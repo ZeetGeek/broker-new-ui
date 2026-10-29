@@ -1,6 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { useLocationOptions } from "@/hooks/use-locations";
+import { useMarket } from "@/hooks/use-market";
 
 import { ComboboxField } from "@/features/contacts/contact-form-ui";
 
@@ -25,6 +28,7 @@ export function ContactLocationFields({
     stateError?: string;
     cityError?: string;
 }) {
+    const market = useMarket();
     const {
         countryOptions,
         stateOptions,
@@ -37,6 +41,17 @@ export function ContactLocationFields({
         stateName: state,
     });
 
+    // The country is chosen once, at registration. A contact saved under another
+    // country is moved over, and its state / city — which belonged there — cleared.
+    useEffect(() => {
+        if (!market || country === market.name) return;
+        onCountryChange(market.name);
+        if (country) {
+            onStateChange("");
+            onCityChange("");
+        }
+    }, [market, country, onCountryChange, onStateChange, onCityChange]);
+
     return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <ComboboxField
@@ -47,6 +62,8 @@ export function ContactLocationFields({
                 emptyText="No country matches"
                 options={countryOptions}
                 error={countryError}
+                disabled={Boolean(market)}
+                hint={market ? "Set from your account" : undefined}
                 onChange={(next) => {
                     onCountryChange(next);
                     onStateChange("");

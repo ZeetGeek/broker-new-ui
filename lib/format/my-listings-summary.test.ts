@@ -4,9 +4,9 @@ import { test } from "node:test";
 import { buildMyListingsSummaryLines } from "./my-listings-summary";
 
 const base = {
-    summary: { total: 15, published: 14, draft: 1, unpublished: 0, sale: 12, rent: 3 },
+    summary: { total: 17, published: 14, draft: 1, unpublished: 0, sold: 2, sale: 12, rent: 3 },
     resultTotal: 14,
-    status: "published" as const,
+    status: "published" as "published" | "draft" | "sold",
     hasActiveFilters: false,
 };
 
@@ -52,8 +52,35 @@ test("empty draft tab and unavailable summary do not claim the inventory is empt
         buildMyListingsSummaryLines({
             ...base,
             resultTotal: 0,
-            summary: { total: 0, published: 0, draft: 0, unpublished: 0, sale: 0, rent: 0 },
+            summary: {
+                total: 0,
+                published: 0,
+                draft: 0,
+                unpublished: 0,
+                sold: 0,
+                sale: 0,
+                rent: 0,
+            },
         })[0],
         "Add your first property to get started",
+    );
+});
+
+test("sold tab counts sold listings and never nudges to publish drafts", () => {
+    assert.deepEqual(buildMyListingsSummaryLines({ ...base, status: "sold", resultTotal: 2 }), [
+        "2 listings sold",
+    ]);
+    assert.deepEqual(buildMyListingsSummaryLines({ ...base, status: "sold", resultTotal: 0 }), [
+        "No sold listings yet",
+        "Listings you mark as sold show up here",
+    ]);
+    assert.deepEqual(
+        buildMyListingsSummaryLines({
+            ...base,
+            status: "sold",
+            hasActiveFilters: true,
+            resultTotal: 0,
+        }),
+        ["No sold listings match your filters", "Try changing or clearing a filter"],
     );
 });

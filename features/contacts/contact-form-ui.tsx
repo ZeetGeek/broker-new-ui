@@ -173,6 +173,7 @@ export function ComboboxField({
     placeholder = "Search…",
     emptyText = "No matches",
     disabled,
+    hint,
 }: {
     label: string;
     value: string;
@@ -184,6 +185,7 @@ export function ComboboxField({
     placeholder?: string;
     emptyText?: string;
     disabled?: boolean;
+    hint?: ReactNode;
 }) {
     const id = `combobox-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`;
     const flat = groups?.flatMap((group) => group.options) ?? options ?? [];
@@ -191,7 +193,7 @@ export function ComboboxField({
     const labelFor = (item: string) => flat.find((option) => option.value === item)?.label ?? item;
 
     return (
-        <FormField label={label} htmlFor={id} required={required}>
+        <FormField label={label} htmlFor={id} required={required} hint={hint}>
             <Combobox
                 value={value || null}
                 onValueChange={(next) => onChange(next ?? "")}
@@ -205,7 +207,7 @@ export function ComboboxField({
                     placeholder={placeholder}
                     disabled={disabled}
                     errorText={error}
-                    showClear={Boolean(value) && !required}
+                    showClear={Boolean(value) && !required && !disabled}
                 />
                 <ComboboxContent>
                     <ComboboxEmpty>{emptyText}</ComboboxEmpty>

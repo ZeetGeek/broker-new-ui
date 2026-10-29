@@ -588,8 +588,9 @@ export function PropertyForm({
                 return;
             }
         }
-        // Quick add is a draft shortcut. Publishing always uses the same full checks.
-        if (entryMode === "quick" && forceDraft) {
+        // Quick add checks only its own fields, for both drafts and publishing, and
+        // never sends the user to Full details.
+        if (entryMode === "quick") {
             if (!validateQuickAdd(methods, current, portal)) {
                 persistInFlightRef.current = false;
                 return;
@@ -612,7 +613,6 @@ export function PropertyForm({
                 return;
             }
         } else if (!forceDraft) {
-            if (entryMode === "quick") setEntryMode("full");
             const required = activeSteps.map((item) => item.id);
             for (const requiredStep of required) {
                 if (!validateStep(requiredStep)) {
@@ -1338,7 +1338,7 @@ function PropertyFormHeader({
                             onPublish();
                         }}
                     >
-                        {entryMode === "quick" ? "Review & publish" : "Publish"}
+                        Publish
                     </Button>
                     {showClose ? (
                         <Tooltip>
