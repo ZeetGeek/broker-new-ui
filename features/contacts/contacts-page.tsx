@@ -116,6 +116,30 @@ export function ContactsPage({
     >(null);
     const [detailSection, setDetailSection] = useState<"properties" | undefined>();
     const [hasContactQuery, setHasContactQuery] = useState(false);
+    const [requestedContact, setRequestedContact] = useState<{
+        id: string;
+        type?: "buyer" | "owner";
+    } | null>(null);
+    const contactLookup = useQuery({
+        queryKey: ["contact-deep-link", requestedContact?.id, requestedContact?.type],
+        queryFn: ({ signal }) =>
+            contactsApi.findContact(requestedContact!.id, requestedContact!.type, signal),
+        enabled: requestedContact != null,
+    });
+    useEffect(() => {
+        const contact = contactLookup.data;
+        if (!requestedContact || !contact) return;
+        const timer = window.setTimeout(() => {
+            if (new URL(window.location.href).searchParams.get("contact") !== requestedContact.id)
+                return;
+            setSelectedContact(contact);
+            setFilters((previous) => ({
+                ...previous,
+                tab: contact.type === "buyer" ? "buyers" : "owners",
+            }));
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, [contactLookup.data, requestedContact, setFilters]);
     const openerIdRef = useRef<string | null>(null);
     /** Bumped after a create/update/attach so the list and counts both refetch. */
     const [revision, setRevision] = useState(0);
@@ -307,6 +331,7 @@ export function ContactsPage({
             );
             const url = new URL(window.location.href);
             url.searchParams.set("contact", row.id);
+            url.searchParams.set("tab", type === "buyer" ? "buyers" : "owners");
             window.history.pushState({ ...window.history.state, contactPanel: true }, "", url);
         },
         [],
@@ -316,6 +341,7 @@ export function ContactsPage({
         const url = new URL(window.location.href);
         setSelectedContact(null);
         setHasContactQuery(false);
+        setRequestedContact(null);
         setDetailSection(undefined);
         if (url.searchParams.has("contact")) {
             if (window.history.state?.contactPanel) window.history.back();
@@ -329,9 +355,11 @@ export function ContactsPage({
 
     useEffect(() => {
         const syncFromUrl = () => {
-            const id = new URL(window.location.href).searchParams.get("contact");
+            const query = new URL(window.location.href).searchParams;
+            const id = query.get("contact");
             setHasContactQuery(Boolean(id));
             if (!id) {
+                setRequestedContact(null);
                 setSelectedContact(null);
                 restoreCardFocus();
                 return;
@@ -340,19 +368,24 @@ export function ContactsPage({
             const owner = ownersQuery.items.find((item) => item.id === id);
             if (buyer) setSelectedContact({ type: "buyer", row: buyer });
             else if (owner) setSelectedContact({ type: "owner", row: owner });
-            else if (
-                (id.startsWith("owner_") || id.startsWith("custom_owner_")) &&
-                filters.tab !== "owners"
-            ) {
-                setFilters((previous) => ({ ...previous, tab: "owners" }));
-            } else if (filters.tab !== "buyers") {
-                setFilters((previous) => ({ ...previous, tab: "buyers" }));
+            else if (contactLookup.data?.row.id === id) setSelectedContact(contactLookup.data);
+            else {
+                const type =
+                    query.get("tab") === "owners"
+                        ? "owner"
+                        : query.get("tab") === "buyers"
+                          ? "buyer"
+                          : undefined;
+                setSelectedContact(null);
+                setRequestedContact((previous) =>
+                    previous?.id === id && previous.type === type ? previous : { id, type },
+                );
             }
         };
         syncFromUrl();
         window.addEventListener("popstate", syncFromUrl);
         return () => window.removeEventListener("popstate", syncFromUrl);
-    }, [buyers, filters.tab, ownersQuery.items, restoreCardFocus, setFilters]);
+    }, [buyers, ownersQuery.items, restoreCardFocus, contactLookup.data]);
 
     const quickUpdateBuyer = useCallback(
         async (buyer: BuyerRow, patch: Partial<BuyerContactForm>) => {
@@ -644,7 +677,17 @@ export function ContactsPage({
 
                 <ContactDetailPanel
                     contact={selectedContact}
-                    open={selectedContact != null || (hasContactQuery && activeQuery.isPending)}
+                    open={selectedContact != null || hasContactQuery}
+                    loadError={
+                        contactLookup.isError
+                            ? "Could not load this contact. Check your connection and try again."
+                            : requestedContact && contactLookup.isSuccess && !contactLookup.data
+                              ? "This contact could not be found in your account."
+                              : undefined
+                    }
+                    onRetryLoad={
+                        contactLookup.isError ? () => void contactLookup.refetch() : undefined
+                    }
                     initialSection={detailSection}
                     onOpenChange={(next) => {
                         if (!next) closeContact();

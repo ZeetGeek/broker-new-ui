@@ -10,6 +10,7 @@ import { Link2 } from "@/components/shared/icons";
 import { ApiError } from "@/lib/api/client";
 import type { NewBuyerInput } from "@/lib/api/clients";
 import { contactsApi } from "@/lib/api/contacts";
+import { brokerContactHref } from "@/lib/routes/broker";
 import {
     type BuyerFormValues,
     buyerFormSchema,
@@ -136,7 +137,7 @@ function DuplicateWarning({
                     type="button"
                     size="sm"
                     variant="outline"
-                    onClick={() => window.location.assign(`/broker/contacts?open=${match.id}`)}
+                    onClick={() => window.location.assign(brokerContactHref(match.id, match.type))}
                 >
                     Open existing
                 </Button>

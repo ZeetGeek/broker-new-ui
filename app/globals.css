@@ -44,7 +44,7 @@
     --secondary: oklch(0.966 0.005 106.5);
     --secondary-foreground: oklch(0.228 0.013 107.4);
     --muted: oklch(0.966 0.005 106.5);
-    --muted-foreground: oklch(0.58 0.031 107.3);
+    --muted-foreground: var(--color-ink-muted);
     --accent: oklch(0.966 0.005 106.5);
     --accent-foreground: oklch(0.228 0.013 107.4);
     --destructive: oklch(0.577 0.245 27.325);
@@ -68,8 +68,8 @@
     --color-border-warm: #e4ded2;
 
     --color-ink: #111111;
-    --color-ink-muted: #86867e;
-    --color-ink-subtle: #a9a79d;
+    --color-ink-muted: #52564b;
+    --color-ink-subtle: #61645a;
 
     --color-brand-ink: #0b1f17;
     --color-brand-deep: #0f3d2e;
@@ -508,6 +508,20 @@
 [data-slot="select-item"]:focus-visible {
     background-color: var(--color-surface-muted);
     color: var(--color-ink);
+}
+
+/* Grow the layout box, not an overlapping pseudo-element hit area. */
+@media (pointer: coarse), (max-width: 767px) {
+    .touch-target,
+    [data-slot="button"],
+    [data-slot="input"],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-input-group"],
+    [data-slot="combobox-trigger"],
+    .t-notif-filter-tab {
+        min-block-size: 44px;
+        min-inline-size: 44px;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -5,6 +5,24 @@
 **Scope:** Frontend broker portal, authentication entry points, owner-feature hiding, shared property pages, and the broker CRM workflow.  
 **Deliverable:** Review only. No application fixes or backend changes were made.
 
+## Frontend follow-up: B17 and Q01–Q03 (29 October 2026)
+
+- **B17:** Undo keeps the server-confirmed stage visible until its PATCH succeeds. Both outcomes trigger an authoritative list refresh; a failed forward move restores the full prior card snapshot. A write gate serializes mutations, retires stale Undo callbacks after newer edits, and prevents older list responses from replacing newer state. Undo callbacks from an unmounted Pipeline no longer write. Stage changes, offers, notes, and call logging share the gate.
+- **Q01:** Darkened functional `ink-muted` to `#52564B` and `ink-subtle` to `#61645A`; the shared muted foreground aliases the accessible muted token. Measured sRGB contrast is respectively **7.52:1 / 6.04:1 on white**, **6.27:1 / 5.03:1 on canvas**, and **5.82:1 / 4.67:1 on brand-soft-hover**. Surface-muted and brand-soft also pass 4.5:1. Updated token reference data and corrected the design guidance. These ratios cover the solid token pairs, not arbitrary opacity reductions or every rendered context.
+- **Q02:** Shared buttons (including small/icon sizes), filter chips, notification tabs, inputs, select triggers, and combobox groups/triggers use actual 44px minimum dimensions on phone/coarse-pointer layouts. Compact desktop sizes remain available; no overlapping invisible hit areas were added. Updated size-reference notes and design guidance. Android spacing/overflow and physical-device hit testing remain unverified.
+- **Q03:** Reschedule's datetime input has a visible associated label, IST help text, and linked validation error. Buyer search has an associated visible label and accessible search name. Both contact notes textareas have meaningful accessible names. The reschedule form remains gated in live mode, while its mock form is labelled correctly.
+
+All changes are frontend-only. Contrast was recalculated with the sRGB relative-luminance formula in PowerShell. Regression cases were added for write serialization/stale Undo/list revisions, token contrast/reference sync, field names, and touch-target rules. Node/npm remain inaccessible, so automated tests, TypeScript, lint/format, and production build checks are unrun for this follow-up. Browser/Android and screen-reader verification remain required.
+
+## Frontend follow-up: B13–B16 (29 October 2026)
+
+- **B13:** Duplicate-contact links now use the shared `?contact=<id>&tab=buyers|owners` convention with encoded IDs. A deep-link lookup scans the existing paginated APIs independently of list search/loaded rows, selects the correct tab, and displays loading, not-found, or error/Retry states. Removed ID-prefix guesses that could switch tabs repeatedly.
+- **B14:** Pipeline consumes supported stage query parameters, normalizes `site_visit` to `visit` and `offer_made` to `negotiation`, selects the matching board/mobile stage, and synchronizes saved preferences. A visible stage filter can be cleared; choosing another mobile stage updates an active stage URL, and Finished clears the live-stage filter. No new stages were introduced.
+- **B15:** Only a completed API status counts as Done. Past-start visits remain elapsed with their confirmation status and an explicit Start time passed label; cancelled/no-show visits stay distinct and are excluded from remaining counts. Next showing selects an active visit and excludes terminal statuses. Time urgency no longer hides confirmation: confirmed visits say Confirmed plus timing, while pending visits retain Awaiting confirmation/Scheduled plus timing.
+- **B16:** Removed the unwired global Search control and its shortcut hint from the shared portal header. Existing per-page search remains available; no unsupported global search operation was added.
+
+All changes are frontend-only. Added regression cases for contact-link encoding and later-page lookup, stage normalization, status-derived completion/counts, and terminal-visit selection. Node/npm remain inaccessible in the restricted shell, so tests, TypeScript, formatting/lint, and build checks are unrun for this follow-up. Authenticated browser interaction is also unverified.
+
 ## Frontend follow-up: B09–B12 (29 October 2026)
 
 - **B09 — unavailable action gated:** Live visit cards, timeline rows, and detail panels no longer offer Reschedule. The detail panel explains checking availability, cancelling, and booking another open slot. Legacy reschedule URLs show a read-only explanation instead of an editable form. Removed the optimistic time change from the reschedule mutation. Mock previews retain their existing operation.

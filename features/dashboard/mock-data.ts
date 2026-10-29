@@ -1,7 +1,7 @@
 import type { PipelineStageId } from "@/config/constants";
 
 export type TodayItemKind = "site_visit" | "call";
-export type TodayItemState = "done" | "upcoming" | "blocked";
+export type TodayItemState = "done" | "upcoming" | "blocked" | "elapsed" | "cancelled" | "missed";
 
 export type TodayItem = {
     id: string;

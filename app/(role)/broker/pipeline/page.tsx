@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { PipelinePage } from "@/features/pipeline/pipeline-page";
 
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-    return <PipelinePage />;
+    return (
+        <Suspense fallback={<p className="body text-ink-muted">Loading Pipeline…</p>}>
+            <PipelinePage />
+        </Suspense>
+    );
 }

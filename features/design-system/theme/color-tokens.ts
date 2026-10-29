@@ -64,7 +64,7 @@ export const COLOR_GROUPS: ColorGroup[] = [
             {
                 name: "Ink muted",
                 variable: "--color-ink-muted",
-                hex: "#86867E",
+                hex: "#52564B",
                 className: "bg-ink-muted",
                 usage: "Secondary text, second line of a two-tone headline",
                 onDark: true,
@@ -72,9 +72,9 @@ export const COLOR_GROUPS: ColorGroup[] = [
             {
                 name: "Ink subtle",
                 variable: "--color-ink-subtle",
-                hex: "#A9A79D",
+                hex: "#61645A",
                 className: "bg-ink-subtle",
-                usage: "Captions, metadata, placeholder — contrast floor",
+                usage: "Captions, metadata, placeholders — at least 4.5:1 on light app surfaces",
             },
         ],
     },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 
 import { Check, Plus, Search } from "@/components/shared/icons";
 
@@ -32,6 +32,7 @@ export function BuyerPicker({
         `${buyer.name} ${buyer.requirement ?? ""}`.toLowerCase().includes(query.toLowerCase()),
     );
 
+    const searchId = useId();
     const toggle = (id: string) => {
         if (selected.includes(id)) onChange(selected.filter((item) => item !== id));
         else onChange([id]);
@@ -41,6 +42,7 @@ export function BuyerPicker({
         <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
                 <label
+                    htmlFor={searchId}
                     className="
               body-sm font-bold text-ink
             "
@@ -52,6 +54,8 @@ export function BuyerPicker({
                 </Button>
             </div>
             <Input
+                id={searchId}
+                aria-label="Search buyers"
                 value={query}
                 onValueChange={(value) => setQuery(value)}
                 placeholder="Search buyers"
