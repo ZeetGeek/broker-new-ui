@@ -415,7 +415,7 @@ function buildSummary(all: DealItem[]): DealsSummary {
     };
 }
 
-async function fetchAllLeads(search?: string): Promise<ApiLead[]> {
+async function fetchAllLeads(search?: string, signal?: AbortSignal): Promise<ApiLead[]> {
     const items: ApiLead[] = [];
     let page = 1;
     let totalPages = 1;
@@ -426,7 +426,7 @@ async function fetchAllLeads(search?: string): Promise<ApiLead[]> {
             limit: "100",
         });
         if (search?.trim()) qs.set("search", search.trim());
-        const response = await apiFetch<LeadsListResponse>(`/clients/leads?${qs}`);
+        const response = await apiFetch<LeadsListResponse>(`/clients/leads?${qs}`, { signal });
         items.push(...(response.items ?? []));
         totalPages = Math.max(1, response.totalPages ?? 1);
         page += 1;
@@ -442,7 +442,7 @@ export type SetStageOptions = {
 };
 
 export const pipelineApi = {
-    async list(filters: DealsFilters): Promise<DealsResult> {
+    async list(filters: DealsFilters, signal?: AbortSignal): Promise<DealsResult> {
         if (isMockMode()) {
             const all = mockDeals;
             let items = filters.q.trim()
@@ -453,7 +453,7 @@ export const pipelineApi = {
             }
             return { items: sortDeals(items, filters.sort), summary: buildSummary(all) };
         }
-        const leads = await fetchAllLeads(filters.q || undefined);
+        const leads = await fetchAllLeads(filters.q || undefined, signal);
         const all = leads.map(mapLeadToDeal).filter((deal): deal is DealItem => deal != null);
 
         let items = filters.q.trim() ? all.filter((deal) => matchesQuery(deal, filters.q)) : all;

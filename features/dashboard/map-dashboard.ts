@@ -20,6 +20,7 @@ import {
 import { parseMoney } from "@/lib/format/money";
 import { isLaunchEventVisible } from "@/lib/notifications/launch-policy";
 import { brokerVisitHref } from "@/lib/routes/broker";
+import { agendaVisitState, isActiveDashboardVisit } from "@/lib/visits/dashboard-state";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";
 
@@ -118,6 +119,8 @@ function mapReraStatus(profile: UserProfile | null): ReraStatus {
 }
 
 function visitStateLabel(visit: DashboardVisit, portal: "broker" | "owner" = "broker"): string {
+    if (visit.status === "no_show") return "No-show recorded";
+    if (visit.status?.startsWith("cancelled_by_")) return "Visit cancelled";
     if (portal === "owner") {
         if (visit.status === "confirmed") return "Confirmed";
         if (visit.status === "cancelled") return "Cancelled";
@@ -142,6 +145,7 @@ function mapTodayAgenda(
     portal: "broker" | "owner" = "broker",
 ): TodayAgenda {
     const todays = visits
+        .filter((visit) => visit.status !== "expired")
         .map((visit) => {
             const scheduledAt = new Date(visit.scheduledAt);
             if (Number.isNaN(scheduledAt.getTime()) || !isSameCalendarDay(scheduledAt, now)) {
@@ -158,8 +162,8 @@ function mapTodayAgenda(
                 timeLabel,
                 title: `Site visit · ${visit.propertyTitle}`,
                 clientName: person,
-                subtitle: visitStateLabel(visit, portal),
-                state: scheduledAt.getTime() < now.getTime() ? "done" : "upcoming",
+                subtitle: `${visitStateLabel(visit, portal)}${agendaVisitState(visit.status, scheduledAt, now) === "elapsed" ? " · Start time passed" : ""}`,
+                state: agendaVisitState(visit.status, scheduledAt, now),
                 href: portal === "owner" ? `/owner/visits` : brokerVisitHref(visit.id),
             };
             return item;
@@ -175,7 +179,9 @@ function mapTodayAgenda(
     return {
         date: formatDateIso(now),
         doneCount: todays.filter((item) => item.state === "done").length,
-        remainingCount: todays.filter((item) => item.state !== "done").length,
+        remainingCount: todays.filter(
+            (item) => item.state === "upcoming" || item.state === "elapsed",
+        ).length,
         items: todays,
     };
 }
@@ -204,6 +210,16 @@ function mapNextShowing(visit: DashboardVisit | undefined, portal: "broker" | "o
             portal === "owner" ? visit.brokerName || "Broker" : visit.clientName || "Client",
         clientPhoneDigits: phoneDigits(visit.clientPhone),
     };
+}
+
+function nextActiveVisit(visits: DashboardVisit[]): DashboardVisit | undefined {
+    return visits
+        .filter(
+            (visit) =>
+                isActiveDashboardVisit(visit.status) &&
+                Number.isFinite(new Date(visit.scheduledAt).getTime()),
+        )
+        .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())[0];
 }
 
 /** Localities arrive from the API in mixed case ("baner"); render them as names. */
@@ -497,7 +513,7 @@ export function mapBrokerDashboardView(
         serviceAreas: profile?.broker?.serviceAreas ?? [],
         phoneDigits: phoneDigits(profile?.phone),
         email: profile?.email ?? "",
-        nextShowing: mapNextShowing(visits[0]),
+        nextShowing: mapNextShowing(nextActiveVisit(visits)),
         today: mapTodayAgenda(visits, now),
         requests: mapRequests(
             data?.summary ?? {},
@@ -671,7 +687,7 @@ export function mapOwnerDashboardView(
         siteVisitCount: todayVisits.length,
         pendingRequestsCount: summary.pendingRequests,
         summary,
-        nextShowing: mapNextShowing(visits[0], "owner"),
+        nextShowing: mapNextShowing(nextActiveVisit(visits), "owner"),
         today: mapTodayAgenda(visits, now, "owner"),
         pendingRequests,
         glanceVisits: mapOwnerGlanceVisits(visits),

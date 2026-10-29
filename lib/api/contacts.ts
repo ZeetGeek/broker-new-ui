@@ -611,6 +611,41 @@ export function sortBuyerRows(rows: BuyerRow[], sort: ContactsFilters["sort"]): 
 }
 
 export const contactsApi = {
+    /** Resolve deep links independently of the list's filters and loaded pages. */
+    async findContact(
+        id: string,
+        type?: "buyer" | "owner",
+        signal?: AbortSignal,
+    ): Promise<{ type: "buyer"; row: BuyerRow } | { type: "owner"; row: OwnerRow } | null> {
+        const filters = { ...DEFAULT_CONTACTS_FILTERS, q: "" };
+        if (type !== "owner") {
+            let cursor: string | null = null;
+            do {
+                const page = await contactsApi.listBuyersPage(filters, cursor, signal);
+                const row = page.items.find((item) => item.id === id);
+                if (row) return { type: "buyer", row };
+                cursor = page.nextCursor;
+            } while (cursor);
+        }
+        if (type !== "buyer") {
+            for (const ownerOrigin of FEATURE_PLATFORM_OWNER
+                ? (["custom", "platform"] as const)
+                : (["custom"] as const)) {
+                let cursor: string | null = null;
+                do {
+                    const page = await contactsApi.listOwnersPage(
+                        { ...filters, ownerOrigin },
+                        cursor,
+                        signal,
+                    );
+                    const row = page.items.find((item) => item.id === id);
+                    if (row) return { type: "owner", row };
+                    cursor = page.nextCursor;
+                } while (cursor);
+            }
+        }
+        return null;
+    },
     async listBuyersPage(
         filters: ContactsFilters,
         cursor: string | null,

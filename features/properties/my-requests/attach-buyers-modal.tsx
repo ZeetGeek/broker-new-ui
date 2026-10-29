@@ -58,7 +58,9 @@ function budgetLabel(client: ClientItem): string | null {
     const sale =
         client.budgetMaxInr != null ? `Sale up to ${formatPrice(client.budgetMaxInr)}` : null;
     const rent =
-        client.rentBudgetMaxInr != null ? `Rent up to ${formatRent(client.rentBudgetMaxInr)}` : null;
+        client.rentBudgetMaxInr != null
+            ? `Rent up to ${formatRent(client.rentBudgetMaxInr)}`
+            : null;
     if (client.lookingFor === "rent") return rent;
     if (client.lookingFor === "both") return [sale, rent].filter(Boolean).join(" · ") || null;
     return sale;

@@ -3,9 +3,8 @@
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { addDays, addMonths } from "date-fns";
-
 import { REQUEST_GROUPS, requestIsCollapsed } from "@/lib/visits/status";
+import { addVisitDays as addDays, addVisitMonths as addMonths } from "@/lib/visits/time";
 import { formatVisitTime, istDateKey } from "@/lib/visits/time";
 import { useRequestActions } from "@/hooks/use-time-requests";
 
@@ -161,8 +160,8 @@ export function RequestsTab({
                         <section key={group.status} className="space-y-3">
                             <header
                                 className="
-                              flex flex-wrap items-baseline justify-between gap-2 px-0.5
-                            "
+                                  flex flex-wrap items-baseline justify-between gap-2 px-0.5
+                                "
                             >
                                 <h3 className="body-sm font-semibold text-ink-muted">
                                     {group.label}

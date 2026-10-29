@@ -1,12 +1,10 @@
 import { tz, TZDate } from "@date-fns/tz";
-import { transpose } from "date-fns";
+/** Single-city India launch: display and booking use IST on server and device alike. */
+export const APP_TIME_ZONE = "Asia/Kolkata";
 
-/** IANA timezone for the current user (browser/system). Falls back to UTC on the server. */
+/** App scheduling timezone. Kept under the existing name for caller compatibility. */
 export function getUserTimeZone(): string {
-    if (typeof Intl !== "undefined") {
-        return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-    }
-    return "UTC";
+    return APP_TIME_ZONE;
 }
 
 /** date-fns context option for the user's timezone. */
@@ -25,5 +23,5 @@ export function toUserZonedTime(date: Date, timeZone = getUserTimeZone()): TZDat
  */
 export function fromUserZonedTime(date: Date, timeZone = getUserTimeZone()): Date {
     const zoned = date instanceof TZDate ? date : new TZDate(date, timeZone);
-    return transpose(zoned, Date);
+    return new Date(zoned.getTime());
 }

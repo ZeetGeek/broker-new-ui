@@ -10,6 +10,10 @@ export const BROKER_ADD_BUYER_HREF = "/broker/contacts?add=buyer";
 export const BROKER_ADD_DEAL_HREF = "/broker/contacts?flow=add-deal";
 export const BROKER_VISIT_SLOTS_HREF = "/broker/visits?tab=slots";
 
+export function brokerContactHref(id: string, type: "buyer" | "owner"): string {
+    return `/broker/contacts?tab=${type === "buyer" ? "buyers" : "owners"}&contact=${encodeURIComponent(id)}`;
+}
+
 export function brokerVisitHref(visitId: string): string {
     return `/broker/visits?tab=visits&visit=${encodeURIComponent(visitId)}`;
 }

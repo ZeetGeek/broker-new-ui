@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -32,6 +32,7 @@ export function RescheduleModal({
     const [selected, setSelected] = useState("");
     const [custom, setCustom] = useState(() => (visit ? inputValueInIst(visit.startsAt) : ""));
     const [saveError, setSaveError] = useState<string>();
+    const timeId = useId();
     if (!visit) return null;
     if (!USE_MOCK_VISITS) {
         return (
@@ -91,6 +92,7 @@ export function RescheduleModal({
                 {saveError ? (
                     <p
                         role="alert"
+                        id={`${timeId}-error`}
                         className="
           body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
         "
@@ -147,7 +149,16 @@ export function RescheduleModal({
                     </span>
                     <span className="flex-1 bg-border-warm block-px" />
                 </div>
+                <label htmlFor={timeId} className="body-sm font-bold text-ink">
+                    New visit time
+                </label>
+                <p id={`${timeId}-help`} className="body-xs text-ink-muted">
+                    Times are in IST. Choose a time in the future.
+                </p>
                 <input
+                    id={timeId}
+                    aria-invalid={Boolean(saveError)}
+                    aria-describedby={`${timeId}-help${saveError ? ` ${timeId}-error` : ""}`}
                     type="datetime-local"
                     step={900}
                     min={inputValueInIst(new Date())}

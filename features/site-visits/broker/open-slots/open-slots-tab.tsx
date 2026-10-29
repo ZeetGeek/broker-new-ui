@@ -4,11 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { formatDistanceToNowStrict } from "date-fns";
 
-import type {
-    ApiLeadOption,
-    ApiOwnerOption,
-    ApiPropertyOption,
-} from "@/lib/api/broker-visits-map";
+import type { ApiLeadOption, ApiOwnerOption, ApiPropertyOption } from "@/lib/api/broker-visits-map";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { sortSlotsForBuyer } from "@/lib/visits/grouping";
 

@@ -37,6 +37,14 @@ yarn.lock
 .claude/skills/
 .cursor/skills/
 
+# Tooling-owned prompts and generated skill metadata are not application source.
+.agents/
+.claude/
+.cursor/
+.codex/
+.impeccable/
+**/AGENTS.md
+
 # env and machine-local tool state
 .env*
 .claude/settings.local.json

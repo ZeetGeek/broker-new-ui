@@ -22,7 +22,10 @@ function walk(dir) {
             for (const part of match[1].split(",")) {
                 let name = part.trim();
                 if (!name) continue;
-                name = name.replace(/^type\s+/, "").split(/\s+as\s+/)[0].trim();
+                name = name
+                    .replace(/^type\s+/, "")
+                    .split(/\s+as\s+/)[0]
+                    .trim();
                 if (name) icons.add(name);
             }
         }

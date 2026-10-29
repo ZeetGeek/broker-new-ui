@@ -71,19 +71,19 @@ function statusBadgeContent(
     isPast: boolean,
     portal: "broker" | "owner",
 ): { label: string; hint: string; color: "emerald" | "orange" | "lime" | "amber" } {
-    if (isPast) {
+    if (status === "confirmed" && isPast) {
         return {
-            label: "In progress",
+            label: "Confirmed · Start time passed",
             hint:
                 portal === "owner"
                     ? "This visit's start time has passed. Check in with the broker if you need an update."
-                    : "This visit's start time has passed. Mark it done or reschedule once you're finished.",
+                    : "The confirmed start time has passed. Open Visits to check what happened; this visit has not been marked done.",
             color: "emerald",
         };
     }
-    if (isStartingSoon) {
+    if (status === "confirmed" && isStartingSoon) {
         return {
-            label: "Starting soon",
+            label: "Confirmed · Starting soon",
             hint:
                 portal === "owner"
                     ? `Starts in under ${STARTING_SOON_MINUTES} minutes. The broker should be on the way with their client.`
@@ -103,13 +103,14 @@ function statusBadgeContent(
             color: "emerald",
         };
     }
+    const timing = isPast ? " · Start time passed" : isStartingSoon ? " · Starts soon" : "";
     return {
         label:
-            portal === "owner"
+            (portal === "owner"
                 ? "Scheduled"
                 : !FEATURE_PLATFORM_OWNER
                   ? "Awaiting confirmation"
-                  : "Owner not replied",
+                  : "Owner not replied") + timing,
         hint:
             portal === "owner"
                 ? "A broker booked this slot. Confirm or cancel it from Visits if you need to change it."

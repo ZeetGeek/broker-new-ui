@@ -598,7 +598,7 @@ async function fetchLeadsForProperty(propertyId: string): Promise<ApiPropertyLea
     return items;
 }
 
-async function fetchAllLeads(): Promise<ApiPropertyLead[]> {
+async function fetchAllLeads(signal?: AbortSignal): Promise<ApiPropertyLead[]> {
     const items: ApiPropertyLead[] = [];
     let page = 1;
     let totalPages = 1;
@@ -608,7 +608,7 @@ async function fetchAllLeads(): Promise<ApiPropertyLead[]> {
             page: String(page),
             limit: "100",
         });
-        const response = await apiFetch<LeadsListResponse>(`/clients/leads?${qs}`);
+        const response = await apiFetch<LeadsListResponse>(`/clients/leads?${qs}`, { signal });
         items.push(...(response.items ?? []));
         totalPages = Math.max(1, response.totalPages ?? 1);
         page += 1;
@@ -654,7 +654,9 @@ export async function attachedClientsFor(propertyId: string): Promise<AttachedCl
 /**
  * Group attached buyers by property in one leads scan — avoids N+1 on list pages.
  */
-export async function attachedClientsByProperty(): Promise<Map<string, AttachedClientRef[]>> {
+export async function attachedClientsByProperty(
+    signal?: AbortSignal,
+): Promise<Map<string, AttachedClientRef[]>> {
     if (isMockMode()) {
         const map = new Map<string, AttachedClientRef[]>();
         for (const [propertyId, ids] of Object.entries(MOCK_PROPERTY_CLIENTS)) {
@@ -668,7 +670,7 @@ export async function attachedClientsByProperty(): Promise<Map<string, AttachedC
         }
         return map;
     }
-    const leads = await fetchAllLeads();
+    const leads = await fetchAllLeads(signal);
     const map = new Map<string, AttachedClientRef[]>();
 
     for (const lead of leads) {

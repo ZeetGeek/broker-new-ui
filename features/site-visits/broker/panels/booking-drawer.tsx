@@ -170,17 +170,23 @@ export function BookingDrawer({
 
     useEffect(() => {
         if (!open) return;
-        form.reset({
-            buyerIds: preselectedBuyerId ? [preselectedBuyerId] : [],
-            acceptTight: false,
-        });
-        setInlineError(undefined);
-        setApiConflict(null);
+        const timer = window.setTimeout(() => {
+            form.reset({
+                buyerIds: preselectedBuyerId ? [preselectedBuyerId] : [],
+                acceptTight: false,
+            });
+            setInlineError(undefined);
+            setApiConflict(null);
+        }, 0);
+        return () => window.clearTimeout(timer);
     }, [form, open, preselectedBuyerId, slot?.id]);
 
     useEffect(() => {
-        setApiConflict(null);
-        setInlineError(undefined);
+        const timer = window.setTimeout(() => {
+            setApiConflict(null);
+            setInlineError(undefined);
+        }, 0);
+        return () => window.clearTimeout(timer);
     }, [watchedBuyerIds, slot?.id]);
 
     if (!item || !slot) return null;

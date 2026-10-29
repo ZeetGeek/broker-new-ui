@@ -1,4 +1,4 @@
-export const VISITS_TIME_ZONE = "Asia/Kolkata";
+export { APP_TIME_ZONE as VISITS_TIME_ZONE } from "@/lib/datetime/timezone";
 export const MIN_NOTICE_MINUTES = 60;
 // Current booking API: one lead per showing.
 export const MAX_BUYERS_PER_VISIT = 1;

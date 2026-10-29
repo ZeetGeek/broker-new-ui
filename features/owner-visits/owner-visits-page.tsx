@@ -160,78 +160,87 @@ export function OwnerVisitsPage() {
 
     useEffect(() => {
         let cancelled = false;
-        setPropertiesLoading(true);
-        void propertiesApi
-            .list({ limit: 100 })
-            .then((page) => {
-                if (!cancelled) setProperties(page.items);
-            })
-            .catch((err) => {
-                if (!cancelled) toast.error(apiMessage(err, "Could not load properties"));
-            })
-            .finally(() => {
-                if (!cancelled) setPropertiesLoading(false);
-            });
+        const timer = window.setTimeout(() => {
+            setPropertiesLoading(true);
+            void propertiesApi
+                .list({ limit: 100 })
+                .then((page) => {
+                    if (!cancelled) setProperties(page.items);
+                })
+                .catch((err) => {
+                    if (!cancelled) toast.error(apiMessage(err, "Could not load properties"));
+                })
+                .finally(() => {
+                    if (!cancelled) setPropertiesLoading(false);
+                });
+        }, 0);
         return () => {
+            window.clearTimeout(timer);
             cancelled = true;
         };
     }, []);
 
     useEffect(() => {
         let cancelled = false;
-        setSlotsLoading(true);
-        void ownerSlotsApi
-            .list({ limit: 200 })
-            .then((page) => {
-                if (!cancelled) setSlots(page.items);
-            })
-            .catch((err) => {
-                if (!cancelled) {
-                    toast.error(apiMessage(err, "Could not load slots"));
-                    setSlots([]);
-                }
-            })
-            .finally(() => {
-                if (!cancelled) setSlotsLoading(false);
-            });
+        const timer = window.setTimeout(() => {
+            setSlotsLoading(true);
+            void ownerSlotsApi
+                .list({ limit: 200 })
+                .then((page) => {
+                    if (!cancelled) setSlots(page.items);
+                })
+                .catch((err) => {
+                    if (!cancelled) {
+                        toast.error(apiMessage(err, "Could not load slots"));
+                        setSlots([]);
+                    }
+                })
+                .finally(() => {
+                    if (!cancelled) setSlotsLoading(false);
+                });
+        }, 0);
         return () => {
+            window.clearTimeout(timer);
             cancelled = true;
         };
     }, [revision]);
 
     useEffect(() => {
         let cancelled = false;
-        setShowingsLoading(true);
-        void ownerSlotsApi
-            .showings({
-                focus: showingFocus,
-                page: showingPage,
-                limit: showingLimit,
-            })
-            .then((page) => {
-                if (!cancelled) {
-                    setShowings(page.items);
-                    setShowingsTotal(page.total);
-                    setShowingsPages(page.totalPages);
-                    setShowingsSummary(page.summary ?? EMPTY_SHOWINGS_SUMMARY);
-                    if (page.totalPages > 0 && showingPage > page.totalPages) {
-                        replaceVisitParams({ page: String(page.totalPages) });
+        const timer = window.setTimeout(() => {
+            setShowingsLoading(true);
+            void ownerSlotsApi
+                .showings({
+                    focus: showingFocus,
+                    page: showingPage,
+                    limit: showingLimit,
+                })
+                .then((page) => {
+                    if (!cancelled) {
+                        setShowings(page.items);
+                        setShowingsTotal(page.total);
+                        setShowingsPages(page.totalPages);
+                        setShowingsSummary(page.summary ?? EMPTY_SHOWINGS_SUMMARY);
+                        if (page.totalPages > 0 && showingPage > page.totalPages) {
+                            replaceVisitParams({ page: String(page.totalPages) });
+                        }
                     }
-                }
-            })
-            .catch((err) => {
-                if (!cancelled) {
-                    toast.error(apiMessage(err, "Could not load showings"));
-                    setShowings([]);
-                    setShowingsTotal(0);
-                    setShowingsPages(1);
-                    setShowingsSummary(EMPTY_SHOWINGS_SUMMARY);
-                }
-            })
-            .finally(() => {
-                if (!cancelled) setShowingsLoading(false);
-            });
+                })
+                .catch((err) => {
+                    if (!cancelled) {
+                        toast.error(apiMessage(err, "Could not load showings"));
+                        setShowings([]);
+                        setShowingsTotal(0);
+                        setShowingsPages(1);
+                        setShowingsSummary(EMPTY_SHOWINGS_SUMMARY);
+                    }
+                })
+                .finally(() => {
+                    if (!cancelled) setShowingsLoading(false);
+                });
+        }, 0);
         return () => {
+            window.clearTimeout(timer);
             cancelled = true;
         };
     }, [replaceVisitParams, revision, showingFocus, showingLimit, showingPage]);

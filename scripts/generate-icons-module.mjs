@@ -310,4 +310,12 @@ const out = `${header}${typeBlock}\n${importBlock}\n${semanticBlock}\n${reexport
 
 const dest = path.join(process.cwd(), "components", "shared", "icons.tsx");
 fs.writeFileSync(dest, out, "utf8");
-console.log("Wrote", dest, "—", Object.keys(MAP).length, "aliases +", Object.keys(semantic).length, "semantic");
+console.log(
+    "Wrote",
+    dest,
+    "—",
+    Object.keys(MAP).length,
+    "aliases +",
+    Object.keys(semantic).length,
+    "semantic",
+);

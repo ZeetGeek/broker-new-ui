@@ -614,6 +614,7 @@ function BuyerPanel({
                     {saved ? <span className="body-sm font-medium text-success">Saved</span> : null}
                 </div>
                 <textarea
+                    aria-label="Buyer notes"
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
                     onBlur={() => void save({ notes })}
@@ -772,6 +773,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                     {saved ? <span className="body-sm font-medium text-success">Saved</span> : null}
                 </div>
                 <textarea
+                    aria-label="Owner notes"
                     value={notes}
                     readOnly={isPlatform}
                     onChange={(event) => {
@@ -798,6 +800,8 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
 }
 
 export type ContactDetailPanelProps = {
+    loadError?: string;
+    onRetryLoad?: () => void;
     contact: { type: "buyer"; row: BuyerRow } | { type: "owner"; row: OwnerRow } | null;
     open: boolean;
     initialSection?: "properties";
@@ -839,6 +843,8 @@ function ContactPanelSkeleton() {
 }
 
 export function ContactDetailPanel({
+    loadError,
+    onRetryLoad,
     contact,
     open,
     initialSection,
@@ -866,7 +872,7 @@ export function ContactDetailPanel({
             <AppModal
                 open
                 onOpenChange={onOpenChange}
-                title="Loading contact"
+                title={loadError ? "Contact unavailable" : "Loading contact"}
                 size="md"
                 padding="md"
                 className="contacts-detail-drawer"
@@ -875,7 +881,18 @@ export function ContactDetailPanel({
                 "
                 bodyClassName="flex flex-col gap-0"
             >
-                <ContactPanelSkeleton />
+                {loadError ? (
+                    <div role="alert" className="flex flex-col items-start gap-3">
+                        <p className="body-sm text-ink-muted">{loadError}</p>
+                        {onRetryLoad ? (
+                            <Button variant="outline" onClick={onRetryLoad}>
+                                Retry
+                            </Button>
+                        ) : null}
+                    </div>
+                ) : (
+                    <ContactPanelSkeleton />
+                )}
             </AppModal>
         );
     }
@@ -883,28 +900,32 @@ export function ContactDetailPanel({
     const isBuyer = contact.type === "buyer";
     const edit = () =>
         isBuyer ? onEditBuyer(contact.row as BuyerRow) : onEditOwner(contact.row as OwnerRow);
-    const badge = owner && FEATURE_PLATFORM_OWNER ? (
-        owner.origin === "platform" ? (
-            <span
-                className="
+    const badge =
+        owner && FEATURE_PLATFORM_OWNER ? (
+            owner.origin === "platform" ? (
+                <span
+                    className="
                   body-xs inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1
                   font-semibold tracking-wide text-brand-text
                 "
-            >
-                Platform
-            </span>
-        ) : (
-            <span
-                className="
+                >
+                    Platform
+                </span>
+            ) : (
+                <span
+                    className="
                   body-xs inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1
                   font-semibold tracking-wide text-brand-text
                 "
-            >
-                <span aria-hidden className="rounded-full bg-success-mid block-1.5 inline-1.5" />
-                Added by you
-            </span>
-        )
-    ) : null;
+                >
+                    <span
+                        aria-hidden
+                        className="rounded-full bg-success-mid block-1.5 inline-1.5"
+                    />
+                    Added by you
+                </span>
+            )
+        ) : null;
     const phone = row.phoneDigits;
 
     return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { type SyntheticEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type SyntheticEvent, useCallback, useRef, useState } from "react";
 
 import { CropIcon } from "@/components/shared/icons";
 import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop";
@@ -119,14 +119,17 @@ export function ProfileImageCropper({
     const [isCropping, setIsCropping] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Reset crop state whenever a new image opens.
-    useEffect(() => {
-        if (!open) return;
-        setCrop(undefined);
-        setCompletedCrop(undefined);
-        setError(null);
-        setIsCropping(false);
-    }, [open, imageUrl]);
+    // Reset before rendering a new image, so a cached image load cannot race a timer.
+    const [cropSource, setCropSource] = useState({ open, imageUrl });
+    if (cropSource.open !== open || cropSource.imageUrl !== imageUrl) {
+        setCropSource({ open, imageUrl });
+        if (open) {
+            setCrop(undefined);
+            setCompletedCrop(undefined);
+            setError(null);
+            setIsCropping(false);
+        }
+    }
 
     const onImageLoad = useCallback((event: SyntheticEvent<HTMLImageElement>) => {
         const { width, height } = event.currentTarget;

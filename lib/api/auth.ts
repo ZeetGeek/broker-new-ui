@@ -163,7 +163,6 @@ export const authApi = {
         if (options?.roleChosen) {
             params.set("roleChosen", "1");
         }
-        // console.log("options =>",options)
         return `${API_URL}/auth/google?${params.toString()}`;
     },
 };

@@ -101,8 +101,8 @@ export function buildPropertyFacts(item: MyListingItem): PropertyFact[] {
             value: formatAreaSqft(item.carpetAreaSqft),
         });
     facts.push({ key: "type", label: "Property type", value: item.propertyTypeLabel });
-    if (visible("furnishing.status") && item.furnishingLabel)
-        facts.push({ key: "furnishing", label: "Furnishing", value: item.furnishingLabel });
+    if (visible("furnishing.status") && item.furnishingLabel.trim())
+        facts.push({ key: "furnishing", label: "Furnishing", value: item.furnishingLabel.trim() });
 
     const floor = floorLabel(item);
     if (visible("details.floorNumber") && floor)
@@ -213,6 +213,14 @@ export function buildPropertyFacts(item: MyListingItem): PropertyFact[] {
     }
 
     return facts;
+}
+
+/** Headline facts follow exactly the same form visibility and missing-data rules. */
+export function buildPropertyHeadlineFacts(item: MyListingItem): PropertyFact[] {
+    const keys = new Set(["bhk", "area", "furnishing"]);
+    return buildPropertyFacts(item).filter(
+        (fact) => keys.has(fact.key) && fact.value.trim() && fact.value !== "—",
+    );
 }
 
 /** Reuse form rules so stale fields never turn into impossible property facts. */

@@ -8,7 +8,8 @@ export function listingAsk(input: {
 }): { amountInr: number; isRent: boolean } | null {
     const sale = amount(input.salePrice);
     const rent = amount(input.monthlyRent);
-    if (input.transactionType === "rent") return rent == null ? null : { amountInr: rent, isRent: true };
+    if (input.transactionType === "rent")
+        return rent == null ? null : { amountInr: rent, isRent: true };
     if (sale != null) return { amountInr: sale, isRent: false };
     if (rent != null) return { amountInr: rent, isRent: true };
     return null;

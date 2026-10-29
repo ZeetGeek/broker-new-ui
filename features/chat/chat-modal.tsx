@@ -243,9 +243,7 @@ export function ChatModal({
                 await representativeApi.deleteMessage(peer.representationId, messageId);
             } catch (error) {
                 setMessages(previous);
-                toast.error(
-                    error instanceof ApiError ? error.message : "Failed to delete message",
-                );
+                toast.error(error instanceof ApiError ? error.message : "Failed to delete message");
             }
         },
         [peer, messages],

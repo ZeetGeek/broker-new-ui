@@ -510,10 +510,6 @@ function ContactCurrencyInput({
     const [display, setDisplay] = useState(() => formatMoneyInput(numericValue));
     const [focused, setFocused] = useState(false);
 
-    useEffect(() => {
-        if (!focused) setDisplay(formatMoneyInput(numericValue));
-    }, [focused, numericValue]);
-
     return (
         <Input
             id={id}
@@ -882,10 +878,6 @@ export function ContactFormDrawer({
     header?: ReactNode;
 }) {
     const bodyRef = useRef<HTMLDivElement>(null);
-    const onPrimaryRef = useRef(onPrimary);
-    const onSaveAnotherRef = useRef(onSaveAnother);
-    onPrimaryRef.current = onPrimary;
-    onSaveAnotherRef.current = onSaveAnother;
     const [discardOpen, setDiscardOpen] = useState(false);
 
     const requestClose = (next: boolean) => {
@@ -901,28 +893,30 @@ export function ContactFormDrawer({
         onOpenChange(false);
     };
 
-    useEffect(() => {
+    const [wasOpen, setWasOpen] = useState(open);
+    if (wasOpen !== open) {
+        setWasOpen(open);
         if (!open) setDiscardOpen(false);
-    }, [open]);
+    }
 
     useEffect(() => {
         if (!open || busy) return;
         const unsubscribe = tinykeys(window, {
             "$mod+Enter": (event) => {
                 event.preventDefault();
-                onPrimaryRef.current();
+                onPrimary();
             },
-            ...(onSaveAnotherRef.current
+            ...(onSaveAnother
                 ? {
                       "$mod+Shift+Enter": (event) => {
                           event.preventDefault();
-                          onSaveAnotherRef.current?.();
+                          onSaveAnother?.();
                       },
                   }
                 : {}),
         });
         return () => unsubscribe();
-    }, [busy, open]);
+    }, [busy, open, onPrimary, onSaveAnother]);
 
     useEffect(() => {
         if (!footerError || !open) return;

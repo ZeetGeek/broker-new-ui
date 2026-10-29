@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Check, Send, X } from "@/components/shared/icons";
 
@@ -236,9 +236,14 @@ export function InviteCard({
     const ownerPhoneDigits = ownerPhoneFor(item);
     const canChat = item.stage === "pending" || item.stage === "accepted";
 
-    useEffect(() => {
+    const [unreadSource, setUnreadSource] = useState({
+        id: item.id,
+        count: item.unreadMessageCount,
+    });
+    if (unreadSource.id !== item.id || unreadSource.count !== item.unreadMessageCount) {
+        setUnreadSource({ id: item.id, count: item.unreadMessageCount });
         setUnreadMessageCount(item.unreadMessageCount ?? 0);
-    }, [item.id, item.unreadMessageCount]);
+    }
 
     function openOwnerChat() {
         setUnreadMessageCount(0);

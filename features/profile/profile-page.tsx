@@ -997,11 +997,7 @@ export function ProfilePage() {
                                                 startIcon={Link2}
                                                 placeholder="rajesh-patel-surat"
                                                 errorText={fieldState.error?.message}
-                                                helperText={
-                                                    field.value
-                                                        ? `yesbroker.in/brokers/${field.value}`
-                                                        : "The web address buyers can share."
-                                                }
+                                                helperText="Public profile links are not available yet."
                                             />
                                         </div>
                                     )}

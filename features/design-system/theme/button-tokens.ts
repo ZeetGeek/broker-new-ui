@@ -24,9 +24,9 @@ export const BUTTON_VARIANTS = [
 ] as const;
 
 export const BUTTON_SIZES = [
-    { name: "xs", label: "XS", note: "24px — control-xs" },
-    { name: "sm", label: "SM", note: "32px — control-sm" },
-    { name: "default", label: "Default", note: "36px — control-md" },
+    { name: "xs", label: "XS", note: "24px desktop; at least 44px on phone/touch" },
+    { name: "sm", label: "SM", note: "32px desktop; at least 44px on phone/touch" },
+    { name: "default", label: "Default", note: "36px desktop; at least 44px on phone/touch" },
     { name: "md", label: "MD", note: "44px — control-lg, desktop tap-target" },
     { name: "lg", label: "LG", note: "48px — control-xl, same as input lg" },
 ] as const;

@@ -1,7 +1,21 @@
-import { addDays, differenceInMinutes } from "date-fns";
+import { tz } from "@date-fns/tz";
+import { addDays, addMonths, differenceInMinutes, startOfWeek } from "date-fns";
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 import { MIN_NOTICE_MINUTES, VISITS_TIME_ZONE } from "@/lib/visits/constants";
+
+export function addVisitDays(value: Date, amount: number): Date {
+    return addDays(value, amount, { in: tz(VISITS_TIME_ZONE) });
+}
+
+export function addVisitMonths(value: Date, amount: number): Date {
+    return addMonths(value, amount, { in: tz(VISITS_TIME_ZONE) });
+}
+
+export function visitWeekDays(anchor: string): Date[] {
+    const start = startOfWeek(istDayAsDate(anchor), { weekStartsOn: 1, in: tz(VISITS_TIME_ZONE) });
+    return Array.from({ length: 7 }, (_, index) => addVisitDays(start, index));
+}
 
 export function formatVisitTime(value: string | Date): string {
     return formatInTimeZone(value, VISITS_TIME_ZONE, "h:mm a");
@@ -18,7 +32,7 @@ export function formatVisitA11yDate(value: string | Date): string {
 export function formatVisitDayHeading(value: string | Date, now = new Date()): string {
     const key = istDateKey(value);
     const today = istDateKey(now);
-    const tomorrow = istDateKey(addDays(istDayAsDate(now), 1));
+    const tomorrow = istDateKey(addDays(istDayAsDate(now), 1, { in: tz(VISITS_TIME_ZONE) }));
     const prefix =
         key === today
             ? "Today"
@@ -38,7 +52,7 @@ export function istDayAsDate(value: string | Date): Date {
 }
 
 export function dateAtIstOffset(dayOffset: number, hour: number, minute = 0): string {
-    const day = addDays(istDayAsDate(new Date()), dayOffset);
+    const day = addDays(istDayAsDate(new Date()), dayOffset, { in: tz(VISITS_TIME_ZONE) });
     const dateKey = formatInTimeZone(day, VISITS_TIME_ZONE, "yyyy-MM-dd");
     return fromZonedTime(
         `${dateKey}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`,
