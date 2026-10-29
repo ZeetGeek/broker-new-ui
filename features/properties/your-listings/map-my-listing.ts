@@ -284,7 +284,7 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         country: listing.country?.trim() || null,
         state: listing.state?.trim() || null,
         address: listing.address?.trim() || locality,
-        unitNumber: (listing.unitNumber ?? listing.flatNumber)?.trim() || null,
+        unitNumber: (listing.flatNo ?? listing.unitNumber ?? listing.flatNumber)?.trim() || null,
         streetOrRoad: listing.streetOrRoad?.trim() || null,
         pinCode: listing.postalCode?.trim() || "",
         landmark: listing.landmark?.trim() || "",
@@ -294,7 +294,7 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         rentAmountInr,
         areaSqft: listing.areaSqft ?? 0,
         carpetAreaSqft: (() => {
-            const value = Number(listing.carpetArea);
+            const value = Number(listing.carpetAreaSqft ?? listing.carpetArea);
             return Number.isFinite(value) && value > 0 ? value : null;
         })(),
         furnishing,
@@ -403,10 +403,14 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
         floorNumber: input.floorNumber ?? undefined,
         totalFloors: input.totalFloors ?? undefined,
         areaSqft: input.areaSqft,
+        carpetAreaSqft: input.carpetAreaSqft ?? undefined,
         address: input.locality.trim(),
         postalCode: input.pinCode.trim() || undefined,
         society: input.society?.trim() || undefined,
+        flatNo: input.unitNumber?.trim() || undefined,
         landmark: input.landmark?.trim() || undefined,
+        propertyAge: input.propertyAge == null ? undefined : String(input.propertyAge),
+        propertyCondition: input.propertyCondition?.trim() || undefined,
         // Informational: the API always files the listing under the holder's country.
         country: sessionCountryName(),
         salePrice: input.saleAmountInr ?? undefined,
@@ -465,7 +469,17 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.pinCode != null) payload.postalCode = input.pinCode.trim();
     if (input.society != null) payload.society = input.society.trim() || undefined;
     if (input.landmark != null) payload.landmark = input.landmark.trim() || undefined;
+    if (input.unitNumber !== undefined) payload.flatNo = input.unitNumber.trim() || undefined;
     if (input.areaSqft != null) payload.areaSqft = input.areaSqft;
+    if (input.carpetAreaSqft !== undefined) {
+        payload.carpetAreaSqft = input.carpetAreaSqft ?? undefined;
+    }
+    if (input.propertyAge !== undefined) {
+        payload.propertyAge = input.propertyAge == null ? undefined : String(input.propertyAge);
+    }
+    if (input.propertyCondition !== undefined) {
+        payload.propertyCondition = input.propertyCondition.trim() || undefined;
+    }
     if (input.saleAmountInr !== undefined) payload.salePrice = input.saleAmountInr ?? undefined;
     if (input.rentAmountInr !== undefined) payload.monthlyRent = input.rentAmountInr ?? undefined;
     if (input.securityDeposit !== undefined) {

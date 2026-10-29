@@ -1207,8 +1207,8 @@ function PropertyFormHeader({
                         </Badge>
                     </PopoverTrigger>
                     <PopoverContent align="start" className="text-sm text-ink max-inline-xs">
-                        Unit number, carpet area, property age, condition and seats are currently
-                        saved only on this device.
+                        Changes you have not saved yet are kept as a draft on this device. Saving
+                        the property sends every detail to your account.
                     </PopoverContent>
                 </Popover>
             )}
@@ -1722,13 +1722,14 @@ function mergeLocalExtras(
     saved: Partial<PropertyDraftValues>,
 ): PropertyDraftValues {
     const next = structuredClone(base);
-    next.location.unitNumber = saved.location?.unitNumber ?? next.location.unitNumber;
     next.location.fullAddress = saved.location?.fullAddress ?? next.location.fullAddress;
-    next.area.carpetArea = saved.area?.carpetArea ?? next.area.carpetArea;
-    next.details.propertyAge = saved.details?.propertyAge ?? next.details.propertyAge;
+    // These are saved on the server now. A value kept only on this device by an
+    // older version fills a blank server value, and goes up on the next save.
+    next.location.unitNumber = next.location.unitNumber || saved.location?.unitNumber || "";
+    next.area.carpetArea = next.area.carpetArea ?? saved.area?.carpetArea ?? null;
+    next.details.propertyAge = next.details.propertyAge ?? saved.details?.propertyAge ?? null;
     next.details.propertyCondition =
-        saved.details?.propertyCondition ?? next.details.propertyCondition;
-    next.details.commercial.seats = saved.details?.commercial?.seats ?? null;
+        next.details.propertyCondition || saved.details?.propertyCondition || "";
     return next;
 }
 
@@ -1935,6 +1936,10 @@ function draftToLegacyInput(
         landmark: values.location.landmark,
         // stripHidden drops projectOrSociety for non-gated plots.
         society: values.location.projectOrSociety ?? "",
+        unitNumber: values.location.unitNumber ?? "",
+        carpetAreaSqft: values.area.carpetArea ?? null,
+        propertyAge: values.details.propertyAge ?? null,
+        propertyCondition: values.details.propertyCondition ?? "",
         saleAmountInr:
             transactionType === "sale" || transactionType === "both"
                 ? values.sale.expectedPrice

@@ -109,6 +109,8 @@ export type PropertyListing = PropertyBrowseListing & {
     society?: string | null;
     /** Newer detail payloads use the form field name; older ones use `society`. */
     projectOrSociety?: string | null;
+    /** Flat / unit number as the API stores it. */
+    flatNo?: string | null;
     unitNumber?: string | null;
     /** Compatibility alias used by some property imports. */
     flatNumber?: string | null;
@@ -119,6 +121,8 @@ export type PropertyListing = PropertyBrowseListing & {
     totalFloors?: number | null;
     propertyAge?: string | number | null;
     propertyCondition?: string | null;
+    /** Carpet area in sq.ft as the API stores it. */
+    carpetAreaSqft?: number | null;
     carpetArea?: string | number | null;
     facingDirection?: string | null;
     parkingSpaces?: number | null;
@@ -307,9 +311,14 @@ export type CreatePropertyInput = {
     address?: string;
     postalCode?: string;
     society?: string;
+    flatNo?: string;
     landmark?: string;
     country?: string;
     status?: string;
+    carpetAreaSqft?: number;
+    /** Age in whole years, sent as text (the API stores a free-form label). */
+    propertyAge?: string;
+    propertyCondition?: string;
     salePrice?: number;
     monthlyRent?: number;
     securityDeposit?: number;
