@@ -31,12 +31,12 @@ import {
     BadgeCheck,
     Briefcase,
     Building2,
+    EmailFieldIcon,
     FileText,
     Globe2,
     Home,
     Landmark,
     Link2,
-    Mail,
     Map,
     MapPin,
     MapPinned,
@@ -531,7 +531,7 @@ export function ProfilePage() {
                                     value={profile?.email ?? ""}
                                     readOnly
                                     disabled
-                                    startIcon={Mail}
+                                    startIcon={EmailFieldIcon}
                                     helperText="Contact support to change this."
                                 />
                             </div>

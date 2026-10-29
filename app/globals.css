@@ -529,3 +529,26 @@
         transition: none !important;
     }
 }
+
+/* Bundled flag glyphs: Windows does not render regional-indicator emoji. */
+@font-face {
+    font-family: "Country Flags";
+    src: url("/fonts/TwemojiCountryFlags.woff2") format("woff2");
+    font-display: swap;
+    unicode-range: U+1F1E6-1F1FF;
+}
+
+.country-flag-text {
+    font-family: "Country Flags", var(--font-sans);
+}
+
+/* The list owns scrolling; outer margins keep rows clear of the popup border. */
+.dropdown-scroll-fade {
+    mask-image: linear-gradient(
+        to bottom,
+        transparent,
+        black var(--scroll-fade-top, 0px),
+        black calc(100% - var(--scroll-fade-bottom, 0px)),
+        transparent
+    );
+}

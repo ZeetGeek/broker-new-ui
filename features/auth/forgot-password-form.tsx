@@ -11,7 +11,7 @@ import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { forgotPasswordSchema, type ForgotPasswordValues } from "@/lib/validation/auth";
 
-import { Mail } from "@/components/shared/icons";
+import { EmailFieldIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -175,7 +175,7 @@ export function ForgotPasswordForm() {
                                             type="email"
                                             autoComplete="email"
                                             placeholder="you@example.com"
-                                            startIcon={Mail}
+                                            startIcon={EmailFieldIcon}
                                             value={field.value}
                                             onValueChange={field.onChange}
                                             onBlur={field.onBlur}

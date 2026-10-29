@@ -32,8 +32,7 @@ export function useSuggestedCountryIso2(): string {
 
 /**
  * Country of the market an account works in. Its value is the ISO2 code the
- * API expects; the label carries the flag, name and currency so the user sees
- * what prices will be shown in.
+ * API expects; the label carries only the flag and country name.
  */
 export function CountryPicker({
     id,
@@ -53,16 +52,12 @@ export function CountryPicker({
 
     const options = useMemo(
         () =>
-            countries.map((country) => ({
-                value: country.iso2,
-                label: [
-                    country.emoji,
-                    country.name,
-                    country.currency ? `(${country.currency.code})` : null,
-                ]
-                    .filter(Boolean)
-                    .join(" "),
-            })),
+            [...countries]
+                .sort((a, b) => a.name.localeCompare(b.name, "en"))
+                .map((country) => ({
+                    value: country.iso2,
+                    label: [country.emoji, country.name].filter(Boolean).join(" "),
+                })),
         [countries],
     );
 
@@ -73,6 +68,7 @@ export function CountryPicker({
         <OptionCombobox
             id={id}
             size="lg"
+            textClassName="country-flag-text"
             value={known ? value : ""}
             options={options}
             onValueChange={onValueChange}

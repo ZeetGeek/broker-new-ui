@@ -16,10 +16,26 @@
  * Generated via: node scripts/generate-icons-module.mjs
  */
 
+import { Icon as IconifyIcon, type IconProps as IconifyProps } from "@iconify/react";
 import type { IconProps, TablerIcon } from "@tabler/icons-react";
+import { IconBrandMailgun, IconPassword } from "@tabler/icons-react";
+
+// Social marks use the same Tabler glyph family through Iconify.
+type SocialIconProps = Omit<IconifyProps, "icon">;
+export const InstagramIcon = (props: SocialIconProps) => (
+    <IconifyIcon icon="tabler:brand-instagram" {...props} />
+);
+export const FacebookIcon = (props: SocialIconProps) => (
+    <IconifyIcon icon="tabler:brand-facebook" {...props} />
+);
+export const LinkedInIcon = (props: SocialIconProps) => (
+    <IconifyIcon icon="tabler:brand-linkedin" {...props} />
+);
 
 /** Icon component type — use instead of LucideIcon. */
 export type AppIcon = TablerIcon;
+export const EmailFieldIcon = IconBrandMailgun;
+export const PasswordIcon = IconPassword;
 export type { IconProps };
 
 import {

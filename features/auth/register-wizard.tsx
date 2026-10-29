@@ -18,7 +18,13 @@ import { cn } from "@/lib/utils";
 import { PASSWORD_REQUIREMENTS, registerSchema, type RegisterValues } from "@/lib/validation/auth";
 
 import { AppImage } from "@/components/shared/app-image";
-import { CheckCircle2, Circle, Gift, Lock, Mail } from "@/components/shared/icons";
+import {
+    CheckCircle2,
+    Circle,
+    EmailFieldIcon,
+    Gift,
+    PasswordIcon,
+} from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -434,7 +440,7 @@ export function RegisterWizard({
                                             type="email"
                                             autoComplete="email"
                                             placeholder="you@example.com"
-                                            startIcon={Mail}
+                                            startIcon={EmailFieldIcon}
                                             value={field.value}
                                             onValueChange={(value) => {
                                                 field.onChange(value);
@@ -487,7 +493,7 @@ export function RegisterWizard({
                                             type="password"
                                             autoComplete="new-password"
                                             placeholder="Create a password"
-                                            startIcon={Lock}
+                                            startIcon={PasswordIcon}
                                             value={field.value}
                                             onValueChange={field.onChange}
                                             onBlur={field.onBlur}
@@ -519,7 +525,7 @@ export function RegisterWizard({
                                             type="password"
                                             autoComplete="new-password"
                                             placeholder="Re-enter password"
-                                            startIcon={Lock}
+                                            startIcon={PasswordIcon}
                                             value={field.value}
                                             onValueChange={field.onChange}
                                             onBlur={field.onBlur}
