@@ -16,31 +16,15 @@ import {
 } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
 
-import {
-    Bookmark,
-    ChartBar,
-    Check,
-    Ellipsis,
-    History,
-    Link2,
-    Pencil,
-    Phone,
-    Share2,
-    Trash2,
-    UserPlus,
-    UserRound,
-} from "@/components/shared/icons";
+import { HoldToDeleteListing } from "@/components/shared/hold-to-delete-listing";
+import { PropertyMenuIcon } from "@/components/shared/icons";
 import { OVERLAY_ICON_BUTTON_CLASS } from "@/components/shared/overlay-card";
-import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import shareBrands from "@/components/shared/thesvg-color-share.json";
 import { Button } from "@/components/ui/button";
-
-import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
-
-addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuSub,
@@ -49,12 +33,14 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
+
 addCollection(shareBrands as Parameters<typeof addCollection>[0]);
 
 type ShareBrandIcon =
     | "thesvg-color:whatsapp"
-    | "thesvg-color:telegram"
     | "thesvg-color:facebook"
+    | "thesvg-color:telegram"
     | "thesvg-color:instagram"
     | "thesvg-color:gmail-2026";
 
@@ -64,7 +50,6 @@ type ShareChannel = {
     href?: string;
     icon?: ShareBrandIcon;
     iconSize?: number;
-    lucide?: "share";
     action?: "native-share" | "copy";
 };
 
@@ -131,8 +116,8 @@ async function copyText(value: string) {
 }
 
 const MENU_SURFACE_CLASS = `
-  t-dropdown t-profile-menu animate-none! rounded-inner border border-border-warm
-  bg-surface p-1.5 text-ink shadow-lg ring-0 min-inline-56
+  t-dropdown t-profile-menu animate-none! rounded-card border border-border-warm
+  bg-surface p-1.5 text-ink shadow-xl ring-0 min-inline-56
   before:backdrop-blur-none
   dark:bg-surface dark:text-ink
   data-closed:animate-none!
@@ -155,7 +140,7 @@ const MENU_SURFACE_CLASS = `
 
 /* Kill shadcn’s focus:**:text-accent-foreground so icons never go white. */
 const ITEM_CLASS = `
-  body-sm h-10 cursor-pointer gap-3 rounded-inner px-3 font-medium text-ink
+  body-sm min-h-11 cursor-pointer gap-3 rounded-inner px-3 font-medium text-ink
   focus:bg-surface-muted! focus:text-ink!
   data-highlighted:bg-surface-muted! data-highlighted:text-ink!
   data-popup-open:bg-surface-muted! data-popup-open:text-ink!
@@ -166,12 +151,11 @@ const ITEM_CLASS = `
   data-open:**:text-ink!
 `;
 
-const ICON_CLASS = "menu-stroke-icon block-4 inline-4 shrink-0 text-ink!";
-const SEPARATOR_CLASS = "mx-1.5 my-1 bg-border-warm";
+const ICON_CLASS = "menu-stroke-icon block-4.5 inline-4.5 shrink-0 text-ink!";
+const SEPARATOR_CLASS = "mx-1.5 my-1.5 bg-border-warm";
 
 /**
- * One ⋯ control for listing cards: Share (submenu), Save, Message,
- * plus deal extras. Call / WhatsApp live on the card owner section.
+ * Listing actions grouped by sharing, people, management, and destructive actions.
  */
 export function PropertyCardMenu({
     listing,
@@ -199,25 +183,26 @@ export function PropertyCardMenu({
     className,
 }: PropertyCardMenuProps) {
     const [open, setOpen] = useState(false);
-    const [copied, setCopied] = useState(false);
+    const [copiedAt, setCopiedAt] = useState<number | null>(null);
+    const copied = copiedAt !== null;
 
     const shareUrl = useMemo(() => buildPropertyShareUrl(listing.id), [listing.id]);
     const shareText = useMemo(() => buildPropertyShareText(listing), [listing]);
 
     useEffect(() => {
-        if (!copied) return;
-        const timer = window.setTimeout(() => setCopied(false), 1800);
+        if (copiedAt === null) return;
+        const timer = window.setTimeout(() => setCopiedAt(null), 1800);
         return () => window.clearTimeout(timer);
-    }, [copied]);
+    }, [copiedAt]);
 
     const handleOpenChange = useCallback((nextOpen: boolean) => {
         setOpen(nextOpen);
-        if (!nextOpen) setCopied(false);
+        if (!nextOpen) setCopiedAt(null);
     }, []);
 
     const handleCopyLink = useCallback(async () => {
         await copyText(shareUrl);
-        setCopied(true);
+        setCopiedAt(performance.now());
     }, [shareUrl]);
 
     const handleNativeShare = useCallback(async () => {
@@ -277,26 +262,18 @@ export function PropertyCardMenu({
             {
                 id: "native",
                 label: "Share via…",
-                lucide: "share",
                 action: "native-share",
             },
         ],
         [shareText, shareUrl],
     );
 
-    const hasContact = Boolean(contact?.onMessage || contact?.phoneDigits || onRemind);
-    const hasDealExtras = Boolean(
-        onAddBuyer ||
-        onOpenTimeline ||
-        onCancelRequest ||
-        onStopRepresenting ||
-        onAttachOwner ||
-        onAnalytics ||
-        onEdit ||
-        onMarkSold ||
-        onDelete ||
-        extraItems,
+    const hasPrimaryActions = Boolean(onEdit || onAddBuyer || onMarkSold);
+    const hasOwnerActions = Boolean(
+        contact?.onMessage || contact?.phoneDigits || onRemind || onAttachOwner,
     );
+    const hasActivityActions = Boolean(onAnalytics || onOpenTimeline || extraItems);
+    const hasDestructiveActions = Boolean(onCancelRequest || onStopRepresenting || onDelete);
     const remindUsed = Math.max(0, Math.min(remindersUsed, remindersLimit));
     const contactPhoneLabel = contact?.phoneDigits ? formatPhoneIn(contact.phoneDigits) : null;
 
@@ -308,7 +285,7 @@ export function PropertyCardMenu({
                         type="button"
                         size={tone === "overlay" ? "icon" : "icon-sm"}
                         variant="ghost"
-                        aria-label="More actions"
+                        aria-label="Property actions"
                         aria-haspopup="menu"
                         className={cn(
                             tone === "overlay"
@@ -319,7 +296,7 @@ export function PropertyCardMenu({
                     />
                 }
             >
-                <Ellipsis aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                <PropertyMenuIcon name="dots" aria-hidden className="block-4 inline-4" />
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
@@ -328,340 +305,348 @@ export function PropertyCardMenu({
                 sideOffset={8}
                 className={MENU_SURFACE_CLASS}
             >
-                <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className={ITEM_CLASS}>
-                        <Share2 aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Share
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent
-                        className={cn(MENU_SURFACE_CLASS, "block-auto min-inline-48 before:hidden")}
-                        sideOffset={4}
-                        alignOffset={-4}
-                    >
-                        {channels.map((channel) => {
-                            const mark = channel.icon ? (
-                                <span
-                                    className="
-                                      flex shrink-0 items-center justify-center block-4 inline-4
-                                    "
-                                    aria-hidden
-                                >
-                                    <Icon
-                                        icon={channel.icon}
-                                        width={channel.iconSize ?? 18}
-                                        height={channel.iconSize ?? 18}
-                                    />
-                                </span>
-                            ) : (
-                                <Share2 aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                            );
-
-                            if (channel.action === "native-share") {
-                                return (
-                                    <DropdownMenuItem
-                                        key={channel.id}
-                                        className={ITEM_CLASS}
-                                        onClick={() => void handleNativeShare()}
-                                    >
-                                        {mark}
-                                        {channel.label}
-                                    </DropdownMenuItem>
-                                );
-                            }
-
-                            if (channel.action === "copy") {
-                                return (
-                                    <DropdownMenuItem
-                                        key={channel.id}
-                                        className={ITEM_CLASS}
-                                        onClick={() => void handleCopyLink()}
-                                    >
-                                        {mark}
-                                        {channel.label}
-                                    </DropdownMenuItem>
-                                );
-                            }
-
-                            return (
-                                <DropdownMenuItem
-                                    key={channel.id}
-                                    className={ITEM_CLASS}
-                                    onClick={() => {
-                                        if (!channel.href) return;
-                                        if (channel.id === "email") {
-                                            window.location.href = channel.href;
-                                        } else {
-                                            window.open(
-                                                channel.href,
-                                                "_blank",
-                                                "noopener,noreferrer",
-                                            );
-                                        }
-                                        setOpen(false);
-                                    }}
-                                >
-                                    {mark}
-                                    {channel.label}
-                                </DropdownMenuItem>
-                            );
-                        })}
-
+                <DropdownMenuGroup aria-label="Manage property">
+                    {onEdit ? (
                         <DropdownMenuItem
                             className={ITEM_CLASS}
-                            onClick={() => void handleCopyLink()}
+                            onClick={() => {
+                                onEdit();
+                                setOpen(false);
+                            }}
                         >
-                            {copied ? (
-                                <Check
-                                    aria-hidden
-                                    className={cn(ICON_CLASS, "is-brand")}
-                                    strokeWidth={2}
-                                />
-                            ) : (
-                                <Link2 aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                            )}
-                            {copied ? "Link copied" : "Copy link"}
+                            <PropertyMenuIcon name="edit" aria-hidden className={ICON_CLASS} />
+                            Edit property
                         </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                    ) : null}
 
-                {onToggleSave ? (
-                    <DropdownMenuItem className={ITEM_CLASS} onClick={onToggleSave}>
-                        <Bookmark
-                            aria-hidden
-                            className={cn(ICON_CLASS, isSaved && "is-brand fill-brand")}
-                            strokeWidth={1.75}
-                        />
-                        {isSaved ? "Remove save" : "Save"}
-                    </DropdownMenuItem>
+                    {onAddBuyer ? (
+                        <DropdownMenuItem
+                            className={cn(
+                                ITEM_CLASS,
+                                isAddBuyerBlocked && "cursor-not-allowed opacity-50",
+                            )}
+                            aria-disabled={isAddBuyerBlocked || undefined}
+                            title={
+                                isAddBuyerBlocked
+                                    ? "Attach an owner first to attach clients"
+                                    : undefined
+                            }
+                            onClick={() => {
+                                onAddBuyer();
+                                setOpen(false);
+                            }}
+                        >
+                            <PropertyMenuIcon name="client" aria-hidden className={ICON_CLASS} />
+                            Attach client
+                        </DropdownMenuItem>
+                    ) : null}
+
+                    {onMarkSold ? (
+                        <DropdownMenuItem
+                            className={ITEM_CLASS}
+                            onClick={() => {
+                                onMarkSold();
+                                setOpen(false);
+                            }}
+                        >
+                            <PropertyMenuIcon name="check" aria-hidden className={ICON_CLASS} />
+                            Mark as sold
+                        </DropdownMenuItem>
+                    ) : null}
+                </DropdownMenuGroup>
+
+                {hasPrimaryActions && hasOwnerActions ? (
+                    <DropdownMenuSeparator className={SEPARATOR_CLASS} />
                 ) : null}
+                <DropdownMenuGroup aria-label="Owner actions">
+                    {contact?.phoneDigits && contactPhoneLabel ? (
+                        <DropdownMenuItem
+                            className={ITEM_CLASS}
+                            onClick={() => {
+                                window.location.href = formatTelUrl(contact.phoneDigits!);
+                                setOpen(false);
+                            }}
+                        >
+                            <PropertyMenuIcon name="phone" aria-hidden className={ICON_CLASS} />
+                            Call owner
+                        </DropdownMenuItem>
+                    ) : null}
 
-                {hasContact ? <DropdownMenuSeparator className={SEPARATOR_CLASS} /> : null}
+                    {contact?.onMessage ? (
+                        <DropdownMenuItem
+                            className={ITEM_CLASS}
+                            onClick={() => {
+                                contact.onMessage?.();
+                                setOpen(false);
+                            }}
+                        >
+                            <PropertyMenuIcon name="message" className={ICON_CLASS} aria-hidden />
+                            Chat here
+                        </DropdownMenuItem>
+                    ) : null}
 
-                {contact?.phoneDigits && contactPhoneLabel ? (
-                    <DropdownMenuItem
-                        className={ITEM_CLASS}
-                        onClick={() => {
-                            window.location.href = formatTelUrl(contact.phoneDigits!);
-                            setOpen(false);
-                        }}
-                    >
-                        <Phone aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Call owner
-                    </DropdownMenuItem>
+                    {onRemind ? (
+                        <DropdownMenuItem
+                            closeOnClick={false}
+                            className={cn(ITEM_CLASS, "justify-between gap-3")}
+                            disabled={!canRemind}
+                            onClick={() => {
+                                if (!canRemind) return;
+                                onRemind();
+                            }}
+                        >
+                            <span className="flex items-center gap-3 min-inline-0">
+                                <PropertyMenuIcon name="bell" className={ICON_CLASS} aria-hidden />
+                                Remind owner
+                            </span>
+                            <span
+                                className={cn(
+                                    "tabular body-xs shrink-0 font-semibold tracking-wide",
+                                    canRemind ? "text-ink-muted" : "text-ink-subtle",
+                                )}
+                                aria-label={`${remindUsed} of ${remindersLimit} reminders used`}
+                            >
+                                {remindUsed}/{remindersLimit}
+                            </span>
+                        </DropdownMenuItem>
+                    ) : null}
+
+                    {onAttachOwner ? (
+                        <DropdownMenuItem
+                            className={ITEM_CLASS}
+                            onClick={() => {
+                                onAttachOwner();
+                                setOpen(false);
+                            }}
+                        >
+                            <PropertyMenuIcon name="owner" aria-hidden className={ICON_CLASS} />
+                            {attachOwnerLabel}
+                        </DropdownMenuItem>
+                    ) : null}
+                </DropdownMenuGroup>
+
+                {(hasPrimaryActions || hasOwnerActions) && hasActivityActions ? (
+                    <DropdownMenuSeparator className={SEPARATOR_CLASS} />
                 ) : null}
+                <DropdownMenuGroup aria-label="Property activity">
+                    {onAnalytics ? (
+                        <DropdownMenuItem
+                            className={ITEM_CLASS}
+                            onClick={() => {
+                                onAnalytics();
+                                setOpen(false);
+                            }}
+                        >
+                            <PropertyMenuIcon name="analytics" aria-hidden className={ICON_CLASS} />
+                            View analytics
+                        </DropdownMenuItem>
+                    ) : null}
 
-                {contact?.onMessage ? (
-                    <DropdownMenuItem
-                        className={ITEM_CLASS}
-                        onClick={() => {
-                            contact.onMessage?.();
-                            setOpen(false);
-                        }}
-                    >
-                        <Icon
-                            icon="tabler:message"
-                            width={16}
-                            height={16}
-                            className={ICON_CLASS}
-                            aria-hidden
-                        />
-                        Chat here
-                    </DropdownMenuItem>
+                    {onOpenTimeline ? (
+                        <DropdownMenuItem className={ITEM_CLASS} onClick={onOpenTimeline}>
+                            <PropertyMenuIcon name="history" aria-hidden className={ICON_CLASS} />
+                            View timeline
+                        </DropdownMenuItem>
+                    ) : null}
+
+                    {extraItems}
+                </DropdownMenuGroup>
+
+                {hasPrimaryActions || hasOwnerActions || hasActivityActions ? (
+                    <DropdownMenuSeparator className={SEPARATOR_CLASS} />
                 ) : null}
+                <DropdownMenuGroup aria-label="Share and save">
+                    <DropdownMenuSub>
+                        <DropdownMenuSubTrigger className={ITEM_CLASS}>
+                            <PropertyMenuIcon name="share" aria-hidden className={ICON_CLASS} />
+                            Share property
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent
+                            className={cn(
+                                MENU_SURFACE_CLASS,
+                                "block-auto min-inline-48 before:hidden",
+                            )}
+                            sideOffset={16}
+                            alignOffset={-4}
+                        >
+                            {channels.map((channel) => {
+                                const mark = channel.icon ? (
+                                    <span
+                                        className="
+                                      flex shrink-0 items-center justify-center block-4 inline-4
+                                    "
+                                        aria-hidden
+                                    >
+                                        <Icon
+                                            icon={channel.icon}
+                                            width={channel.iconSize ?? 18}
+                                            height={channel.iconSize ?? 18}
+                                        />
+                                    </span>
+                                ) : (
+                                    <PropertyMenuIcon
+                                        name="share"
+                                        aria-hidden
+                                        className={ICON_CLASS}
+                                    />
+                                );
 
-                {onRemind ? (
-                    <DropdownMenuItem
-                        className={cn(ITEM_CLASS, "justify-between gap-3")}
-                        disabled={!canRemind}
-                        onClick={() => {
-                            if (!canRemind) return;
-                            onRemind();
-                            setOpen(false);
-                        }}
-                    >
-                        <span className="flex items-center gap-3 min-inline-0">
-                            <Icon
-                                icon="tabler:bell"
-                                width={16}
-                                height={16}
+                                if (channel.action === "native-share") {
+                                    return (
+                                        <DropdownMenuItem
+                                            key={channel.id}
+                                            closeOnClick={false}
+                                            className={ITEM_CLASS}
+                                            onClick={() => void handleNativeShare()}
+                                        >
+                                            {mark}
+                                            {channel.label}
+                                        </DropdownMenuItem>
+                                    );
+                                }
+
+                                if (channel.action === "copy") {
+                                    return (
+                                        <DropdownMenuItem
+                                            key={channel.id}
+                                            closeOnClick={false}
+                                            className={ITEM_CLASS}
+                                            onClick={() => void handleCopyLink()}
+                                        >
+                                            {mark}
+                                            {channel.label}
+                                        </DropdownMenuItem>
+                                    );
+                                }
+
+                                return (
+                                    <DropdownMenuItem
+                                        key={channel.id}
+                                        className={ITEM_CLASS}
+                                        onClick={() => {
+                                            if (!channel.href) return;
+                                            if (channel.id === "email") {
+                                                window.location.href = channel.href;
+                                            } else {
+                                                window.open(
+                                                    channel.href,
+                                                    "_blank",
+                                                    "noopener,noreferrer",
+                                                );
+                                            }
+                                            setOpen(false);
+                                        }}
+                                    >
+                                        {mark}
+                                        {channel.label}
+                                    </DropdownMenuItem>
+                                );
+                            })}
+
+                            <DropdownMenuSeparator className={SEPARATOR_CLASS} />
+                            <DropdownMenuItem
+                                closeOnClick={false}
+                                className={ITEM_CLASS}
+                                onClick={() => void handleCopyLink()}
+                            >
+                                {copied ? (
+                                    <PropertyMenuIcon
+                                        name="check"
+                                        aria-hidden
+                                        className={ICON_CLASS}
+                                    />
+                                ) : (
+                                    <PropertyMenuIcon
+                                        name="link"
+                                        aria-hidden
+                                        className={ICON_CLASS}
+                                    />
+                                )}
+                                {copied ? "Link copied" : "Copy link"}
+                            </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+
+                    {onToggleSave ? (
+                        <DropdownMenuItem
+                            closeOnClick={false}
+                            className={ITEM_CLASS}
+                            onClick={onToggleSave}
+                        >
+                            <PropertyMenuIcon
+                                name={isSaved ? "bookmark-filled" : "bookmark"}
+                                aria-hidden
                                 className={ICON_CLASS}
+                            />
+                            {isSaved ? "Unsave property" : "Save property"}
+                        </DropdownMenuItem>
+                    ) : null}
+                </DropdownMenuGroup>
+
+                {hasDestructiveActions ? (
+                    <DropdownMenuSeparator className={SEPARATOR_CLASS} />
+                ) : null}
+                <DropdownMenuGroup aria-label="Destructive actions">
+                    {onCancelRequest ? (
+                        <DropdownMenuItem
+                            variant="destructive"
+                            className={cn(
+                                ITEM_CLASS,
+                                `
+                              text-danger!
+                              focus:bg-danger-soft! focus:text-danger!
+                              data-highlighted:bg-danger-soft! data-highlighted:text-danger!
+                              focus:[&>svg]:text-danger!
+                              data-highlighted:[&>svg]:text-danger!
+                            `,
+                            )}
+                            onClick={onCancelRequest}
+                        >
+                            <PropertyMenuIcon
+                                name="cancel"
+                                className="menu-stroke-icon is-danger shrink-0 block-4.5 inline-4.5"
                                 aria-hidden
                             />
-                            Remind owner
-                        </span>
-                        <span
+                            Cancel request
+                        </DropdownMenuItem>
+                    ) : null}
+
+                    {onStopRepresenting ? (
+                        <DropdownMenuItem
+                            variant="destructive"
                             className={cn(
-                                "tabular body-xs shrink-0 font-semibold tracking-wide",
-                                canRemind ? "text-ink-muted" : "text-ink-subtle",
+                                ITEM_CLASS,
+                                `
+                              text-danger!
+                              focus:bg-danger-soft! focus:text-danger!
+                              data-highlighted:bg-danger-soft! data-highlighted:text-danger!
+                              focus:[&>svg]:text-danger!
+                              data-highlighted:[&>svg]:text-danger!
+                            `,
                             )}
-                            aria-label={`${remindUsed} of ${remindersLimit} reminders used`}
+                            onClick={() => {
+                                onStopRepresenting();
+                                setOpen(false);
+                            }}
                         >
-                            {remindUsed}/{remindersLimit}
-                        </span>
-                    </DropdownMenuItem>
-                ) : null}
+                            <PropertyMenuIcon
+                                name="cancel"
+                                className="menu-stroke-icon is-danger shrink-0 block-4.5 inline-4.5"
+                                aria-hidden
+                            />
+                            {stopRepresentingLabel}
+                        </DropdownMenuItem>
+                    ) : null}
 
-                {hasDealExtras ? <DropdownMenuSeparator className={SEPARATOR_CLASS} /> : null}
-
-                {onAttachOwner ? (
-                    <DropdownMenuItem
-                        className={ITEM_CLASS}
-                        onClick={() => {
-                            onAttachOwner();
-                            setOpen(false);
-                        }}
-                    >
-                        <UserRound aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        {attachOwnerLabel}
-                    </DropdownMenuItem>
-                ) : null}
-
-                {onAddBuyer ? (
-                    <DropdownMenuItem
-                        className={cn(
-                            ITEM_CLASS,
-                            isAddBuyerBlocked && "cursor-not-allowed opacity-50",
-                        )}
-                        aria-disabled={isAddBuyerBlocked || undefined}
-                        onClick={() => {
-                            onAddBuyer();
-                            setOpen(false);
-                        }}
-                    >
-                        <UserPlus aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Attach client
-                    </DropdownMenuItem>
-                ) : null}
-
-                {onOpenTimeline ? (
-                    <DropdownMenuItem className={ITEM_CLASS} onClick={onOpenTimeline}>
-                        <History aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        View timeline
-                    </DropdownMenuItem>
-                ) : null}
-
-                {onCancelRequest ? (
-                    <DropdownMenuItem
-                        variant="destructive"
-                        className={cn(
-                            ITEM_CLASS,
-                            `
-                              text-danger!
-                              focus:bg-danger-soft! focus:text-danger!
-                              data-highlighted:bg-danger-soft! data-highlighted:text-danger!
-                              focus:[&>svg]:text-danger!
-                              data-highlighted:[&>svg]:text-danger!
-                            `,
-                        )}
-                        onClick={onCancelRequest}
-                    >
-                        <Icon
-                            icon="tabler:cancel"
-                            width={16}
-                            height={16}
-                            className="menu-stroke-icon is-danger shrink-0 block-4 inline-4"
-                            aria-hidden
+                    {onDelete ? (
+                        <HoldToDeleteListing
+                            onComplete={() => {
+                                setOpen(false);
+                                onDelete();
+                            }}
                         />
-                        Cancel request
-                    </DropdownMenuItem>
-                ) : null}
-
-                {onStopRepresenting ? (
-                    <DropdownMenuItem
-                        variant="destructive"
-                        className={cn(
-                            ITEM_CLASS,
-                            `
-                              text-danger!
-                              focus:bg-danger-soft! focus:text-danger!
-                              data-highlighted:bg-danger-soft! data-highlighted:text-danger!
-                              focus:[&>svg]:text-danger!
-                              data-highlighted:[&>svg]:text-danger!
-                            `,
-                        )}
-                        onClick={() => {
-                            onStopRepresenting();
-                            setOpen(false);
-                        }}
-                    >
-                        <Icon
-                            icon="tabler:cancel"
-                            width={16}
-                            height={16}
-                            className="menu-stroke-icon is-danger shrink-0 block-4 inline-4"
-                            aria-hidden
-                        />
-                        {stopRepresentingLabel}
-                    </DropdownMenuItem>
-                ) : null}
-
-                {onAnalytics ? (
-                    <DropdownMenuItem
-                        className={ITEM_CLASS}
-                        onClick={() => {
-                            onAnalytics();
-                            setOpen(false);
-                        }}
-                    >
-                        <ChartBar aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Analytics
-                    </DropdownMenuItem>
-                ) : null}
-
-                {onEdit ? (
-                    <DropdownMenuItem
-                        className={ITEM_CLASS}
-                        onClick={() => {
-                            onEdit();
-                            setOpen(false);
-                        }}
-                    >
-                        <Pencil aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Edit property
-                    </DropdownMenuItem>
-                ) : null}
-
-                {onMarkSold ? (
-                    <DropdownMenuItem
-                        className={ITEM_CLASS}
-                        onClick={() => {
-                            onMarkSold();
-                            setOpen(false);
-                        }}
-                    >
-                        <Check aria-hidden className={ICON_CLASS} strokeWidth={1.75} />
-                        Mark as sold
-                    </DropdownMenuItem>
-                ) : null}
-
-                {onDelete ? (
-                    <DropdownMenuItem
-                        variant="destructive"
-                        className={cn(
-                            ITEM_CLASS,
-                            `
-                              text-danger!
-                              focus:bg-danger-soft! focus:text-danger!
-                              data-highlighted:bg-danger-soft! data-highlighted:text-danger!
-                              focus:[&>svg]:text-danger!
-                              data-highlighted:[&>svg]:text-danger!
-                            `,
-                        )}
-                        onClick={() => {
-                            onDelete();
-                            setOpen(false);
-                        }}
-                    >
-                        <Trash2
-                            aria-hidden
-                            className="menu-stroke-icon is-danger shrink-0 block-4 inline-4"
-                            strokeWidth={1.75}
-                        />
-                        Delete listing
-                    </DropdownMenuItem>
-                ) : null}
-
-                {extraItems}
+                    ) : null}
+                </DropdownMenuGroup>
             </DropdownMenuContent>
         </DropdownMenu>
     );

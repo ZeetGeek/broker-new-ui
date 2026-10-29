@@ -80,25 +80,26 @@ export function PropertySharePopover({
     className,
 }: PropertySharePopoverProps) {
     const [open, setOpen] = useState(false);
-    const [copied, setCopied] = useState(false);
+    const [copiedAt, setCopiedAt] = useState<number | null>(null);
+    const copied = copiedAt !== null;
 
     const shareUrl = useMemo(() => buildPropertyShareUrl(listing.id), [listing.id]);
     const shareText = useMemo(() => buildPropertyShareText(listing), [listing]);
 
     useEffect(() => {
-        if (!copied) return;
-        const timer = window.setTimeout(() => setCopied(false), 1800);
+        if (copiedAt === null) return;
+        const timer = window.setTimeout(() => setCopiedAt(null), 1800);
         return () => window.clearTimeout(timer);
-    }, [copied]);
+    }, [copiedAt]);
 
     const handleOpenChange = useCallback((nextOpen: boolean) => {
         setOpen(nextOpen);
-        if (!nextOpen) setCopied(false);
+        if (!nextOpen) setCopiedAt(null);
     }, []);
 
     const handleCopyLink = useCallback(async () => {
         await copyText(shareUrl);
-        setCopied(true);
+        setCopiedAt(performance.now());
     }, [shareUrl]);
 
     const handleNativeShare = useCallback(async () => {
@@ -279,12 +280,12 @@ export function PropertySharePopover({
                 <button
                     type="button"
                     onClick={() => void handleCopyLink()}
-                    className={rowClassName}
+                    className={cn(rowClassName, copied && "text-ink")}
                 >
                     {copied ? (
                         <Check
                             aria-hidden
-                            className="shrink-0 text-brand block-5 inline-5"
+                            className="shrink-0 text-ink block-5 inline-5"
                             strokeWidth={2}
                         />
                     ) : (

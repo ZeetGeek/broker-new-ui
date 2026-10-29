@@ -43,8 +43,8 @@ function DropdownMenuContent({
                     className={cn(
                         `
                           relative z-50 origin-(--transform-origin) animate-none! overflow-x-hidden
-                          overflow-y-auto rounded-card bg-popover p-1.5 text-popover-foreground
-                          shadow-lg ring-1 ring-foreground/10 duration-100 outline-none
+                          overflow-y-auto rounded-card border border-border-warm bg-popover p-1.5 text-popover-foreground
+                          shadow-xl ring-0 duration-100 outline-none
                           inline-(--anchor-width) max-block-(--available-height) min-inline-48
                           data-[side=bottom]:slide-in-from-top-2
                           data-[side=inline-end]:slide-in-from-start-2
@@ -183,7 +183,7 @@ function DropdownMenuSubContent({
             className={cn(
                 `
                   dark relative animate-none! rounded-card bg-popover/70 p-1.5
-                  text-popover-foreground shadow-lg ring-1 ring-foreground/5 duration-100
+                  text-popover-foreground shadow-xl ring-0 duration-100
                   inline-auto min-inline-36
                   before:pointer-events-none before:absolute before:inset-0 before:-z-1
                   before:rounded-[inherit] before:backdrop-blur-2xl before:backdrop-saturate-150
@@ -199,7 +199,6 @@ function DropdownMenuSubContent({
                   **:data-[variant=destructive]:**:text-accent-foreground!
                   **:data-[variant=destructive]:text-accent-foreground!
                   **:data-[variant=destructive]:focus:bg-foreground/10!
-                  dark:ring-foreground/10
                   data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95
                   data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95
                 `,

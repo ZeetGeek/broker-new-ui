@@ -17,8 +17,30 @@
  */
 
 import { Icon as IconifyIcon, type IconProps as IconifyProps } from "@iconify/react";
+import { Icon as OfflineIcon } from "@iconify/react/offline";
 import type { IconProps, TablerIcon } from "@tabler/icons-react";
 import { IconBrandMailgun } from "@tabler/icons-react";
+
+import notificationIcons from "./notification-icons.json";
+import propertyMenuIcons from "./property-menu-icons.json";
+
+export type NotificationGlyph = keyof typeof notificationIcons;
+
+/** Bundled Iconify Tabler icons for the notification panel. */
+export function NotificationIcon({
+    name,
+    ...props
+}: Omit<IconifyProps, "icon"> & { name: NotificationGlyph }) {
+    return <OfflineIcon icon={notificationIcons[name]} width={20} height={20} {...props} />;
+}
+
+/** Bundled Tabler glyphs for property menus; no icon-service request on open. */
+export function PropertyMenuIcon({
+    name,
+    ...props
+}: Omit<IconifyProps, "icon"> & { name: keyof typeof propertyMenuIcons }) {
+    return <OfflineIcon icon={propertyMenuIcons[name]} width={18} height={18} {...props} />;
+}
 
 // Social marks use the same Tabler glyph family through Iconify.
 type SocialIconProps = Omit<IconifyProps, "icon">;

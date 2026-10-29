@@ -262,6 +262,7 @@ export const VisitCard = memo(function VisitCard({
                         />
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem
+                                closeOnClick={false}
                                 onClick={() => {
                                     void navigator.clipboard.writeText(visit.property.address);
                                 }}

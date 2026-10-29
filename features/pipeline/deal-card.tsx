@@ -447,6 +447,7 @@ function DealCardMenu({
                     View details
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                    closeOnClick={false}
                     className={DEAL_MENU_ITEM_CLASS}
                     onClick={(event) => act(event, () => handlers.onPin(deal.id))}
                 >
