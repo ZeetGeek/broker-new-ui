@@ -78,6 +78,9 @@ export function useBookSlot() {
             void queryClient.invalidateQueries({ queryKey: ["timeRequests"] });
             void queryClient.invalidateQueries({ queryKey: ["visits"] });
             void queryClient.invalidateQueries({ queryKey: ["slots"] });
+            // Booking links a newly added buyer to the property as a lead.
+            void queryClient.invalidateQueries({ queryKey: ["visitBuyers"] });
+            void queryClient.invalidateQueries({ queryKey: ["visitBookableBuyers"] });
         },
     });
 }

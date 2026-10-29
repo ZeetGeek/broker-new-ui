@@ -18,11 +18,14 @@ export function BuyerPicker({
     selected,
     onChange,
     onBuyerCreated,
+    emptyMessage,
 }: {
     buyers: PersonSummary[];
     selected: string[];
     onChange: (ids: string[]) => void;
     onBuyerCreated?: (buyer: PersonSummary) => void;
+    /** Shown in place of the list when there are no buyers to pick. */
+    emptyMessage?: string;
 }) {
     const [query, setQuery] = useState("");
     const [addOpen, setAddOpen] = useState(false);
@@ -59,6 +62,11 @@ export function BuyerPicker({
                 clearable
             />
             <div className="space-y-1 overflow-y-auto pe-1 max-block-56">
+                {allBuyers.length === 0 && emptyMessage ? (
+                    <p className="body-sm rounded-inner bg-surface-muted p-3 text-ink-muted">
+                        {emptyMessage}
+                    </p>
+                ) : null}
                 {shown.map((buyer) => {
                     const checked = selected.includes(buyer.id);
                     return (

@@ -5,11 +5,12 @@ import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { CalendarClock, MapPin } from "@/components/shared/icons";
 
 import { useBookSlot } from "@/hooks/use-book-slot";
 import { ApiError } from "@/lib/api/client";
-import { SlotTakenError } from "@/lib/api/broker-visits";
+import { brokerVisitsApi, SlotTakenError } from "@/lib/api/broker-visits";
 import { checkVisitConflicts, type ConflictResult } from "@/lib/visits/conflicts";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
@@ -88,7 +89,10 @@ export function BookingDrawer({
     const mutation = useBookSlot();
     const [inlineError, setInlineError] = useState<string>();
     const [apiConflict, setApiConflict] = useState<ConflictResult | null>(null);
-    const [createdBuyers, setCreatedBuyers] = useState<PersonSummary[]>([]);
+    // Buyers added here belong to the property they were added for.
+    const [created, setCreated] = useState<{ propertyId?: string; buyers: PersonSummary[] }>({
+        buyers: [],
+    });
     const form = useForm<BookingFormValues>({
         resolver: zodResolver(bookingSchema),
         defaultValues: {
@@ -96,25 +100,39 @@ export function BookingDrawer({
             acceptTight: false,
         },
     });
-    const buyerIds = useWatch({ control: form.control, name: "buyerIds" });
+    const watchedBuyerIds = useWatch({ control: form.control, name: "buyerIds" });
     const acceptTight = useWatch({ control: form.control, name: "acceptTight" });
-    const allBuyers = useMemo(() => [...createdBuyers, ...buyers], [buyers, createdBuyers]);
-    const selectedBuyers = allBuyers.filter((buyer) => buyerIds.includes(buyer.id));
-    const travelEstimates = useMemo(
-        () =>
-            Object.fromEntries(
-                visits.map((visit) => [
-                    visit.id,
-                    {
-                        minutes:
-                            visit.driveMinutes ??
-                            Math.max(12, Math.round((visit.distanceKm ?? 5) * 2.4)),
-                        distanceKm: visit.distanceKm,
-                    },
-                ]),
-            ),
-        [visits],
+    const propertyId = item?.property.id;
+    // Only buyers with an open lead on this property can be booked here.
+    const bookableQuery = useQuery({
+        queryKey: ["visitBookableBuyers", propertyId],
+        queryFn: () => brokerVisitsApi.listBookableBuyerIds(propertyId!),
+        enabled: open && Boolean(propertyId),
+        staleTime: 30_000,
+    });
+    const createdBuyers = useMemo(
+        () => (created.propertyId === propertyId ? created.buyers : []),
+        [created, propertyId],
     );
+    const allBuyers = useMemo(() => {
+        const bookableIds = new Set(bookableQuery.data ?? []);
+        const createdIds = new Set(createdBuyers.map((buyer) => buyer.id));
+        return [
+            ...createdBuyers,
+            ...buyers.filter((buyer) => bookableIds.has(buyer.id) && !createdIds.has(buyer.id)),
+        ];
+    }, [bookableQuery.data, buyers, createdBuyers]);
+    // A preselected buyer without a lead here is not listed, so it is not selected either.
+    const buyerIds = useMemo(
+        () => watchedBuyerIds.filter((id) => allBuyers.some((buyer) => buyer.id === id)),
+        [allBuyers, watchedBuyerIds],
+    );
+    const selectedBuyers = allBuyers.filter((buyer) => buyerIds.includes(buyer.id));
+    const buyerListMessage = bookableQuery.isPending
+        ? "Loading buyers for this property…"
+        : bookableQuery.isError
+          ? "Couldn’t load buyers for this property. Close and try again."
+          : "No buyers have a lead on this property yet. Add a new buyer, or link one from Contacts.";
     const localConflict = useMemo<ConflictResult>(
         () =>
             slot && item
@@ -127,10 +145,9 @@ export function BookingDrawer({
                           slotId: slot.id,
                       },
                       visits,
-                      travelEstimates,
                   )
                 : { level: "clear", reasons: [] },
-        [buyerIds, item, slot, travelEstimates, visits],
+        [buyerIds, item, slot, visits],
     );
     const conflict = apiConflict ?? localConflict;
     const hasBookingAccess = item
@@ -164,7 +181,7 @@ export function BookingDrawer({
     useEffect(() => {
         setApiConflict(null);
         setInlineError(undefined);
-    }, [buyerIds, slot?.id]);
+    }, [watchedBuyerIds, slot?.id]);
 
     if (!item || !slot) return null;
     const blocked =
@@ -278,12 +295,16 @@ export function BookingDrawer({
                     <BuyerPicker
                         buyers={allBuyers}
                         selected={buyerIds}
+                        emptyMessage={buyerListMessage}
                         onChange={(ids) => form.setValue("buyerIds", ids, { shouldValidate: true })}
                         onBuyerCreated={(buyer) =>
-                            setCreatedBuyers((current) => [
-                                buyer,
-                                ...current.filter((row) => row.id !== buyer.id),
-                            ])
+                            setCreated({
+                                propertyId,
+                                buyers: [
+                                    buyer,
+                                    ...createdBuyers.filter((row) => row.id !== buyer.id),
+                                ],
+                            })
                         }
                     />
                     {form.formState.errors.buyerIds ? (

@@ -269,7 +269,7 @@ export function EmptyState({
         "no-exclusive-slots": {
             icon: SlidersHorizontal,
             title: "No open times in this range.",
-            detail: "Booked times stay hidden. Clear filters or pick another week.",
+            detail: "Without filters, only listings with an open buyer lead show. Booked times stay hidden. Pick a property in Filters or try another week.",
             primary: "Clear filters",
         },
         "no-property-slots": {

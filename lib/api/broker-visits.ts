@@ -384,8 +384,8 @@ export const brokerVisitsApi = {
                     body && typeof body === "object" && "code" in body
                         ? (body as { code?: unknown }).code
                         : undefined;
-                // Lead/time conflict must surface as the API message, not "slot taken".
-                if (code === "LEAD_TIME_CONFLICT") {
+                // Buyer or broker time conflicts must surface as the API message, not "slot taken".
+                if (code === "LEAD_TIME_CONFLICT" || code === "BROKER_TIME_CONFLICT") {
                     throw error;
                 }
                 const message = error.message.toLowerCase();
@@ -521,5 +521,14 @@ export const brokerVisitsApi = {
         }
         const clients = await clientsApi.list();
         return clients.map(mapClientToPerson);
+    },
+
+    /** Buyer ids that can be booked for this property: those with an open lead on it. */
+    async listBookableBuyerIds(propertyId: string): Promise<string[]> {
+        if (USE_MOCK_VISITS) {
+            const { MOCK_BUYERS } = await import("@/mocks/visits");
+            return MOCK_BUYERS.map((buyer) => buyer.id);
+        }
+        return clientsApi.listOpenLeadClientIds(propertyId);
     },
 };

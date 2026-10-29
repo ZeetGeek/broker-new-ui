@@ -238,6 +238,7 @@ type ApiPropertyLead = {
     propertyId: string;
     clientId?: string | null;
     client?: { id: string; name: string; phone?: string } | null;
+    stage?: string | null;
 };
 
 type LeadsListResponse = {
@@ -823,6 +824,25 @@ export const clientsApi = {
             clients: contacts.map(mapContact),
             attachedIds,
         };
+    },
+
+    /**
+     * Buyers with an open (not closed) lead on the property. Closed leads
+     * cannot be booked for a visit, so they are left out.
+     */
+    async listOpenLeadClientIds(propertyId: string): Promise<string[]> {
+        if (isMockMode()) {
+            return [...(MOCK_PROPERTY_CLIENTS[propertyId] ?? [])];
+        }
+        const leads = await fetchLeadsForProperty(propertyId);
+        return [
+            ...new Set(
+                leads
+                    .filter((lead) => lead.stage !== "closed_won" && lead.stage !== "closed_lost")
+                    .map((lead) => lead.client?.id ?? lead.clientId)
+                    .filter((id): id is string => Boolean(id)),
+            ),
+        ];
     },
 
     /**
