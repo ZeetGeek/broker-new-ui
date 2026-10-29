@@ -91,9 +91,7 @@ export function MyListingsGrid({
                                 : undefined
                         }
                         onDelete={onDeleteListing ? () => onDeleteListing(item) : undefined}
-                        onMarkSold={
-                            onMarkSold && !item.isSold ? () => onMarkSold(item) : undefined
-                        }
+                        onMarkSold={onMarkSold && !item.isSold ? () => onMarkSold(item) : undefined}
                         onInviteBroker={
                             portal === "owner" && onInviteBroker
                                 ? () => onInviteBroker(item)

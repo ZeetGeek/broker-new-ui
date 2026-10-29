@@ -484,9 +484,7 @@ function DealCardMenu({
                         {FEATURE_PLATFORM_OWNER ? (
                             <DropdownMenuItem
                                 className={DEAL_MENU_ITEM_CLASS}
-                                onClick={(event) =>
-                                    act(event, () => handlers.onMakeOffer(deal.id))
-                                }
+                                onClick={(event) => act(event, () => handlers.onMakeOffer(deal.id))}
                             >
                                 <Handshake
                                     aria-hidden

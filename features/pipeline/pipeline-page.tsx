@@ -176,6 +176,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     }, []);
     useEffect(() => {
         let cancelled = false;
+        const controller = new AbortController();
 
         const timer = window.setTimeout(() => {
             if (cancelled) return;
@@ -185,14 +186,17 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             const requestRevision = stageGate.revision;
 
             void pipelineApi
-                .list({
-                    q: filters.q,
-                    stage: filters.stage,
-                    sort: filters.sort,
-                    dealType: "",
-                    locality: "",
-                    ownerName: "",
-                })
+                .list(
+                    {
+                        q: filters.q,
+                        stage: filters.stage,
+                        sort: filters.sort,
+                        dealType: "",
+                        locality: "",
+                        ownerName: "",
+                    },
+                    controller.signal,
+                )
                 .then((next) => {
                     if (cancelled || stageGate.revision !== requestRevision) return;
                     setDeals(next.items);
@@ -210,6 +214,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
 
         return () => {
             cancelled = true;
+            controller.abort();
             window.clearTimeout(timer);
         };
     }, [filters.q, filters.sort, filters.stage, revision, stageGate]);

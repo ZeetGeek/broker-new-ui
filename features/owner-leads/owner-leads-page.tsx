@@ -95,28 +95,30 @@ export function OwnerLeadsPage() {
 
     useEffect(() => {
         let cancelled = false;
-        setLoading(true);
-        setError(null);
+        const timer = window.setTimeout(() => {
+            setLoading(true);
+            setError(null);
 
-        void ownerLeadsApi
-            .list({
-                search: filters.q.trim() || undefined,
-                limit: 50,
-            })
-            .then((page) => {
-                if (cancelled) return;
-                setItems(page.items);
-            })
-            .catch((err) => {
-                if (cancelled) return;
-                setError(apiMessage(err, "Could not load leads"));
-                setItems([]);
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false);
-            });
-
+            void ownerLeadsApi
+                .list({
+                    search: filters.q.trim() || undefined,
+                    limit: 50,
+                })
+                .then((page) => {
+                    if (cancelled) return;
+                    setItems(page.items);
+                })
+                .catch((err) => {
+                    if (cancelled) return;
+                    setError(apiMessage(err, "Could not load leads"));
+                    setItems([]);
+                })
+                .finally(() => {
+                    if (!cancelled) setLoading(false);
+                });
+        }, 0);
         return () => {
+            window.clearTimeout(timer);
             cancelled = true;
         };
     }, [filters.q, revision]);

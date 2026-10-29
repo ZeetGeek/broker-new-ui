@@ -15,7 +15,12 @@ export type PipelineStageId = (typeof PIPELINE_STAGES)[number]["id"];
 /** Reminders a broker may send the owner on one pending request. */
 export const REPRESENTATION_REMINDER_LIMIT = 2;
 
-/** WhatsApp support line — replace when a real number is assigned. */
-export const SUPPORT_WHATSAPP_E164 = "919824000000";
+/** Only configure this after the support team has verified the destination. */
+export function supportWhatsAppUrl(number: string | undefined): string | null {
+    const digits = number?.trim().replace(/^\+/, "");
+    return digits && /^[1-9]\d{7,14}$/.test(digits) ? `https://wa.me/${digits}` : null;
+}
 
-export const SUPPORT_WHATSAPP_URL = `https://wa.me/${SUPPORT_WHATSAPP_E164}`;
+export const SUPPORT_WHATSAPP_URL = supportWhatsAppUrl(
+    process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP_E164,
+);

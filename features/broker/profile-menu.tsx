@@ -217,19 +217,25 @@ export function BrokerProfileMenu({
                     <PortalProfileShortcutHint shortcutId="shortcuts_cheatsheet" />
                 </DropdownMenuItem>
 
-                <DropdownMenuItem
-                    className={portalProfileMenuItemClass}
-                    render={
-                        <a href={SUPPORT_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" />
-                    }
-                >
-                    <LifeBuoy
-                        aria-hidden
-                        className="shrink-0 block-4 inline-4"
-                        strokeWidth={1.75}
-                    />
-                    <span className="flex-1 min-inline-0">Help & support</span>
-                </DropdownMenuItem>
+                {SUPPORT_WHATSAPP_URL ? (
+                    <DropdownMenuItem
+                        className={portalProfileMenuItemClass}
+                        render={
+                            <a
+                                href={SUPPORT_WHATSAPP_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            />
+                        }
+                    >
+                        <LifeBuoy
+                            aria-hidden
+                            className="shrink-0 block-4 inline-4"
+                            strokeWidth={1.75}
+                        />
+                        <span className="flex-1 min-inline-0">Help & support</span>
+                    </DropdownMenuItem>
+                ) : null}
             </DropdownMenuGroup>
         </PortalProfileMenu>
     );

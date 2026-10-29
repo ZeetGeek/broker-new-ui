@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 import { Send } from "@/components/shared/icons";
@@ -192,9 +192,14 @@ export function RequestCard({
     const actions = attemptActions(item);
     const ownerPhoneDigits = ownerPhoneFor(item);
 
-    useEffect(() => {
+    const [unreadSource, setUnreadSource] = useState({
+        id: item.id,
+        count: item.unreadMessageCount,
+    });
+    if (unreadSource.id !== item.id || unreadSource.count !== item.unreadMessageCount) {
+        setUnreadSource({ id: item.id, count: item.unreadMessageCount });
         setUnreadMessageCount(item.unreadMessageCount ?? 0);
-    }, [item.id, item.unreadMessageCount]);
+    }
 
     function openOwnerChat() {
         setUnreadMessageCount(0);

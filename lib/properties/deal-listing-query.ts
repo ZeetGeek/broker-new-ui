@@ -36,10 +36,12 @@ export type DealListingApiQuery = {
  * Category is sent only when the broker picked one, so a subtype that exists
  * in more than one category is not dropped.
  */
-export function dealListingApiQuery(input?: {
-    type?: "" | "sale" | "rent";
-    propertyFilters?: Partial<PropertyListCriteria> | null;
-} | null): DealListingApiQuery | undefined {
+export function dealListingApiQuery(
+    input?: {
+        type?: "" | "sale" | "rent";
+        propertyFilters?: Partial<PropertyListCriteria> | null;
+    } | null,
+): DealListingApiQuery | undefined {
     if (!input) return undefined;
     const criteria = normalizePropertyCriteria({
         ...input.propertyFilters,

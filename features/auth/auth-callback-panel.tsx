@@ -6,6 +6,7 @@ import { authApi } from "@/lib/api/auth";
 import { isOwnerUnavailable, OWNER_UNAVAILABLE_HREF } from "@/lib/auth/launch-policy";
 import { clearSession, GOOGLE_ONBOARDING_KEY, portalHomeForRole } from "@/lib/auth/session";
 import { useRouter, useSearchParams } from "@/lib/navigation";
+import { APP_NAME } from "@/config";
 
 import { AuthFormFrame } from "@/features/auth/auth-back-link";
 import { AuthBusyState } from "@/features/auth/auth-busy-state";
@@ -47,7 +48,7 @@ export function AuthCallbackPanel() {
                 const needsCountry = searchParams.get("needsCountry") === "1" || !user.country;
                 if (isNewUser || needsCountry) {
                     sessionStorage.setItem(GOOGLE_ONBOARDING_KEY, "1");
-                    setMessage("Almost there. Pick how you want to use YesBroker.");
+                    setMessage(`Almost there. Pick how you want to use ${APP_NAME}.`);
                     router.replace("/auth/choose-role");
                     return;
                 }

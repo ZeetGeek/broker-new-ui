@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useState, type KeyboardEvent, type PointerEvent } from "react";
 
 import { Ruler } from "@/components/shared/icons";
 
@@ -136,11 +136,13 @@ export function OwnerListingsAreaMenu({
     const [maxDraft, setMaxDraft] = useState(synced.maxDraft);
     const isActive = Boolean(minAreaSqft || maxAreaSqft);
 
-    useEffect(() => {
+    const [appliedRange, setAppliedRange] = useState({ minAreaSqft, maxAreaSqft });
+    if (appliedRange.minAreaSqft !== minAreaSqft || appliedRange.maxAreaSqft !== maxAreaSqft) {
+        setAppliedRange({ minAreaSqft, maxAreaSqft });
         const next = draftsFromApplied(minAreaSqft, maxAreaSqft);
         setMinDraft(next.minDraft);
         setMaxDraft(next.maxDraft);
-    }, [minAreaSqft, maxAreaSqft]);
+    }
 
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
@@ -148,7 +150,7 @@ export function OwnerListingsAreaMenu({
     };
 
     const commitRange = (low: number, high: number) => {
-        let nextLow = snapArea(low);
+        const nextLow = snapArea(low);
         let nextHigh = snapArea(high);
         // A max under min is raised so it stays above the minimum.
         if (nextHigh < nextLow) nextHigh = nextLow;

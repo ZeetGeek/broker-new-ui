@@ -104,14 +104,20 @@ export const buyerFormSchema = z
         note: z.string().max(300, "Note is too long"),
     })
     .superRefine((values, ctx) => {
-        if (values.lookingFor !== "rent" && !budgetPairInOrder(values.saleBudgetMin, values.saleBudgetMax)) {
+        if (
+            values.lookingFor !== "rent" &&
+            !budgetPairInOrder(values.saleBudgetMin, values.saleBudgetMax)
+        ) {
             ctx.addIssue({
                 code: "custom",
                 message: "Highest must be more than lowest",
                 path: ["saleBudgetMax"],
             });
         }
-        if (values.lookingFor !== "buy" && !budgetPairInOrder(values.rentBudgetMin, values.rentBudgetMax)) {
+        if (
+            values.lookingFor !== "buy" &&
+            !budgetPairInOrder(values.rentBudgetMin, values.rentBudgetMax)
+        ) {
             ctx.addIssue({
                 code: "custom",
                 message: "Highest must be more than lowest",

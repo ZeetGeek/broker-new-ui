@@ -43,7 +43,10 @@ export function LeadStageLegend({ counts }: { counts: Counts }) {
                 <li key={part.key} className="body-sm flex items-center gap-2">
                     <span
                         aria-hidden
-                        className={cn("shrink-0 rounded-full block-2 inline-2", STAGE_BAR_CLASS[part.key])}
+                        className={cn(
+                            "shrink-0 rounded-full block-2 inline-2",
+                            STAGE_BAR_CLASS[part.key],
+                        )}
                     />
                     <span className="text-ink-muted">{STAGE_LABEL[part.key]}</span>
                     <span className="font-semibold text-ink tabular-nums">{part.count}</span>

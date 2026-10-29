@@ -1,5 +1,2 @@
-/**
- * Placeholder product name. Change this constant when the real name lands.
- * See AGENTS.md. Do not scatter the name across UI copy or page titles.
- */
-export const SITE_NAME = "YesBroker";
+/** Compatibility alias; APP_NAME is the single runtime naming source. */
+export { APP_NAME as SITE_NAME } from "@/config/index";

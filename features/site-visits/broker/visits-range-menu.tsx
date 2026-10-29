@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
 
-import { CalendarRange, ChevronDown, Search } from "@/components/shared/icons";
-
+import { parseApiDateOnly } from "@/lib/datetime/api";
+import { APP_TIME_ZONE } from "@/lib/datetime/timezone";
 import { formatDateIso, formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { CalendarRange, ChevronDown, Search } from "@/components/shared/icons";
 import { Calendar } from "@/components/ui/calendar";
 import {
     Dialog,
@@ -41,7 +42,7 @@ function parseKey(key: string): Date | undefined {
     if (!key) return undefined;
     const [y, m, d] = key.split("-").map(Number);
     if (!y || !m || !d) return undefined;
-    return new Date(y, m - 1, d);
+    return parseApiDateOnly(key);
 }
 
 function rangeLabel(range: SlotDateRange, customFrom: string, customTo: string) {
@@ -219,6 +220,7 @@ export function VisitsRangeMenu({
                     </DialogHeader>
                     <div className="flex justify-center p-3">
                         <Calendar
+                            timeZone={APP_TIME_ZONE}
                             mode="range"
                             autoFocus
                             selected={draft}

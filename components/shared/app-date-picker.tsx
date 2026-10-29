@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { addMonths, startOfDay } from "date-fns";
@@ -339,21 +339,12 @@ export function AppDatePicker({
         hasValidDate && selected ? selected : new Date(),
     );
 
-    useEffect(() => {
-        if (!value) return;
-        const next = new Date(`${value}T00:00:00`);
-        if (!Number.isNaN(next.getTime())) {
-            setMonth(next);
-        }
-    }, [value]);
-
-    useEffect(() => {
-        if (!open || !value) return;
-        const next = new Date(`${value}T00:00:00`);
-        if (!Number.isNaN(next.getTime())) {
-            setMonth(next);
-        }
-    }, [open, value]);
+    const [calendarInput, setCalendarInput] = useState({ value, open });
+    if (calendarInput.value !== value || calendarInput.open !== open) {
+        const shouldReset = calendarInput.value !== value || open;
+        setCalendarInput({ value, open });
+        if (shouldReset && hasValidDate && selected) setMonth(selected);
+    }
 
     return (
         <Popover open={open} onOpenChange={setOpen}>

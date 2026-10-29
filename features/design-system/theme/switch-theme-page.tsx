@@ -220,8 +220,8 @@ export function SwitchThemePage() {
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Sale / rent pill — labels not icons.{" "}
                         <code className="body-xs">components/shared/text-segmented-toggle.tsx</code>
-                        . Reference demo uses <code className="body-xs">size="sm"</code> — same as
-                        property-card price row.
+                        . Reference demo uses <code className="body-xs">size=&quot;sm&quot;</code> —
+                        same as property-card price row.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Swatch label="Sale / rent — live">

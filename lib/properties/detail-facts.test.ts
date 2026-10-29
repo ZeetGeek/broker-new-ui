@@ -3,12 +3,55 @@ import { test } from "node:test";
 
 import {
     buildPropertyFacts,
+    buildPropertyHeadlineFacts,
     propertyDetailFieldVisible,
 } from "../../features/properties/property-detail/property-detail-facts";
 import { mapPropertyListingToMyItem } from "../../features/properties/your-listings/map-my-listing";
 import { MOCK_MY_LISTINGS_SEED } from "../../features/properties/your-listings/mock-my-listings";
 
 const base = MOCK_MY_LISTINGS_SEED[0];
+
+test("headline facts share visibility rules and omit absent values", () => {
+    const plot = {
+        ...base,
+        category: "land" as const,
+        propertyType: "plot" as const,
+        subtype: "residential_plot",
+        bhk: 4,
+        furnishingLabel: "Furnished",
+    };
+    assert.deepEqual(
+        buildPropertyHeadlineFacts(plot).map((fact) => fact.key),
+        ["area"],
+    );
+    const office = {
+        ...base,
+        category: "commercial" as const,
+        propertyType: "office" as const,
+        subtype: "office_space",
+        bhk: 4,
+        furnishingLabel: " ",
+    };
+    assert.ok(
+        !buildPropertyHeadlineFacts(office).some(
+            (fact) => fact.key === "bhk" || fact.key === "furnishing",
+        ),
+    );
+    const home = {
+        ...base,
+        category: "residential" as const,
+        propertyType: "apartment" as const,
+        subtype: "apartment",
+        bhk: 3,
+        configLabel: "3 BHK",
+        furnishingLabel: "Furnished",
+        areaSqft: 1200,
+    };
+    assert.deepEqual(
+        buildPropertyHeadlineFacts(home).map((fact) => fact.key),
+        ["bhk", "area", "furnishing"],
+    );
+});
 
 test("plot details omit stale apartment facts", () => {
     const listing = {

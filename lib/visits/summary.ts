@@ -1,6 +1,4 @@
-import { addDays } from "date-fns";
-
-import { istDateKey } from "@/lib/visits/time";
+import { addVisitDays as addDays, istDateKey } from "@/lib/visits/time";
 
 import type {
     BrokerSiteVisit,

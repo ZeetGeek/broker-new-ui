@@ -197,20 +197,23 @@ export function AddBuyerModal({
 
     useEffect(() => {
         if (!open) return;
-        form.reset(valuesFromBuyer(buyer, locationDefaults));
-        setBusy(false);
-        setFormError(undefined);
-        setDuplicate(null);
-        setIgnoreDuplicate(false);
-        setMoreOpen(Boolean(buyer?.email || buyer?.notes));
+        const timer = window.setTimeout(() => {
+            form.reset(valuesFromBuyer(buyer, locationDefaults));
+            setBusy(false);
+            setFormError(undefined);
+            setDuplicate(null);
+            setIgnoreDuplicate(false);
+            setMoreOpen(Boolean(buyer?.email || buyer?.notes));
+        }, 0);
+        return () => window.clearTimeout(timer);
     }, [buyer, form, locationDefaults, open]);
 
     useEffect(() => {
         if (!open || isEdit || ignoreDuplicate) return;
         const phone = normalizeBuyerPhone(values.phone ?? "");
         if (!/^[6-9]\d{9}$/.test(phone)) {
-            setDuplicate(null);
-            return;
+            const timer = window.setTimeout(() => setDuplicate(null), 0);
+            return () => window.clearTimeout(timer);
         }
         const timer = window.setTimeout(() => {
             void contactsApi

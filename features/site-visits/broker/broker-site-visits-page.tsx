@@ -543,8 +543,11 @@ export function BrokerSiteVisitsPage() {
                         onClearPeople={(key) =>
                             updateUrl({
                                 tab: "visits",
-                                [key === "buyerId" ? "buyer" : key === "ownerId" ? "owner" : "lead"]:
-                                    undefined,
+                                [key === "buyerId"
+                                    ? "buyer"
+                                    : key === "ownerId"
+                                      ? "owner"
+                                      : "lead"]: undefined,
                             })
                         }
                         isLoading={visitsQuery.isLoading}
