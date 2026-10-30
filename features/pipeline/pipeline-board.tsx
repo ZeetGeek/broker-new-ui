@@ -63,6 +63,8 @@ export function PipelineBoard({
     busyId,
     pinnedDealIds,
     onDropDeal,
+    stageLimits,
+    onLoadMore,
 }: {
     dealsByStage: Record<DealStage, DealItem[]>;
     allLiveDeals: DealItem[];
@@ -70,6 +72,8 @@ export function PipelineBoard({
     busyId: string | null;
     pinnedDealIds: string[];
     onDropDeal: (dealId: string, stage: DealStage) => void;
+    stageLimits: Record<DealStage, number>;
+    onLoadMore: (stage: DealStage) => void;
 }) {
     const dnd = usePipelineDnd({
         deals: allLiveDeals,
@@ -93,7 +97,7 @@ export function PipelineBoard({
         >
             <div
                 className="
-                  hidden snap-x snap-mandatory items-start gap-3 overflow-x-auto
+                  hidden snap-x snap-mandatory items-stretch gap-3 overflow-x-auto
                   md:flex
                   lg:grid lg:snap-none lg:grid-cols-4 lg:gap-4 lg:overflow-visible
                 "
@@ -107,6 +111,8 @@ export function PipelineBoard({
                         busyId={busyId}
                         pinnedDealIds={pinnedDealIds}
                         isDropTarget={dnd.overStage === stage}
+                        visibleLimit={stageLimits[stage]}
+                        onLoadMore={() => onLoadMore(stage)}
                     />
                 ))}
             </div>

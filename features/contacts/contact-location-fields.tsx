@@ -5,6 +5,8 @@ import { useEffect } from "react";
 import { useLocationOptions } from "@/hooks/use-locations";
 import { useMarket } from "@/hooks/use-market";
 
+import { Building2, Globe2, Map } from "@/components/shared/icons";
+
 import { ComboboxField } from "@/features/contacts/contact-form-ui";
 
 export function ContactLocationFields({
@@ -56,6 +58,7 @@ export function ContactLocationFields({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <ComboboxField
                 label="Country"
+                startIcon={Globe2}
                 required
                 value={country}
                 placeholder={countriesLoading ? "Loading…" : "Country"}
@@ -72,6 +75,8 @@ export function ContactLocationFields({
             />
             <ComboboxField
                 label="State"
+                startIcon={Map}
+                disabled={!country}
                 required
                 value={state}
                 placeholder={
@@ -87,6 +92,8 @@ export function ContactLocationFields({
             />
             <ComboboxField
                 label="City"
+                startIcon={Building2}
+                disabled={!state}
                 required
                 value={city}
                 placeholder={!state ? "Pick a state first" : citiesLoading ? "Loading…" : "City"}

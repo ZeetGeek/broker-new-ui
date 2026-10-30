@@ -7,6 +7,8 @@ import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
+
 import type { ReraStatus } from "./mock-data";
 
 const PROFILE_EDIT_HREF = "/broker/profile";
@@ -40,6 +42,8 @@ export type ReraStatusChipProps = {
 };
 
 export function ReraStatusChip({ status }: ReraStatusChipProps) {
+    // RERA UI temporarily hidden; retain the implementation below.
+    if (!FEATURE_RERA_VERIFICATION) return null;
     if (status === "verifying") {
         return (
             <Tooltip>
@@ -100,6 +104,8 @@ export type ReraBannerProps = {
 };
 
 export function ReraBanner({ status }: ReraBannerProps) {
+    // RERA UI temporarily hidden; retain the implementation below.
+    if (!FEATURE_RERA_VERIFICATION) return null;
     if (status === "verified") {
         return null;
     }

@@ -8,6 +8,7 @@ import { AppModal } from "@/components/shared/app-modal";
 import { Send, ShieldCheck } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import {
     brokerLocationLine,
     BrokerMetricStrip,
@@ -91,7 +92,8 @@ export function BrokerProfileDialog({
             }
         >
             <div className="flex flex-col gap-5 pbe-2">
-                {profile.verified ? (
+                {/* Verification badge temporarily hidden. */}
+                {FEATURE_RERA_VERIFICATION && profile.verified ? (
                     <p
                         className="
                           body-sm flex items-center gap-2 rounded-inner bg-brand-soft px-3 py-2.5
@@ -117,7 +119,10 @@ export function BrokerProfileDialog({
 
                 <dl className="grid gap-4 sm:grid-cols-2">
                     <DetailRow label="Service areas" value={areas} />
-                    <DetailRow label="RERA licence" value={licence} />
+                    {/* RERA verification temporarily hidden; retain UI for later. */}
+                    {FEATURE_RERA_VERIFICATION && (
+                        <DetailRow label="RERA licence" value={licence} />
+                    )}
                     <DetailRow
                         label="Agency"
                         value={

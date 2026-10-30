@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { BadgeCheck, Eye, ShieldCheck, ShieldQuestion } from "@/components/shared/icons";
 import { Badge } from "@/components/ui/badge";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { mapBrokerVerificationState } from "@/features/broker/map-profile-menu";
 
 type Metric = {
@@ -170,12 +171,15 @@ function StatsSkeleton() {
                   block-56
                 "
             />
-            <div
-                className="
+            {/* Verification placeholder temporarily hidden with its content. */}
+            {FEATURE_RERA_VERIFICATION && (
+                <div
+                    className="
                   animate-pulse rounded-card border border-dashed border-brand/20 bg-brand-soft/20
                   block-24
                 "
-            />
+                />
+            )}
         </div>
     );
 }
@@ -253,29 +257,32 @@ export function ProfileStats({
             </article>
 
             {/* Same dashed note pattern as Live deal summary on the listing form. */}
-            <div
-                className={cn(
-                    "rounded-card border border-dashed px-3.5 py-4",
-                    verification.tone === "verified"
-                        ? "border-brand/30 bg-brand-soft/30"
-                        : "border-pending/35 bg-urgent-soft/45",
-                )}
-            >
-                <div className="flex items-start gap-2.5">
-                    <VerificationIcon
-                        className={cn(
-                            "mts-0.5 shrink-0 block-4 inline-4",
-                            verification.tone === "verified" ? "text-brand" : "text-pending",
-                        )}
-                        strokeWidth={2}
-                        aria-hidden
-                    />
-                    <div className="min-inline-0">
-                        <p className="text-sm font-semibold text-ink">{verification.label}</p>
-                        <p className="mbs-1 text-sm/5 text-ink-muted">{verification.hint}</p>
+            {/* RERA verification temporarily hidden; retain UI for later. */}
+            {FEATURE_RERA_VERIFICATION && (
+                <div
+                    className={cn(
+                        "rounded-card border border-dashed px-3.5 py-4",
+                        verification.tone === "verified"
+                            ? "border-brand/30 bg-brand-soft/30"
+                            : "border-pending/35 bg-urgent-soft/45",
+                    )}
+                >
+                    <div className="flex items-start gap-2.5">
+                        <VerificationIcon
+                            className={cn(
+                                "mts-0.5 shrink-0 block-4 inline-4",
+                                verification.tone === "verified" ? "text-brand" : "text-pending",
+                            )}
+                            strokeWidth={2}
+                            aria-hidden
+                        />
+                        <div className="min-inline-0">
+                            <p className="text-sm font-semibold text-ink">{verification.label}</p>
+                            <p className="mbs-1 text-sm/5 text-ink-muted">{verification.hint}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </aside>
     );
 }

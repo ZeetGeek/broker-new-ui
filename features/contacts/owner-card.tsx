@@ -1,52 +1,15 @@
-"use client";
+﻿"use client";
 
-import { addCollection, Icon } from "@iconify/react/offline";
+import { formatWhatsAppUrl } from "@/lib/format/phone";
 
-import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
-import { cn } from "@/lib/utils";
-
-import { BadgeCheck, MapPin, Phone, UserPlus } from "@/components/shared/icons";
-import { OVERLAY_GLASS_BUTTON_CLASS } from "@/components/shared/overlay-card";
+import { CallIcon, Link2, MapPin, WhatsAppIcon } from "@/components/shared/icons";
+import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import { FEATURE_PLATFORM_OWNER } from "@/config/index";
-import { AttachedPropertiesRow } from "@/features/contacts/attached-properties-row";
 import { ContactCardActions } from "@/features/contacts/contact-card-actions";
-import { toOwnerContactCardModel } from "@/features/contacts/contact-card-model";
 import type { OwnerRow } from "@/features/contacts/types";
-import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
-
-addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
-
-/** Same pill language as pipeline deal cards (soft fill + leading status dot). */
-function OriginPill({ origin }: { origin: "platform" | "custom" }) {
-    if (origin === "platform") {
-        return (
-            <span
-                className="
-                  body-xs inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1
-                  font-semibold tracking-wide text-brand-text
-                "
-            >
-                <BadgeCheck aria-hidden className="block-3 inline-3" strokeWidth={2} />
-                Platform
-            </span>
-        );
-    }
-
-    return (
-        <span
-            className="
-              body-xs inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1
-              font-semibold tracking-wide text-brand-text
-            "
-        >
-            <span aria-hidden className="rounded-full bg-success-mid block-1.5 inline-1.5" />
-            Added by you
-        </span>
-    );
-}
 
 export function OwnerCard({
     owner,
@@ -63,118 +26,140 @@ export function OwnerCard({
     onOpenProperties?: (owner: OwnerRow) => void;
     onDelete?: (owner: OwnerRow) => void;
 }) {
-    const model = toOwnerContactCardModel(owner);
     const isPlatform = owner.origin === "platform";
-    const canContact = (!isPlatform || owner.hasActiveRepresentation) && Boolean(owner.phoneDigits);
+    const canContact =
+        (!isPlatform || owner.hasActiveRepresentation) &&
+        /^[6-9]\d{9}$/.test(owner.phoneDigits ?? "");
     const open = () => onOpen(owner);
     const attach = !isPlatform && onAttachProperty ? () => onAttachProperty(owner) : undefined;
-    const propertyCount = model.properties.length;
-    const locationHeadline = model.city || model.importantLocation || "Location not set";
-    const needLine =
-        model.importantLocation && model.importantLocation !== locationHeadline
-            ? model.importantLocation
-            : model.ownerTypeLabel || null;
+    const properties = [
+        ...new Map((owner.properties ?? []).map((property) => [property.id, property])).values(),
+    ];
+    const propertyCount = Math.max(owner.propertyCount, properties.length);
+    const city = owner.details?.city?.trim();
+    const homeLocation = [city, owner.details?.state?.trim()].filter(Boolean).join(", ");
+    const areas = [
+        ...new Set(
+            [owner.details?.locality, ...owner.localities]
+                .map((area) => area?.trim())
+                .filter((area): area is string => Boolean(area && area !== city && area !== "—")),
+        ),
+    ];
+    const ownerType = owner.details?.ownerType;
+    const ownerLabel =
+        ownerType === "individual"
+            ? "Individual owner"
+            : ownerType === "builder"
+              ? "Builder"
+              : ownerType === "company"
+                ? "Company owner"
+                : "Property owner";
 
     return (
         <article
-            role="button"
-            data-contact-id={owner.id}
-            tabIndex={0}
-            aria-label={`Open ${owner.name}`}
             onClick={open}
-            onKeyDown={(event) => {
-                if (event.key === "Enter") open();
-            }}
-            className="
-              contact-card group/card relative flex cursor-pointer flex-col gap-3 rounded-card
-              border border-border-warm bg-surface p-4 shadow-md transition-shadow duration-160
-              outline-none block-full
-              hover:shadow-lg
-              focus-visible:ring-3 focus-visible:ring-brand/20
-            "
+            className="contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-5 shadow-md transition-[box-shadow,border-color] duration-160 block-full hover:shadow-lg"
         >
-            <div className="flex items-start justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-1.5 min-inline-0">
-                    {FEATURE_PLATFORM_OWNER ? <OriginPill origin={owner.origin} /> : null}
-                </div>
-                <div onClick={(event) => event.stopPropagation()}>
-                    <ContactCardActions
-                        name={owner.name}
-                        phoneDigits={canContact ? owner.phoneDigits : undefined}
-                        onOpen={open}
-                        onEdit={!isPlatform && onEdit ? () => onEdit(owner) : undefined}
-                        onAttach={attach}
-                        onNotes={open}
-                        onDelete={!isPlatform && onDelete ? () => onDelete(owner) : undefined}
-                        editLocked={isPlatform}
-                        density="menu"
-                    />
-                </div>
+            <div className="mbe-3 flex items-center justify-between gap-2">
+                <Badge color="emerald">{ownerLabel}</Badge>
+                <ContactCardActions
+                    editLabel="Edit owner"
+                    name={owner.name}
+                    onOpen={open}
+                    onEdit={!isPlatform && onEdit ? () => onEdit(owner) : undefined}
+                    onDelete={!isPlatform && onDelete ? () => onDelete(owner) : undefined}
+                    editLocked={isPlatform}
+                    density="menu"
+                />
             </div>
-
-            <div className="flex items-center gap-3 min-inline-0">
+            <header className="flex items-center gap-3 min-inline-0">
                 <UserAvatar
                     name={owner.name}
                     imageUrl={owner.avatarUrl}
                     size="md"
-                    className="shrink-0"
+                    framed={false}
+                    className="border-2 border-white shadow-sm"
                 />
                 <div className="min-inline-0">
-                    <h2 className="body truncate font-bold text-ink capitalize">{owner.name}</h2>
-                    {canContact && owner.phoneDigits ? (
-                        <a
-                            href={`tel:+91${owner.phoneDigits}`}
-                            onClick={(event) => event.stopPropagation()}
-                            className="
-                              body-sm tabular mbs-0.5 block truncate text-ink-muted
-                              hover:text-brand-text
-                            "
-                        >
-                            {formatPhoneIn(owner.phoneDigits)}
-                        </a>
-                    ) : (
-                        <span className="body-sm mbs-0.5 block text-ink-muted">Number hidden</span>
-                    )}
-                </div>
-            </div>
-
-            <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
-                <p className="h5 truncate font-semibold text-brand">{locationHeadline}</p>
-                {needLine ? (
-                    <p className="body-sm truncate text-ink-muted">{needLine}</p>
-                ) : (
-                    <p className="body-sm flex items-center gap-1.5 text-ink-subtle">
-                        <MapPin
-                            aria-hidden
-                            className="shrink-0 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                        Details not set
-                    </p>
-                )}
-            </div>
-
-            <footer className="mbs-auto flex flex-col gap-2.5">
-                <div onClick={(event) => event.stopPropagation()}>
-                    {propertyCount > 0 ? (
-                        <AttachedPropertiesRow
-                            properties={model.properties}
-                            onManage={() => (onOpenProperties ? onOpenProperties(owner) : open())}
-                        />
-                    ) : attach ? (
-                        <Button
-                            size="md"
-                            variant="outline"
+                    <h2 className="body font-semibold text-ink">
+                        <button
                             type="button"
-                            className={cn("inline-full", OVERLAY_GLASS_BUTTON_CLASS)}
-                            onClick={attach}
+                            data-contact-id={owner.id}
+                            aria-label={`Open ${owner.name}`}
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                open();
+                            }}
+                            className="relative rounded-sm text-start wrap-break-word outline-none after:absolute after:inset-x-0 after:inset-y-[-10px] hover:text-brand-text focus-visible:ring-3 focus-visible:ring-ring/30"
                         >
-                            <UserPlus aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                            Attach property
-                        </Button>
+                            {owner.name}
+                        </button>
+                    </h2>
+                    {homeLocation ? (
+                        <p className="body-sm mbs-1 flex items-start gap-1 text-ink-muted">
+                            <MapPin aria-hidden className="mbs-0.5 shrink-0 block-3.5 inline-3.5" />
+                            <span className="wrap-break-word min-inline-0">{homeLocation}</span>
+                        </p>
                     ) : null}
                 </div>
-
+            </header>
+            <div className="flex flex-1 flex-col gap-3 py-5 min-inline-0">
+                {areas.length > 0 ? (
+                    <dl>
+                        <div className="flex flex-col gap-1">
+                            <dt className="body-xs font-medium text-ink-muted">
+                                Property locations
+                            </dt>
+                            <dd className="body-sm wrap-break-word text-ink">{areas.join(", ")}</dd>
+                        </div>
+                    </dl>
+                ) : null}
+            </div>
+            <footer className="mbs-auto flex flex-col gap-3 border-bs border-border-warm pbs-3">
+                {propertyCount > 0 || attach ? (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-block-11">
+                        {propertyCount > 0 ? (
+                            <span className="body-sm text-ink-muted">Properties</span>
+                        ) : null}
+                        <Button
+                            variant="link"
+                            type="button"
+                            aria-label={
+                                propertyCount
+                                    ? `View ${propertyCount} linked properties for ${owner.name}`
+                                    : `Link a property to ${owner.name}`
+                            }
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                if (propertyCount) (onOpenProperties ?? onOpen)(owner);
+                                else attach?.();
+                            }}
+                            className="gap-2 px-0 text-brand-text min-block-11"
+                        >
+                            {properties.length > 0 ? (
+                                <span className="flex items-center -space-x-2" aria-hidden>
+                                    {properties.slice(0, 3).map((property) => (
+                                        <PropertyThumb
+                                            key={property.id}
+                                            src={property.coverUrl}
+                                            alt=""
+                                            hoverScale={false}
+                                            sizes="28px"
+                                            sizeClassName="block-7 inline-7"
+                                            iconClassName="block-3.5 inline-3.5"
+                                            className="rounded-full ring-2 ring-surface"
+                                        />
+                                    ))}
+                                </span>
+                            ) : (
+                                <Link2 aria-hidden />
+                            )}
+                            <span>
+                                {propertyCount ? `${propertyCount} linked` : "Link a property"}
+                            </span>
+                        </Button>
+                    </div>
+                ) : null}
                 {canContact && owner.phoneDigits ? (
                     <div
                         className="grid grid-cols-2 gap-2"
@@ -183,8 +168,7 @@ export function OwnerCard({
                         <Button
                             size="md"
                             variant="outline"
-                            type="button"
-                            className="inline-full"
+                            className="inline-full min-block-11"
                             nativeButton={false}
                             render={
                                 <a
@@ -193,14 +177,12 @@ export function OwnerCard({
                                 />
                             }
                         >
-                            <Phone aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-                            Call
+                            <CallIcon aria-hidden /> Call
                         </Button>
                         <Button
                             size="md"
                             variant="accent"
-                            type="button"
-                            className="inline-full"
+                            className="inline-full min-block-11"
                             nativeButton={false}
                             render={
                                 <a
@@ -211,26 +193,10 @@ export function OwnerCard({
                                 />
                             }
                         >
-                            <Icon
-                                icon="bi:whatsapp"
-                                width={16}
-                                height={16}
-                                className="block-4 inline-4"
-                                aria-hidden
-                            />
-                            WhatsApp
+                            <WhatsAppIcon aria-hidden /> WhatsApp
                         </Button>
                     </div>
-                ) : (
-                    <p
-                        className="
-                      body-sm rounded-control bg-surface-muted px-3 py-2.5 text-center
-                      text-ink-muted
-                    "
-                    >
-                        Contact after representation
-                    </p>
-                )}
+                ) : null}
             </footer>
         </article>
     );

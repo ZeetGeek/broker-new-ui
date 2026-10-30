@@ -16,6 +16,8 @@
  * Generated via: node scripts/generate-icons-module.mjs
  */
 
+import { forwardRef } from "react";
+
 import { Icon as IconifyIcon, type IconProps as IconifyProps } from "@iconify/react";
 import { Icon as OfflineIcon } from "@iconify/react/offline";
 import type { IconProps, TablerIcon } from "@tabler/icons-react";
@@ -41,6 +43,23 @@ export function PropertyMenuIcon({
 }: Omit<IconifyProps, "icon"> & { name: keyof typeof propertyMenuIcons }) {
     return <OfflineIcon icon={propertyMenuIcons[name]} width={18} height={18} {...props} />;
 }
+
+/** Lost deals use the bundled Iconify Tabler circle-x glyph everywhere. */
+export const LostIcon = forwardRef<SVGSVGElement, IconProps>(function LostIcon(
+    { size = 24, stroke: _stroke, onLoad: _onLoad, rotate: _rotate, ...props },
+    ref,
+) {
+    return (
+        <OfflineIcon
+            ref={ref}
+            icon={propertyMenuIcons.lost}
+            width={size}
+            height={size}
+            {...props}
+            mode="svg"
+        />
+    );
+});
 
 // Social marks use the same Tabler glyph family through Iconify.
 type SocialIconProps = Omit<IconifyProps, "icon">;

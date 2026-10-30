@@ -212,7 +212,7 @@ export function OwnerListingsIntro({
     if (isExpanded) {
         return (
             <div className="flex flex-col gap-3 text-start">
-                <BrowseHeader title={INTRO_TITLE} titleClassName="h2" {...headerProps} />
+                <BrowseHeader title={INTRO_TITLE} titleClassName="h3" {...headerProps} />
             </div>
         );
     }

@@ -10,6 +10,7 @@ import { propertiesApi } from "@/lib/api/properties";
 import { formatAreaSqft } from "@/lib/format/area";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
 import { formatPrice, formatRent } from "@/lib/format/price";
+import { parseTourEmbed, parseVideoEmbed } from "@/lib/media/embed-url";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 
@@ -21,30 +22,23 @@ import {
     BedDouble,
     Bookmark,
     Building2,
-    CalendarCheck,
-    CalendarClock,
     Car,
     Check,
     ChevronRight,
     Clock,
-    Compass,
-    DoorOpen,
     Droplets,
     Dumbbell,
     ExternalLink,
     Fence,
-    HandCoins,
     Hash,
     Home,
     Landmark,
     Layers,
     Map,
     MapPin,
-    Monitor,
     Route,
     Ruler,
     ShieldCheck,
-    Tags,
     Trees,
     Users,
     Zap,
@@ -69,33 +63,11 @@ import {
     listedAgoLabel,
     propertyDetailFieldVisible,
 } from "./property-detail-facts";
+import { PropertyFactsList } from "./property-facts-list";
 import { PropertyGallery } from "./property-gallery";
 
 import styles from "./property-detail.module.css";
 
-const FACT_ICONS: Record<string, AppIcon> = {
-    bhk: BedDouble,
-    bathrooms: Bath,
-    balconies: DoorOpen,
-    area: Ruler,
-    carpetArea: Ruler,
-    category: Tags,
-    type: Building2,
-    furnishing: Armchair,
-    floor: Layers,
-    totalFloors: Layers,
-    facing: Compass,
-    propertyAge: CalendarClock,
-    condition: ShieldCheck,
-    parking: Car,
-    maintenance: HandCoins,
-    available: CalendarCheck,
-    securityDeposit: ShieldCheck,
-    cabins: DoorOpen,
-    meetingRooms: Users,
-    workstations: Monitor,
-    ceilingHeight: Ruler,
-};
 const AMENITY_ICONS: Record<string, AppIcon> = {
     lift: Layers,
     power_backup: Zap,
@@ -111,25 +83,6 @@ const AMENITY_ICONS: Record<string, AppIcon> = {
     ev_charging: Zap,
     parking: Car,
 };
-
-function PropertyFactsList({ facts }: { facts: ReturnType<typeof buildPropertyFacts> }) {
-    return (
-        <dl className={styles.facts}>
-            {facts.map((fact) => {
-                const Icon = FACT_ICONS[fact.key] ?? Building2;
-                return (
-                    <div className={styles.fact} key={fact.key}>
-                        <dt>
-                            <Icon size={22} strokeWidth={1.5} aria-hidden />
-                            <span>{fact.label}</span>
-                        </dt>
-                        <dd>{fact.value}</dd>
-                    </div>
-                );
-            })}
-        </dl>
-    );
-}
 
 export function PropertyDetailLayout({
     item,
@@ -203,7 +156,7 @@ export function PropertyDetailLayout({
                         <ArrowLeft aria-hidden />
                         Back to {backLabel.toLowerCase()}
                     </Button>
-                    <h1>
+                    <h1 className="h3">
                         <span>Property details.</span>{" "}
                         <RotatingHeaderSummary
                             key={item.id}
@@ -368,9 +321,9 @@ export function PropertyDetailContent({
         } => fact != null,
     );
     const media = [
-        { label: "Watch property video", href: item.videoUrl },
-        { label: "Take a virtual tour", href: item.virtualTourUrl },
-    ].filter(({ href }) => /^https?:\/\//i.test(href));
+        { label: "Property video", embed: parseVideoEmbed(item.videoUrl) },
+        { label: "Virtual tour", embed: parseTourEmbed(item.virtualTourUrl) },
+    ].filter(({ embed }) => embed !== null);
 
     return (
         <div className={styles.content}>
@@ -402,6 +355,46 @@ export function PropertyDetailContent({
                     ))}
                 </div>
             </section>
+            {media.length > 0 ? (
+                <section className={styles.section}>
+                    <h2>Explore the property</h2>
+                    <div className={styles.mediaPreviews}>
+                        {media.map(({ label, embed }) =>
+                            embed ? (
+                                <figure key={label} className={styles.mediaPreview}>
+                                    <iframe
+                                        title={label}
+                                        src={embed.embedUrl}
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                                        allowFullScreen
+                                        loading="lazy"
+                                        referrerPolicy="strict-origin-when-cross-origin"
+                                    />
+                                    <figcaption>
+                                        <span>{label}</span>
+                                        <Button
+                                            variant="link"
+                                            size="sm"
+                                            nativeButton={false}
+                                            render={
+                                                <a
+                                                    href={embed.sourceUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                />
+                                            }
+                                            aria-label={`Open ${label.toLowerCase()} in a new tab`}
+                                        >
+                                            Open
+                                            <ExternalLink size={16} aria-hidden />
+                                        </Button>
+                                    </figcaption>
+                                </figure>
+                            ) : null,
+                        )}
+                    </div>
+                </section>
+            ) : null}
             {item.description.trim() ? (
                 <section className={styles.section}>
                     <h2>About this property</h2>
@@ -520,19 +513,6 @@ export function PropertyDetailContent({
                     </dl>
                 ) : null}
             </section>
-            {media.length > 0 ? (
-                <section className={styles.section}>
-                    <h2>Explore the property</h2>
-                    <div className={styles.mediaLinks}>
-                        {media.map(({ label, href }) => (
-                            <a key={label} href={href} target="_blank" rel="noopener noreferrer">
-                                {label}
-                                <ExternalLink size={18} aria-hidden />
-                            </a>
-                        ))}
-                    </div>
-                </section>
-            ) : null}
         </div>
     );
 }

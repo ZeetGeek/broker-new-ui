@@ -27,7 +27,7 @@ export function MyDealsIntro({
     );
 
     return (
-        <h1 className="h2 min-inline-0">
+        <h1 className="h3 min-inline-0">
             {isLoading ? (
                 <span aria-hidden className="relative inline-block align-bottom">
                     <span className="invisible">Requests & Invitations.</span>

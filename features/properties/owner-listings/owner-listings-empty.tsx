@@ -2,6 +2,8 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { MapPin, Search } from "@/components/shared/icons";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
+
 export type OwnerListingsBlockedReason = "no_service_areas" | "profile_incomplete";
 
 export type OwnerListingsEmptyProps = {
@@ -30,6 +32,8 @@ export function OwnerListingsEmpty({
             );
         }
 
+        // RERA empty state temporarily hidden; keep its code for later.
+        if (!FEATURE_RERA_VERIFICATION) return null;
         return (
             <EmptyState
                 icon={MapPin}

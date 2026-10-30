@@ -1,4 +1,5 @@
 import { FEATURE_PLATFORM_OWNER } from "@/config";
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 
 /** Shared by HTTP notifications, socket delivery, and the dashboard feed. */
 export function isLaunchEventVisible(
@@ -10,6 +11,14 @@ export function isLaunchEventVisible(
     },
     ownerEnabled = FEATURE_PLATFORM_OWNER,
 ): boolean {
+    // Hide RERA / identity verification notices in both portals while deferred.
+    if (
+        !FEATURE_RERA_VERIFICATION &&
+        /rera|verif/.test(
+            `${event.type ?? ""} ${event.referenceType ?? ""} ${event.href ?? ""}`.toLowerCase(),
+        )
+    )
+        return false;
     if (!isLaunchDestinationAllowed(event.href, ownerEnabled)) return false;
     if (ownerEnabled) return true;
     if (event.relatedRepresentationId) return false;

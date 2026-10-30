@@ -230,6 +230,8 @@ function toOwnerRow(item: ApiOwnerItem): OwnerRow {
 function toBuyerRow(
     client: Awaited<ReturnType<typeof listClientsWithLeadSummary>>[number],
 ): BuyerRow {
+    // Never enrich real client records with fixture property facts or details.
+    if (!isMockMode()) return { ...client };
     return {
         ...client,
         attachedProperties: client.attachedProperties.map((property) => {

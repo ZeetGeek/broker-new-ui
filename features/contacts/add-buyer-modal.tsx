@@ -19,24 +19,26 @@ import {
 } from "@/lib/validation/buyer";
 import { useLocationOptions } from "@/hooks/use-locations";
 
-import { Link2 } from "@/components/shared/icons";
+import { CallIcon, Link2, Tag, UserRound } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { Button } from "@/components/ui/button";
 
 import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
 import {
     BudgetRangeField,
-    ChoiceRadioField,
     ComboboxField,
     ContactFormDrawer,
     FormField,
-    MoreDetails,
     NotesField,
     TextField,
 } from "@/features/contacts/contact-form-ui";
 import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
 import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
 import type { BuyerRow } from "@/features/contacts/types";
+import {
+    FORM_SECTIONS_CLASS,
+    WizardSection,
+} from "@/features/properties/property-form/form-fields";
 import { useAppSelector } from "@/store/hooks";
 
 function emptyValues(location = contactLocationDefaults()): BuyerFormValues {
@@ -180,7 +182,6 @@ export function AddBuyerModal({
         type: "buyer" | "owner";
     } | null>(null);
     const [ignoreDuplicate, setIgnoreDuplicate] = useState(false);
-    const [moreOpen, setMoreOpen] = useState(false);
 
     const isDirty = form.formState.isDirty;
     const localityList = useMemo(
@@ -201,7 +202,6 @@ export function AddBuyerModal({
             setFormError(undefined);
             setDuplicate(null);
             setIgnoreDuplicate(false);
-            setMoreOpen(Boolean(buyer?.email || buyer?.notes));
         }, 0);
         return () => window.clearTimeout(timer);
     }, [buyer, form, locationDefaults, open]);
@@ -225,6 +225,11 @@ export function AddBuyerModal({
     }, [ignoreDuplicate, isEdit, open, values.phone]);
 
     const onInvalid = () => {
+        document
+            .querySelectorAll<HTMLDetailsElement>(".contacts-form-drawer details")
+            .forEach((section) => {
+                section.open = true;
+            });
         setFormError("Check the highlighted fields and try again.");
     };
 
@@ -281,7 +286,6 @@ export function AddBuyerModal({
             form.reset(emptyValues(locationDefaults));
             setDuplicate(null);
             setIgnoreDuplicate(false);
-            setMoreOpen(false);
         } catch (error) {
             const message =
                 error instanceof ApiError
@@ -308,7 +312,7 @@ export function AddBuyerModal({
             onSaveAnother={isEdit ? undefined : () => void saveAnother()}
             footerError={formError}
         >
-            <div className="space-y-5">
+            <div className={FORM_SECTIONS_CLASS}>
                 {duplicate && !ignoreDuplicate && !isEdit ? (
                     <DuplicateWarning
                         match={duplicate}
@@ -316,155 +320,188 @@ export function AddBuyerModal({
                     />
                 ) : null}
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <TextField
-                        label="Full name"
-                        required
-                        value={values.name ?? ""}
-                        onValueChange={(name) =>
-                            form.setValue("name", name, { shouldDirty: true, shouldValidate: true })
-                        }
-                        error={form.formState.errors.name?.message}
-                        placeholder="Aarav Shah"
-                    />
-                    <TextField
-                        label="Mobile"
-                        required
-                        inputMode="numeric"
-                        maxLength={10}
-                        value={values.phone ?? ""}
-                        onValueChange={(phone) =>
-                            form.setValue("phone", phone.replace(/\D/g, "").slice(0, 10), {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        error={form.formState.errors.phone?.message}
-                        placeholder="9876543210"
-                        hint="+91 India mobile"
-                    />
-                </div>
-
-                <Controller
-                    control={form.control}
-                    name="lookingFor"
-                    render={({ field }) => (
-                        <ChoiceRadioField
-                            name="looking-for"
-                            label="Looking for"
-                            columns={3}
-                            value={field.value}
-                            onChange={field.onChange}
-                            options={[
-                                {
-                                    value: "buy",
-                                    label: "Buy",
-                                    description: "Find a property to buy",
-                                },
-                                {
-                                    value: "rent",
-                                    label: "Rent",
-                                    description: "Find a rental",
-                                },
-                                {
-                                    value: "both",
-                                    label: "Both",
-                                    description: "Open to buy or rent",
-                                },
-                            ]}
+                <WizardSection
+                    title="Client details"
+                    description="Add their name and the number you can reach them on."
+                >
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <TextField
+                            label="Full name"
+                            startIcon={UserRound}
+                            required
+                            value={values.name ?? ""}
+                            onValueChange={(name) =>
+                                form.setValue("name", name, {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                })
+                            }
+                            error={form.formState.errors.name?.message}
+                            placeholder="Aarav Shah"
                         />
-                    )}
-                />
+                        <TextField
+                            label="Mobile"
+                            startIcon={CallIcon}
+                            required
+                            inputMode="numeric"
+                            maxLength={10}
+                            value={values.phone ?? ""}
+                            onValueChange={(phone) =>
+                                form.setValue("phone", phone.replace(/\D/g, "").slice(0, 10), {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                })
+                            }
+                            error={form.formState.errors.phone?.message}
+                            placeholder="9876543210"
+                            hint="+91 India mobile"
+                        />
+                    </div>
+                </WizardSection>
 
-                <ContactLocationFields
-                    country={values.country ?? ""}
-                    state={values.state ?? ""}
-                    city={values.city ?? ""}
-                    countryError={form.formState.errors.country?.message}
-                    stateError={form.formState.errors.state?.message}
-                    cityError={form.formState.errors.city?.message}
-                    onCountryChange={(country) =>
-                        form.setValue("country", country, {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                        })
-                    }
-                    onStateChange={(state) =>
-                        form.setValue("state", state, { shouldDirty: true, shouldValidate: true })
-                    }
-                    onCityChange={(city) => {
-                        const current = form.getValues("city");
-                        form.setValue("city", city, { shouldDirty: true, shouldValidate: true });
-                        if (city.trim().toLowerCase() === current.trim().toLowerCase()) return;
-                        form.setValue("localities", "", { shouldDirty: true });
-                    }}
-                />
-
-                <FormField label="Preferred area" htmlFor="buyer-preferred-area" required>
-                    <LocalityCombobox
-                        id="buyer-preferred-area"
-                        multiple
-                        size="lg"
-                        cityId={selectedCity?.id}
-                        value={localityList}
-                        placeholder="Search an area, e.g. Vesu"
-                        errorText={form.formState.errors.localities?.message}
-                        onValueChange={(next: string[]) =>
-                            form.setValue("localities", next.join(", "), {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
+                <WizardSection
+                    title="What are they looking for?"
+                    description="Choose whether they want to buy, rent, or consider both."
+                >
+                    <Controller
+                        control={form.control}
+                        name="lookingFor"
+                        render={({ field }) => (
+                            <ComboboxField
+                                startIcon={Tag}
+                                label="Looking for"
+                                required
+                                error={form.formState.errors.lookingFor?.message}
+                                value={field.value}
+                                onChange={field.onChange}
+                                options={[
+                                    {
+                                        value: "buy",
+                                        label: "Buy",
+                                    },
+                                    {
+                                        value: "rent",
+                                        label: "Rent",
+                                    },
+                                    {
+                                        value: "both",
+                                        label: "Buy or rent",
+                                    },
+                                ]}
+                            />
+                        )}
                     />
-                </FormField>
+                </WizardSection>
 
-                {values.lookingFor !== "rent" ? (
-                    <BudgetRangeField
-                        title="Sale budget"
-                        idPrefix="buyer-sale-budget"
-                        lookingFor="buy"
-                        minInr={values.saleBudgetMin ?? ""}
-                        maxInr={values.saleBudgetMax ?? ""}
-                        onMinChange={(saleBudgetMin) =>
-                            form.setValue("saleBudgetMin", saleBudgetMin, {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        onMaxChange={(saleBudgetMax) =>
-                            form.setValue("saleBudgetMax", saleBudgetMax, {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        minError={form.formState.errors.saleBudgetMin?.message}
-                        maxError={form.formState.errors.saleBudgetMax?.message}
-                    />
-                ) : null}
-                {values.lookingFor !== "buy" ? (
-                    <BudgetRangeField
-                        title="Rent budget"
-                        idPrefix="buyer-rent-budget"
-                        lookingFor="rent"
-                        minInr={values.rentBudgetMin ?? ""}
-                        maxInr={values.rentBudgetMax ?? ""}
-                        onMinChange={(rentBudgetMin) =>
-                            form.setValue("rentBudgetMin", rentBudgetMin, {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        onMaxChange={(rentBudgetMax) =>
-                            form.setValue("rentBudgetMax", rentBudgetMax, {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        minError={form.formState.errors.rentBudgetMin?.message}
-                        maxError={form.formState.errors.rentBudgetMax?.message}
-                    />
-                ) : null}
+                <WizardSection
+                    title="Where are they looking?"
+                    description="Choose their city, then add the areas they prefer."
+                >
+                    <div className="flex flex-col gap-4">
+                        <ContactLocationFields
+                            country={values.country ?? ""}
+                            state={values.state ?? ""}
+                            city={values.city ?? ""}
+                            countryError={form.formState.errors.country?.message}
+                            stateError={form.formState.errors.state?.message}
+                            cityError={form.formState.errors.city?.message}
+                            onCountryChange={(country) =>
+                                form.setValue("country", country, {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                })
+                            }
+                            onStateChange={(state) =>
+                                form.setValue("state", state, {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                })
+                            }
+                            onCityChange={(city) => {
+                                const current = form.getValues("city");
+                                form.setValue("city", city, {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                });
+                                if (city.trim().toLowerCase() === current.trim().toLowerCase())
+                                    return;
+                                form.setValue("localities", "", { shouldDirty: true });
+                            }}
+                        />
 
+                        <FormField label="Preferred area" htmlFor="buyer-preferred-area" required>
+                            <LocalityCombobox
+                                id="buyer-preferred-area"
+                                multiple
+                                size="lg"
+                                cityId={selectedCity?.id}
+                                value={localityList}
+                                placeholder="Search an area, e.g. Vesu"
+                                errorText={form.formState.errors.localities?.message}
+                                onValueChange={(next: string[]) =>
+                                    form.setValue("localities", next.join(", "), {
+                                        shouldDirty: true,
+                                        shouldValidate: true,
+                                    })
+                                }
+                            />
+                        </FormField>
+                    </div>
+                </WizardSection>
+
+                <WizardSection
+                    title="What is their budget?"
+                    description="Set a range for buying, monthly rent, or both. These fields are optional."
+                >
+                    <div className="flex flex-col gap-4">
+                        {values.lookingFor !== "rent" ? (
+                            <BudgetRangeField
+                                title="Sale budget"
+                                idPrefix="buyer-sale-budget"
+                                lookingFor="buy"
+                                minInr={values.saleBudgetMin ?? ""}
+                                maxInr={values.saleBudgetMax ?? ""}
+                                onMinChange={(saleBudgetMin) =>
+                                    form.setValue("saleBudgetMin", saleBudgetMin, {
+                                        shouldDirty: true,
+                                        shouldValidate: true,
+                                    })
+                                }
+                                onMaxChange={(saleBudgetMax) =>
+                                    form.setValue("saleBudgetMax", saleBudgetMax, {
+                                        shouldDirty: true,
+                                        shouldValidate: true,
+                                    })
+                                }
+                                minError={form.formState.errors.saleBudgetMin?.message}
+                                maxError={form.formState.errors.saleBudgetMax?.message}
+                            />
+                        ) : null}
+                        {values.lookingFor !== "buy" ? (
+                            <BudgetRangeField
+                                title="Rent budget"
+                                idPrefix="buyer-rent-budget"
+                                lookingFor="rent"
+                                minInr={values.rentBudgetMin ?? ""}
+                                maxInr={values.rentBudgetMax ?? ""}
+                                onMinChange={(rentBudgetMin) =>
+                                    form.setValue("rentBudgetMin", rentBudgetMin, {
+                                        shouldDirty: true,
+                                        shouldValidate: true,
+                                    })
+                                }
+                                onMaxChange={(rentBudgetMax) =>
+                                    form.setValue("rentBudgetMax", rentBudgetMax, {
+                                        shouldDirty: true,
+                                        shouldValidate: true,
+                                    })
+                                }
+                                minError={form.formState.errors.rentBudgetMin?.message}
+                                maxError={form.formState.errors.rentBudgetMax?.message}
+                            />
+                        ) : null}
+                    </div>
+                </WizardSection>
                 {isEdit && onAttach ? (
                     <div className="space-y-2">
                         <p className="text-sm font-semibold text-ink">Matched properties</p>
@@ -483,50 +520,55 @@ export function AddBuyerModal({
                     </div>
                 ) : null}
 
-                <MoreDetails open={moreOpen} onOpenChange={setMoreOpen}>
-                    <TextField
-                        label="Email"
-                        type="email"
-                        value={values.email ?? ""}
-                        onValueChange={(email) =>
-                            form.setValue("email", email, {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        error={form.formState.errors.email?.message}
-                        placeholder="Optional"
-                    />
+                <WizardSection
+                    title="Additional details"
+                    description="Keep their email, source, and useful notes together."
+                >
+                    <div className="flex flex-col gap-4">
+                        <TextField
+                            label="Email"
+                            type="email"
+                            value={values.email ?? ""}
+                            onValueChange={(email) =>
+                                form.setValue("email", email, {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                })
+                            }
+                            error={form.formState.errors.email?.message}
+                            placeholder="Optional"
+                        />
 
-                    <ComboboxField
-                        label="Source"
-                        value={values.source ?? "walk_in"}
-                        placeholder="Source"
-                        emptyText="No source matches"
-                        options={SOURCE_OPTIONS.map((option) => ({
-                            value: option.value,
-                            label: option.label,
-                        }))}
-                        error={form.formState.errors.source?.message}
-                        onChange={(source) =>
-                            form.setValue("source", source as BuyerFormValues["source"], {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                    />
+                        <ComboboxField
+                            label="Source"
+                            value={values.source ?? "walk_in"}
+                            placeholder="Source"
+                            emptyText="No source matches"
+                            options={SOURCE_OPTIONS.map((option) => ({
+                                value: option.value,
+                                label: option.label,
+                            }))}
+                            error={form.formState.errors.source?.message}
+                            onChange={(source) =>
+                                form.setValue("source", source as BuyerFormValues["source"], {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                })
+                            }
+                        />
 
-                    <NotesField
-                        value={values.note ?? ""}
-                        onChange={(note) =>
-                            form.setValue("note", note, {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        error={form.formState.errors.note?.message}
-                    />
-                </MoreDetails>
+                        <NotesField
+                            value={values.note ?? ""}
+                            onChange={(note) =>
+                                form.setValue("note", note, {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                })
+                            }
+                            error={form.formState.errors.note?.message}
+                        />
+                    </div>
+                </WizardSection>
             </div>
         </ContactFormDrawer>
     );

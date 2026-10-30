@@ -34,6 +34,7 @@ import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
 import {
@@ -747,12 +748,17 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                             wide: true,
                             empty: !fullAddress,
                         },
-                        {
-                            label: "RERA number",
-                            icon: Tag,
-                            value: reraNumber,
-                            empty: !reraNumber,
-                        },
+                        // RERA fact temporarily hidden; preserve the original field.
+                        ...(FEATURE_RERA_VERIFICATION
+                            ? [
+                                  {
+                                      label: "RERA number",
+                                      icon: Tag,
+                                      value: reraNumber,
+                                      empty: !reraNumber,
+                                  },
+                              ]
+                            : []),
                     ]}
                 />
             </section>

@@ -12,6 +12,7 @@ import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { Button } from "@/components/ui/button";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { mapBrokerVerificationState } from "@/features/broker/map-profile-menu";
 import { buildQuickChipCounts } from "@/features/properties/owner-listings/build-quick-chip-counts";
 import { countNewListingsInServiceAreasThisWeek } from "@/features/properties/owner-listings/count-new-listings-this-week";
@@ -73,7 +74,8 @@ export function OwnerListingsPage() {
     const blockedReason =
         serviceAreas.length === 0
             ? "no_service_areas"
-            : mapBrokerVerificationState(profile ?? null) === "PROFILE_INCOMPLETE"
+            : FEATURE_RERA_VERIFICATION &&
+                mapBrokerVerificationState(profile ?? null) === "PROFILE_INCOMPLETE"
               ? "profile_incomplete"
               : null;
     const enabled = Boolean(profile) && !blockedReason && scopeReady;

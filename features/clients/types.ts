@@ -13,9 +13,12 @@ export type ClientLookingFor = "buy" | "rent" | "both";
 export type ClientItem = {
     id: string;
     name: string;
+    avatarUrl?: string;
     phoneDigits: string;
     email: string | null;
     lookingFor: ClientLookingFor;
+    /** False when the API omitted a recognised intent; hide the compatibility default. */
+    hasRecordedIntent?: boolean;
     propertyKind: BuyerPropertyKind;
     /** Localities the buyer is searching in. */
     preferredLocalities: string[];

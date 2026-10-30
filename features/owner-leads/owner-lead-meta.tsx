@@ -2,7 +2,7 @@ import type { PropertyLead } from "@/lib/api/owner-leads";
 import { parseMoney } from "@/lib/format/money";
 import { cn } from "@/lib/utils";
 
-import { CircleCheck, CircleSlash, Clock } from "@/components/shared/icons";
+import { CircleCheck, CircleSlash, Clock, LostIcon } from "@/components/shared/icons";
 
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import type { DealStage } from "@/features/pipeline/types";
@@ -138,7 +138,7 @@ export function StagePill({ stage }: { stage?: string | null }) {
         );
     }
 
-    const OutcomeIcon = stage === "closed_won" ? CircleCheck : CircleSlash;
+    const OutcomeIcon = stage === "closed_won" ? CircleCheck : LostIcon;
     return (
         <span
             className="

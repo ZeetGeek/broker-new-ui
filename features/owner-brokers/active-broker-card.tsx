@@ -20,6 +20,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { ownerRequestDetailHref } from "@/features/owner-requests/map-owner-request";
 import type { OwnerRequestCardItem } from "@/features/owner-requests/types";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
@@ -66,7 +67,8 @@ export function ActiveBrokerCard({
                         <h2 className="body truncate font-bold text-ink capitalize">
                             {item.brokerName}
                         </h2>
-                        {item.brokerVerified ? (
+                        {/* Verification badge temporarily hidden. */}
+                        {FEATURE_RERA_VERIFICATION && item.brokerVerified ? (
                             <span
                                 className="
                               body-xs shrink-0 rounded-md bg-brand-soft px-1.5 py-0.5 font-semibold

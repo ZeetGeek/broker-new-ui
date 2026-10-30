@@ -232,7 +232,7 @@ export function PriceWithCommission({
                         <button
                             type="button"
                             className={cn(
-                                "inline border-0 bg-transparent p-0 text-start text-inherit",
+                                "inline-block border-0 bg-transparent p-0 text-start text-inherit inline-fit max-inline-full",
                                 tip.plain ? "cursor-default" : "cursor-help",
                             )}
                             aria-label={ariaLabel}

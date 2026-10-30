@@ -74,7 +74,7 @@ export function VisitsIntro({ summary, viewer, isLoading }: VisitsIntroProps) {
     const { fact, meaning } = headlineClauses(summary, viewer);
 
     return (
-        <h1 className="h1">
+        <h1 className="h3">
             <span className="text-ink">{fact}</span>{" "}
             <span className="text-ink-muted">{meaning}</span>
         </h1>

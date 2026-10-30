@@ -26,6 +26,7 @@ type ApiLead = {
     offerAmount?: string | null;
     offerStatus?: string | null;
     closedAmount?: string | null;
+    lostReason?: string | null;
     notes?: string | null;
     stageHistory?: Array<{
         status?: string;
@@ -234,9 +235,12 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
     const ownerName =
         lead.owner?.fullName?.trim() || lead.exclusiveOwner?.fullName?.trim() || "Owner";
     const status = fromApiStage(lead.stage);
+    // Later note edits must not change the displayed completion/loss date.
     const resolved =
         status === "closed" || status === "lost"
-            ? (lead.updatedAt ?? lead.createdAt ?? null)
+            ? ([...(lead.stageHistory ?? [])]
+                  .reverse()
+                  .find((entry) => fromApiStage(entry.status) === status && entry.at)?.at ?? null)
             : null;
 
     return {
@@ -306,7 +310,7 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
         resolvedAt: resolved,
         closedAmountInr:
             status === "closed" && lead.closedAmount != null ? toNumber(lead.closedAmount) : null,
-        lostReason: status === "lost" ? undefined : undefined,
+        lostReason: status === "lost" ? lead.lostReason?.trim() || undefined : undefined,
         offerAmountInr: lead.offerAmount != null ? toNumber(lead.offerAmount) : null,
         offerStatus:
             lead.offerStatus === "pending" ||

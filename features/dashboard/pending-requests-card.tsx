@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
+
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import { DigitPopIn } from "./digit-pop-in";
@@ -54,7 +56,8 @@ function PendingRequestRow({
             <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-inline-0">
                     <p className="body truncate font-semibold text-ink">{brokerLabel}</p>
-                    {request.brokerVerified ? (
+                    {/* Verification badge temporarily hidden. */}
+                    {FEATURE_RERA_VERIFICATION && request.brokerVerified ? (
                         <Badge variant="brand" className="shrink-0">
                             Verified
                         </Badge>

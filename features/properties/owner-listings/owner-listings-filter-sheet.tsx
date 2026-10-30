@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { AppModalHeader } from "@/components/shared/app-modal-header";
 import {
     type AppIcon,
     Armchair,
@@ -41,7 +42,6 @@ import {
     Store,
     Utensils,
     Warehouse,
-    XIcon,
 } from "@/components/shared/icons";
 import { PropertyFilterFields } from "@/components/shared/property-filter-fields";
 import { RangeValuePill } from "@/components/shared/range-value-pill";
@@ -52,13 +52,7 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogClose,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogPopup } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RangeSlider } from "@/components/ui/slider";
 
@@ -860,34 +854,7 @@ export function OwnerListingsFilterSheet({
                     `,
                 )}
             >
-                <DialogHeader
-                    className="
-                      relative shrink-0 flex-row items-center justify-start border-be
-                      border-border-warm bg-surface px-5 py-4 text-start
-                      sm:px-8 sm:py-5
-                    "
-                >
-                    <DialogTitle className="font-display text-lg font-semibold text-ink">
-                        Filters
-                    </DialogTitle>
-                    <DialogClose
-                        className="
-                          absolute inset-e-4 inset-bs-1/2 flex shrink-0 -translate-y-1/2
-                          items-center justify-center rounded-control border border-border-warm
-                          bg-surface text-ink-muted
-                          transition-[background-color,border-color,color,transform] duration-160
-                          block-9 inline-9
-                          hover:border-ink/20 hover:bg-ink/5 hover:text-ink
-                          focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
-                          focus-visible:ring-offset-surface
-                          active:scale-[0.94]
-                          sm:inset-e-5
-                        "
-                    >
-                        <XIcon className="block-4 inline-4" strokeWidth={2} aria-hidden />
-                        <span className="sr-only">Close</span>
-                    </DialogClose>
-                </DialogHeader>
+                <AppModalHeader title="Filters" className="px-5 sm:px-8 sm:py-5" />
 
                 <ScrollArea
                     viewportRef={scrollRef}

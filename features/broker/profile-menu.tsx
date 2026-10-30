@@ -12,6 +12,7 @@ import { PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
 import { DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import { SUPPORT_WHATSAPP_URL } from "@/config/constants";
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type { BrokerVerificationState } from "@/features/broker/map-profile-menu";
 
@@ -51,20 +52,23 @@ function VerificationStatus({ state }: { state: BrokerVerificationState }) {
                 />
                 Broker
             </span>
-            <span
-                className={
-                    verified
-                        ? "inline-flex items-center gap-1 text-brand-text"
-                        : "inline-flex items-center gap-1 text-ink-muted"
-                }
-            >
-                <AccountMenuIcon
-                    name={verified ? "verified" : "unverified"}
-                    aria-hidden
-                    className="shrink-0 block-3.5 inline-3.5"
-                />
-                {verified ? "RERA verified" : pending ? "Under review" : "Not verified"}
-            </span>
+            {/* Verification badge temporarily hidden. */}
+            {FEATURE_RERA_VERIFICATION && (
+                <span
+                    className={
+                        verified
+                            ? "inline-flex items-center gap-1 text-brand-text"
+                            : "inline-flex items-center gap-1 text-ink-muted"
+                    }
+                >
+                    <AccountMenuIcon
+                        name={verified ? "verified" : "unverified"}
+                        aria-hidden
+                        className="shrink-0 block-3.5 inline-3.5"
+                    />
+                    {verified ? "RERA verified" : pending ? "Under review" : "Not verified"}
+                </span>
+            )}
         </div>
     );
 }
@@ -112,7 +116,8 @@ export function BrokerProfileMenu({
                     <span className="flex-1 min-inline-0">Saved properties</span>
                 </DropdownMenuItem>
 
-                {broker.verificationState !== "VERIFIED" ? (
+                {/* Verification & RERA temporarily hidden; retain menu action for later. */}
+                {FEATURE_RERA_VERIFICATION && broker.verificationState !== "VERIFIED" ? (
                     <DropdownMenuItem
                         className={portalProfileMenuItemClass}
                         render={<Link href={VERIFICATION_HREF} />}

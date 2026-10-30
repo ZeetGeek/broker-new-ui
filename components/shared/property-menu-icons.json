@@ -112,7 +112,7 @@
     "lost": {
         "width": 24,
         "height": 24,
-        "body": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0\"></path><path d=\"M5.7 5.7l12.6 12.6\"></path></g>"
+        "body": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0\"></path><path d=\"M10 10l4 4m0 -4l-4 4\"></path></g>"
     },
     "account": {
         "width": 24,

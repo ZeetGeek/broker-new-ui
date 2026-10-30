@@ -186,11 +186,15 @@
     min-inline-size: 0;
     grid-column: 1;
     max-inline-size: 100%;
-    font-size: clamp(24px, 2.2vw, 32px);
+
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.035em;
     white-space: nowrap;
+}
+/* Portal headings use the shared type scale; public property headings retain their existing size. */
+.header h1:not(:global(.h3)) {
+    font-size: clamp(24px, 2.2vw, 32px);
 }
 .header h1 > span:first-child {
     flex-shrink: 0;
@@ -763,6 +767,10 @@
     background: var(--color-surface-muted);
 }
 .mediaPreview figcaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     margin-block-start: 8px;
     font-size: 14px;
     font-weight: 500;
@@ -1175,7 +1183,7 @@
         flex-direction: column;
         gap: 8px;
     }
-    .header h1 {
+    .header h1:not(:global(.h3)) {
         font-size: 22px;
     }
     .headerActions {
@@ -1299,5 +1307,38 @@
     .peopleLoading {
         transition: none;
         animation: none;
+    }
+}
+
+/* Modal variant: keep page-sized controls out of the narrower dialog. */
+.compactCarouselFooter.compactCarouselFooter {
+    inline-size: 100%;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    padding-block-start: 12px;
+}
+.compactCarouselFooter .headerActions {
+    gap: 6px;
+}
+.compactCarouselFooter .circleButton {
+    inline-size: 34px;
+    block-size: 34px;
+    min-inline-size: 34px;
+    min-block-size: 34px;
+}
+.compactCarouselFooter .circleButton svg {
+    inline-size: 16px;
+    block-size: 16px;
+}
+.compactCarouselFooter .carouselCounter {
+    block-size: 32px;
+    min-inline-size: 48px;
+    padding-inline: 10px;
+    font-size: 12px;
+}
+@media (pointer: coarse) {
+    .compactCarouselFooter .circleButton {
+        min-inline-size: 44px;
+        min-block-size: 44px;
     }
 }

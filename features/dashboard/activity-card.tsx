@@ -15,6 +15,8 @@ import {
 } from "@/components/shared/icons";
 import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
+
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { ActivityData, ActivityEventType, ActivityItem } from "./mock-data";
@@ -144,7 +146,9 @@ function DaySection({ section, now }: { section: ActivityDaySection; now: Date }
 
 export function ActivityCard({ data, className, portal = "broker" }: ActivityCardProps) {
     const now = new Date();
-    const items = data.items.slice(0, MAX_ACTIVITY_ROWS);
+    const items = data.items
+        .filter((item) => FEATURE_RERA_VERIFICATION || item.type !== "verification_approved")
+        .slice(0, MAX_ACTIVITY_ROWS);
     const sections = groupActivitiesByDay(items, now);
     const isEmpty = items.length === 0;
 

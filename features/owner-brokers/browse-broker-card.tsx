@@ -10,6 +10,7 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { brokerDisplayName } from "@/features/owner-brokers/browse-brokers-filters";
 
 const MAX_TAGS = 2;
@@ -147,7 +148,8 @@ export function BrowseBrokerCard({
                 <div className="flex-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">
                         <h2 className="body truncate font-bold text-ink capitalize">{name}</h2>
-                        {broker.verified ? (
+                        {/* Verification badge temporarily hidden. */}
+                        {FEATURE_RERA_VERIFICATION && broker.verified ? (
                             <span
                                 className="
                                   body-xs inline-flex shrink-0 items-center gap-0.5 rounded-md
