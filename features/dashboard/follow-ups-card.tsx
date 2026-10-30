@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-
 import { motion } from "motion/react";
 
 import { duration, ease } from "@/lib/motion/tokens";
@@ -17,7 +15,7 @@ import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { FollowUp, FollowUpDue, FollowUpsData } from "./mock-data";
 
 const FOLLOW_UPS_INFO =
-    "Follow-ups to review. Open a client or contact them directly. Completion is not available here yet.";
+    "Follow-ups to review. Contact clients directly. Completion is not available here yet.";
 
 const MAX_ROWS = 4;
 
@@ -112,13 +110,7 @@ function FollowUpRow({ item }: { item: FollowUp }) {
             exit="exit"
             className="flex items-start gap-3 overflow-hidden py-3"
         >
-            <Link
-                href={item.href}
-                className="
-                  flex flex-1 items-start gap-2.5 rounded-inner outline-none min-inline-0
-                  focus-visible:ring-2 focus-visible:ring-ring
-                "
-            >
+            <div className="flex flex-1 items-start gap-2.5 min-inline-0">
                 <div className="flex-1 min-inline-0">
                     <p className="body truncate font-semibold text-ink">{item.title}</p>
                     <p className="body-sm mbs-0.5 truncate text-ink-muted">{item.context}</p>
@@ -127,7 +119,7 @@ function FollowUpRow({ item }: { item: FollowUp }) {
                 <span className={cn("body-sm shrink-0 whitespace-nowrap", DUE_CLASS[item.due])}>
                     {item.dueLabel}
                 </span>
-            </Link>
+            </div>
 
             <ChannelAction item={item} />
         </motion.li>

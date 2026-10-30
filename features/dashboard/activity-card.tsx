@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { formatActivityDayLabel, formatCompactRelative, formatDateIso } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
@@ -124,23 +122,6 @@ function ActivityRow({ item, now }: { item: ActivityItem; now: Date }) {
             <span className="body-xs mbs-0.5 shrink-0 font-medium text-ink-muted">{whenLabel}</span>
         </>
     );
-
-    if (item.href) {
-        return (
-            <li>
-                <Link
-                    href={item.href}
-                    className="
-                      flex items-start gap-3 py-3 outline-none
-                      hover:opacity-90
-                      focus-visible:ring-3 focus-visible:ring-ring/30
-                    "
-                >
-                    {content}
-                </Link>
-            </li>
-        );
-    }
 
     return <li className="flex items-start gap-3 py-3">{content}</li>;
 }
