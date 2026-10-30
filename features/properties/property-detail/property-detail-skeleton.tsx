@@ -19,7 +19,7 @@ export function PropertyDetailSkeleton({ isPublic = false }: { isPublic?: boolea
                                 <Skeleton className="block-4 inline-40" />
                             </div>
                         ) : null}
-                        <h1>
+                        <h1 className="h3">
                             <Skeleton className={styles.skeletonHeading} />
                         </h1>
                         <div className={styles.propertyMeta}>

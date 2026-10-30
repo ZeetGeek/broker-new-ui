@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { PipelinePage } from "@/features/pipeline/pipeline-page";
+import { PipelinePageSkeleton } from "@/features/pipeline/pipeline-skeleton";
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
     return (
-        <Suspense fallback={<p className="body text-ink-muted">Loading Pipeline…</p>}>
+        <Suspense fallback={<PipelinePageSkeleton />}>
             <PipelinePage />
         </Suspense>
     );

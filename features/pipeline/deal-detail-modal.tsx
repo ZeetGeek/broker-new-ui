@@ -20,6 +20,7 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
 
+import { PipelineDetailSkeleton } from "@/features/pipeline/pipeline-skeleton";
 import { DEAL_OUTCOME_META, DEAL_STAGE_META, isOutcome } from "@/features/pipeline/stage-meta";
 import type { DealDetail, DealHistoryEntry } from "@/features/pipeline/types";
 import { isLiveStage } from "@/features/pipeline/types";
@@ -168,7 +169,7 @@ export function DealDetailModal({
             }
         >
             {isLoading && !deal ? (
-                <p className="body-sm py-10 text-center text-ink-muted">Loading lead details…</p>
+                <PipelineDetailSkeleton />
             ) : error && !deal ? (
                 <p role="alert" className="body-sm py-10 text-center text-urgent">
                     {error}

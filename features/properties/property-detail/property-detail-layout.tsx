@@ -203,7 +203,7 @@ export function PropertyDetailLayout({
                         <ArrowLeft aria-hidden />
                         Back to {backLabel.toLowerCase()}
                     </Button>
-                    <h1>
+                    <h1 className="h3">
                         <span>Property details.</span>{" "}
                         <RotatingHeaderSummary
                             key={item.id}

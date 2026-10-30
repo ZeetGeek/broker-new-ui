@@ -78,7 +78,7 @@ export function ReferralsIntro({ summary, isLoading }: ReferralsIntroProps) {
     const { fact, meaning } = headlineClauses(summary);
 
     return (
-        <h1 className="h1">
+        <h1 className="h3">
             <span className="text-ink">{fact}</span>{" "}
             <span className="text-ink-muted">{meaning}</span>
         </h1>

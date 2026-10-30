@@ -51,6 +51,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { FEATURE_PUBLIC_PROFILE_URL } from "@/config/index";
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { NotificationPreferences } from "@/features/profile/notification-preferences";
 import { ProfilePhotoField } from "@/features/profile/profile-photo-field";
 import { ProfileStats } from "@/features/profile/profile-stats";
@@ -369,15 +371,24 @@ export function ProfilePage() {
                     payload.gstin = values.gstin.trim();
                     payload.preferredCities = parseCommaList(values.preferredCities);
                     payload.preferredLocalities = parseCommaList(values.preferredLocalities);
-                    payload.publicSlug = values.publicSlug.trim();
+                    // Preserve the saved URL while its field is hidden.
+                    if (FEATURE_PUBLIC_PROFILE_URL) {
+                        payload.publicSlug = values.publicSlug.trim();
+                    }
                 } else {
                     payload.experienceYears =
                         values.experienceYears.trim() === ""
                             ? null
                             : Number(values.experienceYears);
-                    payload.licenseNumber = values.licenseNumber.trim();
-                    payload.reraState = values.reraState.trim();
-                    payload.publicSlug = values.publicSlug.trim();
+                    // Hidden RERA fields must not overwrite stored values on profile save.
+                    if (FEATURE_RERA_VERIFICATION) {
+                        payload.licenseNumber = values.licenseNumber.trim();
+                        payload.reraState = values.reraState.trim();
+                    }
+                    // Preserve the saved URL while its field is hidden.
+                    if (FEATURE_PUBLIC_PROFILE_URL) {
+                        payload.publicSlug = values.publicSlug.trim();
+                    }
                     payload.serviceAreas = values.serviceAreas
                         .map((area) => area.trim())
                         .filter(Boolean);
@@ -828,30 +839,33 @@ export function ProfilePage() {
                                 />
                             </div>
 
-                            <Controller
-                                name="publicSlug"
-                                control={control}
-                                render={({ field, fieldState }) => (
-                                    <div className="flex flex-col gap-2 min-inline-0">
-                                        <FieldLabel htmlFor="profile-slug">
-                                            Your public page
-                                        </FieldLabel>
-                                        <Input
-                                            {...field}
-                                            id="profile-slug"
-                                            size="lg"
-                                            startIcon={Link2}
-                                            placeholder="desai-estates"
-                                            errorText={fieldState.error?.message}
-                                            helperText={publicSlugHelper(
-                                                field.value,
-                                                profile?.owner?.publicSlug,
-                                                profile?.qr?.publicProfileUrl,
-                                            )}
-                                        />
-                                    </div>
-                                )}
-                            />
+                            {/* Public profile URL temporarily hidden; retain this field for later. */}
+                            {FEATURE_PUBLIC_PROFILE_URL && (
+                                <Controller
+                                    name="publicSlug"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <div className="flex flex-col gap-2 min-inline-0">
+                                            <FieldLabel htmlFor="profile-slug">
+                                                Your public page
+                                            </FieldLabel>
+                                            <Input
+                                                {...field}
+                                                id="profile-slug"
+                                                size="lg"
+                                                startIcon={Link2}
+                                                placeholder="desai-estates"
+                                                errorText={fieldState.error?.message}
+                                                helperText={publicSlugHelper(
+                                                    field.value,
+                                                    profile?.owner?.publicSlug,
+                                                    profile?.qr?.publicProfileUrl,
+                                                )}
+                                            />
+                                        </div>
+                                    )}
+                                />
+                            )}
 
                             <Controller
                                 name="preferredCities"
@@ -939,67 +953,74 @@ export function ProfilePage() {
                                     )}
                                 />
 
-                                <Controller
-                                    name="licenseNumber"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <div className="flex flex-col gap-2 min-inline-0">
-                                            <FieldLabel htmlFor="profile-rera">
-                                                RERA number
-                                            </FieldLabel>
-                                            <Input
-                                                {...field}
-                                                id="profile-rera"
-                                                size="lg"
-                                                startIcon={BadgeCheck}
-                                                placeholder="A52100012345"
-                                                errorText={fieldState.error?.message}
-                                                helperText="Verified brokers get a badge owners can see."
-                                            />
-                                        </div>
-                                    )}
-                                />
+                                {/* RERA verification temporarily hidden; retain UI for later. */}
+                                {FEATURE_RERA_VERIFICATION && (
+                                    <>
+                                        <Controller
+                                            name="licenseNumber"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <div className="flex flex-col gap-2 min-inline-0">
+                                                    <FieldLabel htmlFor="profile-rera">
+                                                        RERA number
+                                                    </FieldLabel>
+                                                    <Input
+                                                        {...field}
+                                                        id="profile-rera"
+                                                        size="lg"
+                                                        startIcon={BadgeCheck}
+                                                        placeholder="A52100012345"
+                                                        errorText={fieldState.error?.message}
+                                                        helperText="Verified brokers get a badge owners can see."
+                                                    />
+                                                </div>
+                                            )}
+                                        />
 
-                                <Controller
-                                    name="reraState"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <div className="flex flex-col gap-2 min-inline-0">
-                                            <FieldLabel htmlFor="profile-rera-state">
-                                                RERA state
-                                            </FieldLabel>
-                                            <Input
-                                                {...field}
-                                                id="profile-rera-state"
-                                                size="lg"
-                                                startIcon={Landmark}
-                                                placeholder="Gujarat"
-                                                errorText={fieldState.error?.message}
-                                            />
-                                        </div>
-                                    )}
-                                />
-
-                                <Controller
-                                    name="publicSlug"
-                                    control={control}
-                                    render={({ field, fieldState }) => (
-                                        <div className="flex flex-col gap-2 min-inline-0">
-                                            <FieldLabel htmlFor="profile-slug">
-                                                Your public page
-                                            </FieldLabel>
-                                            <Input
-                                                {...field}
-                                                id="profile-slug"
-                                                size="lg"
-                                                startIcon={Link2}
-                                                placeholder="rajesh-patel-surat"
-                                                errorText={fieldState.error?.message}
-                                                helperText="Public profile links are not available yet."
-                                            />
-                                        </div>
-                                    )}
-                                />
+                                        <Controller
+                                            name="reraState"
+                                            control={control}
+                                            render={({ field, fieldState }) => (
+                                                <div className="flex flex-col gap-2 min-inline-0">
+                                                    <FieldLabel htmlFor="profile-rera-state">
+                                                        RERA state
+                                                    </FieldLabel>
+                                                    <Input
+                                                        {...field}
+                                                        id="profile-rera-state"
+                                                        size="lg"
+                                                        startIcon={Landmark}
+                                                        placeholder="Gujarat"
+                                                        errorText={fieldState.error?.message}
+                                                    />
+                                                </div>
+                                            )}
+                                        />
+                                    </>
+                                )}
+                                {/* Public profile URL temporarily hidden; retain this field for later. */}
+                                {FEATURE_PUBLIC_PROFILE_URL && (
+                                    <Controller
+                                        name="publicSlug"
+                                        control={control}
+                                        render={({ field, fieldState }) => (
+                                            <div className="flex flex-col gap-2 min-inline-0">
+                                                <FieldLabel htmlFor="profile-slug">
+                                                    Your public page
+                                                </FieldLabel>
+                                                <Input
+                                                    {...field}
+                                                    id="profile-slug"
+                                                    size="lg"
+                                                    startIcon={Link2}
+                                                    placeholder="rajesh-patel-surat"
+                                                    errorText={fieldState.error?.message}
+                                                    helperText="Public profile links are not available yet."
+                                                />
+                                            </div>
+                                        )}
+                                    />
+                                )}
                             </div>
 
                             <Controller

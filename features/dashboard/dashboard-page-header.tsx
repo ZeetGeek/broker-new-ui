@@ -77,7 +77,7 @@ export function DashboardPageHeader({
     return (
         <div className="flex flex-col gap-3">
             <div className="flex items-start justify-between gap-4">
-                <StaggerReveal className="h1 min-inline-0">
+                <StaggerReveal className="h3 min-inline-0">
                     <StaggerLine>
                         <DateDisplay date={now} variant="weekday" className="text-ink" />
                         <span className="text-ink">.</span> <GreetingLoop lines={greetingLines} />

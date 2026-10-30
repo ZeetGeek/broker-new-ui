@@ -11,6 +11,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import type {
     BrowseBrokersExperience,
     BrowseBrokersFilters,
@@ -27,7 +28,10 @@ const EXPERIENCE_OPTIONS: { value: BrowseBrokersExperience; label: string }[] = 
 ];
 
 const SORT_OPTIONS: { value: BrowseBrokersSort; label: string }[] = [
-    { value: "relevance", label: "Verified first" },
+    // Verification sort temporarily hidden.
+    ...(FEATURE_RERA_VERIFICATION
+        ? [{ value: "relevance" as const, label: "Verified first" }]
+        : []),
     { value: "experience", label: "Most experience" },
     { value: "deals", label: "Most deals closed" },
     { value: "name", label: "Name A–Z" },
@@ -117,23 +121,26 @@ export function BrowseBrokersToolbar({
 
     return (
         <div className="flex flex-wrap items-center gap-2">
-            <button
-                type="button"
-                aria-pressed={filters.verifiedOnly}
-                onClick={() => onFiltersChange({ verifiedOnly: !filters.verifiedOnly })}
-                className={cn(
-                    ownerListingsChipClassName(filters.verifiedOnly),
-                    "gap-2",
-                    !filters.verifiedOnly && "text-ink-muted",
-                )}
-            >
-                <BadgeCheck
-                    aria-hidden
-                    className="text-brand block-4 inline-4"
-                    strokeWidth={1.75}
-                />
-                Verified only
-            </button>
+            {/* RERA verification temporarily hidden; retain UI for later. */}
+            {FEATURE_RERA_VERIFICATION && (
+                <button
+                    type="button"
+                    aria-pressed={filters.verifiedOnly}
+                    onClick={() => onFiltersChange({ verifiedOnly: !filters.verifiedOnly })}
+                    className={cn(
+                        ownerListingsChipClassName(filters.verifiedOnly),
+                        "gap-2",
+                        !filters.verifiedOnly && "text-ink-muted",
+                    )}
+                >
+                    <BadgeCheck
+                        aria-hidden
+                        className="text-brand block-4 inline-4"
+                        strokeWidth={1.75}
+                    />
+                    Verified only
+                </button>
+            )}
 
             <ChipMenu
                 icon={Briefcase}

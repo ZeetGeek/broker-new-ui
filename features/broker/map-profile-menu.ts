@@ -1,5 +1,7 @@
 import type { UserProfile } from "@/lib/api/profile";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
+
 import type { BrokerProfileMenuBroker } from "./profile-menu";
 
 export type BrokerVerificationState = "PROFILE_INCOMPLETE" | "PENDING_VERIFICATION" | "VERIFIED";
@@ -20,7 +22,10 @@ export function computeBrokerProfileCompletion(profile: UserProfile | null): num
     const checks = [
         Boolean(profile.fullName?.trim()),
         Boolean(profile.phone?.replace(/\D/g, "").slice(-10).length === 10),
-        Boolean(profile.licenseNumber?.trim() ?? profile.broker?.licenseNumber?.trim()),
+        // Hidden RERA field does not count against profile completion.
+        ...(FEATURE_RERA_VERIFICATION
+            ? [Boolean(profile.licenseNumber?.trim() ?? profile.broker?.licenseNumber?.trim())]
+            : []),
         Boolean((profile.broker?.serviceAreas?.length ?? 0) > 0),
         Boolean(profile.avatarUrl?.trim()),
         Boolean(profile.broker?.bio?.trim()),

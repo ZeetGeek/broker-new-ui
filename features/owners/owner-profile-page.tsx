@@ -26,6 +26,7 @@ import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { OwnerProfileSkeleton } from "@/features/owners/owner-profile-skeleton";
 
 function listingCountLabel(count: number): string {
@@ -138,7 +139,8 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                             <h1 className="h3 truncate tracking-wide text-ink capitalize">
                                 {name}
                             </h1>
-                            {profile.verified ? (
+                            {/* Verification badge temporarily hidden. */}
+                            {FEATURE_RERA_VERIFICATION && profile.verified ? (
                                 <BadgeCheck
                                     aria-label="Verified owner"
                                     className="shrink-0 text-brand block-5 inline-5"

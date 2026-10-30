@@ -20,3 +20,9 @@ export const FEATURE_PLATFORM_OWNER = process.env.NEXT_PUBLIC_FEATURE_PLATFORM_O
 
 export const SITE_URL =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "http://localhost:3000";
+
+/** RERA / identity verification UI is temporarily hidden. Keep implementation for later. */
+export const FEATURE_RERA_VERIFICATION = false;
+
+/** Public profile URL controls are temporarily hidden; keep their code and saved values. */
+export const FEATURE_PUBLIC_PROFILE_URL = false;

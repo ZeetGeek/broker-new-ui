@@ -27,8 +27,12 @@ import {
     PipelineFirstRunEmpty,
     PipelineOutcomeEmpty,
 } from "@/features/pipeline/pipeline-empty";
+import { PipelineIntro } from "@/features/pipeline/pipeline-intro";
 import { PipelineOutcomeTabs } from "@/features/pipeline/pipeline-outcome-tabs";
-import { PipelineBoardSkeleton } from "@/features/pipeline/pipeline-skeleton";
+import {
+    PipelineBoardSkeleton,
+    PipelineHeaderSkeleton,
+} from "@/features/pipeline/pipeline-skeleton";
 import { PipelineToolbar } from "@/features/pipeline/pipeline-toolbar";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { type StageMoveRequest, StageNoteModal } from "@/features/pipeline/stage-note-modal";
@@ -46,6 +50,7 @@ import {
     isLiveStage,
 } from "@/features/pipeline/types";
 import { useStageSwipe } from "@/features/pipeline/use-stage-swipe";
+
 const PIPELINE_BATCH_SIZE = 6;
 
 const DONE_GRID_BREAKPOINTS = [
@@ -630,34 +635,48 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 }));
             }}
         >
-            {filters.stage ? (
-                <div className="body-sm flex flex-wrap items-center gap-3 text-ink-muted">
-                    <span>Showing {DEAL_STAGE_META[filters.stage].label} deals</span>
-                    <button
-                        type="button"
-                        onClick={handleClearSearch}
-                        className="font-medium text-brand underline"
-                    >
-                        Show all stages
-                    </button>
-                </div>
-            ) : null}
-            <PipelineToolbar
-                filters={filters}
-                onPatch={handlePatch}
-                leading={
-                    <div className="max-inline-full min-inline-0">
-                        <PipelineOutcomeTabs
-                            view={view}
-                            counts={{
-                                board: summary?.liveTotal ?? null,
-                                sold: summary?.closedCount ?? null,
-                                lost: summary?.lostCount ?? null,
-                            }}
-                        />
-                    </div>
-                }
-            />
+            {isFirstLoad && isFetching ? (
+                <PipelineHeaderSkeleton />
+            ) : (
+                <>
+                    <PipelineIntro
+                        deals={view === "board" ? liveDeals : outcomeDeals}
+                        view={view}
+                        hasActiveFilters={hasSearch}
+                        isLoading={isFirstLoad && isFetching}
+                        hasError={error != null}
+                    />
+                    {filters.stage ? (
+                        <div className="body-sm flex flex-wrap items-center gap-3 text-ink-muted">
+                            <span>Showing {DEAL_STAGE_META[filters.stage].label} deals</span>
+                            <button
+                                type="button"
+                                onClick={handleClearSearch}
+                                className="font-medium text-brand underline"
+                            >
+                                Show all stages
+                            </button>
+                        </div>
+                    ) : null}
+                    <PipelineToolbar
+                        filters={filters}
+                        onPatch={handlePatch}
+                        leading={
+                            <div className="max-inline-full min-inline-0">
+                                <PipelineOutcomeTabs
+                                    view={view}
+                                    isLoading={isFirstLoad && isFetching}
+                                    counts={{
+                                        board: summary?.liveTotal ?? null,
+                                        sold: summary?.closedCount ?? null,
+                                        lost: summary?.lostCount ?? null,
+                                    }}
+                                />
+                            </div>
+                        }
+                    />
+                </>
+            )}
 
             {error ? (
                 <p role="alert" className="body-sm text-urgent">
@@ -665,9 +684,20 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 </p>
             ) : null}
 
-            <TabsContent key={view} value={view}>
+            <TabsContent key={view} value={view} aria-busy={isFetching}>
+                {isFetching && !isFirstLoad ? (
+                    <span role="status" className="sr-only">
+                        Updating your deals
+                    </span>
+                ) : null}
                 {isFirstLoad && isFetching ? (
-                    <PipelineBoardSkeleton />
+                    <PipelineBoardSkeleton view={view} mobileStage={mobileStage} />
+                ) : isFirstLoad && error ? (
+                    <div className="flex items-center justify-center min-block-80">
+                        <Button variant="outline" onClick={() => setRevision((value) => value + 1)}>
+                            Try loading again
+                        </Button>
+                    </div>
                 ) : isFirstRun && view === "board" ? (
                     <PipelineFirstRunEmpty />
                 ) : view !== "board" ? (
@@ -678,13 +708,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                             <PipelineOutcomeEmpty outcome={view} />
                         )
                     ) : (
-                        <div
-                            className={
-                                isFetching
-                                    ? "opacity-60 transition-opacity duration-160"
-                                    : undefined
-                            }
-                        >
+                        <div>
                             <WindowVirtualGrid
                                 items={outcomeDeals}
                                 getKey={(deal) => deal.id}
@@ -704,11 +728,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         <PipelineDoneEmpty />
                     )
                 ) : (
-                    <div
-                        className={
-                            isFetching ? "opacity-60 transition-opacity duration-160" : undefined
-                        }
-                    >
+                    <div>
                         <PipelineBoard
                             dealsByStage={dealsByStage}
                             allLiveDeals={liveDeals}

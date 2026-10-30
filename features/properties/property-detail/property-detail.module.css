@@ -186,11 +186,15 @@
     min-inline-size: 0;
     grid-column: 1;
     max-inline-size: 100%;
-    font-size: clamp(24px, 2.2vw, 32px);
+
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.035em;
     white-space: nowrap;
+}
+/* Portal headings use the shared type scale; public property headings retain their existing size. */
+.header h1:not(:global(.h3)) {
+    font-size: clamp(24px, 2.2vw, 32px);
 }
 .header h1 > span:first-child {
     flex-shrink: 0;
@@ -1175,7 +1179,7 @@
         flex-direction: column;
         gap: 8px;
     }
-    .header h1 {
+    .header h1:not(:global(.h3)) {
         font-size: 22px;
     }
     .headerActions {

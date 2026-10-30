@@ -16,6 +16,7 @@ import { useLocationOptions } from "@/hooks/use-locations";
 
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
 import {
     ChoiceRadioField,
@@ -322,18 +323,21 @@ export function AddOwnerModal({
                         placeholder="Flat, tower, landmark"
                     />
 
-                    <TextField
-                        label="RERA number"
-                        value={values.reraNumber ?? ""}
-                        onValueChange={(reraNumber) =>
-                            setValue("reraNumber", reraNumber, {
-                                shouldDirty: true,
-                                shouldValidate: true,
-                            })
-                        }
-                        error={errors.reraNumber?.message}
-                        placeholder="Optional"
-                    />
+                    {/* RERA verification temporarily hidden; retain UI for later. */}
+                    {FEATURE_RERA_VERIFICATION && (
+                        <TextField
+                            label="RERA number"
+                            value={values.reraNumber ?? ""}
+                            onValueChange={(reraNumber) =>
+                                setValue("reraNumber", reraNumber, {
+                                    shouldDirty: true,
+                                    shouldValidate: true,
+                                })
+                            }
+                            error={errors.reraNumber?.message}
+                            placeholder="Optional"
+                        />
+                    )}
 
                     <ComboboxField
                         label="Source"

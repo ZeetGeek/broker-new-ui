@@ -11,6 +11,7 @@ import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 
 import { DashboardContactLine, hasPhoneNumber } from "./dashboard-contact-line";
@@ -206,7 +207,8 @@ export function DashboardHeader({
                 <>
                     <DashboardMetaItem>
                         <div className="flex flex-wrap items-center gap-2">
-                            <ReraStatusChip status={reraStatus} />
+                            {/* RERA verification temporarily hidden; retain UI for later. */}
+                            {FEATURE_RERA_VERIFICATION && <ReraStatusChip status={reraStatus} />}
                         </div>
                     </DashboardMetaItem>
 
