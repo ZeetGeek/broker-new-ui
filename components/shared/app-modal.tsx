@@ -6,18 +6,8 @@ import SimpleBar from "simplebar-react";
 
 import { cn } from "@/lib/utils";
 
-import { XIcon } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogClose,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Kbd } from "@/components/ui/kbd";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { Dialog, DialogPopup, DialogTitle } from "@/components/ui/dialog";
 
 import "simplebar-react/dist/simplebar.min.css";
 
@@ -91,7 +81,7 @@ export type AppModalProps = {
 
 /**
  * Product modal shell — same look as compound Dialog:
- * one surface, content-height, no header/footer dividers, quiet close.
+ * one surface, content-height, shared title row and bordered close button.
  */
 export function AppModal({
     open,
@@ -153,64 +143,28 @@ export function AppModal({
                     className,
                 )}
             >
-                <div
-                    className={cn(
-                        "shrink-0 space-y-3 px-(--dialog-pad) pbs-(--dialog-pad) pbe-2",
-                        headerClassName,
-                    )}
-                >
-                    {customHeaderOnly ? (
+                {customHeaderOnly ? (
+                    <div
+                        className={cn(
+                            "shrink-0 px-(--dialog-pad) pbs-(--dialog-pad)",
+                            headerClassName,
+                        )}
+                    >
                         <DialogTitle className={titleClass}>{title}</DialogTitle>
-                    ) : (
-                        <div className="flex items-start justify-between gap-3">
-                            <DialogHeader className="flex-1 gap-1.5 pe-0 text-start min-inline-0">
-                                <DialogTitle className={titleClass}>{title}</DialogTitle>
-                                {showDescription ? (
-                                    <DialogDescription
-                                        className={cn(
-                                            "body-sm text-ink-muted",
-                                            descriptionClassName,
-                                        )}
-                                    >
-                                        {description}
-                                    </DialogDescription>
-                                ) : null}
-                            </DialogHeader>
-
-                            {showCloseButton ? (
-                                <Tooltip>
-                                    <TooltipTrigger
-                                        render={
-                                            <DialogClose
-                                                render={
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="icon-sm"
-                                                        aria-label="Close"
-                                                        className="shrink-0"
-                                                    />
-                                                }
-                                            />
-                                        }
-                                    >
-                                        <XIcon
-                                            className="block-4 inline-4"
-                                            strokeWidth={2}
-                                            aria-hidden
-                                        />
-                                        <span className="sr-only">Close</span>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="inline-start">
-                                        Close
-                                        <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
-                                    </TooltipContent>
-                                </Tooltip>
-                            ) : null}
-                        </div>
-                    )}
-                    {header}
-                </div>
+                        {header}
+                    </div>
+                ) : (
+                    <AppModalHeader
+                        title={title}
+                        description={showDescription ? description : undefined}
+                        showCloseButton={showCloseButton}
+                        titleClassName={titleClass}
+                        descriptionClassName={descriptionClassName}
+                        className={headerClassName}
+                    >
+                        {header ? <div className="mbs-3">{header}</div> : null}
+                    </AppModalHeader>
+                )}
 
                 <div
                     ref={setViewport}
