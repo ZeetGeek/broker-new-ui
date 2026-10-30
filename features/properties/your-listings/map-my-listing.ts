@@ -469,7 +469,7 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.pinCode != null) payload.postalCode = input.pinCode.trim();
     if (input.society != null) payload.society = input.society.trim() || undefined;
     if (input.landmark != null) payload.landmark = input.landmark.trim() || undefined;
-    if (input.unitNumber !== undefined) payload.flatNo = input.unitNumber.trim() || undefined;
+    if (input.unitNumber !== undefined) payload.flatNo = input.unitNumber?.trim() || undefined;
     if (input.areaSqft != null) payload.areaSqft = input.areaSqft;
     if (input.carpetAreaSqft !== undefined) {
         payload.carpetAreaSqft = input.carpetAreaSqft ?? undefined;
@@ -478,7 +478,7 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
         payload.propertyAge = input.propertyAge == null ? undefined : String(input.propertyAge);
     }
     if (input.propertyCondition !== undefined) {
-        payload.propertyCondition = input.propertyCondition.trim() || undefined;
+        payload.propertyCondition = input.propertyCondition?.trim() || undefined;
     }
     if (input.saleAmountInr !== undefined) payload.salePrice = input.saleAmountInr ?? undefined;
     if (input.rentAmountInr !== undefined) payload.monthlyRent = input.rentAmountInr ?? undefined;
@@ -536,6 +536,32 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     }
 
     return payload;
+}
+
+/**
+ * The `photoOrder` an update sends so the server saves photos in the form's
+ * order (cover first): kept URLs as they are, new files as `new:<n>` in upload
+ * order. Undefined when the server's own order (kept photos as stored, new
+ * files last) already matches, or when the new files cannot be matched up.
+ */
+export function photoOrderForUpdate(
+    nextPhotos: string[],
+    existingPhotos: string[],
+    newFileCount: number,
+): string[] | undefined {
+    let nextNew = 0;
+    const order = nextPhotos.map((src) =>
+        existingPhotos.includes(src) ? src : `new:${nextNew++}`,
+    );
+    if (nextNew !== newFileCount) return undefined;
+    const serverDefault = [
+        ...existingPhotos.filter((src) => nextPhotos.includes(src)),
+        ...Array.from({ length: newFileCount }, (_, index) => `new:${index}`),
+    ];
+    const matchesDefault =
+        order.length === serverDefault.length &&
+        order.every((entry, index) => entry === serverDefault[index]);
+    return matchesDefault ? undefined : order;
 }
 
 /** Best-effort: turn public/static photo URLs into uploadable files. */

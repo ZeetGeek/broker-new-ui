@@ -202,14 +202,14 @@ export type CreateMyListingInput = {
     pinCode: string;
     landmark: string;
     society: string;
-    unitNumber?: string;
+    unitNumber?: string | null;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
     areaSqft: number;
     carpetAreaSqft?: number | null;
-    /** Whole years. */
-    propertyAge?: number | null;
-    propertyCondition?: string;
+    /** Whole years from the form; a saved listing may carry the API's text label. */
+    propertyAge?: number | string | null;
+    propertyCondition?: string | null;
     furnishing: MyListingFurnishing;
     imageSrcs: string[];
     /** Newly picked files (blob previews in imageSrcs). */

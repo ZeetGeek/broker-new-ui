@@ -347,6 +347,8 @@ export type CreatePropertyInput = {
 export type UpdatePropertyInput = Partial<Omit<CreatePropertyInput, "photos">> & {
     photos?: File[];
     deletePhotoUrls?: string[];
+    /** Final order, cover first: kept photo URLs and `new:<n>` for the n-th file in `photos`. */
+    photoOrder?: string[];
 };
 
 function appendList(q: URLSearchParams, key: string, values: string[] | undefined) {
@@ -664,6 +666,7 @@ export const propertiesApi = {
         const {
             photos,
             deletePhotoUrls,
+            photoOrder,
             amenities,
             nearbyPlaces,
             suitableFor,
@@ -679,6 +682,7 @@ export const propertiesApi = {
         if (videoUrl !== undefined) form.append("videoUrl", videoUrl);
         if (virtualTourUrl !== undefined) form.append("virtualTourUrl", virtualTourUrl);
         (deletePhotoUrls ?? []).forEach((url) => form.append("deletePhotoUrls", url));
+        (photoOrder ?? []).forEach((entry) => form.append("photoOrder", entry));
         (photos ?? []).forEach((file) => form.append("photos", file));
         return apiFetch<PropertyListing>(`/properties/${id}`, { method: "POST", body: form });
     },
