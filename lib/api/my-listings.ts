@@ -21,6 +21,7 @@ import {
     mapPropertyListingToMyItem,
     myListingInputToCreatePayload,
     myListingInputToUpdatePayload,
+    photoOrderForUpdate,
     propertyTypeToApiFilters,
     urlsToPhotoFiles,
 } from "@/features/properties/your-listings/map-my-listing";
@@ -471,6 +472,7 @@ export const myListingsApi = {
 
         let photos: File[] | undefined;
         let deletePhotoUrls: string[] | undefined;
+        let photoOrder: string[] | undefined;
 
         if (nextPhotos) {
             const keptRemote = nextPhotos.filter((src) => existingPhotos.includes(src));
@@ -482,6 +484,8 @@ export const myListingsApi = {
                           (src) => !existingPhotos.includes(src) && !src.startsWith("blob:"),
                       ),
                   );
+            // Keeps the form's cover and order, e.g. a replaced cover stays first.
+            photoOrder = photoOrderForUpdate(nextPhotos, existingPhotos, photos.length);
         }
 
         const fields = myListingInputToUpdatePayload(input) as UpdatePropertyInput;
@@ -489,6 +493,7 @@ export const myListingsApi = {
             ...fields,
             ...(photos?.length ? { photos } : {}),
             ...(deletePhotoUrls?.length ? { deletePhotoUrls } : {}),
+            ...(photoOrder ? { photoOrder } : {}),
         });
         return mapPropertyListingToMyItem(updated);
     },
