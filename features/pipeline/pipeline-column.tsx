@@ -1,9 +1,14 @@
 "use client";
 
+import { Fragment } from "react";
+
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 import { cn } from "@/lib/utils";
+
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 import { columnValue } from "@/features/pipeline/deal-attention";
 import type { DealCardHandlers } from "@/features/pipeline/deal-card";
@@ -27,6 +32,8 @@ export function PipelineColumn({
     busyId,
     pinnedDealIds,
     isDropTarget,
+    visibleLimit,
+    onLoadMore,
 }: {
     stage: DealStage;
     deals: DealItem[];
@@ -34,11 +41,19 @@ export function PipelineColumn({
     busyId: string | null;
     pinnedDealIds: string[];
     isDropTarget: boolean;
+    visibleLimit: number;
+    onLoadMore: () => void;
 }) {
     const { setNodeRef, isOver } = useDroppable({ id: stage });
     const meta = DEAL_STAGE_META[stage];
     const highlighted = isDropTarget || isOver;
     const totals = columnValue(deals);
+    // Keep pins ahead of the manually ordered normal cards before limiting.
+    const orderedDeals = [...deals].sort(
+        (a, b) => Number(pinnedDealIds.includes(b.id)) - Number(pinnedDealIds.includes(a.id)),
+    );
+    const visibleDeals = orderedDeals.slice(0, visibleLimit);
+    const remaining = deals.length - visibleDeals.length;
 
     return (
         <section
@@ -89,18 +104,29 @@ export function PipelineColumn({
                 // under the pointer instead of the card jumping to its new
                 // slot on drop.
                 <SortableContext
-                    items={deals.map((deal) => deal.id)}
+                    items={visibleDeals.map((deal) => deal.id)}
                     strategy={verticalListSortingStrategy}
                 >
                     <div className="flex flex-col gap-3">
-                        {deals.map((deal) => (
-                            <DraggableDealCard
-                                key={deal.id}
-                                deal={deal}
-                                handlers={handlers}
-                                isBusy={busyId === deal.id}
-                                isPinned={pinnedDealIds.includes(deal.id)}
-                            />
+                        {visibleDeals.map((deal, index) => (
+                            <Fragment key={deal.id}>
+                                {index > 0 &&
+                                pinnedDealIds.includes(visibleDeals[index - 1].id) &&
+                                !pinnedDealIds.includes(deal.id) ? (
+                                    <Separator
+                                        className={cn(
+                                            meta.columnClass,
+                                            "border-bs bg-transparent!",
+                                        )}
+                                    />
+                                ) : null}
+                                <DraggableDealCard
+                                    deal={deal}
+                                    handlers={handlers}
+                                    isBusy={busyId === deal.id}
+                                    isPinned={pinnedDealIds.includes(deal.id)}
+                                />
+                            </Fragment>
                         ))}
                     </div>
                 </SortableContext>
@@ -117,6 +143,20 @@ export function PipelineColumn({
                     {highlighted ? "Drop here" : "No deals here yet."}
                 </p>
             )}
+            {remaining > 0 ? (
+                <Button
+                    variant="outline"
+                    size="md"
+                    className="inline-full"
+                    onClick={onLoadMore}
+                    aria-label={`Load more ${meta.label.toLowerCase()} deals`}
+                >
+                    Load more deals
+                    <span className="body-xs font-normal text-ink-muted">
+                        ({remaining} remaining)
+                    </span>
+                </Button>
+            ) : null}
         </section>
     );
 }

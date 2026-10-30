@@ -1,78 +1,82 @@
 import Link from "next/link";
 
+import { Icon } from "@iconify/react";
+
 import { formatDateShort, formatTimeIn, isSameCalendarDay } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
-import { Calendar, Pencil } from "@/components/shared/icons";
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { DealItem } from "@/features/pipeline/types";
 
 export function VisitStageBlock({ deal }: { deal: DealItem }) {
-    if (!deal.nextVisitAt) {
-        return <p className="body-xs text-ink-muted">No visit booked yet</p>;
-    }
-
-    const when = new Date(deal.nextVisitAt);
-    const now = new Date();
-    const isToday = isSameCalendarDay(when, now);
-    const whenLabel = `${formatDateShort(when)}, ${formatTimeIn(when)}`;
+    const when = deal.nextVisitAt ? new Date(deal.nextVisitAt) : null;
+    const isToday = when != null && isSameCalendarDay(when, new Date());
 
     return (
         <div
             className={cn(
-                "flex items-center justify-between gap-2 rounded-inner",
-                isToday ? "bg-brand-soft px-2 py-1.5" : "bg-transparent",
+                "flex items-center gap-2.5 rounded-inner border border-stage-3-soft/70 px-3 py-1",
+                isToday ? "bg-stage-3-soft/30" : "bg-stage-3-soft/15",
             )}
         >
-            <div className="flex items-center gap-1.5 min-inline-0">
-                <Calendar
+            <span className="flex shrink-0 items-center justify-center text-pending block-4.5 inline-4.5">
+                <Icon
+                    icon={when ? "tabler:calendar-event" : "tabler:calendar"}
                     aria-hidden
-                    className={cn(
-                        "shrink-0 block-3.5 inline-3.5",
-                        isToday ? "text-brand-text" : "text-ink-muted",
-                    )}
-                    strokeWidth={1.75}
+                    className="block-4.5 inline-4.5"
                 />
-                <p
-                    className={cn(
-                        "body-xs truncate",
-                        isToday ? "font-semibold text-brand-text" : "text-ink",
-                    )}
-                >
-                    {whenLabel}
+            </span>
+            <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
+                <p className="body-xs leading-snug font-medium text-ink">
+                    {when
+                        ? `${formatDateShort(when)}, ${formatTimeIn(when)}`
+                        : "No visit booked yet"}
                 </p>
-                {isToday ? (
-                    <span
-                        className="
-                          body-xs shrink-0 rounded-sm bg-surface px-1.5 py-0.5 font-semibold
-                          text-brand-text
-                        "
-                    >
-                        Today
-                    </span>
+                {when ? (
+                    <p className="body-xs leading-relaxed text-pending">
+                        {isToday ? "Site visit today" : "Site visit scheduled"}
+                    </p>
                 ) : null}
             </div>
-
-            <Tooltip>
-                <TooltipTrigger
+            {when ? (
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <Button
+                                variant="link"
+                                size="icon-sm"
+                                nativeButton={false}
+                                className="justify-end px-0 text-pending"
+                                render={
+                                    <Link
+                                        href="/broker/visits"
+                                        aria-label="Reschedule this visit"
+                                        onClick={(event) => event.stopPropagation()}
+                                    />
+                                }
+                            />
+                        }
+                    >
+                        <Icon icon="tabler:pencil" aria-hidden className="block-4 inline-4" />
+                    </TooltipTrigger>
+                    <TooltipContent>Reschedule on Visits</TooltipContent>
+                </Tooltip>
+            ) : (
+                <Button
+                    variant="link"
+                    size="sm"
+                    nativeButton={false}
+                    className="px-0 text-xs text-pending"
                     render={
-                        <Link
-                            href="/broker/visits"
-                            aria-label="Reschedule this visit"
-                            onClick={(event) => event.stopPropagation()}
-                            className="
-                              flex shrink-0 items-center justify-center rounded-sm text-ink
-                              block-control-sm inline-control-sm
-                              hover:bg-surface
-                            "
-                        />
+                        <Link href="/broker/visits" onClick={(event) => event.stopPropagation()} />
                     }
                 >
-                    <Pencil aria-hidden className="block-3.5 inline-3.5" strokeWidth={1.75} />
-                </TooltipTrigger>
-                <TooltipContent>Reschedule on Visits</TooltipContent>
-            </Tooltip>
+                    Visits
+                    <Icon icon="tabler:chevron-right" aria-hidden />
+                </Button>
+            )}
         </div>
     );
 }

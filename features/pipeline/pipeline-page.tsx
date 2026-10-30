@@ -12,6 +12,7 @@ import { StageOperationGate } from "@/lib/properties/stage-operation-gate";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
+import { Button } from "@/components/ui/button";
 
 import { matchesClientFilters } from "@/features/pipeline/deal-attention";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
@@ -44,6 +45,8 @@ import {
     isLiveStage,
 } from "@/features/pipeline/types";
 import { useStageSwipe } from "@/features/pipeline/use-stage-swipe";
+const PIPELINE_BATCH_SIZE = 6;
+
 const DONE_GRID_BREAKPOINTS = [
     { minWidth: 640, columns: 2 },
     { minWidth: 1024, columns: 3 },
@@ -107,6 +110,15 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     const view: DealsView = urlStage || (prefs.view as string) === "done" ? "board" : prefs.view;
     const mobileStage = urlStage ?? prefs.mobileStage;
     const { pinnedDealIds } = prefs;
+    const [stageLimits, setStageLimits] = useState<Record<DealStage, number>>({
+        new: PIPELINE_BATCH_SIZE,
+        contacted: PIPELINE_BATCH_SIZE,
+        visit: PIPELINE_BATCH_SIZE,
+        negotiation: PIPELINE_BATCH_SIZE,
+    });
+    const loadMoreStage = useCallback((stage: DealStage) => {
+        setStageLimits((limits) => ({ ...limits, [stage]: limits[stage] + PIPELINE_BATCH_SIZE }));
+    }, []);
 
     useEffect(() => {
         if (!urlStage) return;
@@ -696,6 +708,8 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         busyId={busyId}
                         pinnedDealIds={pinnedDealIds}
                         onDropDeal={moveOptimistically}
+                        stageLimits={stageLimits}
+                        onLoadMore={loadMoreStage}
                     />
 
                     <div className="flex flex-col gap-4 md:hidden" {...swipe}>
@@ -713,14 +727,35 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         />
 
                         {dealsByStage[mobileStage].length > 0 ? (
-                            <WindowVirtualGrid
-                                items={dealsByStage[mobileStage]}
-                                getKey={(deal) => deal.id}
-                                estimateRowHeight={470}
-                                gap={12}
-                                ariaLabel={`${DEAL_STAGE_META[mobileStage].label} deals`}
-                                renderItem={renderDealCard}
-                            />
+                            <>
+                                <WindowVirtualGrid
+                                    items={dealsByStage[mobileStage].slice(
+                                        0,
+                                        stageLimits[mobileStage],
+                                    )}
+                                    getKey={(deal) => deal.id}
+                                    estimateRowHeight={470}
+                                    gap={12}
+                                    ariaLabel={`${DEAL_STAGE_META[mobileStage].label} deals`}
+                                    renderItem={renderDealCard}
+                                />
+                                {dealsByStage[mobileStage].length > stageLimits[mobileStage] ? (
+                                    <Button
+                                        variant="outline"
+                                        size="md"
+                                        onClick={() => loadMoreStage(mobileStage)}
+                                        aria-label={`Load more ${DEAL_STAGE_META[mobileStage].label.toLowerCase()} deals`}
+                                    >
+                                        Load more deals
+                                        <span className="body-xs font-normal text-ink-muted">
+                                            (
+                                            {dealsByStage[mobileStage].length -
+                                                stageLimits[mobileStage]}{" "}
+                                            remaining)
+                                        </span>
+                                    </Button>
+                                ) : null}
+                            </>
                         ) : (
                             <p
                                 className="

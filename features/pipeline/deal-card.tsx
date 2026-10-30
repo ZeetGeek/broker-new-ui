@@ -1,8 +1,8 @@
 "use client";
 
-import { type KeyboardEvent, useLayoutEffect, useRef, useState } from "react";
+import { type KeyboardEvent, useRef, useState } from "react";
 
-import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
 
@@ -14,10 +14,11 @@ import {
     GripVertical,
     MapPin,
     Pin,
+    PinOff,
     PropertyMenuIcon,
     WhatsAppIcon,
 } from "@/components/shared/icons";
-import { OVERLAY_GLASS_BUTTON_CLASS, OverlayCardActions } from "@/components/shared/overlay-card";
+import { OverlayCardActions } from "@/components/shared/overlay-card";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,13 @@ function runMenuAction(event: { stopPropagation: () => void }, action: () => voi
     action();
 }
 
+const PINNED_HOVER_COLOR: Record<DealStage, string> = {
+    new: "hover:text-stage-1",
+    contacted: "hover:text-stage-2",
+    visit: "hover:text-stage-3",
+    negotiation: "hover:text-stage-4",
+};
+
 const CHROME_ICON_BUTTON_CLASS = `
   flex shrink-0 items-center justify-center rounded-full border border-border-warm bg-surface
   text-ink-muted block-control-sm inline-control-sm
@@ -105,58 +113,6 @@ const DEAL_MENU_ITEM_CLASS = `
 const DEAL_MENU_ICON_CLASS = "menu-stroke-icon shrink-0 text-ink! block-4.5! inline-4.5!";
 const DEAL_MENU_SEPARATOR_CLASS = "mx-1.5 my-1.5 bg-border-warm";
 
-/** Stage-colored dashed border with tunable dash length / gap. */
-function PinnedDashBorder({ toneClass }: { toneClass: string }) {
-    const svgRef = useRef<SVGSVGElement>(null);
-    const [box, setBox] = useState({ w: 0, h: 0 });
-
-    useLayoutEffect(() => {
-        const host = svgRef.current?.parentElement;
-        if (!host) return;
-
-        const sync = () => {
-            setBox({ w: host.clientWidth, h: host.clientHeight });
-        };
-        sync();
-
-        const observer = new ResizeObserver(sync);
-        observer.observe(host);
-        return () => observer.disconnect();
-    }, []);
-
-    // Keep stroke thin; lengthen dashes + gaps vs CSS border-dashed.
-    const stroke = 1.5;
-    const inset = stroke / 2;
-    // Matches --radius-card (20px), inset so the curve sits on the card edge.
-    const radius = Math.max(0, 20 - inset);
-
-    return (
-        <svg
-            ref={svgRef}
-            aria-hidden
-            className={cn("pointer-events-none absolute inset-0 z-1 overflow-visible", toneClass)}
-            width={box.w || "100%"}
-            height={box.h || "100%"}
-        >
-            {box.w > 0 && box.h > 0 ? (
-                <rect
-                    x={inset}
-                    y={inset}
-                    width={box.w - stroke}
-                    height={box.h - stroke}
-                    rx={radius}
-                    ry={radius}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={stroke}
-                    strokeDasharray="7 6"
-                    strokeLinecap="round"
-                />
-            ) : null}
-        </svg>
-    );
-}
-
 /** Single cover thumb — leads the card row so the eye hits photo, then price. */
 function DealCoverImage({ property, muted = false }: { property: DealProperty; muted?: boolean }) {
     const src = property.imageSrc || property.imageSrcs?.[0] || null;
@@ -166,8 +122,8 @@ function DealCoverImage({ property, muted = false }: { property: DealProperty; m
     return (
         <div
             className="
-              relative aspect-square shrink-0 overflow-hidden rounded-[8px] bg-surface-muted
-              inline-24
+              relative aspect-square shrink-0 overflow-hidden rounded-xl border-2 border-white bg-surface-muted shadow-sm
+              inline-20
             "
             aria-hidden={!src}
         >
@@ -176,7 +132,7 @@ function DealCoverImage({ property, muted = false }: { property: DealProperty; m
                     src={src}
                     alt={property.title}
                     fill
-                    sizes="96px"
+                    sizes="80px"
                     className={cn("object-cover", muted && "grayscale-60")}
                 />
             ) : (
@@ -245,13 +201,11 @@ function DealCardMenu({
     deal,
     handlers,
     isBusy,
-    isPinned,
     onMenuAction,
 }: {
     deal: DealItem;
     handlers: DealCardHandlers;
     isBusy: boolean;
-    isPinned: boolean;
     /** Called before every menu action so the card can ignore the click-through. */
     onMenuAction?: () => void;
 }) {
@@ -399,29 +353,6 @@ function DealCardMenu({
                         </DropdownMenuItem>
                     )}
                 </DropdownMenuGroup>
-                <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
-                <DropdownMenuGroup aria-label="Organize this deal">
-                    <DropdownMenuItem
-                        closeOnClick={false}
-                        className={DEAL_MENU_ITEM_CLASS}
-                        onClick={(event) => act(event, () => handlers.onPin(deal.id))}
-                    >
-                        {isPinned ? (
-                            <PropertyMenuIcon
-                                name="unpin"
-                                aria-hidden
-                                className={DEAL_MENU_ICON_CLASS}
-                            />
-                        ) : (
-                            <PropertyMenuIcon
-                                name="pin"
-                                aria-hidden
-                                className={DEAL_MENU_ICON_CLASS}
-                            />
-                        )}
-                        {isPinned ? "Unpin" : "Pin to top"}
-                    </DropdownMenuItem>
-                </DropdownMenuGroup>
                 {live ? (
                     <>
                         <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
@@ -443,9 +374,10 @@ function DealCardMenu({
     );
 }
 
-function StageMiddle({ deal }: { deal: DealItem }) {
+function StageMiddle({ deal, onMakeOffer }: { deal: DealItem; onMakeOffer?: () => void }) {
     if (deal.status === "visit") return <VisitStageBlock deal={deal} />;
-    if (deal.status === "negotiation") return <NegotiationStageBlock deal={deal} />;
+    if (deal.status === "negotiation")
+        return <NegotiationStageBlock deal={deal} onMakeOffer={onMakeOffer} />;
     return null;
 }
 
@@ -501,6 +433,7 @@ export function DealCard({
     }
 
     function onKeyDown(event: KeyboardEvent<HTMLElement>) {
+        if (event.target !== event.currentTarget) return;
         if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
             openCard();
@@ -520,15 +453,12 @@ export function DealCard({
                   transition-[box-shadow,border-color] duration-160 inline-full
                   hover:shadow-lg
                 `,
-                isPinned ? "border-transparent" : "border-border-warm",
+                "border-border-warm",
                 isBusy && "pointer-events-none opacity-60",
                 isDragging && "cursor-grabbing opacity-40",
                 !live && "bg-surface-muted/40",
             )}
         >
-            {isPinned ? (
-                <PinnedDashBorder toneClass={stageMeta?.pinnedBorderClass ?? "text-ink-muted"} />
-            ) : null}
             <div
                 className="
                   pointer-events-none relative z-10 flex flex-1 flex-col gap-2.5 p-4 text-ink
@@ -554,27 +484,56 @@ export function DealCard({
                     </div>
 
                     <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
-                        {isPinned ? (
-                            <span
-                                className={cn(
-                                    `
-                                      flex items-center justify-center rounded-full border
-                                      block-control-sm inline-control-sm
-                                    `,
-                                    stageMeta?.pinnedBadgeClass ??
-                                        "border-border-warm bg-surface-muted text-ink-muted",
-                                )}
-                                aria-label="Pinned to top"
-                                title="Pinned to top"
+                        <Tooltip>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        disabled={isBusy}
+                                        aria-label={
+                                            isPinned ? "Unpin property" : "Pin property to top"
+                                        }
+                                        aria-pressed={isPinned}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            handlers.onPin(deal.id);
+                                        }}
+                                        className={cn(
+                                            CHROME_ICON_BUTTON_CLASS,
+                                            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50",
+                                            isPinned && "bg-current/10 hover:bg-current/20",
+                                            isPinned &&
+                                                (stageMeta?.labelClass ?? "text-brand-text"),
+                                            isPinned &&
+                                                (live
+                                                    ? PINNED_HOVER_COLOR[deal.status as DealStage]
+                                                    : "hover:text-brand-text"),
+                                        )}
+                                    />
+                                }
                             >
-                                <Pin aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
-                            </span>
-                        ) : null}
+                                {isPinned ? (
+                                    <PinOff
+                                        aria-hidden
+                                        className="block-3.5 inline-3.5"
+                                        strokeWidth={1.75}
+                                    />
+                                ) : (
+                                    <Pin
+                                        aria-hidden
+                                        className="block-3.5 inline-3.5"
+                                        strokeWidth={1.75}
+                                    />
+                                )}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                {isPinned ? "Unpin property" : "Pin property to top"}
+                            </TooltipContent>
+                        </Tooltip>
                         <DealCardMenu
                             deal={deal}
                             handlers={handlers}
                             isBusy={isBusy}
-                            isPinned={isPinned}
                             onMenuAction={guardMenuAction}
                         />
                         {dragHandleProps ? (
@@ -602,7 +561,7 @@ export function DealCard({
                         />
                         <h3
                             className="
-                              body truncate font-semibold tracking-wide text-ink capitalize
+                              body truncate font-semibold tracking-wide text-ink capitalize underline-offset-4 group-hover/marquee:underline
                             "
                         >
                             {headline || deal.property.title}
@@ -626,7 +585,12 @@ export function DealCard({
                 </div>
 
                 {deal.status === "visit" || deal.status === "negotiation" ? (
-                    <StageMiddle deal={deal} />
+                    <StageMiddle
+                        deal={deal}
+                        onMakeOffer={
+                            FEATURE_PLATFORM_OWNER ? () => handlers.onMakeOffer(deal.id) : undefined
+                        }
+                    />
                 ) : null}
 
                 <DealPartiesPanel
@@ -640,48 +604,74 @@ export function DealCard({
                     <OverlayCardActions className="flex-col gap-2">
                         {canCall ? (
                             <div className="flex gap-2">
-                                <Button
-                                    size="md"
-                                    variant="outline"
-                                    nativeButton={false}
-                                    className={cn(
-                                        "flex-1 min-inline-0",
-                                        OVERLAY_GLASS_BUTTON_CLASS,
-                                    )}
-                                    render={
-                                        <a
-                                            href={formatWhatsAppUrl(
-                                                deal.buyer.phoneDigits,
-                                                whatsappMessage(deal),
-                                            )}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            onClick={stopCard}
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Button
+                                                size="md"
+                                                variant="outline"
+                                                nativeButton={false}
+                                                className="flex-1 min-inline-0"
+                                                render={
+                                                    <a
+                                                        href={formatWhatsAppUrl(
+                                                            deal.buyer.phoneDigits,
+                                                            whatsappMessage(deal),
+                                                        )}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        aria-label={`WhatsApp client ${deal.buyer.name} at ${formatPhoneIn(deal.buyer.phoneDigits)}`}
+                                                        onClick={stopCard}
+                                                    />
+                                                }
+                                            />
+                                        }
+                                    >
+                                        <WhatsAppIcon
+                                            aria-hidden
+                                            strokeWidth={1.75}
+                                            className="shrink-0 block-4.5 inline-4.5"
                                         />
-                                    }
-                                >
-                                    <WhatsAppIcon className="block-4 inline-4" aria-hidden />
-                                    WhatsApp
-                                </Button>
-                                <Button
-                                    size="md"
-                                    variant="accent"
-                                    nativeButton={!ownerPhone}
-                                    disabled={!ownerPhone}
-                                    className="flex-1 min-inline-0"
-                                    render={
-                                        ownerPhone ? (
-                                            <a href={formatTelUrl(ownerPhone)} onClick={stopCard} />
-                                        ) : undefined
-                                    }
-                                >
-                                    <CallIcon
-                                        aria-hidden
-                                        className="block-4 inline-4"
-                                        strokeWidth={1.75}
-                                    />
-                                    Call Owner
-                                </Button>
+                                        WhatsApp
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        {formatPhoneIn(deal.buyer.phoneDigits)}
+                                    </TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Button
+                                                size="md"
+                                                variant="accent"
+                                                nativeButton={!ownerPhone}
+                                                disabled={!ownerPhone}
+                                                className="flex-1 min-inline-0"
+                                                render={
+                                                    ownerPhone ? (
+                                                        <a
+                                                            href={formatTelUrl(ownerPhone)}
+                                                            aria-label={`Call owner ${deal.owner.name} at ${formatPhoneIn(ownerPhone)}`}
+                                                            onClick={stopCard}
+                                                        />
+                                                    ) : undefined
+                                                }
+                                            />
+                                        }
+                                    >
+                                        <CallIcon
+                                            aria-hidden
+                                            className="shrink-0 block-4.5 inline-4.5"
+                                            strokeWidth={1.75}
+                                        />
+                                        Call Owner
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        {ownerPhone
+                                            ? formatPhoneIn(ownerPhone)
+                                            : "Owner contact unavailable"}
+                                    </TooltipContent>
+                                </Tooltip>
                             </div>
                         ) : null}
                     </OverlayCardActions>
