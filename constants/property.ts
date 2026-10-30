@@ -28,7 +28,6 @@ export const PROPERTY_TYPES = {
         "penthouse",
         "studio",
         "serviced_apartment",
-        "1rk",
         "farm_house",
         "duplex",
     ],
