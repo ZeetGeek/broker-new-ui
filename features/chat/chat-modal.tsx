@@ -12,11 +12,12 @@ import { formatDateShort, isSameCalendarDay } from "@/lib/format/date";
 import { getNotificationSocket } from "@/lib/socket/notifications";
 
 import { AppImage } from "@/components/shared/app-image";
-import { ChevronDown, XIcon } from "@/components/shared/icons";
+import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { ChevronDown } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogClose, DialogPopup, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogPopup } from "@/components/ui/dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ChatComposer } from "@/features/chat/chat-composer";
@@ -58,9 +59,9 @@ function ChatHeader({ peer }: { peer: ChatPeer }) {
             <UserAvatar name={peer.name} imageUrl={peer.avatarUrl} size="md" />
 
             <div className="flex flex-1 flex-col gap-1 min-inline-0">
-                <DialogTitle className="truncate font-display text-lg/tight font-semibold text-ink">
+                <p className="truncate font-display text-lg/tight font-semibold text-ink">
                     {peer.name}
-                </DialogTitle>
+                </p>
                 <div className="flex items-center gap-2 min-inline-0">
                     {typeof peer.isOnline === "boolean" ? (
                         <Badge
@@ -269,33 +270,13 @@ export function ChatModal({
                   inline-[calc(100vw-1.5rem)] max-block-[calc(100dvh-1.5rem)]
                 "
             >
+                <AppModalHeader title={peer?.name ?? "Chat"} />
                 <TooltipProvider>
-                    <header
-                        style={{ paddingBlockStart: "calc(1.25rem + 3px)" }}
-                        className="
-                          relative flex shrink-0 items-center gap-3 border-be border-border-warm p-5
-                          pe-16
-                        "
-                    >
-                        {peer ? <ChatHeader peer={peer} /> : <DialogTitle>Chat</DialogTitle>}
-                        <DialogClose
-                            className="
-                              absolute inset-e-5 inset-bs-1/2 flex shrink-0 -translate-y-1/2
-                              items-center justify-center rounded-control border border-border-warm
-                              bg-surface text-ink-muted
-                              transition-[background-color,border-color,color,transform]
-                              duration-160 block-control-md inline-control-md
-                              hover:border-ink/20 hover:bg-ink/5 hover:text-ink
-                              focus-visible:ring-2 focus-visible:ring-brand
-                              focus-visible:ring-offset-2 focus-visible:ring-offset-surface
-                              active:scale-[0.94]
-                            "
-                            aria-label="Close chat"
-                        >
-                            <XIcon className="block-4 inline-4" strokeWidth={2} aria-hidden />
-                        </DialogClose>
-                    </header>
-
+                    {peer ? (
+                        <div className="px-5 py-3">
+                            <ChatHeader peer={peer} />
+                        </div>
+                    ) : null}
                     <div className="relative flex-1 min-block-0">
                         <SimpleBar
                             className="app-modal-simplebar block-full"

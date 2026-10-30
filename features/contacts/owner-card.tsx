@@ -58,7 +58,7 @@ export function OwnerCard({
     return (
         <article
             onClick={open}
-            className="contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-5 shadow-md transition-[box-shadow,border-color] duration-160 block-full hover:shadow-lg"
+            className="contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-5 shadow-md transition-[box-shadow,border-color] duration-160 min-block-80 block-full hover:shadow-lg"
         >
             <div className="mbe-3 flex items-center justify-between gap-2">
                 <Badge color="emerald">{ownerLabel}</Badge>

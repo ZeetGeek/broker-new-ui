@@ -39,7 +39,11 @@ import {
 } from "@/features/contacts/contact-form-model";
 import { ContactsHeader } from "@/features/contacts/contacts-header";
 import { ContactsIntro } from "@/features/contacts/contacts-intro";
-import { ContactsSkeleton } from "@/features/contacts/contacts-skeleton";
+import {
+    ContactsSkeleton,
+    ContactsHeaderSkeleton,
+    ContactsIntroSkeleton,
+} from "@/features/contacts/contacts-skeleton";
 import { DeleteBuyerDialog } from "@/features/contacts/delete-buyer-dialog";
 import { DeleteOwnerDialog } from "@/features/contacts/delete-owner-dialog";
 import { OwnerCard } from "@/features/contacts/owner-card";
@@ -446,12 +450,16 @@ export function ContactsPage({
     return (
         <TooltipProvider>
             <div className="flex flex-col gap-6">
-                <ContactsIntro
-                    summary={summary}
-                    tab={filters.tab}
-                    isLoading={summaryQuery.isPending}
-                    hasError={summaryQuery.isError}
-                />
+                {summaryQuery.isPending ? (
+                    <ContactsIntroSkeleton />
+                ) : (
+                    <ContactsIntro
+                        summary={summary}
+                        tab={filters.tab}
+                        isLoading={summaryQuery.isPending}
+                        hasError={summaryQuery.isError}
+                    />
+                )}
                 {addDealFlow ? (
                     <div
                         className="
@@ -471,13 +479,17 @@ export function ContactsPage({
                     </div>
                 ) : null}
 
-                <ContactsHeader
-                    filters={filters}
-                    onFiltersChange={setFilters}
-                    summary={summary}
-                    isLoading={summaryQuery.isPending}
-                    onAdd={openAdd}
-                />
+                {summaryQuery.isPending ? (
+                    <ContactsHeaderSkeleton />
+                ) : (
+                    <ContactsHeader
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        summary={summary}
+                        isLoading={summaryQuery.isPending}
+                        onAdd={openAdd}
+                    />
+                )}
 
                 {activeQuery.isError && rows.length === 0 ? (
                     <div role="alert" className="flex flex-col items-start gap-3 py-12">
@@ -543,7 +555,7 @@ export function ContactsPage({
                             <WindowVirtualGrid
                                 items={buyers}
                                 getKey={(buyer) => buyer.id}
-                                estimateRowHeight={320}
+                                estimateRowHeight={384}
                                 gap={24}
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
                                 ariaLabel="Clients"

@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { Skeleton } from "@/components/shared/skeleton";
+import { ContactFormSkeleton } from "@/features/contacts/contacts-skeleton";
 import type { AppIcon } from "@/components/shared/icons";
 import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
 import { currencyIcon } from "@/components/shared/icons";
@@ -176,6 +178,7 @@ export function ComboboxField({
     disabled,
     hint,
     startIcon,
+    loading = false,
 }: {
     label: string;
     value: string;
@@ -189,6 +192,7 @@ export function ComboboxField({
     disabled?: boolean;
     hint?: ReactNode;
     startIcon?: AppIcon;
+    loading?: boolean;
 }) {
     const id = `combobox-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`;
     const flat = groups?.flatMap((group) => group.options) ?? options ?? [];
@@ -197,49 +201,57 @@ export function ComboboxField({
 
     return (
         <FormField label={label} htmlFor={id} required={required} hint={hint}>
-            <Combobox
-                value={value || null}
-                onValueChange={(next) => onChange(next ?? "")}
-                items={itemValues}
-                itemToStringLabel={labelFor}
-                disabled={disabled}
-            >
-                <ComboboxInput
-                    id={id}
-                    startIcon={startIcon}
-                    size="lg"
-                    placeholder={placeholder}
+            {loading ? (
+                <span role="status" aria-label={`Loading ${label.toLowerCase()}`} aria-busy="true">
+                    <Skeleton className="border-2 border-border-warm block-control-xl inline-full" />
+                </span>
+            ) : (
+                <Combobox
+                    value={value || null}
+                    onValueChange={(next) => onChange(next ?? "")}
+                    items={itemValues}
+                    itemToStringLabel={labelFor}
                     disabled={disabled}
-                    errorText={error}
-                    showClear={Boolean(value) && !required && !disabled}
-                />
-                <ComboboxContent>
-                    <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-                    {groups ? (
-                        <ComboboxList>
-                            {groups.flatMap((group, index) => [
-                                index > 0 ? <ComboboxSeparator key={`${group.label}-sep`} /> : null,
-                                <ComboboxGroup key={group.label}>
-                                    <ComboboxLabel>{group.label}</ComboboxLabel>
-                                    {group.options.map((option) => (
-                                        <ComboboxItem key={option.value} value={option.value}>
-                                            {option.label}
-                                        </ComboboxItem>
-                                    ))}
-                                </ComboboxGroup>,
-                            ])}
-                        </ComboboxList>
-                    ) : (
-                        <ComboboxList>
-                            {(item: string) => (
-                                <ComboboxItem key={item} value={item}>
-                                    {labelFor(item)}
-                                </ComboboxItem>
-                            )}
-                        </ComboboxList>
-                    )}
-                </ComboboxContent>
-            </Combobox>
+                >
+                    <ComboboxInput
+                        id={id}
+                        startIcon={startIcon}
+                        size="lg"
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        errorText={error}
+                        showClear={Boolean(value) && !required && !disabled}
+                    />
+                    <ComboboxContent>
+                        <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+                        {groups ? (
+                            <ComboboxList>
+                                {groups.flatMap((group, index) => [
+                                    index > 0 ? (
+                                        <ComboboxSeparator key={`${group.label}-sep`} />
+                                    ) : null,
+                                    <ComboboxGroup key={group.label}>
+                                        <ComboboxLabel>{group.label}</ComboboxLabel>
+                                        {group.options.map((option) => (
+                                            <ComboboxItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </ComboboxItem>
+                                        ))}
+                                    </ComboboxGroup>,
+                                ])}
+                            </ComboboxList>
+                        ) : (
+                            <ComboboxList>
+                                {(item: string) => (
+                                    <ComboboxItem key={item} value={item}>
+                                        {labelFor(item)}
+                                    </ComboboxItem>
+                                )}
+                            </ComboboxList>
+                        )}
+                    </ComboboxContent>
+                </Combobox>
+            )}
         </FormField>
     );
 }
@@ -868,6 +880,9 @@ export function ContactFormDrawer({
     footerError,
     children,
     header,
+    loading = false,
+    skeletonVariant = "buyer",
+    bothBudgets = false,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -883,6 +898,9 @@ export function ContactFormDrawer({
     footerError?: string;
     children: ReactNode;
     header?: ReactNode;
+    loading?: boolean;
+    skeletonVariant?: "buyer" | "owner";
+    bothBudgets?: boolean;
 }) {
     const bodyRef = useRef<HTMLDivElement>(null);
     const [discardOpen, setDiscardOpen] = useState(false);
@@ -907,7 +925,7 @@ export function ContactFormDrawer({
     }
 
     useEffect(() => {
-        if (!open || busy) return;
+        if (!open || busy || loading) return;
         const unsubscribe = tinykeys(window, {
             "$mod+Enter": (event) => {
                 event.preventDefault();
@@ -923,7 +941,7 @@ export function ContactFormDrawer({
                 : {}),
         });
         return () => unsubscribe();
-    }, [busy, open, onPrimary, onSaveAnother]);
+    }, [busy, loading, open, onPrimary, onSaveAnother]);
 
     useEffect(() => {
         if (!footerError || !open) return;
@@ -942,6 +960,7 @@ export function ContactFormDrawer({
         <>
             <AppModal
                 open={open}
+                nativeScroll
                 onOpenChange={requestClose}
                 title={title}
                 description={description}
@@ -973,31 +992,51 @@ export function ContactFormDrawer({
                             </p>
                         ) : null}
                         <div className="flex flex-wrap items-center justify-end gap-2">
-                            {onSaveAnother ? (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={onSaveAnother}
-                                    disabled={busy}
+                            {loading ? (
+                                <div
+                                    role="status"
+                                    aria-label="Loading form actions"
+                                    aria-busy="true"
+                                    className="flex gap-2"
                                 >
-                                    {saveAnotherLabel}
-                                </Button>
-                            ) : null}
-                            <Button
-                                type="button"
-                                variant="accent"
-                                onClick={onPrimary}
-                                disabled={busy}
-                                loading={busy}
-                            >
-                                {primaryLabel}
-                            </Button>
+                                    {onSaveAnother ? (
+                                        <Skeleton className="block-control-md inline-40" />
+                                    ) : null}
+                                    <Skeleton className="block-control-md inline-28" />
+                                </div>
+                            ) : (
+                                <>
+                                    {onSaveAnother ? (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={onSaveAnother}
+                                            disabled={busy}
+                                        >
+                                            {saveAnotherLabel}
+                                        </Button>
+                                    ) : null}
+                                    <Button
+                                        type="button"
+                                        variant="accent"
+                                        onClick={onPrimary}
+                                        disabled={busy}
+                                        loading={busy}
+                                    >
+                                        {primaryLabel}
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </div>
                 }
             >
-                <div ref={bodyRef} className="mx-auto inline-full max-inline-2xl">
-                    {children}
+                <div ref={bodyRef} className="inline-full">
+                    {loading ? (
+                        <ContactFormSkeleton variant={skeletonVariant} bothBudgets={bothBudgets} />
+                    ) : (
+                        children
+                    )}
                 </div>
             </AppModal>
 

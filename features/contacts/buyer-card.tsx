@@ -1,6 +1,8 @@
 ﻿"use client";
 
-import { formatWhatsAppUrl } from "@/lib/format/phone";
+import { parsePhoneNumberFromString } from "libphonenumber-js/max";
+
+import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatBudgetAmount } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
@@ -64,13 +66,13 @@ export function BuyerCard({
         ...new Map(buyer.attachedProperties.map((property) => [property.id, property])).values(),
     ];
     const propertyCount = linkedProperties.length;
-    const canContact = /^[6-9]\d{9}$/.test(buyer.phoneDigits);
+    const canContact = Boolean(parsePhoneNumberFromString(buyer.phoneDigits, "IN")?.isValid());
     const open = () => onOpen(buyer);
 
     return (
         <article
             onClick={open}
-            className="contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-5 shadow-md transition-[box-shadow,border-color] duration-160 block-full hover:shadow-lg"
+            className="contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-5 shadow-md transition-[box-shadow,border-color] duration-160 min-block-96 block-full hover:shadow-lg"
         >
             <div className="mbe-3 flex items-center justify-between gap-2">
                 {intent ? (
@@ -229,7 +231,7 @@ export function BuyerCard({
                             nativeButton={false}
                             render={
                                 <a
-                                    href={`tel:+91${buyer.phoneDigits}`}
+                                    href={formatTelUrl(buyer.phoneDigits)}
                                     aria-label={`Call ${buyer.name}`}
                                 />
                             }

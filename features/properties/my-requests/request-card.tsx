@@ -7,16 +7,11 @@ import { addCollection, Icon } from "@iconify/react/offline";
 import { formatRelativePast } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { Send } from "@/components/shared/icons";
 import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogClose,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogPopup } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { useChat } from "@/features/chat/chat-provider";
@@ -290,11 +285,8 @@ export function RequestCard({
             </DealOverlayCard>
 
             <Dialog open={isTimelineOpen} onOpenChange={setIsTimelineOpen}>
-                <DialogPopup className="gap-0 p-0 max-inline-md">
-                    <DialogHeader className="border-be border-border-warm px-5 py-4">
-                        <DialogTitle>Request timeline</DialogTitle>
-                        <DialogClose />
-                    </DialogHeader>
+                <DialogPopup showCloseButton={false} className="gap-0 p-0 max-inline-md">
+                    <AppModalHeader title="Request timeline" />
                     <div className="px-5 py-4">
                         <p className="body-xs text-ink-muted">
                             Sent {formatRelativePast(new Date(item.requestedAt), new Date())}

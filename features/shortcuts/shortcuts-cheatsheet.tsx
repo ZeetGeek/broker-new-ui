@@ -5,6 +5,7 @@ import type { ComponentType } from "react";
 import { type ShortcutDef, type ShortcutId, SHORTCUTS } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
+import { AppModalHeader } from "@/components/shared/app-modal-header";
 import {
     Bell,
     Building2,
@@ -22,7 +23,7 @@ import {
     UserRound,
     Users,
 } from "@/components/shared/icons";
-import { Dialog, DialogHeader, DialogPopup, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogPopup } from "@/components/ui/dialog";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -120,25 +121,8 @@ export function ShortcutsCheatsheet({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup className="gap-0 p-0 max-inline-sm">
-                <DialogHeader
-                    className="
-                      flex-row items-center gap-3 border-be border-border-warm px-6 py-5 text-start
-                    "
-                >
-                    <span
-                        className="
-                          flex shrink-0 items-center justify-center rounded-control bg-brand-soft
-                          text-brand block-10 inline-10
-                        "
-                    >
-                        <Keyboard aria-hidden className="block-5 inline-5" strokeWidth={1.75} />
-                    </span>
-                    <div className="flex flex-col gap-0.5">
-                        <DialogTitle>Keyboard shortcuts</DialogTitle>
-                        <p className="body-xs text-ink-muted">Fast paths for desktop work</p>
-                    </div>
-                </DialogHeader>
+            <DialogPopup showCloseButton={false} className="gap-0 p-0 max-inline-sm">
+                <AppModalHeader title="Keyboard shortcuts" />
 
                 <ScrollArea className="max-block-96">
                     <div className="flex flex-col gap-4 p-4">

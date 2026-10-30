@@ -1,4 +1,5 @@
 "use client";
+
 import dynamic from "next/dynamic";
 
 import { formatMoneyCompact } from "@/lib/format/money";
@@ -6,6 +7,7 @@ import { VISIT_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
+import { AppModalHeader } from "@/components/shared/app-modal-header";
 import {
     CalendarCheck,
     Check,
@@ -21,13 +23,7 @@ import {
 } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogPopup } from "@/components/ui/dialog";
 
 import { APP_NAME } from "@/config";
 import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
@@ -129,6 +125,7 @@ export function VisitDetailPanel({
             }}
         >
             <DialogPopup
+                showCloseButton={false}
                 className="
                   inset-s-0! inset-bs-auto! inset-be-0! flex translate-0! flex-col gap-0
                   overflow-hidden rounded-b-none p-0 inline-full max-block-[94dvh] max-inline-none
@@ -136,23 +133,12 @@ export function VisitDetailPanel({
                   sm:inline-[520px] sm:max-block-none sm:max-inline-[520px]
                 "
             >
-                <div
-                    className="
-                      mx-auto mbs-2 rounded-full bg-border-warm block-1 inline-12
-                      sm:hidden
-                    "
-                    aria-hidden
-                />
-                <div className={`shrink-0 px-5 py-4 pe-14 ${status.tone}`}>
-                    <DialogHeader className="pe-0 text-start">
-                        <DialogTitle className="h3 font-bold text-current">
-                            {status.label}
-                        </DialogTitle>
-                        <DialogDescription className="text-current/70">
-                            {formatVisitDate(visit.startsAt)} · {formatVisitTime(visit.startsAt)}–
-                            {formatVisitTime(visit.endsAt)}
-                        </DialogDescription>
-                    </DialogHeader>
+                <AppModalHeader title={status.label} />
+                <div className={`shrink-0 px-5 py-4 ${status.tone}`}>
+                    <p className="body-sm text-ink-muted">
+                        {formatVisitDate(visit.startsAt)} · {formatVisitTime(visit.startsAt)}–
+                        {formatVisitTime(visit.endsAt)}
+                    </p>
                     <div className="mbs-3 flex items-center gap-1 text-[10px] font-semibold">
                         <span className="flex items-center gap-1">
                             <Check aria-hidden className="block-3 inline-3" /> Booked

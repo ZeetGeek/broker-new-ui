@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { parseClientMobile } from "@/lib/validation/client-phone";
+
 /**
  * Strips formatting from a typed mobile number. Input arrives with spaces,
  * `+91`, or a leading zero far too often to reject on that alone.
@@ -68,62 +70,69 @@ function budgetPairInOrder(min: string, max: string) {
  * the stored shape happens explicitly on submit instead, using the helpers
  * above.
  */
-export const buyerFormSchema = z
-    .object({
-        name: z.string().trim().min(2, "Enter the client's name").max(80, "Name is too long"),
-        phone: z
-            .string()
-            .refine(
-                (value) => /^[6-9]\d{9}$/.test(normalizeBuyerPhone(value)),
-                "Enter a 10-digit mobile number",
-            ),
-        /** Optional — many buyers in this market have no email at all. */
-        email: z
-            .string()
-            .refine(
-                (value) => value.trim() === "" || z.email().safeParse(value.trim()).success,
-                "Enter a valid email, or leave it blank",
-            ),
-        lookingFor: z.enum(["buy", "rent", "both"]),
-        /** Kept for API payload — not shown on the create form (defaults to any). */
-        propertyKind: buyerPropertyKindSchema,
-        country: z.string().trim().min(1, "Pick a country"),
-        state: z.string().trim().min(1, "Pick a state"),
-        city: z.string().trim().min(1, "Pick a city"),
-        localities: z
-            .string()
-            .refine((value) => parseBuyerLocalities(value).length > 0, "Add at least one area"),
-        /** Empty is allowed — a buyer who has not named a number is still worth saving. */
-        saleBudgetMin: budgetAmount,
-        saleBudgetMax: budgetAmount,
-        rentBudgetMin: budgetAmount,
-        rentBudgetMax: budgetAmount,
-        /** Empty string means "any" — kept for API; not shown on the create form. */
-        bhk: z.string(),
-        source: buyerSourceSchema,
-        note: z.string().max(300, "Note is too long"),
-    })
-    .superRefine((values, ctx) => {
-        if (
-            values.lookingFor !== "rent" &&
-            !budgetPairInOrder(values.saleBudgetMin, values.saleBudgetMax)
-        ) {
-            ctx.addIssue({
-                code: "custom",
-                message: "Highest must be more than lowest",
-                path: ["saleBudgetMax"],
-            });
-        }
-        if (
-            values.lookingFor !== "buy" &&
-            !budgetPairInOrder(values.rentBudgetMin, values.rentBudgetMax)
-        ) {
-            ctx.addIssue({
-                code: "custom",
-                message: "Highest must be more than lowest",
-                path: ["rentBudgetMax"],
-            });
-        }
-    });
+export function createBuyerFormSchema(
+    countryIso2: string | undefined,
+    countryName = "your account’s country",
+) {
+    return z
+        .object({
+            name: z.string().trim().min(2, "Enter the client's name").max(80, "Name is too long"),
+            phone: z
+                .string()
+                .refine(
+                    (value) => Boolean(parseClientMobile(value, countryIso2)),
+                    `Enter a valid ${countryName} mobile number`,
+                ),
+            /** Optional — many buyers in this market have no email at all. */
+            email: z
+                .string()
+                .refine(
+                    (value) => value.trim() === "" || z.email().safeParse(value.trim()).success,
+                    "Enter a valid email, or leave it blank",
+                ),
+            lookingFor: z.enum(["buy", "rent", "both"]),
+            /** Kept for API payload — not shown on the create form (defaults to any). */
+            propertyKind: buyerPropertyKindSchema,
+            country: z.string().trim().min(1, "Pick a country"),
+            state: z.string().trim().min(1, "Pick a state"),
+            city: z.string().trim().min(1, "Pick a city"),
+            localities: z
+                .string()
+                .refine((value) => parseBuyerLocalities(value).length > 0, "Add at least one area"),
+            /** Empty is allowed — a buyer who has not named a number is still worth saving. */
+            saleBudgetMin: budgetAmount,
+            saleBudgetMax: budgetAmount,
+            rentBudgetMin: budgetAmount,
+            rentBudgetMax: budgetAmount,
+            /** Empty string means "any" — kept for API; not shown on the create form. */
+            bhk: z.string(),
+            source: buyerSourceSchema,
+            note: z.string().max(300, "Note is too long"),
+        })
+        .superRefine((values, ctx) => {
+            if (
+                values.lookingFor !== "rent" &&
+                !budgetPairInOrder(values.saleBudgetMin, values.saleBudgetMax)
+            ) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "Highest must be more than lowest",
+                    path: ["saleBudgetMax"],
+                });
+            }
+            if (
+                values.lookingFor !== "buy" &&
+                !budgetPairInOrder(values.rentBudgetMin, values.rentBudgetMax)
+            ) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "Highest must be more than lowest",
+                    path: ["rentBudgetMax"],
+                });
+            }
+        });
+}
+
+export const buyerFormSchema = createBuyerFormSchema("IN", "India");
 
 export type BuyerFormValues = z.infer<typeof buyerFormSchema>;

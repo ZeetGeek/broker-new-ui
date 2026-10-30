@@ -14,16 +14,11 @@ import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 import { useBookSlot } from "@/hooks/use-book-slot";
 
 import { AppImage } from "@/components/shared/app-image";
+import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { CalendarClock, MapPin } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-    Dialog,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogPopup } from "@/components/ui/dialog";
 
 import type {
     BrokerSiteVisit,
@@ -239,6 +234,7 @@ export function BookingDrawer({
             }}
         >
             <DialogPopup
+                showCloseButton={false}
                 className="
                   inset-s-0! inset-bs-auto! inset-be-0! flex translate-0! flex-col gap-0
                   overflow-hidden rounded-b-none p-0 inline-full max-block-[94dvh] max-inline-none
@@ -246,20 +242,11 @@ export function BookingDrawer({
                   sm:inline-[480px] sm:max-block-none sm:max-inline-[480px]
                 "
             >
-                <div
-                    className="
-                      mx-auto mbs-2 rounded-full bg-border-warm block-1 inline-12
-                      sm:hidden
-                    "
-                    aria-hidden
-                />
-                <div className="shrink-0 border-be border-border-warm p-5 pe-14">
-                    <DialogHeader className="pe-0 text-start">
-                        <DialogTitle className="h3 font-bold text-ink">Book this visit</DialogTitle>
-                        <DialogDescription>
-                            One screen. Your client, the timing, and any clash.
-                        </DialogDescription>
-                    </DialogHeader>
+                <AppModalHeader title="Book this visit" />
+                <div className="shrink-0 border-be border-border-warm p-5">
+                    <p className="body-sm text-ink-muted">
+                        One screen. Your client, the timing, and any clash.
+                    </p>
                     <div className="mbs-4 flex gap-3 rounded-inner bg-surface-muted p-3">
                         <div
                             className="

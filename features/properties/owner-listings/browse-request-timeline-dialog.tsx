@@ -8,15 +8,10 @@ import {
     representativeApi,
 } from "@/lib/api/representative";
 
+import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogClose,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogPopup } from "@/components/ui/dialog";
 
 import { buildRepresentationTimeline } from "@/features/properties/my-requests/map-my-request";
 import { RequestTimeline } from "@/features/properties/my-requests/request-timeline";
@@ -71,11 +66,8 @@ export function BrowseRequestTimelineDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup className="gap-0 p-0 max-inline-md">
-                <DialogHeader className="border-be border-border-warm px-5 py-4">
-                    <DialogTitle>Request timeline</DialogTitle>
-                    <DialogClose />
-                </DialogHeader>
+            <DialogPopup showCloseButton={false} className="gap-0 p-0 max-inline-md">
+                <AppModalHeader title="Request timeline" />
                 <div className="px-5 py-4 min-block-44">
                     {ownerName ? (
                         <p className="body-xs text-ink-muted">Waiting on {ownerName}</p>

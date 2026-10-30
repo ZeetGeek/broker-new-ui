@@ -854,7 +854,7 @@ export function OwnerListingsFilterSheet({
                     `,
                 )}
             >
-                <AppModalHeader title="Filters" className="px-5 sm:px-8 sm:py-5" />
+                <AppModalHeader title="Filters" className="px-5 sm:px-8 sm:py-4" />
 
                 <ScrollArea
                     viewportRef={scrollRef}

@@ -8,6 +8,7 @@ function nationalTenDigits(phoneDigits: string): string {
 
 /** Display form `+91 XXXXX XXXXX`. */
 export function formatPhoneIn(phoneDigits: string): string {
+    if (phoneDigits.startsWith("+") && !phoneDigits.startsWith("+91")) return phoneDigits;
     const ten = nationalTenDigits(phoneDigits);
     if (ten.length !== 10) {
         return phoneDigits;
@@ -27,7 +28,7 @@ export function formatMaskedPhoneIn(phoneDigits: string): string {
 /** WhatsApp deep link for an Indian mobile number. */
 export function formatWhatsAppUrl(phoneDigits: string, text?: string): string {
     const digits = phoneDigits.replace(/\D/g, "");
-    const e164 = digits.length === 10 ? `91${digits}` : digits;
+    const e164 = !phoneDigits.startsWith("+") && digits.length === 10 ? `91${digits}` : digits;
     const base = `https://wa.me/${e164}`;
     if (!text?.trim()) return base;
     return `${base}?text=${encodeURIComponent(text.trim())}`;
@@ -35,6 +36,7 @@ export function formatWhatsAppUrl(phoneDigits: string, text?: string): string {
 
 /** `tel:` link for an Indian mobile number. */
 export function formatTelUrl(phoneDigits: string): string {
+    if (phoneDigits.startsWith("+")) return `tel:+${phoneDigits.replace(/\D/g, "")}`;
     const digits = phoneDigits.replace(/\D/g, "");
     const ten =
         digits.length === 12 && digits.startsWith("91") ? digits.slice(2) : digits.slice(-10);
