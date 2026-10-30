@@ -1305,3 +1305,36 @@
         animation: none;
     }
 }
+
+/* Modal variant: keep page-sized controls out of the narrower dialog. */
+.compactCarouselFooter.compactCarouselFooter {
+    inline-size: 100%;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    padding-block-start: 12px;
+}
+.compactCarouselFooter .headerActions {
+    gap: 6px;
+}
+.compactCarouselFooter .circleButton {
+    inline-size: 34px;
+    block-size: 34px;
+    min-inline-size: 34px;
+    min-block-size: 34px;
+}
+.compactCarouselFooter .circleButton svg {
+    inline-size: 16px;
+    block-size: 16px;
+}
+.compactCarouselFooter .carouselCounter {
+    block-size: 32px;
+    min-inline-size: 48px;
+    padding-inline: 10px;
+    font-size: 12px;
+}
+@media (pointer: coarse) {
+    .compactCarouselFooter .circleButton {
+        min-inline-size: 44px;
+        min-block-size: 44px;
+    }
+}

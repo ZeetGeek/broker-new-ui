@@ -840,6 +840,21 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 deal={viewDetail}
                 isLoading={isLoadingView}
                 error={viewError}
+                isBusy={busyId != null || isSavingMove}
+                onStageAction={(status) => {
+                    if (!viewDetail || busyId != null || isSavingMove) return;
+                    requestMove(
+                        viewDetail.id,
+                        status,
+                        status === "closed"
+                            ? "Deal marked as closed"
+                            : `Moved to ${DEAL_STAGE_META[status as DealStage].label.toLowerCase()}`,
+                    );
+                    setViewDealId(null);
+                    setViewDetail(null);
+                    setViewError(null);
+                    if (initialLeadId) router.replace("/broker/pipeline");
+                }}
                 onClose={() => {
                     setViewDealId(null);
                     setViewDetail(null);

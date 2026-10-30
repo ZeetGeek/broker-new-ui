@@ -21,30 +21,23 @@ import {
     BedDouble,
     Bookmark,
     Building2,
-    CalendarCheck,
-    CalendarClock,
     Car,
     Check,
     ChevronRight,
     Clock,
-    Compass,
-    DoorOpen,
     Droplets,
     Dumbbell,
     ExternalLink,
     Fence,
-    HandCoins,
     Hash,
     Home,
     Landmark,
     Layers,
     Map,
     MapPin,
-    Monitor,
     Route,
     Ruler,
     ShieldCheck,
-    Tags,
     Trees,
     Users,
     Zap,
@@ -69,33 +62,11 @@ import {
     listedAgoLabel,
     propertyDetailFieldVisible,
 } from "./property-detail-facts";
+import { PropertyFactsList } from "./property-facts-list";
 import { PropertyGallery } from "./property-gallery";
 
 import styles from "./property-detail.module.css";
 
-const FACT_ICONS: Record<string, AppIcon> = {
-    bhk: BedDouble,
-    bathrooms: Bath,
-    balconies: DoorOpen,
-    area: Ruler,
-    carpetArea: Ruler,
-    category: Tags,
-    type: Building2,
-    furnishing: Armchair,
-    floor: Layers,
-    totalFloors: Layers,
-    facing: Compass,
-    propertyAge: CalendarClock,
-    condition: ShieldCheck,
-    parking: Car,
-    maintenance: HandCoins,
-    available: CalendarCheck,
-    securityDeposit: ShieldCheck,
-    cabins: DoorOpen,
-    meetingRooms: Users,
-    workstations: Monitor,
-    ceilingHeight: Ruler,
-};
 const AMENITY_ICONS: Record<string, AppIcon> = {
     lift: Layers,
     power_backup: Zap,
@@ -111,25 +82,6 @@ const AMENITY_ICONS: Record<string, AppIcon> = {
     ev_charging: Zap,
     parking: Car,
 };
-
-function PropertyFactsList({ facts }: { facts: ReturnType<typeof buildPropertyFacts> }) {
-    return (
-        <dl className={styles.facts}>
-            {facts.map((fact) => {
-                const Icon = FACT_ICONS[fact.key] ?? Building2;
-                return (
-                    <div className={styles.fact} key={fact.key}>
-                        <dt>
-                            <Icon size={22} strokeWidth={1.5} aria-hidden />
-                            <span>{fact.label}</span>
-                        </dt>
-                        <dd>{fact.value}</dd>
-                    </div>
-                );
-            })}
-        </dl>
-    );
-}
 
 export function PropertyDetailLayout({
     item,

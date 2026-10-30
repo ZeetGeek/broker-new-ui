@@ -196,6 +196,7 @@ export function PipelineDetailSkeleton() {
             className="flex flex-col gap-5 motion-safe:animate-pulse"
         >
             <span className="sr-only">Loading deal details</span>
+            <Bone className="rounded-inner block-56 inline-full" />
             <div className="grid grid-cols-2 gap-4" aria-hidden>
                 {Array.from({ length: 4 }, (_, index) => (
                     <div key={index} className="flex flex-col gap-2">

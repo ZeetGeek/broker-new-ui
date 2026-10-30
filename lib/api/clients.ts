@@ -69,6 +69,7 @@ export type ApiClientLead = {
 type ApiClientContact = {
     id: string;
     name: string;
+    avatarUrl?: string | null;
     phone: string;
     email?: string | null;
     clientType?: string | null;
@@ -402,9 +403,11 @@ function mapContact(contact: ApiClientContact): ClientItem {
     return {
         id: contact.id,
         name: contact.name,
+        avatarUrl: contact.avatarUrl?.trim() || undefined,
         phoneDigits: normalized,
         email: contact.email?.trim() || null,
         lookingFor: lookingForFromType(contact.clientType),
+        hasRecordedIntent: ["buyer", "renter", "both"].includes(contact.clientType ?? ""),
         propertyKind: asPropertyKind(contact.propertyKind),
         preferredLocalities: contact.preferredLocalities ?? [],
         country: contact.country?.trim() || null,

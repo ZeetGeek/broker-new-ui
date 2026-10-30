@@ -14,9 +14,11 @@ import styles from "./property-detail.module.css";
 export function PropertyGalleryControls({
     api,
     count,
+    compact = false,
 }: {
     api: UseEmblaCarouselType[1];
     count: number;
+    compact?: boolean;
 }) {
     const [selected, setSelected] = useState(0);
     const [progress, setProgress] = useState(0);
@@ -44,7 +46,7 @@ export function PropertyGalleryControls({
         };
     }, [api, count]);
     return (
-        <div className={styles.carouselFooter}>
+        <div className={`${styles.carouselFooter} ${compact ? styles.compactCarouselFooter : ""}`}>
             <div className={styles.carouselControls}>
                 <div className={styles.headerActions}>
                     <Button

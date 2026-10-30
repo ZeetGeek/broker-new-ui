@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 
 import SimpleBar from "simplebar-react";
 
@@ -65,6 +65,9 @@ function hasVisibleDescription(description: ReactNode | undefined): boolean {
 
 export type AppModalProps = {
     open: boolean;
+    nativeScroll?: boolean;
+    /** Temporarily release modal focus when a nested external lightbox owns it. */
+    modal?: boolean;
     onOpenChange: (open: boolean) => void;
     title: ReactNode;
     /** Optional — omitted or empty string hides the description entirely */
@@ -92,6 +95,8 @@ export type AppModalProps = {
  */
 export function AppModal({
     open,
+    nativeScroll = false,
+    modal = true,
     onOpenChange,
     title,
     description,
@@ -108,6 +113,25 @@ export function AppModal({
     titleClassName,
     descriptionClassName,
 }: AppModalProps) {
+    const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+    const [hasMoreBelow, setHasMoreBelow] = useState(false);
+    useEffect(() => {
+        if (!open || !nativeScroll) return;
+        const content = contentRef.current;
+        if (!viewport || !content) return;
+        const update = () =>
+            setHasMoreBelow(viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 2);
+        const observer = new ResizeObserver(update);
+        observer.observe(viewport);
+        observer.observe(content);
+        viewport.addEventListener("scroll", update, { passive: true });
+        update();
+        return () => {
+            observer.disconnect();
+            viewport.removeEventListener("scroll", update);
+        };
+    }, [open, nativeScroll, viewport]);
     const pad = PAD_VALUE[padding];
     const showDescription = hasVisibleDescription(description);
     const titleClass = cn("font-display text-lg font-medium text-ink", titleClassName);
@@ -116,7 +140,7 @@ export function AppModal({
     const customHeaderOnly = Boolean(header) && titleIsSrOnly && !showDescription;
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
+        <Dialog open={open} modal={modal} onOpenChange={onOpenChange}>
             <DialogPopup
                 showCloseButton={false}
                 style={{ "--dialog-pad": pad } as CSSProperties}
@@ -188,20 +212,35 @@ export function AppModal({
                     {header}
                 </div>
 
-                <div className="relative flex-1 overflow-hidden min-block-0">
-                    <SimpleBar
-                        className="app-modal-simplebar block-full"
-                        style={{ maxHeight: "100%" }}
-                        autoHide
-                    >
-                        <div className={cn("p-(--dialog-pad)", bodyClassName)}>{children}</div>
-                    </SimpleBar>
+                <div
+                    ref={setViewport}
+                    className={cn(
+                        "relative flex-1 min-block-0",
+                        nativeScroll ? "overflow-y-auto overscroll-contain" : "overflow-hidden",
+                    )}
+                >
+                    {nativeScroll ? (
+                        <div ref={contentRef} className={cn("p-(--dialog-pad)", bodyClassName)}>
+                            {children}
+                        </div>
+                    ) : (
+                        <SimpleBar
+                            className="app-modal-simplebar block-full"
+                            style={{ maxHeight: "100%" }}
+                            autoHide
+                        >
+                            <div className={cn("p-(--dialog-pad)", bodyClassName)}>{children}</div>
+                        </SimpleBar>
+                    )}
                 </div>
 
                 {footer ? (
                     <div
                         className={cn(
                             "shrink-0 px-(--dialog-pad) pbs-3 pbe-(--dialog-pad)",
+                            nativeScroll &&
+                                hasMoreBelow &&
+                                "shadow-[0_-6px_16px_-8px_rgb(0_0_0/0.2)]",
                             footerClassName,
                         )}
                     >
