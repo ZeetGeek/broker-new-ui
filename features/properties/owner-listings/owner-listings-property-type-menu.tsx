@@ -2,12 +2,10 @@
 
 import { useMemo, useState } from "react";
 
-import { Layers } from "@/components/shared/icons";
-
-import { propertyTypeOptions, toLabel } from "@/constants/property";
 import { formatPropertyTypeLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
+import { Layers } from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,6 +14,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { propertyTypeOptions, toLabel } from "@/constants/property";
 import {
     OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
     OWNER_LISTINGS_BAND_MENU_SIDE_OFFSET,
@@ -168,7 +167,7 @@ export function OwnerListingsPropertyTypeMenu({
                     className={cn(
                         OWNER_LISTINGS_BAND_MENU_CONTENT_CLASS,
                         OWNER_LISTINGS_BAND_MENU_WIDTH_CLASS,
-                        "max-block-80 overflow-y-auto! overflow-x-hidden! p-0",
+                        "overflow-x-hidden! overflow-y-auto! p-0 max-block-80",
                     )}
                 >
                     <div className="flex flex-col gap-3 px-3 pe-3 pbs-3 pbe-3">

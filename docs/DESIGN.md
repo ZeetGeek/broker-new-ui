@@ -62,8 +62,8 @@ border          #E4DED2   hairline dividers, 1px
 
 ```
 ink             #191C1A   primary text, near-black with a green cast
-ink-muted       #86867E   secondary text, second line of a two-tone headline
-ink-subtle      #A9A79D   captions, metadata, placeholder
+ink-muted       #52564B   secondary text, second line of a two-tone headline
+ink-subtle      #61645A   captions, metadata, placeholder
 ```
 
 ```
@@ -142,8 +142,11 @@ hue.
 
 ### 1.4 Contrast
 
-- Body text meets 4.5:1 against its own surface. `ink-subtle` on `canvas` is the floor —
-  do not go lighter.
+- Functional text, including captions and placeholders, must meet 4.5:1 against its
+  actual surface. The updated `ink-muted`/`ink-subtle` tokens measure 6.27:1/5.03:1
+  on canvas and 7.52:1/6.04:1 on white. Do not reduce text opacity or lighten these
+  tokens without measuring the resulting contrast. Lighter colours are reserved
+  for decorative or disabled content, not information needed to complete a task.
 - `highlight` is only ever used on `brand-deep`, `brand-ink`, or as a fill with
   `highlight-ink` on top. Lime text on cream fails contrast badly.
 - Never encode meaning in colour alone. A verified broker gets a badge with the word
@@ -395,6 +398,12 @@ one form row. `md` (44px) is the desktop tap-target; `lg` (48px) is the mobile
 tap-target floor, so use it on primary mobile actions. Minimum horizontal
 padding 20px. Label is sentence case, verb first, one to three words, no
 terminal punctuation.
+
+On phone layouts (under 768px) and coarse pointers, shared buttons (including icon
+sizes), filter chips, notification tabs, inputs, and select/combobox triggers have
+an actual 44px minimum block/inline size. The desktop compact size tokens stay
+unchanged. Primary mobile actions still use `lg` (48px). Use layout space for the
+target; do not overlap adjacent controls with enlarged invisible hit areas.
 
 **Loading state** uses the `loading` prop on `components/ui/button.tsx`. The spinner is
 `Tailspin` from `ldrs/react` (`import { Tailspin } from 'ldrs/react'`), `size="16"

@@ -1,13 +1,12 @@
 "use client";
 
-import { Building2 } from "@/components/shared/icons";
-
 import { formatRelativePast } from "@/lib/format/date";
 import { formatPrice } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Building2 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
@@ -133,7 +132,7 @@ export function ViewBuyerLeadsModal({
                 <EmptyState
                     icon={Building2}
                     heading="Not on any property yet"
-                    description="Use Attach to link this buyer to an accepted listing."
+                    description="Use Attach to link this client to a property from My Listings."
                 />
             ) : (
                 <VirtualListBox

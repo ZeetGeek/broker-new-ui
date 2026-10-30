@@ -4,19 +4,19 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { Check, Clock, Send, X } from "@/components/shared/icons";
-
 import { brokerRequestsApi } from "@/lib/api/broker-requests";
 import { PREF_KEYS } from "@/lib/prefs/keys";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
+import { Check, Clock, Send, X } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { MyListingsRequestsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import type {
     BrokerRequestItem,
@@ -138,6 +138,11 @@ function RequestRow({
 }
 
 export function MyListingsRequestsPanel() {
+    if (!FEATURE_PLATFORM_OWNER) return null;
+    return <PlatformMyListingsRequestsPanel />;
+}
+
+function PlatformMyListingsRequestsPanel() {
     const [status, setStatus] = usePersistedJson<BrokerRequestStatusFilter>(
         PREF_KEYS.broker.myListings.requestsStatus,
         "all",

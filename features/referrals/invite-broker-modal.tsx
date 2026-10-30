@@ -4,7 +4,6 @@ import { type ReactNode, useCallback, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MessageSquare, Phone, Send, UserRound } from "@/components/shared/icons";
 
 import { buildSmsInviteUrl, buildWhatsAppInviteUrl } from "@/lib/share/referral";
 import {
@@ -17,6 +16,7 @@ import {
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { MessageSquare, Phone, Send, UserRound } from "@/components/shared/icons";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 

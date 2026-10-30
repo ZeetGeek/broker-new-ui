@@ -2,9 +2,9 @@
 
 import type { ReactNode } from "react";
 import * as React from "react";
+
 // Apple sign-in disabled for now — re-enable with the button below.
 // import toast from "react-hot-toast";
-
 import { addCollection, Icon } from "@iconify/react/offline";
 
 import { authApi } from "@/lib/api/auth";
@@ -46,7 +46,7 @@ function SocialButton({
             disabled={disabled}
             className="
               gap-3 border-border-warm bg-surface font-medium text-ink shadow-sm inline-full
-              hover:bg-surface-muted
+              hover:border-gray-300 hover:bg-gray-50 hover:text-ink
             "
         >
             {loading ? null : mark}

@@ -3,12 +3,11 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-import { TriangleAlert } from "@/components/shared/icons";
-
 import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { TriangleAlert } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -113,7 +112,11 @@ export function CancelRepresentationDialog({
             }
         >
             <div className="flex flex-col gap-4">
-                <div className="flex gap-3 rounded-inner border border-danger/30 bg-danger-soft p-3.5">
+                <div
+                    className="
+                  flex gap-3 rounded-inner border border-danger/30 bg-danger-soft p-3.5
+                "
+                >
                     <TriangleAlert
                         aria-hidden
                         className="mbs-0.5 shrink-0 text-danger block-5 inline-5"

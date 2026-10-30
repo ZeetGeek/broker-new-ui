@@ -4,11 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { formatDistanceToNowStrict } from "date-fns";
 
-import type {
-    ApiLeadOption,
-    ApiOwnerOption,
-    ApiPropertyOption,
-} from "@/lib/api/broker-visits-map";
+import type { ApiLeadOption, ApiOwnerOption, ApiPropertyOption } from "@/lib/api/broker-visits-map";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { sortSlotsForBuyer } from "@/lib/visits/grouping";
 
@@ -216,7 +212,8 @@ export function OpenSlotsTab({
             ? [
                   {
                       key: "buyer",
-                      label: buyers.find((buyer) => buyer.id === buyerId)?.name ?? "Selected buyer",
+                      label:
+                          buyers.find((buyer) => buyer.id === buyerId)?.name ?? "Selected client",
                       clear: () => onBuyerChange(undefined),
                   },
               ]
@@ -276,7 +273,7 @@ export function OpenSlotsTab({
                 <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
                     <DialogTitle>Filter open slots</DialogTitle>
                     <DialogDescription>
-                        Pick a buyer or owner to narrow the leads, then pick a lead to see its
+                        Pick a client or owner to narrow the leads, then pick a lead to see its
                         property.
                     </DialogDescription>
                     <DialogClose />

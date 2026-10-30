@@ -7,11 +7,13 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
+import { visibleSavedProperties } from "@/lib/properties/saved-properties";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { mapSavedProperty } from "@/features/properties/saved-properties/map-saved-property";
 import { SavedPropertiesEmpty } from "@/features/properties/saved-properties/saved-properties-empty";
 import { SavedPropertiesGrid } from "@/features/properties/saved-properties/saved-properties-grid";
@@ -44,11 +46,16 @@ export function SavedPropertiesPage() {
     });
 
     const items = useMemo(
-        () => query.items.filter((item) => !hiddenIds[item.id]),
+        () => visibleSavedProperties(query.items).filter((item) => !hiddenIds[item.id]),
         [hiddenIds, query.items],
     );
     const hiddenStillListed = query.items.filter((item) => hiddenIds[item.id]).length;
-    const total = Math.max(0, query.total - hiddenStillListed);
+    // The API total includes hidden owner-pool records. Until paging finishes,
+    // only claim the count of visible inventory already loaded.
+    const total = FEATURE_PLATFORM_OWNER
+        ? Math.max(0, query.total - hiddenStillListed)
+        : items.length;
+    const checkingMore = items.length === 0 && Boolean(query.hasNextPage);
 
     const handleUnsave = useCallback(
         async (id: string) => {
@@ -74,8 +81,9 @@ export function SavedPropertiesPage() {
             <PortalSectionNav>
                 <SavedPropertiesIntro
                     total={total}
-                    isLoading={query.isPending}
-                    hasError={query.isError && query.items.length === 0}
+                    isLoading={query.isPending || (checkingMore && !query.isFetchNextPageError)}
+                    hasError={query.isError && items.length === 0}
+                    hasMore={!FEATURE_PLATFORM_OWNER && Boolean(query.hasNextPage)}
                 />
             </PortalSectionNav>
 
@@ -96,7 +104,7 @@ export function SavedPropertiesPage() {
                 </div>
             ) : query.isPending ? (
                 <SavedPropertiesResultsSkeleton />
-            ) : items.length === 0 ? (
+            ) : items.length === 0 && !query.hasNextPage ? (
                 <SavedPropertiesEmpty />
             ) : (
                 <div
@@ -106,7 +114,16 @@ export function SavedPropertiesPage() {
                             : undefined
                     }
                 >
-                    <SavedPropertiesGrid items={items} onUnsave={(id) => void handleUnsave(id)} />
+                    {checkingMore ? (
+                        <p className="body text-ink" role="status">
+                            Checking more saved properties…
+                        </p>
+                    ) : (
+                        <SavedPropertiesGrid
+                            items={items}
+                            onUnsave={(id) => void handleUnsave(id)}
+                        />
+                    )}
                     <InfiniteListStatus
                         hasNextPage={Boolean(query.hasNextPage)}
                         isFetchingNextPage={query.isFetchingNextPage}

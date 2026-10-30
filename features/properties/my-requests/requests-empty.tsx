@@ -1,10 +1,9 @@
 import Link from "next/link";
 
-import { Inbox } from "@/components/shared/icons";
-
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { Inbox } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 /** No requests at all — point the broker at the pool, not at a filter. */
@@ -13,7 +12,7 @@ export function RequestsFirstRunEmpty() {
         <EmptyState
             icon={Inbox}
             heading="You have not sent any requests yet"
-            description="Browse what owners have listed, then send a request for the ones your buyers want."
+            description="Browse what owners have listed, then send a request for the ones your clients want."
         >
             <Button
                 size="lg"

@@ -1,6 +1,8 @@
-import { addDays, addMonths } from "date-fns";
-
-import { istDateKey } from "@/lib/visits/time";
+import {
+    addVisitDays as addDays,
+    addVisitMonths as addMonths,
+    istDateKey,
+} from "@/lib/visits/time";
 
 import type { SlotListFilters } from "@/features/site-visits/broker/model";
 

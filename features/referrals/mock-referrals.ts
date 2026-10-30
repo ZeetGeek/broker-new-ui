@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/config";
 import {
     type CreditEntry,
     LISTING_COST_CREDITS,
@@ -376,5 +377,5 @@ export const MOCK_CREDIT_LEDGER: CreditEntry[] = [
  */
 export const MOCK_REFERRAL_CODE: ReferralCode = {
     code: "YB-RAJESH",
-    shareUrl: "https://yesbroker.in/join/YB-RAJESH",
+    shareUrl: `${SITE_URL}/join/YB-RAJESH`,
 };

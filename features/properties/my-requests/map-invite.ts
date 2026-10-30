@@ -131,9 +131,7 @@ export function mapRepresentationToInviteItem(
         subtype: rep.propertySubtype ?? null,
         transactionType: rep.propertyTransactionType ?? null,
         saleAmountInr:
-            rep.propertyTransactionType === "rent"
-                ? null
-                : toNumber(rep.propertySalePrice) || null,
+            rep.propertyTransactionType === "rent" ? null : toNumber(rep.propertySalePrice) || null,
         rentAmountInr:
             rep.propertyTransactionType === "sale"
                 ? null

@@ -6,13 +6,13 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock } from "@/components/shared/icons";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useRouter } from "@/lib/navigation";
 import { resetPasswordSchema, type ResetPasswordValues } from "@/lib/validation/auth";
 
+import { PasswordIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -118,7 +118,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
                                     type="password"
                                     autoComplete="new-password"
                                     placeholder="Create a password"
-                                    startIcon={Lock}
+                                    startIcon={PasswordIcon}
                                     value={field.value}
                                     onValueChange={field.onChange}
                                     onBlur={field.onBlur}
@@ -149,7 +149,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
                                     type="password"
                                     autoComplete="new-password"
                                     placeholder="Re-enter password"
-                                    startIcon={Lock}
+                                    startIcon={PasswordIcon}
                                     value={field.value}
                                     onValueChange={field.onChange}
                                     onBlur={field.onBlur}

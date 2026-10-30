@@ -70,7 +70,7 @@ function budgetPairInOrder(min: string, max: string) {
  */
 export const buyerFormSchema = z
     .object({
-        name: z.string().trim().min(2, "Enter the buyer's name").max(80, "Name is too long"),
+        name: z.string().trim().min(2, "Enter the client's name").max(80, "Name is too long"),
         phone: z
             .string()
             .refine(
@@ -104,14 +104,20 @@ export const buyerFormSchema = z
         note: z.string().max(300, "Note is too long"),
     })
     .superRefine((values, ctx) => {
-        if (values.lookingFor !== "rent" && !budgetPairInOrder(values.saleBudgetMin, values.saleBudgetMax)) {
+        if (
+            values.lookingFor !== "rent" &&
+            !budgetPairInOrder(values.saleBudgetMin, values.saleBudgetMax)
+        ) {
             ctx.addIssue({
                 code: "custom",
                 message: "Highest must be more than lowest",
                 path: ["saleBudgetMax"],
             });
         }
-        if (values.lookingFor !== "buy" && !budgetPairInOrder(values.rentBudgetMin, values.rentBudgetMax)) {
+        if (
+            values.lookingFor !== "buy" &&
+            !budgetPairInOrder(values.rentBudgetMin, values.rentBudgetMax)
+        ) {
             ctx.addIssue({
                 code: "custom",
                 message: "Highest must be more than lowest",

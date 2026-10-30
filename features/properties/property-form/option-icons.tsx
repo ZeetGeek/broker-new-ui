@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import type { PropertyCategory, PropertyFormValues, PropertyType } from "@/lib/validation/property";
+
 import {
     Armchair,
     Baby,
@@ -42,8 +44,8 @@ import {
     Plane,
     Repeat,
     Route,
-    Scissors,
     School,
+    Scissors,
     Server,
     Shield,
     Shirt,
@@ -63,8 +65,6 @@ import {
     Wind,
     Zap,
 } from "@/components/shared/icons";
-
-import type { PropertyCategory, PropertyFormValues, PropertyType } from "@/lib/validation/property";
 
 import type { ListingFor } from "@/constants/property";
 

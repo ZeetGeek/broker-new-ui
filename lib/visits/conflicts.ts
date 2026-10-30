@@ -1,11 +1,7 @@
 import { differenceInMinutes } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 
-import {
-    MIN_NOTICE_MINUTES,
-    TRAVEL_BUFFER_MINUTES,
-    VISITS_TIME_ZONE,
-} from "@/lib/visits/constants";
+import { MIN_NOTICE_MINUTES, VISITS_TIME_ZONE } from "@/lib/visits/constants";
 import { istDateKey } from "@/lib/visits/time";
 
 import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
@@ -13,14 +9,7 @@ import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
 export type ConflictResult = {
     level: "clear" | "tight" | "clash";
     reasons: {
-        code:
-            | "OVERLAP"
-            | "BUYER_BUSY"
-            | "TOO_SOON"
-            | "TRAVEL_TIGHT"
-            | "BACK_TO_BACK"
-            | "DAY_OVERLOAD"
-            | "LATE_EVENING";
+        code: "OVERLAP" | "BUYER_BUSY" | "TOO_SOON" | "DAY_OVERLOAD" | "LATE_EVENING";
         message: string;
         visitId?: string;
     }[];
@@ -34,8 +23,6 @@ export type ConflictCandidate = {
     /** When set, ignore an existing visit for this same open slot (retry / stale cache). */
     slotId?: string;
 };
-
-export type TravelEstimates = Record<string, { minutes: number; distanceKm?: number }>;
 
 function overlaps(
     a: { startsAt: string; endsAt: string },
@@ -57,7 +44,6 @@ function isActive(visit: BrokerSiteVisit) {
 export function checkVisitConflicts(
     candidate: ConflictCandidate,
     existingVisits: BrokerSiteVisit[],
-    travelEstimates: TravelEstimates = {},
     now = new Date(),
 ): ConflictResult {
     const reasons: ConflictResult["reasons"] = [];
@@ -81,7 +67,7 @@ export function checkVisitConflicts(
         const buyer = visit.buyers.find((person) => candidate.buyerIds.includes(person.id));
         reasons.push({
             code: "BUYER_BUSY",
-            message: `${buyer?.name ?? "This buyer"} already has a visit at ${visit.property.title}.`,
+            message: `${buyer?.name ?? "This client"} already has a visit at ${visit.property.title}.`,
             visitId: visit.id,
         });
     }
@@ -90,38 +76,6 @@ export function checkVisitConflicts(
             code: "TOO_SOON",
             message: `This starts within ${MIN_NOTICE_MINUTES} minutes. Choose a later time.`,
         });
-    }
-
-    const nonOverlapping = active.filter((visit) => !overlaps(candidate, visit));
-    const neighbours = nonOverlapping
-        .map((visit) => {
-            const before = new Date(visit.endsAt) <= new Date(candidate.startsAt);
-            const gap = before
-                ? differenceInMinutes(new Date(candidate.startsAt), new Date(visit.endsAt))
-                : differenceInMinutes(new Date(visit.startsAt), new Date(candidate.endsAt));
-            return { visit, gap };
-        })
-        .filter(({ gap }) => gap >= 0)
-        .sort((a, b) => a.gap - b.gap)
-        .slice(0, 2);
-
-    for (const { visit, gap } of neighbours) {
-        const estimate = travelEstimates[visit.id];
-        const travel = estimate?.minutes ?? visit.driveMinutes ?? 20;
-        const distance = estimate?.distanceKm ?? visit.distanceKm;
-        const distanceLabel = distance == null ? "" : `${distance.toFixed(1)} km, `;
-        if (gap === 0)
-            reasons.push({
-                code: "BACK_TO_BACK",
-                message: `Back-to-back with ${visit.property.locality}; there is no travel gap.`,
-                visitId: visit.id,
-            });
-        else if (gap < travel + TRAVEL_BUFFER_MINUTES)
-            reasons.push({
-                code: "TRAVEL_TIGHT",
-                message: `Only ${gap} min gap from ${visit.property.locality} visit, ${distanceLabel}drive takes ${travel} min.`,
-                visitId: visit.id,
-            });
     }
 
     if (

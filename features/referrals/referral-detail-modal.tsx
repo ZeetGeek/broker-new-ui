@@ -1,12 +1,11 @@
 "use client";
 
-import { BellRing, MessageSquare } from "@/components/shared/icons";
-
 import { formatDateShort, formatRelativePast } from "@/lib/format/date";
 import { buildWhatsAppInviteUrl } from "@/lib/share/referral";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { BellRing, MessageSquare } from "@/components/shared/icons";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";

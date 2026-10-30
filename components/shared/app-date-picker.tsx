@@ -1,21 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { type DayButton, getDefaultClassNames } from "react-day-picker";
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { addMonths, startOfDay } from "date-fns";
+
+import { formatDateIn, formatDateIso } from "@/lib/format/date";
+import { cn } from "@/lib/utils";
+
 import {
     CalendarIcon,
     ChevronLeftIcon,
     ChevronRightIcon,
     ChevronsUpDownIcon,
 } from "@/components/shared/icons";
-import { type DayButton, getDefaultClassNames } from "react-day-picker";
-
-import { formatDateIn, formatDateIso } from "@/lib/format/date";
-import { cn } from "@/lib/utils";
-
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -135,14 +135,13 @@ function DatePickerDayButton({
             }
             className={cn(
                 `
-                  relative isolate z-10 flex aspect-square items-center justify-center
-                  rounded-full border-0 text-[13px] leading-none font-normal text-ink
-                  shadow-none block-auto inline-full min-inline-(--cell-size)
+                  relative isolate z-10 flex aspect-square items-center justify-center rounded-full
+                  border-0 text-[13px] leading-none font-normal text-ink shadow-none block-auto
+                  inline-full min-inline-(--cell-size)
                   hover:bg-surface-muted hover:text-ink
                   focus-visible:ring-2 focus-visible:ring-ring/30
                   active:translate-y-0 active:scale-100
-                  data-[selected-single=true]:bg-brand
-                  data-[selected-single=true]:font-medium
+                  data-[selected-single=true]:bg-brand data-[selected-single=true]:font-medium
                   data-[selected-single=true]:text-surface
                   data-[selected-single=true]:hover:bg-brand
                   data-[selected-single=true]:hover:text-surface
@@ -225,10 +224,10 @@ function CalendarCaption({
                         </SelectValue>
                         <ChevronsUpDownIcon
                             aria-hidden
-                            className="block-3.5 inline-3.5 text-ink-muted"
+                            className="text-ink-muted block-3.5 inline-3.5"
                         />
                     </SelectTrigger>
-                    <SelectContent align="center" className="min-inline-28 inline-auto">
+                    <SelectContent align="center" className="inline-auto min-inline-28">
                         {MONTH_OPTIONS.map((option) => (
                             <SelectItem
                                 key={option.value}
@@ -260,12 +259,12 @@ function CalendarCaption({
                         <SelectValue />
                         <ChevronsUpDownIcon
                             aria-hidden
-                            className="block-3.5 inline-3.5 text-ink-muted"
+                            className="text-ink-muted block-3.5 inline-3.5"
                         />
                     </SelectTrigger>
                     <SelectContent
                         align="center"
-                        className="max-block-60 min-inline-24 inline-auto"
+                        className="inline-auto max-block-60 min-inline-24"
                     >
                         {years.map((year) => (
                             <SelectItem key={year} value={String(year)}>
@@ -339,21 +338,12 @@ export function AppDatePicker({
         hasValidDate && selected ? selected : new Date(),
     );
 
-    useEffect(() => {
-        if (!value) return;
-        const next = new Date(`${value}T00:00:00`);
-        if (!Number.isNaN(next.getTime())) {
-            setMonth(next);
-        }
-    }, [value]);
-
-    useEffect(() => {
-        if (!open || !value) return;
-        const next = new Date(`${value}T00:00:00`);
-        if (!Number.isNaN(next.getTime())) {
-            setMonth(next);
-        }
-    }, [open, value]);
+    const [calendarInput, setCalendarInput] = useState({ value, open });
+    if (calendarInput.value !== value || calendarInput.open !== open) {
+        const shouldReset = calendarInput.value !== value || open;
+        setCalendarInput({ value, open });
+        if (shouldReset && hasValidDate && selected) setMonth(selected);
+    }
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -413,7 +403,9 @@ export function AppDatePicker({
                             setOpen(false);
                         }}
                         autoFocus
-                        className="bg-transparent p-0 [--cell-radius:9999px] [--cell-size:--spacing(8)]"
+                        className="
+                          bg-transparent p-0 [--cell-radius:9999px] [--cell-size:--spacing(8)]
+                        "
                         classNames={{
                             months: "relative flex flex-col",
                             month: "flex flex-col gap-3 inline-full",

@@ -37,13 +37,10 @@ export function TextSegmentedToggle<T extends string>({
             role="group"
             aria-label={ariaLabel}
             className={cn(
-                `
-                  inline-flex shrink-0 items-center border border-border-warm bg-surface
-                  shadow-sm
-                `,
+                `inline-flex shrink-0 items-center border border-border-warm bg-surface shadow-sm`,
                 isCompact
                     ? "gap-0.5 rounded-control p-0.5"
-                    : "gap-1 rounded-full p-1 min-inline-[10.5rem]",
+                    : "gap-1 rounded-full p-1 min-inline-42",
                 className,
             )}
         >
@@ -70,15 +67,12 @@ export function TextSegmentedToggle<T extends string>({
                             type="button"
                             aria-pressed={isActive}
                             className={cn(
-                                `
-                                  relative z-10 font-semibold transition-[color] duration-160
-                                `,
+                                `relative z-10 font-semibold transition-[color] duration-160`,
                                 isCompact
                                     ? "body-xs rounded-md px-2.5 py-0.5"
                                     : `
-                                      body-sm inline-flex min-inline-[5rem] flex-1
-                                      items-center justify-center rounded-full px-4 py-1.5
-                                      min-block-9
+                                      body-sm inline-flex flex-1 items-center justify-center
+                                      rounded-full px-4 py-1.5 min-block-9 min-inline-20
                                     `,
                                 isActive ? "text-brand-text" : "text-ink-muted hover:text-ink",
                             )}

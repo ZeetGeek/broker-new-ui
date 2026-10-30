@@ -17,8 +17,10 @@ import {
     requestBrowserNotificationPermission,
     showBrowserNotification,
 } from "@/lib/browser-notification";
+import { isLaunchEventVisible } from "@/lib/notifications/launch-policy";
 import { disconnectNotificationSocket, getNotificationSocket } from "@/lib/socket/notifications";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { useAppSelector } from "@/store/hooks";
 
 type NotificationContextValue = {
@@ -60,7 +62,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const markRead = useCallback(
         async (id: string) => {
             if (!accessToken) return;
-            if (!isMockMode()) {
+            if (FEATURE_PLATFORM_OWNER && !isMockMode()) {
                 const socket = getNotificationSocket(accessToken);
                 if (socket.connected) {
                     setItems((prev) =>
@@ -74,14 +76,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             setItems((prev) =>
                 prev.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
             );
-            setUnreadCount(res.unreadCount);
+            if (FEATURE_PLATFORM_OWNER) setUnreadCount(res.unreadCount);
+            else await refresh();
         },
-        [accessToken],
+        [accessToken, refresh],
     );
 
     const markAllRead = useCallback(async () => {
         if (!accessToken) return;
-        if (!isMockMode()) {
+        if (FEATURE_PLATFORM_OWNER && !isMockMode()) {
             const socket = getNotificationSocket(accessToken);
             if (socket.connected) {
                 setItems((prev) => prev.map((item) => ({ ...item, isRead: true })));
@@ -101,7 +104,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             representationId: string,
             status: RepresentationRespondStatus,
         ) => {
-            if (!accessToken) return;
+            if (!accessToken || !FEATURE_PLATFORM_OWNER) return;
 
             const body = { status };
             if (userRole === "owner") {
@@ -157,7 +160,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const socket = getNotificationSocket(accessToken);
 
         const onCreated = (item: NotificationItem) => {
+            if (!isLaunchEventVisible(item)) return;
             setItems((prev) => [item, ...prev.filter((entry) => entry.id !== item.id)]);
+            if (!FEATURE_PLATFORM_OWNER) void refresh();
             showBrowserNotification({
                 id: item.id,
                 title: item.title,
@@ -171,17 +176,24 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         };
 
         const onUnread = ({ unreadCount: count }: { unreadCount: number }) => {
-            setUnreadCount(count);
+            if (FEATURE_PLATFORM_OWNER) setUnreadCount(count);
+            else void refresh();
         };
 
         const onRead = ({ id }: { id: string }) => {
+            if (!FEATURE_PLATFORM_OWNER) void refresh();
             setItems((prev) =>
                 prev.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
             );
         };
 
         const onUpdated = (item: NotificationItem) => {
-            setItems((prev) => prev.map((entry) => (entry.id === item.id ? item : entry)));
+            setItems((prev) =>
+                prev
+                    .filter((entry) => entry.id !== item.id || isLaunchEventVisible(item))
+                    .map((entry) => (entry.id === item.id ? item : entry)),
+            );
+            if (!FEATURE_PLATFORM_OWNER) void refresh();
         };
 
         socket.on("notification.created", onCreated);
@@ -195,7 +207,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             socket.off("notification.unread_count", onUnread);
             socket.off("notification.read", onRead);
         };
-    }, [accessToken, isAuthenticated]);
+    }, [accessToken, isAuthenticated, refresh]);
 
     const value = useMemo(
         () => ({

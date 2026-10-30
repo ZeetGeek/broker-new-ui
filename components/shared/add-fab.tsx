@@ -1,16 +1,15 @@
 "use client";
 
-import { Plus } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { Plus } from "@/components/shared/icons";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 /**
  * The floating "add" action. Sits clear of the mobile bottom nav, pulses once
  * so it reads as the primary thing to do on an otherwise passive list screen.
  *
- * Shared rather than per-feature: Your listings and Contacts both use it, and
+ * Shared rather than per-feature: My Listings and Contacts both use it, and
  * two copies would drift on position, size, or the safe-area inset.
  */
 export function AddFab({

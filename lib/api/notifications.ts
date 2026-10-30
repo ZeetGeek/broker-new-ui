@@ -1,5 +1,8 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import { isLaunchEventVisible } from "@/lib/notifications/launch-policy";
+
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 
 export type NotificationType =
     | "representation_request"
@@ -55,7 +58,7 @@ export type NotificationListResponse = {
     items: NotificationItem[];
 };
 
-export const notificationsApi = {
+const rawNotificationsApi = {
     list(params?: { page?: number; limit?: number; unreadOnly?: boolean }, signal?: AbortSignal) {
         if (isMockMode()) {
             const items: NotificationItem[] = [
@@ -65,7 +68,7 @@ export const notificationsApi = {
                     actorUserId: "owner_1",
                     type: "representation_approved",
                     title: "Jayesh P. approved your request",
-                    body: "1 BHK · Pal · you can add a buyer now",
+                    body: "1 BHK · Pal · you can add a client now",
                     href: "/broker/my-deals",
                     referenceType: "representation",
                     referenceId: "req_042",
@@ -160,5 +163,55 @@ export const notificationsApi = {
         return apiFetch<{ unreadCount: number }>("/notifications/read-all", {
             method: "PATCH",
         });
+    },
+};
+
+export const notificationsApi = {
+    ...rawNotificationsApi,
+    async list(
+        params?: { page?: number; limit?: number; unreadOnly?: boolean },
+        signal?: AbortSignal,
+    ): Promise<NotificationListResponse> {
+        if (FEATURE_PLATFORM_OWNER) return rawNotificationsApi.list(params, signal);
+        // The API count includes deferred events. Scan before paginating so hidden
+        // rows cannot inflate badges or leave an apparently empty first page.
+        const all: NotificationItem[] = [];
+        let page = 1;
+        let result: NotificationListResponse;
+        do {
+            result = await rawNotificationsApi.list({ page, limit: 100 }, signal);
+            all.push(...result.items);
+            page++;
+        } while (
+            !isMockMode() &&
+            result.items.length > 0 &&
+            (page - 1) * result.limit < result.total
+        );
+        const visible = [
+            ...new Map(
+                all.filter((item) => isLaunchEventVisible(item)).map((item) => [item.id, item]),
+            ).values(),
+        ];
+        const selected = params?.unreadOnly ? visible.filter((item) => !item.isRead) : visible;
+        const requestedPage = params?.page ?? 1;
+        const limit = params?.limit ?? 20;
+        return {
+            page: requestedPage,
+            limit,
+            total: selected.length,
+            unreadCount: visible.filter((item) => !item.isRead).length,
+            items: selected.slice((requestedPage - 1) * limit, requestedPage * limit),
+        };
+    },
+    async markAllRead() {
+        if (FEATURE_PLATFORM_OWNER) return rawNotificationsApi.markAllRead();
+        const visible = await this.list({ limit: Number.MAX_SAFE_INTEGER, unreadOnly: true });
+        await Promise.all(visible.items.map((item) => rawNotificationsApi.markRead(item.id)));
+        return { unreadCount: 0 };
+    },
+    async unreadCount() {
+        if (FEATURE_PLATFORM_OWNER) return rawNotificationsApi.unreadCount();
+        const result = await this.list({ limit: 1 });
+        return { unreadCount: result.unreadCount };
     },
 };

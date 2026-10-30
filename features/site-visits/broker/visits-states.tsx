@@ -1,7 +1,6 @@
 "use client";
 
 import { CalendarDays, Clock3, RotateCw, SlidersHorizontal } from "@/components/shared/icons";
-
 import { Button } from "@/components/ui/button";
 
 export function VisitsTabSkeleton({ kind = "visits" }: { kind?: "visits" | "slots" | "requests" }) {
@@ -114,13 +113,13 @@ export function VisitsTabSkeleton({ kind = "visits" }: { kind?: "visits" | "slot
                                         <div className="flex gap-1.5">
                                             <div
                                                 className="
-                                              rounded-lg bg-brand-soft block-6 inline-20
-                                            "
+                                                  rounded-lg bg-brand-soft block-6 inline-20
+                                                "
                                             />
                                             <div
                                                 className="
-                                              rounded-lg bg-surface-muted block-6 inline-28
-                                            "
+                                                  rounded-lg bg-surface-muted block-6 inline-28
+                                                "
                                             />
                                         </div>
                                         <div className="rounded-sm bg-brand-soft block-5 inline-20" />
@@ -145,8 +144,8 @@ export function VisitsTabSkeleton({ kind = "visits" }: { kind?: "visits" | "slot
                                 <div className="flex gap-2 px-4 py-3 sm:px-5">
                                     <div
                                         className="
-                                      rounded-control bg-surface-muted block-8 inline-24
-                                    "
+                                          rounded-control bg-surface-muted block-8 inline-24
+                                        "
                                     />
                                 </div>
                             </div>
@@ -190,8 +189,8 @@ export function VisitsTabSkeleton({ kind = "visits" }: { kind?: "visits" | "slot
                                         <div className="rounded-lg bg-danger-soft block-6 inline-28" />
                                         <div
                                             className="
-                                          rounded-lg bg-surface-muted block-6 inline-24
-                                        "
+                                              rounded-lg bg-surface-muted block-6 inline-24
+                                            "
                                         />
                                     </div>
                                     <div className="rounded-sm bg-brand-soft block-5 inline-20" />
@@ -269,19 +268,19 @@ export function EmptyState({
         "no-exclusive-slots": {
             icon: SlidersHorizontal,
             title: "No open times in this range.",
-            detail: "Booked times stay hidden. Clear filters or pick another week.",
+            detail: "Without filters, only listings with an open client lead show. Booked times stay hidden. Pick a property in Filters or try another week.",
             primary: "Clear filters",
         },
         "no-property-slots": {
             icon: Clock3,
             title: "This owner has not published any times.",
-            detail: "Ask for one that suits your buyer.",
+            detail: "Ask for one that suits your client.",
             primary: "Request another time",
         },
         "no-requests": {
             icon: Clock3,
             title: "No time requests.",
-            detail: "Ask an owner for a time that suits your buyer.",
+            detail: "Ask an owner for a time that suits your client.",
             primary: "Request another time",
         },
         "slots-error": {

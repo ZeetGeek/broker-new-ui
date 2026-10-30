@@ -1,5 +1,3 @@
-import { ApiError, apiFetch } from "@/lib/api/client";
-import { clientsApi } from "@/lib/api/clients";
 import {
     type ApiBrokerOpenSlotItem,
     type ApiLeadOption,
@@ -7,12 +5,14 @@ import {
     type ApiPropertyOption,
     type ApiShowing,
     type ApiVisitSlot,
-    type Paged,
     mapBrokerOpenSlotItem,
     mapClientToPerson,
     mapShowingToTimeRequest,
     mapShowingToVisit,
+    type Paged,
 } from "@/lib/api/broker-visits-map";
+import { ApiError, apiFetch } from "@/lib/api/client";
+import { clientsApi } from "@/lib/api/clients";
 import { buildVisitSummary } from "@/lib/visits/summary";
 
 import type {
@@ -142,6 +142,8 @@ function filterVisits(visits: BrokerSiteVisit[], filters: VisitListFilters): Bro
 
 function buildOpenSlotsQuery(filters: SlotListFilters): string {
     const params = new URLSearchParams();
+    if (filters.page != null) params.set("page", String(filters.page));
+    if (filters.limit != null) params.set("limit", String(filters.limit));
     if (filters.propertyId) params.set("propertyId", filters.propertyId);
     else if (filters.propertyIds?.length === 1) params.set("propertyId", filters.propertyIds[0]!);
     if (filters.from) params.set("from", filters.from.slice(0, 10));
@@ -155,17 +157,21 @@ function buildOpenSlotsQuery(filters: SlotListFilters): string {
 
 async function resolveLeadIdForBuyer(propertyId: string, clientId: string): Promise<string> {
     await clientsApi.setPropertyClients(propertyId, [clientId]);
-    const params = new URLSearchParams({ propertyId, page: "1", limit: "100" });
-    const response = await requestData<{
-        items: Array<{ id: string; clientId?: string | null; client?: { id: string } | null }>;
-    }>(`/clients/leads?${params}`);
-    const lead = (response.items ?? []).find(
-        (item) => item.clientId === clientId || item.client?.id === clientId,
-    );
-    if (!lead) {
-        throw new Error("Could not link this buyer to the property. Try again from Contacts.");
+    let page = 1;
+    let totalPages = 1;
+    while (page <= totalPages) {
+        const params = new URLSearchParams({ propertyId, page: String(page), limit: "100" });
+        const response = await requestData<
+            Paged<{ id: string; clientId?: string | null; client?: { id: string } | null }>
+        >(`/clients/leads?${params}`);
+        const lead = (response.items ?? []).find(
+            (item) => item.clientId === clientId || item.client?.id === clientId,
+        );
+        if (lead) return lead.id;
+        totalPages = Math.max(1, response.totalPages ?? 1);
+        page += 1;
     }
-    return lead.id;
+    throw new Error("Could not link this client to the property. Try again from Clients.");
 }
 
 export class SlotTakenError extends Error {
@@ -322,8 +328,9 @@ export const brokerVisitsApi = {
             };
         }
 
+        if (input.buyers.length !== 1) throw new Error("Choose exactly one client per visit.");
         const primaryBuyer = input.buyers[0];
-        if (!primaryBuyer) throw new Error("Select a buyer to book this visit.");
+        if (!primaryBuyer) throw new Error("Select a client to book this visit.");
 
         try {
             const leadId = await resolveLeadIdForBuyer(input.item.property.id, primaryBuyer.id);
@@ -383,8 +390,8 @@ export const brokerVisitsApi = {
                     body && typeof body === "object" && "code" in body
                         ? (body as { code?: unknown }).code
                         : undefined;
-                // Lead/time conflict must surface as the API message, not "slot taken".
-                if (code === "LEAD_TIME_CONFLICT") {
+                // Buyer or broker time conflicts must surface as the API message, not "slot taken".
+                if (code === "LEAD_TIME_CONFLICT" || code === "BROKER_TIME_CONFLICT") {
                     throw error;
                 }
                 const message = error.message.toLowerCase();
@@ -482,13 +489,17 @@ export const brokerVisitsApi = {
         visit: BrokerSiteVisit,
         outcome: NonNullable<BrokerSiteVisit["outcome"]>,
     ): Promise<OutcomeTransactionResult> {
+        if (!USE_MOCK_VISITS) {
+            throw new Error(
+                "Saving visit outcomes is not available yet. Manage client notes and stages in Pipeline.",
+            );
+        }
         return {
             id: visit.id,
             outcome,
             buyerIds: visit.buyerIds,
             pipelineUpdated: false,
-            followUpCreated:
-                outcome.nextStep === "schedule_followup" && Boolean(outcome.followUpAt),
+            followUpCreated: false,
         };
     },
 
@@ -516,5 +527,14 @@ export const brokerVisitsApi = {
         }
         const clients = await clientsApi.list();
         return clients.map(mapClientToPerson);
+    },
+
+    /** Buyer ids that can be booked for this property: those with an open lead on it. */
+    async listBookableBuyerIds(propertyId: string): Promise<string[]> {
+        if (USE_MOCK_VISITS) {
+            const { MOCK_BUYERS } = await import("@/mocks/visits");
+            return MOCK_BUYERS.map((buyer) => buyer.id);
+        }
+        return clientsApi.listOpenLeadClientIds(propertyId);
     },
 };

@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { currencyIcon } from "@/components/shared/icons";
-
 import { formatBudgetLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
+import { useMarketCurrency } from "@/hooks/use-market";
 
+import { currencyIcon } from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -26,7 +26,6 @@ import {
     getBudgetSteps,
     isBudgetInSteps,
 } from "@/features/properties/owner-listings/owner-listings-budget-presets";
-import { useMarketCurrency } from "@/hooks/use-market";
 import type { OwnerListingTransactionType } from "@/features/properties/owner-listings/types";
 
 export type OwnerListingsBudgetMenuProps = {

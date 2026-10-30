@@ -4,12 +4,12 @@ import { type MouseEvent, type PointerEvent, useEffect, useRef, useState } from 
 import Link from "next/link";
 
 import useEmblaCarousel from "embla-carousel-react";
-import { Building2, ChevronLeft, ChevronRight } from "@/components/shared/icons";
 
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
+import { Building2, ChevronLeft, ChevronRight } from "@/components/shared/icons";
 
 /**
  * Same glass circle as the photo menu button. Hidden until the photo is hovered.
@@ -116,8 +116,8 @@ export function OverlayCardPhotos({
         return (
             <div
                 className="
-                  flex flex-col items-center justify-center gap-2 bg-surface-muted px-4
-                  text-center block-full inline-full
+                  flex flex-col items-center justify-center gap-2 bg-surface-muted px-4 text-center
+                  block-full inline-full
                 "
             >
                 <Building2
@@ -131,7 +131,7 @@ export function OverlayCardPhotos({
     }
 
     return (
-        <HoverScaleRoot className="group/photo relative block-full overflow-hidden inline-full">
+        <HoverScaleRoot className="group/photo relative overflow-hidden block-full inline-full">
             <HoverScaleLayer className="absolute inset-0">
                 <div
                     ref={emblaRef}

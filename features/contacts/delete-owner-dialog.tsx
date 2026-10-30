@@ -22,7 +22,7 @@ export function DeleteOwnerDialog({
             onOpenChange={onOpenChange}
             size="sm"
             title="Delete this owner?"
-            description={`“${name}” will be removed from your contacts.`}
+            description={`“${name}” will be removed from your owner list.`}
             footer={
                 <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
                     <Button
@@ -46,7 +46,7 @@ export function DeleteOwnerDialog({
             }
         >
             <p className="body text-ink-muted">
-                This cannot be undone. Linked listings stay in Your listings — only this contact is
+                This cannot be undone. Linked listings stay in My Listings — only this owner is
                 removed.
             </p>
         </AppModal>

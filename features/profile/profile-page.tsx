@@ -12,30 +12,9 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-    Award,
-    BadgeCheck,
-    Briefcase,
-    Building2,
-    FileText,
-    Globe2,
-    Home,
-    Landmark,
-    Link2,
-    type AppIcon,
-    Mail,
-    Map,
-    MapPinned,
-    MapPin,
-    Phone,
-    Receipt,
-    Tags,
-    UserRound,
-} from "@/components/shared/icons";
-
-import { cn } from "@/lib/utils";
 
 import { profileApi, type UpdateProfileInput, type UserProfile } from "@/lib/api/profile";
+import { cn } from "@/lib/utils";
 import {
     BIO_MAX,
     MAX_SERVICE_AREAS,
@@ -44,14 +23,33 @@ import {
     profileFormSchema,
     type ProfileFormValues,
 } from "@/lib/validation/profile";
+import { useLocationOptions } from "@/hooks/use-locations";
 
+import {
+    type AppIcon,
+    Award,
+    BadgeCheck,
+    Briefcase,
+    Building2,
+    EmailFieldIcon,
+    FileText,
+    Globe2,
+    Home,
+    Landmark,
+    Link2,
+    Map,
+    MapPin,
+    MapPinned,
+    Phone,
+    Receipt,
+    Tags,
+    UserRound,
+} from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { OptionCombobox } from "@/components/shared/option-combobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
-import { useLocationOptions } from "@/hooks/use-locations";
 
 import { NotificationPreferences } from "@/features/profile/notification-preferences";
 import { ProfilePhotoField } from "@/features/profile/profile-photo-field";
@@ -472,11 +470,11 @@ export function ProfilePage() {
             >
                 <div
                     className="
-                      flex flex-col gap-0 rounded-card border border-border-warm bg-surface p-5
-                      shadow-sm
+                      order-2 flex flex-col gap-0 rounded-card border border-border-warm bg-surface
+                      p-5 shadow-sm
                       sm:p-6
+                      lg:order-1
                       xl:p-7
-                      order-2 lg:order-1
                     "
                 >
                     {submitError ? (
@@ -503,7 +501,7 @@ export function ProfilePage() {
                         description={
                             ownerAccount
                                 ? "How brokers reach you about your properties."
-                                : "How owners and buyers reach you."
+                                : "How owners and clients reach you."
                         }
                     >
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -533,7 +531,7 @@ export function ProfilePage() {
                                     value={profile?.email ?? ""}
                                     readOnly
                                     disabled
-                                    startIcon={Mail}
+                                    startIcon={EmailFieldIcon}
                                     helperText="Contact support to change this."
                                 />
                             </div>
@@ -997,11 +995,7 @@ export function ProfilePage() {
                                                 startIcon={Link2}
                                                 placeholder="rajesh-patel-surat"
                                                 errorText={fieldState.error?.message}
-                                                helperText={
-                                                    field.value
-                                                        ? `yesbroker.in/brokers/${field.value}`
-                                                        : "The web address buyers can share."
-                                                }
+                                                helperText="Public profile links are not available yet."
                                             />
                                         </div>
                                     )}
@@ -1059,9 +1053,8 @@ export function ProfilePage() {
             {isDirty ? (
                 <div
                     className="
-                      fixed inset-x-0 z-30 border-bs border-border-warm bg-surface/95 p-3
-                      shadow-md backdrop-blur-sm
-                      inset-be-[calc(4.75rem+env(safe-area-inset-bottom))]
+                      fixed inset-x-0 inset-be-[calc(4.75rem+env(safe-area-inset-bottom))] z-30
+                      border-bs border-border-warm bg-surface/95 p-3 shadow-md backdrop-blur-sm
                       md:hidden
                     "
                 >
@@ -1071,7 +1064,7 @@ export function ProfilePage() {
                         size="lg"
                         loading={isSubmitting}
                         disabled={!isDirty}
-                        className="w-full"
+                        className="inline-full"
                     >
                         {isSubmitting ? "Saving…" : "Save changes"}
                     </Button>

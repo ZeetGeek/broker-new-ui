@@ -2,33 +2,47 @@
 
 import Link from "next/link";
 
-import { ArrowRight, CreditCardOff, Gift, Lock, Rocket } from "@/components/shared/icons";
-
 import { ProgressiveBlur } from "@/components/motion-primitives/progressive-blur";
+import {
+    Building2,
+    Calendar,
+    Contact,
+    FacebookIcon,
+    InstagramIcon,
+    LinkedInIcon,
+    UserPlus,
+} from "@/components/shared/icons";
 import { Logo } from "@/components/shared/logo";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { APP_NAME } from "@/config";
+
 import { HeroBg } from "./hero-bg";
+import { RotatingBrokerHeadline } from "./rotating-broker-headline";
 
 const BROKER_SIGNUP_HREF = "/register?portal=broker";
 
+// Replace these placeholders with the product's official profile URLs at launch.
+const SOCIAL_LINKS = [
+    { label: "Instagram", icon: InstagramIcon, href: "#" },
+    { label: "Facebook", icon: FacebookIcon, href: "#" },
+    { label: "LinkedIn", icon: LinkedInIcon, href: "#" },
+];
+
 const HERO_COPY = {
-    title: "Stop losing leads in WhatsApp",
-    lede: "Track every client, never miss a follow-up, manage showings from your phone. Built for independent brokers.",
-    primary: { label: "Start free for 3 months", href: BROKER_SIGNUP_HREF },
-    secondary: { label: "See how it works", href: BROKER_SIGNUP_HREF },
-    trust: [
-        { icon: Gift, label: "Free for first 20 brokers" },
-        { icon: CreditCardOff, label: "No card required" },
-        { icon: Lock, label: "Your data stays yours" },
+    lede: "Add property listings, keep client details handy and schedule site visits. Track your deals in one place, right from your phone.",
+    primary: { label: "Create broker account", href: BROKER_SIGNUP_HREF },
+    features: [
+        { icon: Building2, label: "Property listings" },
+        { icon: Contact, label: "Client records" },
+        { icon: Calendar, label: "Site visits" },
     ],
-    note: "Coming soon: property owners list directly, and you apply to represent them.",
+    note: "Built for real estate brokers.",
 };
 
 export function HomeHero() {
     return (
-        <section className="relative overflow-hidden rounded-card block-full">
+        <section className="relative overflow-hidden min-block-svh">
             <div className="absolute inset-0 bg-brand-ink" aria-hidden="true">
                 <HeroBg />
 
@@ -66,15 +80,15 @@ export function HomeHero() {
                 "
             >
                 <Logo variant="accent" />
-                <nav className="flex items-center gap-2">
+                <nav aria-label="Account" className="flex items-center gap-2">
                     <Button
                         variant="link"
                         className="text-canvas hover:text-canvas"
                         render={<Link href="/login" />}
                     >
-                        Login
+                        Log in
                     </Button>
-                    <Button variant="highlight" render={<Link href="/register" />}>
+                    <Button variant="highlight" render={<Link href={BROKER_SIGNUP_HREF} />}>
                         Get started
                     </Button>
                 </nav>
@@ -82,11 +96,11 @@ export function HomeHero() {
 
             <div
                 className="
-                  relative z-10 mx-auto flex items-center justify-center px-4 block-full
-                  max-inline-[800px]
+                  relative z-10 mx-auto flex items-center justify-center px-5 py-28
+                  max-inline-[800px] min-block-svh
                 "
             >
-                <div className="relative flex flex-col items-center gap-6 p-6 text-center md:p-8">
+                <div className="relative flex flex-col items-center gap-6 text-center inline-full md:p-8">
                     <div
                         aria-hidden="true"
                         className="
@@ -96,24 +110,12 @@ export function HomeHero() {
                         "
                     />
 
-                    <Badge color="lime" blur className="relative">
-                        <Rocket aria-hidden="true" />
-                        Now onboarding brokers and owners
-                    </Badge>
-
-                    <h1
-                        className="
-                          display-2 relative text-canvas
-                          [text-shadow:0_2px_24px_var(--color-brand-ink)]
-                        "
-                    >
-                        {HERO_COPY.title}
-                    </h1>
+                    <RotatingBrokerHeadline />
 
                     <p
                         className="
-                          body relative text-canvas/90
-                          [text-shadow:0_1px_16px_var(--color-brand-ink)] max-inline-[420px]
+                          body relative -mt-2 text-canvas/90
+                          [text-shadow:0_1px_16px_var(--color-brand-ink)] max-inline-[460px]
                         "
                     >
                         {HERO_COPY.lede}
@@ -131,52 +133,52 @@ export function HomeHero() {
                             nativeButton={false}
                             render={<Link href={HERO_COPY.primary.href} />}
                         >
+                            <UserPlus aria-hidden="true" data-icon="inline-end" />
                             {HERO_COPY.primary.label}
-                        </Button>
-                        <Button
-                            size="lg"
-                            variant="highlight-outline"
-                            className="bg-canvas/10 backdrop-blur-lg hover:bg-canvas/15"
-                            nativeButton={false}
-                            render={<Link href={HERO_COPY.secondary.href} />}
-                        >
-                            {HERO_COPY.secondary.label}
-                            <ArrowRight aria-hidden="true" data-icon="inline-end" />
                         </Button>
                     </div>
 
                     <ul
                         className="
-                          body-sm relative flex flex-col items-center gap-3 text-canvas/90
-                          sm:flex-row sm:gap-0 sm:divide-x sm:divide-canvas/15
+                          body-sm relative flex flex-wrap items-center justify-center gap-x-5
+                          gap-y-3 text-canvas
                         "
                     >
-                        {HERO_COPY.trust.map(({ icon: Icon, label }) => (
-                            <li key={label} className="flex items-center gap-2 sm:px-5">
-                                <span
-                                    className="
-                                      flex items-center justify-center rounded-control border
-                                      border-canvas/25 bg-canvas/10 backdrop-blur-md block-6
-                                      inline-6
-                                    "
-                                >
-                                    <Icon aria-hidden="true" className="block-3.5 inline-3.5" />
-                                </span>
+                        {HERO_COPY.features.map(({ icon: Icon, label }) => (
+                            <li key={label} className="flex items-center gap-2">
+                                <Icon aria-hidden="true" className="shrink-0 block-4 inline-4" />
                                 {label}
                             </li>
                         ))}
                     </ul>
 
-                    <p
-                        className="
-                          body-sm relative text-canvas/80
-                          [text-shadow:0_1px_16px_var(--color-brand-ink)]
-                        "
-                    >
-                        {HERO_COPY.note}
-                    </p>
+                    <div
+                        aria-hidden="true"
+                        className="relative bg-linear-to-r from-transparent via-canvas/40 to-transparent block-px inline-full max-inline-xs"
+                    />
+
+                    <p className="body-sm relative text-canvas/90">{HERO_COPY.note}</p>
                 </div>
             </div>
+            <footer className="absolute inset-x-0 inset-be-0 z-10 flex flex-col items-center justify-between gap-2 px-4 py-3 text-canvas/90 sm:flex-row md:px-6 md:py-4">
+                <p className="body-sm">
+                    © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+                </p>
+                <nav aria-label="Social media" className="flex items-center">
+                    {SOCIAL_LINKS.map(({ label, icon: Icon, href }) => (
+                        <a
+                            key={label}
+                            href={href}
+                            onClick={(event) => event.preventDefault()}
+                            aria-label={`${label} (coming soon)`}
+                            title={`${label} — coming soon`}
+                            className="flex items-center justify-center rounded-control text-canvas/90 block-11 inline-11 hover:text-highlight focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-highlight sm:inline-9"
+                        >
+                            <Icon aria-hidden="true" className="block-5 inline-5" />
+                        </a>
+                    ))}
+                </nav>
+            </footer>
         </section>
     );
 }

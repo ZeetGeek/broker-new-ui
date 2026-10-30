@@ -1,7 +1,11 @@
 "use client";
-
 import dynamic from "next/dynamic";
 
+import { formatMoneyCompact } from "@/lib/format/money";
+import { VISIT_STATUS } from "@/lib/visits/status";
+import { formatVisitDate, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
+
+import { AppImage } from "@/components/shared/app-image";
 import {
     CalendarCheck,
     Check,
@@ -9,18 +13,12 @@ import {
     FileText,
     KeyRound,
     MapPin,
-    WhatsAppIcon,
     Phone,
     Route,
     SquareParking,
     Trash2,
+    WhatsAppIcon,
 } from "@/components/shared/icons";
-
-import { formatMoneyCompact } from "@/lib/format/money";
-import { VISIT_STATUS } from "@/lib/visits/status";
-import { formatVisitDate, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
-
-import { AppImage } from "@/components/shared/app-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +31,7 @@ import {
 
 import { APP_NAME } from "@/config";
 import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
+import { USE_MOCK_VISITS } from "@/mocks/visits";
 import { useAppSelector } from "@/store/hooks";
 
 const VisitDetailMap = dynamic(
@@ -40,11 +39,7 @@ const VisitDetailMap = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div
-                className="
-  animate-pulse rounded-inner bg-surface-muted block-56 inline-full
-"
-            />
+            <div className="animate-pulse rounded-inner bg-surface-muted block-56 inline-full" />
         ),
     },
 );
@@ -64,29 +59,15 @@ function ContactBlock({
     return (
         <div className="flex items-center gap-3 rounded-inner bg-surface-muted p-3">
             <UserAvatar name={person.name} imageUrl={person.avatarUrl} size="md" />
-            <div
-                className="
-      flex-1 min-inline-0
-    "
-            >
+            <div className="flex-1 min-inline-0">
                 <p className="text-[10px] text-ink-subtle">{label}</p>
-                <p
-                    className="
-      body-sm truncate font-bold text-ink
-    "
-                >
-                    {person.name}
-                </p>
+                <p className="body-sm truncate font-bold text-ink">{person.name}</p>
                 {person.requirement ? (
                     <p className="body-xs truncate text-ink-muted">{person.requirement}</p>
                 ) : null}
             </div>
             {person.phoneDigits ? (
-                <div
-                    className="
-      flex gap-1
-    "
-                >
+                <div className="flex gap-1">
                     <Button
                         nativeButton={false}
                         render={<a href={`tel:+91${person.phoneDigits}`} />}
@@ -149,77 +130,44 @@ export function VisitDetailPanel({
         >
             <DialogPopup
                 className="
-      inset-s-0! inset-bs-auto! inset-be-0! flex translate-0! flex-col gap-0 overflow-hidden
-      rounded-b-none p-0 inline-full max-block-[94dvh] max-inline-none
-      sm:inset-s-auto! sm:inset-e-0! sm:inset-bs-0! sm:rounded-none sm:block-full sm:inline-[520px]
-      sm:max-block-none sm:max-inline-[520px]
-    "
+                  inset-s-0! inset-bs-auto! inset-be-0! flex translate-0! flex-col gap-0
+                  overflow-hidden rounded-b-none p-0 inline-full max-block-[94dvh] max-inline-none
+                  sm:inset-s-auto! sm:inset-e-0! sm:inset-bs-0! sm:rounded-none sm:block-full
+                  sm:inline-[520px] sm:max-block-none sm:max-inline-[520px]
+                "
             >
                 <div
-                    className="mx-auto mbs-2 rounded-full bg-border-warm block-1 inline-12 sm:hidden"
+                    className="
+                      mx-auto mbs-2 rounded-full bg-border-warm block-1 inline-12
+                      sm:hidden
+                    "
                     aria-hidden
                 />
                 <div className={`shrink-0 px-5 py-4 pe-14 ${status.tone}`}>
-                    <DialogHeader
-                        className="
-          pe-0 text-start
-        "
-                    >
+                    <DialogHeader className="pe-0 text-start">
                         <DialogTitle className="h3 font-bold text-current">
                             {status.label}
                         </DialogTitle>
-                        <DialogDescription
-                            className="
-          text-current/70
-        "
-                        >
+                        <DialogDescription className="text-current/70">
                             {formatVisitDate(visit.startsAt)} · {formatVisitTime(visit.startsAt)}–
                             {formatVisitTime(visit.endsAt)}
                         </DialogDescription>
                     </DialogHeader>
-                    <div
-                        className="
-          mbs-3 flex items-center gap-1 text-[10px] font-semibold
-        "
-                    >
+                    <div className="mbs-3 flex items-center gap-1 text-[10px] font-semibold">
                         <span className="flex items-center gap-1">
                             <Check aria-hidden className="block-3 inline-3" /> Booked
                         </span>
-                        <span
-                            className="
-          flex-1 bg-current/20 block-px
-        "
-                        />
+                        <span className="flex-1 bg-current/20 block-px" />
                         <span className="flex items-center gap-1">
-                            <Check
-                                aria-hidden
-                                className="
-          block-3 inline-3
-        "
-                            />{" "}
-                            Confirmed
+                            <Check aria-hidden className="block-3 inline-3" /> Confirmed
                         </span>
                         <span className="flex-1 bg-current/20 block-px" />
-                        <span
-                            className="
-          flex items-center gap-1
-        "
-                        >
+                        <span className="flex items-center gap-1">
                             <Circle aria-hidden className="block-3 inline-3" /> Reminded
                         </span>
-                        <span
-                            className="
-          flex-1 bg-current/20 block-px
-        "
-                        />
+                        <span className="flex-1 bg-current/20 block-px" />
                         <span className="flex items-center gap-1">
-                            <Circle
-                                aria-hidden
-                                className="
-          block-3 inline-3
-        "
-                            />{" "}
-                            Completed
+                            <Circle aria-hidden className="block-3 inline-3" /> Completed
                         </span>
                     </div>
                 </div>
@@ -227,8 +175,8 @@ export function VisitDetailPanel({
                     <section className="flex gap-3">
                         <div
                             className="
-              relative shrink-0 overflow-hidden rounded-[8px] block-20 inline-24
-            "
+                              relative shrink-0 overflow-hidden rounded-[8px] block-20 inline-24
+                            "
                         >
                             <AppImage
                                 src={visit.property.coverUrl ?? "/properties/1.jpg"}
@@ -237,26 +185,14 @@ export function VisitDetailPanel({
                                 sizes="96px"
                             />
                         </div>
-                        <div
-                            className="
-              min-inline-0
-            "
-                        >
+                        <div className="min-inline-0">
                             <h2 className="h5 truncate text-ink">{visit.property.title}</h2>
-                            <p
-                                className="
-              body-xs mbs-1 text-ink-muted
-            "
-                            >
+                            <p className="body-xs mbs-1 text-ink-muted">
                                 {visit.property.configLabel} ·{" "}
                                 {visit.property.areaSqft.toLocaleString("en-IN")} sqft ·{" "}
                                 {formatMoneyCompact(visit.property.amountInr)}
                             </p>
-                            <p
-                                className="
-              body-xs mbs-2 flex items-start gap-1.5 text-ink-muted
-            "
-                            >
+                            <p className="body-xs mbs-2 flex items-start gap-1.5 text-ink-muted">
                                 <MapPin
                                     aria-hidden
                                     className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
@@ -272,11 +208,7 @@ export function VisitDetailPanel({
                                 longitude={visit.property.longitude}
                                 title={visit.property.title}
                             />
-                            <div
-                                className="
-              flex items-center justify-between gap-3
-            "
-                            >
+                            <div className="flex items-center justify-between gap-3">
                                 <p className="body-xs text-ink-muted">
                                     {visit.distanceKm?.toFixed(1)} km · about {visit.driveMinutes}{" "}
                                     min from you
@@ -295,8 +227,8 @@ export function VisitDetailPanel({
                         <ContactBlock
                             label={
                                 visit.buyers.length > 1
-                                    ? `Buyers · ${visit.buyers.length}`
-                                    : "Buyer"
+                                    ? `Clients · ${visit.buyers.length}`
+                                    : "Client"
                             }
                             person={visit.buyers[0]}
                             message={buyerMessage}
@@ -305,19 +237,13 @@ export function VisitDetailPanel({
                     </section>
                     {visit.ownerNote || visit.brokerNote ? (
                         <section>
-                            <h3
-                                className="
-              body-sm font-bold text-ink
-            "
-                            >
-                                Visit notes
-                            </h3>
+                            <h3 className="body-sm font-bold text-ink">Visit notes</h3>
                             <div className="mbs-2 space-y-2">
                                 {visit.ownerNote ? (
                                     <p
                                         className="
-              body-xs rounded-inner bg-surface-muted p-3 text-ink
-            "
+                                          body-xs rounded-inner bg-surface-muted p-3 text-ink
+                                        "
                                     >
                                         <span className="font-bold">Owner:</span> {visit.ownerNote}
                                     </p>
@@ -325,8 +251,8 @@ export function VisitDetailPanel({
                                 {visit.brokerNote ? (
                                     <p
                                         className="
-              body-xs rounded-inner bg-surface-muted p-3 text-ink
-            "
+                                          body-xs rounded-inner bg-surface-muted p-3 text-ink
+                                        "
                                     >
                                         <span className="font-bold">Your note:</span>{" "}
                                         {visit.brokerNote}
@@ -337,11 +263,7 @@ export function VisitDetailPanel({
                     ) : null}
                     <section>
                         <h3 className="body-sm font-bold text-ink">Before you leave</h3>
-                        <div
-                            className="
-              mbs-2 grid grid-cols-3 gap-2
-            "
-                        >
+                        <div className="mbs-2 grid grid-cols-3 gap-2">
                             {(
                                 [
                                     { key: "documents", label: "Documents", icon: FileText },
@@ -360,14 +282,12 @@ export function VisitDetailPanel({
                                         })
                                     }
                                     className={`
-              rounded-inner border p-2 text-xs font-semibold min-block-16
-              ${
-                  checklist[item.key]
-                      ? `border-brand bg-brand-soft text-brand-text`
-                      : `
-                border-border-warm bg-surface text-ink-muted
-              `
-              }`}
+                                      rounded-inner border p-2 text-xs font-semibold min-block-16
+                                      ${
+                                          checklist[item.key]
+                                              ? `border-brand bg-brand-soft text-brand-text`
+                                              : `border-border-warm bg-surface text-ink-muted`
+                                      }`}
                                 >
                                     <item.icon
                                         aria-hidden
@@ -379,43 +299,38 @@ export function VisitDetailPanel({
                         </div>
                     </section>
                     <section className="rounded-inner border border-border-warm p-4">
-                        <div
-                            className="
-              flex items-center justify-between gap-3
-            "
-                        >
+                        <div className="flex items-center justify-between gap-3">
                             <div>
                                 <h3 className="body-sm font-bold text-ink">Outcome</h3>
-                                <p
-                                    className="
-              body-xs text-ink-muted
-            "
-                                >
+                                <p className="body-xs text-ink-muted">
                                     {visit.outcome
                                         ? `${visit.outcome.interest} · ${visit.outcome.nextStep.replaceAll("_", " ")}`
-                                        : "Not logged yet"}
+                                        : USE_MOCK_VISITS
+                                          ? "Not logged yet"
+                                          : "Saving outcomes is not available yet. Manage client notes and stages in Pipeline."}
                                 </p>
                             </div>
-                            {!visit.outcome ? (
+                            {!visit.outcome && USE_MOCK_VISITS ? (
                                 <Button onClick={onLogOutcome}>
                                     <CalendarCheck aria-hidden /> Log outcome
                                 </Button>
                             ) : null}
                         </div>
                         {visit.outcome?.feedback ? (
-                            <p
-                                className="
-              body-xs mbs-3 text-ink-muted
-            "
-                            >
-                                {visit.outcome.feedback}
-                            </p>
+                            <p className="body-xs mbs-3 text-ink-muted">{visit.outcome.feedback}</p>
                         ) : null}
                     </section>
                     <section className="flex flex-wrap gap-2 border-bs border-danger/15 pbs-4">
-                        <Button variant="surface" onClick={onReschedule}>
-                            Reschedule
-                        </Button>
+                        {USE_MOCK_VISITS ? (
+                            <Button variant="surface" onClick={onReschedule}>
+                                Reschedule
+                            </Button>
+                        ) : (
+                            <p className="body-xs text-ink-muted">
+                                To change the time, cancel this visit and book another open slot.
+                                Check availability before cancelling.
+                            </p>
+                        )}
                         <Button variant="destructive" onClick={onCancel}>
                             <Trash2 aria-hidden /> Cancel visit
                         </Button>

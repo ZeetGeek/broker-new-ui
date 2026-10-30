@@ -1,3 +1,5 @@
+import { signupPortal } from "@/lib/auth/launch-policy";
+
 import { readPortal } from "@/features/auth/portal";
 import { RegisterWizard } from "@/features/auth/register-wizard";
 
@@ -17,8 +19,7 @@ export default async function Page({
     }>;
 }) {
     const { portal, role, ref, step, country } = await searchParams;
-    const chosenPortal = readPortal(portal) ?? readPortal(role);
-    // console.log("portal=>",portal)
+    const chosenPortal = signupPortal(readPortal(portal) ?? readPortal(role));
 
     return (
         <RegisterWizard

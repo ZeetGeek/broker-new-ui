@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api/client";
+import { ApiError, apiFetch } from "@/lib/api/client";
 import { type AttachedClientRef, attachedClientsByProperty } from "@/lib/api/clients";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { PropertyListing } from "@/lib/api/properties";
@@ -183,7 +183,11 @@ export const myListingsApi = {
         filters: Partial<MyListingsFilters> = {},
         signal?: AbortSignal,
         /** Owners have no buyer book, so skip the leads scan for them. */
-        options: { withAttachedClients?: boolean } = {},
+        options: {
+            withAttachedClients?: boolean;
+            attachedClients?: () => Promise<Map<string, AttachedClientRef[]>>;
+            propertyCollection?: (query: PropertyListQuery) => Promise<PropertyListing[]>;
+        } = {},
     ): Promise<MyListingsResult> {
         const { withAttachedClients = true } = options;
         const merged: MyListingsFilters = { ...DEFAULT_MY_LISTINGS_FILTERS, ...filters };
@@ -204,8 +208,11 @@ export const myListingsApi = {
 
         const [page, attachedByProperty] = await Promise.all([
             propertyCriteriaCount(merged.propertyFilters)
-                ? collectPropertyPages((page) =>
-                      propertiesApi.list({ ...query, page }, signal),
+                ? (options.propertyCollection
+                      ? options.propertyCollection({ ...query, page: 1 })
+                      : collectPropertyPages((page) =>
+                            propertiesApi.list({ ...query, page }, signal),
+                        )
                   ).then((listings) =>
                       paginateItems(
                           listings
@@ -220,7 +227,7 @@ export const myListingsApi = {
                       items: page.items.map(mapPropertyListingToMyItem),
                   })),
             withAttachedClients
-                ? attachedClientsByProperty()
+                ? (options.attachedClients ?? attachedClientsByProperty)()
                 : Promise.resolve(new Map<string, AttachedClientRef[]>()),
         ]);
         return {
@@ -247,8 +254,9 @@ export const myListingsApi = {
         try {
             const listing = await propertiesApi.get(propertyId);
             return mapPropertyListingToMyItem(listing);
-        } catch {
-            return null;
+        } catch (error) {
+            if (error instanceof ApiError && error.status === 404) return null;
+            throw error;
         }
     },
 

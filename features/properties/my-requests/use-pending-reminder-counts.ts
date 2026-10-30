@@ -20,7 +20,7 @@ function remindersSent(row: RepresentationItem): number {
 
 /**
  * Reminders already sent on each pending broker request, keyed by property id.
- * Same source as My deals, so browse cards show the real count after a reload.
+ * Same source as Requests & Invitations, so browse cards show the real count after a reload.
  */
 export function usePendingReminderCounts(): ReadonlyMap<string, number> {
     const query = useQuery({

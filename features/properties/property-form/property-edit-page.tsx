@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+
+import { useQuery } from "@tanstack/react-query";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
@@ -11,27 +12,39 @@ import { OWNER_PROPERTIES_HREF } from "@/lib/routes/owner";
 import { Button } from "@/components/ui/button";
 
 import { PropertyForm } from "@/features/properties/property-form";
-import type { MyListingItem } from "@/features/properties/your-listings/types";
 
 export function PropertyEditPage({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const params = useParams<{ id: string }>();
     const propertyId = params.id;
-    const [listing, setListing] = useState<MyListingItem | null | undefined>(undefined);
+    const query = useQuery({
+        queryKey: ["edit-property", portal, propertyId],
+        queryFn: () => myListingsApi.get(propertyId),
+        staleTime: 0,
+    });
+    const listing = query.data;
     const listHref = portal === "owner" ? OWNER_PROPERTIES_HREF : BROKER_YOUR_LISTINGS_HREF;
-    const backLabel = portal === "owner" ? "Back to properties" : "Back to your listings";
+    const backLabel = portal === "owner" ? "Back to properties" : "Back to My Listings";
 
-    useEffect(() => {
-        let cancelled = false;
-        void myListingsApi.get(propertyId).then((item) => {
-            if (!cancelled) setListing(item);
-        });
-        return () => {
-            cancelled = true;
-        };
-    }, [propertyId]);
-
-    if (listing === undefined) {
-        return null;
+    if (query.isPending) {
+        return (
+            <p role="status" className="body text-ink-muted">
+                Loading property…
+            </p>
+        );
+    }
+    if (query.isError) {
+        return (
+            <div role="alert" className="flex flex-col items-start gap-4 py-16">
+                <h1 className="h3">Could not load property</h1>
+                <p className="body text-ink-muted">
+                    Check your connection or account access and try again.
+                </p>
+                <Button onClick={() => void query.refetch()} disabled={query.isFetching}>
+                    Retry
+                </Button>
+                <Link href={listHref}>{backLabel}</Link>
+            </div>
+        );
     }
 
     if (!listing) {

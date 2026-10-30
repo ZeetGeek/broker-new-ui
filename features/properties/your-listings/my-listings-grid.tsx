@@ -70,7 +70,7 @@ export function MyListingsGrid({
             estimateRowHeight={520}
             gap={24}
             breakpoints={GRID_BREAKPOINTS}
-            ariaLabel="Your listings"
+            ariaLabel="My Listings"
             gridClassName={MY_LISTINGS_GRID_CLASS}
             renderItem={(item, index) => {
                 const listing = toOwnedPropertyCardListing(item);
@@ -91,9 +91,7 @@ export function MyListingsGrid({
                                 : undefined
                         }
                         onDelete={onDeleteListing ? () => onDeleteListing(item) : undefined}
-                        onMarkSold={
-                            onMarkSold && !item.isSold ? () => onMarkSold(item) : undefined
-                        }
+                        onMarkSold={onMarkSold && !item.isSold ? () => onMarkSold(item) : undefined}
                         onInviteBroker={
                             portal === "owner" && onInviteBroker
                                 ? () => onInviteBroker(item)

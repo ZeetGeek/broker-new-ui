@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { LogOut } from "@/components/shared/icons";
 import { useReducedMotion } from "motion/react";
 
 import { getShortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
+import { PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 
 const HOLD_MS = 900;
@@ -126,7 +126,7 @@ export function HoldToLogout({ disabled = false, onComplete }: HoldToLogoutProps
             disabled={disabled}
             aria-label={label}
             className={cn(
-                "t-hold-logout body-sm rounded-inner text-start block-9 inline-full",
+                "t-hold-logout body-sm rounded-inner text-start block-11 inline-full",
                 isHolding && "is-holding",
                 isComplete && "is-complete",
             )}
@@ -177,7 +177,11 @@ export function HoldToLogout({ disabled = false, onComplete }: HoldToLogoutProps
                 style={{ width: `${progress}%` }}
             />
             <span className="t-hold-logout-content">
-                <LogOut aria-hidden className="shrink-0 block-4 inline-4" strokeWidth={1.75} />
+                <AccountMenuIcon
+                    name="logout"
+                    aria-hidden
+                    className="shrink-0 block-4.5 inline-4.5"
+                />
                 <span className="flex-1 min-inline-0">{label}</span>
                 <LogoutShortcutHint />
             </span>

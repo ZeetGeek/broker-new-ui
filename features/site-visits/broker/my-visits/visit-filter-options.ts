@@ -54,5 +54,9 @@ export function matchesVisitPeople(visit: BrokerSiteVisit, filter: VisitPeopleFi
 }
 
 export function countVisitPeopleFilters(filter: VisitPeopleFilter) {
-    return Number(Boolean(filter.buyerId)) + Number(Boolean(filter.ownerId)) + Number(Boolean(filter.leadId));
+    return (
+        Number(Boolean(filter.buyerId)) +
+        Number(Boolean(filter.ownerId)) +
+        Number(Boolean(filter.leadId))
+    );
 }

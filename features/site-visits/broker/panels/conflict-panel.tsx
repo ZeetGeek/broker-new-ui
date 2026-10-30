@@ -1,9 +1,8 @@
 "use client";
 
-import { AlertTriangle, Check, XCircle } from "@/components/shared/icons";
-
 import type { ConflictResult } from "@/lib/visits/conflicts";
 
+import { AlertTriangle, Check, XCircle } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 export function ConflictPanel({
@@ -18,7 +17,12 @@ export function ConflictPanel({
 }) {
     if (result.level === "clear")
         return (
-            <div className="body-sm flex items-center gap-2 rounded-inner bg-brand-soft px-3 py-2.5 font-semibold text-brand-text">
+            <div
+                className="
+              body-sm flex items-center gap-2 rounded-inner bg-brand-soft px-3 py-2.5 font-semibold
+              text-brand-text
+            "
+            >
                 <Check aria-hidden className="block-4 inline-4" /> No clashes. Travel time looks
                 workable.
             </div>
@@ -26,7 +30,13 @@ export function ConflictPanel({
     const clash = result.level === "clash";
     return (
         <div
-            className={`rounded-inner p-3 ${clash ? "bg-danger-soft text-danger" : "bg-urgent-soft text-pending"}`}
+            className={`rounded-inner p-3 ${
+                clash
+                    ? "bg-danger-soft text-danger"
+                    : `
+              bg-urgent-soft text-pending
+            `
+            }`}
             role="alert"
         >
             <div className="flex items-start gap-2">

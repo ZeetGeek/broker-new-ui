@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formatInTimeZone } from "date-fns-tz";
-import { Clock3, Plus, Trash2 } from "@/components/shared/icons";
 
 import { VISITS_TIME_ZONE } from "@/lib/visits/constants";
 import {
@@ -19,6 +18,7 @@ import {
 import { useCreateTimeRequest } from "@/hooks/use-time-requests";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { Clock3, Plus, Trash2 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import type { PersonSummary, PropertyWithSlots } from "@/features/site-visits/broker/model";
@@ -26,9 +26,9 @@ import { BuyerPicker } from "@/features/site-visits/broker/panels/buyer-picker";
 import { type TimeRequestFormValues, timeRequestSchema } from "@/schemas/visits";
 
 const PRESETS = [
-    "Buyer works till 5, evening suits better",
-    "Buyer is visiting Surat only tomorrow",
-    "Buyer wants to see it in daylight",
+    "Client works till 5, evening suits better",
+    "Client is visiting Surat only tomorrow",
+    "Client wants to see it in daylight",
 ];
 
 export function TimeRequestModal({
@@ -184,12 +184,12 @@ export function TimeRequestModal({
             description="Give the owner one preferred time and up to two backups."
             size="lg"
             footer={
-                <div className="flex flex-row flex-wrap items-center justify-between gap-2 inline-full">
-                    <p
-                        className="
-          body-xs text-ink-muted
-        "
-                    >
+                <div
+                    className="
+                  flex flex-row flex-wrap items-center justify-between gap-2 inline-full
+                "
+                >
+                    <p className="body-xs text-ink-muted">
                         Requests expire when the preferred time passes.
                     </p>
                     <Button
@@ -210,8 +210,8 @@ export function TimeRequestModal({
                     <p
                         role="alert"
                         className="
-                  body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
-                "
+                          body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
+                        "
                     >
                         {requestError}
                     </p>
@@ -221,10 +221,10 @@ export function TimeRequestModal({
                     <select
                         {...form.register("propertyId")}
                         className="
-                  body-sm mbs-2 rounded-control border border-border-warm bg-surface px-3 text-ink
-                  outline-none inline-full min-block-11
-                  focus:border-brand focus:ring-3 focus:ring-brand/15
-                "
+                          body-sm mbs-2 rounded-control border border-border-warm bg-surface px-3
+                          text-ink outline-none inline-full min-block-11
+                          focus:border-brand focus:ring-3 focus:ring-brand/15
+                        "
                     >
                         <option value="">Choose a property</option>
                         {properties.map((item) => (
@@ -234,11 +234,7 @@ export function TimeRequestModal({
                         ))}
                     </select>
                     {form.formState.errors.propertyId ? (
-                        <span
-                            className="
-                  body-xs mbs-1 block text-danger
-                "
-                        >
+                        <span className="body-xs mbs-1 block text-danger">
                             {form.formState.errors.propertyId.message}
                         </span>
                     ) : null}
@@ -266,27 +262,19 @@ export function TimeRequestModal({
                             min={inputValueInIst(new Date())}
                             {...form.register("preferredStartsAt")}
                             className="
-                  body-sm mbs-2 block rounded-control border border-border-warm bg-surface px-3
-                  text-ink outline-none inline-full min-block-11
-                  focus:border-brand focus:ring-3 focus:ring-brand/15
-                "
+                              body-sm mbs-2 block rounded-control border border-border-warm
+                              bg-surface px-3 text-ink outline-none inline-full min-block-11
+                              focus:border-brand focus:ring-3 focus:ring-brand/15
+                            "
                         />
                     </label>
                     {form.formState.errors.preferredStartsAt ? (
-                        <p
-                            className="
-                  body-xs mbs-1 text-danger
-                "
-                        >
+                        <p className="body-xs mbs-1 text-danger">
                             {form.formState.errors.preferredStartsAt.message}
                         </p>
                     ) : null}
                     {usualPattern ? (
-                        <p
-                            className="
-                  body-xs mbs-2 flex items-center gap-1.5 text-ink-muted
-                "
-                        >
+                        <p className="body-xs mbs-2 flex items-center gap-1.5 text-ink-muted">
                             <Clock3 aria-hidden className="block-3.5 inline-3.5" />
                             This owner usually allows {usualPattern}.
                         </p>
@@ -294,11 +282,7 @@ export function TimeRequestModal({
                 </div>
                 {published.length ? (
                     <div className="rounded-inner bg-surface-muted p-3">
-                        <p
-                            className="
-                  body-xs font-semibold text-ink-muted
-                "
-                        >
+                        <p className="body-xs font-semibold text-ink-muted">
                             Published times that day
                         </p>
                         <div className="mbs-2 flex flex-wrap gap-2">
@@ -306,9 +290,9 @@ export function TimeRequestModal({
                                 <span
                                     key={slot.id}
                                     className="
-                  body-xs tabular rounded-md border border-border-warm bg-surface px-2 py-1
-                  text-ink-muted
-                "
+                                      body-xs tabular rounded-md border border-border-warm
+                                      bg-surface px-2 py-1 text-ink-muted
+                                    "
                                 >
                                     {formatVisitTime(slot.startsAt)}
                                 </span>
@@ -317,11 +301,7 @@ export function TimeRequestModal({
                     </div>
                 ) : null}
                 <fieldset className="space-y-3">
-                    <div
-                        className="
-                  flex items-start justify-between gap-3
-                "
-                    >
+                    <div className="flex items-start justify-between gap-3">
                         <legend className="body-sm font-bold text-ink">Backup times</legend>
                         {alternates.length < 2 ? (
                             <Button
@@ -339,20 +319,11 @@ export function TimeRequestModal({
                             </Button>
                         ) : null}
                     </div>
-                    <p
-                        className="
-                  body-xs text-ink-muted
-                "
-                    >
+                    <p className="body-xs text-ink-muted">
                         Owners accept faster when you give options.
                     </p>
                     {alternates.map((value, index) => (
-                        <div
-                            key={index}
-                            className="
-                  flex items-center gap-2
-                "
-                        >
+                        <div key={index} className="flex items-center gap-2">
                             <input
                                 type="datetime-local"
                                 step={900}
@@ -367,9 +338,9 @@ export function TimeRequestModal({
                                     )
                                 }
                                 className="
-                  body-sm flex-1 rounded-control border border-border-warm bg-surface px-3 text-ink
-                  min-block-11
-                "
+                                  body-sm flex-1 rounded-control border border-border-warm
+                                  bg-surface px-3 text-ink min-block-11
+                                "
                             />
                             <Button
                                 type="button"
@@ -390,51 +361,36 @@ export function TimeRequestModal({
                 </fieldset>
                 <div>
                     <label className="body-sm font-bold text-ink">
-                        Message{" "}
-                        <span
-                            className="
-                  font-normal text-ink-muted
-                "
-                        >
-                            · optional
-                        </span>
+                        Message <span className="font-normal text-ink-muted">· optional</span>
                         <textarea
                             {...form.register("message")}
                             maxLength={240}
                             rows={3}
                             className="
-                  body-sm mbs-2 resize-none rounded-control border border-border-warm bg-surface
-                  px-3 py-2.5 text-ink inline-full
-                "
+                              body-sm mbs-2 resize-none rounded-control border border-border-warm
+                              bg-surface px-3 py-2.5 text-ink inline-full
+                            "
                             placeholder="Why this time works better"
                         />
                     </label>
-                    <div
-                        className="
-                  mbs-2 flex flex-wrap gap-2
-                "
-                    >
+                    <div className="mbs-2 flex flex-wrap gap-2">
                         {PRESETS.map((preset) => (
                             <button
                                 type="button"
                                 key={preset}
                                 onClick={() => form.setValue("message", preset)}
                                 className="
-                  body-xs rounded-control border border-border-warm bg-surface px-3 text-start
-                  font-semibold text-ink-muted min-block-12
-                  hover:bg-brand-soft hover:text-brand-text
-                  lg:min-block-9
-                "
+                                  body-xs rounded-control border border-border-warm bg-surface px-3
+                                  text-start font-semibold text-ink-muted min-block-12
+                                  hover:bg-brand-soft hover:text-brand-text
+                                  lg:min-block-9
+                                "
                             >
                                 {preset}
                             </button>
                         ))}
                     </div>
-                    <p
-                        className="
-                  body-xs tabular mbs-1 text-end text-ink-subtle
-                "
-                    >
+                    <p className="body-xs tabular mbs-1 text-end text-ink-subtle">
                         {message.length}/240
                     </p>
                 </div>

@@ -44,7 +44,7 @@
     --secondary: oklch(0.966 0.005 106.5);
     --secondary-foreground: oklch(0.228 0.013 107.4);
     --muted: oklch(0.966 0.005 106.5);
-    --muted-foreground: oklch(0.58 0.031 107.3);
+    --muted-foreground: var(--color-ink-muted);
     --accent: oklch(0.966 0.005 106.5);
     --accent-foreground: oklch(0.228 0.013 107.4);
     --destructive: oklch(0.577 0.245 27.325);
@@ -68,8 +68,8 @@
     --color-border-warm: #e4ded2;
 
     --color-ink: #111111;
-    --color-ink-muted: #86867e;
-    --color-ink-subtle: #a9a79d;
+    --color-ink-muted: #52564b;
+    --color-ink-subtle: #61645a;
 
     --color-brand-ink: #0b1f17;
     --color-brand-deep: #0f3d2e;
@@ -510,8 +510,46 @@
     color: var(--color-ink);
 }
 
+/* Grow the layout box, not an overlapping pseudo-element hit area. */
+@media (pointer: coarse), (max-width: 767px) {
+    .touch-target,
+    [data-slot="button"],
+    [data-slot="input"],
+    [data-slot="select-trigger"],
+    [data-slot="combobox-input-group"],
+    [data-slot="combobox-trigger"],
+    .t-notif-filter-tab {
+        min-block-size: 44px;
+        min-inline-size: 44px;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     [data-slot="select-item"] {
         transition: none !important;
     }
+}
+
+/* Bundled flag glyphs: Windows does not render regional-indicator emoji. */
+@font-face {
+    font-family: "Country Flags";
+    size-adjust: 120%;
+    src: url("/fonts/TwemojiCountryFlags.woff2") format("woff2");
+    font-display: swap;
+    unicode-range: U+1F1E6-1F1FF;
+}
+
+.country-flag-text {
+    font-family: "Country Flags", var(--font-sans);
+}
+
+/* The list owns scrolling; outer margins keep rows clear of the popup border. */
+.dropdown-scroll-fade {
+    mask-image: linear-gradient(
+        to bottom,
+        transparent,
+        black var(--scroll-fade-top, 0px),
+        black calc(100% - var(--scroll-fade-bottom, 0px)),
+        transparent
+    );
 }

@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import type { BrokerSiteVisit, VisitOutcome } from "@/features/site-visits/broker/model";
+import { USE_MOCK_VISITS } from "@/mocks/visits";
 import { type OutcomeFormValues, outcomeSchema } from "@/schemas/visits";
 
 const OBJECTIONS = ["Price", "Size", "Floor", "Parking", "Location", "Condition", "Vastu", "Other"];
@@ -37,9 +38,9 @@ function Choice<T extends string>({
             onClick={() => onChange(value)}
             className={cn(
                 `
-      rounded-control border border-border-warm bg-surface px-3 text-sm font-bold text-ink
-      min-block-12
-    `,
+                  rounded-control border border-border-warm bg-surface px-3 text-sm font-bold
+                  text-ink min-block-12
+                `,
                 current === value && `border-brand-ink bg-brand-ink text-surface`,
             )}
         >
@@ -88,6 +89,23 @@ export default function OutcomeModal({
             });
     }, [form, open, visit?.id]);
     if (!visit) return null;
+    if (!USE_MOCK_VISITS) {
+        return (
+            <AppModal
+                open={open}
+                onOpenChange={(next) => {
+                    if (!next) onClose();
+                }}
+                title="Visit outcomes"
+                size="sm"
+            >
+                <p className="body-sm text-ink-muted">
+                    Saving visit outcomes is not available yet. You can manage client notes and
+                    stages in Pipeline.
+                </p>
+            </AppModal>
+        );
+    }
     return (
         <AppModal
             open={open}
@@ -101,13 +119,13 @@ export default function OutcomeModal({
             description={`${visit.property.title} · ${visit.buyers[0].name}`}
             size="md"
             footer={
-                <div className="flex flex-row flex-wrap items-center justify-between gap-2 inline-full">
-                    <p
-                        className="
-      body-xs text-ink-muted
-    "
-                    >
-                        Saves the visit, pipeline step, and follow-up together.
+                <div
+                    className="
+                      flex flex-row flex-wrap items-center justify-between gap-2 inline-full
+                    "
+                >
+                    <p className="body-xs text-ink-muted">
+                        Preview only. Changes are not saved to your account.
                     </p>
                     <Button
                         type="submit"
@@ -136,27 +154,21 @@ export default function OutcomeModal({
                         );
                     }
                 })}
-                className="
-          space-y-5
-        "
+                className="space-y-5"
             >
                 {saveError ? (
                     <p
                         role="alert"
                         className="
-              body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
-            "
+                          body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
+                        "
                     >
                         {saveError}
                     </p>
                 ) : null}
                 <fieldset>
                     <legend className="body-sm mbe-2 font-bold text-ink">Did it happen?</legend>
-                    <div
-                        className="
-              grid grid-cols-3 gap-2
-            "
-                    >
+                    <div className="grid grid-cols-3 gap-2">
                         <Choice
                             value="buyer_and_owner"
                             current={attended}
@@ -166,7 +178,7 @@ export default function OutcomeModal({
                         <Choice
                             value="buyer_only"
                             current={attended}
-                            label="Only buyer came"
+                            label="Only client came"
                             onChange={(value) => form.setValue("attended", value)}
                         />
                         <Choice
@@ -179,11 +191,7 @@ export default function OutcomeModal({
                 </fieldset>
                 <fieldset>
                     <legend className="body-sm mbe-2 font-bold text-ink">Interest</legend>
-                    <div
-                        className="
-              grid grid-cols-3 gap-2
-            "
-                    >
+                    <div className="grid grid-cols-3 gap-2">
                         <Choice
                             value="hot"
                             current={interest}
@@ -209,24 +217,18 @@ export default function OutcomeModal({
                         <legend className="body-sm mbe-2 font-bold text-ink">
                             What held them back?
                         </legend>
-                        <div
-                            className="
-              flex flex-wrap gap-2
-            "
-                        >
+                        <div className="flex flex-wrap gap-2">
                             {OBJECTIONS.map((item) => (
                                 <label
                                     key={item}
                                     className={cn(
                                         `
-              body-xs flex cursor-pointer items-center gap-2 rounded-control border px-3
-              font-semibold min-block-12
-            `,
+                                          body-xs flex cursor-pointer items-center gap-2
+                                          rounded-control border px-3 font-semibold min-block-12
+                                        `,
                                         objections.includes(item)
                                             ? `border-brand bg-brand-soft text-brand-text`
-                                            : `
-              border-border-warm bg-surface text-ink-muted
-            `,
+                                            : `border-border-warm bg-surface text-ink-muted`,
                                     )}
                                 >
                                     <Checkbox
@@ -248,11 +250,7 @@ export default function OutcomeModal({
                 ) : null}
                 {interest === "hot" ? (
                     <label className="block">
-                        <span
-                            className="
-              body-sm font-bold text-ink
-            "
-                        >
+                        <span className="body-sm font-bold text-ink">
                             Offer amount{" "}
                             <span className="font-normal text-ink-muted">· optional</span>
                         </span>
@@ -266,17 +264,13 @@ export default function OutcomeModal({
                                 )
                             }
                             className="
-              body-sm tabular mbs-2 rounded-control border border-border-warm bg-surface px-3
-              text-ink inline-full min-block-11
-            "
+                              body-sm tabular mbs-2 rounded-control border border-border-warm
+                              bg-surface px-3 text-ink inline-full min-block-11
+                            "
                             placeholder={`${getActiveCurrency().symbol}0`}
                         />
                         {offerAmount ? (
-                            <span
-                                className="
-              body-xs mbs-1 block text-brand-text
-            "
-                            >
+                            <span className="body-xs mbs-1 block text-brand-text">
                                 {moneyWordHint(offerAmount)}
                             </span>
                         ) : null}
@@ -288,20 +282,15 @@ export default function OutcomeModal({
                         {...form.register("feedback")}
                         rows={2}
                         className="
-              body-sm mbs-2 resize-none rounded-control border border-border-warm bg-surface px-3
-              py-2.5 text-ink inline-full
-            "
-                        placeholder="What the buyer said while it is fresh"
+                          body-sm mbs-2 resize-none rounded-control border border-border-warm
+                          bg-surface px-3 py-2.5 text-ink inline-full
+                        "
+                        placeholder="What the client said while it is fresh"
                     />
                 </label>
                 <fieldset>
                     <legend className="body-sm mbe-2 font-bold text-ink">Next step</legend>
-                    <div
-                        className="
-              grid gap-2
-              sm:grid-cols-2
-            "
-                    >
+                    <div className="grid gap-2 sm:grid-cols-2">
                         <Choice
                             value="move_to_negotiation"
                             current={nextStep}
@@ -323,7 +312,7 @@ export default function OutcomeModal({
                         <Choice
                             value="drop"
                             current={nextStep}
-                            label="Drop this buyer"
+                            label="Drop this client"
                             onChange={(value) => form.setValue("nextStep", value)}
                         />
                     </div>
@@ -336,9 +325,9 @@ export default function OutcomeModal({
                                 aria-invalid={Boolean(form.formState.errors.followUpAt)}
                                 {...form.register("followUpAt")}
                                 className="
-              body-sm mbs-3 rounded-control border border-border-warm bg-surface px-3 text-ink
-              inline-full min-block-11
-            "
+                                  body-sm mbs-3 rounded-control border border-border-warm bg-surface
+                                  px-3 text-ink inline-full min-block-11
+                                "
                             />
                             {form.formState.errors.followUpAt ? (
                                 <p role="alert" className="body-sm mbs-1.5 text-danger">

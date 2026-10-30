@@ -78,16 +78,16 @@ function DialogPopup({
                 {showCloseButton ? (
                     <DialogClose
                         className="
-                                      absolute inset-e-[calc(var(--dialog-pad)-0.75rem)]
-                                      inset-bs-[calc(var(--dialog-pad)-0.75rem)] flex items-center
-                                      justify-center rounded-full text-ink-muted
-                                      transition-[color,background-color,transform] duration-160
-                                      ease-out outline-none block-9 inline-9
-                                      hover:bg-ink/5 hover:text-ink
-                                      focus-visible:ring-2 focus-visible:ring-brand
-                                      focus-visible:ring-offset-2 focus-visible:ring-offset-surface
-                                      active:scale-[0.94]
-                                    "
+                          absolute inset-e-[calc(var(--dialog-pad)-0.75rem)]
+                          inset-bs-[calc(var(--dialog-pad)-0.75rem)] flex items-center
+                          justify-center rounded-full text-ink-muted
+                          transition-[color,background-color,transform] duration-160 ease-out
+                          outline-none block-9 inline-9
+                          hover:bg-ink/5 hover:text-ink
+                          focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
+                          focus-visible:ring-offset-surface
+                          active:scale-[0.94]
+                        "
                     >
                         <XIcon className="block-4 inline-4" strokeWidth={1.7} aria-hidden />
                         <span className="sr-only">Close</span>

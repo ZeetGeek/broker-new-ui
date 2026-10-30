@@ -5,7 +5,13 @@ import axios, {
 } from "axios";
 
 import { isMockMode } from "@/lib/api/mock-mode";
-import { type AuthUser, clearSession, getAccessToken, setSession } from "@/lib/auth/session";
+import {
+    type AuthUser,
+    clearSession,
+    getAccessToken,
+    getSessionVersion,
+    setSession,
+} from "@/lib/auth/session";
 
 import { API_URL } from "@/config";
 
@@ -29,6 +35,7 @@ type ApiOptions = RequestInit & {
 type RetryConfig = InternalAxiosRequestConfig & {
     skipAuth?: boolean;
     _retry?: boolean;
+    _sessionVersion?: number;
 };
 
 type RefreshResponse = {
@@ -125,9 +132,11 @@ async function refreshAccessToken(): Promise<string> {
         throw new ApiError("Not authenticated", 401);
     }
     if (!refreshPromise) {
+        const version = getSessionVersion();
         refreshPromise = refreshClient
             .post<RefreshResponse>("/auth/refresh", {})
             .then((res) => {
+                if (version !== getSessionVersion()) throw new ApiError("Session changed", 0);
                 const { accessToken, user } = res.data;
                 if (!accessToken || !user) {
                     throw new ApiError("Refresh response missing tokens", 401, res.data);
@@ -140,7 +149,10 @@ async function refreshAccessToken(): Promise<string> {
                 const apiError = toApiError(error);
                 // Network blips (status 0) keep the session so a reconnect can retry.
                 // Auth failures — e.g. "Refresh token is missing" — force login.
-                if (apiError.status === 401 || apiError.status === 403) {
+                if (
+                    version === getSessionVersion() &&
+                    (apiError.status === 401 || apiError.status === 403)
+                ) {
                     forceLogout();
                 }
                 throw apiError;
@@ -159,6 +171,12 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config: RetryConfig) => {
+    if (!config.skipAuth) {
+        if (config._sessionVersion != null && config._sessionVersion !== getSessionVersion()) {
+            throw new ApiError("Session changed", 0);
+        }
+        config._sessionVersion ??= getSessionVersion();
+    }
     const headers = AxiosHeaders.from(config.headers);
     const method = (config.method ?? "get").toLowerCase();
     const hasBody = config.data != null && config.data !== "";
@@ -185,9 +203,18 @@ api.interceptors.request.use((config: RetryConfig) => {
 });
 
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        const config = response.config as RetryConfig;
+        if (!config.skipAuth && config._sessionVersion !== getSessionVersion()) {
+            throw new ApiError("Session changed", 0);
+        }
+        return response;
+    },
     async (error) => {
         const original = error.config as RetryConfig | undefined;
+        if (original && !original.skipAuth && original._sessionVersion !== getSessionVersion()) {
+            return Promise.reject(new ApiError("Session changed", 0));
+        }
         const status = error.response?.status;
 
         const shouldAttemptRefresh =

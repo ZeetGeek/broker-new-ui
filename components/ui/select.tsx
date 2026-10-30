@@ -5,20 +5,22 @@ import * as React from "react";
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tailspin } from "ldrs/react";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@/components/shared/icons";
 
 import { clearInputError, shakeInput } from "@/lib/motion/shake-input";
 import { swapText } from "@/lib/motion/swap-text";
 import { cn } from "@/lib/utils";
+import { useScrollFade } from "@/hooks/use-scroll-fade";
+
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@/components/shared/icons";
 
 import "ldrs/react/Tailspin.css";
 
 const selectTriggerVariants = cva(
     `
-      group/select-trigger relative flex items-center justify-between gap-1.5 rounded-control
+      group/select-trigger relative flex cursor-pointer items-center justify-between gap-1.5 rounded-control
       border-2 border-border-warm bg-surface text-[15px] whitespace-nowrap text-ink
       transition-[border-color,box-shadow] outline-none inline-full min-inline-0
-      hover:border-ink-subtle
+      hover:border-ring/50
       focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
       disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-surface-muted
       disabled:opacity-50
@@ -303,8 +305,8 @@ function SelectContent({
                     className={cn(
                         `
                           t-dropdown relative isolate z-50 origin-(--transform-origin) animate-none!
-                          overflow-x-hidden overflow-y-auto rounded-card border border-border-warm
-                          bg-surface p-1.5 text-ink shadow-lg ring-0 inline-(--anchor-width)
+                          overflow-hidden rounded-card border border-border-warm
+                          bg-surface text-ink shadow-lg ring-0 inline-(--anchor-width)
                           max-block-(--available-height) min-inline-36
                           data-open:animate-none!
                           data-closed:animate-none!
@@ -313,14 +315,27 @@ function SelectContent({
                     )}
                     {...props}
                 >
-                    <SelectScrollUpButton />
-                    <SelectPrimitive.List className="flex flex-col">
-                        {children}
-                    </SelectPrimitive.List>
-                    <SelectScrollDownButton />
+                    <SelectOptionsList>{children}</SelectOptionsList>
                 </SelectPrimitive.Popup>
             </SelectPrimitive.Positioner>
         </SelectPrimitive.Portal>
+    );
+}
+
+function SelectOptionsList({ children }: { children: React.ReactNode }) {
+    const ref = useScrollFade();
+
+    return (
+        <SelectPrimitive.List
+            ref={ref}
+            data-slot="select-list"
+            className="
+              dropdown-scroll-fade m-1.5 no-scrollbar flex flex-col overflow-y-auto overscroll-contain
+              max-block-[min(calc(--spacing(72)-(--spacing(9))),calc(var(--available-height)-(--spacing(9))))]
+            "
+        >
+            {children}
+        </SelectPrimitive.List>
     );
 }
 
@@ -340,11 +355,12 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
             data-slot="select-item"
             className={cn(
                 `
-                  relative flex cursor-pointer items-center gap-2 rounded-inner px-2.5 py-2 pe-8
+                  relative flex shrink-0 cursor-pointer items-center gap-2 rounded-inner px-2.5 py-2 pe-8
                   text-[15px] font-medium text-ink outline-hidden
                   transition-[background-color,color] duration-160
                   ease-[cubic-bezier(0.22,1,0.36,1)] select-none inline-full
                   data-highlighted:bg-surface-muted data-highlighted:text-ink
+                  data-selected:bg-surface-muted
                   data-disabled:pointer-events-none data-disabled:opacity-50
                   [&_svg]:pointer-events-none [&_svg]:shrink-0
                   [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
@@ -353,11 +369,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
             )}
             {...props}
         >
-            <SelectPrimitive.ItemText
-                className="
-              flex flex-1 items-center gap-2 truncate min-inline-0
-            "
-            >
+            <SelectPrimitive.ItemText className="flex flex-1 items-center gap-2 truncate min-inline-0">
                 {children}
             </SelectPrimitive.ItemText>
             <SelectPrimitive.ItemIndicator

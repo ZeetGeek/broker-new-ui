@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 
+import { isOwnerUnavailable, OWNER_UNAVAILABLE_HREF } from "@/lib/auth/launch-policy";
 import {
     GOOGLE_ONBOARDING_KEY,
     type Portal,
@@ -20,12 +21,18 @@ export function AuthGuard({ children, portal }: { children: React.ReactNode; por
     const { user, accessToken, hydrated } = useAppSelector((state) => state.auth);
     const isAuthenticated = Boolean(accessToken && user);
     const wrongPortal = isAuthenticated && portalForRole(user?.role) !== portal;
+    const ownerUnavailable =
+        isOwnerUnavailable(portal) || (isAuthenticated && isOwnerUnavailable(user?.role));
     // Every portal screen is scoped to a country. A Google signup that skipped
     // the choice is sent to pick one before seeing an empty marketplace.
     const needsCountry = isAuthenticated && !wrongPortal && user?.country === null;
 
     useEffect(() => {
         if (!hydrated) return;
+        if (ownerUnavailable) {
+            router.replace(OWNER_UNAVAILABLE_HREF);
+            return;
+        }
         if (!isAuthenticated) {
             const next = pathname && pathname !== "/" ? pathname : portalHomeForRole(undefined);
             router.replace(`/login?next=${encodeURIComponent(next)}`);
@@ -39,9 +46,18 @@ export function AuthGuard({ children, portal }: { children: React.ReactNode; por
             sessionStorage.setItem(GOOGLE_ONBOARDING_KEY, "1");
             router.replace("/auth/choose-role");
         }
-    }, [hydrated, isAuthenticated, router, pathname, wrongPortal, needsCountry, user?.role]);
+    }, [
+        hydrated,
+        isAuthenticated,
+        router,
+        pathname,
+        wrongPortal,
+        needsCountry,
+        user?.role,
+        ownerUnavailable,
+    ]);
 
-    if (!hydrated || !isAuthenticated || wrongPortal || needsCountry) {
+    if (!hydrated || !isAuthenticated || wrongPortal || needsCountry || ownerUnavailable) {
         return (
             <div
                 className="bg-canvas p-4 min-block-screen md:p-8"
@@ -60,9 +76,7 @@ export function AuthGuard({ children, portal }: { children: React.ReactNode; por
                         {Array.from({ length: 6 }, (_, index) => (
                             <div
                                 key={index}
-                                className="
-                      animate-pulse rounded-inner bg-surface-muted block-16
-                    "
+                                className="animate-pulse rounded-inner bg-surface-muted block-16"
                             />
                         ))}
                     </div>

@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 
-import { ArrowLeft, Home } from "@/components/shared/icons";
-
 import { useRouter } from "@/lib/navigation";
 
+import { ArrowLeft, Home } from "@/components/shared/icons";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 

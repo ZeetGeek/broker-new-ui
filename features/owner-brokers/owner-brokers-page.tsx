@@ -70,12 +70,12 @@ export function OwnerBrokersPage() {
         };
     }, [revision]);
 
-    useEffect(() => {
-        if (tab !== "active" || queue.isPending) return;
-        if (typeof queue.total === "number") setActiveCount(queue.total);
-    }, [tab, queue.isPending, queue.total]);
-
-    const introCount = tab === "browse" ? browseCount : activeCount;
+    const introCount =
+        tab === "browse"
+            ? browseCount
+            : !queue.isPending && typeof queue.total === "number"
+              ? queue.total
+              : activeCount;
 
     let body: ReactNode;
 

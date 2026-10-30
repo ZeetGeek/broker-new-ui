@@ -5,23 +5,21 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link2 } from "@/components/shared/icons";
 
 import { ApiError } from "@/lib/api/client";
 import type { NewBuyerInput } from "@/lib/api/clients";
 import { contactsApi } from "@/lib/api/contacts";
+import { brokerContactHref } from "@/lib/routes/broker";
 import {
-    type BuyerFormValues,
     buyerFormSchema,
+    type BuyerFormValues,
     normalizeBuyerBudget,
     normalizeBuyerPhone,
     parseBuyerLocalities,
 } from "@/lib/validation/buyer";
-
 import { useLocationOptions } from "@/hooks/use-locations";
 
-import { useAppSelector } from "@/store/hooks";
-
+import { Link2 } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { Button } from "@/components/ui/button";
 
@@ -39,6 +37,7 @@ import {
 import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
 import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
 import type { BuyerRow } from "@/features/contacts/types";
+import { useAppSelector } from "@/store/hooks";
 
 function emptyValues(location = contactLocationDefaults()): BuyerFormValues {
     return {
@@ -136,7 +135,7 @@ function DuplicateWarning({
                     type="button"
                     size="sm"
                     variant="outline"
-                    onClick={() => window.location.assign(`/broker/contacts?open=${match.id}`)}
+                    onClick={() => window.location.assign(brokerContactHref(match.id, match.type))}
                 >
                     Open existing
                 </Button>
@@ -196,20 +195,23 @@ export function AddBuyerModal({
 
     useEffect(() => {
         if (!open) return;
-        form.reset(valuesFromBuyer(buyer, locationDefaults));
-        setBusy(false);
-        setFormError(undefined);
-        setDuplicate(null);
-        setIgnoreDuplicate(false);
-        setMoreOpen(Boolean(buyer?.email || buyer?.notes));
+        const timer = window.setTimeout(() => {
+            form.reset(valuesFromBuyer(buyer, locationDefaults));
+            setBusy(false);
+            setFormError(undefined);
+            setDuplicate(null);
+            setIgnoreDuplicate(false);
+            setMoreOpen(Boolean(buyer?.email || buyer?.notes));
+        }, 0);
+        return () => window.clearTimeout(timer);
     }, [buyer, form, locationDefaults, open]);
 
     useEffect(() => {
         if (!open || isEdit || ignoreDuplicate) return;
         const phone = normalizeBuyerPhone(values.phone ?? "");
         if (!/^[6-9]\d{9}$/.test(phone)) {
-            setDuplicate(null);
-            return;
+            const timer = window.setTimeout(() => setDuplicate(null), 0);
+            return () => window.clearTimeout(timer);
         }
         const timer = window.setTimeout(() => {
             void contactsApi
@@ -229,7 +231,7 @@ export function AddBuyerModal({
     const save = form.handleSubmit(async (parsed) => {
         if (duplicate && !ignoreDuplicate && !isEdit) {
             setFormError(
-                "This mobile number is already saved. Open the existing contact, or continue anyway.",
+                "This mobile number is already saved. Open the existing client, or continue anyway.",
             );
             return;
         }
@@ -240,12 +242,12 @@ export function AddBuyerModal({
             if (isEdit && buyer) {
                 await contactsApi.saveBuyer(input, buyer.id);
                 onUpdated?.(input.name);
-                toast.success("Buyer updated");
+                toast.success("Client updated");
                 onOpenChange(false);
             } else {
                 const savedId = await contactsApi.saveBuyer(input);
                 onCreated(input.name, savedId);
-                toast.success("Buyer added");
+                toast.success("Client added");
                 form.reset(emptyValues(locationDefaults));
                 onOpenChange(false);
             }
@@ -255,7 +257,7 @@ export function AddBuyerModal({
                     ? error.message
                     : error instanceof Error
                       ? error.message
-                      : "Could not save this buyer. Try again.";
+                      : "Could not save this client. Try again.";
             setFormError(message);
         } finally {
             setBusy(false);
@@ -265,7 +267,7 @@ export function AddBuyerModal({
     const saveAnother = form.handleSubmit(async (parsed) => {
         if (duplicate && !ignoreDuplicate) {
             setFormError(
-                "This mobile number is already saved. Open the existing contact, or continue anyway.",
+                "This mobile number is already saved. Open the existing client, or continue anyway.",
             );
             return;
         }
@@ -275,7 +277,7 @@ export function AddBuyerModal({
             const input = toNewBuyerInput(parsed);
             const savedId = await contactsApi.saveBuyer(input);
             onCreated(input.name, savedId);
-            toast.success("Buyer added");
+            toast.success("Client added");
             form.reset(emptyValues(locationDefaults));
             setDuplicate(null);
             setIgnoreDuplicate(false);
@@ -286,7 +288,7 @@ export function AddBuyerModal({
                     ? error.message
                     : error instanceof Error
                       ? error.message
-                      : "Could not save this buyer. Try again.";
+                      : "Could not save this client. Try again.";
             setFormError(message);
         } finally {
             setBusy(false);
@@ -297,11 +299,11 @@ export function AddBuyerModal({
         <ContactFormDrawer
             open={open}
             onOpenChange={onOpenChange}
-            title={isEdit ? "Edit buyer" : "Add buyer"}
+            title={isEdit ? "Edit client" : "Add client"}
             description="Capture their requirement once, then match them to your private listings."
             isDirty={isDirty}
             busy={busy}
-            primaryLabel={isEdit ? "Save changes" : "Save buyer"}
+            primaryLabel={isEdit ? "Save changes" : "Save client"}
             onPrimary={() => void save()}
             onSaveAnother={isEdit ? undefined : () => void saveAnother()}
             footerError={formError}

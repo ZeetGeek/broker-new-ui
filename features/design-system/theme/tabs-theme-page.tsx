@@ -14,8 +14,7 @@ function Swatch({ label, children }: { label: string; children: React.ReactNode 
     return (
         <div
             className="
-              flex flex-col items-start gap-3 rounded-card border border-border-warm bg-surface
-              p-5
+              flex flex-col items-start gap-3 rounded-card border border-border-warm bg-surface p-5
             "
         >
             <p className="eyebrow">{label}</p>
@@ -88,8 +87,7 @@ function PanelsDemo() {
             <TabsPanel
                 panelKey={value}
                 className="
-                  body-sm rounded-control border border-border-warm bg-canvas p-4
-                  text-ink-muted
+                  body-sm rounded-control border border-border-warm bg-canvas p-4 text-ink-muted
                 "
             >
                 {PANEL_COPY[value]}
@@ -118,7 +116,12 @@ function CountsDemo() {
                     <>
                         <span className="truncate">{tab.label}</span>
                         {tab.count > 0 ? (
-                            <span className="tabular rounded-md bg-surface/70 px-1.5 py-0.5 text-[11px] text-ink-muted">
+                            <span
+                                className="
+                              tabular rounded-md bg-surface/70 px-1.5 py-0.5 text-[11px]
+                              text-ink-muted
+                            "
+                            >
                                 {tab.count}
                             </span>
                         ) : null}
@@ -179,13 +182,21 @@ export function TabsThemePage() {
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
                         <Swatch label={TABS_VARIANT.label}>
-                            <div className="flex min-block-14 items-center justify-center inline-full">
+                            <div
+                                className="
+                              flex items-center justify-center inline-full min-block-14
+                            "
+                            >
                                 <TabsDemo />
                             </div>
                             <p className="body-xs text-ink-subtle">{TABS_VARIANT.note}</p>
                         </Swatch>
                         <Swatch label="Equal options">
-                            <div className="flex min-block-14 items-center justify-center inline-full">
+                            <div
+                                className="
+                              flex items-center justify-center inline-full min-block-14
+                            "
+                            >
                                 <TabsDemo options={FILTER_TABS} />
                             </div>
                             <p className="body-xs text-ink-subtle">

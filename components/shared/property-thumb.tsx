@@ -1,6 +1,6 @@
-import { Building2 } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
+
+import { Building2 } from "@/components/shared/icons";
 
 import { AppImage } from "./app-image";
 import { HoverScaleMedia } from "./hover-scale-media";

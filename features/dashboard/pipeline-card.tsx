@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 
-import { AlertCircle, Navigation, Users } from "@/components/shared/icons";
-
+import { BROKER_ADD_BUYER_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { AlertCircle, Navigation, Users } from "@/components/shared/icons";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -204,10 +204,10 @@ function EmptyPipeline({ className }: { className?: string }) {
 
             <EmptyState
                 icon={Users}
-                heading="No buyers yet"
-                description="Add a buyer or tenant to start tracking deals."
+                heading="No clients yet"
+                description="Add a client to start tracking deals."
             >
-                <TextLinkButton href="/broker/pipeline/new">Add buyer</TextLinkButton>
+                <TextLinkButton href={BROKER_ADD_BUYER_HREF}>Add client</TextLinkButton>
             </EmptyState>
         </section>
     );
@@ -229,7 +229,7 @@ export function PipelineCard({ data, className }: PipelineCardProps) {
                 <CardLabel info={PIPELINE_INFO}>
                     <span id="pipeline-card-heading">Pipeline</span>
                 </CardLabel>
-                <p className="eyebrow shrink-0 text-ink-muted">{data.activeTotal} active buyers</p>
+                <p className="eyebrow shrink-0 text-ink-muted">{data.activeTotal} active clients</p>
             </div>
 
             <div className="mbs-4 flex flex-1 flex-col min-block-0">

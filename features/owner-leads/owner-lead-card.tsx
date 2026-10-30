@@ -2,20 +2,6 @@
 
 import Link from "next/link";
 
-import {
-    Building2,
-    Check,
-    Clock,
-    HandCoins,
-    Images,
-    MapPin,
-    WhatsAppIcon,
-    Move3d,
-    Phone,
-    StickyNote,
-    X,
-} from "@/components/shared/icons";
-
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
 import { parseMoney } from "@/lib/format/money";
@@ -25,6 +11,19 @@ import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
+import {
+    Building2,
+    Check,
+    Clock,
+    HandCoins,
+    Images,
+    MapPin,
+    Move3d,
+    Phone,
+    StickyNote,
+    WhatsAppIcon,
+    X,
+} from "@/components/shared/icons";
 import { Price } from "@/components/shared/price";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -130,7 +129,11 @@ export function OwnerLeadCard({
                     </div>
                 )}
 
-                <div className="absolute inset-bs-0 flex items-start justify-between p-3 inline-full">
+                <div
+                    className="
+                  absolute inset-bs-0 flex items-start justify-between p-3 inline-full
+                "
+                >
                     <StagePill stage={lead.stage} />
                     {facts.photoCount > 1 ? (
                         <span

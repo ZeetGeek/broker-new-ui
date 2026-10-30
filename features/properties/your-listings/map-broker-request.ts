@@ -4,7 +4,6 @@ import { calendarDaysBetween, formatDateIso } from "@/lib/format/date";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
 import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
-
 import type {
     BrokerRequestItem,
     BrokerRequestRowType,

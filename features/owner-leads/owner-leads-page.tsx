@@ -3,13 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { HandCoins } from "@/components/shared/icons";
-
 import { ApiError } from "@/lib/api/client";
 import { ownerLeadsApi, type PropertyLead } from "@/lib/api/owner-leads";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { HandCoins } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -95,28 +94,30 @@ export function OwnerLeadsPage() {
 
     useEffect(() => {
         let cancelled = false;
-        setLoading(true);
-        setError(null);
+        const timer = window.setTimeout(() => {
+            setLoading(true);
+            setError(null);
 
-        void ownerLeadsApi
-            .list({
-                search: filters.q.trim() || undefined,
-                limit: 50,
-            })
-            .then((page) => {
-                if (cancelled) return;
-                setItems(page.items);
-            })
-            .catch((err) => {
-                if (cancelled) return;
-                setError(apiMessage(err, "Could not load leads"));
-                setItems([]);
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false);
-            });
-
+            void ownerLeadsApi
+                .list({
+                    search: filters.q.trim() || undefined,
+                    limit: 50,
+                })
+                .then((page) => {
+                    if (cancelled) return;
+                    setItems(page.items);
+                })
+                .catch((err) => {
+                    if (cancelled) return;
+                    setError(apiMessage(err, "Could not load leads"));
+                    setItems([]);
+                })
+                .finally(() => {
+                    if (!cancelled) setLoading(false);
+                });
+        }, 0);
         return () => {
+            window.clearTimeout(timer);
             cancelled = true;
         };
     }, [filters.q, revision]);

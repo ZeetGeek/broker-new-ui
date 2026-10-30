@@ -37,7 +37,7 @@ function pendingStepsFromRep(rep: RepresentationItem): RequestTimelineStep[] {
 }
 
 /**
- * Same Request timeline dialog as My Deals, for a pending broker request on
+ * Same Request timeline dialog as Requests & Invitations, for a pending broker request on
  * an owner-listing card.
  */
 export function BrowseRequestTimelineDialog({

@@ -1,5 +1,11 @@
 import Link from "next/link";
 
+import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
+import { BROKER_VISIT_SLOTS_HREF, brokerVisitHref } from "@/lib/routes/broker";
+import { OWNER_VISITS_HREF } from "@/lib/routes/owner";
+import { cn } from "@/lib/utils";
+
+import { EmptyState } from "@/components/shared/empty-state";
 import {
     CalendarClock,
     CalendarPlus,
@@ -8,12 +14,6 @@ import {
     Phone,
     User,
 } from "@/components/shared/icons";
-
-import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
-import { OWNER_VISITS_HREF } from "@/lib/routes/owner";
-import { cn } from "@/lib/utils";
-
-import { EmptyState } from "@/components/shared/empty-state";
 import { MarketCurrencyIcon } from "@/components/shared/market-currency-icon";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
@@ -22,6 +22,8 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
@@ -69,19 +71,19 @@ function statusBadgeContent(
     isPast: boolean,
     portal: "broker" | "owner",
 ): { label: string; hint: string; color: "emerald" | "orange" | "lime" | "amber" } {
-    if (isPast) {
+    if (status === "confirmed" && isPast) {
         return {
-            label: "In progress",
+            label: "Confirmed · Start time passed",
             hint:
                 portal === "owner"
                     ? "This visit's start time has passed. Check in with the broker if you need an update."
-                    : "This visit's start time has passed. Mark it done or reschedule once you're finished.",
+                    : "The confirmed start time has passed. Open Visits to check what happened; this visit has not been marked done.",
             color: "emerald",
         };
     }
-    if (isStartingSoon) {
+    if (status === "confirmed" && isStartingSoon) {
         return {
-            label: "Starting soon",
+            label: "Confirmed · Starting soon",
             hint:
                 portal === "owner"
                     ? `Starts in under ${STARTING_SOON_MINUTES} minutes. The broker should be on the way with their client.`
@@ -91,20 +93,30 @@ function statusBadgeContent(
     }
     if (status === "confirmed") {
         return {
-            label: portal === "owner" ? "Confirmed" : "Owner confirmed",
+            label: portal === "owner" || !FEATURE_PLATFORM_OWNER ? "Confirmed" : "Owner confirmed",
             hint:
                 portal === "owner"
                     ? "You've confirmed this time slot. The visit is on."
-                    : "The owner approved this time slot. The visit is on - no further action needed.",
+                    : !FEATURE_PLATFORM_OWNER
+                      ? "This visit is confirmed. Check Visits for the details."
+                      : "The owner approved this time slot. The visit is on - no further action needed.",
             color: "emerald",
         };
     }
+    const timing = isPast ? " · Start time passed" : isStartingSoon ? " · Starts soon" : "";
     return {
-        label: portal === "owner" ? "Scheduled" : "Owner not replied",
+        label:
+            (portal === "owner"
+                ? "Scheduled"
+                : !FEATURE_PLATFORM_OWNER
+                  ? "Awaiting confirmation"
+                  : "Owner not replied") + timing,
         hint:
             portal === "owner"
                 ? "A broker booked this slot. Confirm or cancel it from Visits if you need to change it."
-                : "The owner hasn't confirmed this slot yet. Nudge them, or reschedule if you don't hear back before the visit.",
+                : !FEATURE_PLATFORM_OWNER
+                  ? "This visit is not confirmed yet. Check its status in Visits."
+                  : "The owner hasn't confirmed this slot yet. Nudge them, or reschedule if you don't hear back before the visit.",
         color: "amber",
     };
 }
@@ -202,7 +214,7 @@ function EmptyNextShowing({
                         : "Schedule one when a client is ready to see a property."
                 }
             >
-                <TextLinkButton href={isOwner ? OWNER_VISITS_HREF : "/broker/visits/new"}>
+                <TextLinkButton href={isOwner ? OWNER_VISITS_HREF : BROKER_VISIT_SLOTS_HREF}>
                     {isOwner ? "Manage visits" : "Schedule a visit"}
                 </TextLinkButton>
             </EmptyState>
@@ -241,10 +253,8 @@ export function NextShowingCard({
     const locationLine = showing.address.trim() || propertyLine;
     const directionsHref = mapsSearchUrl(locationLine);
     const personRole = isOwner ? "Broker" : "Client";
-    const secondaryHref = isOwner
-        ? OWNER_VISITS_HREF
-        : `/broker/visits/new?reschedule=${showing.id}`;
-    const secondaryLabel = isOwner ? "View visits" : "Reschedule";
+    const secondaryHref = isOwner ? OWNER_VISITS_HREF : brokerVisitHref(showing.id);
+    const secondaryLabel = isOwner ? "View visits" : "View visit";
 
     return (
         <section

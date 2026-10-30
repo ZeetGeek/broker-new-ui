@@ -3,10 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { Check, X } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { Check, X } from "@/components/shared/icons";
 import { OverlayPersonLine } from "@/components/shared/overlay-card";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { Button } from "@/components/ui/button";

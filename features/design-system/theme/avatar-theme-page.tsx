@@ -1,8 +1,7 @@
 "use client";
 
-import { Check } from "@/components/shared/icons";
-
 import { AvatarStack } from "@/components/shared/avatar-stack";
+import { Check } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import {
     Avatar,
@@ -60,7 +59,7 @@ function BadgeDemo() {
             <AvatarImage src={DEMO_PEOPLE[1].avatarUrl} alt={DEMO_PEOPLE[1].name} />
             <AvatarFallback>AP</AvatarFallback>
             <AvatarBadge>
-                <Check aria-hidden className="size-full" strokeWidth={3} />
+                <Check aria-hidden className="block-full inline-full" strokeWidth={3} />
             </AvatarBadge>
         </Avatar>
     );
@@ -129,7 +128,11 @@ export function AvatarThemePage() {
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         {AVATAR_USES.map((use) => (
                             <Swatch key={use.name} label={use.label}>
-                                <div className="flex min-block-14 items-center justify-center inline-full">
+                                <div
+                                    className="
+                                  flex items-center justify-center inline-full min-block-14
+                                "
+                                >
                                     {use.name === "image" ? <ImageDemo /> : null}
                                     {use.name === "fallback" ? <FallbackDemo /> : null}
                                     {use.name === "badge" ? <BadgeDemo /> : null}
@@ -156,7 +159,11 @@ export function AvatarThemePage() {
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         {AVATAR_SIZES.map((size) => (
                             <Swatch key={size.name} label={size.label}>
-                                <div className="flex min-block-14 items-center justify-center inline-full">
+                                <div
+                                    className="
+                                  flex items-center justify-center inline-full min-block-14
+                                "
+                                >
                                     <SizeDemo size={size.name} />
                                 </div>
                                 <p className="body-xs text-ink-subtle">{size.note}</p>
@@ -175,7 +182,11 @@ export function AvatarThemePage() {
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {AVATAR_GROUPS.map((group) => (
                             <Swatch key={group.name} label={group.label}>
-                                <div className="flex min-block-14 items-center justify-center inline-full">
+                                <div
+                                    className="
+                                  flex items-center justify-center inline-full min-block-14
+                                "
+                                >
                                     {group.name === "compound" ? <CompoundGroupDemo /> : null}
                                     {group.name === "stack" ? <StackDemo /> : null}
                                 </div>

@@ -15,7 +15,7 @@ const REASON_MAX = 500;
 
 /**
  * Confirm "Mark as sold". Open deals close immediately, so the dialog says so
- * before the caller commits. Owner listings also notify representing brokers.
+ * before the caller commits. Marketplace also notify representing brokers.
  * A broker exclusive listing does not — only that broker listed it.
  */
 export function MarkSoldDialog({
@@ -89,7 +89,11 @@ export function MarkSoldDialog({
             }
         >
             <div className="flex flex-col gap-4">
-                <div className="flex gap-3 rounded-inner border border-amber-300/60 bg-amber-50 p-3.5">
+                <div
+                    className="
+                  flex gap-3 rounded-inner border border-amber-300/60 bg-amber-50 p-3.5
+                "
+                >
                     <TriangleAlert
                         aria-hidden
                         className="mbs-0.5 shrink-0 text-pending block-5 inline-5"
@@ -123,7 +127,7 @@ export function MarkSoldDialog({
                         maxLength={REASON_MAX}
                         rows={3}
                         disabled={busy}
-                        placeholder="e.g. Sold to a buyer I found myself"
+                        placeholder="e.g. Sold to a client I found myself"
                         className="border-2 border-border-warm bg-surface"
                     />
                     <span className="body-xs text-ink-muted">

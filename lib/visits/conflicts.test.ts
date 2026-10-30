@@ -51,7 +51,6 @@ test("blocks overlapping broker bookings hard; buyer overlap is advisory", () =>
             locality: "Vesu",
         },
         [visit()],
-        {},
         now,
     );
     assert.equal(result.level, "clash");
@@ -71,7 +70,6 @@ test("ignores an existing visit for the same open slot", () => {
             slotId: "slot_1",
         },
         [visit({ slotId: "slot_1" })],
-        {},
         now,
     );
     assert.equal(result.level, "clear");
@@ -86,43 +84,27 @@ test("blocks a visit inside the notice window", () => {
             locality: "Vesu",
         },
         [],
-        {},
         now,
     );
     assert.equal(result.level, "clash");
     assert.equal(result.reasons[0].code, "TOO_SOON");
 });
 
-test("returns a concrete travel warning with distance and drive time", () => {
-    const result = checkVisitConflicts(
-        {
-            startsAt: "2026-09-15T05:00:00.000Z",
-            endsAt: "2026-09-15T05:45:00.000Z",
-            buyerIds: ["b_2"],
-            locality: "Vesu",
-        },
-        [visit()],
-        { v_existing: { minutes: 28, distanceKm: 11.4 } },
-        now,
-    );
-    assert.equal(result.level, "tight");
-    assert.match(result.reasons[0].message, /15 min gap.*11\.4 km.*28 min/);
-});
-
-test("marks back-to-back visits as warning-only", () => {
-    const result = checkVisitConflicts(
-        {
-            startsAt: "2026-09-15T04:45:00.000Z",
-            endsAt: "2026-09-15T05:30:00.000Z",
-            buyerIds: ["b_2"],
-            locality: "Vesu",
-        },
-        [visit()],
-        {},
-        now,
-    );
-    assert.equal(result.level, "tight");
-    assert.equal(result.reasons[0].code, "BACK_TO_BACK");
+test("allows a visit right after another one, with no travel warning", () => {
+    for (const startsAt of ["2026-09-15T04:45:00.000Z", "2026-09-15T05:00:00.000Z"]) {
+        const result = checkVisitConflicts(
+            {
+                startsAt,
+                endsAt: "2026-09-15T05:45:00.000Z",
+                buyerIds: ["b_2"],
+                locality: "Vesu",
+            },
+            [visit()],
+            now,
+        );
+        assert.equal(result.level, "clear");
+        assert.deepEqual(result.reasons, []);
+    }
 });
 
 test("warns on a sixth visit and a late-evening finish", () => {
@@ -142,7 +124,6 @@ test("warns on a sixth visit and a late-evening finish", () => {
             locality: "Vesu",
         },
         existing,
-        {},
         now,
     );
     assert.equal(result.level, "tight");
@@ -159,7 +140,6 @@ test("ignores cancelled visits", () => {
             locality: "Vesu",
         },
         [visit({ status: "cancelled_by_owner" })],
-        {},
         now,
     );
     assert.equal(result.level, "clear");

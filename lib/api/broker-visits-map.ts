@@ -176,15 +176,13 @@ function configLabel(
 
 export function mapShowingStatus(
     status: string | null | undefined,
-    startsAt: string,
+    _startsAt: string,
 ): BrokerVisitStatus {
-    const now = Date.now();
-    const startMs = new Date(startsAt).getTime();
     switch (status) {
         case "scheduled":
             return "awaiting_owner";
         case "confirmed":
-            return startMs < now ? "completed" : "confirmed";
+            return "confirmed";
         case "completed":
             return "completed";
         case "cancelled":
@@ -210,7 +208,7 @@ export function mapShowingToVisit(showing: ApiShowing): BrokerSiteVisit {
               name: client.name,
               phoneDigits: phoneDigits(client.phone),
           }
-        : { id: showing.leadId, name: "Buyer" };
+        : { id: showing.leadId, name: "Client" };
     const owner: PersonSummary = showing.owner
         ? {
               id: showing.owner.id,

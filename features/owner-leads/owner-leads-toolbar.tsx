@@ -2,10 +2,9 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 
-import { ArrowDownUp, ChevronDown, Search } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { ArrowDownUp, ChevronDown, Search } from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuContent,

@@ -26,7 +26,7 @@ import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-list
 
 const SORT_OPTIONS: { value: DealSort; label: string }[] = [
     { value: "recent", label: "Newest first" },
-    { value: "stalled", label: "Quietest first" },
+    { value: "stalled", label: "Longest in stage" },
     { value: "visit_soon", label: "Visit soonest" },
     { value: "price_desc", label: "Costliest first" },
     { value: "price_asc", label: "Cheapest first" },
@@ -56,7 +56,7 @@ function PipelineQueryInput({ value, onChange }: { value: string; onChange: (q: 
             size="sm"
             value={draft}
             onValueChange={setDraft}
-            placeholder="Search buyer, owner or area"
+            placeholder="Search client, owner or area"
             aria-label="Search your deals"
             startIcon={Search}
             clearable

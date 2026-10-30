@@ -2,6 +2,10 @@
 
 import type { ReactNode } from "react";
 
+import { formatDurationUntil, formatTimeIn } from "@/lib/format/date";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
+import { cn } from "@/lib/utils";
+
 import {
     Clock3,
     Lock,
@@ -10,11 +14,6 @@ import {
     PhoneCall,
     StickyNote,
 } from "@/components/shared/icons";
-
-import { formatDurationUntil, formatTimeIn } from "@/lib/format/date";
-import { formatPropertyCardName } from "@/lib/format/property-card-name";
-import { cn } from "@/lib/utils";
-
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Badge } from "@/components/ui/badge";
@@ -243,7 +242,7 @@ export function VisitRow({
                         label={
                             viewer === "broker"
                                 ? "The owner of this property"
-                                : "The broker bringing a buyer"
+                                : "The broker bringing a client"
                         }
                     >
                         <span>
@@ -257,9 +256,9 @@ export function VisitRow({
                             <span aria-hidden className="text-ink-subtle">
                                 ·
                             </span>
-                            <Hint label="Your buyer being shown this property">
+                            <Hint label="Your client being shown this property">
                                 <span>
-                                    <span className="text-ink-subtle">Buyer</span>{" "}
+                                    <span className="text-ink-subtle">Client</span>{" "}
                                     <span className="font-medium text-ink">{visit.buyer.name}</span>
                                 </span>
                             </Hint>
@@ -298,7 +297,7 @@ export function VisitRow({
 
                 <div className="flex flex-wrap items-center gap-2">
                     {visit.outcome ? (
-                        <Hint label="What the buyer thought after this visit">
+                        <Hint label="What the client thought after this visit">
                             <Badge variant={VISIT_OUTCOME_META[visit.outcome].badgeVariant}>
                                 {VISIT_OUTCOME_META[visit.outcome].label}
                             </Badge>

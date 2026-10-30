@@ -3,27 +3,16 @@
 import Link from "next/link";
 
 import {
-    BadgeCheck,
-    Bookmark,
-    Briefcase,
-    Command,
-    ExternalLink,
-    Gift,
-    LifeBuoy,
-    ShieldCheck,
-    User,
-} from "@/components/shared/icons";
-
-import {
     PortalProfileMenu,
+    portalProfileMenuItemClass,
     PortalProfileMenuSeparator,
     PortalProfileShortcutHint,
-    portalProfileMenuItemClass,
 } from "@/components/layout/portal-profile-menu";
+import { PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
 import { DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import { SUPPORT_WHATSAPP_URL } from "@/config/constants";
-import { SITE_URL } from "@/config/index";
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type { BrokerVerificationState } from "@/features/broker/map-profile-menu";
 
 export type BrokerProfileMenuBroker = {
@@ -45,91 +34,38 @@ export type BrokerProfileMenuProps = {
 };
 
 const PROFILE_HREF = "/broker/profile";
-const PROFILE_EDIT_HREF = "/broker/profile";
 const SAVED_PROPERTIES_HREF = "/broker/saved-properties";
 const REFERRALS_HREF = "/broker/referrals";
-const VERIFICATION_HREF = "/broker/verification";
+const VERIFICATION_HREF = "/broker/profile#profile-rera";
 
-function brokerPublicProfileUrl(slug: string) {
-    return `${SITE_URL.replace(/\/$/, "")}/b/${slug}`;
-}
-
-function VerificationStatus({
-    state,
-    profileCompletion,
-}: {
-    state: BrokerVerificationState;
-    profileCompletion: number;
-}) {
-    if (state === "VERIFIED") {
-        return (
-            <div className="body-xs flex items-center gap-2.5 font-medium text-ink-muted">
-                <span className="inline-flex items-center gap-1">
-                    <Briefcase
-                        aria-hidden
-                        className="shrink-0 block-3.5 inline-3.5"
-                        strokeWidth={2}
-                    />
-                    Broker
-                </span>
-                <span aria-hidden className="rounded-full bg-ink-subtle/40 block-1 inline-1" />
-                <span className="inline-flex items-center gap-1 text-brand-text">
-                    <BadgeCheck
-                        aria-hidden
-                        className="shrink-0 animate-verified-glow text-brand block-3.5 inline-3.5"
-                        strokeWidth={2.25}
-                    />
-                    RERA verified
-                </span>
-            </div>
-        );
-    }
-
-    if (state === "PENDING_VERIFICATION") {
-        return (
-            <div
-                className="
-                  body-xs rounded-md border border-border-warm bg-surface-muted/80 px-3 py-1.5
-                  font-medium text-ink-muted
-                "
-            >
-                Under review
-            </div>
-        );
-    }
-
-    const clamped = Math.min(100, Math.max(0, profileCompletion));
-
+function VerificationStatus({ state }: { state: BrokerVerificationState }) {
+    const verified = state === "VERIFIED";
+    const pending = state === "PENDING_VERIFICATION";
     return (
-        <Link
-            href={PROFILE_EDIT_HREF}
-            className="
-              group/chip block overflow-hidden rounded-inner border border-brand-soft
-              bg-linear-to-br from-brand-soft/70 to-surface-muted/50 px-3 py-2.5
-              transition-[background-color,box-shadow] duration-160 ease-out
-              hover:border-brand/25 hover:shadow-xs
-            "
-        >
-            <div className="flex items-center justify-between gap-2">
-                <span className="body-xs font-semibold text-brand-text">Complete your profile</span>
-                <span className="tabular body-xs font-semibold text-brand">{clamped}%</span>
-            </div>
-            <div
-                className="mbs-2 overflow-hidden rounded-full bg-canvas/60 block-1"
-                role="progressbar"
-                aria-valuenow={clamped}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label={`Profile ${clamped}% complete`}
-            >
-                <div
-                    className="
-                      rounded-full bg-brand transition-[width] duration-500 ease-out block-full
-                    "
-                    style={{ width: `${clamped}%` }}
+        <div className="body-xs flex flex-wrap items-center gap-2.5 font-medium text-ink-muted">
+            <span className="inline-flex items-center gap-1">
+                <AccountMenuIcon
+                    name="briefcase"
+                    aria-hidden
+                    className="shrink-0 block-3.5 inline-3.5"
                 />
-            </div>
-        </Link>
+                Broker
+            </span>
+            <span
+                className={
+                    verified
+                        ? "inline-flex items-center gap-1 text-brand-text"
+                        : "inline-flex items-center gap-1 text-ink-muted"
+                }
+            >
+                <AccountMenuIcon
+                    name={verified ? "verified" : "unverified"}
+                    aria-hidden
+                    className="shrink-0 block-3.5 inline-3.5"
+                />
+                {verified ? "RERA verified" : pending ? "Under review" : "Not verified"}
+            </span>
+        </div>
     );
 }
 
@@ -140,19 +76,12 @@ export function BrokerProfileMenu({
     open,
     onOpenChange,
 }: BrokerProfileMenuProps) {
-    const publicProfileUrl = broker.publicSlug ? brokerPublicProfileUrl(broker.publicSlug) : null;
-
     return (
         <PortalProfileMenu
             userName={broker.name}
             userAvatarUrl={broker.avatarUrl}
             profileHref={PROFILE_HREF}
-            headerStatus={
-                <VerificationStatus
-                    state={broker.verificationState}
-                    profileCompletion={broker.profileCompletion}
-                />
-            }
+            headerStatus={<VerificationStatus state={broker.verificationState} />}
             tooltipLabel={tooltipLabel}
             open={open}
             onOpenChange={onOpenChange}
@@ -162,7 +91,11 @@ export function BrokerProfileMenu({
                     className={portalProfileMenuItemClass}
                     render={<Link href={PROFILE_HREF} />}
                 >
-                    <User aria-hidden className="shrink-0 block-4 inline-4" strokeWidth={1.75} />
+                    <AccountMenuIcon
+                        name="account"
+                        aria-hidden
+                        className="shrink-0 text-ink! block-4.5! inline-4.5!"
+                    />
                     <span className="flex-1 min-inline-0">My profile</span>
                     <PortalProfileShortcutHint shortcutId="profile" />
                 </DropdownMenuItem>
@@ -171,39 +104,23 @@ export function BrokerProfileMenu({
                     className={portalProfileMenuItemClass}
                     render={<Link href={SAVED_PROPERTIES_HREF} />}
                 >
-                    <Bookmark
+                    <AccountMenuIcon
+                        name="bookmark"
                         aria-hidden
-                        className="shrink-0 block-4 inline-4"
-                        strokeWidth={1.75}
+                        className="shrink-0 text-ink! block-4.5! inline-4.5!"
                     />
                     <span className="flex-1 min-inline-0">Saved properties</span>
                 </DropdownMenuItem>
-
-                {publicProfileUrl ? (
-                    <DropdownMenuItem
-                        className={portalProfileMenuItemClass}
-                        render={
-                            <a href={publicProfileUrl} target="_blank" rel="noopener noreferrer" />
-                        }
-                    >
-                        <ExternalLink
-                            aria-hidden
-                            className="shrink-0 block-4 inline-4"
-                            strokeWidth={1.75}
-                        />
-                        <span className="flex-1 min-inline-0">Preview public profile</span>
-                    </DropdownMenuItem>
-                ) : null}
 
                 {broker.verificationState !== "VERIFIED" ? (
                     <DropdownMenuItem
                         className={portalProfileMenuItemClass}
                         render={<Link href={VERIFICATION_HREF} />}
                     >
-                        <ShieldCheck
+                        <AccountMenuIcon
+                            name="shield"
                             aria-hidden
-                            className="shrink-0 block-4 inline-4"
-                            strokeWidth={1.75}
+                            className="shrink-0 text-ink! block-4.5! inline-4.5!"
                         />
                         <span className="flex-1 min-inline-0">Verification & RERA</span>
                     </DropdownMenuItem>
@@ -212,42 +129,58 @@ export function BrokerProfileMenu({
 
             <PortalProfileMenuSeparator />
 
-            <DropdownMenuGroup>
-                <DropdownMenuItem
-                    className={portalProfileMenuItemClass}
-                    render={<Link href={REFERRALS_HREF} />}
-                >
-                    <Gift aria-hidden className="shrink-0 block-4 inline-4" strokeWidth={1.75} />
-                    <span className="flex-1 min-inline-0">Referrals</span>
-                    <PortalProfileShortcutHint shortcutId="referrals" />
-                </DropdownMenuItem>
-            </DropdownMenuGroup>
+            {FEATURE_PLATFORM_OWNER ? (
+                <DropdownMenuGroup>
+                    <DropdownMenuItem
+                        className={portalProfileMenuItemClass}
+                        render={<Link href={REFERRALS_HREF} />}
+                    >
+                        <AccountMenuIcon
+                            name="gift"
+                            aria-hidden
+                            className="shrink-0 text-ink! block-4.5! inline-4.5!"
+                        />
+                        <span className="flex-1 min-inline-0">Referrals</span>
+                        <PortalProfileShortcutHint shortcutId="referrals" />
+                    </DropdownMenuItem>
+                </DropdownMenuGroup>
+            ) : null}
 
-            <PortalProfileMenuSeparator />
+            {FEATURE_PLATFORM_OWNER ? <PortalProfileMenuSeparator /> : null}
 
             <DropdownMenuGroup>
                 <DropdownMenuItem
                     className={portalProfileMenuItemClass}
                     onClick={() => onShortcutsOpen?.()}
                 >
-                    <Command aria-hidden className="shrink-0 block-4 inline-4" strokeWidth={1.75} />
+                    <AccountMenuIcon
+                        name="keyboard"
+                        aria-hidden
+                        className="shrink-0 text-ink! block-4.5! inline-4.5!"
+                    />
                     <span className="flex-1 min-inline-0">Keyboard shortcuts</span>
                     <PortalProfileShortcutHint shortcutId="shortcuts_cheatsheet" />
                 </DropdownMenuItem>
 
-                <DropdownMenuItem
-                    className={portalProfileMenuItemClass}
-                    render={
-                        <a href={SUPPORT_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" />
-                    }
-                >
-                    <LifeBuoy
-                        aria-hidden
-                        className="shrink-0 block-4 inline-4"
-                        strokeWidth={1.75}
-                    />
-                    <span className="flex-1 min-inline-0">Help & support</span>
-                </DropdownMenuItem>
+                {SUPPORT_WHATSAPP_URL ? (
+                    <DropdownMenuItem
+                        className={portalProfileMenuItemClass}
+                        render={
+                            <a
+                                href={SUPPORT_WHATSAPP_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            />
+                        }
+                    >
+                        <AccountMenuIcon
+                            name="support"
+                            aria-hidden
+                            className="shrink-0 text-ink! block-4.5! inline-4.5!"
+                        />
+                        <span className="flex-1 min-inline-0">Help & support</span>
+                    </DropdownMenuItem>
+                ) : null}
             </DropdownMenuGroup>
         </PortalProfileMenu>
     );

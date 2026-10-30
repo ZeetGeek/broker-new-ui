@@ -1,15 +1,14 @@
 "use client";
 
-import { AlertCircle, Check, MapPin } from "@/components/shared/icons";
-
 import type { PropertyLead } from "@/lib/api/owner-leads";
-import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { parseMoney } from "@/lib/format/money";
 import { formatPrice } from "@/lib/format/price";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { AlertCircle, Check, MapPin } from "@/components/shared/icons";
 import { Price } from "@/components/shared/price";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";

@@ -6,20 +6,29 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Circle, Gift, Lock, Mail } from "@/components/shared/icons";
 import { AnimatePresence, motion } from "motion/react";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { generatePassword } from "@/lib/auth/generate-password";
+import { signupPortal } from "@/lib/auth/launch-policy";
 import { duration, ease } from "@/lib/motion/tokens";
 import { useRouter } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { PASSWORD_REQUIREMENTS, registerSchema, type RegisterValues } from "@/lib/validation/auth";
 
 import { AppImage } from "@/components/shared/app-image";
+import {
+    CheckCircle2,
+    Circle,
+    EmailFieldIcon,
+    Gift,
+    PasswordIcon,
+} from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 
 import { AuthFormFrame } from "./auth-back-link";
 import { AuthBusyState } from "./auth-busy-state";
@@ -128,7 +137,7 @@ export function RegisterWizard({
     initialCountryIso2?: string;
 }) {
     const router = useRouter();
-    const [portal, setPortal] = React.useState<Portal>(initialPortal ?? "owner");
+    const [portal, setPortal] = React.useState<Portal>(signupPortal(initialPortal));
     const [step, setStep] = React.useState<Step>(initialStep);
     const [isRedirecting, setIsRedirecting] = React.useState(false);
     // The market the account will work in: listings, brokers and prices.
@@ -160,7 +169,7 @@ export function RegisterWizard({
         mode: "onTouched",
         reValidateMode: "onChange",
         defaultValues: {
-            portal: initialPortal ?? "owner",
+            portal: signupPortal(initialPortal),
             email: "",
             password: "",
             confirmPassword: "",
@@ -211,8 +220,9 @@ export function RegisterWizard({
     }
 
     function choosePortal(next: Portal) {
-        setPortal(next);
-        writeRegisterParams({ portal: next, step });
+        const allowedPortal = signupPortal(next);
+        setPortal(allowedPortal);
+        writeRegisterParams({ portal: allowedPortal, step });
     }
 
     function chooseCountry(next: string) {
@@ -262,7 +272,7 @@ export function RegisterWizard({
             await authApi.register({
                 email: values.email.trim(),
                 password: values.password,
-                role: values.portal,
+                role: signupPortal(values.portal),
                 countryIso2,
                 ...(resolvedReferralCode ? { referralCode: resolvedReferralCode } : {}),
             });
@@ -310,16 +320,26 @@ export function RegisterWizard({
                     <section className="t-page flex flex-col gap-8" data-page-id="1">
                         <div className="mx-auto inline-full max-inline-96">
                             <AuthHeading
-                                title="Pick a role"
-                                description="This account is for one role. Choose owner or broker."
+                                title={
+                                    FEATURE_PLATFORM_OWNER
+                                        ? "Pick a role"
+                                        : "Create a broker account"
+                                }
+                                description={
+                                    FEATURE_PLATFORM_OWNER
+                                        ? "This account is for one role. Choose owner or broker."
+                                        : "Choose the country where you work to get started."
+                                }
                             />
                         </div>
 
-                        <PortalPicker
-                            value={portal}
-                            onChange={choosePortal}
-                            ariaLabel="Sign up as"
-                        />
+                        {FEATURE_PLATFORM_OWNER ? (
+                            <PortalPicker
+                                value={portal}
+                                onChange={choosePortal}
+                                ariaLabel="Sign up as"
+                            />
+                        ) : null}
 
                         <div className="mx-auto flex flex-col gap-2 inline-full max-inline-96">
                             <label htmlFor="register-country" className="body font-medium text-ink">
@@ -358,7 +378,11 @@ export function RegisterWizard({
                             <button
                                 type="button"
                                 onClick={goToRole}
-                                aria-label={`Signed up as ${selected.label}. Change role`}
+                                aria-label={
+                                    FEATURE_PLATFORM_OWNER
+                                        ? `Signed up as ${selected.label}. Change role`
+                                        : "Change country"
+                                }
                                 className="
                                   rounded-card
                                   focus-visible:ring-3 focus-visible:ring-ring/30
@@ -416,7 +440,7 @@ export function RegisterWizard({
                                             type="email"
                                             autoComplete="email"
                                             placeholder="you@example.com"
-                                            startIcon={Mail}
+                                            startIcon={EmailFieldIcon}
                                             value={field.value}
                                             onValueChange={(value) => {
                                                 field.onChange(value);
@@ -469,7 +493,7 @@ export function RegisterWizard({
                                             type="password"
                                             autoComplete="new-password"
                                             placeholder="Create a password"
-                                            startIcon={Lock}
+                                            startIcon={PasswordIcon}
                                             value={field.value}
                                             onValueChange={field.onChange}
                                             onBlur={field.onBlur}
@@ -501,7 +525,7 @@ export function RegisterWizard({
                                             type="password"
                                             autoComplete="new-password"
                                             placeholder="Re-enter password"
-                                            startIcon={Lock}
+                                            startIcon={PasswordIcon}
                                             value={field.value}
                                             onValueChange={field.onChange}
                                             onBlur={field.onBlur}

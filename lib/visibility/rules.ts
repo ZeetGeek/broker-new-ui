@@ -118,10 +118,6 @@ export const FIELD_RULES = {
         visible: (d, v) =>
             (d.isCommercial || d.isIndustrial) && officeTypes.has(v.basics.propertyType),
     },
-    "details.commercial.seats": {
-        visible: (_d, v) => v.basics.propertyType === "coworking_space",
-        level: required,
-    },
     "details.commercial.washroomType": { visible: () => false },
     "details.commercial.pantryType": { visible: () => false },
     "details.commercial.centralAc": { visible: () => false },

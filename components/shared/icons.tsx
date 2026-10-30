@@ -16,10 +16,48 @@
  * Generated via: node scripts/generate-icons-module.mjs
  */
 
+import { Icon as IconifyIcon, type IconProps as IconifyProps } from "@iconify/react";
+import { Icon as OfflineIcon } from "@iconify/react/offline";
 import type { IconProps, TablerIcon } from "@tabler/icons-react";
+import { IconBrandMailgun } from "@tabler/icons-react";
+
+import notificationIcons from "./notification-icons.json";
+import propertyMenuIcons from "./property-menu-icons.json";
+
+export type NotificationGlyph = keyof typeof notificationIcons;
+
+/** Bundled Iconify Tabler icons for the notification panel. */
+export function NotificationIcon({
+    name,
+    ...props
+}: Omit<IconifyProps, "icon"> & { name: NotificationGlyph }) {
+    return <OfflineIcon icon={notificationIcons[name]} width={20} height={20} {...props} />;
+}
+
+/** Bundled Tabler glyphs for property menus; no icon-service request on open. */
+export function PropertyMenuIcon({
+    name,
+    ...props
+}: Omit<IconifyProps, "icon"> & { name: keyof typeof propertyMenuIcons }) {
+    return <OfflineIcon icon={propertyMenuIcons[name]} width={18} height={18} {...props} />;
+}
+
+// Social marks use the same Tabler glyph family through Iconify.
+type SocialIconProps = Omit<IconifyProps, "icon">;
+export const InstagramIcon = (props: SocialIconProps) => (
+    <IconifyIcon icon="tabler:brand-instagram" {...props} />
+);
+export const FacebookIcon = (props: SocialIconProps) => (
+    <IconifyIcon icon="tabler:brand-facebook" {...props} />
+);
+export const LinkedInIcon = (props: SocialIconProps) => (
+    <IconifyIcon icon="tabler:brand-linkedin" {...props} />
+);
 
 /** Icon component type — use instead of LucideIcon. */
 export type AppIcon = TablerIcon;
+export const EmailFieldIcon = IconBrandMailgun;
+export const PasswordIcon = IconLock;
 export type { IconProps };
 
 import {
@@ -75,9 +113,9 @@ import {
     IconChevronDown,
     IconChevronLeft,
     IconChevronRight,
-    IconChevronUp,
     IconChevronsLeft,
     IconChevronsRight,
+    IconChevronUp,
     IconCircle,
     IconCircleCheck,
     IconCircleOff,
@@ -226,10 +264,10 @@ import {
     IconUserCircle,
     IconUserMinus,
     IconUserPlus,
-    IconUserSearch,
-    IconUserX,
     IconUsers,
+    IconUserSearch,
     IconUsersGroup,
+    IconUserX,
     IconVideo,
     IconView360,
     IconWalk,

@@ -1,7 +1,9 @@
 function CardSkeleton() {
     return (
         <div
-            className="flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-4 shadow-md"
+            className="
+              flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-4 shadow-md
+            "
             aria-hidden
         >
             <div className="flex items-start gap-3">
@@ -17,7 +19,7 @@ function CardSkeleton() {
                 <div className="rounded-sm bg-surface-muted block-3 inline-36" />
             </div>
 
-            <div className="mt-auto grid grid-cols-2 gap-2">
+            <div className="mbs-auto grid grid-cols-2 gap-2">
                 <div className="rounded-control bg-surface-muted block-10" />
                 <div className="rounded-control bg-surface-muted block-10" />
             </div>

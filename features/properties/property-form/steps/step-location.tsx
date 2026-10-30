@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { MAX_PROPERTY_ADDRESS_LENGTH } from "@/lib/properties/form-limits";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
@@ -73,11 +72,7 @@ function buildFullAddress(location: PropertyDraftValues["location"]): string {
 }
 
 export function StepLocation() {
-    const {
-        watch,
-        setValue,
-        formState: { errors },
-    } = useFormContext<PropertyDraftValues>();
+    const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const location = watch("location");
     const {
         countryOptions,
@@ -96,8 +91,6 @@ export function StepLocation() {
     });
     const country = location.country;
     const pincode = location.pincode;
-    const lat = location.lat;
-    const lng = location.lng;
     const fullAddress = location.fullAddress;
     const lastAutoAddress = useRef("");
     const market = useMarket();
@@ -194,41 +187,6 @@ export function StepLocation() {
         const auto = generatedAddress.trim();
         lastAutoAddress.current = auto;
         setValue("location.fullAddress", auto, { shouldDirty: true });
-    }
-
-    function useCurrentLocation() {
-        if (!navigator.geolocation) {
-            toast.error("Location is not available on this device.");
-            return;
-        }
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                setValue("location.lat", Number(position.coords.latitude.toFixed(6)), {
-                    shouldDirty: true,
-                });
-                setValue("location.lng", Number(position.coords.longitude.toFixed(6)), {
-                    shouldDirty: true,
-                });
-                setValue("location.mapPinPlaced", true, {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                });
-                toast.success("Map pin moved to your location.");
-            },
-            () => toast.error("Location permission was not granted."),
-        );
-    }
-
-    function confirmMapPin() {
-        if (lat == null || lng == null) {
-            toast.error("Enter coordinates or use your current location first.");
-            return;
-        }
-        setValue("location.mapPinPlaced", true, {
-            shouldDirty: true,
-            shouldValidate: true,
-        });
-        toast.success("Map pin confirmed.");
     }
 
     return (

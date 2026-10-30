@@ -413,7 +413,7 @@ export type OwnerListingsWhereMenuProps = {
     selectedLocalities: string[];
     yourAreas: boolean;
     serviceAreas?: string[];
-    /** Owner listings inside the service areas. Badge hidden while unknown. */
+    /** Marketplace inside the service areas. Badge hidden while unknown. */
     serviceableListingCount?: number;
     onWhereChange: (next: OwnerListingsWhereSelection) => void;
     /** Apply the reset to the results while the menu stays open. */
@@ -999,7 +999,7 @@ export function OwnerListingsWhereMenu({
                                     <WhereMenuEmptyState
                                         icon={MapPinOff}
                                         title="No listings yet"
-                                        description="Owner listings will appear here once they are live in a city."
+                                        description="Marketplace will appear here once they are live in a city."
                                     />
                                 </div>
                             )}

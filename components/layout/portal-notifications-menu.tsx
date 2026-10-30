@@ -1,11 +1,9 @@
 "use client";
 
 import {
-    type CSSProperties,
     Fragment,
     type ReactNode,
-    type RefObject,
-    useEffect,
+    useCallback,
     useLayoutEffect,
     useMemo,
     useRef,
@@ -14,15 +12,9 @@ import {
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-import { BellIcon, type BellIconHandle } from "@animateicons/react/lucide/bell-icon";
-import { BellRingIcon, type BellRingIconHandle } from "@animateicons/react/lucide/bell-ring-icon";
-import { Bell, Building2, CalendarClock, CheckCheck, Clock3 } from "@/components/shared/icons";
-import { useReducedMotion } from "motion/react";
-
 import { ApiError } from "@/lib/api/client";
 import type { NotificationItem } from "@/lib/api/notifications";
-import { toApiInstant } from "@/lib/datetime/api";
-import { formatNotificationDayTime, formatRelativePast } from "@/lib/format/date";
+import { formatNotificationDayTime } from "@/lib/format/date";
 import {
     countByTab,
     filterNotificationsByTab,
@@ -35,10 +27,10 @@ import {
     type NotificationDaySection,
     type NotificationTab,
 } from "@/lib/notifications/classify";
+import { getNotificationDisplayContent } from "@/lib/notifications/display-content";
 import { cn } from "@/lib/utils";
 
-import { EmptyState } from "@/components/shared/empty-state";
-import { TextLinkButton } from "@/components/shared/text-link-button";
+import { NotificationIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -47,9 +39,9 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { useNotifications } from "@/providers/notification-provider";
 import { useAppSelector } from "@/store/hooks";
 
@@ -60,28 +52,28 @@ export type PortalNotificationsMenuProps = {
 };
 
 const menuSurfaceClass = `
-  t-dropdown t-profile-menu animate-none! flex flex-col overflow-hidden! rounded-inner border
-  border-border-warm bg-surface p-0 text-ink shadow-md ring-0
+  t-dropdown t-profile-menu t-notifications-panel animate-none! flex flex-col overflow-hidden! rounded-card border
+  border-border-warm bg-surface p-0 text-ink shadow-xl ring-0
   before:backdrop-blur-none
   data-closed:animate-none!
   data-open:animate-none!
-  w-fit! min-inline-[20rem] max-inline-[min(100vw-2rem,26rem)]
+  min-inline-0 inline-[min(23rem,calc(100vw-1.5rem))] max-block-[min(44rem,var(--available-height),calc(100dvh-6rem))]
   **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
   **:data-[slot$=-item]:focus:bg-surface-muted!
 `;
 
-const notificationsListClass = "relative block-136 shrink-0 min-block-0";
-
-const notificationsScrollClass = `
-  block-full overflow-hidden
-  [&_[data-slot=scroll-area-thumb]]:bg-brand/55
-  hover:[&_[data-slot=scroll-area-thumb]]:bg-brand/75
+const notificationsListClass = `
+  relative overflow-y-auto overscroll-contain touch-pan-y
+  block-[min(30rem,calc(100dvh-17rem))] min-block-0
+  [scrollbar-width:thin] [scrollbar-color:var(--color-border-warm)_transparent]
 `;
 
 const itemClass = `
   group/notification relative flex inline-full cursor-pointer items-start gap-3.5 rounded-inner
-  px-2.5 py-3 body-sm font-normal text-ink transition-colors duration-160
+  px-3 py-4 body-sm font-normal text-ink transition-colors duration-160
+  hover:bg-surface-muted!
   focus:text-ink!
+  not-data-[variant=destructive]:focus:**:text-inherit
   data-highlighted:text-ink!
   data-highlighted:[&_[data-notification-actions]_button:first-child]:border-border-warm!
   data-highlighted:[&_[data-notification-actions]_button:first-child]:bg-surface!
@@ -95,8 +87,8 @@ const itemClass = `
   focus:[&_[data-notification-actions]_button:last-child]:text-primary-foreground!
 `;
 
-const listDividerClass = "mx-1 my-1 border-be border-border-warm/80";
-const headerSectionDividerClass = "mx-3.5 border-be border-border-warm/80";
+const listDividerClass = "mx-3 my-1.5 border-be border-border-warm/60";
+const headerSectionDividerClass = "shrink-0 border-be border-border-warm/70";
 
 const declineActionClass = `
   rounded-inner! font-medium
@@ -112,157 +104,57 @@ const acceptActionClass = `
   focus-visible:bg-primary! focus-visible:text-primary-foreground!
 `;
 
-const unreadItemClass = `
-  border border-brand-soft/60 bg-brand-soft/30
-  hover:border-brand-soft/80 hover:bg-brand-soft/45!
-  data-highlighted:border-brand-soft/80 data-highlighted:bg-brand-soft/45!
-  focus:border-brand-soft/80 focus:bg-brand-soft/45!
-`;
-
-const notificationLeadClass = "flex shrink-0 items-start justify-center block-8 inline-8 pbs-0.5";
+const notificationLeadClass = "flex shrink-0 items-start justify-center pbs-0.5 inline-5";
 
 function NotificationLeadMedia({ children }: { children: ReactNode }) {
     return <span className={notificationLeadClass}>{children}</span>;
 }
 
-function movePill(pill: HTMLElement, tab: HTMLElement, animate: boolean) {
-    const nextTransform = `translateX(${tab.offsetLeft}px)`;
-    const nextWidth = `${tab.offsetWidth}px`;
-
-    if (!animate) {
-        const previous = pill.style.transition;
-        pill.style.transition = "none";
-        pill.style.transform = nextTransform;
-        pill.style.width = nextWidth;
-        void pill.offsetWidth;
-        pill.style.transition = previous;
-        return;
-    }
-
-    pill.style.transform = nextTransform;
-    pill.style.width = nextWidth;
-}
-
-function paintNotificationFilterPill(bar: HTMLDivElement, pill: HTMLSpanElement, animate: boolean) {
-    const active = bar.querySelector<HTMLElement>('[aria-selected="true"]');
-    if (!active) return;
-    movePill(pill, active, animate);
-}
-
-function scrollNotificationTabIntoView(
-    scrollEl: HTMLElement,
-    tabEl: HTMLElement,
-    animate: boolean,
-) {
-    const maxScroll = scrollEl.scrollWidth - scrollEl.clientWidth;
-    if (maxScroll <= 0) return;
-
-    const prefersReducedMotion =
-        typeof window !== "undefined" &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    const anchorRatio = 0.36;
-    const tabStart = tabEl.offsetLeft;
-    const tabWidth = tabEl.offsetWidth;
-    const targetScroll = tabStart + tabWidth / 2 - scrollEl.clientWidth * anchorRatio;
-
-    scrollEl.scrollTo({
-        left: Math.max(0, Math.min(maxScroll, targetScroll)),
-        behavior: animate && !prefersReducedMotion ? "smooth" : "auto",
-    });
-}
-
 function NotificationsFooter({ viewAllHref }: { viewAllHref: string }) {
     return (
-        <div className="absolute inset-x-0 inset-be-0 z-10 flex flex-col justify-end block-14">
-            <div
-                aria-hidden
-                className="
-                  pointer-events-none absolute inset-0 bg-linear-to-t from-surface from-45%
-                  via-surface/95 to-transparent
-                "
-            />
-            <div className="relative flex justify-center px-4 pbs-1 pbe-2.5">
-                <TextLinkButton href={viewAllHref}>View all notifications</TextLinkButton>
-            </div>
+        <div className="shrink-0 border-bs border-border-warm/70 px-4 py-2">
+            <Button
+                variant="link"
+                nativeButton={false}
+                render={<Link href={viewAllHref} />}
+                className="body-sm gap-2 font-semibold text-ink inline-full min-block-11 hover:text-ink"
+            >
+                View all notifications
+                <NotificationIcon name="arrow" aria-hidden className="block-4 inline-4" />
+            </Button>
         </div>
     );
 }
 
-const HEADER_ICON_SIZE = 16;
-
-function HeaderNotificationIcon({
-    hasUnread,
-    reduceMotion,
-    bellRef,
-    ringRef,
-}: {
-    hasUnread: boolean;
-    reduceMotion: boolean | null;
-    bellRef: RefObject<BellIconHandle | null>;
-    ringRef: RefObject<BellRingIconHandle | null>;
-}) {
-    const animated = !reduceMotion;
-
-    if (hasUnread) {
-        return (
-            <BellRingIcon
-                ref={ringRef}
-                size={HEADER_ICON_SIZE}
-                isAnimated={animated}
-                aria-hidden="true"
-            />
-        );
-    }
-
-    return (
-        <BellIcon ref={bellRef} size={HEADER_ICON_SIZE} isAnimated={animated} aria-hidden="true" />
-    );
-}
-
 function UnreadBadge({ count }: { count: number }) {
-    if (count <= 0) {
-        return null;
-    }
-
     return (
         <span
+            className="t-badge t-notifications-badge"
+            data-open={count > 0 ? "true" : "false"}
             aria-hidden
-            className="
-              tabular body-xs absolute -inset-e-1 -inset-bs-1 flex items-center justify-center
-              rounded-md bg-brand px-1 font-semibold text-canvas ring-2 ring-surface-muted block-5
-              min-inline-5
-            "
         >
-            {count > 9 ? "9+" : count}
+            <span className="t-badge-dot tabular body-xs flex! items-center justify-center rounded-md bg-brand px-1 font-semibold text-canvas ring-2 ring-surface-muted block-5 min-inline-5">
+                {count > 9 ? "9+" : count}
+            </span>
         </span>
     );
 }
 
 function NotificationTypeIcon({ item }: { item: NotificationItem }) {
-    const { Icon, colorClass } = getNotificationVisual(item);
-
+    const { iconName } = getNotificationVisual(item);
     return (
-        <span
-            data-notification-icon
-            className={cn(
-                `
-                  inline-flex items-center justify-center rounded-control bg-surface-muted block-8
-                  inline-8
-                `,
-                colorClass,
-            )}
-        >
-            <Icon aria-hidden className="text-current block-4 inline-4" strokeWidth={1.75} />
-        </span>
+        <NotificationIcon
+            name={iconName}
+            aria-hidden
+            className="shrink-0 text-ink! block-5! inline-5!"
+        />
     );
 }
 
 function NotificationDayHeader({ label }: { label: string }) {
     return (
-        <div className="flex items-center gap-3 px-1 py-2" role="presentation">
-            <p className="body-sm shrink-0 font-semibold text-pending">{label}</p>
-            <div className="flex-1 bg-pending/35 block-px" aria-hidden />
+        <div className="px-3 pbs-5 pbe-1.5" role="presentation">
+            <p className="body-xs font-semibold text-brand-text">{label}</p>
         </div>
     );
 }
@@ -276,118 +168,87 @@ function NotificationFilterTabs({
     tabCounts: Record<NotificationTab, number>;
     onTabChange: (tab: NotificationTab) => void;
 }) {
-    const scrollRef = useRef<HTMLDivElement>(null);
     const barRef = useRef<HTMLDivElement>(null);
     const pillRef = useRef<HTMLSpanElement>(null);
-    const hasPainted = useRef(false);
+    const painted = useRef(false);
 
-    function syncActiveTabScroll(animate: boolean) {
-        const scrollEl = scrollRef.current;
+    const moveToActive = useCallback((animate: boolean) => {
         const bar = barRef.current;
-        if (!scrollEl || !bar) return;
+        const pill = pillRef.current;
+        const tab = bar?.querySelector<HTMLElement>('[aria-selected="true"]');
+        if (!tab || !pill) return;
+        const previous = pill.style.transition;
+        if (!animate) pill.style.transition = "none";
+        pill.style.transform = `translateX(${tab.offsetLeft}px)`;
+        pill.style.width = `${tab.offsetWidth}px`;
+        if (!animate) {
+            void pill.offsetWidth;
+            pill.style.transition = previous;
+        }
+    }, []);
 
-        const tabEl = bar.querySelector<HTMLElement>(`[data-tab-value="${activeTab}"]`);
-        if (!tabEl) return;
-
-        scrollNotificationTabIntoView(scrollEl, tabEl, animate);
-    }
+    useLayoutEffect(() => {
+        moveToActive(painted.current);
+        painted.current = true;
+    }, [activeTab, tabCounts, moveToActive]);
 
     useLayoutEffect(() => {
         const bar = barRef.current;
-        const pill = pillRef.current;
-        if (!bar || !pill) return;
-
-        paintNotificationFilterPill(bar, pill, hasPainted.current);
-        syncActiveTabScroll(hasPainted.current);
-        hasPainted.current = true;
-    }, [activeTab, tabCounts]);
-
-    useLayoutEffect(() => {
-        const bar = barRef.current;
-        const pill = pillRef.current;
-        if (!bar || !pill) return;
-
-        function syncPill(animate: boolean) {
-            const currentBar = barRef.current;
-            const currentPill = pillRef.current;
-            if (!currentBar || !currentPill) return;
-            paintNotificationFilterPill(currentBar, currentPill, animate);
-        }
-
-        function onResize() {
-            syncPill(false);
-            syncActiveTabScroll(false);
-        }
-
-        const observer = new ResizeObserver(() => onResize());
+        if (!bar) return;
+        // Keep the observer stable: recreating it on selection would cancel the slide.
+        const observer = new ResizeObserver(() => moveToActive(false));
         observer.observe(bar);
-        window.addEventListener("resize", onResize);
+        bar.querySelectorAll<HTMLElement>('[role="tab"]').forEach((tab) => observer.observe(tab));
+        return () => observer.disconnect();
+    }, [moveToActive]);
 
-        requestAnimationFrame(() => {
-            syncPill(false);
-            syncActiveTabScroll(false);
-        });
-
-        return () => {
-            observer.disconnect();
-            window.removeEventListener("resize", onResize);
-        };
-    }, [activeTab]);
-
-    function handleTabChange(tab: NotificationTab) {
-        const bar = barRef.current;
-        const pill = pillRef.current;
-        const scrollEl = scrollRef.current;
-
-        if (bar && pill) {
-            const next = bar.querySelector<HTMLElement>(`[data-tab-value="${tab}"]`);
-            if (next) {
-                movePill(pill, next, hasPainted.current);
-                if (scrollEl) {
-                    scrollNotificationTabIntoView(scrollEl, next, hasPainted.current);
-                }
-            }
-        }
-
-        onTabChange(tab);
-    }
-
+    const tabs = NOTIFICATION_TABS.filter(
+        (tab) => FEATURE_PLATFORM_OWNER || tab.value !== "requests",
+    );
     return (
         <div
-            ref={scrollRef}
-            className="scrollbar-none overflow-x-auto scroll-smooth max-inline-full"
+            ref={barRef}
+            className="t-tabs t-tabs-surface t-tabs-stretch t-notifications-tabs no-scrollbar overflow-x-auto"
             role="tablist"
             aria-label="Filter notifications"
         >
-            <div ref={barRef} className="t-notif-filter-tabs">
-                <span ref={pillRef} className="t-notif-filter-tabs-pill" aria-hidden="true" />
-                {NOTIFICATION_TABS.map((tab) => {
-                    const count = tabCounts[tab.value];
-                    const isActive = activeTab === tab.value;
-
-                    return (
-                        <button
-                            key={tab.value}
-                            type="button"
-                            role="tab"
-                            aria-selected={isActive}
-                            data-tab-value={tab.value}
-                            className="t-notif-filter-tab body-xs"
-                            onClick={() => handleTabChange(tab.value)}
-                        >
-                            <span className="t-notif-filter-tab-label">{tab.label}</span>
-                            {count > 0 ? (
-                                <span
-                                    className="t-notif-filter-tab-count body-xs"
-                                    data-badge={isActive ? undefined : "true"}
-                                >
-                                    {count}
-                                </span>
-                            ) : null}
-                        </button>
-                    );
-                })}
-            </div>
+            <span ref={pillRef} className="t-tabs-pill" aria-hidden="true" />
+            {tabs.map((tab, index) => {
+                const active = activeTab === tab.value;
+                return (
+                    <button
+                        key={tab.value}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        tabIndex={active ? 0 : -1}
+                        className="t-tab body-xs whitespace-nowrap"
+                        onClick={() => onTabChange(tab.value)}
+                        onKeyDown={(event) => {
+                            let next = index;
+                            if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+                            else if (event.key === "ArrowLeft")
+                                next = (index - 1 + tabs.length) % tabs.length;
+                            else if (event.key === "Home") next = 0;
+                            else if (event.key === "End") next = tabs.length - 1;
+                            else return;
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onTabChange(tabs[next].value);
+                            const buttons =
+                                event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+                                    '[role="tab"]',
+                                );
+                            buttons?.[next]?.focus();
+                        }}
+                    >
+                        {tab.label}
+                        {tabCounts[tab.value] > 0 ? (
+                            <span className="tabular text-ink-subtle">{tabCounts[tab.value]}</span>
+                        ) : null}
+                    </button>
+                );
+            })}
         </div>
     );
 }
@@ -406,11 +267,9 @@ function NotificationsHeader({
     onTabChange: (tab: NotificationTab) => void;
 }) {
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
-                <h2 className="body font-display font-semibold tracking-tight text-ink">
-                    Notifications
-                </h2>
+                <h2 className="text-lg font-semibold tracking-tight text-ink">Notifications</h2>
                 <Button
                     type="button"
                     variant="link"
@@ -418,13 +277,13 @@ function NotificationsHeader({
                     disabled={unreadCount === 0}
                     onClick={onMarkAllRead}
                     className="
-                      body-xs shrink-0 gap-1.5 p-0 font-medium text-brand block-auto
-                      hover:text-brand-text hover:underline
+                      body-xs shrink-0 gap-1.5 p-0 font-medium text-ink min-block-11
+                      hover:text-ink hover:underline
                       disabled:text-ink-subtle disabled:no-underline
                     "
                 >
                     Mark all read
-                    <CheckCheck aria-hidden strokeWidth={1.75} className="block-3.5 inline-3.5" />
+                    <NotificationIcon name="checks" aria-hidden className="block-4 inline-4" />
                 </Button>
             </div>
             <NotificationFilterTabs
@@ -436,26 +295,23 @@ function NotificationsHeader({
     );
 }
 
-function NotificationsEmpty({
-    viewAllHref,
-    filtered,
-}: {
-    viewAllHref: string;
-    filtered?: boolean;
-}) {
+function NotificationsEmpty({ filtered = false }: { filtered?: boolean }) {
     return (
-        <EmptyState
-            icon={Bell}
-            heading={filtered ? "Nothing in this tab" : "Nothing yet"}
-            description={
-                filtered
+        <div className="flex flex-col items-center gap-3 px-6 py-12 text-center" role="status">
+            <NotificationIcon
+                name="bell"
+                aria-hidden
+                className="mbe-1 text-ink-subtle block-7 inline-7"
+            />
+            <p className="body-sm font-semibold text-ink">
+                {filtered ? "Nothing in this tab" : "You're up to date"}
+            </p>
+            <p className="body-sm text-pretty text-ink-muted">
+                {filtered
                     ? "Try another filter or view all notifications."
-                    : "When something needs your attention, it shows up here."
-            }
-            className="gap-3 px-2 py-14 [&>div]:gap-1"
-        >
-            <TextLinkButton href={viewAllHref}>View all notifications</TextLinkButton>
-        </EmptyState>
+                    : "When something needs your attention, it shows up here."}
+            </p>
+        </div>
     );
 }
 
@@ -526,95 +382,23 @@ function RequestActions({
     );
 }
 
-function measureMarqueeDuration(distancePx: number): number {
-    const seconds = distancePx / 32;
-    return Math.min(14, Math.max(4, seconds));
-}
-
 function NotificationDescription({ text }: { text: string }) {
-    const containerRef = useRef<HTMLSpanElement>(null);
-    const textRef = useRef<HTMLSpanElement>(null);
-    const [marquee, setMarquee] = useState({ overflows: false, distance: 0, duration: 6 });
-
-    useLayoutEffect(() => {
-        const container = containerRef.current;
-        const label = textRef.current;
-        if (!container || !label) return;
-
-        function measure() {
-            const currentContainer = containerRef.current;
-            const currentLabel = textRef.current;
-            if (!currentContainer || !currentLabel) return;
-
-            const distance = Math.max(0, currentLabel.scrollWidth - currentContainer.clientWidth);
-            setMarquee({
-                overflows: distance > 4,
-                distance,
-                duration: measureMarqueeDuration(distance),
-            });
-        }
-
-        measure();
-        const observer = new ResizeObserver(measure);
-        observer.observe(container);
-        return () => observer.disconnect();
-    }, [text]);
-
-    const marqueeStyle = marquee.overflows
-        ? ({
-              "--notif-marquee-distance": `${marquee.distance}px`,
-              "--notif-marquee-dur": `${marquee.duration}s`,
-          } as CSSProperties)
-        : undefined;
-
     return (
         <span
-            ref={containerRef}
             data-notification-body
-            data-overflow={marquee.overflows ? "true" : undefined}
-            title={marquee.overflows ? text : undefined}
-            className="t-notif-body-marquee body-sm text-ink-muted"
-            style={marqueeStyle}
+            className="body-sm wrap-anywhere whitespace-normal text-ink-muted!"
         >
-            <span ref={textRef} className="t-notif-body-marquee-text">
-                {text}
-            </span>
+            {text}
         </span>
-    );
-}
-
-function NotificationTimestamp({ occurredAt, now }: { occurredAt: Date; now: Date }) {
-    const dateTime = toApiInstant(occurredAt);
-    const metaTimeClass =
-        "tabular body-xs inline-flex items-center gap-1 leading-none whitespace-nowrap text-ink-muted";
-    const metaIconClass = "shrink-0 self-center text-ink-subtle block-2.5 inline-2.5";
-
-    return (
-        <div className="mbs-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 min-inline-0">
-            <time
-                data-notification-meta
-                dateTime={dateTime}
-                className={cn(metaTimeClass, "font-medium")}
-            >
-                <Clock3 aria-hidden className={metaIconClass} strokeWidth={1.5} />
-                {formatRelativePast(occurredAt, now)}
-            </time>
-            <time data-notification-meta dateTime={dateTime} className={metaTimeClass}>
-                <CalendarClock aria-hidden className={metaIconClass} strokeWidth={1.5} />
-                {formatNotificationDayTime(occurredAt)}
-            </time>
-        </div>
     );
 }
 
 function NotificationRowContent({
     item,
-    now,
     userRole,
     onRespond,
 }: {
     item: NotificationItem;
-    now: Date;
     userRole: string | null | undefined;
     onRespond: (
         notificationId: string,
@@ -623,41 +407,42 @@ function NotificationRowContent({
     ) => Promise<void>;
 }) {
     const occurredAt = item.createdAt ? new Date(item.createdAt) : null;
+    const { title, body } = getNotificationDisplayContent(item);
     const propertyLabel = getPropertyLabel(item);
     const showActions = isActionableRequest(item, userRole);
     const decisionLabel = getRepresentationDecisionLabel(item);
 
     return (
-        <div className="flex items-start gap-3 inline-full min-inline-0">
+        <div
+            className="flex items-start gap-3 inline-full min-inline-0"
+            title={occurredAt ? `Received ${formatNotificationDayTime(occurredAt)}` : undefined}
+        >
             <NotificationLeadMedia>
                 <NotificationTypeIcon item={item} />
             </NotificationLeadMedia>
 
-            <div className="pie-6 flex flex-1 flex-col gap-2 min-inline-0">
+            <div className="pie-4 flex flex-1 flex-col gap-1.5 min-inline-0">
                 <span
                     data-notification-title
-                    className={cn(
-                        "body-sm line-clamp-2 text-pretty text-ink",
-                        item.isRead ? "font-medium" : "font-semibold",
-                    )}
+                    className="body-sm line-clamp-2 font-semibold text-pretty text-ink"
                 >
-                    {item.title}
+                    {!item.isRead ? <span className="sr-only">Unread: </span> : null}
+                    {title}
                 </span>
 
-                {item.body ? <NotificationDescription text={item.body} /> : null}
+                {body ? <NotificationDescription text={body} /> : null}
 
                 {propertyLabel ? (
                     <span
                         data-notification-body
                         className="
-                          body-xs inline-flex items-center gap-1 rounded-md border
-                          border-border-warm bg-surface-muted/80 px-2 py-0.5 font-medium
-                          text-ink-muted inline-fit
+                          body-xs inline-flex items-center gap-1.5 text-ink-muted! max-inline-full
                         "
                     >
-                        <Building2
+                        <NotificationIcon
+                            name="building"
                             aria-hidden
-                            className="shrink-0 text-ink-muted block-3 inline-3"
+                            className="shrink-0 text-ink-muted! block-3 inline-3"
                         />
                         <span className="truncate">{propertyLabel}</span>
                     </span>
@@ -670,21 +455,19 @@ function NotificationRowContent({
                         data-notification-status
                         className="
                           body-xs rounded-md border border-border-warm bg-surface-muted/80 px-2
-                          py-0.5 font-medium text-ink-muted inline-fit
+                          py-0.5 font-medium text-ink-muted! inline-fit
                         "
                     >
                         {decisionLabel}
                     </span>
                 ) : null}
-
-                {occurredAt ? <NotificationTimestamp occurredAt={occurredAt} now={now} /> : null}
             </div>
 
             {!item.isRead ? (
                 <span
                     aria-hidden
                     className="
-                      t-unread-dot absolute inset-e-2 inset-bs-2 rounded-full block-2 inline-2
+                      absolute inset-e-3 inset-bs-5 rounded-full bg-brand block-1.5 inline-1.5
                     "
                 />
             ) : null}
@@ -695,7 +478,6 @@ function NotificationRowContent({
 function NotificationDayBlock({
     section,
     viewAllHref,
-    now,
     userRole,
     onMarkRead,
     onRespond,
@@ -704,7 +486,6 @@ function NotificationDayBlock({
 }: {
     section: NotificationDaySection;
     viewAllHref: string;
-    now: Date;
     userRole: string | null | undefined;
     onMarkRead: (id: string) => void;
     onRespond: (
@@ -727,7 +508,6 @@ function NotificationDayBlock({
                         <NotificationRow
                             item={item}
                             viewAllHref={viewAllHref}
-                            now={now}
                             userRole={userRole}
                             onMarkRead={onMarkRead}
                             onRespond={onRespond}
@@ -745,14 +525,12 @@ function NotificationDayBlock({
 function NotificationRow({
     item,
     viewAllHref,
-    now,
     userRole,
     onMarkRead,
     onRespond,
 }: {
     item: NotificationItem;
     viewAllHref: string;
-    now: Date;
     userRole: string | null | undefined;
     onMarkRead: (id: string) => void;
     onRespond: (
@@ -764,17 +542,12 @@ function NotificationRow({
     const href = item.href || viewAllHref;
     const actionable = isActionableRequest(item, userRole);
 
-    const rowClass = cn(itemClass, !item.isRead && unreadItemClass);
+    const rowClass = itemClass;
 
     if (actionable) {
         return (
-            <DropdownMenuItem className={rowClass}>
-                <NotificationRowContent
-                    item={item}
-                    now={now}
-                    userRole={userRole}
-                    onRespond={onRespond}
-                />
+            <DropdownMenuItem closeOnClick={false} className={rowClass}>
+                <NotificationRowContent item={item} userRole={userRole} onRespond={onRespond} />
             </DropdownMenuItem>
         );
     }
@@ -787,12 +560,7 @@ function NotificationRow({
                 if (!item.isRead) onMarkRead(item.id);
             }}
         >
-            <NotificationRowContent
-                item={item}
-                now={now}
-                userRole={userRole}
-                onRespond={onRespond}
-            />
+            <NotificationRowContent item={item} userRole={userRole} onRespond={onRespond} />
         </DropdownMenuItem>
     );
 }
@@ -809,29 +577,12 @@ export function PortalNotificationsMenu({
     const now = new Date();
     const hasUnread = unreadCount > 0;
     const label = hasUnread ? `Notifications, ${unreadCount} unread` : "Notifications";
-    const reduceMotion = useReducedMotion();
-    const bellRef = useRef<BellIconHandle>(null);
-    const ringRef = useRef<BellRingIconHandle>(null);
-
-    useEffect(() => {
-        if (reduceMotion) return;
-        if (hasUnread) {
-            ringRef.current?.startAnimation();
-            return;
-        }
-        bellRef.current?.stopAnimation();
-        ringRef.current?.stopAnimation();
-    }, [hasUnread, unreadCount, reduceMotion]);
-
     const tabCounts = useMemo(() => countByTab(items), [items]);
     const filteredItems = useMemo(
         () => filterNotificationsByTab(items, activeTab),
         [items, activeTab],
     );
-    const daySections = useMemo(
-        () => groupNotificationsByDay(filteredItems, now),
-        [filteredItems, now],
-    );
+    const daySections = groupNotificationsByDay(filteredItems, now);
 
     const trigger = (
         <DropdownMenuTrigger
@@ -841,29 +592,14 @@ export function PortalNotificationsMenu({
                     variant="outline"
                     size="icon-md"
                     aria-label={label}
-                    className={triggerClassName}
-                    onMouseEnter={() => {
-                        if (hasUnread) {
-                            ringRef.current?.startAnimation();
-                            return;
-                        }
-                        bellRef.current?.startAnimation();
-                    }}
-                    onMouseLeave={() => {
-                        if (hasUnread) {
-                            ringRef.current?.stopAnimation();
-                            return;
-                        }
-                        bellRef.current?.stopAnimation();
-                    }}
+                    className={cn("relative", triggerClassName)}
                 />
             }
         >
-            <HeaderNotificationIcon
-                hasUnread={hasUnread}
-                reduceMotion={reduceMotion}
-                bellRef={bellRef}
-                ringRef={ringRef}
+            <NotificationIcon
+                name={hasUnread ? "bell-ring" : "bell"}
+                aria-hidden
+                className="block-5! inline-5!"
             />
             <UnreadBadge count={unreadCount} />
         </DropdownMenuTrigger>
@@ -881,7 +617,7 @@ export function PortalNotificationsMenu({
             )}
 
             <DropdownMenuContent align="end" sideOffset={14} className={cn(menuSurfaceClass)}>
-                <div className="shrink-0 px-3 py-3.5">
+                <div className="shrink-0 p-4">
                     <NotificationsHeader
                         unreadCount={unreadCount}
                         activeTab={activeTab}
@@ -899,35 +635,37 @@ export function PortalNotificationsMenu({
                     </p>
                 ) : items.length === 0 ? (
                     <div className="mx-auto px-4 max-inline-80">
-                        <NotificationsEmpty viewAllHref={viewAllHref} />
+                        <NotificationsEmpty />
                     </div>
                 ) : filteredItems.length === 0 ? (
                     <div className="mx-auto px-4 max-inline-80">
-                        <NotificationsEmpty viewAllHref={viewAllHref} filtered />
+                        <NotificationsEmpty filtered />
                     </div>
                 ) : (
-                    <div className={notificationsListClass}>
-                        <ScrollArea className={notificationsScrollClass}>
-                            <DropdownMenuGroup className="flex flex-col px-2.5 py-2 pbe-14">
-                                {daySections.map((section, sectionIndex) => (
-                                    <NotificationDayBlock
-                                        key={section.dayKey}
-                                        section={section}
-                                        viewAllHref={viewAllHref}
-                                        now={now}
-                                        userRole={userRole}
-                                        onMarkRead={(id) => void markRead(id)}
-                                        onRespond={respondToRepresentation}
-                                        showHeader={daySections.length > 1}
-                                        isLastSection={sectionIndex === daySections.length - 1}
-                                    />
-                                ))}
-                            </DropdownMenuGroup>
-                        </ScrollArea>
-
-                        <NotificationsFooter viewAllHref={viewAllHref} />
+                    <div
+                        key={activeTab}
+                        className={notificationsListClass}
+                        role="region"
+                        aria-label="Notification list"
+                        tabIndex={0}
+                    >
+                        <DropdownMenuGroup className="t-tabs-panel flex flex-col px-4 py-2">
+                            {daySections.map((section, sectionIndex) => (
+                                <NotificationDayBlock
+                                    key={section.dayKey}
+                                    section={section}
+                                    viewAllHref={viewAllHref}
+                                    userRole={userRole}
+                                    onMarkRead={(id) => void markRead(id)}
+                                    onRespond={respondToRepresentation}
+                                    showHeader={true}
+                                    isLastSection={sectionIndex === daySections.length - 1}
+                                />
+                            ))}
+                        </DropdownMenuGroup>
                     </div>
                 )}
+                <NotificationsFooter viewAllHref={viewAllHref} />
             </DropdownMenuContent>
         </DropdownMenu>
     );

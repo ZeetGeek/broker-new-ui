@@ -2,6 +2,9 @@
 
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
+import toast from "react-hot-toast";
+
+import { useQueryClient } from "@tanstack/react-query";
 
 import { clientsApi } from "@/lib/api/clients";
 import { contactsApi } from "@/lib/api/contacts";
@@ -10,10 +13,12 @@ import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
-import { Check, Plus, Search, X } from "@/components/shared/icons";
+import { AppModal } from "@/components/shared/app-modal";
+import { Check, Search, X } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
@@ -38,6 +43,7 @@ function ContactOption({
     active,
     multiple,
     locked = false,
+    busy = false,
     onSelect,
 }: {
     name: string;
@@ -47,27 +53,33 @@ function ContactOption({
     active: boolean;
     multiple: boolean;
     locked?: boolean;
+    busy?: boolean;
     onSelect: () => void;
 }) {
     return (
-        <button
-            type="button"
-            aria-pressed={active}
-            disabled={locked}
-            onClick={onSelect}
-            className="
-              flex items-center gap-3 rounded-control p-3 text-start inline-full min-block-18
-              hover:bg-surface-muted/35
-              focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand
-              disabled:cursor-default
-            "
+        <label
+            className={cn(
+                `
+                  flex items-center gap-3 rounded-control px-3 py-2.5 text-start inline-full
+                  min-block-16
+                  hover:bg-surface-muted/35
+                  has-focus-visible:outline-2 has-focus-visible:-outline-offset-2
+                  has-focus-visible:outline-brand
+                `,
+                busy ? "cursor-default" : "cursor-pointer",
+            )}
         >
             <span aria-hidden>
                 <UserAvatar name={name} imageUrl={imageUrl} size="md" />
             </span>
             <span className="flex-1 space-y-1 min-inline-0">
-                <span className="block truncate text-sm font-semibold text-ink">{name}</span>
-                <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">
+                <span className="block truncate text-sm font-bold text-ink">{name}</span>
+                <span
+                    className="
+                      flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-medium
+                      text-ink-muted
+                    "
+                >
                     <span className="tabular">{formatPhone(phone)}</span>
                     {detail ? (
                         <>
@@ -79,37 +91,28 @@ function ContactOption({
                     ) : null}
                 </span>
             </span>
-            {locked ? (
-                <span className="shrink-0 text-xs font-medium text-brand-text">Attached</span>
-            ) : (
-                <span
-                    aria-hidden
-                    className={cn(
-                        "flex shrink-0 items-center justify-center border block-5 inline-5",
-                        multiple ? "rounded-md" : "rounded-full",
-                        active
-                            ? "border-brand bg-brand text-white"
-                            : "border-border-warm bg-surface text-ink-subtle",
-                    )}
-                >
-                    {active ? (
-                        <Check className="block-3.5 inline-3.5" />
-                    ) : multiple ? (
-                        <Plus className="block-3 inline-3" />
-                    ) : null}
-                </span>
-            )}
-        </button>
+            <Checkbox
+                checked={active}
+                disabled={busy}
+                onCheckedChange={() => onSelect()}
+                aria-label={
+                    locked ? `Detach ${name}` : multiple ? `Select ${name}` : `Choose ${name}`
+                }
+            />
+        </label>
     );
 }
 
 export function StepPublish({ propertyId }: { propertyId?: string }) {
+    const queryClient = useQueryClient();
     const { watch, setValue, getValues } = useFormContext<PropertyDraftValues>();
     const values = watch();
     const attachedOwnerId = values.owner.contactId;
     const attachedBuyers = values.attachedBuyers ?? [];
     const [existingBuyers, setExistingBuyers] = useState<{ id: string; name: string }[]>([]);
     const [buyerLoadError, setBuyerLoadError] = useState(false);
+    const [buyerToDetach, setBuyerToDetach] = useState<{ id: string; name: string } | null>(null);
+    const [detaching, setDetaching] = useState(false);
     useEffect(() => {
         if (!propertyId) return;
         let cancelled = false;
@@ -120,7 +123,7 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                     setExistingBuyers(
                         attachedIds.map((id) => ({
                             id,
-                            name: clients.find((client) => client.id === id)?.name ?? "Buyer",
+                            name: clients.find((client) => client.id === id)?.name ?? "Client",
                         })),
                     );
             })
@@ -149,7 +152,11 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
     }
 
     function toggleBuyer(buyer: BuyerRow) {
-        if (existingBuyers.some((existing) => existing.id === buyer.id)) return;
+        const existing = existingBuyers.find((item) => item.id === buyer.id);
+        if (existing) {
+            setBuyerToDetach(existing);
+            return;
+        }
         const current = getValues("attachedBuyers") ?? [];
         const exists = current.some((item) => item.id === buyer.id);
         const next: AttachedBuyer[] = exists
@@ -174,11 +181,34 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
         );
     }
 
+    async function detachBuyer() {
+        if (!propertyId || !buyerToDetach || detaching) return;
+        setDetaching(true);
+        try {
+            await clientsApi.detachClientFromProperty(propertyId, buyerToDetach.id);
+            setExistingBuyers((current) =>
+                current.filter((buyer) => buyer.id !== buyerToDetach.id),
+            );
+            removeBuyer(buyerToDetach.id);
+            setBuyerToDetach(null);
+            void queryClient.invalidateQueries();
+            toast.success("Client detached from this property.");
+        } catch (error) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Couldn’t detach this client. Please try again.",
+            );
+        } finally {
+            setDetaching(false);
+        }
+    }
+
     return (
         <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
                 title={<>Attach owner</>}
-                description="Optional. Pick an exclusive owner from your contacts. One owner per listing."
+                description="Optional. Pick an exclusive owner from your owner list. One owner per listing."
                 tone="private"
             >
                 <ContactSearchPanel
@@ -198,19 +228,53 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
             </WizardSection>
 
             <WizardSection
-                title={<>Attach buyers</>}
-                description="Optional. Link buyers from your contacts to this property in your CRM."
+                title={<>Attach clients</>}
+                description="Optional. Link clients from your client list to this property in your CRM."
                 tone="private"
             >
                 {existingBuyers.length ? (
-                    <p className="mbe-4 text-sm text-ink-muted">
-                        Already attached: {existingBuyers.map((buyer) => buyer.name).join(", ")}.
-                        Manage existing links from the property page.
-                    </p>
+                    <div className="mbe-4 space-y-2.5">
+                        <p className="text-sm font-semibold text-ink">
+                            Attached · {existingBuyers.length}
+                        </p>
+                        <div
+                            className="flex flex-wrap gap-2"
+                            role="group"
+                            aria-label="Existing attached clients"
+                        >
+                            {existingBuyers.map((buyer) => (
+                                <Button
+                                    key={buyer.id}
+                                    type="button"
+                                    variant="outline"
+                                    size="md"
+                                    disabled={detaching}
+                                    aria-label={`Detach ${buyer.name}`}
+                                    onClick={() => setBuyerToDetach(buyer)}
+                                    className="
+                                      inline-flex items-center gap-2 rounded-full border
+                                      border-border-warm bg-surface px-3 py-2 text-sm text-ink
+                                    "
+                                >
+                                    <span aria-hidden>
+                                        <UserAvatar name={buyer.name} size="2xs" framed={false} />
+                                    </span>
+                                    <span className="truncate max-inline-48">{buyer.name}</span>
+                                    <X
+                                        className="text-ink-muted block-3.5 inline-3.5"
+                                        aria-hidden
+                                    />
+                                </Button>
+                            ))}
+                        </div>
+                        <p className="text-xs/5 text-ink-muted">
+                            Select an attached client to detach them, or add more clients below.
+                        </p>
+                    </div>
                 ) : null}
                 {buyerLoadError ? (
                     <p role="alert" className="mbe-4 text-sm text-danger">
-                        Existing buyers could not be loaded. Saving new selections will keep
+                        Existing clients could not be loaded. Saving new selections will keep
                         existing links.
                     </p>
                 ) : null}
@@ -218,7 +282,8 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                     <div className="mbe-4 space-y-2">
                         <div className="flex items-baseline justify-between gap-3">
                             <p className="text-sm font-semibold text-ink">
-                                Selected · {attachedBuyers.length}
+                                {existingBuyers.length ? "New selections" : "Selected"} ·{" "}
+                                {attachedBuyers.length}
                             </p>
                             <Button
                                 type="button"
@@ -238,7 +303,7 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                         <div
                             className="flex flex-wrap gap-2"
                             role="group"
-                            aria-label="Attached buyers"
+                            aria-label="Attached clients"
                         >
                             {attachedBuyers.map((buyer) => (
                                 <Button
@@ -249,8 +314,8 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                                     aria-label={`Remove ${buyer.name}`}
                                     onClick={() => removeBuyer(buyer.id)}
                                     className="
-                                      gap-2 rounded-full border border-border-warm bg-surface
-                                      px-3 py-2 text-sm font-medium text-ink min-block-10
+                                      gap-2 rounded-full border border-border-warm bg-surface px-3
+                                      py-2 text-sm font-medium text-ink min-block-10
                                       hover:bg-surface-muted/35 hover:text-ink
                                       focus-visible:ring-3 focus-visible:ring-ring/30
                                     "
@@ -267,11 +332,7 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                             ))}
                         </div>
                     </div>
-                ) : (
-                    <p className="mbe-4 text-sm text-ink-muted">
-                        No buyers attached yet. Search contacts below to add one or more.
-                    </p>
-                )}
+                ) : null}
                 <ContactSearchPanel
                     mode="buyer"
                     selectedId={null}
@@ -280,11 +341,46 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                         ...attachedBuyers.map((buyer) => buyer.id),
                     ]}
                     lockedIds={existingBuyers.map((buyer) => buyer.id)}
+                    busy={detaching}
                     selectedLabel={null}
                     onSelectBuyer={toggleBuyer}
                     onClear={() => undefined}
                 />
             </WizardSection>
+            <AppModal
+                open={buyerToDetach != null}
+                onOpenChange={(open) => {
+                    if (!open && !detaching) setBuyerToDetach(null);
+                }}
+                title="Detach client?"
+                size="sm"
+                footer={
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            disabled={detaching}
+                            onClick={() => setBuyerToDetach(null)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            loading={detaching}
+                            onClick={() => void detachBuyer()}
+                        >
+                            Detach client
+                        </Button>
+                    </div>
+                }
+            >
+                <p className="text-sm/6 text-ink-muted">
+                    Detach <span className="font-semibold text-ink">{buyerToDetach?.name}</span>{" "}
+                    from this property? This removes their deal for this property immediately. Their
+                    client record and other property links stay in your CRM.
+                </p>
+            </AppModal>
         </div>
     );
 }
@@ -294,6 +390,7 @@ function ContactSearchPanel({
     selectedId,
     selectedIds = [],
     lockedIds = [],
+    busy = false,
     selectedLabel,
     onSelectOwner,
     onSelectBuyer,
@@ -303,6 +400,7 @@ function ContactSearchPanel({
     selectedId: string | null;
     selectedIds?: string[];
     lockedIds?: string[];
+    busy?: boolean;
     selectedLabel: { name: string; phone: string } | null;
     onSelectOwner?: (owner: OwnerRow) => void;
     onSelectBuyer?: (buyer: BuyerRow) => void;
@@ -389,9 +487,9 @@ function ContactSearchPanel({
                         placeholder={
                             mode === "owner"
                                 ? "Search owners by name or phone"
-                                : "Search buyers by name or phone"
+                                : "Search clients by name or phone"
                         }
-                        aria-label={mode === "owner" ? "Search owners" : "Search buyers"}
+                        aria-label={mode === "owner" ? "Search owners" : "Search clients"}
                         clearable
                     />
 
@@ -400,8 +498,8 @@ function ContactSearchPanel({
                             {deferredQuery
                                 ? "Search results"
                                 : mode === "owner"
-                                  ? "Owner contacts"
-                                  : "Buyer contacts"}
+                                  ? "Owners"
+                                  : "Clients"}
                             {!activeQuery.isLoading && !activeQuery.isError
                                 ? ` · ${activeQuery.total}`
                                 : ""}
@@ -414,11 +512,11 @@ function ContactSearchPanel({
                           border-border-warm bg-surface p-1.5 max-block-80
                         "
                         role="group"
-                        aria-label={mode === "owner" ? "Owner contacts" : "Buyer contacts"}
+                        aria-label={mode === "owner" ? "Owners" : "Clients"}
                     >
                         {activeQuery.isLoading ? (
                             <div role="status" className="space-y-1">
-                                <span className="sr-only">Loading contacts…</span>
+                                <span className="sr-only">Loading clients…</span>
                                 {[0, 1, 2].map((item) => (
                                     <div key={item} className="flex items-center gap-3 p-3">
                                         <Skeleton
@@ -439,7 +537,7 @@ function ContactSearchPanel({
                             </div>
                         ) : activeQuery.isError ? (
                             <div role="alert" className="space-y-2 px-3 py-5 text-center">
-                                <p className="text-sm text-danger">Couldn’t load contacts.</p>
+                                <p className="text-sm text-danger">Couldn’t load clients.</p>
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -457,15 +555,15 @@ function ContactSearchPanel({
                                 />
                                 <p className="text-sm font-semibold text-ink">
                                     {deferredQuery
-                                        ? "No matches in your contacts."
+                                        ? "No matches in your clients."
                                         : mode === "owner"
-                                          ? "No owners in contacts yet."
-                                          : "No buyers in contacts yet."}
+                                          ? "No owners yet."
+                                          : "No clients yet."}
                                 </p>
                                 <p className="text-xs text-ink-muted">
                                     {deferredQuery
                                         ? "Try a different name or phone number."
-                                        : "Add a contact from Contacts, then select them here."}
+                                        : "Add a client from Clients, then select them here."}
                                 </p>
                             </div>
                         ) : mode === "owner" ? (
@@ -504,6 +602,7 @@ function ContactSearchPanel({
                                         active={active}
                                         multiple
                                         locked={lockedIds.includes(buyer.id)}
+                                        busy={busy}
                                         onSelect={() => onSelectBuyer?.(buyer)}
                                     />
                                 );

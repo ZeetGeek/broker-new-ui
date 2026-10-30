@@ -6,7 +6,6 @@ import dynamic from "next/dynamic";
 
 import { useQuery } from "@tanstack/react-query";
 
-import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { brokerVisitsApi } from "@/lib/api/broker-visits";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { parsePropertyCriteria, propertyCriteriaCount } from "@/lib/properties/list-criteria";
@@ -22,6 +21,7 @@ import { useVisitSummary } from "@/hooks/use-visit-summary";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type { BrokerVisitsTab, SummaryFilter } from "@/features/site-visits/broker/model";
 import { MyVisitsTab } from "@/features/site-visits/broker/my-visits/my-visits-tab";
 import {
@@ -41,7 +41,7 @@ import { VisitDetailPanel } from "@/features/site-visits/broker/panels/visit-det
 import { RequestsTab } from "@/features/site-visits/broker/requests/requests-tab";
 import { BrokerVisitsHeader } from "@/features/site-visits/broker/visits-header";
 import { VisitsPropertyFiltersDialog } from "@/features/site-visits/broker/visits-property-filters";
-import { VisitsTabs, type VisitInventory } from "@/features/site-visits/broker/visits-tabs";
+import { type VisitInventory, VisitsTabs } from "@/features/site-visits/broker/visits-tabs";
 
 const OutcomeModal = dynamic(() => import("@/features/site-visits/broker/panels/outcome-modal"), {
     ssr: false,
@@ -178,7 +178,7 @@ export function BrokerSiteVisitsPage() {
                 return {
                     ...slot,
                     bookedVisitId: slot.bookedVisitId ?? visit.id,
-                    bookedBuyerName: buyerNames || "Your buyer",
+                    bookedBuyerName: buyerNames || "Your client",
                     bookedBuyerAvatarUrl: slot.bookedBuyerAvatarUrl ?? visit.buyers[0]?.avatarUrl,
                 };
             });
@@ -211,7 +211,7 @@ export function BrokerSiteVisitsPage() {
                     visit.buyers
                         .map((buyer) => buyer.name.trim())
                         .filter(Boolean)
-                        .join(", ") || "Your buyer";
+                        .join(", ") || "Your client";
                 slots.push({
                     id: visit.slotId ?? `booked-${visit.id}`,
                     propertyId: visit.propertyId,
@@ -263,7 +263,7 @@ export function BrokerSiteVisitsPage() {
                 visit.buyers
                     .map((buyer) => buyer.name.trim())
                     .filter(Boolean)
-                    .join(", ") || "Your buyer";
+                    .join(", ") || "Your client";
             propertyIds.add(visit.propertyId);
             mergedItems.push({
                 property: visit.property,
@@ -543,8 +543,11 @@ export function BrokerSiteVisitsPage() {
                         onClearPeople={(key) =>
                             updateUrl({
                                 tab: "visits",
-                                [key === "buyerId" ? "buyer" : key === "ownerId" ? "owner" : "lead"]:
-                                    undefined,
+                                [key === "buyerId"
+                                    ? "buyer"
+                                    : key === "ownerId"
+                                      ? "owner"
+                                      : "lead"]: undefined,
                             })
                         }
                         isLoading={visitsQuery.isLoading}

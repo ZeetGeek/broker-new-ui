@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useQuery } from "@tanstack/react-query";
-import { Search, UserPlus, UserRound, UserRoundPlus, Users } from "@/components/shared/icons";
 import { tinykeys } from "tinykeys";
 
 import { ApiError } from "@/lib/api/client";
@@ -17,6 +16,7 @@ import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { AddFab } from "@/components/shared/add-fab";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Search, UserPlus, UserRound, UserRoundPlus, Users } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,7 @@ import {
     type OwnerRow,
 } from "@/features/contacts/types";
 
-/** Match Your listings grid: 1 → 2 → 3 → 4 → 5 columns. */
+/** Match My Listings grid: 1 → 2 → 3 → 4 → 5 columns. */
 const CONTACT_GRID_BREAKPOINTS = [
     { minWidth: 640, columns: 2 },
     { minWidth: 768, columns: 3 },
@@ -82,13 +82,27 @@ function isEditable(el: EventTarget | null): boolean {
     );
 }
 
-export function ContactsPage() {
+export function ContactsPage({
+    initialAddBuyer = false,
+    addDealFlow = false,
+}: {
+    initialAddBuyer?: boolean;
+    addDealFlow?: boolean;
+}) {
     const [filters, setFilters] = usePersistedJson<ContactsFilters>(
         PREF_KEYS.broker.contacts.prefs,
         DEFAULT_CONTACTS_FILTERS,
         { isValid: isContactsFilters },
     );
-    const [isAddOpen, setIsAddOpen] = useState(false);
+    const [isAddOpen, setIsAddOpen] = useState(initialAddBuyer);
+    useEffect(() => {
+        if (!initialAddBuyer && !addDealFlow) return;
+        const timer = window.setTimeout(
+            () => setFilters((previous) => ({ ...previous, tab: "buyers", q: "" })),
+            0,
+        );
+        return () => window.clearTimeout(timer);
+    }, [initialAddBuyer, addDealFlow, setFilters]);
     const [isOwnerAddOpen, setIsOwnerAddOpen] = useState(false);
     const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
     const [editingOwner, setEditingOwner] = useState<OwnerRow | null>(null);
@@ -102,6 +116,30 @@ export function ContactsPage() {
     >(null);
     const [detailSection, setDetailSection] = useState<"properties" | undefined>();
     const [hasContactQuery, setHasContactQuery] = useState(false);
+    const [requestedContact, setRequestedContact] = useState<{
+        id: string;
+        type?: "buyer" | "owner";
+    } | null>(null);
+    const contactLookup = useQuery({
+        queryKey: ["contact-deep-link", requestedContact?.id, requestedContact?.type],
+        queryFn: ({ signal }) =>
+            contactsApi.findContact(requestedContact!.id, requestedContact!.type, signal),
+        enabled: requestedContact != null,
+    });
+    useEffect(() => {
+        const contact = contactLookup.data;
+        if (!requestedContact || !contact) return;
+        const timer = window.setTimeout(() => {
+            if (new URL(window.location.href).searchParams.get("contact") !== requestedContact.id)
+                return;
+            setSelectedContact(contact);
+            setFilters((previous) => ({
+                ...previous,
+                tab: contact.type === "buyer" ? "buyers" : "owners",
+            }));
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, [contactLookup.data, requestedContact, setFilters]);
     const openerIdRef = useRef<string | null>(null);
     /** Bumped after a create/update/attach so the list and counts both refetch. */
     const [revision, setRevision] = useState(0);
@@ -123,7 +161,7 @@ export function ContactsPage() {
 
     const handleCreated = useCallback((name: string) => {
         setRevision((prev) => prev + 1);
-        toast.success(`${name} added to your buyers`);
+        toast.success(`${name} added to your clients`);
     }, []);
 
     const handleUpdated = useCallback((name: string) => {
@@ -164,7 +202,7 @@ export function ContactsPage() {
                     };
                 });
                 setRevision((prev) => prev + 1);
-                toast.success("Property removed from this buyer");
+                toast.success("Property removed from this client");
             } catch (error) {
                 const message =
                     error instanceof ApiError
@@ -184,7 +222,7 @@ export function ContactsPage() {
         setDeleteBusy(true);
         try {
             await clientsApi.remove(deletingBuyer.id);
-            toast.success(`${deletingBuyer.name} removed from your buyers`);
+            toast.success(`${deletingBuyer.name} removed from your clients`);
             setDeletingBuyer(null);
             setSelectedContact((current) =>
                 current?.type === "buyer" && current.row.id === deletingBuyer.id ? null : current,
@@ -196,7 +234,7 @@ export function ContactsPage() {
                     ? error.message
                     : error instanceof Error
                       ? error.message
-                      : "Could not delete this buyer. Try again.",
+                      : "Could not delete this client. Try again.",
             );
         } finally {
             setDeleteBusy(false);
@@ -293,6 +331,7 @@ export function ContactsPage() {
             );
             const url = new URL(window.location.href);
             url.searchParams.set("contact", row.id);
+            url.searchParams.set("tab", type === "buyer" ? "buyers" : "owners");
             window.history.pushState({ ...window.history.state, contactPanel: true }, "", url);
         },
         [],
@@ -302,6 +341,7 @@ export function ContactsPage() {
         const url = new URL(window.location.href);
         setSelectedContact(null);
         setHasContactQuery(false);
+        setRequestedContact(null);
         setDetailSection(undefined);
         if (url.searchParams.has("contact")) {
             if (window.history.state?.contactPanel) window.history.back();
@@ -315,9 +355,11 @@ export function ContactsPage() {
 
     useEffect(() => {
         const syncFromUrl = () => {
-            const id = new URL(window.location.href).searchParams.get("contact");
+            const query = new URL(window.location.href).searchParams;
+            const id = query.get("contact");
             setHasContactQuery(Boolean(id));
             if (!id) {
+                setRequestedContact(null);
                 setSelectedContact(null);
                 restoreCardFocus();
                 return;
@@ -326,19 +368,24 @@ export function ContactsPage() {
             const owner = ownersQuery.items.find((item) => item.id === id);
             if (buyer) setSelectedContact({ type: "buyer", row: buyer });
             else if (owner) setSelectedContact({ type: "owner", row: owner });
-            else if (
-                (id.startsWith("owner_") || id.startsWith("custom_owner_")) &&
-                filters.tab !== "owners"
-            ) {
-                setFilters((previous) => ({ ...previous, tab: "owners" }));
-            } else if (filters.tab !== "buyers") {
-                setFilters((previous) => ({ ...previous, tab: "buyers" }));
+            else if (contactLookup.data?.row.id === id) setSelectedContact(contactLookup.data);
+            else {
+                const type =
+                    query.get("tab") === "owners"
+                        ? "owner"
+                        : query.get("tab") === "buyers"
+                          ? "buyer"
+                          : undefined;
+                setSelectedContact(null);
+                setRequestedContact((previous) =>
+                    previous?.id === id && previous.type === type ? previous : { id, type },
+                );
             }
         };
         syncFromUrl();
         window.addEventListener("popstate", syncFromUrl);
         return () => window.removeEventListener("popstate", syncFromUrl);
-    }, [buyers, filters.tab, ownersQuery.items, restoreCardFocus, setFilters]);
+    }, [buyers, ownersQuery.items, restoreCardFocus, contactLookup.data]);
 
     const quickUpdateBuyer = useCallback(
         async (buyer: BuyerRow, patch: Partial<BuyerContactForm>) => {
@@ -400,6 +447,24 @@ export function ContactsPage() {
         <TooltipProvider>
             <div className="flex flex-col gap-6">
                 <ContactsIntro summary={summary} tab={filters.tab} />
+                {addDealFlow ? (
+                    <div
+                        className="
+                      flex flex-wrap items-center gap-3 rounded-inner border border-border-warm p-4
+                    "
+                    >
+                        <p className="body-sm text-ink-muted">
+                            Choose a client and use Attach properties to start a deal. Add a client
+                            first if needed. New deals start in New.
+                        </p>
+                        <Button variant="outline" onClick={() => setIsAddOpen(true)}>
+                            Add client
+                        </Button>
+                        <a href="/broker/your-listings" className="body-sm font-medium underline">
+                            My Listings
+                        </a>
+                    </div>
+                ) : null}
 
                 <ContactsHeader
                     filters={filters}
@@ -412,7 +477,7 @@ export function ContactsPage() {
                 {activeQuery.isError && rows.length === 0 ? (
                     <div role="alert" className="flex flex-col items-start gap-3 py-12">
                         <p className="body-sm font-medium text-ink">
-                            Contacts could not load. Check your connection and try again.
+                            Clients could not load. Check your connection and try again.
                         </p>
                         <Button
                             variant="secondary"
@@ -445,13 +510,13 @@ export function ContactsPage() {
                     ) : isBuyers ? (
                         <EmptyState
                             icon={Users}
-                            heading="No buyers yet"
+                            heading="No clients yet"
                             description="Add the people looking to buy or rent. You can link them to a property once they are on your list."
                             className="py-16"
                         >
                             <Button size="lg" onClick={() => setIsAddOpen(true)}>
                                 <UserPlus aria-hidden strokeWidth={1.75} />
-                                Add your first buyer
+                                Add your first client
                             </Button>
                         </EmptyState>
                     ) : (
@@ -476,7 +541,7 @@ export function ContactsPage() {
                                 estimateRowHeight={320}
                                 gap={24}
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
-                                ariaLabel="Buyers"
+                                ariaLabel="Clients"
                                 renderItem={(buyer) => (
                                     <BuyerCard
                                         buyer={buyer}
@@ -523,7 +588,7 @@ export function ContactsPage() {
 
                 <AddFab
                     onClick={openAdd}
-                    label={isBuyers ? "Add buyer" : "Add owner"}
+                    label={isBuyers ? "Add client" : "Add owner"}
                     hint={
                         isBuyers
                             ? "Add someone you’re helping find a property"
@@ -616,7 +681,17 @@ export function ContactsPage() {
 
                 <ContactDetailPanel
                     contact={selectedContact}
-                    open={selectedContact != null || (hasContactQuery && activeQuery.isPending)}
+                    open={selectedContact != null || hasContactQuery}
+                    loadError={
+                        contactLookup.isError
+                            ? "Could not load this client. Check your connection and try again."
+                            : requestedContact && contactLookup.isSuccess && !contactLookup.data
+                              ? "This client could not be found in your account."
+                              : undefined
+                    }
+                    onRetryLoad={
+                        contactLookup.isError ? () => void contactLookup.refetch() : undefined
+                    }
                     initialSection={detailSection}
                     onOpenChange={(next) => {
                         if (!next) closeContact();

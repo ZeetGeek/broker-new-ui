@@ -37,9 +37,10 @@ export function ContactsSpeedDial({
     return (
         <div
             className="
-          fixed inset-e-8 inset-be-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 block-40
-          inline-56 md:hidden
-        "
+              fixed inset-e-8 inset-be-[calc(5.75rem+env(safe-area-inset-bottom))] z-30 block-40
+              inline-56
+              md:hidden
+            "
         >
             <div
                 ref={ref}
@@ -51,7 +52,7 @@ export function ContactsSpeedDial({
             >
                 <div className="t-morph-menu flex flex-col justify-between gap-2 p-3">
                     <div className="flex items-center justify-between px-1">
-                        <span className="body-sm font-semibold text-surface">Add contact</span>
+                        <span className="body-sm font-semibold text-surface">Add client</span>
                         <button
                             type="button"
                             onClick={() => setOpen(false)}
@@ -77,7 +78,7 @@ export function ContactsSpeedDial({
                         "
                     >
                         <UserPlus aria-hidden className="text-brand block-4.5 inline-4.5" />
-                        Add buyer
+                        Add client
                     </button>
                     <button
                         type="button"
@@ -97,7 +98,7 @@ export function ContactsSpeedDial({
                     type="button"
                     className="t-morph-plus"
                     aria-expanded={open}
-                    aria-label="Add contact"
+                    aria-label="Add client"
                     onClick={(event) => {
                         event.stopPropagation();
                         setOpen((current) => !current);

@@ -5,13 +5,13 @@ import type { BrokerProfileMenuBroker } from "./profile-menu";
 export type BrokerVerificationState = "PROFILE_INCOMPLETE" | "PENDING_VERIFICATION" | "VERIFIED";
 
 export function mapBrokerVerificationState(profile: UserProfile | null): BrokerVerificationState {
-    const verified = profile?.verified ?? profile?.broker?.verified;
-    if (verified) return "VERIFIED";
+    // Match the profile form's source of truth; an explicitly cleared broker
+    // RERA number must not fall back to an older flattened value.
+    const license = profile?.broker?.licenseNumber ?? profile?.licenseNumber;
+    if (!license?.trim()) return "PROFILE_INCOMPLETE";
 
-    const license = profile?.licenseNumber ?? profile?.broker?.licenseNumber;
-    if (license?.trim()) return "PENDING_VERIFICATION";
-
-    return "PROFILE_INCOMPLETE";
+    const verified = profile?.broker?.verified ?? profile?.verified;
+    return verified ? "VERIFIED" : "PENDING_VERIFICATION";
 }
 
 export function computeBrokerProfileCompletion(profile: UserProfile | null): number {

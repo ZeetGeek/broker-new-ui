@@ -29,9 +29,7 @@ export default function VisitDetailMap({
             center={destination}
             zoom={13}
             scrollWheelZoom={false}
-            className="
-      rounded-inner block-56 inline-full
-    "
+            className="rounded-inner block-56 inline-full"
             aria-label={`Map showing ${title}`}
         >
             <TileLayer

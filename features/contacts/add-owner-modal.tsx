@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -9,13 +9,10 @@ import { ApiError } from "@/lib/api/client";
 import { exclusiveOwnersApi } from "@/lib/api/exclusive-owners";
 import {
     exclusiveOwnerFormSchema,
-    normalizeExclusiveOwnerPhone,
     type ExclusiveOwnerFormValues,
+    normalizeExclusiveOwnerPhone,
 } from "@/lib/validation/exclusive-owner";
-
 import { useLocationOptions } from "@/hooks/use-locations";
-
-import { useAppSelector } from "@/store/hooks";
 
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 
@@ -32,6 +29,7 @@ import {
 import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
 import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
 import type { OwnerRow } from "@/features/contacts/types";
+import { useAppSelector } from "@/store/hooks";
 
 const OWNER_TYPE_OPTIONS = [
     { value: "individual", label: "Individual", description: "Private person" },
@@ -122,11 +120,10 @@ export function AddOwnerModal({
         handleSubmit,
         reset,
         setValue,
-        watch,
         formState: { errors, isDirty },
     } = form;
 
-    const values = watch();
+    const values = useWatch({ control });
     const { selectedCity } = useLocationOptions({
         countryName: values.country,
         stateName: values.state,
@@ -135,11 +132,14 @@ export function AddOwnerModal({
 
     useEffect(() => {
         if (!open) return;
-        const next = valuesFromOwner(owner, locationDefaults);
-        reset(next);
-        setSubmitError("");
-        setBusy(false);
-        setMoreOpen(Boolean(next.email || next.fullAddress || next.reraNumber || next.notes));
+        const timer = window.setTimeout(() => {
+            const next = valuesFromOwner(owner, locationDefaults);
+            reset(next);
+            setSubmitError("");
+            setBusy(false);
+            setMoreOpen(Boolean(next.email || next.fullAddress || next.reraNumber || next.notes));
+        }, 0);
+        return () => window.clearTimeout(timer);
     }, [locationDefaults, open, owner, reset]);
 
     const onInvalid = () => {

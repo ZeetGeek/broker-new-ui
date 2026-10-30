@@ -6,7 +6,7 @@ import { OwnerListingsPage } from "@/features/properties/owner-listings/owner-li
 import { OwnerListingsPageSkeleton } from "@/features/properties/owner-listings/owner-listings-skeleton";
 
 export const metadata: Metadata = {
-    title: `Owner listings | ${APP_NAME}`,
+    title: `Marketplace | ${APP_NAME}`,
     robots: { index: false, follow: false },
 };
 

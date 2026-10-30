@@ -2,7 +2,7 @@ import type { PropertyType } from "@/lib/validation/property";
 
 export type MyListingStatus = "draft" | "published" | "unpublished";
 
-/** Your listings tabs. `sold` is availability, not publish state, so it is tab-only. */
+/** My Listings tabs. `sold` is availability, not publish state, so it is tab-only. */
 export type MyListingsStatusTab = MyListingStatus | "sold";
 
 export type MyListingFurnishing = "furnished" | "semi" | "unfurnished";
@@ -202,9 +202,14 @@ export type CreateMyListingInput = {
     pinCode: string;
     landmark: string;
     society: string;
+    unitNumber?: string;
     saleAmountInr: number | null;
     rentAmountInr: number | null;
     areaSqft: number;
+    carpetAreaSqft?: number | null;
+    /** Whole years. */
+    propertyAge?: number | null;
+    propertyCondition?: string;
     furnishing: MyListingFurnishing;
     imageSrcs: string[];
     /** Newly picked files (blob previews in imageSrcs). */

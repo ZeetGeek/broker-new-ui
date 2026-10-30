@@ -1,10 +1,10 @@
-import { CalendarDays } from "@/components/shared/icons";
-
 import { formatDateIso, formatDateShort, formatTimeIn } from "@/lib/format/date";
+import { BROKER_VISIT_SLOTS_HREF } from "@/lib/routes/broker";
 import { OWNER_VISITS_HREF } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { CalendarDays } from "@/components/shared/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { CardLabel } from "./card-label";
@@ -83,7 +83,7 @@ function EmptyToday({
                         : "Visits you schedule will appear here."
                 }
             >
-                <TextLinkButton href={isOwner ? OWNER_VISITS_HREF : "/broker/visits/new"}>
+                <TextLinkButton href={isOwner ? OWNER_VISITS_HREF : BROKER_VISIT_SLOTS_HREF}>
                     {isOwner ? "Manage visits" : "Book a site visit"}
                 </TextLinkButton>
             </EmptyState>

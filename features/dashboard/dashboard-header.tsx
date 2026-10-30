@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 
-import { MapPin, Pencil, Search, UserRoundPlus } from "@/components/shared/icons";
-
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { MapPin, Pencil, Search, UserRoundPlus } from "@/components/shared/icons";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -239,10 +238,10 @@ export function DashboardHeader({
                                 size="md"
                                 nativeButton={false}
                                 render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
-                                aria-label="Owner listings"
+                                aria-label="Marketplace"
                             >
                                 <Search aria-hidden strokeWidth={1.75} />
-                                <span className="hidden md:inline">Owner listings</span>
+                                <span className="hidden md:inline">Marketplace</span>
                             </Button>
                         </ShortcutTooltip>
                     ) : null}
@@ -252,10 +251,10 @@ export function DashboardHeader({
                             size="md"
                             nativeButton={false}
                             render={<Link href="/broker/pipeline" />}
-                            aria-label="Add buyer"
+                            aria-label="Add client"
                         >
                             <UserRoundPlus aria-hidden strokeWidth={1.75} />
-                            <span className="hidden md:inline">Add buyers</span>
+                            <span className="hidden md:inline">Add client</span>
                         </Button>
                     </ShortcutTooltip>
                 </>

@@ -65,18 +65,18 @@ export function MyListingsIntro({
         <h1 className="h2 text-start min-inline-0">
             {isLoading ? (
                 <span aria-hidden className="relative inline-block align-bottom">
-                    <span className="invisible">Your listings.</span>
+                    <span className="invisible">My Listings.</span>
                     <span
                         className="
-                      absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control
-                      bg-border-warm block-[0.8em] inline-full
-                    "
+                          absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control
+                          bg-border-warm block-[0.8em] inline-full
+                        "
                     >
                         <Skeleton className="bg-ink/3 block-full inline-full" />
                     </span>
                 </span>
             ) : (
-                <span className="text-ink">Your listings.</span>
+                <span className="text-ink">My Listings.</span>
             )}{" "}
             <RotatingHeaderSummary
                 key={`${status}:${lines.join("|")}`}

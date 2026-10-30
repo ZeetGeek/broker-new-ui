@@ -1,20 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { pipelineApi } from "@/lib/api/pipeline";
+import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { PREF_KEYS } from "@/lib/prefs/keys";
 import { EMPTY_PROPERTY_CRITERIA, propertyCriteriaCount } from "@/lib/properties/list-criteria";
+import { pipelineStageFromQuery } from "@/lib/properties/pipeline-stage-query";
+import { StageOperationGate } from "@/lib/properties/stage-operation-gate";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
-import {
-    matchesClientFilters,
-    type OtherBuyer,
-    otherBuyersOnProperty,
-} from "@/features/pipeline/deal-attention";
+import { matchesClientFilters } from "@/features/pipeline/deal-attention";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
 import { DealDetailModal } from "@/features/pipeline/deal-detail-modal";
 import { DealNoteModal } from "@/features/pipeline/deal-note-modal";
@@ -24,8 +23,9 @@ import {
     PipelineDoneEmpty,
     PipelineFilteredEmpty,
     PipelineFirstRunEmpty,
+    PipelineOutcomeEmpty,
 } from "@/features/pipeline/pipeline-empty";
-import { PipelineFinishedToggle } from "@/features/pipeline/pipeline-finished-toggle";
+import { PipelineOutcomeTabs } from "@/features/pipeline/pipeline-outcome-tabs";
 import { PipelineBoardSkeleton } from "@/features/pipeline/pipeline-skeleton";
 import { PipelineToolbar } from "@/features/pipeline/pipeline-toolbar";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
@@ -75,7 +75,7 @@ function isPipelinePrefs(value: unknown): value is PipelinePrefs {
         typeof filters === "object" &&
         filters !== null &&
         typeof filters.q === "string" &&
-        (v.view === "board" || v.view === "done") &&
+        (v.view === "board" || v.view === "sold" || v.view === "lost" || v.view === "done") &&
         isDealStage(v.mobileStage) &&
         Array.isArray(v.pinnedDealIds)
     );
@@ -89,13 +89,39 @@ function pinSort(pinnedDealIds: string[]) {
     };
 }
 
-export function PipelinePage() {
+export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const urlStage = pipelineStageFromQuery(searchParams.get("stage"));
     const [prefs, setPrefs] = usePersistedJson<PipelinePrefs>(
         PREF_KEYS.broker.pipeline.prefs,
         DEFAULT_PIPELINE_PREFS,
         { isValid: isPipelinePrefs },
     );
-    const { filters, view, mobileStage, pinnedDealIds } = prefs;
+    const filters = useMemo(
+        () => (urlStage ? { ...prefs.filters, stage: urlStage } : prefs.filters),
+        [prefs.filters, urlStage],
+    );
+    // "done" is the old combined Finished tab, still in some saved prefs.
+    const view: DealsView = urlStage || (prefs.view as string) === "done" ? "board" : prefs.view;
+    const mobileStage = urlStage ?? prefs.mobileStage;
+    const { pinnedDealIds } = prefs;
+
+    useEffect(() => {
+        if (!urlStage) return;
+        const timer = window.setTimeout(
+            () =>
+                setPrefs((previous) => ({
+                    ...previous,
+                    filters: { ...DEFAULT_DEALS_FILTERS, stage: urlStage },
+                    view: "board",
+                    mobileStage: urlStage,
+                })),
+            0,
+        );
+        return () => window.clearTimeout(timer);
+    }, [urlStage, setPrefs]);
 
     const setFilters = useCallback(
         (next: DealsFilters | ((prev: DealsFilters) => DealsFilters)) => {
@@ -109,9 +135,19 @@ export function PipelinePage() {
 
     const setMobileStage = useCallback(
         (next: DealStage) => {
-            setPrefs((prev) => ({ ...prev, mobileStage: next }));
+            setPrefs((prev) => ({
+                ...prev,
+                mobileStage: next,
+                filters:
+                    urlStage || filters.stage ? { ...prev.filters, stage: next } : prev.filters,
+            }));
+            if (urlStage) {
+                const query = new URLSearchParams(searchParams.toString());
+                query.set("stage", next === "visit" ? "site_visit" : next);
+                router.replace(`${pathname}?${query}`);
+            }
         },
-        [setPrefs],
+        [setPrefs, urlStage, filters.stage, searchParams, router, pathname],
     );
 
     const [deals, setDeals] = useState<DealItem[] | null>(null);
@@ -131,44 +167,58 @@ export function PipelinePage() {
     const [viewError, setViewError] = useState<string | null>(null);
     const [noteDealId, setNoteDealId] = useState<string | null>(null);
     const [isSavingNote, setIsSavingNote] = useState(false);
+    const [stageGate] = useState(() => new StageOperationGate());
+    const mounted = useRef(true);
+    useEffect(() => {
+        mounted.current = true;
+        return () => {
+            mounted.current = false;
+        };
+    }, []);
     useEffect(() => {
         let cancelled = false;
+        const controller = new AbortController();
 
         const timer = window.setTimeout(() => {
             if (cancelled) return;
 
             setIsFetching(true);
             setError(null);
+            const requestRevision = stageGate.revision;
 
             void pipelineApi
-                .list({
-                    q: filters.q,
-                    stage: filters.stage,
-                    sort: filters.sort,
-                    dealType: "",
-                    locality: "",
-                    ownerName: "",
-                })
+                .list(
+                    {
+                        q: filters.q,
+                        stage: filters.stage,
+                        sort: filters.sort,
+                        dealType: "",
+                        locality: "",
+                        ownerName: "",
+                    },
+                    controller.signal,
+                )
                 .then((next) => {
-                    if (cancelled) return;
+                    if (cancelled || stageGate.revision !== requestRevision) return;
                     setDeals(next.items);
                     setSummary(next.summary);
                 })
                 .catch(() => {
-                    if (!cancelled) {
+                    if (!cancelled && stageGate.revision === requestRevision) {
                         setError("Could not load your deals. Check your connection and try again.");
                     }
                 })
                 .finally(() => {
-                    if (!cancelled) setIsFetching(false);
+                    if (!cancelled && stageGate.revision === requestRevision) setIsFetching(false);
                 });
         }, 0);
 
         return () => {
             cancelled = true;
+            controller.abort();
             window.clearTimeout(timer);
         };
-    }, [filters.q, filters.sort, filters.stage, revision]);
+    }, [filters.q, filters.sort, filters.stage, revision, stageGate]);
 
     const requestMove = useCallback(
         (dealId: string, status: DealStatus, successMessage: string) => {
@@ -196,6 +246,12 @@ export function PipelinePage() {
             .finally(() => setIsLoadingView(false));
     }, []);
 
+    useEffect(() => {
+        if (!initialLeadId) return;
+        const timer = window.setTimeout(() => openLeadView(initialLeadId), 0);
+        return () => window.clearTimeout(timer);
+    }, [initialLeadId, openLeadView]);
+
     const applyLocalStage = useCallback((dealId: string, status: DealStatus) => {
         setDeals((prev) =>
             (prev ?? []).map((deal) =>
@@ -218,6 +274,9 @@ export function PipelinePage() {
         (dealId: string, status: DealStage) => {
             const current = (deals ?? []).find((deal) => deal.id === dealId);
             if (!current || current.status === status) return;
+            const version = stageGate.begin(dealId);
+            if (version == null) return;
+            setBusyId(dealId);
 
             const previous = current.status;
             applyLocalStage(dealId, status);
@@ -225,6 +284,7 @@ export function PipelinePage() {
             void pipelineApi
                 .setStage(dealId, status)
                 .then(() => {
+                    if (!mounted.current) return;
                     toast(
                         (t) => (
                             <span className="flex items-center gap-3">
@@ -233,10 +293,37 @@ export function PipelinePage() {
                                     type="button"
                                     className="font-semibold text-brand underline"
                                     onClick={() => {
-                                        applyLocalStage(dealId, previous);
-                                        void pipelineApi.setStage(dealId, previous).catch(() => {
-                                            toast.error("Could not undo that. Try again.");
-                                        });
+                                        if (!mounted.current) {
+                                            toast.dismiss(t.id);
+                                            return;
+                                        }
+                                        if (stageGate.begin(dealId, version) == null) {
+                                            toast.error(
+                                                "This deal changed or is still saving. Check its current stage.",
+                                            );
+                                            return;
+                                        }
+                                        setBusyId(dealId);
+                                        // Keep the confirmed stage visible until Undo actually saves.
+                                        void pipelineApi
+                                            .setStage(dealId, previous)
+                                            .then(() => {
+                                                if (mounted.current)
+                                                    applyLocalStage(dealId, previous);
+                                            })
+                                            .catch(() => {
+                                                if (mounted.current)
+                                                    toast.error(
+                                                        "Could not undo. Reloading the saved stage.",
+                                                    );
+                                            })
+                                            .finally(() => {
+                                                stageGate.end();
+                                                if (mounted.current) {
+                                                    setBusyId(null);
+                                                    setRevision((value) => value + 1);
+                                                }
+                                            });
                                         toast.dismiss(t.id);
                                     }}
                                 >
@@ -246,23 +333,34 @@ export function PipelinePage() {
                         ),
                         { duration: 5_000 },
                     );
-                    setRevision((prev) => prev + 1);
                 })
                 .catch((moveError) => {
-                    applyLocalStage(dealId, previous);
+                    if (!mounted.current) return;
+                    setDeals(
+                        (items) =>
+                            items?.map((item) => (item.id === dealId ? current : item)) ?? null,
+                    );
                     toast.error(
                         moveError instanceof Error
                             ? moveError.message
                             : "Could not save that. Try again.",
                     );
+                })
+                .finally(() => {
+                    stageGate.end();
+                    if (mounted.current) {
+                        setBusyId(null);
+                        setRevision((value) => value + 1);
+                    }
                 });
         },
-        [applyLocalStage, deals],
+        [applyLocalStage, deals, stageGate],
     );
 
     const handleConfirmMove = useCallback(
         async (note: string) => {
             if (!moveRequest) return;
+            if (stageGate.begin(moveRequest.dealId) == null) return;
 
             setIsSavingMove(true);
             setBusyId(moveRequest.dealId);
@@ -280,16 +378,19 @@ export function PipelinePage() {
                         : "Could not save that. Try again.",
                 );
             } finally {
+                stageGate.end();
                 setIsSavingMove(false);
                 setBusyId(null);
+                setRevision((value) => value + 1);
             }
         },
-        [moveRequest],
+        [moveRequest, stageGate],
     );
 
     const handleConfirmOffer = useCallback(
         async (offerAmount: number, notes: string) => {
             if (!offerDealId) return;
+            if (stageGate.begin(offerDealId) == null) return;
 
             setIsSavingOffer(true);
             setBusyId(offerDealId);
@@ -297,7 +398,7 @@ export function PipelinePage() {
                 await pipelineApi.makeOffer(offerDealId, offerAmount, notes);
                 setOfferDealId(null);
                 setRevision((prev) => prev + 1);
-                toast.success("Offer submitted to owner");
+                toast.success("Offer saved");
             } catch (offerError) {
                 toast.error(
                     offerError instanceof Error
@@ -305,11 +406,13 @@ export function PipelinePage() {
                         : "Could not submit offer. Try again.",
                 );
             } finally {
+                stageGate.end();
                 setIsSavingOffer(false);
                 setBusyId(null);
+                setRevision((value) => value + 1);
             }
         },
-        [offerDealId],
+        [offerDealId, stageGate],
     );
 
     const handleConfirmNote = useCallback(
@@ -317,6 +420,7 @@ export function PipelinePage() {
             if (!noteDealId) return;
             const current = (deals ?? []).find((deal) => deal.id === noteDealId);
             if (!current) return;
+            if (stageGate.begin(noteDealId) == null) return;
 
             setIsSavingNote(true);
             setBusyId(noteDealId);
@@ -332,11 +436,13 @@ export function PipelinePage() {
                         : "Could not save that. Try again.",
                 );
             } finally {
+                stageGate.end();
                 setIsSavingNote(false);
                 setBusyId(null);
+                setRevision((value) => value + 1);
             }
         },
-        [deals, noteDealId],
+        [deals, noteDealId, stageGate],
     );
 
     const handlers = useMemo<DealCardHandlers>(
@@ -352,6 +458,7 @@ export function PipelinePage() {
                 );
             },
             onLogContact: (dealId, currentStatus) => {
+                if (stageGate.begin(dealId) == null) return;
                 setBusyId(dealId);
                 void pipelineApi
                     .logContact(dealId, currentStatus)
@@ -366,7 +473,11 @@ export function PipelinePage() {
                                 : "Could not save that. Try again.",
                         );
                     })
-                    .finally(() => setBusyId(null));
+                    .finally(() => {
+                        stageGate.end();
+                        setBusyId(null);
+                        setRevision((value) => value + 1);
+                    });
             },
             onClose: (dealId) => {
                 requestMove(dealId, "closed", "Marked as sold");
@@ -392,7 +503,7 @@ export function PipelinePage() {
                 setNoteDealId(dealId);
             },
         }),
-        [openLeadView, requestMove, setPrefs],
+        [openLeadView, requestMove, setPrefs, stageGate],
     );
 
     const handlePatch = useCallback(
@@ -409,10 +520,16 @@ export function PipelinePage() {
             dealType: "",
             locality: "",
             ownerName: "",
+            stage: "",
             propertyFilters: { ...EMPTY_PROPERTY_CRITERIA },
         }));
         setPrefs((prev) => ({ ...prev, view: "board" }));
-    }, [setFilters, setPrefs]);
+        if (searchParams.has("stage")) {
+            const query = new URLSearchParams(searchParams.toString());
+            query.delete("stage");
+            router.replace(`${pathname}${query.size ? `?${query}` : ""}`);
+        }
+    }, [setFilters, setPrefs, searchParams, router, pathname]);
 
     const filteredDeals = useMemo(() => {
         const all = deals ?? [];
@@ -424,10 +541,11 @@ export function PipelinePage() {
         return [...live].sort(pinSort(pinnedDealIds));
     }, [filteredDeals, pinnedDealIds]);
 
-    const doneDeals = useMemo(
-        () => filteredDeals.filter((deal) => !isLiveStage(deal.status)),
-        [filteredDeals],
-    );
+    const outcomeDeals = useMemo(() => {
+        if (view === "board") return [];
+        const status = view === "sold" ? "closed" : "lost";
+        return filteredDeals.filter((deal) => deal.status === status);
+    }, [filteredDeals, view]);
 
     const dealsByStage = useMemo(() => {
         const grouped = Object.fromEntries(
@@ -440,14 +558,6 @@ export function PipelinePage() {
 
         return grouped;
     }, [liveDeals]);
-
-    const otherBuyersByDealId = useMemo(() => {
-        const map: Record<string, OtherBuyer[]> = {};
-        for (const deal of deals ?? []) {
-            map[deal.id] = otherBuyersOnProperty(deal, deals ?? []);
-        }
-        return map;
-    }, [deals]);
 
     const moveDeal =
         moveRequest != null
@@ -467,6 +577,7 @@ export function PipelinePage() {
     const isFirstLoad = deals === null;
     const hasSearch =
         filters.q.trim().length > 0 ||
+        filters.stage !== "" ||
         filters.dealType !== "" ||
         filters.locality !== "" ||
         propertyCriteriaCount(filters.propertyFilters) > 0;
@@ -482,28 +593,50 @@ export function PipelinePage() {
                 handlers={handlers}
                 isBusy={busyId === deal.id}
                 isPinned={pinnedDealIds.includes(deal.id)}
-                otherBuyers={otherBuyersByDealId[deal.id] ?? []}
             />
         );
     }
 
     return (
         <div className="flex flex-col gap-5">
+            {filters.stage ? (
+                <div className="body-sm flex flex-wrap items-center gap-3 text-ink-muted">
+                    <span>Showing {DEAL_STAGE_META[filters.stage].label} deals</span>
+                    <button
+                        type="button"
+                        onClick={handleClearSearch}
+                        className="font-medium text-brand underline"
+                    >
+                        Show all stages
+                    </button>
+                </div>
+            ) : null}
             {!isFirstRun ? (
                 <PipelineToolbar
                     filters={filters}
                     onPatch={handlePatch}
                     leading={
                         summary ? (
-                            <PipelineFinishedToggle
-                                count={summary.closedCount + summary.lostCount}
-                                active={view === "done"}
-                                onChange={(active) =>
+                            <PipelineOutcomeTabs
+                                counts={{ sold: summary.closedCount, lost: summary.lostCount }}
+                                view={view}
+                                onChange={(next) => {
+                                    const active = next !== "board";
+                                    if (active && searchParams.has("stage")) {
+                                        const query = new URLSearchParams(searchParams.toString());
+                                        query.delete("stage");
+                                        router.replace(
+                                            `${pathname}${query.size ? `?${query}` : ""}`,
+                                        );
+                                    }
                                     setPrefs((prev) => ({
                                         ...prev,
-                                        view: active ? "done" : "board",
-                                    }))
-                                }
+                                        view: next,
+                                        filters: active
+                                            ? { ...prev.filters, stage: "" }
+                                            : prev.filters,
+                                    }));
+                                }}
                             />
                         ) : null
                     }
@@ -520,12 +653,12 @@ export function PipelinePage() {
                 <PipelineBoardSkeleton />
             ) : isFirstRun ? (
                 <PipelineFirstRunEmpty />
-            ) : view === "done" ? (
-                doneDeals.length === 0 ? (
+            ) : view !== "board" ? (
+                outcomeDeals.length === 0 ? (
                     hasSearch ? (
                         <PipelineFilteredEmpty onClear={handleClearSearch} />
                     ) : (
-                        <PipelineDoneEmpty />
+                        <PipelineOutcomeEmpty outcome={view} />
                     )
                 ) : (
                     <div
@@ -534,12 +667,12 @@ export function PipelinePage() {
                         }
                     >
                         <WindowVirtualGrid
-                            items={doneDeals}
+                            items={outcomeDeals}
                             getKey={(deal) => deal.id}
                             estimateRowHeight={470}
                             gap={12}
                             breakpoints={DONE_GRID_BREAKPOINTS}
-                            ariaLabel="Completed and lost deals"
+                            ariaLabel={view === "sold" ? "Sold deals" : "Lost deals"}
                             renderItem={renderDealCard}
                         />
                     </div>
@@ -562,7 +695,6 @@ export function PipelinePage() {
                         handlers={handlers}
                         busyId={busyId}
                         pinnedDealIds={pinnedDealIds}
-                        otherBuyersByDealId={otherBuyersByDealId}
                         onDropDeal={moveOptimistically}
                     />
 
@@ -649,6 +781,7 @@ export function PipelinePage() {
                     setViewDealId(null);
                     setViewDetail(null);
                     setViewError(null);
+                    if (initialLeadId) router.replace("/broker/pipeline");
                 }}
             />
         </div>

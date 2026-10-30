@@ -1,0 +1,140 @@
+.card {
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    color: var(--color-ink);
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 20px 16px 12px;
+}
+
+.title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.4;
+}
+
+.liveHint {
+    margin-block-start: 4px;
+    color: var(--color-ink-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.private {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 4px;
+    padding-block: 4px;
+    color: var(--color-ink-muted);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.breakdown {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0 16px 8px;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0 12px;
+    min-inline-size: 0;
+    min-block-size: 44px;
+    padding-block: 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.rowLabel {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-inline-size: 0;
+    color: var(--color-ink-muted);
+    font-size: 12px;
+}
+
+.rowValue {
+    margin: 0;
+    margin-inline-start: auto;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.strongRow {
+    font-weight: 600;
+}
+
+.helpButton {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    color: var(--color-ink-subtle);
+}
+
+.total {
+    margin-inline: 16px;
+    padding: 16px 0;
+    border-block-start: 1px solid var(--color-border-warm);
+    background: var(--color-surface);
+    color: var(--color-ink);
+}
+
+.totalLabel {
+    color: var(--color-ink);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.totalAmount {
+    display: block;
+    margin-block-start: 6px;
+    color: var(--color-brand-text);
+    font-size: clamp(26px, 2.2vw, 32px);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    overflow-wrap: anywhere;
+}
+
+.totalNote {
+    margin-block-start: 8px;
+    color: var(--color-ink-muted);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.copyButton {
+    inline-size: 100%;
+    min-block-size: 44px;
+    gap: 8px;
+    margin-block-start: 16px;
+    border-color: var(--color-border-warm);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 12px;
+}
+
+.copyButton:hover {
+    background: color-mix(in srgb, var(--color-surface-muted) 35%, var(--color-surface));
+    color: var(--color-ink);
+}
+
+.copyButton:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
+}

@@ -63,7 +63,7 @@ export function PropertyAnalyticsPage() {
                 render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}
             >
                 <ArrowLeft aria-hidden />
-                Back to your listings
+                Back to My Listings
             </Button>
 
             {query.isPending ? (
@@ -71,7 +71,9 @@ export function PropertyAnalyticsPage() {
             ) : query.isError || !data ? (
                 <div role="alert" className={`${CARD_CLASS} flex flex-col items-start gap-4 p-5`}>
                     <div className="flex flex-col gap-1">
-                        <h1 className="h5 text-ink">Couldn&apos;t load this listing&apos;s leads</h1>
+                        <h1 className="h5 text-ink">
+                            Couldn&apos;t load this listing&apos;s leads
+                        </h1>
                         <p className="body-sm text-ink-muted">
                             Check your connection and try again.
                         </p>
@@ -114,9 +116,11 @@ function AnalyticsBody({ data }: { data: PropertyAnalytics }) {
                         </span>{" "}
                         <span className="text-ink-muted">{headlineSummary(summary)}</span>
                     </h1>
-                    <div className="
-                      body-sm flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-muted
-                    ">
+                    <div
+                        className="
+                          body-sm flex flex-wrap items-center gap-x-3 gap-y-1 text-ink-muted
+                        "
+                    >
                         {place ? (
                             <span className="flex items-center gap-1 min-inline-0">
                                 <MapPin
@@ -148,21 +152,27 @@ function AnalyticsBody({ data }: { data: PropertyAnalytics }) {
                 </Button>
             </header>
 
-            <section aria-labelledby="analytics-overview" className={`${CARD_CLASS}
+            <section
+                aria-labelledby="analytics-overview"
+                className={`${CARD_CLASS}
               flex flex-col gap-5 p-4
               md:p-5
-            `}>
+            `}
+            >
                 <h2 id="analytics-overview" className="sr-only">
                     Overview
                 </h2>
-                <dl className="
-                  grid grid-cols-2 gap-px overflow-hidden rounded-inner bg-border-warm
-                  sm:grid-cols-4
-                ">
+                <dl
+                    className="
+                      grid grid-cols-2 gap-px overflow-hidden rounded-inner bg-border-warm
+                      sm:grid-cols-4
+                    "
+                >
                     {metrics.map((metric) => (
-                        <div key={metric.label} className="
-                          flex flex-col gap-1 bg-surface-muted px-4 py-3
-                        ">
+                        <div
+                            key={metric.label}
+                            className="flex flex-col gap-1 bg-surface-muted px-4 py-3"
+                        >
                             <dt className="body-xs text-ink-muted">{metric.label}</dt>
                             <dd className="flex flex-wrap items-baseline gap-x-1.5">
                                 {metric.value > 0 ? (
@@ -200,10 +210,14 @@ function AnalyticsBody({ data }: { data: PropertyAnalytics }) {
                     <EmptyState
                         icon={ChartBar}
                         heading="No leads on this listing yet"
-                        description="Add a buyer to this listing from Your listings. Their progress shows up here."
+                        description="Add a client to this listing from My Listings. Their progress shows up here."
                     >
-                        <Button variant="outline" size="md" render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}>
-                            Go to your listings
+                        <Button
+                            variant="outline"
+                            size="md"
+                            render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}
+                        >
+                            Go to My Listings
                         </Button>
                     </EmptyState>
                 ) : (
@@ -216,19 +230,17 @@ function AnalyticsBody({ data }: { data: PropertyAnalytics }) {
 
 function AnalyticsSkeleton() {
     return (
-        <div aria-busy="true" aria-label="Loading this listing's leads" className="
-          flex flex-col gap-6
-          md:gap-8
-        ">
+        <div
+            aria-busy="true"
+            aria-label="Loading this listing's leads"
+            className="flex flex-col gap-6 md:gap-8"
+        >
             <div className="flex flex-col gap-2">
                 <Skeleton className="block-8 inline-full max-inline-lg" />
                 <Skeleton className="block-4 inline-48" />
             </div>
             <div className={`${CARD_CLASS} flex flex-col gap-5 p-4 md:p-5`}>
-                <div className="
-                  grid grid-cols-2 gap-px overflow-hidden rounded-inner
-                  sm:grid-cols-4
-                ">
+                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-inner sm:grid-cols-4">
                     {Array.from({ length: 4 }, (_, index) => (
                         <Skeleton key={index} className="rounded-none block-16" />
                     ))}

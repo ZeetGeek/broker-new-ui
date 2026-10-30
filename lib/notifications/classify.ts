@@ -1,4 +1,7 @@
-import type { AppIcon } from "@/components/shared/icons";
+import type { NotificationItem, NotificationType } from "@/lib/api/notifications";
+import { formatActivityDayLabel, formatDateIso } from "@/lib/format/date";
+
+import type { AppIcon, NotificationGlyph } from "@/components/shared/icons";
 import {
     BadgeCheck,
     Bell,
@@ -13,8 +16,7 @@ import {
     XCircle,
 } from "@/components/shared/icons";
 
-import type { NotificationItem, NotificationType } from "@/lib/api/notifications";
-import { formatActivityDayLabel, formatDateIso } from "@/lib/format/date";
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 
 export type NotificationTab = "all" | "requests" | "visits" | "updates";
 
@@ -25,6 +27,7 @@ export type NotificationActor = {
 
 export type NotificationVisual = {
     Icon: AppIcon;
+    iconName: NotificationGlyph;
     colorClass: string;
 };
 
@@ -105,7 +108,7 @@ function isKnownNotificationType(type: string | null): type is NotificationType 
 /** Classify a notification into a filter tab (excluding "all"). */
 export function getNotificationTab(item: NotificationItem): Exclude<NotificationTab, "all"> {
     if (isKnownNotificationType(item.type)) {
-        if (REQUEST_TYPES.has(item.type)) return "requests";
+        if (REQUEST_TYPES.has(item.type)) return FEATURE_PLATFORM_OWNER ? "requests" : "updates";
         if (VISIT_TYPES.has(item.type)) return "visits";
         return "updates";
     }
@@ -113,7 +116,7 @@ export function getNotificationTab(item: NotificationItem): Exclude<Notification
     const key = notificationKey(item);
 
     if (matchesAny(key, ["represent", "request", "invite", "offer"])) {
-        return "requests";
+        return FEATURE_PLATFORM_OWNER ? "requests" : "updates";
     }
 
     if (matchesAny(key, ["visit", "showing", "schedule"])) {
@@ -283,6 +286,7 @@ export function isActionableRequest(
     item: NotificationItem,
     role: "owner" | "broker" | string | null | undefined,
 ): boolean {
+    if (!FEATURE_PLATFORM_OWNER) return false;
     if (!item.relatedRepresentationId) return false;
     if (!isPendingRequest(item)) return false;
     if (!isKnownNotificationType(item.type)) return false;
@@ -314,35 +318,36 @@ export function getNotificationVisual(item: NotificationItem): NotificationVisua
     const key = notificationKey(item);
 
     if (key.includes("referral")) {
-        return { Icon: Gift, colorClass: "!text-urgent-mid" };
+        return { Icon: Gift, iconName: "gift", colorClass: "!text-urgent-mid" };
     }
 
     if (key.includes("message") || key.includes("chat")) {
-        return { Icon: MessageCircle, colorClass: "!text-brand-deep" };
+        return { Icon: MessageCircle, iconName: "message", colorClass: "!text-brand-deep" };
     }
 
     if (key.includes("visit") || key.includes("showing") || key.includes("schedule")) {
         return {
             Icon: CalendarClock,
+            iconName: "calendar",
             colorClass:
                 key.includes("approv") || key.includes("accept") ? "!text-brand" : "!text-urgent",
         };
     }
 
     if (key.includes("invite") || key.includes("property") || key.includes("listing")) {
-        return { Icon: Building2, colorClass: "!text-brand" };
+        return { Icon: Building2, iconName: "building", colorClass: "!text-brand" };
     }
 
     if (key.includes("reject") || key.includes("declin") || key.includes("cancel")) {
-        return { Icon: XCircle, colorClass: "!text-danger" };
+        return { Icon: XCircle, iconName: "cancel", colorClass: "!text-danger" };
     }
 
     if (key.includes("approv") || key.includes("accepted") || key.includes("qualified")) {
-        return { Icon: BadgeCheck, colorClass: "!text-brand" };
+        return { Icon: BadgeCheck, iconName: "verified", colorClass: "!text-brand" };
     }
 
     if (key.includes("represent") || key.includes("request")) {
-        return { Icon: Send, colorClass: "!text-brand-deep" };
+        return { Icon: Send, iconName: "send", colorClass: "!text-brand-deep" };
     }
 
     if (
@@ -351,20 +356,20 @@ export function getNotificationVisual(item: NotificationItem): NotificationVisua
         key.includes("follow up") ||
         key.includes("due")
     ) {
-        return { Icon: BellRing, colorClass: "!text-urgent" };
+        return { Icon: BellRing, iconName: "bell-ring", colorClass: "!text-urgent" };
     }
 
     if (key.includes("client") || key.includes("lead")) {
-        return { Icon: UserPlus, colorClass: "!text-brand-text" };
+        return { Icon: UserPlus, iconName: "client", colorClass: "!text-brand-text" };
     }
 
     if (key.includes("verif") || key.includes("rera")) {
-        return { Icon: ShieldCheck, colorClass: "!text-brand-text" };
+        return { Icon: ShieldCheck, iconName: "shield", colorClass: "!text-brand-text" };
     }
 
     if (key.includes("announce") || key.includes("update") || key.includes("system")) {
-        return { Icon: Bell, colorClass: "!text-brand" };
+        return { Icon: Bell, iconName: "bell", colorClass: "!text-brand" };
     }
 
-    return { Icon: Bell, colorClass: "!text-brand" };
+    return { Icon: Bell, iconName: "bell", colorClass: "!text-brand" };
 }

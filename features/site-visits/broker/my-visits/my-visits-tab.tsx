@@ -2,13 +2,12 @@
 
 import { useMemo, useState } from "react";
 
-import { addDays, addMonths } from "date-fns";
-
 import { formatPrice } from "@/lib/format/price";
 import { propertyCriteriaCount, type PropertyListCriteria } from "@/lib/properties/list-criteria";
 import { groupVisitsByDay } from "@/lib/visits/grouping";
 import { matchesVisitProperty } from "@/lib/visits/property-filters";
 import { isVisitCancelled } from "@/lib/visits/status";
+import { addVisitDays as addDays, addVisitMonths as addMonths } from "@/lib/visits/time";
 import { formatVisitDayHeading, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { VirtualStack } from "@/components/shared/virtual-stack";
@@ -208,7 +207,7 @@ export function MyVisitsTab({
                     .find((buyer) => buyer.id === buyerId)?.name;
                 next.push({
                     key: "buyer",
-                    label: name ?? "Selected buyer",
+                    label: name ?? "Selected client",
                     clear: () => onClearPeople("buyerId"),
                 });
             }
@@ -225,7 +224,7 @@ export function MyVisitsTab({
                 next.push({
                     key: "lead",
                     label: visit
-                        ? `${visit.buyers[0]?.name ?? "Buyer"} · ${visit.property.title}`
+                        ? `${visit.buyers[0]?.name ?? "Client"} · ${visit.property.title}`
                         : "Selected lead",
                     clear: () => onClearPeople("leadId"),
                 });

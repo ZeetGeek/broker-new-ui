@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { isOwnerUnavailable, OWNER_UNAVAILABLE_HREF, signupPortal } from "@/lib/auth/launch-policy";
 import {
     getAccessToken,
     getStoredUser,
@@ -15,6 +16,7 @@ import { useRouter } from "@/lib/navigation";
 
 import { Button } from "@/components/ui/button";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { establishSession } from "@/store/slices/auth-slice";
 
@@ -28,6 +30,7 @@ export function GoogleRolePickerPanel() {
     const router = useRouter();
     const dispatch = useAppDispatch();
     const currentRole = useAppSelector((state) => state.auth.user?.role);
+    const hydrated = useAppSelector((state) => state.auth.hydrated);
     // Google tells us no country. Ask only when the account has none yet —
     // a register-page signup already carried it through.
     const hasCountry = useAppSelector((state) => Boolean(state.auth.user?.country));
@@ -38,22 +41,34 @@ export function GoogleRolePickerPanel() {
     const [countryError, setCountryError] = React.useState<string | undefined>();
     const [portal, setPortal] = React.useState<Portal>(() => {
         const storedRole = getStoredUser()?.role;
-        return storedRole === "owner" ? "owner" : "broker";
+        return signupPortal(storedRole === "owner" ? "owner" : "broker");
     });
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [isRedirecting, setIsRedirecting] = React.useState(false);
 
     React.useEffect(() => {
+        if (!hydrated) return;
         if (!getAccessToken()) {
             router.replace("/login");
+            return;
+        }
+        if (isOwnerUnavailable(currentRole ?? getStoredUser()?.role)) {
+            sessionStorage.removeItem(GOOGLE_ONBOARDING_KEY);
+            router.replace(OWNER_UNAVAILABLE_HREF);
             return;
         }
         if (sessionStorage.getItem(GOOGLE_ONBOARDING_KEY) !== "1") {
             router.replace(portalHomeForRole(currentRole));
         }
-    }, [router, currentRole]);
+    }, [router, currentRole, hydrated]);
 
     async function handleContinue() {
+        if (!hydrated) return;
+        if (isOwnerUnavailable(currentRole ?? getStoredUser()?.role)) {
+            sessionStorage.removeItem(GOOGLE_ONBOARDING_KEY);
+            router.replace(OWNER_UNAVAILABLE_HREF);
+            return;
+        }
         if (!hasCountry && !countryIso2) {
             setCountryError("Choose the country you work in");
             return;
@@ -68,7 +83,7 @@ export function GoogleRolePickerPanel() {
                 return;
             }
             const result = await authApi.completeGoogleRole(
-                portal,
+                signupPortal(portal),
                 hasCountry ? undefined : countryIso2,
             );
             dispatch(
@@ -87,7 +102,7 @@ export function GoogleRolePickerPanel() {
         }
     }
 
-    if (isRedirecting) {
+    if (!hydrated || isRedirecting || isOwnerUnavailable(currentRole)) {
         return (
             <AuthFormFrame>
                 <AuthBusyState title="All set" description="Taking you to your dashboard." />
@@ -100,12 +115,20 @@ export function GoogleRolePickerPanel() {
             <div className="mx-auto flex flex-col gap-8 inline-full max-inline-140">
                 <div className="mx-auto inline-full max-inline-96">
                     <AuthHeading
-                        title="Pick a role"
-                        description="This account is for one role. Choose owner or broker to continue."
+                        title={
+                            FEATURE_PLATFORM_OWNER ? "Pick a role" : "Finish your broker account"
+                        }
+                        description={
+                            FEATURE_PLATFORM_OWNER
+                                ? "This account is for one role. Choose owner or broker to continue."
+                                : "Confirm your country to continue."
+                        }
                     />
                 </div>
 
-                <PortalPicker value={portal} onChange={setPortal} ariaLabel="Sign in as" />
+                {FEATURE_PLATFORM_OWNER ? (
+                    <PortalPicker value={portal} onChange={setPortal} ariaLabel="Sign in as" />
+                ) : null}
 
                 {hasCountry ? null : (
                     <div className="mx-auto flex flex-col gap-2 inline-full max-inline-96">

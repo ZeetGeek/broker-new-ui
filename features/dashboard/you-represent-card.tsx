@@ -1,12 +1,11 @@
 import Link from "next/link";
 
-import { AlertTriangle, KeyRound, WhatsAppIcon, UserRound } from "@/components/shared/icons";
-
 import { formatAreaSqft } from "@/lib/format/area";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { AlertTriangle, KeyRound, UserRound, WhatsAppIcon } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
@@ -193,7 +192,7 @@ function EmptyYouRepresent() {
             description="Once an owner approves your request, the property appears here."
         >
             <ShortcutKbdMessage shortcutId="owner_listings">
-                to browse owner listings
+                to browse Marketplace
             </ShortcutKbdMessage>
         </EmptyState>
     );

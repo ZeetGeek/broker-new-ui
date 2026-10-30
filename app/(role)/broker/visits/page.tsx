@@ -5,10 +5,10 @@ import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query
 
 import { getInitialBrokerVisits } from "@/lib/api/broker-visits-server";
 import { slotListFiltersFromParams } from "@/lib/visits/filters";
-import { USE_MOCK_VISITS } from "@/mocks/visits";
 
 import { BrokerSiteVisitsPage } from "@/features/site-visits/broker/broker-site-visits-page";
 import { VisitsPageSkeleton } from "@/features/site-visits/broker/visits-page-skeleton";
+import { USE_MOCK_VISITS } from "@/mocks/visits";
 
 export const metadata: Metadata = {
     robots: { index: false, follow: false },

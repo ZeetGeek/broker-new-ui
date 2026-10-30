@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { formatAreaSqft } from "@/lib/format/area";
 import {
     defaultPriceMode,
     type ListingPriceMode,
@@ -21,6 +20,8 @@ import {
 
 import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
+
+import { buildPropertyHeadlineFacts } from "./property-detail-facts";
 
 import styles from "./property-detail.module.css";
 
@@ -61,11 +62,7 @@ export function PropertyPriceBlock({
 
     // The price alone leaves half the card empty on a sale-only listing, so the
     // headline numbers a broker quotes on a call sit beside it.
-    const headlineStats = [
-        item.bhk > 0 ? { label: "Config", value: item.configLabel } : null,
-        { label: "Area", value: formatAreaSqft(item.areaSqft) },
-        { label: "Furnishing", value: item.furnishingLabel },
-    ].filter((stat): stat is { label: string; value: string } => stat != null);
+    const headlineStats = buildPropertyHeadlineFacts(item);
 
     return (
         <div

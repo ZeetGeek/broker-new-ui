@@ -2,11 +2,10 @@
 
 import type { ReactNode } from "react";
 
-import { BadgeCheck, MapPin, Send } from "@/components/shared/icons";
-
 import type { BrokerProfile } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
 
+import { BadgeCheck, MapPin, Send } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -151,9 +150,9 @@ export function BrowseBrokerCard({
                         {broker.verified ? (
                             <span
                                 className="
-                              body-xs inline-flex shrink-0 items-center gap-0.5 rounded-md
-                              bg-brand-soft px-1.5 py-0.5 font-semibold text-brand-text
-                            "
+                                  body-xs inline-flex shrink-0 items-center gap-0.5 rounded-md
+                                  bg-brand-soft px-1.5 py-0.5 font-semibold text-brand-text
+                                "
                             >
                                 <BadgeCheck
                                     aria-hidden

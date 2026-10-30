@@ -1,13 +1,12 @@
 "use client";
 
-import { Clock3 } from "@/components/shared/icons";
-
 import type { ShowingStatus, VisitShowing } from "@/lib/api/owner-slots";
 import { formatDateIn, formatTimeIn, parseApiInstant } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 import { visitAge } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
+import { Clock3 } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
@@ -43,8 +42,8 @@ export function ShowingRow({
             <div className="grid gap-4 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-start">
                 <div
                     className="
-                  relative overflow-hidden rounded-[8px] bg-surface-muted block-14 inline-[72px]
-                "
+                      relative overflow-hidden rounded-[8px] bg-surface-muted block-14 inline-[72px]
+                    "
                 >
                     <AppImage
                         src={showing.property?.photos?.[0] || "/properties/1.jpg"}
@@ -55,11 +54,7 @@ export function ShowingRow({
                 </div>
                 <div className="min-inline-0">
                     <div className="flex flex-wrap items-center gap-2">
-                        <h3
-                            className="
-                      h6 truncate text-ink
-                    "
-                        >
+                        <h3 className="h6 truncate text-ink">
                             {showing.property?.title?.trim() || "Property"}
                         </h3>
                         <span
@@ -77,30 +72,13 @@ export function ShowingRow({
                             imageUrl={showing.broker?.avatarUrl ?? undefined}
                             size="xs"
                         />
-                        <p
-                            className="
-                      body-xs text-ink
-                    "
-                        >
+                        <p className="body-xs text-ink">
                             <span className="body-sm font-semibold">{brokerName}</span>
-                            {place ? (
-                                <span
-                                    className="
-                      text-ink-muted
-                    "
-                                >
-                                    {" "}
-                                    · {place}
-                                </span>
-                            ) : null}
+                            {place ? <span className="text-ink-muted"> · {place}</span> : null}
                         </p>
                     </div>
                     {showing.createdAt ? (
-                        <p
-                            className="
-                      body-xs mbs-2 flex items-center gap-1.5 text-ink-muted
-                    "
-                        >
+                        <p className="body-xs mbs-2 flex items-center gap-1.5 text-ink-muted">
                             <Clock3 aria-hidden className="block-3.5 inline-3.5" />
                             {visitAge(showing.createdAt).replace("asked", "booked")}
                         </p>
@@ -108,8 +86,8 @@ export function ShowingRow({
                     {showing.notes ? (
                         <p
                             className="
-                      body-xs mbs-2 rounded-inner bg-surface-muted px-3 py-2 text-ink-muted
-                    "
+                              body-xs mbs-2 rounded-inner bg-surface-muted px-3 py-2 text-ink-muted
+                            "
                         >
                             “{showing.notes}”
                         </p>
@@ -117,13 +95,7 @@ export function ShowingRow({
                 </div>
                 <div className="sm:text-end">
                     <p className="body-xs text-ink-muted">Visit at</p>
-                    <p
-                        className="
-                  tabular text-lg font-bold text-ink
-                "
-                    >
-                        {formatTimeIn(when)}
-                    </p>
+                    <p className="tabular text-lg font-bold text-ink">{formatTimeIn(when)}</p>
                     <p className="body-xs text-ink-muted">{formatDateIn(when)}</p>
                 </div>
             </div>
@@ -131,8 +103,8 @@ export function ShowingRow({
             {canRespond ? (
                 <footer
                     className="
-              mbs-4 flex flex-wrap justify-end gap-2 border-bs border-border-warm pbs-3
-            "
+                      mbs-4 flex flex-wrap justify-end gap-2 border-bs border-border-warm pbs-3
+                    "
                 >
                     <Button variant="ghost" size="md" onClick={onCancel} disabled={busy}>
                         Cancel

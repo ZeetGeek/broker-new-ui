@@ -5,7 +5,6 @@ import * as React from "react";
 import { Input as InputPrimitive } from "@base-ui/react/input";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tailspin } from "ldrs/react";
-import { AlertCircle, CheckCircle2, Eye, EyeOff, X } from "@/components/shared/icons";
 
 import {
     copyInputTypeMetrics,
@@ -16,6 +15,16 @@ import { clearInputError, shakeInput } from "@/lib/motion/shake-input";
 import { swapText } from "@/lib/motion/swap-text";
 import { cn } from "@/lib/utils";
 
+import {
+    AlertCircle,
+    CheckCircle2,
+    EmailFieldIcon,
+    Eye,
+    EyeOff,
+    PasswordIcon,
+    X,
+} from "@/components/shared/icons";
+
 import "ldrs/react/Tailspin.css";
 
 const inputVariants = cva(
@@ -25,7 +34,7 @@ const inputVariants = cva(
       file:inline-flex file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-ink
       file:block-7
       placeholder:text-ink-subtle
-      hover:border-ink-subtle
+      hover:border-ring/50
       focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
       disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-surface-muted
       disabled:opacity-50
@@ -207,7 +216,7 @@ function Input({
     wrapperClassName,
     type = "text",
     size = "default",
-    startIcon,
+    startIcon = type === "email" ? EmailFieldIcon : type === "password" ? PasswordIcon : undefined,
     endIcon,
     loading = false,
     success = false,

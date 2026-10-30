@@ -3,43 +3,27 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { Search, UserRound } from "@/components/shared/icons";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
-import {
-    type ExclusiveOwnerItem,
-    exclusiveOwnerPhoneDigits,
-    exclusiveOwnersApi,
-} from "@/lib/api/exclusive-owners";
+import { exclusiveOwnerPhoneDigits } from "@/lib/api/exclusive-owners";
 import { propertiesApi } from "@/lib/api/properties";
+import { exclusiveOwnerPickerOptions } from "@/lib/contacts/exclusive-owner-picker-query";
+import { uniqueInfiniteItems } from "@/lib/pagination/infinite-page";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Search, UserRound } from "@/components/shared/icons";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import type { MyListingItem } from "@/features/properties/your-listings/types";
-
-function matchesQuery(owner: ExclusiveOwnerItem, q: string): boolean {
-    const needle = q.trim().toLowerCase();
-    if (!needle) return true;
-    return [
-        owner.fullName,
-        owner.phone,
-        owner.email ?? "",
-        owner.society,
-        owner.area ?? "",
-        owner.city ?? "",
-    ]
-        .join(" ")
-        .toLowerCase()
-        .includes(needle);
-}
 
 export function AttachExclusiveOwnerModal({
     open,
@@ -52,51 +36,43 @@ export function AttachExclusiveOwnerModal({
     listing: MyListingItem | null;
     onAttached?: () => void;
 }) {
-    const [owners, setOwners] = useState<ExclusiveOwnerItem[]>([]);
-    const [loading, setLoading] = useState(false);
     const [query, setQuery] = useState("");
+    const [search, setSearch] = useState("");
     const [selectedId, setSelectedId] = useState<string>("");
     const [busy, setBusy] = useState(false);
 
     const currentOwnerId = listing?.exclusiveOwnerId ?? null;
     const isReplace = Boolean(currentOwnerId);
+    const ownersQuery = useInfiniteQuery(
+        exclusiveOwnerPickerOptions(search, open && Boolean(listing)),
+    );
+    const filtered = useMemo(
+        () =>
+            uniqueInfiniteItems(
+                ownersQuery.data?.pages.map((page) => ({ ...page, nextCursor: null })) ?? [],
+            ),
+        [ownersQuery.data],
+    );
+    const loading = ownersQuery.isLoading || query.trim() !== search;
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => setSearch(query.trim()), 300);
+        return () => window.clearTimeout(timer);
+    }, [query]);
 
     useEffect(() => {
         if (!open || !listing) return undefined;
 
-        let cancelled = false;
         const timer = window.setTimeout(() => {
-            if (cancelled) return;
-            setLoading(true);
             setQuery("");
+            setSearch("");
             setSelectedId(listing.exclusiveOwnerId ?? "");
-
-            void exclusiveOwnersApi
-                .list({ limit: 100, sort: "name" })
-                .then((page) => {
-                    if (!cancelled) setOwners(page.items);
-                })
-                .catch(() => {
-                    if (!cancelled) {
-                        setOwners([]);
-                        toast.error("Couldn't load exclusive owners");
-                    }
-                })
-                .finally(() => {
-                    if (!cancelled) setLoading(false);
-                });
         }, 0);
 
         return () => {
-            cancelled = true;
             window.clearTimeout(timer);
         };
     }, [open, listing]);
-
-    const filtered = useMemo(
-        () => owners.filter((owner) => matchesQuery(owner, query)),
-        [owners, query],
-    );
 
     const attach = useCallback(() => {
         if (!listing || !selectedId) return;
@@ -125,7 +101,12 @@ export function AttachExclusiveOwnerModal({
     }, [currentOwnerId, isReplace, listing, onAttached, onOpenChange, selectedId]);
 
     const primaryDisabled =
-        !selectedId || busy || loading || !listing || selectedId === currentOwnerId;
+        !selectedId ||
+        busy ||
+        loading ||
+        (ownersQuery.isError && filtered.length === 0) ||
+        !listing ||
+        selectedId === currentOwnerId;
 
     return (
         <AppModal
@@ -145,8 +126,8 @@ export function AttachExclusiveOwnerModal({
                     {isReplace && listing?.ownerName ? (
                         <p
                             className="
-                          body-sm rounded-inner bg-surface-muted px-3 py-2 text-ink-muted
-                        "
+                              body-sm rounded-inner bg-surface-muted px-3 py-2 text-ink-muted
+                            "
                         >
                             Current owner:{" "}
                             <span className="font-semibold text-ink">{listing.ownerName}</span>
@@ -194,6 +175,13 @@ export function AttachExclusiveOwnerModal({
                         />
                     ))}
                 </div>
+            ) : ownersQuery.isError && filtered.length === 0 ? (
+                <div role="alert" className="flex flex-col items-start gap-3">
+                    <p className="body-sm text-danger">Could not load owners. Please try again.</p>
+                    <Button variant="outline" onClick={() => void ownersQuery.refetch()}>
+                        Try again
+                    </Button>
+                </div>
             ) : filtered.length === 0 ? (
                 <EmptyState
                     icon={UserRound}
@@ -201,7 +189,7 @@ export function AttachExclusiveOwnerModal({
                     description={
                         query
                             ? "Try a different name, phone, or society."
-                            : "Add an exclusive owner from Contacts, then attach them here."
+                            : "Add an exclusive owner from Clients, then attach them here."
                     }
                 />
             ) : (
@@ -273,6 +261,28 @@ export function AttachExclusiveOwnerModal({
                     />
                 </RadioGroup>
             )}
+            {!loading &&
+            filtered.length > 0 &&
+            (ownersQuery.hasNextPage || ownersQuery.isFetchNextPageError) ? (
+                <div className="flex flex-col items-center gap-2 pbs-3" aria-live="polite">
+                    {ownersQuery.isFetchNextPageError ? (
+                        <p role="alert" className="body-sm text-danger">
+                            Could not load more owners. Please try again.
+                        </p>
+                    ) : null}
+                    <Button
+                        variant="outline"
+                        disabled={ownersQuery.isFetchingNextPage}
+                        onClick={() => void ownersQuery.fetchNextPage()}
+                    >
+                        {ownersQuery.isFetchingNextPage
+                            ? "Loading owners…"
+                            : ownersQuery.isFetchNextPageError
+                              ? "Try again"
+                              : "Load more owners"}
+                    </Button>
+                </div>
+            ) : null}
         </AppModal>
     );
 }

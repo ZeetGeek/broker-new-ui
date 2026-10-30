@@ -1,5 +1,5 @@
 /**
- * Display formatting — date-fns v4 + @date-fns/tz in the user's local timezone.
+ * Display formatting — date-fns v4 + @date-fns/tz in the app's India timezone.
  * API instants arrive as UTC ISO strings; parse with `parseApiInstant`.
  */
 
@@ -57,7 +57,6 @@ export function formatWeekdayDate(date: Date): string {
 /** Notification detail line as `Monday 03:20pm`. */
 export function formatNotificationDayTime(date: Date): string {
     const timeZone = getUserTimeZone();
-    console.log("timeZone", timeZone);
     const weekday = formatInUserTz(date, "EEEE", timeZone);
     const parts = new Intl.DateTimeFormat(LOCALE, {
         timeZone,

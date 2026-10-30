@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 
-import { Armchair, Layers, type AppIcon, PackageOpen, Sofa } from "@/components/shared/icons";
-
 import { formatFurnishingLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
+import { type AppIcon, Armchair, Layers, PackageOpen, Sofa } from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuContent,

@@ -2,11 +2,10 @@
 
 import { type ReactNode, useState } from "react";
 
-import { FileText, Gift, type AppIcon, Sparkles } from "@/components/shared/icons";
-
 import { formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { type AppIcon, FileText, Gift, Sparkles } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 

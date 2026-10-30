@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 
-import { HandCoins, KeyRound, Layers, type AppIcon, Tags } from "@/components/shared/icons";
-
 import { formatTransactionTypeLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
+import { type AppIcon, HandCoins, KeyRound, Layers, Tags } from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuContent,

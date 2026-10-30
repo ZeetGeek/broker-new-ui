@@ -2,13 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { UserRoundSearch } from "@/components/shared/icons";
-
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { UserRoundSearch } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";

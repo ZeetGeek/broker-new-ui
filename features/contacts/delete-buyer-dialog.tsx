@@ -21,8 +21,8 @@ export function DeleteBuyerDialog({
             open={open}
             onOpenChange={onOpenChange}
             size="sm"
-            title="Delete this buyer?"
-            description={`“${name}” will be removed from your contacts.`}
+            title="Delete this client?"
+            description={`“${name}” will be removed from your clients.`}
             footer={
                 <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
                     <Button
@@ -31,7 +31,7 @@ export function DeleteBuyerDialog({
                         disabled={busy}
                         onClick={() => onOpenChange(false)}
                     >
-                        Keep buyer
+                        Keep client
                     </Button>
                     <Button
                         type="button"
@@ -40,13 +40,13 @@ export function DeleteBuyerDialog({
                         loading={busy}
                         onClick={onConfirm}
                     >
-                        Delete buyer
+                        Delete client
                     </Button>
                 </div>
             }
         >
             <p className="body text-ink-muted">
-                This cannot be undone. Matched properties stay in your listings — only this contact
+                This cannot be undone. Matched properties stay in your listings — only this client
                 is removed.
             </p>
         </AppModal>

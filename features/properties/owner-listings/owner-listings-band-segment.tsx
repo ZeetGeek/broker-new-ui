@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronDown, type AppIcon } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
+
+import { type AppIcon, ChevronDown } from "@/components/shared/icons";
 
 export type OwnerListingsBandSegmentProps = {
     label: string;

@@ -1,10 +1,9 @@
 "use client";
 
-import { ArrowDownUp, ChevronDown } from "@/components/shared/icons";
-
 import { formatSortLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
+import { ArrowDownUp, ChevronDown } from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuContent,

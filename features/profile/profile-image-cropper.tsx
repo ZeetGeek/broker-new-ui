@@ -1,10 +1,9 @@
 "use client";
 
-import { type SyntheticEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type SyntheticEvent, useCallback, useRef, useState } from "react";
+import ReactCrop, { centerCrop, type Crop, makeAspectCrop, type PixelCrop } from "react-image-crop";
 
 import { CropIcon } from "@/components/shared/icons";
-import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop";
-
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -119,14 +118,17 @@ export function ProfileImageCropper({
     const [isCropping, setIsCropping] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Reset crop state whenever a new image opens.
-    useEffect(() => {
-        if (!open) return;
-        setCrop(undefined);
-        setCompletedCrop(undefined);
-        setError(null);
-        setIsCropping(false);
-    }, [open, imageUrl]);
+    // Reset before rendering a new image, so a cached image load cannot race a timer.
+    const [cropSource, setCropSource] = useState({ open, imageUrl });
+    if (cropSource.open !== open || cropSource.imageUrl !== imageUrl) {
+        setCropSource({ open, imageUrl });
+        if (open) {
+            setCrop(undefined);
+            setCompletedCrop(undefined);
+            setError(null);
+            setIsCropping(false);
+        }
+    }
 
     const onImageLoad = useCallback((event: SyntheticEvent<HTMLImageElement>) => {
         const { width, height } = event.currentTarget;
@@ -171,7 +173,12 @@ export function ProfileImageCropper({
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex items-center justify-center bg-surface-muted p-4 min-block-72 sm:p-6">
+                <div
+                    className="
+                  flex items-center justify-center bg-surface-muted p-4 min-block-72
+                  sm:p-6
+                "
+                >
                     {imageUrl ? (
                         <ReactCrop
                             crop={crop}

@@ -1,11 +1,11 @@
 import { sessionCountryName } from "@/lib/auth/session";
 import { listingCompareAmountInr } from "@/lib/format/listing-availability";
 
-import { normalizeAreaFilterStrings } from "@/features/properties/owner-listings/owner-listings-area-presets";
 import {
     isOwnerListingCategory,
     isOwnerListingSubtype,
 } from "@/features/properties/owner-listings/filter-visibility";
+import { normalizeAreaFilterStrings } from "@/features/properties/owner-listings/owner-listings-area-presets";
 import type {
     OwnerListingItem,
     OwnerListingsFilterContext,

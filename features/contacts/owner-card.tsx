@@ -1,19 +1,19 @@
 "use client";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { BadgeCheck, MapPin, Phone, UserPlus } from "@/components/shared/icons";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
+import { BadgeCheck, MapPin, Phone, UserPlus } from "@/components/shared/icons";
 import { OVERLAY_GLASS_BUTTON_CLASS } from "@/components/shared/overlay-card";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { AttachedPropertiesRow } from "@/features/contacts/attached-properties-row";
-import { toOwnerContactCardModel } from "@/features/contacts/contact-card-model";
 import { ContactCardActions } from "@/features/contacts/contact-card-actions";
+import { toOwnerContactCardModel } from "@/features/contacts/contact-card-model";
 import type { OwnerRow } from "@/features/contacts/types";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 
@@ -86,9 +86,10 @@ export function OwnerCard({
                 if (event.key === "Enter") open();
             }}
             className="
-              contact-card group/card relative flex h-full cursor-pointer flex-col gap-3
-              rounded-card border border-border-warm bg-surface p-4 outline-none shadow-md
-              transition-[box-shadow] duration-160 hover:shadow-lg
+              contact-card group/card relative flex cursor-pointer flex-col gap-3 rounded-card
+              border border-border-warm bg-surface p-4 shadow-md transition-shadow duration-160
+              outline-none block-full
+              hover:shadow-lg
               focus-visible:ring-3 focus-visible:ring-brand/20
             "
         >
@@ -119,12 +120,15 @@ export function OwnerCard({
                     className="shrink-0"
                 />
                 <div className="min-inline-0">
-                    <h2 className="body truncate font-bold capitalize text-ink">{owner.name}</h2>
+                    <h2 className="body truncate font-bold text-ink capitalize">{owner.name}</h2>
                     {canContact && owner.phoneDigits ? (
                         <a
                             href={`tel:+91${owner.phoneDigits}`}
                             onClick={(event) => event.stopPropagation()}
-                            className="body-sm mbs-0.5 block truncate tabular text-ink-muted hover:text-brand-text"
+                            className="
+                              body-sm tabular mbs-0.5 block truncate text-ink-muted
+                              hover:text-brand-text
+                            "
                         >
                             {formatPhoneIn(owner.phoneDigits)}
                         </a>
@@ -150,7 +154,7 @@ export function OwnerCard({
                 )}
             </div>
 
-            <footer className="mt-auto flex flex-col gap-2.5">
+            <footer className="mbs-auto flex flex-col gap-2.5">
                 <div onClick={(event) => event.stopPropagation()}>
                     {propertyCount > 0 ? (
                         <AttachedPropertiesRow
@@ -218,7 +222,12 @@ export function OwnerCard({
                         </Button>
                     </div>
                 ) : (
-                    <p className="body-sm rounded-control bg-surface-muted px-3 py-2.5 text-center text-ink-muted">
+                    <p
+                        className="
+                      body-sm rounded-control bg-surface-muted px-3 py-2.5 text-center
+                      text-ink-muted
+                    "
+                    >
                         Contact after representation
                     </p>
                 )}

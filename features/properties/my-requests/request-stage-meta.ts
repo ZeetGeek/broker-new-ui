@@ -24,7 +24,7 @@ export const REQUEST_STAGE_META: Record<RequestStage, RequestStageMeta> = {
     },
     approved: {
         label: "You can sell this",
-        hint: "The owner accepted your request. You can now show this property to buyers.",
+        hint: "The owner accepted your request. You can now show this property to clients.",
         icon: CircleCheck,
         badgeVariant: "brand",
         toneClass: "text-success",

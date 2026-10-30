@@ -6,10 +6,12 @@ import toast from "react-hot-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { tinykeys } from "tinykeys";
 
+import { attachedClientsByProperty } from "@/lib/api/clients";
 import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
 import { propertiesApi } from "@/lib/api/properties";
 import { representativeApi } from "@/lib/api/representative";
 import { summarizePropertyBrokers } from "@/lib/format/property-brokers";
+import { collectPropertyPages } from "@/lib/properties/list-criteria";
 import { getShortcut } from "@/lib/shortcuts";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
@@ -36,6 +38,7 @@ import {
 import { MyListingsResultsSkeleton } from "@/features/properties/your-listings/my-listings-skeleton";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 import { useMyListingsFilters } from "@/features/properties/your-listings/use-my-listings-filters";
+import { useAppSelector } from "@/store/hooks";
 
 function isEditable(el: EventTarget | null): boolean {
     if (!(el instanceof HTMLElement)) return false;
@@ -91,6 +94,7 @@ function asRequestShape(item: MyListingItem): RequestItem {
 
 export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const queryClient = useQueryClient();
+    const userId = useAppSelector((state) => state.auth.user?.id);
     const { filters, setFilters, clearFilters, hasActiveFilters, scopeReady } =
         useMyListingsFilters();
     const [addOpen, setAddOpen] = useState(false);
@@ -169,7 +173,29 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             const result = await myListingsApi.list(
                 { ...infiniteFilters, page: cursor ? Number(cursor) : 1 },
                 signal,
-                { withAttachedClients: !isOwnerPortal },
+                {
+                    withAttachedClients: !isOwnerPortal,
+                    attachedClients: () =>
+                        queryClient.fetchQuery({
+                            queryKey: ["inventory-lead-summary", userId],
+                            queryFn: ({ signal }) => attachedClientsByProperty(signal),
+                            staleTime: 30_000,
+                        }),
+                    propertyCollection: (propertyQuery) =>
+                        queryClient.fetchQuery({
+                            queryKey: [
+                                "inventory-filter-collection",
+                                userId,
+                                portal,
+                                propertyQuery,
+                            ],
+                            queryFn: ({ signal }) =>
+                                collectPropertyPages((page) =>
+                                    propertiesApi.list({ ...propertyQuery, page }, signal),
+                                ),
+                            staleTime: 30_000,
+                        }),
+                },
             );
             return {
                 ...result,
@@ -184,6 +210,8 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
     });
     const summary = summaryQuery.data ?? null;
     const refreshListings = useCallback(() => {
+        void queryClient.invalidateQueries({ queryKey: ["inventory-lead-summary"] });
+        void queryClient.invalidateQueries({ queryKey: ["inventory-filter-collection"] });
         void queryClient.invalidateQueries({ queryKey: ["my-listings"] });
         void queryClient.invalidateQueries({ queryKey: ["my-listings-summary"] });
     }, [queryClient]);
@@ -251,7 +279,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 onAddProperty={() => setAddOpen(true)}
             />
 
-            <section aria-label="Your listings results" aria-busy={loading || query.isFetching}>
+            <section aria-label="My Listings results" aria-busy={loading || query.isFetching}>
                 {loading ? (
                     <MyListingsResultsSkeleton portal={portal} />
                 ) : query.isError && query.items.length === 0 ? (

@@ -1,7 +1,8 @@
 "use client";
 
-import type { AppIcon } from "@/components/shared/icons";
+import type { ReactNode } from "react";
 
+import type { AppIcon } from "@/components/shared/icons";
 import {
     Combobox,
     ComboboxContent,
@@ -12,7 +13,7 @@ import {
     ComboboxList,
 } from "@/components/ui/combobox";
 
-export type ComboboxOption = { value: string; label: string };
+export type ComboboxOption = { value: string; label: string; displayLabel?: ReactNode };
 
 /**
  * Single-select dropdown over a list already in memory, filtered as the user
@@ -33,6 +34,7 @@ export function OptionCombobox({
     helperText,
     limit,
     size,
+    textClassName,
 }: {
     id?: string;
     value: string;
@@ -50,6 +52,8 @@ export function OptionCombobox({
     /** Caps rendered matches. Needed for long lists such as a state's cities. */
     limit?: number;
     size?: ComboboxInputProps["size"];
+    /** Font treatment shared by the input and portalled options. */
+    textClassName?: string;
 }) {
     const labelFor = (item: string) =>
         options.find((option) => option.value === item)?.label ?? item;
@@ -71,6 +75,7 @@ export function OptionCombobox({
             <ComboboxInput
                 id={id}
                 size={size}
+                className={textClassName}
                 startIcon={startIcon}
                 placeholder={placeholder}
                 loading={loading}
@@ -82,8 +87,9 @@ export function OptionCombobox({
                 <ComboboxEmpty>{emptyText}</ComboboxEmpty>
                 <ComboboxList>
                     {(item: string) => (
-                        <ComboboxItem key={item} value={item}>
-                            {labelFor(item)}
+                        <ComboboxItem key={item} value={item} className={textClassName}>
+                            {options.find((option) => option.value === item)?.displayLabel ??
+                                labelFor(item)}
                         </ComboboxItem>
                     )}
                 </ComboboxList>

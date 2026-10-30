@@ -19,10 +19,11 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
                   disabled:cursor-not-allowed disabled:opacity-50
                   aria-invalid:border-danger-mid
                   aria-invalid:focus-visible:ring-danger/20
+                  data-indeterminate:border-brand data-indeterminate:bg-brand
+                  data-indeterminate:text-surface
+                  data-indeterminate:hover:border-brand
                   data-checked:border-brand data-checked:bg-brand data-checked:text-surface
                   data-checked:hover:border-brand
-                  data-indeterminate:border-brand data-indeterminate:bg-brand
-                  data-indeterminate:text-surface data-indeterminate:hover:border-brand
                 `,
                 className,
             )}

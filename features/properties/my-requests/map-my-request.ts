@@ -1,7 +1,6 @@
 import type { RepresentationItem } from "@/lib/api/representative";
 import { calendarDaysBetween } from "@/lib/format/date";
 
-import { mapApiPropertyType } from "@/features/properties/owner-listings/map-browse-listing";
 import {
     ATTEMPT_LIMIT,
     REMINDER_LIMIT,
@@ -9,6 +8,7 @@ import {
     type RequestStage,
     type RequestTimelineStep,
 } from "@/features/properties/my-requests/types";
+import { mapApiPropertyType } from "@/features/properties/owner-listings/map-browse-listing";
 
 const BHK_CONFIG_TO_NUMBER: Record<string, number> = {
     one_rk: 1,
@@ -106,7 +106,7 @@ export function representationEndedBy(
     return undefined;
 }
 
-/** Shared by My Deals cards and owner-listing request timeline. */
+/** Shared by Requests & Invitations cards and owner-listing request timeline. */
 export function buildRepresentationTimeline(
     rep: RepresentationItem,
     stage: RequestStage,
@@ -224,9 +224,7 @@ export function mapRepresentationToRequestItem(
         subtype: rep.propertySubtype ?? null,
         transactionType: rep.propertyTransactionType ?? null,
         saleAmountInr:
-            rep.propertyTransactionType === "rent"
-                ? null
-                : toNumber(rep.propertySalePrice) || null,
+            rep.propertyTransactionType === "rent" ? null : toNumber(rep.propertySalePrice) || null,
         rentAmountInr:
             rep.propertyTransactionType === "sale"
                 ? null

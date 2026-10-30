@@ -10,12 +10,12 @@ import { cn } from "@/lib/utils";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
+import { AcceptedPanel } from "@/features/properties/my-requests/accepted-panel";
+import { CancelledPanel } from "@/features/properties/my-requests/cancelled-panel";
 import {
     DEFAULT_INVITES_FILTERS,
     type InvitesSummary,
 } from "@/features/properties/my-requests/invite-types";
-import { AcceptedPanel } from "@/features/properties/my-requests/accepted-panel";
-import { CancelledPanel } from "@/features/properties/my-requests/cancelled-panel";
 import { InvitesPanel } from "@/features/properties/my-requests/invites-panel";
 import { RejectedPanel } from "@/features/properties/my-requests/rejected-panel";
 import { RequestCard } from "@/features/properties/my-requests/request-card";
@@ -187,8 +187,8 @@ function SentRequestsPanel({
             <div className="flex flex-col items-center gap-4 py-12 text-center">
                 <p className="h6 text-ink">Nothing waiting right now</p>
                 <p className="body-sm max-w-prose text-ink-muted">
-                    Properties you can sell are under Representing. Send a new request from owner
-                    listings when you need more.
+                    Properties you can sell are under Representing. Send a new request from
+                    Marketplace when you need more.
                 </p>
             </div>
         );

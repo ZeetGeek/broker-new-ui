@@ -6,7 +6,7 @@
  */
 
 import { tz, TZDate } from "@date-fns/tz";
-import { format, parseISO, transpose } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 import { getUserTimeZone } from "@/lib/datetime/timezone";
 
@@ -33,8 +33,8 @@ export function toApiDateOnly(value: Date, timeZone = getUserTimeZone()): string
 
 /** Parse API date-only string (`YYYY-MM-DD`) as start of that day in the user's timezone. */
 export function parseApiDateOnly(value: string, timeZone = getUserTimeZone()): Date {
-    const zoned = new TZDate(`${value}T00:00:00`, timeZone);
-    return transpose(zoned, Date);
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(new TZDate(year, month - 1, day, 0, 0, 0, timeZone).getTime());
 }
 
 /**

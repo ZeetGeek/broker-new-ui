@@ -1,10 +1,9 @@
 "use client";
 
-import type { AppIcon } from "@/components/shared/icons";
-import { ArrowDownUp, BadgeCheck, Briefcase, ChevronDown, Tags } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import type { AppIcon } from "@/components/shared/icons";
+import { ArrowDownUp, BadgeCheck, Briefcase, ChevronDown, Tags } from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -176,7 +175,10 @@ export function BrowseBrokersToolbar({
                 <button
                     type="button"
                     onClick={onClear}
-                    className="body-sm px-2 font-semibold text-brand underline-offset-4 hover:underline"
+                    className="
+                      body-sm px-2 font-semibold text-brand underline-offset-4
+                      hover:underline
+                    "
                 >
                     Clear all
                 </button>

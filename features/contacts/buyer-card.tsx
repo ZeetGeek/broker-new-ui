@@ -1,18 +1,18 @@
 "use client";
 
 import { addCollection, Icon } from "@iconify/react/offline";
-import { MapPin, Phone, UserPlus } from "@/components/shared/icons";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
+import { MapPin, Phone, UserPlus } from "@/components/shared/icons";
 import { OVERLAY_GLASS_BUTTON_CLASS } from "@/components/shared/overlay-card";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
 import { AttachedPropertiesRow } from "@/features/contacts/attached-properties-row";
-import { toBuyerContactCardModel } from "@/features/contacts/contact-card-model";
 import { ContactCardActions } from "@/features/contacts/contact-card-actions";
+import { toBuyerContactCardModel } from "@/features/contacts/contact-card-model";
 import type { BuyerRow } from "@/features/contacts/types";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 
@@ -63,9 +63,10 @@ export function BuyerCard({
             }}
             className={cn(
                 `
-                  contact-card group/card relative flex h-full cursor-pointer flex-col gap-3
-                  rounded-card border border-border-warm bg-surface p-4 outline-none shadow-md
-                  transition-[box-shadow] duration-160 hover:shadow-lg
+                  contact-card group/card relative flex cursor-pointer flex-col gap-3 rounded-card
+                  border border-border-warm bg-surface p-4 shadow-md transition-shadow duration-160
+                  outline-none block-full
+                  hover:shadow-lg
                   focus-visible:ring-3 focus-visible:ring-brand/20
                 `,
                 isOverdue && "border-urgent/40 bg-urgent-soft/25",
@@ -76,7 +77,7 @@ export function BuyerCard({
                     <UserAvatar name={buyer.name} size="md" className="shrink-0" />
                     <div className="min-inline-0">
                         <div className="flex flex-wrap items-center gap-1.5">
-                            <h2 className="body truncate font-bold capitalize text-ink">
+                            <h2 className="body truncate font-bold text-ink capitalize">
                                 {buyer.name}
                             </h2>
                             {isOverdue || isHot ? (
@@ -104,7 +105,10 @@ export function BuyerCard({
                         <a
                             href={`tel:+91${buyer.phoneDigits}`}
                             onClick={(event) => event.stopPropagation()}
-                            className="body-sm mbs-0.5 block truncate tabular text-ink-muted hover:text-brand-text"
+                            className="
+                              body-sm tabular mbs-0.5 block truncate text-ink-muted
+                              hover:text-brand-text
+                            "
                         >
                             {formatPhoneIn(buyer.phoneDigits)}
                         </a>
@@ -126,7 +130,7 @@ export function BuyerCard({
             </div>
 
             <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
-                <p className="h5 truncate font-semibold tabular text-brand">{model.budgetLabel}</p>
+                <p className="h5 tabular truncate font-semibold text-brand">{model.budgetLabel}</p>
                 {needLine ? (
                     <p className="body-sm truncate text-ink-muted">{needLine}</p>
                 ) : (
@@ -144,7 +148,7 @@ export function BuyerCard({
                 ) : null}
             </div>
 
-            <footer className="mt-auto flex flex-col gap-2.5">
+            <footer className="mbs-auto flex flex-col gap-2.5">
                 <div onClick={(event) => event.stopPropagation()}>
                     {propertyCount > 0 ? (
                         <AttachedPropertiesRow

@@ -58,7 +58,8 @@ export function OwnerDashboard() {
 
     useEffect(() => {
         if (!authHydrated) return;
-        void load();
+        const timer = window.setTimeout(() => void load(), 0);
+        return () => window.clearTimeout(timer);
     }, [authHydrated, load]);
 
     const handleRespond = useCallback(

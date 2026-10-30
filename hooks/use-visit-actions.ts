@@ -22,13 +22,6 @@ export function useVisitActions() {
     const outcome = useMutation({
         mutationFn: ({ visit, outcome }: { visit: BrokerSiteVisit; outcome: VisitOutcome }) =>
             brokerVisitsApi.recordOutcome(visit, outcome),
-        onMutate: async ({ visit, outcome: value }) => {
-            await queryClient.cancelQueries({ queryKey: ["visits"] });
-            const previous = snapshot();
-            update(visit.id, { status: "completed", outcome: value });
-            return { previous };
-        },
-        onError: (_error, _input, context) => restore(context?.previous),
         onSuccess: ({ id, outcome: value }) => {
             update(id, { status: "completed", outcome: value });
             void queryClient.invalidateQueries({ queryKey: ["pipeline"] });
@@ -38,13 +31,6 @@ export function useVisitActions() {
     const reschedule = useMutation({
         mutationFn: ({ id, startsAt, endsAt }: { id: string; startsAt: string; endsAt: string }) =>
             brokerVisitsApi.reschedule(id, startsAt, endsAt),
-        onMutate: async ({ id, startsAt, endsAt }) => {
-            await queryClient.cancelQueries({ queryKey: ["visits"] });
-            const previous = snapshot();
-            update(id, { startsAt, endsAt, status: "reschedule_pending" });
-            return { previous };
-        },
-        onError: (_error, _input, context) => restore(context?.previous),
         onSuccess: ({ id, startsAt, endsAt }) =>
             update(id, { startsAt, endsAt, status: "reschedule_pending" }),
     });

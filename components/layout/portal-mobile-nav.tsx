@@ -4,6 +4,9 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { cn } from "@/lib/utils";
+
+import { resolveActiveNavHref } from "@/components/layout/resolve-active-nav";
 import type { AppIcon } from "@/components/shared/icons";
 import {
     Briefcase,
@@ -16,10 +19,6 @@ import {
     UserRoundSearch,
     Users,
 } from "@/components/shared/icons";
-
-import { cn } from "@/lib/utils";
-
-import { resolveActiveNavHref } from "@/components/layout/resolve-active-nav";
 
 import type { NavItem } from "@/config/nav";
 

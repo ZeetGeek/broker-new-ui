@@ -247,24 +247,30 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
         [handleAction],
     );
 
-    const handlePatch = useCallback((patch: Partial<VisitsFilters>) => {
-        setFilters((prev) => ({ ...prev, ...patch }));
-    }, []);
+    const handlePatch = useCallback(
+        (patch: Partial<VisitsFilters>) => {
+            setFilters((prev) => ({ ...prev, ...patch }));
+        },
+        [setFilters],
+    );
 
     /** Clearing goes back to today, the same place the page opens on. */
     const handleClearFilters = useCallback(() => {
         const today = formatDateIso(new Date());
         setFilters({ ...DEFAULT_VISITS_FILTERS, dateFrom: today, dateTo: today });
-    }, []);
+    }, [setFilters]);
 
     /**
      * The week strip narrows the list to one day, written as a one-day window
      * so it and the range picker share a single filter. Passing "" clears it,
      * which is what tapping the selected day again does.
      */
-    const handleSelectDay = useCallback((day: string) => {
-        setFilters((prev) => ({ ...prev, dateFrom: day, dateTo: day }));
-    }, []);
+    const handleSelectDay = useCallback(
+        (day: string) => {
+            setFilters((prev) => ({ ...prev, dateFrom: day, dateTo: day }));
+        },
+        [setFilters],
+    );
 
     const handleSubmitOutcome = useCallback(
         (visitId: string, outcome: VisitOutcome) => {

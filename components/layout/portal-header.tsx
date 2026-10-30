@@ -1,12 +1,11 @@
-import type { ReactElement, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-import { PortalHeaderSearch } from "@/components/layout/portal-header-search";
 import { PortalNav } from "@/components/layout/portal-nav";
 import { PortalNotificationsMenu } from "@/components/layout/portal-notifications-menu";
 import { Logo } from "@/components/shared/logo";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import type { NavItem } from "@/config/nav";
 
@@ -24,36 +23,10 @@ export type PortalHeaderProps = {
     children?: ReactNode;
 };
 
-const headerControlClass = `
-  border-2 border-border-warm bg-surface!
-  hover:border-ink-subtle
-`;
-
-function HeaderTooltip({
-    label,
-    shortcut,
-    children,
-}: {
-    label: string;
-    shortcut?: ReactNode;
-    children: ReactElement;
-}) {
-    return (
-        <Tooltip>
-            <TooltipTrigger render={children} />
-            <TooltipContent side="bottom">
-                {label}
-                {shortcut}
-            </TooltipContent>
-        </Tooltip>
-    );
-}
-
 export function PortalHeader({
     navItems,
     notificationsHref,
     profileMenu,
-    searchHints,
     sectionNav,
     mobileNav,
     children,
@@ -76,31 +49,14 @@ export function PortalHeader({
 
                         <TooltipProvider>
                             <div className="flex shrink-0 items-center gap-4">
-                                <HeaderTooltip label="Find properties, clients, and visits">
-                                    <PortalHeaderSearch
-                                        hints={searchHints}
-                                        className={cn(
-                                            headerControlClass,
-                                            `
-                                              border! text-ink-muted
-                                              hover:bg-transparent hover:text-ink-muted
-                                              md:justify-start md:gap-2 md:px-4 md:inline-auto
-                                              md:min-inline-64
-                                            `,
-                                        )}
-                                    />
-                                </HeaderTooltip>
-
                                 <PortalNotificationsMenu
                                     viewAllHref={notificationsHref}
                                     tooltipLabel="Notifications"
-                                    triggerClassName={cn(
-                                        headerControlClass,
-                                        `
-                                          relative border! text-ink-muted
-                                          hover:bg-transparent hover:text-ink-muted
-                                        `,
-                                    )}
+                                    triggerClassName="
+                                      relative rounded-2xl border-0 bg-surface text-ink-muted shadow-sm
+                                      hover:bg-gray-50 hover:text-ink-muted
+                                      aria-expanded:bg-gray-50 aria-expanded:text-ink-muted
+                                    "
                                 />
 
                                 {profileMenu}

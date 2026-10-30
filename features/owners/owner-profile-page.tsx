@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
+import { type BrokerOwnerProfile, type OwnerProfileProperty, ownersApi } from "@/lib/api/owners";
+import { formatPlaceName } from "@/lib/format/owner-listings-labels";
+import { formatPhoneIn } from "@/lib/format/phone";
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
+import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
+
+import { AppImage } from "@/components/shared/app-image";
+import { EmptyState } from "@/components/shared/empty-state";
 import {
     BadgeCheck,
     Building2,
@@ -14,15 +22,6 @@ import {
     Phone,
     UserRound,
 } from "@/components/shared/icons";
-
-import { type BrokerOwnerProfile, type OwnerProfileProperty, ownersApi } from "@/lib/api/owners";
-import { formatPlaceName } from "@/lib/format/owner-listings-labels";
-import { formatPhoneIn } from "@/lib/format/phone";
-import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
-import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
-
-import { EmptyState } from "@/components/shared/empty-state";
-import { AppImage } from "@/components/shared/app-image";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -66,7 +65,7 @@ function PropertyCard({ property }: { property: OwnerProfileProperty }) {
               focus-visible:ring-3 focus-visible:ring-ring/30
             "
         >
-            <div className="relative aspect-[4/3] bg-surface-muted">
+            <div className="relative aspect-4/3 bg-surface-muted">
                 {photo ? (
                     <AppImage src={photo} alt="" fill className="object-cover" sizes="320px" />
                 ) : null}
@@ -102,7 +101,7 @@ function NotFoundState() {
                 className="bg-brand-ink text-surface hover:bg-brand-ink/90"
                 render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
             >
-                Back to owner listings
+                Back to Marketplace
             </Button>
         </EmptyState>
     );
@@ -124,10 +123,14 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                 "
             >
                 <ChevronLeft aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                Owner listings
+                Marketplace
             </Link>
 
-            <section className="flex flex-col gap-4 rounded-card border border-border-warm bg-surface p-5">
+            <section
+                className="
+              flex flex-col gap-4 rounded-card border border-border-warm bg-surface p-5
+            "
+            >
                 <div className="flex items-center gap-4 min-inline-0">
                     <UserAvatar name={name} imageUrl={profile.avatarUrl} size="lg" />
                     <div className="flex flex-col gap-1 min-inline-0">
@@ -144,7 +147,11 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                             ) : null}
                         </div>
                         {location ? (
-                            <p className="body-sm flex items-center gap-1.5 tracking-wide text-ink-muted">
+                            <p
+                                className="
+                              body-sm flex items-center gap-1.5 tracking-wide text-ink-muted
+                            "
+                            >
                                 <MapPin
                                     aria-hidden
                                     className="shrink-0 block-3.5 inline-3.5"
@@ -165,7 +172,7 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                     <p className="body-sm flex items-center gap-1.5 tracking-wide text-ink">
                         <Building2
                             aria-hidden
-                            className="shrink-0 block-3.5 inline-3.5 text-ink-muted"
+                            className="shrink-0 text-ink-muted block-3.5 inline-3.5"
                             strokeWidth={1.75}
                         />
                         <span className="truncate capitalize">
@@ -179,7 +186,9 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                         {profile.phoneDigits ? (
                             <a
                                 href={`tel:+91${profile.phoneDigits}`}
-                                className="body-sm inline-flex items-center gap-1.5 font-medium text-ink"
+                                className="
+                                  body-sm inline-flex items-center gap-1.5 font-medium text-ink
+                                "
                             >
                                 <Phone
                                     aria-hidden
@@ -192,7 +201,9 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                         {profile.email ? (
                             <a
                                 href={`mailto:${profile.email}`}
-                                className="body-sm inline-flex items-center gap-1.5 font-medium text-ink"
+                                className="
+                                  body-sm inline-flex items-center gap-1.5 font-medium text-ink
+                                "
                             >
                                 <Mail
                                     aria-hidden
@@ -219,14 +230,22 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
             </section>
 
             {profile.bio ? (
-                <section className="flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-5">
+                <section
+                    className="
+                  flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-5
+                "
+                >
                     <h2 className="eyebrow">About</h2>
                     <p className="body tracking-wide text-ink">{profile.bio}</p>
                 </section>
             ) : null}
 
             {areas.length > 0 ? (
-                <section className="flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-5">
+                <section
+                    className="
+                  flex flex-col gap-2 rounded-card border border-border-warm bg-surface p-5
+                "
+                >
                     <h2 className="eyebrow">Areas</h2>
                     <p className="body-sm tracking-wide text-ink capitalize">{areas.join(", ")}</p>
                 </section>

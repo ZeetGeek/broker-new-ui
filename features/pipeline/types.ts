@@ -170,7 +170,7 @@ export type DealsFilters = {
 
 export type DealSort = "recent" | "stalled" | "price_desc" | "price_asc" | "visit_soon";
 
-export type DealsView = "board" | "done";
+export type DealsView = "board" | "sold" | "lost";
 
 export type DealTypeFilter = "" | "rent" | "sale";
 

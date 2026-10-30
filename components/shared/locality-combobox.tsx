@@ -2,10 +2,9 @@
 
 import { useMemo, useState } from "react";
 
-import { MapPinned } from "@/components/shared/icons";
-
 import { useDebouncedValue, useLocalitySearch } from "@/hooks/use-locations";
 
+import { MapPinned } from "@/components/shared/icons";
 import {
     SearchCombobox,
     type SearchComboboxProps,

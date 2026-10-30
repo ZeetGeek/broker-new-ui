@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 
-import { Mail, Phone, Search, User } from "@/components/shared/icons";
-
+import { EmailFieldIcon, Phone, Search, User } from "@/components/shared/icons";
 import { Input } from "@/components/ui/input";
 
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";
@@ -25,7 +24,7 @@ function EmailDemo() {
 
     return (
         <Input
-            startIcon={Mail}
+            startIcon={EmailFieldIcon}
             placeholder="you@example.com"
             value={value}
             onValueChange={setValue}

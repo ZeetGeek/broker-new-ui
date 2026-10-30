@@ -25,7 +25,7 @@ export const INVITE_STAGE_META: Record<InviteStage, InviteStageMeta> = {
     },
     accepted: {
         label: "You can sell this",
-        hint: "You accepted this invite. You can now show the property to buyers.",
+        hint: "You accepted this invite. You can now show the property to clients.",
         icon: CircleCheck,
         badgeVariant: "brand",
     },

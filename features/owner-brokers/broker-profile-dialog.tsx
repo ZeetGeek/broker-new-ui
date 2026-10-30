@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import { Send, ShieldCheck } from "@/components/shared/icons";
-
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { Send, ShieldCheck } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import {

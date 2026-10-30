@@ -38,6 +38,7 @@ export function ChatMessageRow({
     const time = formatTimeIn(new Date(message.sentAt));
     const attachmentOnly = Boolean(attachment) && !text;
     const hasMedia = attachment?.kind === "media";
+    const hasAttachmentCard = hasMedia || attachment?.kind === "file";
 
     const row = (
         <li className={cn("flex items-end gap-2", isOwn && "flex-row-reverse")}>
@@ -51,7 +52,7 @@ export function ChatMessageRow({
             ) : null}
             <div className="flex flex-col gap-1 max-inline-[82%] min-inline-0">
                 <Bubble
-                    variant={hasMedia ? "ghost" : isOwn ? "tinted" : "muted"}
+                    variant={hasAttachmentCard ? "ghost" : isOwn ? "tinted" : "muted"}
                     align={isOwn ? "end" : "start"}
                     className="max-inline-full"
                 >
@@ -59,21 +60,21 @@ export function ChatMessageRow({
                         className={cn(
                             "flex flex-col gap-2 text-start",
                             isOwn ? "rounded-ee-sm" : "rounded-es-sm",
-                            attachmentOnly && !hasMedia && "p-2",
-                            hasMedia && "overflow-visible border-0 text-ink",
+                            attachmentOnly && !hasAttachmentCard && "p-2",
+                            hasAttachmentCard && "overflow-visible border-0 text-ink",
                         )}
                     >
                         {attachment ? (
                             <ChatAttachmentBlock attachment={attachment} isOwn={isOwn} />
                         ) : null}
 
-                        {text && !hasMedia ? (
+                        {text && !hasAttachmentCard ? (
                             <p className="font-medium wrap-anywhere whitespace-pre-wrap">{text}</p>
                         ) : null}
                     </BubbleContent>
                 </Bubble>
 
-                {text && hasMedia ? (
+                {text && hasAttachmentCard ? (
                     <Bubble
                         variant={isOwn ? "tinted" : "muted"}
                         align={isOwn ? "end" : "start"}
@@ -117,9 +118,9 @@ export function ChatMessageRow({
                 <ContextMenu.Positioner className="z-50 outline-none" sideOffset={4}>
                     <ContextMenu.Popup
                         className="
-                      rounded-card bg-popover p-1.5 text-popover-foreground shadow-lg ring-1
-                      ring-foreground/10 outline-none min-inline-48
-                    "
+                          rounded-card bg-popover p-1.5 text-popover-foreground shadow-lg ring-1
+                          ring-foreground/10 outline-none min-inline-48
+                        "
                     >
                         <ContextMenu.Item
                             disabled={!onDelete}

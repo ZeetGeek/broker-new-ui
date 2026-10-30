@@ -1,8 +1,7 @@
 import Link from "next/link";
 
-import { Building2, Search } from "@/components/shared/icons";
-
 import { EmptyState } from "@/components/shared/empty-state";
+import { Building2, Search } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 export type MyListingsEmptyProps = {
@@ -82,7 +81,7 @@ export function MyListingsRequestsEmpty() {
                 className="bg-brand-ink text-surface hover:bg-brand-ink/90"
                 render={<Link href="/broker/owner-listings" />}
             >
-                Browse owner listings
+                Browse Marketplace
             </Button>
         </EmptyState>
     );

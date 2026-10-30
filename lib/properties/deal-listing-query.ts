@@ -1,10 +1,11 @@
-import { browseApiTypeFilters } from "@/features/properties/owner-listings/filter-visibility";
 import {
     normalizePropertyCriteria,
     type PropertyListCriteria,
 } from "@/lib/properties/list-criteria";
 
-/** Listing filters sent to the My Deals representation queues. */
+import { browseApiTypeFilters } from "@/features/properties/owner-listings/filter-visibility";
+
+/** Listing filters sent to the Requests & Invitations representation queues. */
 export type DealListingApiQuery = {
     transactionType?: "sale" | "rent";
     propertyType?: string;
@@ -36,10 +37,12 @@ export type DealListingApiQuery = {
  * Category is sent only when the broker picked one, so a subtype that exists
  * in more than one category is not dropped.
  */
-export function dealListingApiQuery(input?: {
-    type?: "" | "sale" | "rent";
-    propertyFilters?: Partial<PropertyListCriteria> | null;
-} | null): DealListingApiQuery | undefined {
+export function dealListingApiQuery(
+    input?: {
+        type?: "" | "sale" | "rent";
+        propertyFilters?: Partial<PropertyListCriteria> | null;
+    } | null,
+): DealListingApiQuery | undefined {
     if (!input) return undefined;
     const criteria = normalizePropertyCriteria({
         ...input.propertyFilters,

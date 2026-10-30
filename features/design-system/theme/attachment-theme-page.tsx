@@ -1,7 +1,6 @@
 "use client";
 
 import { Download, FileText, X } from "@/components/shared/icons";
-
 import {
     Attachment,
     AttachmentAction,
@@ -93,7 +92,7 @@ function ImageDemo() {
 
 function GroupDemo() {
     return (
-        <AttachmentGroup className="max-inline-full pe-1">
+        <AttachmentGroup className="pe-1 max-inline-full">
             <FileDemo />
             <Attachment state="done" size="default">
                 <AttachmentMedia>
@@ -144,11 +143,15 @@ export function AttachmentThemePage() {
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         {ATTACHMENT_USES.map((use) => (
                             <Swatch key={use.name} label={use.label}>
-                                <div className="flex min-block-16 items-center justify-center inline-full">
+                                <div
+                                    className="
+                                  flex items-center justify-center inline-full min-block-16
+                                "
+                                >
                                     {use.name === "file" ? <FileDemo /> : null}
                                     {use.name === "image" ? <ImageDemo /> : null}
                                     {use.name === "group" ? (
-                                        <div className="max-inline-full overflow-hidden">
+                                        <div className="overflow-hidden max-inline-full">
                                             <GroupDemo />
                                         </div>
                                     ) : null}
@@ -169,7 +172,11 @@ export function AttachmentThemePage() {
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {ATTACHMENT_STATES.map((item) => (
                             <Swatch key={item.name} label={item.label}>
-                                <div className="flex min-block-14 items-center justify-center inline-full">
+                                <div
+                                    className="
+                                  flex items-center justify-center inline-full min-block-14
+                                "
+                                >
                                     <FileDemo state={item.name} />
                                 </div>
                                 <p className="body-xs text-ink-subtle">{item.note}</p>
@@ -187,7 +194,11 @@ export function AttachmentThemePage() {
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                         {ATTACHMENT_SIZES.map((item) => (
                             <Swatch key={item.name} label={item.label}>
-                                <div className="flex min-block-14 items-center justify-center inline-full">
+                                <div
+                                    className="
+                                  flex items-center justify-center inline-full min-block-14
+                                "
+                                >
                                     <FileDemo size={item.name} />
                                 </div>
                                 <p className="body-xs text-ink-subtle">{item.note}</p>
@@ -205,7 +216,11 @@ export function AttachmentThemePage() {
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {ATTACHMENT_ORIENTATIONS.map((item) => (
                             <Swatch key={item.name} label={item.label}>
-                                <div className="flex min-block-24 items-center justify-center inline-full">
+                                <div
+                                    className="
+                                  flex items-center justify-center inline-full min-block-24
+                                "
+                                >
                                     {item.name === "horizontal" ? <FileDemo /> : <ImageDemo />}
                                 </div>
                                 <p className="body-xs text-ink-subtle">{item.note}</p>

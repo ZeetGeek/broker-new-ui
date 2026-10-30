@@ -17,7 +17,7 @@ function seedThread(peer: ChatPeer): ChatMessage[] {
         {
             id: `${peer.id}-1`,
             isOwn: false,
-            text: "Hello. I saw your request. Which buyer are you bringing?",
+            text: "Hello. I saw your request. Which client are you bringing?",
             sentAt: minutesAgo(52),
         },
         {

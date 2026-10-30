@@ -73,7 +73,10 @@ function RequestsToolbarSkeleton() {
                 <div
                     className={cn(
                         DEALS_SEARCH_CLASS,
-                        "flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 block-[38px]",
+                        `
+                          flex items-center gap-2 rounded-control border border-border-warm
+                          bg-surface px-3 block-[38px]
+                        `,
                     )}
                 >
                     <Skeleton className="shrink-0 block-4 inline-4" />
@@ -164,7 +167,7 @@ export function RequestsListSkeleton({
 }) {
     return (
         <div role="status" aria-busy="true">
-            <span className="sr-only">Loading your deals</span>
+            <span className="sr-only">Loading requests and invitations</span>
             <div className={REQUESTS_GRID_CLASS}>
                 {Array.from({ length: count }, (_, index) => (
                     <DealCardSkeleton key={index} activeTab={activeTab} />

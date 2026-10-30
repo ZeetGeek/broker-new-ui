@@ -1,7 +1,7 @@
 import type { OwnerListingsFilters } from "@/features/properties/owner-listings/types";
 
 export const OWNER_LISTINGS_APPROVAL_MESSAGE =
-    "Once the owner approves, it goes to My Deals. No need to add it again";
+    "Once the owner approves, it goes to Requests & Invitations. No need to add it again";
 
 export type OwnerListingsPoolSummary = {
     slotsOpenCount: number;

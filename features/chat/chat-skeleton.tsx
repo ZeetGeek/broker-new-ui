@@ -30,30 +30,20 @@ export function ChatSkeleton() {
                                     "space-y-2.5 rounded-inner px-4 py-3.5",
                                     own
                                         ? "rounded-ee-sm bg-brand-soft/60"
-                                        : `
-                                  rounded-es-sm bg-surface-muted/60
-                                `,
+                                        : `rounded-es-sm bg-surface-muted/60`,
                                 )}
                             >
                                 <Skeleton
                                     className={cn(
                                         "block-2 inline-full",
-                                        own
-                                            ? "bg-brand/15"
-                                            : `
-                                  bg-border-warm
-                                `,
+                                        own ? "bg-brand/15" : `bg-border-warm`,
                                     )}
                                 />
                                 {lines > 1 ? (
                                     <Skeleton
                                         className={cn(
                                             "block-2 inline-2/3",
-                                            own
-                                                ? `
-                                  bg-brand/15
-                                `
-                                                : `bg-border-warm`,
+                                            own ? `bg-brand/15` : `bg-border-warm`,
                                         )}
                                     />
                                 ) : null}

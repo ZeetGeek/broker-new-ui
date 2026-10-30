@@ -6,13 +6,13 @@ import type {
 } from "@/lib/api/properties";
 import { sessionCountryName } from "@/lib/auth/session";
 
+import { isOwnerListingCategory } from "@/features/properties/owner-listings/filter-visibility";
 import type {
     OwnerListingCategory,
     OwnerListingFurnishing,
     OwnerListingItem,
     OwnerListingPropertyType,
 } from "@/features/properties/owner-listings/types";
-import { isOwnerListingCategory } from "@/features/properties/owner-listings/filter-visibility";
 
 const BHK_CONFIG_TO_NUMBER: Record<string, number> = {
     one_rk: 1,
@@ -89,7 +89,7 @@ function furnishingLabel(value: OwnerListingFurnishing): string {
     return "Unfurnished";
 }
 
-/** API `subtype` / `propertyType` → the card type. Shared with My deals so both name a listing alike. */
+/** API `subtype` / `propertyType` → the card type. Shared with Requests & Invitations so both name a listing alike. */
 export function mapApiPropertyType(
     subtypeRaw: string | null | undefined,
     propertyTypeRaw: string | null | undefined,

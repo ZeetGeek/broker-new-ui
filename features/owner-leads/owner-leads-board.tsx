@@ -3,21 +3,20 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { GripVertical, Plus } from "@/components/shared/icons";
-
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { ownerBrokersHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { GripVertical, Plus } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { OwnerLeadBoardCard } from "@/features/owner-leads/owner-lead-board-card";
 import {
     isFinishedLead,
-    leadPropertyFacts,
     LEAD_STAGE_TO_DEAL_STAGE,
+    leadPropertyFacts,
 } from "@/features/owner-leads/owner-lead-meta";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { StageTabs } from "@/features/pipeline/stage-tabs";
@@ -225,7 +224,8 @@ export function OwnerLeadsBoard({
         <div className="flex flex-col gap-5">
             <div
                 className="
-                  hidden snap-x snap-mandatory items-start gap-3 overflow-x-auto md:flex
+                  hidden snap-x snap-mandatory items-start gap-3 overflow-x-auto
+                  md:flex
                   lg:grid lg:snap-none lg:grid-cols-4 lg:gap-4 lg:overflow-visible
                 "
             >

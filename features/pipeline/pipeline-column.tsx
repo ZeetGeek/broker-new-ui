@@ -1,18 +1,11 @@
 "use client";
 
-import Link from "next/link";
-
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { GripVertical, Plus } from "@/components/shared/icons";
 
-import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
-import { columnValue, type OtherBuyer } from "@/features/pipeline/deal-attention";
+import { columnValue } from "@/features/pipeline/deal-attention";
 import type { DealCardHandlers } from "@/features/pipeline/deal-card";
 import { DraggableDealCard } from "@/features/pipeline/draggable-deal-card";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
@@ -33,7 +26,6 @@ export function PipelineColumn({
     handlers,
     busyId,
     pinnedDealIds,
-    otherBuyersByDealId,
     isDropTarget,
 }: {
     stage: DealStage;
@@ -41,7 +33,6 @@ export function PipelineColumn({
     handlers: DealCardHandlers;
     busyId: string | null;
     pinnedDealIds: string[];
-    otherBuyersByDealId: Record<string, OtherBuyer[]>;
     isDropTarget: boolean;
 }) {
     const { setNodeRef, isOver } = useDroppable({ id: stage });
@@ -69,11 +60,6 @@ export function PipelineColumn({
                 deals rides alongside the money rather than competing with it. */}
             <header className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2 min-inline-0">
-                    <GripVertical
-                        aria-hidden
-                        className="mbs-0.5 shrink-0 text-ink-subtle block-4 inline-4"
-                        strokeWidth={1.75}
-                    />
                     <div className="min-inline-0">
                         {/* The stage hue lives on the label now. A filled pill
                             beside a heading-sized number read as two competing
@@ -96,27 +82,6 @@ export function PipelineColumn({
                         </div>
                     </div>
                 </div>
-
-                {/* The `+` is the whole menu. A dropdown whose only item was
-                    "Add a deal", pointing at this same href, was two controls
-                    for one action. */}
-                <Tooltip>
-                    <TooltipTrigger
-                        render={
-                            <Button
-                                variant="ghost"
-                                size="icon-xs"
-                                nativeButton={false}
-                                aria-label={`Add a deal to ${meta.label}`}
-                                className="shrink-0 text-ink-subtle hover:text-ink"
-                                render={<Link href={BROKER_MY_DEALS_HREF} />}
-                            />
-                        }
-                    >
-                        <Plus aria-hidden strokeWidth={1.75} />
-                    </TooltipTrigger>
-                    <TooltipContent>Add deal</TooltipContent>
-                </Tooltip>
             </header>
 
             {deals.length > 0 ? (
@@ -135,7 +100,6 @@ export function PipelineColumn({
                                 handlers={handlers}
                                 isBusy={busyId === deal.id}
                                 isPinned={pinnedDealIds.includes(deal.id)}
-                                otherBuyers={otherBuyersByDealId[deal.id] ?? []}
                             />
                         ))}
                     </div>

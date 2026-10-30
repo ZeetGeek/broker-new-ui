@@ -16,7 +16,10 @@ export function VirtualStack<T>({
     renderItem: (item: T, index: number) => ReactNode;
     getKey: (item: T) => string;
 }) {
+    "use no memo"; // The virtualizer's mutable methods must not be compiler-memoized.
     const parentRef = useRef<HTMLDivElement>(null);
+    // Explicitly opted out above: TanStack Virtual's mutable methods cannot be memoized.
+    // eslint-disable-next-line react-hooks/incompatible-library
     const virtualizer = useVirtualizer({
         count: items.length,
         getScrollElement: () => parentRef.current,
@@ -27,9 +30,7 @@ export function VirtualStack<T>({
     return (
         <div
             ref={parentRef}
-            className="
-      overflow-y-auto pe-1 max-block-[calc(100dvh-10rem)] min-block-[520px]
-    "
+            className="overflow-y-auto pe-1 max-block-[calc(100dvh-10rem)] min-block-[520px]"
             style={{ contain: "strict" }}
         >
             <div className="relative inline-full" style={{ height: virtualizer.getTotalSize() }}>
@@ -38,9 +39,7 @@ export function VirtualStack<T>({
                         key={row.key}
                         ref={virtualizer.measureElement}
                         data-index={row.index}
-                        className="
-      absolute inset-s-0 inset-bs-0 pbe-4 inline-full
-    "
+                        className="absolute inset-s-0 inset-bs-0 pbe-4 inline-full"
                         style={{ transform: `translateY(${row.start}px)` }}
                     >
                         {renderItem(items[row.index], row.index)}

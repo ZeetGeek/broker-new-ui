@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -14,6 +14,7 @@ import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 
 import type { BrokerSiteVisit, PropertyWithSlots } from "@/features/site-visits/broker/model";
+import { USE_MOCK_VISITS } from "@/mocks/visits";
 
 export function RescheduleModal({
     open,
@@ -31,7 +32,25 @@ export function RescheduleModal({
     const [selected, setSelected] = useState("");
     const [custom, setCustom] = useState(() => (visit ? inputValueInIst(visit.startsAt) : ""));
     const [saveError, setSaveError] = useState<string>();
+    const timeId = useId();
     if (!visit) return null;
+    if (!USE_MOCK_VISITS) {
+        return (
+            <AppModal
+                open={open}
+                onOpenChange={(next) => {
+                    if (!next) onClose();
+                }}
+                title="Change visit time"
+                size="sm"
+            >
+                <p className="body-sm text-ink-muted">
+                    Rescheduling is not available yet. Check open slots, then cancel this visit and
+                    book another time. Your current booking has not changed.
+                </p>
+            </AppModal>
+        );
+    }
     const save = async () => {
         const slot = propertySlots?.slots.find((item) => item.id === selected);
         const startsAt = slot?.startsAt ?? inputValueToUtc(custom);
@@ -73,20 +92,17 @@ export function RescheduleModal({
                 {saveError ? (
                     <p
                         role="alert"
+                        id={`${timeId}-error`}
                         className="
-          body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
-        "
+                          body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger
+                        "
                     >
                         {saveError}
                     </p>
                 ) : null}
                 <div>
                     <p className="body-sm font-bold text-ink">Owner’s open slots</p>
-                    <div
-                        className="
-          mbs-2 flex flex-wrap gap-2
-        "
-                    >
+                    <div className="mbs-2 flex flex-wrap gap-2">
                         {propertySlots?.slots
                             .filter(
                                 (slot) =>
@@ -101,9 +117,9 @@ export function RescheduleModal({
                                     onClick={() => setSelected(slot.id)}
                                     className={cn(
                                         `
-          body-xs tabular rounded-control border border-border-warm bg-surface px-3 font-bold
-          text-ink min-block-11
-        `,
+                                          body-xs tabular rounded-control border border-border-warm
+                                          bg-surface px-3 font-bold text-ink min-block-11
+                                        `,
                                         selected === slot.id &&
                                             `border-brand-ink bg-brand-ink text-surface`,
                                     )}
@@ -114,22 +130,21 @@ export function RescheduleModal({
                             ))}
                     </div>
                 </div>
-                <div
-                    className="
-          flex items-center gap-3
-        "
-                >
+                <div className="flex items-center gap-3">
                     <span className="flex-1 bg-border-warm block-px" />
-                    <span
-                        className="
-          body-xs text-ink-muted
-        "
-                    >
-                        or choose another time
-                    </span>
+                    <span className="body-xs text-ink-muted">or choose another time</span>
                     <span className="flex-1 bg-border-warm block-px" />
                 </div>
+                <label htmlFor={timeId} className="body-sm font-bold text-ink">
+                    New visit time
+                </label>
+                <p id={`${timeId}-help`} className="body-xs text-ink-muted">
+                    Times are in IST. Choose a time in the future.
+                </p>
                 <input
+                    id={timeId}
+                    aria-invalid={Boolean(saveError)}
+                    aria-describedby={`${timeId}-help${saveError ? ` ${timeId}-error` : ""}`}
                     type="datetime-local"
                     step={900}
                     min={inputValueInIst(new Date())}
@@ -139,9 +154,9 @@ export function RescheduleModal({
                         setSelected("");
                     }}
                     className="
-          body-sm rounded-control border border-border-warm bg-surface px-3 text-ink inline-full
-          min-block-11
-        "
+                      body-sm rounded-control border border-border-warm bg-surface px-3 text-ink
+                      inline-full min-block-11
+                    "
                 />
             </div>
         </AppModal>

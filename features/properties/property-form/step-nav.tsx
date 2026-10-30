@@ -1,9 +1,8 @@
 "use client";
 
-import { Check } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { Check } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import { FORM_STEPS, type PropertyFormStep } from "@/constants/property";
@@ -57,10 +56,7 @@ export function StepNav({
                                           bg-brand-soft text-brand-text
                                           hover:bg-brand-soft-hover hover:text-brand-text
                                         `
-                                        : `
-                                          text-ink-muted
-                                          hover:bg-surface-muted hover:text-ink
-                                        `,
+                                        : `text-ink-muted hover:bg-surface-muted hover:text-ink`,
                                 )}
                             >
                                 <span

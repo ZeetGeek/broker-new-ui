@@ -12,7 +12,7 @@ function BoardCardSkeleton() {
                 <div className="rounded-full bg-surface-muted block-7 inline-7" />
             </div>
             <div className="flex items-center gap-3">
-                <div className="shrink-0 rounded-[8px] bg-surface-muted aspect-square inline-24" />
+                <div className="aspect-square shrink-0 rounded-[8px] bg-surface-muted inline-24" />
                 <div className="flex flex-1 flex-col gap-2 min-inline-0">
                     <div className="rounded-sm bg-surface-muted block-5 inline-24" />
                     <div className="rounded-sm bg-surface-muted block-3 inline-32" />
@@ -53,7 +53,8 @@ export function LeadsSkeleton({ layout = "board" }: { layout?: "board" | "list" 
         <div className="motion-safe:animate-pulse" aria-busy="true" aria-label="Loading your leads">
             <div
                 className="
-                  hidden items-start gap-3 overflow-hidden md:flex
+                  hidden items-start gap-3 overflow-hidden
+                  md:flex
                   lg:grid lg:grid-cols-4 lg:gap-4
                 "
             >

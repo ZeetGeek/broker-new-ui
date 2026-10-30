@@ -18,6 +18,11 @@ import {
     isSameCalendarDay,
 } from "@/lib/format/date";
 import { parseMoney } from "@/lib/format/money";
+import { isLaunchEventVisible } from "@/lib/notifications/launch-policy";
+import { brokerVisitHref } from "@/lib/routes/broker";
+import { agendaVisitState, isActiveDashboardVisit } from "@/lib/visits/dashboard-state";
+
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 
 import type {
     ActivityData,
@@ -114,11 +119,19 @@ function mapReraStatus(profile: UserProfile | null): ReraStatus {
 }
 
 function visitStateLabel(visit: DashboardVisit, portal: "broker" | "owner" = "broker"): string {
+    if (visit.status === "no_show") return "No-show recorded";
+    if (visit.status?.startsWith("cancelled_by_")) return "Visit cancelled";
     if (portal === "owner") {
         if (visit.status === "confirmed") return "Confirmed";
         if (visit.status === "cancelled") return "Cancelled";
         if (visit.status === "completed") return "Done";
         return visit.statusLabel || "Scheduled";
+    }
+    if (!FEATURE_PLATFORM_OWNER) {
+        if (visit.status === "confirmed") return "Visit confirmed";
+        if (visit.status === "cancelled") return "Visit cancelled";
+        if (visit.status === "completed") return "Visit done";
+        return "Awaiting confirmation";
     }
     if (visit.status === "confirmed") return "Owner confirmed the slot";
     if (visit.status === "cancelled") return "Visit cancelled";
@@ -132,6 +145,7 @@ function mapTodayAgenda(
     portal: "broker" | "owner" = "broker",
 ): TodayAgenda {
     const todays = visits
+        .filter((visit) => visit.status !== "expired")
         .map((visit) => {
             const scheduledAt = new Date(visit.scheduledAt);
             if (Number.isNaN(scheduledAt.getTime()) || !isSameCalendarDay(scheduledAt, now)) {
@@ -148,9 +162,9 @@ function mapTodayAgenda(
                 timeLabel,
                 title: `Site visit · ${visit.propertyTitle}`,
                 clientName: person,
-                subtitle: visitStateLabel(visit, portal),
-                state: scheduledAt.getTime() < now.getTime() ? "done" : "upcoming",
-                href: portal === "owner" ? `/owner/visits` : `/broker/visits/${visit.id}`,
+                subtitle: `${visitStateLabel(visit, portal)}${agendaVisitState(visit.status, scheduledAt, now) === "elapsed" ? " · Start time passed" : ""}`,
+                state: agendaVisitState(visit.status, scheduledAt, now),
+                href: portal === "owner" ? `/owner/visits` : brokerVisitHref(visit.id),
             };
             return item;
         })
@@ -165,7 +179,9 @@ function mapTodayAgenda(
     return {
         date: formatDateIso(now),
         doneCount: todays.filter((item) => item.state === "done").length,
-        remainingCount: todays.filter((item) => item.state !== "done").length,
+        remainingCount: todays.filter(
+            (item) => item.state === "upcoming" || item.state === "elapsed",
+        ).length,
         items: todays,
     };
 }
@@ -194,6 +210,16 @@ function mapNextShowing(visit: DashboardVisit | undefined, portal: "broker" | "o
             portal === "owner" ? visit.brokerName || "Broker" : visit.clientName || "Client",
         clientPhoneDigits: phoneDigits(visit.clientPhone),
     };
+}
+
+function nextActiveVisit(visits: DashboardVisit[]): DashboardVisit | undefined {
+    return visits
+        .filter(
+            (visit) =>
+                isActiveDashboardVisit(visit.status) &&
+                Number.isFinite(new Date(visit.scheduledAt).getTime()),
+        )
+        .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())[0];
 }
 
 /** Localities arrive from the API in mixed case ("baner"); render them as names. */
@@ -369,16 +395,24 @@ function mapActivity(activity: DashboardActivity | undefined): ActivityData {
     }
 
     return {
-        items: (activity.items ?? []).map((item) => ({
-            id: item.id,
-            type: mapActivityEventType(item.category, item.action),
-            occurredAt: item.createdAt,
-            href: item.href,
-            title: item.title,
-            subtitle: item.detail ?? "",
-            actorKind: "owner",
-        })),
-        remainingCount: activity.remainingCount ?? 0,
+        items: (activity.items ?? [])
+            .filter((item) =>
+                isLaunchEventVisible({
+                    type: `${item.category} ${item.action}`,
+                    referenceType: item.entityType,
+                    href: item.href,
+                }),
+            )
+            .map((item) => ({
+                id: item.id,
+                type: mapActivityEventType(item.category, item.action),
+                occurredAt: item.createdAt,
+                href: item.href,
+                title: item.title,
+                subtitle: item.detail ?? "",
+                actorKind: FEATURE_PLATFORM_OWNER ? "owner" : "system",
+            })),
+        remainingCount: FEATURE_PLATFORM_OWNER ? (activity.remainingCount ?? 0) : 0,
     };
 }
 
@@ -479,7 +513,7 @@ export function mapBrokerDashboardView(
         serviceAreas: profile?.broker?.serviceAreas ?? [],
         phoneDigits: phoneDigits(profile?.phone),
         email: profile?.email ?? "",
-        nextShowing: mapNextShowing(visits[0]),
+        nextShowing: mapNextShowing(nextActiveVisit(visits)),
         today: mapTodayAgenda(visits, now),
         requests: mapRequests(
             data?.summary ?? {},
@@ -536,7 +570,14 @@ export function mapBrokerDashboardViewFromMock(
         requests: mock.requests,
         pipelineCard: mock.pipelineCard,
         followUps: mock.followUps,
-        activity: mock.activity,
+        activity: FEATURE_PLATFORM_OWNER
+            ? mock.activity
+            : {
+                  items: mock.activity.items.filter((item) =>
+                      isLaunchEventVisible({ type: item.type, href: item.href }),
+                  ),
+                  remainingCount: 0,
+              },
         youRepresent: mock.youRepresent,
         newInAreas: mock.newInAreas,
         userName: fullName,
@@ -646,7 +687,7 @@ export function mapOwnerDashboardView(
         siteVisitCount: todayVisits.length,
         pendingRequestsCount: summary.pendingRequests,
         summary,
-        nextShowing: mapNextShowing(visits[0], "owner"),
+        nextShowing: mapNextShowing(nextActiveVisit(visits), "owner"),
         today: mapTodayAgenda(visits, now, "owner"),
         pendingRequests,
         glanceVisits: mapOwnerGlanceVisits(visits),

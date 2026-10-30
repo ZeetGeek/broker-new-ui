@@ -1,7 +1,7 @@
 import type { PipelineStageId } from "@/config/constants";
 
 export type TodayItemKind = "site_visit" | "call";
-export type TodayItemState = "done" | "upcoming" | "blocked";
+export type TodayItemState = "done" | "upcoming" | "blocked" | "elapsed" | "cancelled" | "missed";
 
 export type TodayItem = {
     id: string;
@@ -369,7 +369,7 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             state: "done",
             clientId: "cl_006",
             propertyId: "pr_099",
-            href: "/broker/visits/visit_00",
+            href: "/broker/visits?tab=visits&visit=visit_00",
         },
         {
             id: "visit_01",
@@ -382,7 +382,7 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             state: "done",
             clientId: "cl_002",
             propertyId: "pr_114",
-            href: "/broker/visits/visit_01",
+            href: "/broker/visits?tab=visits&visit=visit_01",
         },
         {
             id: "visit_02",
@@ -396,7 +396,7 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             isNext: true,
             clientId: "cl_001",
             propertyId: "pr_108",
-            href: "/broker/visits/visit_02",
+            href: "/broker/visits?tab=visits&visit=visit_02",
         },
         {
             id: "visit_03",
@@ -408,7 +408,7 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             state: "blocked",
             clientId: "cl_004",
             propertyId: "pr_121",
-            href: "/broker/visits/visit_03",
+            href: "/broker/visits?tab=visits&visit=visit_03",
         },
         {
             id: "task_09",
@@ -432,7 +432,7 @@ export const TODAY_PLACEHOLDER: TodayAgenda = {
             state: "upcoming",
             clientId: "cl_007",
             propertyId: "pr_130",
-            href: "/broker/visits/visit_04",
+            href: "/broker/visits?tab=visits&visit=visit_04",
         },
         {
             id: "task_10",
@@ -665,7 +665,7 @@ export const dashboardMock: DashboardMock = {
                 daysSinceActivity: 16,
                 isStale: true,
                 shareHref: "https://wa.me/?text=3%20BHK%20%C2%B7%20Pal",
-                bookVisitHref: "/broker/visits/new?propertyId=pr_092",
+                bookVisitHref: "/broker/visits?tab=slots&propertyId=pr_092",
                 imageSrc: "/properties/1.jpg",
             },
             {
@@ -682,7 +682,7 @@ export const dashboardMock: DashboardMock = {
                 daysSinceActivity: 2,
                 isStale: false,
                 shareHref: "https://wa.me/?text=2%20BHK%20%C2%B7%20Piplod",
-                bookVisitHref: "/broker/visits/new?propertyId=pr_088",
+                bookVisitHref: "/broker/visits?tab=slots&propertyId=pr_088",
                 imageSrc: "/properties/2.jpg",
             },
             {
@@ -701,7 +701,7 @@ export const dashboardMock: DashboardMock = {
                 stageLabel: "In negotiation",
                 negotiationClientName: "Hetal Modi",
                 shareHref: "https://wa.me/?text=4%20BHK%20%C2%B7%20Vesu",
-                bookVisitHref: "/broker/visits/new?propertyId=pr_095",
+                bookVisitHref: "/broker/visits?tab=slots&propertyId=pr_095",
                 imageSrc: "/properties/3.jpg",
             },
         ],

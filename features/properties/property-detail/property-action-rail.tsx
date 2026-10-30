@@ -91,7 +91,7 @@ export function PropertyActionRail({
                         </div>
                         <p className={styles.actionDescription}>
                             {item.isSold
-                                ? "This property is no longer available in owner listings."
+                                ? "This property is no longer available in Marketplace."
                                 : isPublished
                                   ? "Brokers can discover your property and ask to represent it."
                                   : "Publish your property when you are ready to receive broker requests."}

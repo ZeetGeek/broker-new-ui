@@ -397,7 +397,7 @@ export function OwnerListingsGrid({
                 estimateRowHeight={520}
                 gap={24}
                 breakpoints={GRID_BREAKPOINTS}
-                ariaLabel="Owner listings"
+                ariaLabel="Marketplace"
                 renderItem={(item, index) => {
                     const listing = toBrowsePropertyCardListing(item);
                     const requested = hasRequested(item);

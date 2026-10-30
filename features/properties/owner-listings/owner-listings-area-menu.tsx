@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState, type KeyboardEvent, type PointerEvent } from "react";
-
-import { Ruler } from "@/components/shared/icons";
+import { type KeyboardEvent, type PointerEvent, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { Ruler } from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -136,11 +135,13 @@ export function OwnerListingsAreaMenu({
     const [maxDraft, setMaxDraft] = useState(synced.maxDraft);
     const isActive = Boolean(minAreaSqft || maxAreaSqft);
 
-    useEffect(() => {
+    const [appliedRange, setAppliedRange] = useState({ minAreaSqft, maxAreaSqft });
+    if (appliedRange.minAreaSqft !== minAreaSqft || appliedRange.maxAreaSqft !== maxAreaSqft) {
+        setAppliedRange({ minAreaSqft, maxAreaSqft });
         const next = draftsFromApplied(minAreaSqft, maxAreaSqft);
         setMinDraft(next.minDraft);
         setMaxDraft(next.maxDraft);
-    }, [minAreaSqft, maxAreaSqft]);
+    }
 
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
@@ -148,7 +149,7 @@ export function OwnerListingsAreaMenu({
     };
 
     const commitRange = (low: number, high: number) => {
-        let nextLow = snapArea(low);
+        const nextLow = snapArea(low);
         let nextHigh = snapArea(high);
         // A max under min is raised so it stays above the minimum.
         if (nextHigh < nextLow) nextHigh = nextLow;
@@ -218,14 +219,18 @@ export function OwnerListingsAreaMenu({
 
                         <div className="flex items-start gap-3">
                             <label className="flex flex-1 flex-col gap-1.5 min-inline-0">
-                                <span className="text-[11px] font-semibold tracking-wide text-ink-muted uppercase">
+                                <span
+                                    className="
+                                  text-[11px] font-semibold tracking-wide text-ink-muted uppercase
+                                "
+                                >
                                     Min
                                 </span>
                                 <div className={AREA_INPUT_SHELL}>
                                     <span className="body-sm shrink-0 font-medium text-ink-subtle">
                                         sq ft
                                     </span>
-                                    <span className="block-3.5 inline-px bg-border" aria-hidden />
+                                    <span className="bg-border block-3.5 inline-px" aria-hidden />
                                     <Input
                                         type="text"
                                         inputMode="numeric"
@@ -250,14 +255,18 @@ export function OwnerListingsAreaMenu({
                             </label>
 
                             <label className="flex flex-1 flex-col gap-1.5 min-inline-0">
-                                <span className="text-[11px] font-semibold tracking-wide text-ink-muted uppercase">
+                                <span
+                                    className="
+                                  text-[11px] font-semibold tracking-wide text-ink-muted uppercase
+                                "
+                                >
                                     Max
                                 </span>
                                 <div className={AREA_INPUT_SHELL}>
                                     <span className="body-sm shrink-0 font-medium text-ink-subtle">
                                         sq ft
                                     </span>
-                                    <span className="block-3.5 inline-px bg-border" aria-hidden />
+                                    <span className="bg-border block-3.5 inline-px" aria-hidden />
                                     <Input
                                         type="text"
                                         inputMode="numeric"
@@ -301,10 +310,10 @@ export function OwnerListingsAreaMenu({
                                             key={index}
                                             className={cn(
                                                 `
-                                                  min-inline-0 flex-1 rounded-[3px]
+                                                  flex-1 rounded-[3px]
                                                   transition-[background-color,opacity,transform]
-                                                  duration-160
-                                                  ease-[cubic-bezier(0.22,1,0.36,1)]
+                                                  duration-160 ease-[cubic-bezier(0.22,1,0.36,1)]
+                                                  min-inline-0
                                                 `,
                                                 active
                                                     ? "bg-brand opacity-100"
@@ -333,24 +342,22 @@ export function OwnerListingsAreaMenu({
                                     commitRange(Math.min(low, high), Math.max(low, high));
                                 }}
                                 className="
-                                  [&>div]:py-2.5
-                                  [&>div>div]:rounded-full
-                                  [&>div>div]:bg-border
-                                  [&>div>div]:block-1.5
-                                  [&>div>div>div:first-child]:rounded-full
-                                  [&>div>div>div:first-child]:bg-brand
-                                  [&_[class*='block-5']]:border-[3px]
-                                  [&_[class*='block-5']]:border-brand
-                                  [&_[class*='block-5']]:bg-surface
-                                  [&_[class*='block-5']]:shadow-md
-                                  [&_[class*='block-5']]:block-6
-                                  [&_[class*='block-5']]:inline-6
-                                  [&_[class*='block-5']]:transition-[box-shadow,transform]
-                                  [&_[class*='block-5']]:duration-160
-                                  [&_[class*='block-5']]:ease-[cubic-bezier(0.22,1,0.36,1)]
                                   [&_[class*='block-5'][data-dragging]]:scale-110
                                   [&_[class*='block-5'][data-dragging]]:ring-3
                                   [&_[class*='block-5'][data-dragging]]:ring-brand/25
+                                  **:[[class*='block-5']]:border-[3px]
+                                  **:[[class*='block-5']]:border-brand
+                                  **:[[class*='block-5']]:bg-surface
+                                  **:[[class*='block-5']]:shadow-md
+                                  **:[[class*='block-5']]:transition-[box-shadow,transform]
+                                  **:[[class*='block-5']]:duration-160
+                                  **:[[class*='block-5']]:ease-[cubic-bezier(0.22,1,0.36,1)]
+                                  **:[[class*='block-5']]:block-6 **:[[class*='block-5']]:inline-6
+                                  [&>div]:py-2.5
+                                  [&>div>div]:rounded-full [&>div>div]:bg-border
+                                  [&>div>div]:block-1.5
+                                  [&>div>div>div:first-child]:rounded-full
+                                  [&>div>div>div:first-child]:bg-brand
                                 "
                             />
                         </div>

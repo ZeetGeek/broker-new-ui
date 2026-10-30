@@ -12,10 +12,11 @@ export const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true";
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "YesBroker";
 
 /**
- * Broker marketplace: Owner listings, My Deals, and the dashboard's My deals,
- * You represent and New in your areas sections. On unless set to `false`.
+ * Owner accounts and marketplace workflows are deferred for the broker-only launch.
+ * Enable explicitly with `true` for the later owner phase. NEXT_PUBLIC settings
+ * are baked into the client bundle: changing this requires a fresh build.
  */
-export const FEATURE_PLATFORM_OWNER = process.env.NEXT_PUBLIC_FEATURE_PLATFORM_OWNER !== "false";
+export const FEATURE_PLATFORM_OWNER = process.env.NEXT_PUBLIC_FEATURE_PLATFORM_OWNER === "true";
 
 export const SITE_URL =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "http://localhost:3000";

@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { createClientId } from "@/lib/client-id";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
-import { MAX_PROPERTY_PHOTOS } from "@/lib/properties/form-media";
+import { MAX_PROPERTY_PHOTOS, PROPERTY_COVER_SIZE_GUIDANCE } from "@/lib/properties/form-media";
 import {
     DEFAULT_PROPERTY_DRAFT,
     OWNER_SALE_COMMISSION_MAX,
@@ -334,7 +334,7 @@ export function QuickAdd({
 
             <WizardSection
                 title={<>Location</>}
-                description="Where buyers will find this property."
+                description="Where clients will find this property."
             >
                 <div className={FORM_GRID_CLASS}>
                     <SelectField
@@ -548,8 +548,8 @@ export function QuickAdd({
                             {cover?.url ? (
                                 <div
                                     className="
-                                      group relative aspect-3/4 flex-1 overflow-hidden rounded-card
-                                      bg-surface-muted min-block-48
+                                      group relative aspect-4/3 shrink-0 overflow-hidden
+                                      rounded-card bg-surface-muted
                                     "
                                 >
                                     <AppImage
@@ -604,10 +604,10 @@ export function QuickAdd({
                                     onClick={() => coverInputRef.current?.click()}
                                     className={cn(
                                         `
-                                          flex aspect-3/4 flex-1 cursor-pointer flex-col
+                                          flex aspect-4/3 shrink-0 cursor-pointer flex-col
                                           items-center justify-center rounded-card border-2
                                           border-dashed bg-brand-soft/40 px-4 py-6 text-center
-                                          transition-colors duration-160 min-block-48
+                                          transition-colors duration-160
                                           hover:border-brand/50 hover:bg-brand-soft/55
                                           focus-visible:ring-3 focus-visible:ring-ring/30
                                           focus-visible:outline-none
@@ -627,11 +627,12 @@ export function QuickAdd({
                                     <span className="mbs-3 text-sm font-bold text-ink">
                                         Upload cover
                                     </span>
-                                    <span className="mbs-1 text-xs text-ink-muted">
-                                        Portrait · up to 10 MB
-                                    </span>
                                 </button>
                             )}
+                            <div className="space-y-1 text-xs text-ink-muted">
+                                <p>{PROPERTY_COVER_SIZE_GUIDANCE}</p>
+                                <p>Keep the property centered · Max 10 MB</p>
+                            </div>
                             {coverError ? (
                                 <p role="alert" className="text-sm text-danger">
                                     {coverError}

@@ -29,7 +29,7 @@ function Fact({ label, value, empty }: { label: string; value: string | null; em
 }
 
 function LeadRow({ lead }: { lead: PropertyAnalyticsLead }) {
-    const name = lead.buyerName?.trim() || "Unnamed buyer";
+    const name = lead.buyerName?.trim() || "Unnamed client";
     const phone = lead.buyerPhone?.trim() || null;
     const contact = [phone ? formatPhoneIn(phone) : null, lead.buyerEmail?.trim() || null]
         .filter(Boolean)
@@ -79,11 +79,17 @@ function LeadRow({ lead }: { lead: PropertyAnalyticsLead }) {
             </dl>
 
             {lead.notes?.trim() ? (
-                <p className="
-                  body-sm flex items-start gap-2 rounded-inner bg-surface-muted px-3 py-2
-                  text-ink-muted
-                ">
-                    <StickyNote aria-hidden className="mbs-0.5 shrink-0 block-4 inline-4" strokeWidth={1.75} />
+                <p
+                    className="
+                      body-sm flex items-start gap-2 rounded-inner bg-surface-muted px-3 py-2
+                      text-ink-muted
+                    "
+                >
+                    <StickyNote
+                        aria-hidden
+                        className="mbs-0.5 shrink-0 block-4 inline-4"
+                        strokeWidth={1.75}
+                    />
                     <span className="wrap-break-word min-inline-0">{lead.notes.trim()}</span>
                 </p>
             ) : null}
@@ -118,10 +124,12 @@ function LeadRow({ lead }: { lead: PropertyAnalyticsLead }) {
 
 export function LeadList({ leads }: { leads: PropertyAnalyticsLead[] }) {
     return (
-        <ul className="
-          divide-y divide-border-warm overflow-hidden rounded-card border border-border-warm
-          bg-surface shadow-sm
-        ">
+        <ul
+            className="
+              divide-y divide-border-warm overflow-hidden rounded-card border border-border-warm
+              bg-surface shadow-sm
+            "
+        >
             {leads.map((lead) => (
                 <li key={lead.id}>
                     <LeadRow lead={lead} />

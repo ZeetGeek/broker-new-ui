@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 
-import { StickyNote } from "@/components/shared/icons";
-
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { StickyNote } from "@/components/shared/icons";
 import { Textarea } from "@/components/ui/textarea";
 
 import { DEAL_OUTCOME_META, DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
@@ -100,7 +99,7 @@ export function StageNoteModal({
                     onChange={(event) => setNote(event.target.value)}
                     rows={4}
                     maxLength={500}
-                    placeholder="e.g. Buyer liked the balcony, wants a second visit"
+                    placeholder="e.g. Client liked the balcony, wants a second visit"
                     className="rounded-inner"
                     disabled={isSaving}
                 />

@@ -1,14 +1,17 @@
 "use client";
 
-import { type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 
+import { useQuery } from "@tanstack/react-query";
+
+import { profileApi } from "@/lib/api/profile";
 import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
-import type { ShortcutId } from "@/lib/shortcuts";
 import {
     BROKER_MY_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
+import type { ShortcutId } from "@/lib/shortcuts";
 
 import { PortalHeader } from "@/components/layout/portal-header";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
@@ -26,7 +29,8 @@ import { ChatProvider } from "@/features/chat/chat-provider";
 import { ShortcutsCheatsheet } from "@/features/shortcuts/shortcuts-cheatsheet";
 import { useGlobalShortcuts } from "@/features/shortcuts/use-global-shortcuts";
 import { NotificationProvider } from "@/providers/notification-provider";
-import { useAppSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { setProfile } from "@/store/slices/dashboard-slice";
 
 const BROKER_NOTIFICATIONS_HREF = "/broker/notifications";
 
@@ -39,15 +43,14 @@ const BROKER_SHORTCUT_ROUTES = {
     pipeline: "/broker/pipeline",
     contacts: "/broker/contacts",
     visits: "/broker/visits",
-    referrals: "/broker/referrals",
+    ...(FEATURE_PLATFORM_OWNER ? { referrals: "/broker/referrals" } : {}),
     notifications: BROKER_NOTIFICATIONS_HREF,
     profile: "/broker/profile",
-    settings: "/broker/settings",
 };
 
 const BROKER_HIDDEN_SHORTCUTS: ShortcutId[] = FEATURE_PLATFORM_OWNER
-    ? []
-    : ["owner_listings", "my_deals"];
+    ? ["settings"]
+    : ["owner_listings", "my_deals", "referrals", "settings"];
 
 export function BrokerPortalShell({ children }: { children: ReactNode }) {
     return (
@@ -59,8 +62,23 @@ export function BrokerPortalShell({ children }: { children: ReactNode }) {
 
 function BrokerPortalShellInner({ children }: { children: ReactNode }) {
     const sectionNav = usePortalSectionNav();
+    const dispatch = useAppDispatch();
     const user = useAppSelector((state) => state.auth.user);
-    const profile = useAppSelector((state) => state.dashboard.profile);
+    const cachedProfile = useAppSelector((state) => state.dashboard.profile);
+
+    // The account header needs the server profile on every broker route, not
+    // only after visiting Dashboard or Profile. Reuse the marketplace query
+    // key so opening that route doesn't issue a second profile request.
+    const profileQuery = useQuery({
+        queryKey: ["owner-listings-profile", user?.id],
+        queryFn: ({ signal }) => profileApi.get(signal),
+        enabled: Boolean(user?.id) && !cachedProfile,
+    });
+    const profile = cachedProfile ?? profileQuery.data ?? null;
+
+    useEffect(() => {
+        if (!cachedProfile && profileQuery.data) dispatch(setProfile(profileQuery.data));
+    }, [cachedProfile, dispatch, profileQuery.data]);
 
     const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);

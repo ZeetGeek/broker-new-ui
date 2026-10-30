@@ -18,8 +18,8 @@ function Tabs({ className, orientation = "horizontal", ...props }: TabsPrimitive
 
 const tabsListVariants = cva(
     `
-      group/tabs-list inline-flex items-center justify-center rounded-control p-1 text-muted-foreground
-      inline-fit
+      group/tabs-list inline-flex items-center justify-center rounded-control p-1
+      text-muted-foreground inline-fit
       group-data-horizontal/tabs:block-9
       group-data-vertical/tabs:flex-col group-data-vertical/tabs:rounded-control
       group-data-vertical/tabs:block-fit

@@ -3,6 +3,14 @@
 import { memo } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
+
+import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
+import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { cn } from "@/lib/utils";
+import { isVisitCancelled, VISIT_STATUS, visitPrimaryAction } from "@/lib/visits/status";
+import { durationMinutes, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
+
+import { AppImage } from "@/components/shared/app-image";
 import {
     CalendarClock,
     Clock3,
@@ -15,14 +23,6 @@ import {
     Route,
     Trash2,
 } from "@/components/shared/icons";
-
-import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
-import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
-import { cn } from "@/lib/utils";
-import { isVisitCancelled, VISIT_STATUS, visitPrimaryAction } from "@/lib/visits/status";
-import { durationMinutes, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
-
-import { AppImage } from "@/components/shared/app-image";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,7 @@ import {
 import { APP_NAME } from "@/config";
 import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
+import { USE_MOCK_VISITS } from "@/mocks/visits";
 import { useAppSelector } from "@/store/hooks";
 
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
@@ -69,7 +70,8 @@ export const VisitCard = memo(function VisitCard({
     const StatusIcon = status.icon;
     const cancelled = isVisitCancelled(visit.status);
     const action = visitPrimaryAction(visit.status, visit.startsAt, Boolean(visit.outcome));
-    const primary = action === "outcome" ? null : action;
+    const primary =
+        action === "outcome" || (action === "reschedule" && !USE_MOCK_VISITS) ? null : action;
     const primaryLabel = primary === "withdraw" ? "Cancel request" : "Reschedule";
     const PrimaryIcon = primary === "withdraw" ? Trash2 : CalendarClock;
     const buyer = visit.buyers[0];
@@ -88,7 +90,7 @@ export const VisitCard = memo(function VisitCard({
         `Hi ${buyer.name}, your site visit for ${visit.property.title}, ${visit.property.locality} is confirmed for ${formatVisitDayHeading(visit.startsAt)} at ${formatVisitTime(visit.startsAt)}. Address: ${visit.property.address}. I${APOSTROPHE}ll meet you there. ${EM_DASH} ${brokerName}, ${APP_NAME}`,
     );
     const buyerLabel =
-        visit.buyers.length > 1 ? `Buyers ${DOT} +${visit.buyers.length - 1}` : "Buyer";
+        visit.buyers.length > 1 ? `Clients ${DOT} +${visit.buyers.length - 1}` : "Client";
     const duration = durationMinutes(visit.startsAt, visit.endsAt);
     const metaName =
         formatPropertyCardName(visit.property.propertyType, visit.property.areaSqft, {
@@ -260,6 +262,7 @@ export const VisitCard = memo(function VisitCard({
                         />
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem
+                                closeOnClick={false}
                                 onClick={() => {
                                     void navigator.clipboard.writeText(visit.property.address);
                                 }}
@@ -296,7 +299,7 @@ export const VisitCard = memo(function VisitCard({
                             variant="ghost"
                             size="sm"
                         >
-                            <Phone aria-hidden /> Call buyer
+                            <Phone aria-hidden /> Call client
                         </Button>
                         <Button
                             nativeButton={false}

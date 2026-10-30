@@ -36,18 +36,14 @@ const RADIO_OPTION_ITEM_CLASS =
 function optionCardClassName(active: boolean, hasDescription: boolean, disabled?: boolean) {
     return cn(
         `
-          flex cursor-pointer gap-3 rounded-control border px-4 py-3 text-start font-normal
-          leading-normal
-          transition-[background-color,border-color,color] duration-160 min-block-12
+          flex cursor-pointer gap-3 rounded-control border px-4 py-3 text-start leading-normal
+          font-normal transition-[background-color,border-color,color] duration-160 min-block-12
           has-focus-visible:ring-3 has-focus-visible:ring-ring/30
         `,
         hasDescription ? "items-start" : "items-center",
         active
             ? "border-brand bg-brand-soft text-brand-text"
-            : `
-              border-border-warm bg-surface text-ink
-              hover:border-brand/40
-            `,
+            : `border-border-warm bg-surface text-ink hover:border-brand/40`,
         disabled && "pointer-events-none opacity-50",
     );
 }
@@ -97,11 +93,9 @@ function OptionCardGroup({
                             className={cn(RADIO_OPTION_ITEM_CLASS, hasDescription && "mts-0.5")}
                         />
                         <span className="min-inline-0">
-                            <span className="block text-sm leading-5 font-semibold">
-                                {option.label}
-                            </span>
+                            <span className="block text-sm/5 font-semibold">{option.label}</span>
                             {option.description ? (
-                                <span className="mbs-1 block text-xs leading-4 text-ink-muted">
+                                <span className="mbs-1 block text-xs/4 text-ink-muted">
                                     {option.description}
                                 </span>
                             ) : null}
@@ -167,10 +161,10 @@ function LiveListingDemo() {
                                 className={cn(RADIO_OPTION_ITEM_CLASS, "mts-0.5")}
                             />
                             <span className="min-inline-0">
-                                <span className="block text-sm leading-5 font-semibold">
+                                <span className="block text-sm/5 font-semibold">
                                     {option.label}
                                 </span>
-                                <span className="mbs-1 block text-xs leading-4 text-ink-muted">
+                                <span className="mbs-1 block text-xs/4 text-ink-muted">
                                     {option.description}
                                 </span>
                             </span>

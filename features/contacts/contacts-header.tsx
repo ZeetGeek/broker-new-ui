@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 
+import { getShortcut } from "@/lib/shortcuts";
+import { cn } from "@/lib/utils";
+
+import { FilterChip, filterChipClassName } from "@/components/shared/filter-chip";
 import {
     ArrowDownUp,
     ChevronDown,
@@ -10,13 +14,7 @@ import {
     UserRound,
     Users,
 } from "@/components/shared/icons";
-
-import { getShortcut } from "@/lib/shortcuts";
-import { cn } from "@/lib/utils";
-
-import { FilterChip, filterChipClassName } from "@/components/shared/filter-chip";
 import { Button } from "@/components/ui/button";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -24,6 +22,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
@@ -65,7 +64,7 @@ function ContactsQueryInput({ value, onChange }: { value: string; onChange: (q: 
             value={draft}
             onValueChange={setDraft}
             placeholder="Search name, number or area"
-            aria-label="Search your contacts"
+            aria-label="Search your clients"
             startIcon={Search}
             clearable
             wrapperClassName="
@@ -97,7 +96,7 @@ export function ContactsHeader({
     onAdd: () => void;
 }) {
     const isBuyers = filters.tab === "buyers";
-    const addLabel = isBuyers ? "Add buyer" : "Add owner";
+    const addLabel = isBuyers ? "Add client" : "Add owner";
     const addShortcut = getShortcut("add_contact");
 
     const setTab = (tab: ContactsTab) => {
@@ -113,8 +112,8 @@ export function ContactsHeader({
                             [
                                 {
                                     value: "buyers" as const,
-                                    label: "Buyers",
-                                    mobileLabel: "Buyers",
+                                    label: "Clients",
+                                    mobileLabel: "Clients",
                                     icon: Users,
                                     count: summary?.buyerCount ?? 0,
                                     description: "People you’re helping find a property",
@@ -275,8 +274,7 @@ export function ContactsHeader({
                                             key={key}
                                             className="
                                               border-surface/25 bg-surface/15 px-1.5 text-[10px]
-                                              text-surface min-inline-4
-                                              [box-shadow:none]
+                                              text-surface [box-shadow:none] min-inline-4
                                             "
                                         >
                                             {key}

@@ -2,12 +2,11 @@
 
 import { memo } from "react";
 
-import { Check, Clock3, Info, X } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 import { getSlotVisualState } from "@/lib/visits/status";
 import { formatVisitA11yDate, formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
+import { Check, Clock3, Info, X } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
     Popover,
@@ -47,7 +46,7 @@ export const SlotChip = memo(function SlotChip({
         : state === "last"
           ? "1 spot left"
           : state === "booked"
-            ? `booked by you for ${slot.bookedBuyerName ?? "your buyer"}`
+            ? `booked by you for ${slot.bookedBuyerName ?? "your client"}`
             : state === "requested"
               ? "requested by you"
               : state === "full"

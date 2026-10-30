@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
-import { Check, Copy, MessageSquare, Share2, UserRoundPlus } from "@/components/shared/icons";
-
 import { copyText } from "@/lib/clipboard";
 import { buildSmsInviteUrl, buildWhatsAppInviteUrl } from "@/lib/share/referral";
 import { cn } from "@/lib/utils";
 
+import { Check, Copy, MessageSquare, Share2, UserRoundPlus } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import { buildInviteMessage } from "@/features/referrals/referral-meta";

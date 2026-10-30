@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
-import type { AppIcon } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
+
+import type { AppIcon } from "@/components/shared/icons";
 
 export type EmptyStateProps = {
     icon: AppIcon;

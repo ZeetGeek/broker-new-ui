@@ -1,7 +1,6 @@
 "use client";
 
 import { Bell, Info, LayoutGrid } from "@/components/shared/icons";
-
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Button } from "@/components/ui/button";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
@@ -105,7 +104,11 @@ export function TooltipThemePage() {
                         <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             {TOOLTIP_SIDES.map((side) => (
                                 <Swatch key={side.name} label={side.label}>
-                                    <div className="flex min-block-16 items-center justify-center inline-full">
+                                    <div
+                                        className="
+                                      flex items-center justify-center inline-full min-block-16
+                                    "
+                                    >
                                         <SideDemo side={side.name} />
                                     </div>
                                     <p className="body-xs text-ink-subtle">{side.note}</p>
@@ -145,10 +148,10 @@ export function TooltipThemePage() {
                                             <button
                                                 type="button"
                                                 className="
-                                                  inline-flex items-center justify-center rounded-full
-                                                  text-ink-muted
+                                                  inline-flex items-center justify-center
+                                                  rounded-full text-ink-muted min-block-8
+                                                  min-inline-8
                                                   hover:text-ink
-                                                  min-block-8 min-inline-8
                                                 "
                                                 aria-label="What this means"
                                             >

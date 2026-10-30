@@ -6,6 +6,7 @@ import {
     stripHiddenOwnerListingsFilters,
 } from "../../features/properties/owner-listings/filter-visibility";
 import { DEFAULT_OWNER_LISTINGS_FILTERS } from "../../features/properties/owner-listings/types";
+
 import {
     collectPropertyPages,
     EMPTY_PROPERTY_CRITERIA,
@@ -124,7 +125,7 @@ test("changing to plot clears hidden advanced filters", () => {
     assert.deepEqual(filters.suitableFor, []);
 });
 
-test("My Deals condition and room filters require matching property facts", () => {
+test("Requests & Invitations condition and room filters require matching property facts", () => {
     const readyThreeBhk = {
         bhk: 3,
         bathrooms: 2,

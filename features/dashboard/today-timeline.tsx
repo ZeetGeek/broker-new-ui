@@ -3,10 +3,9 @@
 import { type RefObject, useEffect, useRef } from "react";
 import Link from "next/link";
 
-import { CircleCheck, MapPin, Phone } from "@/components/shared/icons";
-
 import { cn } from "@/lib/utils";
 
+import { CircleCheck, MapPin, Phone } from "@/components/shared/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { TodayItem } from "./mock-data";
@@ -67,6 +66,13 @@ function rowHint(item: TodayItem): string {
     if (item.state === "blocked") {
         return `This ${what} is blocked and needs your attention. Open it to sort it out.`;
     }
+    if (item.state === "elapsed") {
+        return "The start time has passed, but this visit has not been marked done. Open it to check the status.";
+    }
+    if (item.state === "cancelled")
+        return "This visit was cancelled. Open it to review the details.";
+    if (item.state === "missed")
+        return "A no-show was recorded for this visit. Open it to review the details.";
     if (item.isNext) {
         return `Your next ${what} today. Open it for directions and client details.`;
     }
@@ -76,7 +82,8 @@ function rowHint(item: TodayItem): string {
 function TimelineRow({ item }: { item: TodayItem }) {
     const isDone = item.state === "done";
     const isNext = Boolean(item.isNext) && !isDone;
-    const isBlocked = item.state === "blocked";
+    const isBlocked =
+        item.state === "blocked" || item.state === "elapsed" || item.state === "missed";
     const hint = rowHint(item);
 
     return (
@@ -188,6 +195,9 @@ export type TodayTimelineProps = {
 export function TodayTimeline({ timeline, doneCount }: TodayTimelineProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const nowRef = useRef<HTMLLIElement>(null);
+    const pastAttentionCount = timeline.filter(
+        (entry) => entry.type === "item" && entry.item.state === "elapsed",
+    ).length;
 
     useEffect(() => {
         const container = scrollRef.current;
@@ -198,11 +208,11 @@ export function TodayTimeline({ timeline, doneCount }: TodayTimelineProps) {
 
         // Wait a frame so row heights are settled before measuring.
         const frame = requestAnimationFrame(() => {
-            scrollTimelineFocus(container, nowEl, doneCount);
+            scrollTimelineFocus(container, nowEl, doneCount + pastAttentionCount);
         });
 
         return () => cancelAnimationFrame(frame);
-    }, [doneCount]);
+    }, [doneCount, pastAttentionCount]);
 
     return (
         <div ref={scrollRef} className={cn("absolute inset-0", SCROLL_HIDE)}>

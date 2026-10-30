@@ -1,7 +1,7 @@
-import { toLabel } from "@/constants/property";
 import { getActiveCurrency } from "@/lib/format/currency";
 import { formatPrice, formatRent } from "@/lib/format/price";
 
+import { toLabel } from "@/constants/property";
 import type {
     OwnerListingCategory,
     OwnerListingFurnishing,

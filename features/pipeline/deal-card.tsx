@@ -1,46 +1,30 @@
 "use client";
 
-import {
-    Fragment,
-    type KeyboardEvent,
-    type ReactNode,
-    useLayoutEffect,
-    useRef,
-    useState,
-} from "react";
+import { type KeyboardEvent, useLayoutEffect, useRef, useState } from "react";
 
-import { addCollection, Icon } from "@iconify/react/offline";
-
-import { isOverBudget } from "@/lib/api/pipeline";
-import { getStoredUser } from "@/lib/auth/session";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
+import { HoldToConfirmMenuItem } from "@/components/shared/hold-to-confirm-menu-item";
 import {
     Building2,
-    Check,
-    CircleSlash,
-    Eye,
+    CallIcon,
     GripVertical,
-    Handshake,
     MapPin,
-    MoreHorizontal,
-    Phone,
-    PhoneCall,
     Pin,
-    PinOff,
-    StickyNote,
-    Undo2,
+    PropertyMenuIcon,
+    WhatsAppIcon,
 } from "@/components/shared/icons";
 import { OVERLAY_GLASS_BUTTON_CLASS, OverlayCardActions } from "@/components/shared/overlay-card";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
-import { Badge, type BadgeColor } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
+    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
@@ -48,19 +32,8 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
-import { ChipOverflowPopover, type ChipTone } from "@/features/pipeline/chip-overflow-popover";
-import {
-    type AttentionTone,
-    daysInStage,
-    daysWithoutMovement,
-    dealAttention,
-    type OtherBuyer,
-} from "@/features/pipeline/deal-attention";
 import { DealPartiesPanel } from "@/features/pipeline/deal-parties-panel";
-import { MoreBuyersPopover } from "@/features/pipeline/more-buyers-popover";
-import { ContactedStageBlock } from "@/features/pipeline/stage-blocks/contacted-stage-block";
 import { NegotiationStageBlock } from "@/features/pipeline/stage-blocks/negotiation-stage-block";
-import { NewStageBlock } from "@/features/pipeline/stage-blocks/new-stage-block";
 import { VisitStageBlock } from "@/features/pipeline/stage-blocks/visit-stage-block";
 import { DEAL_OUTCOME_META, DEAL_STAGE_META, isOutcome } from "@/features/pipeline/stage-meta";
 import {
@@ -70,11 +43,7 @@ import {
     type DealStage,
     type DealStatus,
     isLiveStage,
-    nextStage,
 } from "@/features/pipeline/types";
-import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
-
-addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
 
 export type DealCardHandlers = {
     onView: (dealId: string) => void;
@@ -108,10 +77,10 @@ const CHROME_ICON_BUTTON_CLASS = `
   hover:border-ink/20 hover:bg-surface-muted hover:text-ink
 `;
 
-/** Same surface + hover as the broker profile menu. */
+/** Same surface, row rhythm, and hover treatment as the property listing menu. */
 const DEAL_MENU_SURFACE_CLASS = `
-  t-dropdown t-profile-menu animate-none! min-inline-56 rounded-inner border border-border-warm
-  bg-surface p-3 text-ink shadow-lg ring-0
+  t-dropdown t-profile-menu animate-none! min-inline-56 rounded-card border border-border-warm
+  bg-surface p-1.5 text-ink shadow-xl ring-0
   before:backdrop-blur-none
   data-closed:animate-none!
   data-open:animate-none!
@@ -126,15 +95,15 @@ const DEAL_MENU_SURFACE_CLASS = `
 `;
 
 const DEAL_MENU_ITEM_CLASS = `
-  body-sm h-9 cursor-pointer gap-2.5 rounded-inner px-3 font-medium text-ink
+  body-sm min-block-11 cursor-pointer gap-3 rounded-inner px-3 font-medium text-ink
   focus:bg-surface-muted! focus:text-ink!
   data-highlighted:bg-surface-muted! data-highlighted:text-ink!
   not-data-[variant=destructive]:focus:**:text-ink!
   not-data-[variant=destructive]:data-highlighted:**:text-ink!
 `;
 
-const DEAL_MENU_ICON_CLASS = "menu-stroke-icon shrink-0 block-4 inline-4 text-ink!";
-const DEAL_MENU_SEPARATOR_CLASS = "mx-0! my-2.5 bg-border-warm inline-full!";
+const DEAL_MENU_ICON_CLASS = "menu-stroke-icon shrink-0 text-ink! block-4.5! inline-4.5!";
+const DEAL_MENU_SEPARATOR_CLASS = "mx-1.5 my-1.5 bg-border-warm";
 
 /** Stage-colored dashed border with tunable dash length / gap. */
 function PinnedDashBorder({ toneClass }: { toneClass: string }) {
@@ -233,126 +202,6 @@ function DealCoverImage({ property, muted = false }: { property: DealProperty; m
     );
 }
 
-type ChipCandidate = {
-    key: string;
-    label: string;
-    tone: ChipTone;
-    /** Overrides the plain label span — e.g. the other-buyers popover trigger. */
-    render?: ReactNode;
-};
-
-/** Blocker facts outrank money facts, which outrank plain neutral facts. */
-const CHIP_TONE_RANK: Record<ChipTone, number> = { danger: 0, urgent: 1, neutral: 2 };
-
-const STAGE_BADGE_COLOR: Record<DealStage, BadgeColor> = {
-    new: "sky",
-    contacted: "violet",
-    visit: "amber",
-    negotiation: "emerald",
-};
-
-function chipColor(tone: ChipTone): BadgeColor {
-    if (tone === "danger") return "red";
-    if (tone === "urgent") return "orange";
-    return "stone";
-}
-
-function buildChipCandidates(
-    deal: DealItem,
-    live: boolean,
-    attention: AttentionTone,
-    otherBuyers: OtherBuyer[],
-    onView: (dealId: string) => void,
-): ChipCandidate[] {
-    const items: ChipCandidate[] = [];
-
-    if (deal.property.isExclusiveProperty) {
-        items.push({ key: "exclusive", label: "Exclusive property", tone: "neutral" });
-    }
-
-    if (!deal.owner.isRepresentationActive) {
-        items.push({ key: "repr", label: "Representation ended", tone: "danger" });
-    }
-
-    if (live) {
-        if (attention !== "healthy") {
-            const days = daysWithoutMovement(deal);
-            items.push({
-                key: "warning",
-                label: `No response · ${days} ${days === 1 ? "day" : "days"}`,
-                tone: attention === "quiet" ? "danger" : "urgent",
-            });
-        }
-
-        // Neutral, not urgent. This fires on a large share of a typical board,
-        // and docs/DESIGN.md §1.3 reserves orange for an actual deadline — an
-        // "alert" that appears on half the cards has stopped being one.
-        if (isOverBudget(deal)) {
-            items.push({ key: "budget", label: "Over budget", tone: "neutral" });
-        }
-
-        if (otherBuyers.length > 0) {
-            items.push({
-                key: "buyers",
-                label: `${otherBuyers.length} more ${otherBuyers.length === 1 ? "buyer" : "buyers"}`,
-                tone: "neutral",
-                render: (
-                    <MoreBuyersPopover
-                        count={otherBuyers.length}
-                        buyers={otherBuyers}
-                        onView={onView}
-                    />
-                ),
-            });
-        }
-    }
-
-    return items;
-}
-
-/**
- * Soft chips under the summary — blockers and competing buyers. Stage and
- * sale/rent sit in the card chrome above the photo strip.
- */
-function CardChips({
-    deal,
-    live,
-    attention,
-    otherBuyers,
-    onView,
-}: {
-    deal: DealItem;
-    live: boolean;
-    attention: AttentionTone;
-    otherBuyers: OtherBuyer[];
-    onView: (dealId: string) => void;
-}) {
-    const ranked = buildChipCandidates(deal, live, attention, otherBuyers, onView).sort(
-        (a, b) => CHIP_TONE_RANK[a.tone] - CHIP_TONE_RANK[b.tone],
-    );
-    const exclusive = ranked.find((chip) => chip.key === "exclusive");
-    const rest = ranked.filter((chip) => chip.key !== "exclusive");
-    const visible = exclusive ? [exclusive, ...rest.slice(0, 1)] : rest.slice(0, 1);
-    const overflow = exclusive ? rest.slice(1) : rest.slice(1);
-
-    if (visible.length === 0) return null;
-
-    return (
-        <div className="flex flex-wrap items-center gap-1.5">
-            {visible.map((chip) =>
-                chip.render ? (
-                    <Fragment key={chip.key}>{chip.render}</Fragment>
-                ) : (
-                    <Badge key={chip.key} color={chipColor(chip.tone)}>
-                        {chip.label}
-                    </Badge>
-                ),
-            )}
-            {overflow.length > 0 ? <ChipOverflowPopover items={overflow} /> : null}
-        </div>
-    );
-}
-
 /**
  * The grip that starts a drag. Only this starts one — the card face stays a
  * link to the deal, and call / WhatsApp keep working.
@@ -407,6 +256,7 @@ function DealCardMenu({
     onMenuAction?: () => void;
 }) {
     const live = isLiveStage(deal.status);
+    const [open, setOpen] = useState(false);
 
     function act(event: { stopPropagation: () => void }, action: () => void) {
         runMenuAction(event, () => {
@@ -416,7 +266,7 @@ function DealCardMenu({
     }
 
     return (
-        <DropdownMenu>
+        <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger
                 render={
                     <Button
@@ -429,7 +279,7 @@ function DealCardMenu({
                     />
                 }
             >
-                <MoreHorizontal aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                <PropertyMenuIcon name="dots" aria-hidden className="block-4 inline-4" />
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
@@ -439,135 +289,161 @@ function DealCardMenu({
                 onClick={stopCard}
                 onPointerDown={stopCard}
             >
-                <DropdownMenuItem
-                    className={DEAL_MENU_ITEM_CLASS}
-                    onClick={(event) => act(event, () => handlers.onView(deal.id))}
-                >
-                    <Eye aria-hidden className={DEAL_MENU_ICON_CLASS} strokeWidth={1.75} />
-                    View details
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    className={DEAL_MENU_ITEM_CLASS}
-                    onClick={(event) => act(event, () => handlers.onPin(deal.id))}
-                >
-                    {isPinned ? (
-                        <PinOff aria-hidden className={DEAL_MENU_ICON_CLASS} strokeWidth={1.75} />
-                    ) : (
-                        <Pin aria-hidden className={DEAL_MENU_ICON_CLASS} strokeWidth={1.75} />
-                    )}
-                    {isPinned ? "Unpin" : "Pin to top"}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    className={DEAL_MENU_ITEM_CLASS}
-                    onClick={(event) => act(event, () => handlers.onNote(deal.id))}
-                >
-                    <StickyNote aria-hidden className={DEAL_MENU_ICON_CLASS} strokeWidth={1.75} />
-                    Add a note
-                </DropdownMenuItem>
-
-                {live ? (
-                    <>
-                        <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
+                <DropdownMenuGroup aria-label="Work on this deal">
+                    <DropdownMenuItem
+                        className={DEAL_MENU_ITEM_CLASS}
+                        onClick={(event) => act(event, () => handlers.onView(deal.id))}
+                    >
+                        <PropertyMenuIcon
+                            name="view"
+                            aria-hidden
+                            className={DEAL_MENU_ICON_CLASS}
+                        />
+                        View details
+                    </DropdownMenuItem>
+                    {live ? (
                         <DropdownMenuItem
                             className={DEAL_MENU_ITEM_CLASS}
                             onClick={(event) =>
                                 act(event, () => handlers.onLogContact(deal.id, deal.status))
                             }
                         >
-                            <PhoneCall
+                            <PropertyMenuIcon
+                                name="phone"
                                 aria-hidden
                                 className={DEAL_MENU_ICON_CLASS}
-                                strokeWidth={1.75}
                             />
                             Log a call
                         </DropdownMenuItem>
-                        {FEATURE_PLATFORM_OWNER ? (
-                            <DropdownMenuItem
-                                className={DEAL_MENU_ITEM_CLASS}
-                                onClick={(event) =>
-                                    act(event, () => handlers.onMakeOffer(deal.id))
-                                }
-                            >
-                                <Handshake
-                                    aria-hidden
-                                    className={DEAL_MENU_ICON_CLASS}
-                                    strokeWidth={1.75}
-                                />
-                                {deal.offerStatus === "rejected" || deal.offerStatus === "pending"
-                                    ? "Revise offer"
-                                    : "Make offer"}
-                            </DropdownMenuItem>
-                        ) : null}
-                        <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
-                        {DEAL_STAGE_ORDER.filter((stage) => stage !== deal.status).map((stage) => (
-                            <DropdownMenuItem
-                                key={stage}
-                                className={DEAL_MENU_ITEM_CLASS}
-                                onClick={(event) =>
-                                    act(event, () => handlers.onAdvance(deal.id, stage))
-                                }
-                            >
-                                <span
-                                    aria-hidden
-                                    className={cn(
-                                        "shrink-0 rounded-full block-2 inline-2",
-                                        DEAL_STAGE_META[stage].dotClass,
-                                    )}
-                                />
-                                Move to {DEAL_STAGE_META[stage].label.toLowerCase()}
-                            </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
+                    ) : null}
+                    <DropdownMenuItem
+                        className={DEAL_MENU_ITEM_CLASS}
+                        onClick={(event) => act(event, () => handlers.onNote(deal.id))}
+                    >
+                        <PropertyMenuIcon
+                            name="note"
+                            aria-hidden
+                            className={DEAL_MENU_ICON_CLASS}
+                        />
+                        Add a note
+                    </DropdownMenuItem>
+                    {live && FEATURE_PLATFORM_OWNER ? (
                         <DropdownMenuItem
                             className={DEAL_MENU_ITEM_CLASS}
-                            onClick={(event) => act(event, () => handlers.onClose(deal.id))}
+                            onClick={(event) => act(event, () => handlers.onMakeOffer(deal.id))}
                         >
-                            <Check
+                            <PropertyMenuIcon
+                                name="handshake"
                                 aria-hidden
                                 className={DEAL_MENU_ICON_CLASS}
-                                strokeWidth={1.75}
                             />
-                            Mark as sold
+                            {deal.offerStatus === "rejected" || deal.offerStatus === "pending"
+                                ? "Revise offer"
+                                : "Make offer"}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                            className={DEAL_MENU_ITEM_CLASS}
-                            variant="destructive"
-                            onClick={(event) => act(event, () => handlers.onLose(deal.id))}
-                        >
-                            <CircleSlash
-                                aria-hidden
-                                className={cn(DEAL_MENU_ICON_CLASS, "is-danger")}
-                                strokeWidth={1.75}
-                            />
-                            Mark as lost
-                        </DropdownMenuItem>
-                    </>
-                ) : (
-                    <>
-                        <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
+                    ) : null}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
+                <DropdownMenuGroup aria-label="Deal progress">
+                    {live ? (
+                        <>
+                            {DEAL_STAGE_ORDER.filter((stage) => stage !== deal.status).map(
+                                (stage) => (
+                                    <DropdownMenuItem
+                                        key={stage}
+                                        className={DEAL_MENU_ITEM_CLASS}
+                                        onClick={(event) =>
+                                            act(event, () => handlers.onAdvance(deal.id, stage))
+                                        }
+                                    >
+                                        <span
+                                            aria-hidden
+                                            className="flex shrink-0 items-center justify-center block-4.5 inline-4.5"
+                                        >
+                                            <span
+                                                className={cn(
+                                                    "rounded-full block-2 inline-2",
+                                                    DEAL_STAGE_META[stage].dotClass,
+                                                )}
+                                            />
+                                        </span>
+                                        Move to {DEAL_STAGE_META[stage].label.toLowerCase()}
+                                    </DropdownMenuItem>
+                                ),
+                            )}
+                            <DropdownMenuItem
+                                className={DEAL_MENU_ITEM_CLASS}
+                                onClick={(event) => act(event, () => handlers.onClose(deal.id))}
+                            >
+                                <PropertyMenuIcon
+                                    name="check"
+                                    aria-hidden
+                                    className={DEAL_MENU_ICON_CLASS}
+                                />
+                                Mark as sold
+                            </DropdownMenuItem>
+                        </>
+                    ) : (
                         <DropdownMenuItem
                             className={DEAL_MENU_ITEM_CLASS}
                             onClick={(event) =>
                                 act(event, () => handlers.onReopen(deal.id, "contacted"))
                             }
                         >
-                            <Undo2
+                            <PropertyMenuIcon
+                                name="reopen"
                                 aria-hidden
                                 className={DEAL_MENU_ICON_CLASS}
-                                strokeWidth={1.75}
                             />
                             Put back on the board
                         </DropdownMenuItem>
+                    )}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
+                <DropdownMenuGroup aria-label="Organize this deal">
+                    <DropdownMenuItem
+                        closeOnClick={false}
+                        className={DEAL_MENU_ITEM_CLASS}
+                        onClick={(event) => act(event, () => handlers.onPin(deal.id))}
+                    >
+                        {isPinned ? (
+                            <PropertyMenuIcon
+                                name="unpin"
+                                aria-hidden
+                                className={DEAL_MENU_ICON_CLASS}
+                            />
+                        ) : (
+                            <PropertyMenuIcon
+                                name="pin"
+                                aria-hidden
+                                className={DEAL_MENU_ICON_CLASS}
+                            />
+                        )}
+                        {isPinned ? "Unpin" : "Pin to top"}
+                    </DropdownMenuItem>
+                </DropdownMenuGroup>
+                {live ? (
+                    <>
+                        <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
+                        <DropdownMenuGroup aria-label="Mark deal as lost">
+                            <HoldToConfirmMenuItem
+                                label="Hold to mark as lost"
+                                icon="lost"
+                                onComplete={() => {
+                                    onMenuAction?.();
+                                    setOpen(false);
+                                    handlers.onLose(deal.id);
+                                }}
+                            />
+                        </DropdownMenuGroup>
                     </>
-                )}
+                ) : null}
             </DropdownMenuContent>
         </DropdownMenu>
     );
 }
 
 function StageMiddle({ deal }: { deal: DealItem }) {
-    if (deal.status === "new") return <NewStageBlock deal={deal} />;
-    if (deal.status === "contacted") return <ContactedStageBlock deal={deal} />;
     if (deal.status === "visit") return <VisitStageBlock deal={deal} />;
     if (deal.status === "negotiation") return <NegotiationStageBlock deal={deal} />;
     return null;
@@ -575,7 +451,7 @@ function StageMiddle({ deal }: { deal: DealItem }) {
 
 /**
  * Board deal card — same photo → price → people → CTA rhythm as owned
- * property cards (`OverlayCard`), so Pipeline and Your listings feel like
+ * property cards (`OverlayCard`), so Pipeline and My Listings feel like
  * one product. Field actions are labeled Call / WhatsApp; overflow + drag
  * sit on the photo like the property-card menu.
  */
@@ -585,7 +461,6 @@ export function DealCard({
     isBusy = false,
     isDragging = false,
     isPinned = false,
-    otherBuyers = [],
     dragHandleRef,
     dragHandleProps,
 }: {
@@ -594,49 +469,25 @@ export function DealCard({
     isBusy?: boolean;
     isDragging?: boolean;
     isPinned?: boolean;
-    otherBuyers?: OtherBuyer[];
     /** dnd-kit's activator ref. Marks the handle as what starts a drag. */
     dragHandleRef?: (element: HTMLElement | null) => void;
     /** Listeners + a11y attributes for the handle. Absent on a static card. */
     dragHandleProps?: Record<string, unknown>;
 }) {
     const live = isLiveStage(deal.status);
-    const attention: AttentionTone = live ? dealAttention(deal) : "healthy";
-    const advance = live ? nextStage(deal.status as DealStage) : null;
     const outcome = isOutcome(deal.status) ? DEAL_OUTCOME_META[deal.status] : null;
     const OutcomeIcon = outcome?.icon;
     const stageMeta = live ? DEAL_STAGE_META[deal.status as DealStage] : null;
     const canCall = Boolean(deal.buyer.phoneDigits);
-    const stageDays = live ? daysInStage(deal) : 0;
-    const currentUserId = getStoredUser()?.id ?? null;
+    const ownerPhone = deal.owner.isRepresentationActive ? deal.owner.phoneDigits : undefined;
     const ignoreCardClickUntilRef = useRef(0);
     const headline =
         formatPropertyCardName(deal.property.propertyTypeLabel, deal.property.areaSqft, {
             bhk: deal.property.bhk,
         }) || deal.property.configLabel;
-    const locationLabel = `${deal.property.locality}, ${deal.property.city}`;
-    const metaParts = [live && stageDays >= 1 ? `${stageDays}d in stage` : null].filter(Boolean);
-
-    const primary = (() => {
-        if (!live) return null;
-        if (deal.status === "negotiation") {
-            if (!FEATURE_PLATFORM_OWNER) return null;
-            return {
-                label:
-                    deal.offerStatus === "rejected" || deal.offerStatus === "pending"
-                        ? "Revise offer"
-                        : "Make offer",
-                onClick: () => handlers.onMakeOffer(deal.id),
-            };
-        }
-        if (advance) {
-            return {
-                label: DEAL_STAGE_META[advance].advanceLabel,
-                onClick: () => handlers.onAdvance(deal.id, advance),
-            };
-        }
-        return null;
-    })();
+    const locationLabel = [
+        ...new Set([deal.property.locality, deal.property.city].filter(Boolean)),
+    ].join(", ");
 
     function guardMenuAction() {
         // Menu portals unmount on select; the same click can land on the card.
@@ -687,11 +538,7 @@ export function DealCard({
             >
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5 min-inline-0">
-                        {stageMeta ? (
-                            <Badge color={STAGE_BADGE_COLOR[deal.status as DealStage]}>
-                                {stageMeta.label}
-                            </Badge>
-                        ) : outcome && OutcomeIcon ? (
+                        {outcome && OutcomeIcon ? (
                             <Badge color={deal.status === "closed" ? "emerald" : "stone"}>
                                 <OutcomeIcon
                                     aria-hidden
@@ -760,51 +607,31 @@ export function DealCard({
                         >
                             {headline || deal.property.title}
                         </h3>
-                        <p
-                            className="
+                        {locationLabel ? (
+                            <p
+                                className="
                               body-sm flex items-center gap-1.5 tracking-wide text-ink-muted
                               min-inline-0
                             "
-                        >
-                            <MapPin
-                                aria-hidden
-                                className="shrink-0 block-3.5 inline-3.5"
-                                strokeWidth={1.75}
-                            />
-                            <span className="truncate capitalize">{locationLabel}</span>
-                        </p>
-                        {metaParts.length > 0 ? (
-                            <p className="body-sm tracking-wide text-ink-muted">
-                                {metaParts.join(" · ")}
+                            >
+                                <MapPin
+                                    aria-hidden
+                                    className="shrink-0 block-3.5 inline-3.5"
+                                    strokeWidth={1.75}
+                                />
+                                <span className="truncate capitalize">{locationLabel}</span>
                             </p>
                         ) : null}
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                    <CardChips
-                        deal={deal}
-                        live={live}
-                        attention={attention}
-                        otherBuyers={otherBuyers}
-                        onView={handlers.onView}
-                    />
-
-                    {outcome && OutcomeIcon ? (
-                        <Badge variant={outcome.badgeVariant} className="gap-1 inline-fit">
-                            <OutcomeIcon aria-hidden className="block-3 inline-3" strokeWidth={2} />
-                            {outcome.label}
-                        </Badge>
-                    ) : null}
-
-                    {live ? <StageMiddle deal={deal} /> : null}
-                </div>
+                {deal.status === "visit" || deal.status === "negotiation" ? (
+                    <StageMiddle deal={deal} />
+                ) : null}
 
                 <DealPartiesPanel
                     buyer={deal.buyer}
                     owner={deal.owner}
-                    assignedAgent={deal.assignedAgent}
-                    currentUserId={currentUserId}
                     onOpenBuyer={openCard}
                     onOpenOwner={openCard}
                 />
@@ -813,28 +640,6 @@ export function DealCard({
                     <OverlayCardActions className="flex-col gap-2">
                         {canCall ? (
                             <div className="flex gap-2">
-                                <Button
-                                    size="md"
-                                    variant="outline"
-                                    nativeButton={false}
-                                    className={cn(
-                                        "flex-1 min-inline-0",
-                                        OVERLAY_GLASS_BUTTON_CLASS,
-                                    )}
-                                    render={
-                                        <a
-                                            href={formatTelUrl(deal.buyer.phoneDigits)}
-                                            onClick={stopCard}
-                                        />
-                                    }
-                                >
-                                    <Phone
-                                        aria-hidden
-                                        className="block-4 inline-4"
-                                        strokeWidth={1.75}
-                                    />
-                                    Call
-                                </Button>
                                 <Button
                                     size="md"
                                     variant="outline"
@@ -855,31 +660,29 @@ export function DealCard({
                                         />
                                     }
                                 >
-                                    <Icon
-                                        icon="bi:whatsapp"
-                                        width={16}
-                                        height={16}
-                                        className="block-4 inline-4"
-                                        aria-hidden
-                                    />
+                                    <WhatsAppIcon className="block-4 inline-4" aria-hidden />
                                     WhatsApp
                                 </Button>
+                                <Button
+                                    size="md"
+                                    variant="accent"
+                                    nativeButton={!ownerPhone}
+                                    disabled={!ownerPhone}
+                                    className="flex-1 min-inline-0"
+                                    render={
+                                        ownerPhone ? (
+                                            <a href={formatTelUrl(ownerPhone)} onClick={stopCard} />
+                                        ) : undefined
+                                    }
+                                >
+                                    <CallIcon
+                                        aria-hidden
+                                        className="block-4 inline-4"
+                                        strokeWidth={1.75}
+                                    />
+                                    Call Owner
+                                </Button>
                             </div>
-                        ) : null}
-
-                        {primary ? (
-                            <Button
-                                variant="accent"
-                                size="md"
-                                disabled={isBusy}
-                                className="font-semibold inline-full"
-                                onClick={(event) => {
-                                    stopCard(event);
-                                    primary.onClick();
-                                }}
-                            >
-                                {primary.label}
-                            </Button>
                         ) : null}
                     </OverlayCardActions>
                 ) : null}

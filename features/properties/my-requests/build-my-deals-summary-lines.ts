@@ -25,7 +25,7 @@ export function buildMyDealsSummaryLines({
         if (pending === 0)
             return [
                 "No requests waiting for an owner's reply",
-                "Find a property in Owner listings and send a request",
+                "Find a property in Marketplace and send a request",
             ];
         const lines = [
             `${countLabel(pending, "request is", "requests are")} waiting for the owner's reply`,
@@ -55,7 +55,8 @@ export function buildMyDealsSummaryLines({
         ];
     }
 
-    if (!sentSummary || !inviteSummary) return ["Some deal counts are unavailable right now"];
+    if (!sentSummary || !inviteSummary)
+        return ["Some request and invitation counts are unavailable right now"];
 
     if (activeTab === "rejected") {
         const rejected = sentSummary.counts.declined;
@@ -103,10 +104,10 @@ export function buildMyDealsSummaryLines({
         );
     if (sentSummary.needsFollowUpCount > 0) {
         lines.push(
-            `${countLabel(sentSummary.needsFollowUpCount, "property from your requests still needs", "properties from your requests still need")} buyers`,
+            `${countLabel(sentSummary.needsFollowUpCount, "property from your requests still needs", "properties from your requests still need")} clients`,
         );
     } else {
-        lines.push("Add interested buyers or tenants to start working on a property");
+        lines.push("Add interested clients to start working on a property");
     }
     if (inviteSummary.waitingOnYouCount > 0)
         lines.push(

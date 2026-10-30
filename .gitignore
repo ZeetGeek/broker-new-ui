@@ -44,6 +44,15 @@ yarn-error.log*
 pnpm-debug.log*
 *.log
 
+# diagnostic output and temporary files
+/detect-band-*.json
+*.err
+*.tmp
+*.temp
+*.bak
+/tmp/
+/.tmp/
+
 # env files (can opt-in for committing if needed)
 .env*
 

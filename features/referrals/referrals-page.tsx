@@ -147,13 +147,16 @@ export function ReferralsPage() {
         [handleNudge],
     );
 
-    const handlePatch = useCallback((patch: Partial<ReferralsFilters>) => {
-        setFilters((prev) => ({ ...prev, ...patch }));
-    }, []);
+    const handlePatch = useCallback(
+        (patch: Partial<ReferralsFilters>) => {
+            setFilters((prev) => ({ ...prev, ...patch }));
+        },
+        [setFilters],
+    );
 
     const handleClearFilters = useCallback(() => {
         setFilters(DEFAULT_REFERRALS_FILTERS);
-    }, []);
+    }, [setFilters]);
 
     const handleInvited = useCallback((firstName: string) => {
         toast.success(`Message ready for ${firstName}`);

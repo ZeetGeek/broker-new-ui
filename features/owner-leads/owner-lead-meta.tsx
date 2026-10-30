@@ -1,8 +1,8 @@
-import { CircleCheck, CircleSlash, Clock } from "@/components/shared/icons";
-
 import type { PropertyLead } from "@/lib/api/owner-leads";
 import { parseMoney } from "@/lib/format/money";
 import { cn } from "@/lib/utils";
+
+import { CircleCheck, CircleSlash, Clock } from "@/components/shared/icons";
 
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import type { DealStage } from "@/features/pipeline/types";

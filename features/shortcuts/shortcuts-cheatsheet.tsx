@@ -2,27 +2,26 @@
 
 import type { ComponentType } from "react";
 
+import { type ShortcutDef, type ShortcutId, SHORTCUTS } from "@/lib/shortcuts";
+import { cn } from "@/lib/utils";
+
 import {
     Bell,
     Building2,
     CalendarClock,
     Contact,
     Gift,
+    type IconProps,
     Keyboard,
     KeyRound,
     LayoutDashboard,
     LogOut,
-    type IconProps,
     Plus,
     Send,
     Settings,
     UserRound,
     Users,
 } from "@/components/shared/icons";
-
-import { type ShortcutDef, type ShortcutId, SHORTCUTS } from "@/lib/shortcuts";
-import { cn } from "@/lib/utils";
-
 import { Dialog, DialogHeader, DialogPopup, DialogTitle } from "@/components/ui/dialog";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { ScrollArea } from "@/components/ui/scroll-area";

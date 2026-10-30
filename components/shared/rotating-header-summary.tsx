@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 import { useReducedMotion } from "motion/react";
 
 import { TextLoop } from "@/components/motion-primitives/text-loop";
@@ -36,7 +37,10 @@ export function RotatingHeaderSummary({
             aria-live="polite"
             aria-atomic="true"
             aria-busy={isLoading}
-            className="relative inline-grid grid-cols-[minmax(0,1fr)] align-bottom text-ink-muted max-inline-full"
+            className="
+              relative inline-grid grid-cols-[minmax(0,1fr)] align-bottom text-ink-muted
+              max-inline-full
+            "
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
         >
@@ -59,7 +63,10 @@ export function RotatingHeaderSummary({
                     <span className="sr-only">{loadingLabel}</span>
                     <span
                         aria-hidden
-                        className="absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control bg-border-warm block-[0.8em] inline-full"
+                        className="
+                          absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control
+                          bg-border-warm block-[0.8em] inline-full
+                        "
                     >
                         <Skeleton className="bg-ink/3 block-full inline-full" />
                     </span>

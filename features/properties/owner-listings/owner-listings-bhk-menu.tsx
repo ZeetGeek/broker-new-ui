@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 
-import { BedDouble } from "@/components/shared/icons";
-
 import { formatBhkLabel } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
+import { BedDouble } from "@/components/shared/icons";
 import {
     DropdownMenu,
     DropdownMenuContent,

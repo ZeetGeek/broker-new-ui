@@ -1,7 +1,6 @@
 "use client";
 
 import { BadgeCheck } from "@/components/shared/icons";
-
 import { Badge } from "@/components/ui/badge";
 
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";

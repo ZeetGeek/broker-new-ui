@@ -2,6 +2,9 @@
 
 import type { SyntheticEvent } from "react";
 
+import { formatWhatsAppUrl } from "@/lib/format/phone";
+import { cn } from "@/lib/utils";
+
 import {
     CallIcon,
     Eye,
@@ -13,10 +16,6 @@ import {
     Trash2,
     WhatsAppIcon,
 } from "@/components/shared/icons";
-
-import { formatWhatsAppUrl } from "@/lib/format/phone";
-import { cn } from "@/lib/utils";
-
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -77,7 +76,7 @@ export function ContactCardActions({
                             />
                         }
                     >
-                        <CallIcon aria-hidden strokeWidth={1.75} className="size-4" />
+                        <CallIcon aria-hidden strokeWidth={1.75} className="block-4 inline-4" />
                     </TooltipTrigger>
                     <TooltipContent>Call {name}</TooltipContent>
                 </Tooltip>
@@ -104,7 +103,7 @@ export function ContactCardActions({
                             />
                         }
                     >
-                        <WhatsAppIcon aria-hidden strokeWidth={1.75} className="size-4" />
+                        <WhatsAppIcon aria-hidden strokeWidth={1.75} className="block-4 inline-4" />
                     </TooltipTrigger>
                     <TooltipContent>WhatsApp {name}</TooltipContent>
                 </Tooltip>
@@ -122,7 +121,9 @@ export function ContactCardActions({
                                         size="icon-sm"
                                         aria-label={`More actions for ${name}`}
                                         onClick={stop}
-                                        className="rounded-full border-border-warm bg-surface shadow-xs"
+                                        className="
+                                          rounded-full border-border-warm bg-surface shadow-xs
+                                        "
                                     />
                                 }
                             >
@@ -146,7 +147,7 @@ export function ContactCardActions({
                             title={editLocked ? "Owner details come from the platform" : undefined}
                         >
                             {editLocked ? <Lock aria-hidden /> : <Pencil aria-hidden />}
-                            {editLocked ? "Edit tracking" : "Edit contact"}
+                            {editLocked ? "Edit tracking" : "Edit client"}
                         </DropdownMenuItem>
                     ) : null}
                     {onAttach ? (

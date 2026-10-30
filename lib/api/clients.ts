@@ -238,6 +238,7 @@ type ApiPropertyLead = {
     propertyId: string;
     clientId?: string | null;
     client?: { id: string; name: string; phone?: string } | null;
+    stage?: string | null;
 };
 
 type LeadsListResponse = {
@@ -597,7 +598,7 @@ async function fetchLeadsForProperty(propertyId: string): Promise<ApiPropertyLea
     return items;
 }
 
-async function fetchAllLeads(): Promise<ApiPropertyLead[]> {
+async function fetchAllLeads(signal?: AbortSignal): Promise<ApiPropertyLead[]> {
     const items: ApiPropertyLead[] = [];
     let page = 1;
     let totalPages = 1;
@@ -607,7 +608,7 @@ async function fetchAllLeads(): Promise<ApiPropertyLead[]> {
             page: String(page),
             limit: "100",
         });
-        const response = await apiFetch<LeadsListResponse>(`/clients/leads?${qs}`);
+        const response = await apiFetch<LeadsListResponse>(`/clients/leads?${qs}`, { signal });
         items.push(...(response.items ?? []));
         totalPages = Math.max(1, response.totalPages ?? 1);
         page += 1;
@@ -621,7 +622,7 @@ function leadClientRef(lead: ApiPropertyLead): AttachedClientRef | null {
     if (!id) return null;
     return {
         id,
-        name: lead.client?.name?.trim() || "Buyer",
+        name: lead.client?.name?.trim() || "Client",
     };
 }
 
@@ -653,7 +654,9 @@ export async function attachedClientsFor(propertyId: string): Promise<AttachedCl
 /**
  * Group attached buyers by property in one leads scan — avoids N+1 on list pages.
  */
-export async function attachedClientsByProperty(): Promise<Map<string, AttachedClientRef[]>> {
+export async function attachedClientsByProperty(
+    signal?: AbortSignal,
+): Promise<Map<string, AttachedClientRef[]>> {
     if (isMockMode()) {
         const map = new Map<string, AttachedClientRef[]>();
         for (const [propertyId, ids] of Object.entries(MOCK_PROPERTY_CLIENTS)) {
@@ -667,7 +670,7 @@ export async function attachedClientsByProperty(): Promise<Map<string, AttachedC
         }
         return map;
     }
-    const leads = await fetchAllLeads();
+    const leads = await fetchAllLeads(signal);
     const map = new Map<string, AttachedClientRef[]>();
 
     for (const lead of leads) {
@@ -826,9 +829,27 @@ export const clientsApi = {
     },
 
     /**
+     * Buyers with an open (not closed) lead on the property. Closed leads
+     * cannot be booked for a visit, so they are left out.
+     */
+    async listOpenLeadClientIds(propertyId: string): Promise<string[]> {
+        if (isMockMode()) {
+            return [...(MOCK_PROPERTY_CLIENTS[propertyId] ?? [])];
+        }
+        const leads = await fetchLeadsForProperty(propertyId);
+        return [
+            ...new Set(
+                leads
+                    .filter((lead) => lead.stage !== "closed_won" && lead.stage !== "closed_lost")
+                    .map((lead) => lead.client?.id ?? lead.clientId)
+                    .filter((id): id is string => Boolean(id)),
+            ),
+        ];
+    },
+
+    /**
      * Link the selected buyers to the property. Already-linked ids are skipped
-     * server-side. Unchecking a previously linked buyer does not detach them
-     * (no detach endpoint yet) — the next open still shows them as attached.
+     * server-side. This is additive; use detachClientFromProperty to unlink a buyer.
      */
     async setPropertyClients(propertyId: string, clientIds: string[]): Promise<void> {
         if (isMockMode()) {
@@ -865,6 +886,26 @@ export const clientsApi = {
                 }),
             ),
         );
+    },
+
+    /** Unlink only this buyer/property pair, leaving the contact and other properties intact. */
+    async detachClientFromProperty(propertyId: string, clientId: string): Promise<void> {
+        if (isMockMode()) {
+            const leads = MOCK_DEALS.filter(
+                (deal) => deal.property.id === propertyId && deal.buyer.id === clientId,
+            );
+            for (const lead of leads) await clientsApi.removeLead(lead.id);
+            MOCK_PROPERTY_CLIENTS[propertyId] = (MOCK_PROPERTY_CLIENTS[propertyId] ?? []).filter(
+                (id) => id !== clientId,
+            );
+            return;
+        }
+        const leads = await fetchLeadsForProperty(propertyId);
+        const matching = leads.filter(
+            (lead) =>
+                lead.propertyId === propertyId && (lead.client?.id ?? lead.clientId) === clientId,
+        );
+        for (const lead of matching) await clientsApi.removeLead(lead.id);
     },
 
     /** Unlink a buyer from one property (deletes the lead). */
