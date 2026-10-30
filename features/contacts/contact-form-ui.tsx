@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppModal } from "@/components/shared/app-modal";
+import type { AppIcon } from "@/components/shared/icons";
 import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
 import { currencyIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
@@ -174,6 +175,7 @@ export function ComboboxField({
     emptyText = "No matches",
     disabled,
     hint,
+    startIcon,
 }: {
     label: string;
     value: string;
@@ -186,6 +188,7 @@ export function ComboboxField({
     emptyText?: string;
     disabled?: boolean;
     hint?: ReactNode;
+    startIcon?: AppIcon;
 }) {
     const id = `combobox-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`;
     const flat = groups?.flatMap((group) => group.options) ?? options ?? [];
@@ -203,6 +206,7 @@ export function ComboboxField({
             >
                 <ComboboxInput
                     id={id}
+                    startIcon={startIcon}
                     size="lg"
                     placeholder={placeholder}
                     disabled={disabled}

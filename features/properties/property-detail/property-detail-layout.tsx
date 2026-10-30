@@ -10,6 +10,7 @@ import { propertiesApi } from "@/lib/api/properties";
 import { formatAreaSqft } from "@/lib/format/area";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
 import { formatPrice, formatRent } from "@/lib/format/price";
+import { parseTourEmbed, parseVideoEmbed } from "@/lib/media/embed-url";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 
@@ -320,9 +321,9 @@ export function PropertyDetailContent({
         } => fact != null,
     );
     const media = [
-        { label: "Watch property video", href: item.videoUrl },
-        { label: "Take a virtual tour", href: item.virtualTourUrl },
-    ].filter(({ href }) => /^https?:\/\//i.test(href));
+        { label: "Property video", embed: parseVideoEmbed(item.videoUrl) },
+        { label: "Virtual tour", embed: parseTourEmbed(item.virtualTourUrl) },
+    ].filter(({ embed }) => embed !== null);
 
     return (
         <div className={styles.content}>
@@ -354,6 +355,46 @@ export function PropertyDetailContent({
                     ))}
                 </div>
             </section>
+            {media.length > 0 ? (
+                <section className={styles.section}>
+                    <h2>Explore the property</h2>
+                    <div className={styles.mediaPreviews}>
+                        {media.map(({ label, embed }) =>
+                            embed ? (
+                                <figure key={label} className={styles.mediaPreview}>
+                                    <iframe
+                                        title={label}
+                                        src={embed.embedUrl}
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                                        allowFullScreen
+                                        loading="lazy"
+                                        referrerPolicy="strict-origin-when-cross-origin"
+                                    />
+                                    <figcaption>
+                                        <span>{label}</span>
+                                        <Button
+                                            variant="link"
+                                            size="sm"
+                                            nativeButton={false}
+                                            render={
+                                                <a
+                                                    href={embed.sourceUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                />
+                                            }
+                                            aria-label={`Open ${label.toLowerCase()} in a new tab`}
+                                        >
+                                            Open
+                                            <ExternalLink size={16} aria-hidden />
+                                        </Button>
+                                    </figcaption>
+                                </figure>
+                            ) : null,
+                        )}
+                    </div>
+                </section>
+            ) : null}
             {item.description.trim() ? (
                 <section className={styles.section}>
                     <h2>About this property</h2>
@@ -472,19 +513,6 @@ export function PropertyDetailContent({
                     </dl>
                 ) : null}
             </section>
-            {media.length > 0 ? (
-                <section className={styles.section}>
-                    <h2>Explore the property</h2>
-                    <div className={styles.mediaLinks}>
-                        {media.map(({ label, href }) => (
-                            <a key={label} href={href} target="_blank" rel="noopener noreferrer">
-                                {label}
-                                <ExternalLink size={18} aria-hidden />
-                            </a>
-                        ))}
-                    </div>
-                </section>
-            ) : null}
         </div>
     );
 }

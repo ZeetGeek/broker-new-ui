@@ -767,6 +767,10 @@
     background: var(--color-surface-muted);
 }
 .mediaPreview figcaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     margin-block-start: 8px;
     font-size: 14px;
     font-weight: 500;
