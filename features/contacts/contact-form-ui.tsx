@@ -10,11 +10,10 @@ import { cn } from "@/lib/utils";
 import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { Skeleton } from "@/components/shared/skeleton";
-import { ContactFormSkeleton } from "@/features/contacts/contacts-skeleton";
 import type { AppIcon } from "@/components/shared/icons";
 import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
 import { currencyIcon } from "@/components/shared/icons";
+import { Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,6 +31,8 @@ import { Input, type InputProps } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+
+import { ContactFormSkeleton } from "@/features/contacts/contacts-skeleton";
 
 /** Same control height as Add property (`size="lg"` → 48px). */
 export const nativeControlClass = `

@@ -103,10 +103,10 @@ export function ContactsHeaderSkeleton() {
         <div
             role="status"
             aria-busy="true"
-            className="flex flex-wrap items-center justify-between gap-3 motion-safe:animate-pulse"
+            className="flex items-center justify-between gap-3 motion-safe:animate-pulse sm:gap-4"
         >
             <span className="sr-only">Loading contact filters</span>
-            <div className="flex gap-2">
+            <div className="flex flex-1 gap-2 overflow-hidden min-inline-0">
                 {[0, 1].map((index) => (
                     <div
                         key={index}
@@ -118,7 +118,7 @@ export function ContactsHeaderSkeleton() {
                     </div>
                 ))}
             </div>
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex shrink-0 gap-2.5">
                 <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px] inline-44 sm:inline-52 lg:inline-64">
                     <Bone className="rounded-full block-3 inline-3" />
                     <Bone className="block-3 inline-3/4" />
@@ -165,7 +165,7 @@ export function ContactFormSkeleton({
             <span className="sr-only">Loading {variant === "buyer" ? "client" : "owner"} form</span>
             <div
                 aria-hidden
-                className="flex flex-col divide-y divide-border-warm [&>*:not(:last-child)]:pbe-6 [&>*+*]:pbs-6"
+                className="flex flex-col divide-y divide-border-warm [&>*+*]:pbs-6 [&>*:not(:last-child)]:pbe-6"
             >
                 {(variant === "buyer" ? [2, 1, 4, bothBudgets ? 4 : 2, 3] : [2, 1, 4, 4]).map(
                     (fields, section) => (

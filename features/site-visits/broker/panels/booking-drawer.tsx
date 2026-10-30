@@ -254,7 +254,10 @@ export function BookingDrawer({
                         "
                         >
                             <AppImage
-                                src={item.property.coverUrl ?? "/properties/1.jpg"}
+                                src={
+                                    item.property.coverUrl ??
+                                    "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                                }
                                 alt=""
                                 fill
                                 sizes="64px"

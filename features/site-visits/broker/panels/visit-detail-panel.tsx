@@ -1,26 +1,12 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
-import { formatMoneyCompact } from "@/lib/format/money";
 import { VISIT_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
-import {
-    CalendarCheck,
-    Check,
-    Circle,
-    FileText,
-    KeyRound,
-    MapPin,
-    Phone,
-    Route,
-    SquareParking,
-    Trash2,
-    WhatsAppIcon,
-} from "@/components/shared/icons";
+import { CalendarCheck, CallIcon, MapPin, Trash2, WhatsAppIcon } from "@/components/shared/icons";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogPopup } from "@/components/ui/dialog";
@@ -29,16 +15,6 @@ import { APP_NAME } from "@/config";
 import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
 import { USE_MOCK_VISITS } from "@/mocks/visits";
 import { useAppSelector } from "@/store/hooks";
-
-const VisitDetailMap = dynamic(
-    () => import("@/features/site-visits/broker/panels/visit-detail-map"),
-    {
-        ssr: false,
-        loading: () => (
-            <div className="animate-pulse rounded-inner bg-surface-muted block-56 inline-full" />
-        ),
-    },
-);
 
 function ContactBlock({
     label,
@@ -71,7 +47,7 @@ function ContactBlock({
                         size="md"
                         aria-label={`Call ${person.name}`}
                     >
-                        <Phone aria-hidden />
+                        <CallIcon aria-hidden />
                     </Button>
                     <Button
                         nativeButton={false}
@@ -95,7 +71,6 @@ export function VisitDetailPanel({
     onLogOutcome,
     onReschedule,
     onCancel,
-    onChecklist,
 }: {
     open: boolean;
     visit?: BrokerSiteVisit;
@@ -103,20 +78,14 @@ export function VisitDetailPanel({
     onLogOutcome: () => void;
     onReschedule: () => void;
     onCancel: () => void;
-    onChecklist: (value: NonNullable<BrokerSiteVisit["checklist"]>) => void;
 }) {
     const broker = useAppSelector((state) => state.auth.user);
     if (!visit) return null;
     const brokerName = broker?.fullName?.trim() || broker?.email || "Your broker";
     const dayAndTime = `${formatVisitDayHeading(visit.startsAt)} at ${formatVisitTime(visit.startsAt)}`;
-    const buyerMessage = `Hi ${visit.buyers[0].name}, your site visit for ${visit.property.title}, ${visit.property.locality} is confirmed for ${dayAndTime}. Address: ${visit.property.address}. I’ll meet you there. — ${brokerName}, ${APP_NAME}`;
+    const buyerMessage = `Hi ${visit.buyers[0].name}, your site visit for ${visit.property.title}, ${visit.property.locality} is ${visit.status === "confirmed" ? "confirmed" : "scheduled"} for ${dayAndTime}. Address: ${visit.property.address}. I’ll meet you there. — ${brokerName}, ${APP_NAME}`;
     const ownerMessage = `Hi ${visit.owner.name}, I’m bringing ${visit.buyers[0].name} to ${visit.property.title} on ${dayAndTime}. — ${brokerName}, ${APP_NAME}`;
     const status = VISIT_STATUS[visit.status];
-    const checklist = visit.checklist ?? { documents: false, keys: false, parking: false };
-    const mapHref =
-        visit.property.latitude && visit.property.longitude
-            ? `https://www.openstreetmap.org/directions?to=${visit.property.latitude},${visit.property.longitude}`
-            : `https://www.openstreetmap.org/search?query=${encodeURIComponent(visit.property.address)}`;
     return (
         <Dialog
             open={open}
@@ -139,33 +108,19 @@ export function VisitDetailPanel({
                         {formatVisitDate(visit.startsAt)} · {formatVisitTime(visit.startsAt)}–
                         {formatVisitTime(visit.endsAt)}
                     </p>
-                    <div className="mbs-3 flex items-center gap-1 text-[10px] font-semibold">
-                        <span className="flex items-center gap-1">
-                            <Check aria-hidden className="block-3 inline-3" /> Booked
-                        </span>
-                        <span className="flex-1 bg-current/20 block-px" />
-                        <span className="flex items-center gap-1">
-                            <Check aria-hidden className="block-3 inline-3" /> Confirmed
-                        </span>
-                        <span className="flex-1 bg-current/20 block-px" />
-                        <span className="flex items-center gap-1">
-                            <Circle aria-hidden className="block-3 inline-3" /> Reminded
-                        </span>
-                        <span className="flex-1 bg-current/20 block-px" />
-                        <span className="flex items-center gap-1">
-                            <Circle aria-hidden className="block-3 inline-3" /> Completed
-                        </span>
-                    </div>
                 </div>
                 <div className="flex-1 space-y-5 overflow-y-auto p-5">
                     <section className="flex gap-3">
                         <div
                             className="
-                              relative shrink-0 overflow-hidden rounded-[8px] block-20 inline-24
+                              relative shrink-0 overflow-hidden rounded-[8px] bg-surface-muted block-20 inline-24
                             "
                         >
                             <AppImage
-                                src={visit.property.coverUrl ?? "/properties/1.jpg"}
+                                src={
+                                    visit.property.coverUrl ??
+                                    "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                                }
                                 alt=""
                                 fill
                                 sizes="96px"
@@ -175,9 +130,17 @@ export function VisitDetailPanel({
                             <h2 className="h5 truncate text-ink">{visit.property.title}</h2>
                             <p className="body-xs mbs-1 text-ink-muted">
                                 {visit.property.configLabel} ·{" "}
-                                {visit.property.areaSqft.toLocaleString("en-IN")} sqft ·{" "}
-                                {formatMoneyCompact(visit.property.amountInr)}
+                                {visit.property.areaSqft.toLocaleString("en-IN")} sqft
                             </p>
+                            <PriceWithCommission
+                                amountInr={visit.property.amountInr}
+                                isRent={visit.property.purpose === "rent"}
+                                commissionPercent={visit.property.commissionPercent}
+                                commissionAmountInr={visit.property.commissionAmountInr}
+                                audience="broker"
+                                size="sm"
+                                className="mbs-2"
+                            />
                             <p className="body-xs mbs-2 flex items-start gap-1.5 text-ink-muted">
                                 <MapPin
                                     aria-hidden
@@ -187,28 +150,6 @@ export function VisitDetailPanel({
                             </p>
                         </div>
                     </section>
-                    {visit.property.latitude && visit.property.longitude ? (
-                        <section className="space-y-2">
-                            <VisitDetailMap
-                                latitude={visit.property.latitude}
-                                longitude={visit.property.longitude}
-                                title={visit.property.title}
-                            />
-                            <div className="flex items-center justify-between gap-3">
-                                <p className="body-xs text-ink-muted">
-                                    {visit.distanceKm?.toFixed(1)} km · about {visit.driveMinutes}{" "}
-                                    min from you
-                                </p>
-                                <Button
-                                    render={<a href={mapHref} target="_blank" rel="noreferrer" />}
-                                    variant="surface"
-                                    size="sm"
-                                >
-                                    <Route aria-hidden /> Navigate
-                                </Button>
-                            </div>
-                        </section>
-                    ) : null}
                     <section className="grid gap-2">
                         <ContactBlock
                             label={
@@ -247,80 +188,55 @@ export function VisitDetailPanel({
                             </div>
                         </section>
                     ) : null}
-                    <section>
-                        <h3 className="body-sm font-bold text-ink">Before you leave</h3>
-                        <div className="mbs-2 grid grid-cols-3 gap-2">
-                            {(
-                                [
-                                    { key: "documents", label: "Documents", icon: FileText },
-                                    { key: "keys", label: "Keys arranged", icon: KeyRound },
-                                    { key: "parking", label: "Parking", icon: SquareParking },
-                                ] as const
-                            ).map((item) => (
-                                <button
-                                    key={item.key}
-                                    type="button"
-                                    aria-pressed={checklist[item.key]}
-                                    onClick={() =>
-                                        onChecklist({
-                                            ...checklist,
-                                            [item.key]: !checklist[item.key],
-                                        })
-                                    }
-                                    className={`
-                                      rounded-inner border p-2 text-xs font-semibold min-block-16
-                                      ${
-                                          checklist[item.key]
-                                              ? `border-brand bg-brand-soft text-brand-text`
-                                              : `border-border-warm bg-surface text-ink-muted`
-                                      }`}
-                                >
-                                    <item.icon
-                                        aria-hidden
-                                        className="mx-auto mbe-1 block-4 inline-4"
-                                    />
-                                    {item.label}
-                                </button>
-                            ))}
-                        </div>
-                    </section>
-                    <section className="rounded-inner border border-border-warm p-4">
-                        <div className="flex items-center justify-between gap-3">
-                            <div>
-                                <h3 className="body-sm font-bold text-ink">Outcome</h3>
-                                <p className="body-xs text-ink-muted">
-                                    {visit.outcome
-                                        ? `${visit.outcome.interest} · ${visit.outcome.nextStep.replaceAll("_", " ")}`
-                                        : USE_MOCK_VISITS
-                                          ? "Not logged yet"
-                                          : "Saving outcomes is not available yet. Manage client notes and stages in Pipeline."}
-                                </p>
+                    {USE_MOCK_VISITS || visit.outcome ? (
+                        <section className="rounded-inner border border-border-warm p-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <h3 className="body-sm font-bold text-ink">Outcome</h3>
+                                    <p className="body-xs text-ink-muted">
+                                        {visit.outcome
+                                            ? `${visit.outcome.interest} · ${visit.outcome.nextStep.replaceAll("_", " ")}`
+                                            : USE_MOCK_VISITS
+                                              ? "Not logged yet"
+                                              : "Saving outcomes is not available yet. Manage client notes and stages in Pipeline."}
+                                    </p>
+                                </div>
+                                {!visit.outcome && USE_MOCK_VISITS ? (
+                                    <Button onClick={onLogOutcome}>
+                                        <CalendarCheck aria-hidden /> Log outcome
+                                    </Button>
+                                ) : null}
                             </div>
-                            {!visit.outcome && USE_MOCK_VISITS ? (
-                                <Button onClick={onLogOutcome}>
-                                    <CalendarCheck aria-hidden /> Log outcome
-                                </Button>
+                            {visit.outcome?.feedback ? (
+                                <p className="body-xs mbs-3 text-ink-muted">
+                                    {visit.outcome.feedback}
+                                </p>
                             ) : null}
-                        </div>
-                        {visit.outcome?.feedback ? (
-                            <p className="body-xs mbs-3 text-ink-muted">{visit.outcome.feedback}</p>
-                        ) : null}
-                    </section>
-                    <section className="flex flex-wrap gap-2 border-bs border-danger/15 pbs-4">
-                        {USE_MOCK_VISITS ? (
-                            <Button variant="surface" onClick={onReschedule}>
-                                Reschedule
+                        </section>
+                    ) : null}
+                    {![
+                        "cancelled_by_broker",
+                        "cancelled_by_owner",
+                        "completed",
+                        "no_show",
+                        "expired",
+                    ].includes(visit.status) ? (
+                        <section className="flex flex-wrap gap-2 border-bs border-danger/15 pbs-4">
+                            {USE_MOCK_VISITS ? (
+                                <Button variant="surface" onClick={onReschedule}>
+                                    Reschedule
+                                </Button>
+                            ) : (
+                                <p className="body-xs text-ink-muted">
+                                    To change the time, cancel this visit and book another open
+                                    slot. Check availability before cancelling.
+                                </p>
+                            )}
+                            <Button variant="destructive" onClick={onCancel}>
+                                <Trash2 aria-hidden /> Cancel visit
                             </Button>
-                        ) : (
-                            <p className="body-xs text-ink-muted">
-                                To change the time, cancel this visit and book another open slot.
-                                Check availability before cancelling.
-                            </p>
-                        )}
-                        <Button variant="destructive" onClick={onCancel}>
-                            <Trash2 aria-hidden /> Cancel visit
-                        </Button>
-                    </section>
+                        </section>
+                    ) : null}
                 </div>
             </DialogPopup>
         </Dialog>

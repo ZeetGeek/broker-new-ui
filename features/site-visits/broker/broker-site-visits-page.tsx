@@ -42,6 +42,7 @@ import { RequestsTab } from "@/features/site-visits/broker/requests/requests-tab
 import { BrokerVisitsHeader } from "@/features/site-visits/broker/visits-header";
 import { VisitsPropertyFiltersDialog } from "@/features/site-visits/broker/visits-property-filters";
 import { type VisitInventory, VisitsTabs } from "@/features/site-visits/broker/visits-tabs";
+import { USE_MOCK_VISITS } from "@/mocks/visits";
 
 const OutcomeModal = dynamic(() => import("@/features/site-visits/broker/panels/outcome-modal"), {
     ssr: false,
@@ -294,8 +295,12 @@ export function BrokerSiteVisitsPage() {
         return mergedItems;
     }, [inventoryVisits, now, selectedLead?.propertyId, slotFilters, slotItems]);
     const selectedVisit = allVisits.find((visit) => visit.id === visitId);
-    const outcomeVisit = allVisits.find((visit) => visit.id === outcomeId);
-    const rescheduleVisit = allVisits.find((visit) => visit.id === rescheduleId);
+    const outcomeVisit = USE_MOCK_VISITS
+        ? allVisits.find((visit) => visit.id === outcomeId)
+        : undefined;
+    const rescheduleVisit = USE_MOCK_VISITS
+        ? allVisits.find((visit) => visit.id === rescheduleId)
+        : undefined;
     const rescheduleSlots = slotItems.find(
         (item) => item.property.id === rescheduleVisit?.property.id,
     );
@@ -410,7 +415,11 @@ export function BrokerSiteVisitsPage() {
     return (
         <main className="flex flex-col gap-6 pbe-24 md:pbe-10">
             <PortalSectionNav>
-                <BrokerVisitsHeader summary={summary} />
+                <BrokerVisitsHeader
+                    summary={summary}
+                    isLoading={visitsQuery.isPending}
+                    hasError={visitsQuery.isError}
+                />
             </PortalSectionNav>
 
             <VisitsTabs
@@ -725,9 +734,6 @@ export function BrokerSiteVisitsPage() {
                                     : "Could not cancel this visit. Check your connection and try again.",
                             ),
                         )
-                }
-                onChecklist={(value) =>
-                    selectedVisit && visitActions.checklist(selectedVisit.id, value)
                 }
             />
 

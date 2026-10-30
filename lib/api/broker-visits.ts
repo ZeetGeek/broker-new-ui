@@ -324,7 +324,6 @@ export const brokerVisitsApi = {
                 owner: input.item.owner,
                 buyers: input.buyers,
                 distanceKm: input.item.distanceKm,
-                driveMinutes: Math.max(12, Math.round((input.item.distanceKm ?? 5) * 2.4)),
             };
         }
 
@@ -381,7 +380,6 @@ export const brokerVisitsApi = {
                 owner: input.item.owner,
                 buyers: input.buyers,
                 distanceKm: input.item.distanceKm,
-                driveMinutes: Math.max(12, Math.round((input.item.distanceKm ?? 5) * 2.4)),
             };
         } catch (error) {
             if (error instanceof ApiError && (error.status === 409 || error.status === 400)) {

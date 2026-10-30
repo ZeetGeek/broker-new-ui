@@ -2,8 +2,6 @@
 
 import { memo } from "react";
 
-import { addCollection, Icon } from "@iconify/react/offline";
-
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
@@ -18,16 +16,14 @@ import {
     PanelRight,
     RotateCcw,
     Trash2,
+    WhatsAppIcon,
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 import type { TimeRequest } from "@/features/site-visits/broker/model";
-
-addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
 
 const DOT = "\u00B7";
 
@@ -42,13 +38,6 @@ const REQUEST_BADGE_COLOR = {
     TimeRequest["status"],
     "amber" | "orange" | "emerald" | "red" | "stone"
 >;
-
-function canNudge(request: TimeRequest) {
-    return (
-        !request.lastNudgedAt ||
-        Date.now() - new Date(request.lastNudgedAt).getTime() >= 6 * 60 * 60_000
-    );
-}
 
 export const RequestRow = memo(function RequestRow({
     request,
@@ -109,7 +98,10 @@ export const RequestRow = memo(function RequestRow({
                     "
                 >
                     <AppImage
-                        src={request.property.coverUrl ?? "/properties/1.jpg"}
+                        src={
+                            request.property.coverUrl ??
+                            "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                        }
                         alt=""
                         fill
                         sizes="96px"
@@ -228,22 +220,12 @@ export const RequestRow = memo(function RequestRow({
                             variant="outline"
                             size="md"
                             onClick={onNudge}
-                            disabled={!canNudge(request) || busy}
-                            title={
-                                canNudge(request)
-                                    ? "Send WhatsApp nudge"
-                                    : "You can nudge this owner once every 6 hours"
-                            }
+                            disabled={!request.owner.phoneDigits || busy}
+                            title="Open WhatsApp to contact the owner"
                             className="hidden shrink-0 sm:inline-flex"
                         >
-                            <Icon
-                                icon="bi:whatsapp"
-                                width={16}
-                                height={16}
-                                className="block-4 inline-4"
-                                aria-hidden
-                            />
-                            Nudge owner
+                            <WhatsAppIcon aria-hidden />
+                            WhatsApp owner
                         </Button>
                     ) : null}
                     {action === "retry" ? (
@@ -340,22 +322,12 @@ export const RequestRow = memo(function RequestRow({
                                 variant="ghost"
                                 size="sm"
                                 onClick={onNudge}
-                                disabled={!canNudge(request) || busy}
-                                title={
-                                    canNudge(request)
-                                        ? "Send WhatsApp nudge"
-                                        : "You can nudge this owner once every 6 hours"
-                                }
+                                disabled={!request.owner.phoneDigits || busy}
+                                title="Open WhatsApp to contact the owner"
                                 className="sm:hidden"
                             >
-                                <Icon
-                                    icon="bi:whatsapp"
-                                    width={16}
-                                    height={16}
-                                    className="block-4 inline-4"
-                                    aria-hidden
-                                />
-                                Nudge owner
+                                <WhatsAppIcon aria-hidden />
+                                WhatsApp owner
                             </Button>
                         </>
                     ) : null}

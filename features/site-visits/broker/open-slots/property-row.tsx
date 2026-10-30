@@ -14,7 +14,6 @@ import {
     CalendarClock,
     ChevronDown,
     MapPin,
-    Sparkles,
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
@@ -23,10 +22,10 @@ import { Button } from "@/components/ui/button";
 
 import type { PropertyWithSlots, VisitSlot } from "@/features/site-visits/broker/model";
 import { SlotRail } from "@/features/site-visits/broker/open-slots/slot-rail";
+import { USE_MOCK_VISITS } from "@/mocks/visits";
 
 export const PropertyRow = memo(function PropertyRow({
     item,
-    buyerSelected,
     hideFull,
     onBook,
     onOpenVisit,
@@ -112,7 +111,10 @@ export const PropertyRow = memo(function PropertyRow({
                     "
                 >
                     <AppImage
-                        src={item.property.coverUrl ?? "/properties/1.jpg"}
+                        src={
+                            item.property.coverUrl ??
+                            "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                        }
                         alt=""
                         fill
                         sizes="96px"
@@ -189,21 +191,9 @@ export const PropertyRow = memo(function PropertyRow({
                             </span>
                         </span>
                     </p>
-
-                    {buyerSelected && item.matchScore != null ? (
-                        <p className="body-xs mbs-1.5 flex items-center gap-1.5 text-brand-text">
-                            <Sparkles aria-hidden className="shrink-0 block-3.5 inline-3.5" />
-                            <span className="truncate font-semibold">
-                                {item.matchScore}% match
-                                {(item.matchReasons ?? []).length > 0
-                                    ? ` · ${(item.matchReasons ?? []).join(", ")}`
-                                    : ""}
-                            </span>
-                        </p>
-                    ) : null}
                 </div>
 
-                {item.propertySource === "own_listing" ? null : (
+                {!USE_MOCK_VISITS || item.propertySource === "own_listing" ? null : (
                     <Button
                         variant="outline"
                         size="md"
@@ -297,7 +287,7 @@ export const PropertyRow = memo(function PropertyRow({
                             </p>
                         )}
 
-                        {item.propertySource === "own_listing" ? null : (
+                        {!USE_MOCK_VISITS || item.propertySource === "own_listing" ? null : (
                             <Button
                                 variant="outline"
                                 size="lg"

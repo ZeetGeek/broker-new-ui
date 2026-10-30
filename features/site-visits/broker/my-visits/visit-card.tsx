@@ -1,27 +1,29 @@
 ﻿"use client";
 
 import { memo } from "react";
+import toast from "react-hot-toast";
 
-import { addCollection, Icon } from "@iconify/react/offline";
-
+import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
-import { isVisitCancelled, VISIT_STATUS, visitPrimaryAction } from "@/lib/visits/status";
-import { durationMinutes, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
+import { VISIT_STATUS } from "@/lib/visits/status";
+import { durationMinutes, formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
+import { PartyMeetRow } from "@/components/shared/attached-people-row";
+import { HoldToConfirmMenuItem } from "@/components/shared/hold-to-confirm-menu-item";
 import {
-    CalendarClock,
+    Building2,
+    CalendarDays,
+    CallIcon,
+    ChevronDown,
     Clock3,
     Copy,
     ExternalLink,
     MapPin,
     MoreHorizontal,
-    PanelRight,
-    Phone,
-    Route,
-    Trash2,
+    WhatsAppIcon,
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
@@ -31,115 +33,135 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { APP_NAME } from "@/config";
-import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
-import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
-import { USE_MOCK_VISITS } from "@/mocks/visits";
-import { useAppSelector } from "@/store/hooks";
-
-addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
-
-const VISIT_BADGE_COLOR = {
-    awaiting_owner: "amber",
-    confirmed: "emerald",
-    reschedule_pending: "amber",
-    cancelled_by_broker: "stone",
-    cancelled_by_owner: "red",
-    completed: "emerald",
-    no_show: "red",
-    expired: "stone",
-} as const satisfies Record<BrokerSiteVisit["status"], "amber" | "emerald" | "stone" | "red">;
-
-const DOT = "\u00B7";
-const EM_DASH = "\u2014";
-const APOSTROPHE = "\u2019";
+import type { BrokerSiteVisit, PersonSummary } from "@/features/site-visits/broker/model";
 
 export const VisitCard = memo(function VisitCard({
     visit,
-    onOpen,
     onAction,
 }: {
     visit: BrokerSiteVisit;
-    onOpen: (id: string) => void;
     onAction: (action: "outcome" | "reschedule" | "withdraw", id: string) => void;
 }) {
     const status = VISIT_STATUS[visit.status];
     const StatusIcon = status.icon;
-    const cancelled = isVisitCancelled(visit.status);
-    const action = visitPrimaryAction(visit.status, visit.startsAt, Boolean(visit.outcome));
-    const primary =
-        action === "outcome" || (action === "reschedule" && !USE_MOCK_VISITS) ? null : action;
-    const primaryLabel = primary === "withdraw" ? "Cancel request" : "Reschedule";
-    const PrimaryIcon = primary === "withdraw" ? Trash2 : CalendarClock;
+    const cancelled =
+        visit.status === "cancelled_by_broker" || visit.status === "cancelled_by_owner";
+    const canCancel = ["awaiting_owner", "confirmed", "reschedule_pending"].includes(visit.status);
     const buyer = visit.buyers[0];
-    const broker = useAppSelector((state) => state.auth.user);
-    const brokerName = broker?.fullName?.trim() || broker?.email || "Your broker";
     const propertyHref =
         visit.propertySource === "own_listing"
             ? brokerPropertyDetailHref(visit.property.id)
             : brokerOwnerListingDetailHref(visit.property.id);
-    const hasTravel = visit.distanceKm != null || visit.driveMinutes != null;
-    const mapHref =
-        visit.property.latitude && visit.property.longitude
-            ? `https://www.openstreetmap.org/directions?to=${visit.property.latitude},${visit.property.longitude}`
-            : `https://www.openstreetmap.org/search?query=${encodeURIComponent(visit.property.address)}`;
-    const whatsAppText = encodeURIComponent(
-        `Hi ${buyer.name}, your site visit for ${visit.property.title}, ${visit.property.locality} is confirmed for ${formatVisitDayHeading(visit.startsAt)} at ${formatVisitTime(visit.startsAt)}. Address: ${visit.property.address}. I${APOSTROPHE}ll meet you there. ${EM_DASH} ${brokerName}, ${APP_NAME}`,
-    );
-    const buyerLabel =
-        visit.buyers.length > 1 ? `Clients ${DOT} +${visit.buyers.length - 1}` : "Client";
-    const duration = durationMinutes(visit.startsAt, visit.endsAt);
-    const metaName =
+    const propertyName =
         formatPropertyCardName(visit.property.propertyType, visit.property.areaSqft, {
             bhk: bhkFromConfigLabel(visit.property.configLabel),
         }) || visit.property.configLabel;
+    const when = `${formatVisitDate(visit.startsAt)} at ${formatVisitTime(visit.startsAt)}`;
+    const message = (person: PersonSummary) =>
+        `Hi ${person.name}, this is about our site visit for ${visit.property.title} on ${when}.`;
+    const openWhatsApp = (person: PersonSummary) => {
+        if (person.phoneDigits)
+            window.open(
+                formatWhatsAppUrl(person.phoneDigits, message(person)),
+                "_blank",
+                "noopener,noreferrer",
+            );
+    };
+    const copyAddress = async () => {
+        try {
+            await navigator.clipboard.writeText(visit.property.address);
+            toast.success("Address copied");
+        } catch {
+            toast.error("Could not copy the address. Please try again.");
+        }
+    };
 
     return (
         <article
-            aria-label={`${visit.property.title} ${DOT} ${formatVisitTime(visit.startsAt)}`}
+            aria-label={`${visit.property.title}, ${when}, ${status.label}`}
             className={cn(
-                "overflow-hidden rounded-card border border-border-warm bg-surface shadow-sm",
-                cancelled && "opacity-90",
+                "flex flex-col gap-3 rounded-[20px] border border-border-warm bg-surface p-4 shadow-sm block-full min-inline-0",
+                cancelled && "bg-surface-muted",
             )}
         >
-            <div
-                className="
-                  grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 p-4
-                  sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:p-5
-                "
-            >
-                <div
-                    className="
-                      relative shrink-0 overflow-hidden rounded-inner bg-surface-muted block-20
-                      inline-20
-                      sm:block-24 sm:inline-24
-                    "
+            <header className="flex items-center justify-between gap-2">
+                <Badge
+                    color={
+                        cancelled || visit.status === "expired"
+                            ? "stone"
+                            : visit.status === "awaiting_owner" ||
+                                visit.status === "reschedule_pending"
+                              ? "amber"
+                              : visit.status === "no_show"
+                                ? "red"
+                                : "emerald"
+                    }
                 >
-                    <AppImage
-                        src={visit.property.coverUrl ?? "/properties/1.jpg"}
-                        alt=""
-                        fill
-                        sizes="96px"
+                    <StatusIcon aria-hidden />
+                    {status.label}
+                </Badge>
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        render={
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon-md"
+                                className="shrink-0 rounded-full"
+                                aria-label={`Actions for ${visit.property.title}, ${when}`}
+                            >
+                                <MoreHorizontal aria-hidden />
+                            </Button>
+                        }
                     />
+                    <DropdownMenuContent align="end" className="min-inline-56">
+                        <DropdownMenuItem onClick={() => void copyAddress()}>
+                            <Copy aria-hidden />
+                            Copy address
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() =>
+                                window.open(propertyHref, "_blank", "noopener,noreferrer")
+                            }
+                        >
+                            <ExternalLink aria-hidden />
+                            View property
+                        </DropdownMenuItem>
+                        {canCancel ? (
+                            <>
+                                <DropdownMenuSeparator />
+                                <HoldToConfirmMenuItem
+                                    icon="trash"
+                                    label="Cancel visit"
+                                    onComplete={() => onAction("withdraw", visit.id)}
+                                />
+                            </>
+                        ) : null}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </header>
+
+            <div className="flex items-center gap-3 min-inline-0">
+                <div className="relative aspect-square shrink-0 overflow-hidden rounded-xl bg-surface-muted block-20 inline-20">
+                    {visit.property.coverUrl ? (
+                        <AppImage
+                            src={visit.property.coverUrl}
+                            alt=""
+                            fill
+                            sizes="80px"
+                            className="object-cover"
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center text-ink-subtle block-full">
+                            <Building2 aria-hidden className="block-6 inline-6" />
+                        </div>
+                    )}
                 </div>
-
-                <div className="flex flex-col pbs-1! min-inline-0">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                        <Badge color={VISIT_BADGE_COLOR[visit.status]}>
-                            <StatusIcon aria-hidden />
-                            {status.label}
-                        </Badge>
-                        <Badge variant="neutral">
-                            <Clock3 aria-hidden />
-                            {formatVisitTime(visit.startsAt)}
-                            <span className="text-ink-subtle">{DOT}</span>
-                            {duration} min
-                        </Badge>
-                    </div>
-
+                <div className="flex-1 space-y-1 min-inline-0">
                     <PriceWithCommission
                         amountInr={visit.property.amountInr}
                         isRent={visit.property.purpose === "rent"}
@@ -147,204 +169,113 @@ export const VisitCard = memo(function VisitCard({
                         commissionAmountInr={visit.property.commissionAmountInr}
                         audience="broker"
                         size="lg"
-                        showEmptyTip
-                        className="mbs-3 mbe-0.5 leading-none"
                     />
-
-                    <p
-                        className="
-                          body-sm flex flex-wrap items-center gap-1.5 leading-none tracking-wide
-                          min-inline-0
-                        "
-                    >
-                        <PropertyTitleLink
-                            href={propertyHref}
-                            className="body-sm font-semibold tracking-wide capitalize"
-                        >
-                            {metaName}
+                    <h3 className="body-sm font-semibold text-ink">
+                        <PropertyTitleLink href={propertyHref} className="line-clamp-2">
+                            {propertyName}
                         </PropertyTitleLink>
-                        <span className="text-ink-subtle" aria-hidden>
-                            {DOT}
-                        </span>
-                        <span className="flex items-center gap-1 text-ink-muted min-inline-0">
-                            <MapPin
-                                aria-hidden
-                                className="shrink-0 block-3.5 inline-3.5"
-                                strokeWidth={1.75}
-                            />
-                            <span className="truncate capitalize">
-                                {visit.property.locality}, {visit.property.city}
-                            </span>
-                        </span>
-                        <span className="text-ink-subtle" aria-hidden>
-                            {DOT}
-                        </span>
-                        <span className="truncate min-inline-0">
-                            <span className="text-ink-subtle">{buyerLabel}</span>
-                            <span className="text-ink-subtle/60"> </span>
-                            <span className="font-semibold text-ink capitalize">{buyer.name}</span>
-                        </span>
-                        <span className="text-ink-subtle" aria-hidden>
-                            {DOT}
-                        </span>
-                        <span className="truncate min-inline-0">
-                            <span className="text-ink-subtle">Owner</span>
-                            <span className="text-ink-subtle/60"> </span>
-                            <span className="font-semibold text-ink capitalize">
-                                {visit.owner.name}
-                            </span>
+                    </h3>
+                    <p className="body-xs flex items-center gap-1 text-ink-muted">
+                        <MapPin aria-hidden className="shrink-0 block-3.5 inline-3.5" />
+                        <span className="truncate capitalize">
+                            {visit.property.locality}, {visit.property.city}
                         </span>
                     </p>
-
-                    {hasTravel ? (
-                        <p className="body-xs mbs-1.5 flex items-center gap-1.5 text-ink-muted">
-                            <Route
-                                aria-hidden
-                                className="shrink-0 block-3.5 inline-3.5"
-                                strokeWidth={1.75}
-                            />
-                            <span>
-                                {visit.distanceKm != null
-                                    ? `${visit.distanceKm.toFixed(1)} km`
-                                    : EM_DASH}
-                                {` ${DOT} `}
-                                {visit.driveMinutes != null
-                                    ? `${visit.driveMinutes} min`
-                                    : EM_DASH}{" "}
-                                from your last stop
-                                {visit.distanceApproximate ? ` ${DOT} approx` : ""}
-                            </span>
-                        </p>
-                    ) : null}
-                </div>
-
-                <div
-                    className="
-                      col-span-2 flex items-center justify-end gap-2
-                      sm:col-span-1 sm:justify-self-end
-                    "
-                >
-                    {primary ? (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="md"
-                            onClick={() => onAction(primary, visit.id)}
-                            className="hidden shrink-0 sm:inline-flex"
-                        >
-                            <PrimaryIcon aria-hidden />
-                            {primaryLabel}
-                        </Button>
-                    ) : (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="md"
-                            onClick={() => onOpen(visit.id)}
-                            className="hidden shrink-0 sm:inline-flex"
-                        >
-                            <PanelRight aria-hidden />
-                            View visit
-                        </Button>
-                    )}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            render={
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon-md"
-                                    aria-label="More visit actions"
-                                >
-                                    <MoreHorizontal aria-hidden />
-                                </Button>
-                            }
-                        />
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                                closeOnClick={false}
-                                onClick={() => {
-                                    void navigator.clipboard.writeText(visit.property.address);
-                                }}
-                            >
-                                <Copy aria-hidden /> Copy address
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    window.open(propertyHref, "_blank", "noopener,noreferrer");
-                                }}
-                            >
-                                <ExternalLink aria-hidden /> View property
-                            </DropdownMenuItem>
-                            {!cancelled ? (
-                                <DropdownMenuItem
-                                    variant="destructive"
-                                    onClick={() => onAction("withdraw", visit.id)}
-                                >
-                                    <Trash2 aria-hidden /> Cancel visit
-                                </DropdownMenuItem>
-                            ) : null}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
             </div>
 
-            <div aria-hidden className="mx-4 border-bs border-border-warm sm:mx-5" />
-            <footer className="flex flex-wrap items-center gap-2 px-4 py-3 sm:px-5">
-                {buyer.phoneDigits ? (
-                    <>
-                        <Button
-                            nativeButton={false}
-                            render={<a href={`tel:+91${buyer.phoneDigits}`} />}
-                            variant="ghost"
-                            size="sm"
-                        >
-                            <Phone aria-hidden /> Call client
-                        </Button>
-                        <Button
-                            nativeButton={false}
-                            render={
-                                <a
-                                    href={`https://wa.me/91${buyer.phoneDigits}?text=${whatsAppText}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                />
-                            }
-                            variant="ghost"
-                            size="sm"
-                        >
-                            <Icon
-                                icon="bi:whatsapp"
-                                width={16}
-                                height={16}
-                                className="block-4 inline-4"
-                                aria-hidden
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-inner bg-surface-muted px-3 py-2.5">
+                <p className="body-xs flex items-center gap-1.5 font-semibold text-ink">
+                    <CalendarDays aria-hidden className="block-4 inline-4" />
+                    <time dateTime={visit.startsAt}>{formatVisitDate(visit.startsAt)}</time>
+                </p>
+                <p className="body-xs flex items-center gap-1.5 text-ink-muted tabular-nums">
+                    <Clock3 aria-hidden className="block-4 inline-4" />
+                    {formatVisitTime(visit.startsAt)}
+                    <span aria-hidden>·</span>
+                    {durationMinutes(visit.startsAt, visit.endsAt)} min
+                </p>
+            </div>
+
+            <PartyMeetRow
+                highlightOnHover={false}
+                left={{ name: visit.owner.name, avatarUrl: visit.owner.avatarUrl, role: "Owner" }}
+                right={{
+                    name: buyer?.name ?? "No client linked",
+                    avatarUrl: buyer?.avatarUrl,
+                    role: visit.buyers.length > 1 ? `Client +${visit.buyers.length - 1}` : "Client",
+                }}
+            />
+
+            <footer className="mbs-auto flex gap-2">
+                {(["whatsapp", "call"] as const).map((channel) => {
+                    const isWhatsApp = channel === "whatsapp";
+                    const ActionIcon = isWhatsApp ? WhatsAppIcon : CallIcon;
+                    const actionLabel = isWhatsApp ? "WhatsApp" : "Call";
+                    const contacts = [
+                        { person: visit.owner, label: "Owner" },
+                        ...visit.buyers.map((person) => ({ person, label: "Client" })),
+                    ];
+                    return (
+                        <DropdownMenu key={channel}>
+                            <DropdownMenuTrigger
+                                render={
+                                    <Button
+                                        type="button"
+                                        variant={isWhatsApp ? "accent" : "outline"}
+                                        size="md"
+                                        className="flex-1 min-inline-0"
+                                        aria-label={`${actionLabel} contacts for ${visit.property.title}`}
+                                    >
+                                        <ActionIcon aria-hidden />
+                                        {actionLabel}
+                                        <ChevronDown
+                                            aria-hidden
+                                            className="ms-auto block-3.5 inline-3.5"
+                                        />
+                                    </Button>
+                                }
                             />
-                            WhatsApp
-                        </Button>
-                    </>
-                ) : null}
-                {!cancelled ? (
-                    <Button
-                        nativeButton={false}
-                        render={<a href={mapHref} target="_blank" rel="noreferrer" />}
-                        variant="ghost"
-                        size="sm"
-                    >
-                        <Route aria-hidden /> Navigate
-                    </Button>
-                ) : null}
-                {primary ? (
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant={cancelled ? "outline" : "default"}
-                        onClick={() => onAction(primary, visit.id)}
-                        className="ms-auto sm:hidden"
-                    >
-                        {primaryLabel}
-                    </Button>
-                ) : null}
+                            <DropdownMenuContent
+                                align={isWhatsApp ? "start" : "end"}
+                                side="top"
+                                className="min-inline-56"
+                            >
+                                {contacts.map(({ person, label }) => (
+                                    <DropdownMenuItem
+                                        key={`${label}-${person.id}`}
+                                        disabled={!person.phoneDigits}
+                                        onClick={() => {
+                                            if (!person.phoneDigits) return;
+                                            if (isWhatsApp) openWhatsApp(person);
+                                            else
+                                                window.location.href = formatTelUrl(
+                                                    person.phoneDigits,
+                                                );
+                                        }}
+                                    >
+                                        <ActionIcon aria-hidden />
+                                        <span className="flex flex-col min-inline-0">
+                                            <span>
+                                                {actionLabel} {label.toLowerCase()}
+                                            </span>
+                                            <span className="body-xs truncate text-ink-muted">
+                                                {person.name}
+                                                {!person.phoneDigits ? " ? No phone number" : ""}
+                                            </span>
+                                        </span>
+                                    </DropdownMenuItem>
+                                ))}
+                                {visit.buyers.length === 0 ? (
+                                    <DropdownMenuItem disabled>
+                                        <ActionIcon aria-hidden />
+                                        No client linked
+                                    </DropdownMenuItem>
+                                ) : null}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    );
+                })}
             </footer>
         </article>
     );

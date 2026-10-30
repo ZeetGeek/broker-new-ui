@@ -40,9 +40,9 @@ import {
 import { ContactsHeader } from "@/features/contacts/contacts-header";
 import { ContactsIntro } from "@/features/contacts/contacts-intro";
 import {
-    ContactsSkeleton,
     ContactsHeaderSkeleton,
     ContactsIntroSkeleton,
+    ContactsSkeleton,
 } from "@/features/contacts/contacts-skeleton";
 import { DeleteBuyerDialog } from "@/features/contacts/delete-buyer-dialog";
 import { DeleteOwnerDialog } from "@/features/contacts/delete-owner-dialog";
