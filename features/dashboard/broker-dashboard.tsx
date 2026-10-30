@@ -67,8 +67,6 @@ export function BrokerDashboard() {
                     activityCount={view.activity.items.length + (view.activity.remainingCount ?? 0)}
                     reraStatus={view.reraStatus}
                     serviceAreas={view.serviceAreas}
-                    phoneDigits={view.phoneDigits}
-                    email={view.email}
                 />
             }
         >
