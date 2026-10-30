@@ -64,6 +64,8 @@ export type PropertyCardMenuProps = {
     listing: PropertyShareInput;
     isSaved?: boolean;
     onToggleSave?: () => void;
+    /** Draft listings have no public page yet — share and save stay visible but disabled. */
+    isDraft?: boolean;
     /** Call / message the owner (or broker). */
     contact?: PropertyCardMenuContact;
     /** Open the attach-buyers flow. */
@@ -153,6 +155,10 @@ const ITEM_CLASS = `
 
 const ICON_CLASS = "menu-stroke-icon block-4.5 inline-4.5 shrink-0 text-ink!";
 const SEPARATOR_CLASS = "mx-1.5 my-1.5 bg-border-warm";
+/* Keep pointer events so the `title` hint still shows on a disabled row. */
+const DISABLED_ITEM_CLASS =
+    "data-disabled:pointer-events-auto data-disabled:cursor-not-allowed data-disabled:opacity-50";
+const DRAFT_SHARE_HINT = "Publish this property to share or save it";
 
 /**
  * Listing actions grouped by sharing, people, management, and destructive actions.
@@ -161,6 +167,7 @@ export function PropertyCardMenu({
     listing,
     isSaved = false,
     onToggleSave,
+    isDraft = false,
     contact,
     onAddBuyer,
     isAddBuyerBlocked = false,
@@ -457,7 +464,11 @@ export function PropertyCardMenu({
                 ) : null}
                 <DropdownMenuGroup aria-label="Share and save">
                     <DropdownMenuSub>
-                        <DropdownMenuSubTrigger className={ITEM_CLASS}>
+                        <DropdownMenuSubTrigger
+                            className={cn(ITEM_CLASS, DISABLED_ITEM_CLASS)}
+                            disabled={isDraft}
+                            title={isDraft ? DRAFT_SHARE_HINT : undefined}
+                        >
                             <PropertyMenuIcon name="share" aria-hidden className={ICON_CLASS} />
                             Share property
                         </DropdownMenuSubTrigger>
@@ -570,8 +581,13 @@ export function PropertyCardMenu({
                     {onToggleSave ? (
                         <DropdownMenuItem
                             closeOnClick={false}
-                            className={ITEM_CLASS}
-                            onClick={onToggleSave}
+                            className={cn(ITEM_CLASS, DISABLED_ITEM_CLASS)}
+                            disabled={isDraft}
+                            title={isDraft ? DRAFT_SHARE_HINT : undefined}
+                            onClick={() => {
+                                if (isDraft) return;
+                                onToggleSave();
+                            }}
                         >
                             <PropertyMenuIcon
                                 name={isSaved ? "bookmark-filled" : "bookmark"}
