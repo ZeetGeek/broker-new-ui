@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { memo } from "react";
-import toast from "react-hot-toast";
+import Link from "next/link";
 
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
@@ -17,23 +17,17 @@ import {
     Building2,
     CalendarDays,
     CallIcon,
-    ChevronDown,
-    Clock3,
-    Copy,
-    ExternalLink,
     MapPin,
     MoreHorizontal,
     WhatsAppIcon,
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
-import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -47,7 +41,6 @@ export const VisitCard = memo(function VisitCard({
     onAction: (action: "outcome" | "reschedule" | "withdraw", id: string) => void;
 }) {
     const status = VISIT_STATUS[visit.status];
-    const StatusIcon = status.icon;
     const cancelled =
         visit.status === "cancelled_by_broker" || visit.status === "cancelled_by_owner";
     const canCancel = ["awaiting_owner", "confirmed", "reschedule_pending"].includes(visit.status);
@@ -71,14 +64,6 @@ export const VisitCard = memo(function VisitCard({
                 "noopener,noreferrer",
             );
     };
-    const copyAddress = async () => {
-        try {
-            await navigator.clipboard.writeText(visit.property.address);
-            toast.success("Address copied");
-        } catch {
-            toast.error("Could not copy the address. Please try again.");
-        }
-    };
 
     return (
         <article
@@ -101,48 +86,32 @@ export const VisitCard = memo(function VisitCard({
                                 : "emerald"
                     }
                 >
-                    <StatusIcon aria-hidden />
                     {status.label}
                 </Badge>
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="icon-md"
-                                className="shrink-0 rounded-full"
-                                aria-label={`Actions for ${visit.property.title}, ${when}`}
-                            >
-                                <MoreHorizontal aria-hidden />
-                            </Button>
-                        }
-                    />
-                    <DropdownMenuContent align="end" className="min-inline-56">
-                        <DropdownMenuItem onClick={() => void copyAddress()}>
-                            <Copy aria-hidden />
-                            Copy address
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onClick={() =>
-                                window.open(propertyHref, "_blank", "noopener,noreferrer")
+                {canCancel ? (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger
+                            render={
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon-sm"
+                                    className="shrink-0 rounded-full"
+                                    aria-label={`Actions for ${visit.property.title}, ${when}`}
+                                >
+                                    <MoreHorizontal aria-hidden className="block-4 inline-4" />
+                                </Button>
                             }
-                        >
-                            <ExternalLink aria-hidden />
-                            View property
-                        </DropdownMenuItem>
-                        {canCancel ? (
-                            <>
-                                <DropdownMenuSeparator />
-                                <HoldToConfirmMenuItem
-                                    icon="trash"
-                                    label="Cancel visit"
-                                    onComplete={() => onAction("withdraw", visit.id)}
-                                />
-                            </>
-                        ) : null}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                        />
+                        <DropdownMenuContent align="end" className="min-inline-56">
+                            <HoldToConfirmMenuItem
+                                icon="trash"
+                                label="Cancel visit"
+                                onComplete={() => onAction("withdraw", visit.id)}
+                            />
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                ) : null}
             </header>
 
             <div className="flex items-center gap-3 min-inline-0">
@@ -160,8 +129,13 @@ export const VisitCard = memo(function VisitCard({
                             <Building2 aria-hidden className="block-6 inline-6" />
                         </div>
                     )}
+                    {visit.property.coverUrl && (visit.property.photoCount ?? 0) > 1 ? (
+                        <span className="body-xs absolute inset-e-1 inset-be-1 rounded-full bg-ink/65 px-1.5 py-0.5 font-semibold text-surface tabular-nums">
+                            +{visit.property.photoCount! - 1}
+                        </span>
+                    ) : null}
                 </div>
-                <div className="flex-1 space-y-1 min-inline-0">
+                <div className="flex flex-1 flex-col gap-1 min-inline-0">
                     <PriceWithCommission
                         amountInr={visit.property.amountInr}
                         isRent={visit.property.purpose === "rent"}
@@ -170,13 +144,21 @@ export const VisitCard = memo(function VisitCard({
                         audience="broker"
                         size="lg"
                     />
-                    <h3 className="body-sm font-semibold text-ink">
-                        <PropertyTitleLink href={propertyHref} className="line-clamp-2">
+                    <h3 className="body truncate font-semibold tracking-wide text-ink capitalize">
+                        <Link
+                            href={propertyHref}
+                            prefetch={false}
+                            className="underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                        >
                             {propertyName}
-                        </PropertyTitleLink>
+                        </Link>
                     </h3>
-                    <p className="body-xs flex items-center gap-1 text-ink-muted">
-                        <MapPin aria-hidden className="shrink-0 block-3.5 inline-3.5" />
+                    <p className="body-sm flex items-center gap-1.5 tracking-wide text-ink-muted min-inline-0">
+                        <MapPin
+                            aria-hidden
+                            className="shrink-0 block-3.5 inline-3.5"
+                            strokeWidth={1.75}
+                        />
                         <span className="truncate capitalize">
                             {visit.property.locality}, {visit.property.city}
                         </span>
@@ -184,17 +166,28 @@ export const VisitCard = memo(function VisitCard({
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-inner bg-surface-muted px-3 py-2.5">
-                <p className="body-xs flex items-center gap-1.5 font-semibold text-ink">
-                    <CalendarDays aria-hidden className="block-4 inline-4" />
-                    <time dateTime={visit.startsAt}>{formatVisitDate(visit.startsAt)}</time>
-                </p>
-                <p className="body-xs flex items-center gap-1.5 text-ink-muted tabular-nums">
-                    <Clock3 aria-hidden className="block-4 inline-4" />
-                    {formatVisitTime(visit.startsAt)}
-                    <span aria-hidden>·</span>
-                    {durationMinutes(visit.startsAt, visit.endsAt)} min
-                </p>
+            <div className="flex items-center justify-between gap-3 rounded-inner border border-emerald-300 bg-emerald-50 p-3">
+                <div className="flex items-center gap-2.5 min-inline-0">
+                    <span className="flex shrink-0 items-center justify-center text-brand-text">
+                        <CalendarDays aria-hidden className="block-4.5 inline-4.5" />
+                    </span>
+                    <div className="space-y-0.5 min-inline-0">
+                        <p className="body-sm font-semibold text-ink">
+                            <time dateTime={visit.startsAt}>{formatVisitDate(visit.startsAt)}</time>
+                        </p>
+                        <p className="body-xs font-medium text-ink-muted">
+                            {durationMinutes(visit.startsAt, visit.endsAt)} min visit
+                        </p>
+                    </div>
+                </div>
+                <div className="shrink-0 space-y-0.5 text-end tabular-nums">
+                    <p className="body-sm font-bold text-ink">
+                        <time dateTime={visit.startsAt}>{formatVisitTime(visit.startsAt)}</time>
+                    </p>
+                    <p className="body-xs font-medium text-ink-muted">
+                        Until <time dateTime={visit.endsAt}>{formatVisitTime(visit.endsAt)}</time>
+                    </p>
+                </div>
             </div>
 
             <PartyMeetRow
@@ -208,7 +201,7 @@ export const VisitCard = memo(function VisitCard({
             />
 
             <footer className="mbs-auto flex gap-2">
-                {(["whatsapp", "call"] as const).map((channel) => {
+                {(["call", "whatsapp"] as const).map((channel) => {
                     const isWhatsApp = channel === "whatsapp";
                     const ActionIcon = isWhatsApp ? WhatsAppIcon : CallIcon;
                     const actionLabel = isWhatsApp ? "WhatsApp" : "Call";
@@ -229,15 +222,11 @@ export const VisitCard = memo(function VisitCard({
                                     >
                                         <ActionIcon aria-hidden />
                                         {actionLabel}
-                                        <ChevronDown
-                                            aria-hidden
-                                            className="ms-auto block-3.5 inline-3.5"
-                                        />
                                     </Button>
                                 }
                             />
                             <DropdownMenuContent
-                                align={isWhatsApp ? "start" : "end"}
+                                align={isWhatsApp ? "end" : "start"}
                                 side="top"
                                 className="min-inline-56"
                             >

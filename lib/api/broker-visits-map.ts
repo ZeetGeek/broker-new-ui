@@ -262,7 +262,7 @@ function mapShowingProperty(showing: ApiShowing): VisitPropertySummary {
         id: showing.propertyId,
         title: p?.title?.trim() || "Property",
         configLabel: configLabel(p?.bhkConfig, p?.bedrooms, p?.subtype),
-        propertyType: p?.propertyType?.trim() || p?.subtype?.trim() || "Apartment",
+        propertyType: p?.subtype?.trim() || p?.propertyType?.trim() || "Apartment",
         locality: localityFromAddress(p?.address, p?.city),
         city: p?.city ?? "—",
         address: p?.address?.trim() || p?.city || "—",
@@ -271,6 +271,7 @@ function mapShowingProperty(showing: ApiShowing): VisitPropertySummary {
         purpose: purposeFromTransaction(p?.transactionType),
         ...commissionFromSource(p ?? {}),
         coverUrl: p?.photos?.[0] ?? undefined,
+        photoCount: p?.photos?.length,
     };
 }
 

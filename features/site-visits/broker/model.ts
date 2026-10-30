@@ -37,6 +37,7 @@ export type VisitPropertySummary = {
     /** Fixed rent brokerage in INR. Absent or 0 when unset. */
     commissionAmountInr?: number | null;
     coverUrl?: string;
+    photoCount?: number;
     latitude?: number;
     longitude?: number;
 };
