@@ -1,10 +1,11 @@
 "use client";
 
-import type { SyntheticEvent } from "react";
+import { type SyntheticEvent, useState } from "react";
 
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
+import { HoldToConfirmMenuItem } from "@/components/shared/hold-to-confirm-menu-item";
 import {
     CallIcon,
     Eye,
@@ -13,7 +14,6 @@ import {
     MoreHorizontal,
     Pencil,
     StickyNote,
-    Trash2,
     WhatsAppIcon,
 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ export type ContactCardActionsProps = {
     phoneDigits?: string;
     onOpen: () => void;
     onEdit?: () => void;
+    editLabel?: string;
     onAttach?: () => void;
     onNotes?: () => void;
     onDelete?: () => void;
@@ -46,17 +47,22 @@ function stop(event: SyntheticEvent) {
     event.stopPropagation();
 }
 
+const MENU_ITEM_CLASS =
+    "body-sm cursor-pointer gap-3 rounded-inner px-3 font-medium text-ink min-block-11 focus:bg-surface-muted! focus:text-ink! data-highlighted:bg-surface-muted! data-highlighted:text-ink!";
+
 export function ContactCardActions({
     name,
     phoneDigits,
     onOpen,
     onEdit,
+    editLabel = "Edit client",
     onAttach,
     onNotes,
     onDelete,
     editLocked = false,
     density = "default",
 }: ContactCardActionsProps) {
+    const [menuOpen, setMenuOpen] = useState(false);
     const callHref = phoneDigits ? `tel:+91${phoneDigits}` : undefined;
     const showQuickActions = density === "default";
 
@@ -109,7 +115,7 @@ export function ContactCardActions({
                 </Tooltip>
             ) : null}
 
-            <DropdownMenu>
+            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
                 <Tooltip>
                     <TooltipTrigger
                         render={
@@ -137,34 +143,44 @@ export function ContactCardActions({
                     />
                     <TooltipContent>More actions</TooltipContent>
                 </Tooltip>
-                <DropdownMenuContent align="end" onClick={stop}>
-                    <DropdownMenuItem onClick={onOpen}>
+                <DropdownMenuContent
+                    align="end"
+                    onClick={stop}
+                    className="t-dropdown t-profile-menu animate-none! rounded-card border border-border-warm bg-surface p-1.5 text-ink shadow-xl ring-0 min-inline-48 before:backdrop-blur-none data-open:animate-none! data-closed:animate-none!"
+                >
+                    <DropdownMenuItem className={MENU_ITEM_CLASS} onClick={onOpen}>
                         <Eye aria-hidden /> View details
                     </DropdownMenuItem>
                     {onEdit ? (
                         <DropdownMenuItem
+                            className={MENU_ITEM_CLASS}
                             onClick={onEdit}
                             title={editLocked ? "Owner details come from the platform" : undefined}
                         >
                             {editLocked ? <Lock aria-hidden /> : <Pencil aria-hidden />}
-                            {editLocked ? "Edit tracking" : "Edit client"}
+                            {editLocked ? "Edit tracking" : editLabel}
                         </DropdownMenuItem>
                     ) : null}
                     {onAttach ? (
-                        <DropdownMenuItem onClick={onAttach}>
+                        <DropdownMenuItem className={MENU_ITEM_CLASS} onClick={onAttach}>
                             <Link2 aria-hidden /> Attach property
                         </DropdownMenuItem>
                     ) : null}
                     {onNotes ? (
-                        <DropdownMenuItem onClick={onNotes}>
+                        <DropdownMenuItem className={MENU_ITEM_CLASS} onClick={onNotes}>
                             <StickyNote aria-hidden /> Notes
                         </DropdownMenuItem>
                     ) : null}
-                    {onDelete ? <DropdownMenuSeparator /> : null}
+                    {onDelete ? <DropdownMenuSeparator className="m-1.5 bg-border-warm" /> : null}
                     {onDelete ? (
-                        <DropdownMenuItem variant="destructive" onClick={onDelete}>
-                            <Trash2 aria-hidden /> Delete
-                        </DropdownMenuItem>
+                        <HoldToConfirmMenuItem
+                            label="Hold to delete"
+                            icon="trash"
+                            onComplete={() => {
+                                setMenuOpen(false);
+                                onDelete();
+                            }}
+                        />
                     ) : null}
                 </DropdownMenuContent>
             </DropdownMenu>

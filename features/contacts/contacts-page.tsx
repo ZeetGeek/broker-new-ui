@@ -446,7 +446,12 @@ export function ContactsPage({
     return (
         <TooltipProvider>
             <div className="flex flex-col gap-6">
-                <ContactsIntro summary={summary} tab={filters.tab} />
+                <ContactsIntro
+                    summary={summary}
+                    tab={filters.tab}
+                    isLoading={summaryQuery.isPending}
+                    hasError={summaryQuery.isError}
+                />
                 {addDealFlow ? (
                     <div
                         className="

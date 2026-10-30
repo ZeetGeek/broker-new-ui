@@ -7,7 +7,7 @@ import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import { useReducedMotion } from "motion/react";
 
-import { formatDateIn, formatDateShort, formatRelativePast, formatTimeIn } from "@/lib/format/date";
+import { formatDateIn, formatDateShort, formatTimeIn } from "@/lib/format/date";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 
@@ -27,12 +27,17 @@ import {
 } from "@/components/shared/icons";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { Skeleton } from "@/components/shared/skeleton";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { PipelineDetailSkeleton } from "@/features/pipeline/pipeline-skeleton";
-import { DEAL_OUTCOME_META, DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
+import {
+    DEAL_OUTCOME_META,
+    DEAL_STAGE_META,
+    lostReasonLabel,
+} from "@/features/pipeline/stage-meta";
 import type { DealDetail, DealHistoryEntry, DealStatus } from "@/features/pipeline/types";
 import { isLiveStage, nextStage } from "@/features/pipeline/types";
 
@@ -62,14 +67,15 @@ function stageLabel(status: string): string {
 }
 
 function formatMoney(amountInr: number | null, isRent: boolean): string {
-    if (amountInr == null || amountInr <= 0) return "�";
+    if (amountInr == null || amountInr <= 0) return "Not added";
     return isRent ? formatRent(amountInr) : formatPrice(amountInr);
 }
 
-function formatWhen(iso: string | null, now: Date): string {
-    if (!iso) return "�";
+function formatWhen(iso: string | null): string {
+    if (!iso) return "Date not added";
     const date = new Date(iso);
-    return `${formatDateIn(date)} / ${formatTimeIn(date)} / ${formatRelativePast(date, now)}`;
+    if (!Number.isFinite(date.getTime())) return "Date unavailable";
+    return `${formatDateIn(date)} at ${formatTimeIn(date)}`;
 }
 
 function historyIcon(status: string): AppIcon {
@@ -110,7 +116,9 @@ function HistoryList({ history }: { history: DealHistoryEntry[] }) {
                                         {stageLabel(entry.status)}
                                     </h3>
                                     {index === 0 ? (
-                                        <span className={styles.latestUpdate}>Latest</span>
+                                        <Badge variant="brand" className="px-2 py-0.5 text-[10px]">
+                                            Latest
+                                        </Badge>
                                     ) : null}
                                 </div>
                                 {validDate ? (
@@ -142,7 +150,7 @@ function HistoryList({ history }: { history: DealHistoryEntry[] }) {
                     aria-expanded={expanded}
                     onClick={() => setExpanded((value) => !value)}
                 >
-                    {expanded ? "Show recent updates" : `View all ${all.length} updates`}
+                    {expanded ? "Show latest 3 updates" : `View all ${all.length} updates`}
                 </button>
             ) : null}
         </>
@@ -163,6 +171,7 @@ function DealPhotos({
     ];
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [failed, setFailed] = useState<string[]>([]);
+    const [loaded, setLoaded] = useState<string[]>([]);
     const [active, setActive] = useState(0);
     const reduceMotion = useReducedMotion();
     const [viewportRef, carousel] = useEmblaCarousel({
@@ -280,10 +289,20 @@ function DealPhotos({
                                                     draggable={false}
                                                     sizes="(max-width: 899px) 90vw, 560px"
                                                     priority={index === 0}
+                                                    onLoad={() =>
+                                                        setLoaded((previous) =>
+                                                            previous.includes(src)
+                                                                ? previous
+                                                                : [...previous, src],
+                                                        )
+                                                    }
                                                     onError={() =>
                                                         setFailed((previous) => [...previous, src])
                                                     }
                                                 />
+                                                {!loaded.includes(src) ? (
+                                                    <Skeleton className={styles.imageSkeleton} />
+                                                ) : null}
                                             </span>
                                         ) : (
                                             <span className={styles.photoEmpty}>
@@ -366,7 +385,7 @@ function DealNotes({ note }: { note: string }) {
                     aria-expanded={expanded}
                     onClick={() => setExpanded((value) => !value)}
                 >
-                    {expanded ? "Show less" : "Show more"}
+                    {expanded ? "Show less" : "Read full note"}
                 </button>
             ) : null}
         </div>
@@ -401,11 +420,12 @@ function DetailField({
  */
 export function DealDetailModal({
     open,
-    deal,
+    deal: detail,
     isLoading,
     error,
     onClose,
     onStageAction,
+    onRetry,
     isBusy,
 }: {
     open: boolean;
@@ -414,8 +434,10 @@ export function DealDetailModal({
     error: string | null;
     onClose: () => void;
     onStageAction: (status: DealStatus) => void;
+    onRetry: () => void;
     isBusy: boolean;
 }) {
+    const deal = detail;
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const next = deal && isLiveStage(deal.status) ? nextStage(deal.status) : null;
     const target: DealStatus | null = next ?? (deal?.status === "negotiation" ? "closed" : null);
@@ -428,12 +450,11 @@ export function DealDetailModal({
                 ? "Start negotiating"
                 : "Mark as closed";
     const ActionIcon = target && isLiveStage(target) ? DEAL_STAGE_META[target].icon : BadgeCheck;
-    const now = new Date();
     const title = deal ? deal.buyer.name : "Deal details";
 
     const statusLabel = deal
-        ? deal.apiStage
-            ? stageLabel(deal.apiStage)
+        ? detail?.apiStage
+            ? stageLabel(detail.apiStage)
             : isLiveStage(deal.status)
               ? DEAL_STAGE_META[deal.status].label
               : DEAL_OUTCOME_META[deal.status].label
@@ -449,7 +470,12 @@ export function DealDetailModal({
             size="xl"
             nativeScroll
             footer={
-                deal ? (
+                isLoading ? (
+                    <div className={styles.footer} aria-hidden>
+                        <Skeleton className="block-11 inline-36" />
+                        <Skeleton className="block-11 inline-44" />
+                    </div>
+                ) : deal ? (
                     <div className={styles.footer}>
                         <Button
                             variant="link"
@@ -465,7 +491,7 @@ export function DealDetailModal({
                                 onClick={() => onStageAction(target)}
                             >
                                 <ActionIcon size={18} aria-hidden />
-                                {isBusy ? "Saving..." : actionLabel}
+                                {isBusy ? "Please wait..." : actionLabel}
                             </Button>
                         ) : null}
                     </div>
@@ -477,22 +503,44 @@ export function DealDetailModal({
             footerClassName={styles.footerBar}
             title={
                 <span className="flex flex-wrap items-center gap-2">
-                    {title}
-                    {statusLabel ? <Badge variant="brand">{statusLabel}</Badge> : null}
+                    {isLoading ? (
+                        <>
+                            <span className="sr-only">Deal details</span>
+                            <Skeleton className="block-6 inline-32" />
+                            <Skeleton className="rounded-full block-6 inline-24" />
+                        </>
+                    ) : (
+                        title
+                    )}
+                    {!isLoading && statusLabel ? (
+                        <Badge variant="brand">{statusLabel}</Badge>
+                    ) : null}
                 </span>
             }
             description={
-                deal
-                    ? `${deal.property.locality}, ${deal.property.city}`
-                    : "Client, property, offer and stage history."
+                isLoading ? (
+                    <Skeleton className="block-5 inline-28" />
+                ) : deal ? (
+                    `${deal.property.locality}, ${deal.property.city}`
+                ) : (
+                    "Client, property, offer and stage history."
+                )
             }
         >
-            {isLoading && !deal ? (
+            {isLoading ? (
                 <PipelineDetailSkeleton />
             ) : error && !deal ? (
-                <p role="alert" className="body-sm py-10 text-center text-urgent">
-                    {error}
-                </p>
+                <div className="flex flex-col items-center gap-3 py-10 text-center">
+                    <p role="alert" className="body-sm text-urgent">
+                        Could not load deal details.
+                    </p>
+                    <p className="body-sm text-ink-muted">
+                        Try again. If the problem continues, close this window and reopen the deal.
+                    </p>
+                    <Button variant="outline" onClick={onRetry}>
+                        Try again
+                    </Button>
+                </div>
             ) : deal ? (
                 <div className={styles.layout}>
                     {error ? (
@@ -553,7 +601,11 @@ export function DealDetailModal({
                                                 phoneDigits={deal.buyer.phoneDigits}
                                                 className="body-xs whitespace-nowrap text-ink-muted"
                                             />
-                                        ) : null}
+                                        ) : (
+                                            <p className="body-xs text-ink-muted">
+                                                Phone number not added
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -576,8 +628,8 @@ export function DealDetailModal({
                                         ) : (
                                             <p className="body-xs text-ink-subtle">
                                                 {deal.owner.isRepresentationActive
-                                                    ? "No phone on file"
-                                                    : "Number hidden"}
+                                                    ? "Phone number not added"
+                                                    : "Phone number not shared"}
                                             </p>
                                         )}
                                     </div>
@@ -628,7 +680,7 @@ export function DealDetailModal({
                                         ) : null}
                                         {deal.status === "lost" && deal.lostReason ? (
                                             <DetailField label="Reason lost" icon={CircleX}>
-                                                {deal.lostReason.replace(/_/g, " ")}
+                                                {lostReasonLabel(deal.lostReason)}
                                             </DetailField>
                                         ) : null}
                                     </div>
@@ -637,7 +689,7 @@ export function DealDetailModal({
 
                             {deal.nextVisitAt ? (
                                 <DetailField label="Next visit" icon={CalendarCheck}>
-                                    {formatWhen(deal.nextVisitAt, now)}
+                                    {formatWhen(deal.nextVisitAt)}
                                 </DetailField>
                             ) : null}
                         </div>
@@ -647,9 +699,6 @@ export function DealDetailModal({
 
                         <div className={styles.history}>
                             <h2 className={styles.sectionTitle}>Stage history</h2>
-                            {isLoading ? (
-                                <p className="body-xs text-ink-subtle">Refreshing�</p>
-                            ) : null}
                             <HistoryList key={deal.id} history={deal.history} />
                         </div>
                     </div>

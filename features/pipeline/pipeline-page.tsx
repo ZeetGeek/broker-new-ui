@@ -840,6 +840,9 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 deal={viewDetail}
                 isLoading={isLoadingView}
                 error={viewError}
+                onRetry={() => {
+                    if (viewDealId) openLeadView(viewDealId);
+                }}
                 isBusy={busyId != null || isSavingMove}
                 onStageAction={(status) => {
                     if (!viewDetail || busyId != null || isSavingMove) return;

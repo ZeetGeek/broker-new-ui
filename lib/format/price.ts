@@ -52,6 +52,21 @@ export function formatPrice(amount: number, currency: Currency = getActiveCurren
         : formatInternationalAmount(abs, currency);
 }
 
+/** Compact budgets: thousands use K; INR lakh/crore notation stays unchanged. */
+export function formatBudgetAmount(
+    amount: number,
+    currency: Currency = getActiveCurrency(),
+): string {
+    const abs = Math.abs(amount);
+    if (Number.isFinite(abs) && abs >= 1_000 && abs < 100_000) {
+        const thousands = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+            abs / 1_000,
+        );
+        return withCurrencySymbol(currency, `${thousands}K`);
+    }
+    return formatPrice(amount, currency);
+}
+
 /** Rent display: same rules as {@link formatPrice}, with `/mo` appended. */
 export function formatRent(amount: number, currency: Currency = getActiveCurrency()): string {
     return `${formatPrice(amount, currency)}/mo`;

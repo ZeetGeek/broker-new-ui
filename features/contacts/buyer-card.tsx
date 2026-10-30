@@ -1,9 +1,11 @@
 ﻿"use client";
 
 import { formatWhatsAppUrl } from "@/lib/format/phone";
-import { formatPrice } from "@/lib/format/price";
+import { formatBudgetAmount } from "@/lib/format/price";
+import { cn } from "@/lib/utils";
 
-import { CallIcon, ChevronRight, Link2, MapPin, WhatsAppIcon } from "@/components/shared/icons";
+import { CallIcon, Link2, MapPin, WhatsAppIcon } from "@/components/shared/icons";
+import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,10 +19,10 @@ function budgetRange(min: number | null | undefined, max: number | null | undefi
     const upper = max != null && Number.isFinite(max) ? max : null;
     if (lower != null && upper != null)
         return lower === upper
-            ? formatPrice(lower)
-            : `${formatPrice(lower)} – ${formatPrice(upper)}`;
-    if (upper != null) return `Up to ${formatPrice(upper)}`;
-    if (lower != null) return `From ${formatPrice(lower)}`;
+            ? formatBudgetAmount(lower)
+            : `${formatBudgetAmount(lower)}–${formatBudgetAmount(upper)}`;
+    if (upper != null) return `Up to ${formatBudgetAmount(upper)}`;
+    if (lower != null) return `From ${formatBudgetAmount(lower)}`;
     return null;
 }
 
@@ -58,7 +60,10 @@ export function BuyerCard({
         ...new Set(buyer.preferredLocalities.map((area) => area.trim()).filter(Boolean)),
     ];
     const homeLocation = [buyer.city?.trim(), buyer.state?.trim()].filter(Boolean).join(", ");
-    const propertyCount = new Set(buyer.attachedProperties.map((property) => property.id)).size;
+    const linkedProperties = [
+        ...new Map(buyer.attachedProperties.map((property) => [property.id, property])).values(),
+    ];
+    const propertyCount = linkedProperties.length;
     const canContact = /^[6-9]\d{9}$/.test(buyer.phoneDigits);
     const open = () => onOpen(buyer);
 
@@ -95,7 +100,13 @@ export function BuyerCard({
             </div>
             <header>
                 <div className="flex items-center gap-3 min-inline-0">
-                    <UserAvatar name={buyer.name} imageUrl={buyer.avatarUrl} size="md" />
+                    <UserAvatar
+                        name={buyer.name}
+                        imageUrl={buyer.avatarUrl}
+                        size="md"
+                        framed={false}
+                        className="border-2 border-white shadow-sm"
+                    />
                     <div className="min-inline-0">
                         <h2 className="body font-semibold text-ink">
                             <button
@@ -126,11 +137,18 @@ export function BuyerCard({
             <div className="flex flex-1 flex-col gap-3 py-5 min-inline-0">
                 {requirement ? <p className="body-sm font-medium text-ink">{requirement}</p> : null}
                 {saleBudget || rentBudget ? (
-                    <dl className="grid grid-cols-2 gap-4 divide-x divide-border-warm [&>div+div]:ps-4">
+                    <dl
+                        className={cn(
+                            "relative grid gap-8",
+                            saleBudget && rentBudget
+                                ? "grid-cols-2 after:pointer-events-none after:absolute after:inset-y-0 after:inset-s-1/2 after:bg-border-warm after:inline-px"
+                                : "grid-cols-1",
+                        )}
+                    >
                         {saleBudget ? (
                             <div className="flex flex-col gap-1">
                                 <dt className="body-xs font-medium text-ink-muted">Sale budget</dt>
-                                <dd className="body tabular font-semibold wrap-break-word text-brand-text">
+                                <dd className="body tabular font-bold wrap-break-word text-brand-text">
                                     {saleBudget}
                                 </dd>
                             </div>
@@ -140,7 +158,7 @@ export function BuyerCard({
                                 <dt className="body-xs font-medium text-ink-muted">
                                     Monthly rent budget
                                 </dt>
-                                <dd className="body tabular font-semibold wrap-break-word text-brand-text">
+                                <dd className="body tabular font-bold wrap-break-word text-brand-text">
                                     {rentBudget}
                                 </dd>
                             </div>
@@ -159,23 +177,46 @@ export function BuyerCard({
                 ) : null}
             </div>
             <footer className="mbs-auto flex flex-col gap-3 border-bs border-border-warm pbs-3">
-                <button
-                    type="button"
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        if (propertyCount) (onOpenProperties ?? onOpen)(buyer);
-                        else onAttachProperties(buyer);
-                    }}
-                    className="body-sm flex items-center gap-2 rounded-control text-start font-semibold text-brand-text outline-none min-block-11 hover:bg-surface-muted focus-visible:ring-3 focus-visible:ring-ring/30"
-                >
-                    <Link2 aria-hidden className="shrink-0 block-4 inline-4" />
-                    <span className="flex-1">
-                        {propertyCount
-                            ? `${propertyCount} ${propertyCount === 1 ? "property" : "properties"} linked`
-                            : "Link a property"}
-                    </span>
-                    <ChevronRight aria-hidden className="shrink-0 block-4 inline-4" />
-                </button>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-block-11">
+                    {propertyCount > 0 ? (
+                        <span className="body-sm text-ink-muted">Properties</span>
+                    ) : null}
+                    <Button
+                        variant="link"
+                        type="button"
+                        aria-label={
+                            propertyCount
+                                ? `View ${propertyCount} linked properties for ${buyer.name}`
+                                : `Link a property to ${buyer.name}`
+                        }
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            if (propertyCount) (onOpenProperties ?? onOpen)(buyer);
+                            else onAttachProperties(buyer);
+                        }}
+                        className="gap-2 px-0 text-brand-text min-block-11"
+                    >
+                        {propertyCount > 0 ? (
+                            <span className="flex items-center -space-x-2" aria-hidden>
+                                {linkedProperties.slice(0, 3).map((property) => (
+                                    <PropertyThumb
+                                        key={property.id}
+                                        src={property.coverUrl}
+                                        alt=""
+                                        hoverScale={false}
+                                        sizes="28px"
+                                        sizeClassName="block-7 inline-7"
+                                        iconClassName="block-3.5 inline-3.5"
+                                        className="rounded-full ring-2 ring-surface"
+                                    />
+                                ))}
+                            </span>
+                        ) : (
+                            <Link2 aria-hidden />
+                        )}
+                        <span>{propertyCount ? `${propertyCount} linked` : "Link a property"}</span>
+                    </Button>
+                </div>
                 {canContact ? (
                     <div
                         className="grid grid-cols-2 gap-2"
@@ -197,7 +238,7 @@ export function BuyerCard({
                         </Button>
                         <Button
                             size="md"
-                            variant="secondary"
+                            variant="accent"
                             className="inline-full min-block-11"
                             nativeButton={false}
                             render={
