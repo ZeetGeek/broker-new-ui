@@ -74,24 +74,28 @@ export function PipelineColumn({
                 the stage name sits above it as a quiet eyebrow — the count of
                 deals rides alongside the money rather than competing with it. */}
             <header className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-2 min-inline-0">
-                    <div className="min-inline-0">
+                <div className="flex flex-1 items-start gap-2 min-inline-0">
+                    <div className="flex-1 min-inline-0">
                         {/* The stage hue lives on the label now. A filled pill
                             beside a heading-sized number read as two competing
                             marks. */}
                         <p className={cn("eyebrow truncate", meta.labelClass)}>{meta.label}</p>
-                        <div className="mbs-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                            {totals.sale || totals.rent ? (
-                                <>
-                                    {totals.sale ? (
-                                        <span className="h6 tabular text-ink">{totals.sale}</span>
-                                    ) : null}
-                                    {totals.rent ? <RentTotal value={totals.rent} /> : null}
-                                </>
-                            ) : (
-                                <span className="h6 tabular text-ink-subtle">—</span>
-                            )}
-                            <span className="body-sm tabular text-ink-muted">
+                        <div className="mbs-1 flex items-baseline justify-between gap-2">
+                            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 min-inline-0">
+                                {totals.sale || totals.rent ? (
+                                    <>
+                                        {totals.sale ? (
+                                            <span className="h6 tabular text-ink">
+                                                {totals.sale}
+                                            </span>
+                                        ) : null}
+                                        {totals.rent ? <RentTotal value={totals.rent} /> : null}
+                                    </>
+                                ) : (
+                                    <span className="h6 tabular text-ink-subtle">—</span>
+                                )}
+                            </div>
+                            <span className="body-sm shrink-0 text-ink-muted tabular-nums">
                                 {deals.length} {deals.length === 1 ? "deal" : "deals"}
                             </span>
                         </div>
@@ -147,13 +151,13 @@ export function PipelineColumn({
                 <Button
                     variant="outline"
                     size="md"
-                    className="inline-full"
+                    className="shadow-md inline-full hover:shadow-lg"
                     onClick={onLoadMore}
                     aria-label={`Load more ${meta.label.toLowerCase()} deals`}
                 >
                     Load more deals
-                    <span className="body-xs font-normal text-ink-muted">
-                        ({remaining} remaining)
+                    <span className="body-xs rounded-full bg-ink/5 px-1.5 font-semibold text-ink-muted tabular-nums min-inline-5">
+                        {remaining}
                     </span>
                 </Button>
             ) : null}

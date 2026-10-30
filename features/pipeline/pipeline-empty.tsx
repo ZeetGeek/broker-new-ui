@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BROKER_ADD_DEAL_HREF } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { CircleCheck, CircleSlash, Search, Users } from "@/components/shared/icons";
+import { CircleCheck, CircleSlash, LostIcon, Search, Users } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 /** A deal starts by linking a buyer to a property in Contacts. */
@@ -43,8 +43,8 @@ export function PipelineDoneEmpty() {
     return (
         <EmptyState
             icon={CircleSlash}
-            heading="Nothing finished yet"
-            description="Deals you mark as sold or lost move here, so the board only shows what you are still working on."
+            heading="No active deals"
+            description="Your finished and lost deals are saved in their tabs. Active deals appear here."
             className="py-16"
         />
     );
@@ -55,13 +55,13 @@ export function PipelineOutcomeEmpty({ outcome }: { outcome: "sold" | "lost" }) 
     return outcome === "sold" ? (
         <EmptyState
             icon={CircleCheck}
-            heading="No sold deals yet"
+            heading="No finished deals yet"
             description="When you mark a deal as sold, it moves here."
             className="py-16"
         />
     ) : (
         <EmptyState
-            icon={CircleSlash}
+            icon={LostIcon}
             heading="No lost deals"
             description="Deals you mark as lost move here, so the board only shows what you are still working on."
             className="py-16"

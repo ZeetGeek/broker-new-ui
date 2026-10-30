@@ -106,7 +106,7 @@ export type DealItem = {
     /** Free-text note the broker typed. Empty string when none. */
     note: string;
     /** Set only when `status` is "lost". */
-    lostReason?: DealLostReason;
+    lostReason?: string;
     /** ISO instant the deal was closed or lost. Null while live. */
     resolvedAt: string | null;
     /** What the deal actually closed at, in INR. Null unless closed. */

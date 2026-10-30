@@ -39,6 +39,7 @@ export function DealPartiesPanel({
     return (
         <div className="flex flex-col gap-2">
             <PartyMeetRow
+                highlightOnHover={false}
                 left={{
                     name: owner.name,
                     avatarUrl: owner.avatarUrl,

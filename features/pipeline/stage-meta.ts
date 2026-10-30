@@ -2,8 +2,8 @@ import type { AppIcon } from "@/components/shared/icons";
 import {
     CalendarCheck,
     CircleCheck,
-    CircleSlash,
     Handshake,
+    LostIcon,
     PhoneCall,
     Sparkles,
 } from "@/components/shared/icons";
@@ -56,7 +56,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         dotClass: "bg-stage-1",
         advanceLabel: "Move to new",
         pillClass: "bg-stage-1-soft text-stage-1",
-        columnClass: "border-stage-1-soft bg-stage-1-soft/25",
+        columnClass: "border-stage-1/30 bg-stage-1-soft/25",
         labelClass: "text-stage-1",
         pinnedBorderClass: "text-stage-1",
         pinnedBadgeClass: "border-stage-1/35 bg-surface text-stage-1",
@@ -68,7 +68,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         dotClass: "bg-stage-2",
         advanceLabel: "Mark contacted",
         pillClass: "bg-stage-2-soft text-stage-2",
-        columnClass: "border-stage-2-soft bg-stage-2-soft/25",
+        columnClass: "border-stage-2/30 bg-stage-2-soft/25",
         labelClass: "text-stage-2",
         pinnedBorderClass: "text-stage-2",
         pinnedBadgeClass: "border-stage-2/35 bg-surface text-stage-2",
@@ -80,7 +80,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         dotClass: "bg-stage-3",
         advanceLabel: "Book a visit",
         pillClass: "bg-stage-3-soft text-stage-3",
-        columnClass: "border-stage-3-soft bg-stage-3-soft/25",
+        columnClass: "border-stage-3/30 bg-stage-3-soft/25",
         labelClass: "text-stage-3",
         pinnedBorderClass: "text-stage-3",
         pinnedBadgeClass: "border-stage-3/35 bg-surface text-stage-3",
@@ -92,7 +92,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
         dotClass: "bg-stage-4",
         advanceLabel: "Start negotiating",
         pillClass: "bg-stage-4-soft text-stage-4",
-        columnClass: "border-stage-4-soft bg-stage-4-soft/25",
+        columnClass: "border-stage-4/30 bg-stage-4-soft/25",
         labelClass: "text-stage-4",
         pinnedBorderClass: "text-stage-4",
         pinnedBadgeClass: "border-stage-4/35 bg-surface text-stage-4",
@@ -118,7 +118,7 @@ export const DEAL_OUTCOME_META: Record<DealOutcome, OutcomeMeta> = {
     lost: {
         label: "Lost",
         hint: "This client will not be buying this property.",
-        icon: CircleSlash,
+        icon: LostIcon,
         badgeVariant: "neutral",
         toneClass: "text-ink-muted",
     },
@@ -131,6 +131,13 @@ export const DEAL_LOST_REASON_LABEL: Record<DealLostReason, string> = {
     not_responding: "Client stopped replying",
     changed_mind: "Client changed their mind",
 };
+
+/** Known API codes use plain-language labels; saved free text stays as supplied. */
+export function lostReasonLabel(reason: string): string {
+    return Object.hasOwn(DEAL_LOST_REASON_LABEL, reason)
+        ? DEAL_LOST_REASON_LABEL[reason as DealLostReason]
+        : reason;
+}
 
 export function isOutcome(status: DealStatus): status is DealOutcome {
     return status === "closed" || status === "lost";

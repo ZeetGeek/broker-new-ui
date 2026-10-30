@@ -28,7 +28,15 @@ type PartyMeetSide = {
  * center divider. Name on top, role under it. Used on pipeline and owner-lead
  * cards so both portals read a deal the same way.
  */
-export function PartyMeetRow({ left, right }: { left: PartyMeetSide; right: PartyMeetSide }) {
+export function PartyMeetRow({
+    left,
+    right,
+    highlightOnHover = true,
+}: {
+    left: PartyMeetSide;
+    right: PartyMeetSide;
+    highlightOnHover?: boolean;
+}) {
     const ariaLabel = `${left.role} ${left.name}, ${right.role} ${right.name}`;
 
     return (
@@ -40,17 +48,23 @@ export function PartyMeetRow({ left, right }: { left: PartyMeetSide; right: Part
               border-ink/15 bg-surface p-1.5 font-semibold text-ink inline-full
             "
         >
-            <PartyMeetPerson side={left} />
+            <PartyMeetPerson side={left} highlightOnHover={highlightOnHover} />
             <div
                 aria-hidden
                 className="mbs-2.5 mbe-2.5 shrink-0 self-stretch bg-border-warm inline-px"
             />
-            <PartyMeetPerson side={right} />
+            <PartyMeetPerson side={right} highlightOnHover={highlightOnHover} />
         </div>
     );
 }
 
-function PartyMeetPerson({ side }: { side: PartyMeetSide }) {
+function PartyMeetPerson({
+    side,
+    highlightOnHover,
+}: {
+    side: PartyMeetSide;
+    highlightOnHover: boolean;
+}) {
     const content = (
         <>
             <UserAvatar name={side.name} imageUrl={side.avatarUrl} size="xs" className="shrink-0" />
@@ -72,9 +86,8 @@ function PartyMeetPerson({ side }: { side: PartyMeetSide }) {
                 onClick={side.onOpen}
                 className={cn(
                     className,
+                    highlightOnHover && "transition-colors duration-160 hover:bg-surface-muted/60",
                     `
-                      transition-colors duration-160
-                      hover:bg-surface-muted/60
                       focus-visible:outline-2 focus-visible:-outline-offset-2
                       focus-visible:outline-ring
                     `,

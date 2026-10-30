@@ -2,6 +2,7 @@
 
 import { type KeyboardEvent, useRef, useState } from "react";
 
+import { formatDateIn } from "@/lib/format/date";
 import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
@@ -11,7 +12,9 @@ import { HoldToConfirmMenuItem } from "@/components/shared/hold-to-confirm-menu-
 import {
     Building2,
     CallIcon,
+    CircleCheck,
     GripVertical,
+    LostIcon,
     MapPin,
     Pin,
     PinOff,
@@ -19,6 +22,7 @@ import {
     WhatsAppIcon,
 } from "@/components/shared/icons";
 import { OverlayCardActions } from "@/components/shared/overlay-card";
+import { Price } from "@/components/shared/price";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +40,7 @@ import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { DealPartiesPanel } from "@/features/pipeline/deal-parties-panel";
 import { NegotiationStageBlock } from "@/features/pipeline/stage-blocks/negotiation-stage-block";
 import { VisitStageBlock } from "@/features/pipeline/stage-blocks/visit-stage-block";
-import { DEAL_OUTCOME_META, DEAL_STAGE_META, isOutcome } from "@/features/pipeline/stage-meta";
+import { DEAL_STAGE_META, lostReasonLabel } from "@/features/pipeline/stage-meta";
 import {
     DEAL_STAGE_ORDER,
     type DealItem,
@@ -407,8 +411,8 @@ export function DealCard({
     dragHandleProps?: Record<string, unknown>;
 }) {
     const live = isLiveStage(deal.status);
-    const outcome = isOutcome(deal.status) ? DEAL_OUTCOME_META[deal.status] : null;
-    const OutcomeIcon = outcome?.icon;
+    const resolved = deal.resolvedAt ? new Date(deal.resolvedAt) : null;
+    const hasResolvedDate = resolved != null && Number.isFinite(resolved.getTime());
     const stageMeta = live ? DEAL_STAGE_META[deal.status as DealStage] : null;
     const canCall = Boolean(deal.buyer.phoneDigits);
     const ownerPhone = deal.owner.isRepresentationActive ? deal.owner.phoneDigits : undefined;
@@ -456,7 +460,7 @@ export function DealCard({
                 "border-border-warm",
                 isBusy && "pointer-events-none opacity-60",
                 isDragging && "cursor-grabbing opacity-40",
-                !live && "bg-surface-muted/40",
+                !live && "block-full",
             )}
         >
             <div
@@ -468,16 +472,6 @@ export function DealCard({
             >
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5 min-inline-0">
-                        {outcome && OutcomeIcon ? (
-                            <Badge color={deal.status === "closed" ? "emerald" : "stone"}>
-                                <OutcomeIcon
-                                    aria-hidden
-                                    className="block-3 inline-3"
-                                    strokeWidth={2}
-                                />
-                                {outcome.label}
-                            </Badge>
-                        ) : null}
                         <Badge color={deal.property.isRent ? "orange" : "emerald"}>
                             {deal.property.isRent ? "For rent" : "For sale"}
                         </Badge>
@@ -547,7 +541,7 @@ export function DealCard({
                 </div>
 
                 <div className="flex items-center gap-3 min-inline-0">
-                    <DealCoverImage property={deal.property} muted={!live} />
+                    <DealCoverImage property={deal.property} />
 
                     <div className="flex flex-1 flex-col gap-1 min-inline-0">
                         <PriceWithCommission
@@ -560,9 +554,10 @@ export function DealCard({
                             showEmptyTip
                         />
                         <h3
-                            className="
-                              body truncate font-semibold tracking-wide text-ink capitalize underline-offset-4 group-hover/marquee:underline
-                            "
+                            className={cn(
+                                "body font-semibold tracking-wide text-ink capitalize underline-offset-4 group-hover/marquee:underline",
+                                "truncate",
+                            )}
                         >
                             {headline || deal.property.title}
                         </h3>
@@ -593,6 +588,69 @@ export function DealCard({
                     />
                 ) : null}
 
+                {!live ? (
+                    <div
+                        className={cn(
+                            "flex items-center gap-2.5 rounded-inner border px-3 py-1 min-block-10",
+                            deal.status === "closed"
+                                ? "border-stage-4-soft/70 bg-stage-4-soft/15 text-brand-text"
+                                : "border-danger/20 bg-danger-soft/40 text-danger",
+                        )}
+                    >
+                        {deal.status === "closed" ? (
+                            <CircleCheck
+                                aria-hidden
+                                className="shrink-0 block-4.5 inline-4.5"
+                                strokeWidth={1.75}
+                            />
+                        ) : (
+                            <LostIcon
+                                aria-hidden
+                                className="shrink-0 block-4.5 inline-4.5"
+                                strokeWidth={1.75}
+                            />
+                        )}
+                        <div className="flex flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1 py-1 min-inline-0">
+                            <p
+                                className={cn(
+                                    "body-xs leading-snug whitespace-nowrap",
+                                    deal.status === "closed"
+                                        ? "font-semibold text-brand-text"
+                                        : "font-medium text-ink",
+                                )}
+                            >
+                                {hasResolvedDate ? (
+                                    <time dateTime={deal.resolvedAt!}>
+                                        {deal.status === "closed" ? "Completed on" : "Lost on"}{" "}
+                                        {formatDateIn(resolved)}
+                                    </time>
+                                ) : deal.status === "closed" ? (
+                                    "Completion date unavailable"
+                                ) : (
+                                    "Lost date unavailable"
+                                )}
+                            </p>
+                            {deal.status === "closed" &&
+                            deal.closedAmountInr != null &&
+                            deal.closedAmountInr > 0 ? (
+                                <p className="body-xs flex shrink-0 items-baseline gap-x-1 font-semibold whitespace-nowrap text-brand-text">
+                                    <span className="body-xs font-medium">Closed at</span>
+                                    <Price
+                                        amountInr={deal.closedAmountInr}
+                                        isRent={deal.property.isRent}
+                                        className="text-brand-text"
+                                    />
+                                </p>
+                            ) : null}
+                            {deal.status === "lost" && deal.lostReason ? (
+                                <p className="body-xs leading-relaxed text-danger inline-full">
+                                    {lostReasonLabel(deal.lostReason)}
+                                </p>
+                            ) : null}
+                        </div>
+                    </div>
+                ) : null}
+
                 <DealPartiesPanel
                     buyer={deal.buyer}
                     owner={deal.owner}
@@ -600,82 +658,80 @@ export function DealCard({
                     onOpenOwner={openCard}
                 />
 
-                {live ? (
-                    <OverlayCardActions className="flex-col gap-2">
-                        {canCall ? (
-                            <div className="flex gap-2">
-                                <Tooltip>
-                                    <TooltipTrigger
-                                        render={
-                                            <Button
-                                                size="md"
-                                                variant="outline"
-                                                nativeButton={false}
-                                                className="flex-1 min-inline-0"
-                                                render={
+                <OverlayCardActions className="flex-col gap-2">
+                    {canCall ? (
+                        <div className="flex gap-2">
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <Button
+                                            size="md"
+                                            variant="outline"
+                                            nativeButton={false}
+                                            className="flex-1 min-inline-0"
+                                            render={
+                                                <a
+                                                    href={formatWhatsAppUrl(
+                                                        deal.buyer.phoneDigits,
+                                                        whatsappMessage(deal),
+                                                    )}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    aria-label={`WhatsApp client ${deal.buyer.name} at ${formatPhoneIn(deal.buyer.phoneDigits)}`}
+                                                    onClick={stopCard}
+                                                />
+                                            }
+                                        />
+                                    }
+                                >
+                                    <WhatsAppIcon
+                                        aria-hidden
+                                        strokeWidth={1.75}
+                                        className="shrink-0 block-4.5 inline-4.5"
+                                    />
+                                    WhatsApp
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    {formatPhoneIn(deal.buyer.phoneDigits)}
+                                </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger
+                                    render={
+                                        <Button
+                                            size="md"
+                                            variant="accent"
+                                            nativeButton={!ownerPhone}
+                                            disabled={!ownerPhone}
+                                            className="flex-1 min-inline-0"
+                                            render={
+                                                ownerPhone ? (
                                                     <a
-                                                        href={formatWhatsAppUrl(
-                                                            deal.buyer.phoneDigits,
-                                                            whatsappMessage(deal),
-                                                        )}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        aria-label={`WhatsApp client ${deal.buyer.name} at ${formatPhoneIn(deal.buyer.phoneDigits)}`}
+                                                        href={formatTelUrl(ownerPhone)}
+                                                        aria-label={`Call owner ${deal.owner.name} at ${formatPhoneIn(ownerPhone)}`}
                                                         onClick={stopCard}
                                                     />
-                                                }
-                                            />
-                                        }
-                                    >
-                                        <WhatsAppIcon
-                                            aria-hidden
-                                            strokeWidth={1.75}
-                                            className="shrink-0 block-4.5 inline-4.5"
+                                                ) : undefined
+                                            }
                                         />
-                                        WhatsApp
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">
-                                        {formatPhoneIn(deal.buyer.phoneDigits)}
-                                    </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                    <TooltipTrigger
-                                        render={
-                                            <Button
-                                                size="md"
-                                                variant="accent"
-                                                nativeButton={!ownerPhone}
-                                                disabled={!ownerPhone}
-                                                className="flex-1 min-inline-0"
-                                                render={
-                                                    ownerPhone ? (
-                                                        <a
-                                                            href={formatTelUrl(ownerPhone)}
-                                                            aria-label={`Call owner ${deal.owner.name} at ${formatPhoneIn(ownerPhone)}`}
-                                                            onClick={stopCard}
-                                                        />
-                                                    ) : undefined
-                                                }
-                                            />
-                                        }
-                                    >
-                                        <CallIcon
-                                            aria-hidden
-                                            className="shrink-0 block-4.5 inline-4.5"
-                                            strokeWidth={1.75}
-                                        />
-                                        Call Owner
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">
-                                        {ownerPhone
-                                            ? formatPhoneIn(ownerPhone)
-                                            : "Owner contact unavailable"}
-                                    </TooltipContent>
-                                </Tooltip>
-                            </div>
-                        ) : null}
-                    </OverlayCardActions>
-                ) : null}
+                                    }
+                                >
+                                    <CallIcon
+                                        aria-hidden
+                                        className="shrink-0 block-4.5 inline-4.5"
+                                        strokeWidth={1.75}
+                                    />
+                                    Call Owner
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    {ownerPhone
+                                        ? formatPhoneIn(ownerPhone)
+                                        : "Owner contact unavailable"}
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                    ) : null}
+                </OverlayCardActions>
             </div>
         </article>
     );

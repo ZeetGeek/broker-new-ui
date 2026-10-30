@@ -97,7 +97,7 @@ export function PipelineBoard({
         >
             <div
                 className="
-                  hidden snap-x snap-mandatory items-start gap-3 overflow-x-auto
+                  hidden snap-x snap-mandatory items-stretch gap-3 overflow-x-auto
                   md:flex
                   lg:grid lg:snap-none lg:grid-cols-4 lg:gap-4 lg:overflow-visible
                 "

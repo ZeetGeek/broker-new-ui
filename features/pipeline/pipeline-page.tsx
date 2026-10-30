@@ -13,6 +13,7 @@ import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 import { matchesClientFilters } from "@/features/pipeline/deal-attention";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
@@ -50,6 +51,7 @@ const PIPELINE_BATCH_SIZE = 6;
 const DONE_GRID_BREAKPOINTS = [
     { minWidth: 640, columns: 2 },
     { minWidth: 1024, columns: 3 },
+    { minWidth: 1280, columns: 4 },
 ];
 
 type PipelinePrefs = {
@@ -556,8 +558,8 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     const outcomeDeals = useMemo(() => {
         if (view === "board") return [];
         const status = view === "sold" ? "closed" : "lost";
-        return filteredDeals.filter((deal) => deal.status === status);
-    }, [filteredDeals, view]);
+        return filteredDeals.filter((deal) => deal.status === status).sort(pinSort(pinnedDealIds));
+    }, [filteredDeals, view, pinnedDealIds]);
 
     const dealsByStage = useMemo(() => {
         const grouped = Object.fromEntries(
@@ -610,7 +612,24 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     }
 
     return (
-        <div className="flex flex-col gap-5">
+        <Tabs
+            value={view}
+            className="gap-5"
+            onValueChange={(value) => {
+                if (value !== "board" && value !== "sold" && value !== "lost") return;
+                const active = value !== "board";
+                if (active && searchParams.has("stage")) {
+                    const query = new URLSearchParams(searchParams.toString());
+                    query.delete("stage");
+                    router.replace(`${pathname}${query.size ? `?${query}` : ""}`);
+                }
+                setPrefs((prev) => ({
+                    ...prev,
+                    view: value,
+                    filters: active ? { ...prev.filters, stage: "" } : prev.filters,
+                }));
+            }}
+        >
             {filters.stage ? (
                 <div className="body-sm flex flex-wrap items-center gap-3 text-ink-muted">
                     <span>Showing {DEAL_STAGE_META[filters.stage].label} deals</span>
@@ -623,37 +642,22 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     </button>
                 </div>
             ) : null}
-            {!isFirstRun ? (
-                <PipelineToolbar
-                    filters={filters}
-                    onPatch={handlePatch}
-                    leading={
-                        summary ? (
-                            <PipelineOutcomeTabs
-                                counts={{ sold: summary.closedCount, lost: summary.lostCount }}
-                                view={view}
-                                onChange={(next) => {
-                                    const active = next !== "board";
-                                    if (active && searchParams.has("stage")) {
-                                        const query = new URLSearchParams(searchParams.toString());
-                                        query.delete("stage");
-                                        router.replace(
-                                            `${pathname}${query.size ? `?${query}` : ""}`,
-                                        );
-                                    }
-                                    setPrefs((prev) => ({
-                                        ...prev,
-                                        view: next,
-                                        filters: active
-                                            ? { ...prev.filters, stage: "" }
-                                            : prev.filters,
-                                    }));
-                                }}
-                            />
-                        ) : null
-                    }
-                />
-            ) : null}
+            <PipelineToolbar
+                filters={filters}
+                onPatch={handlePatch}
+                leading={
+                    <div className="max-inline-full min-inline-0">
+                        <PipelineOutcomeTabs
+                            view={view}
+                            counts={{
+                                board: summary?.liveTotal ?? null,
+                                sold: summary?.closedCount ?? null,
+                                lost: summary?.lostCount ?? null,
+                            }}
+                        />
+                    </div>
+                }
+            />
 
             {error ? (
                 <p role="alert" className="body-sm text-urgent">
@@ -661,16 +665,43 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 </p>
             ) : null}
 
-            {isFirstLoad && isFetching ? (
-                <PipelineBoardSkeleton />
-            ) : isFirstRun ? (
-                <PipelineFirstRunEmpty />
-            ) : view !== "board" ? (
-                outcomeDeals.length === 0 ? (
+            <TabsContent key={view} value={view}>
+                {isFirstLoad && isFetching ? (
+                    <PipelineBoardSkeleton />
+                ) : isFirstRun && view === "board" ? (
+                    <PipelineFirstRunEmpty />
+                ) : view !== "board" ? (
+                    outcomeDeals.length === 0 ? (
+                        hasSearch ? (
+                            <PipelineFilteredEmpty onClear={handleClearSearch} />
+                        ) : (
+                            <PipelineOutcomeEmpty outcome={view} />
+                        )
+                    ) : (
+                        <div
+                            className={
+                                isFetching
+                                    ? "opacity-60 transition-opacity duration-160"
+                                    : undefined
+                            }
+                        >
+                            <WindowVirtualGrid
+                                items={outcomeDeals}
+                                getKey={(deal) => deal.id}
+                                estimateRowHeight={360}
+                                gridClassName="grid grid-cols-1 inline-full sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                                gap={24}
+                                breakpoints={DONE_GRID_BREAKPOINTS}
+                                ariaLabel={view === "sold" ? "Finished deals" : "Lost deals"}
+                                renderItem={renderDealCard}
+                            />
+                        </div>
+                    )
+                ) : liveDeals.length === 0 ? (
                     hasSearch ? (
                         <PipelineFilteredEmpty onClear={handleClearSearch} />
                     ) : (
-                        <PipelineOutcomeEmpty outcome={view} />
+                        <PipelineDoneEmpty />
                     )
                 ) : (
                     <div
@@ -678,97 +709,74 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                             isFetching ? "opacity-60 transition-opacity duration-160" : undefined
                         }
                     >
-                        <WindowVirtualGrid
-                            items={outcomeDeals}
-                            getKey={(deal) => deal.id}
-                            estimateRowHeight={470}
-                            gap={12}
-                            breakpoints={DONE_GRID_BREAKPOINTS}
-                            ariaLabel={view === "sold" ? "Sold deals" : "Lost deals"}
-                            renderItem={renderDealCard}
+                        <PipelineBoard
+                            dealsByStage={dealsByStage}
+                            allLiveDeals={liveDeals}
+                            handlers={handlers}
+                            busyId={busyId}
+                            pinnedDealIds={pinnedDealIds}
+                            onDropDeal={moveOptimistically}
+                            stageLimits={stageLimits}
+                            onLoadMore={loadMoreStage}
                         />
-                    </div>
-                )
-            ) : liveDeals.length === 0 ? (
-                hasSearch ? (
-                    <PipelineFilteredEmpty onClear={handleClearSearch} />
-                ) : (
-                    <PipelineDoneEmpty />
-                )
-            ) : (
-                <div
-                    className={
-                        isFetching ? "opacity-60 transition-opacity duration-160" : undefined
-                    }
-                >
-                    <PipelineBoard
-                        dealsByStage={dealsByStage}
-                        allLiveDeals={liveDeals}
-                        handlers={handlers}
-                        busyId={busyId}
-                        pinnedDealIds={pinnedDealIds}
-                        onDropDeal={moveOptimistically}
-                        stageLimits={stageLimits}
-                        onLoadMore={loadMoreStage}
-                    />
 
-                    <div className="flex flex-col gap-4 md:hidden" {...swipe}>
-                        <StageTabs
-                            active={mobileStage}
-                            counts={
-                                summary?.counts ?? {
-                                    new: 0,
-                                    contacted: 0,
-                                    visit: 0,
-                                    negotiation: 0,
+                        <div className="flex flex-col gap-4 md:hidden" {...swipe}>
+                            <StageTabs
+                                active={mobileStage}
+                                counts={
+                                    summary?.counts ?? {
+                                        new: 0,
+                                        contacted: 0,
+                                        visit: 0,
+                                        negotiation: 0,
+                                    }
                                 }
-                            }
-                            onChange={setMobileStage}
-                        />
+                                onChange={setMobileStage}
+                            />
 
-                        {dealsByStage[mobileStage].length > 0 ? (
-                            <>
-                                <WindowVirtualGrid
-                                    items={dealsByStage[mobileStage].slice(
-                                        0,
-                                        stageLimits[mobileStage],
-                                    )}
-                                    getKey={(deal) => deal.id}
-                                    estimateRowHeight={470}
-                                    gap={12}
-                                    ariaLabel={`${DEAL_STAGE_META[mobileStage].label} deals`}
-                                    renderItem={renderDealCard}
-                                />
-                                {dealsByStage[mobileStage].length > stageLimits[mobileStage] ? (
-                                    <Button
-                                        variant="outline"
-                                        size="md"
-                                        onClick={() => loadMoreStage(mobileStage)}
-                                        aria-label={`Load more ${DEAL_STAGE_META[mobileStage].label.toLowerCase()} deals`}
-                                    >
-                                        Load more deals
-                                        <span className="body-xs font-normal text-ink-muted">
-                                            (
-                                            {dealsByStage[mobileStage].length -
-                                                stageLimits[mobileStage]}{" "}
-                                            remaining)
-                                        </span>
-                                    </Button>
-                                ) : null}
-                            </>
-                        ) : (
-                            <p
-                                className="
+                            {dealsByStage[mobileStage].length > 0 ? (
+                                <>
+                                    <WindowVirtualGrid
+                                        items={dealsByStage[mobileStage].slice(
+                                            0,
+                                            stageLimits[mobileStage],
+                                        )}
+                                        getKey={(deal) => deal.id}
+                                        estimateRowHeight={470}
+                                        gap={12}
+                                        ariaLabel={`${DEAL_STAGE_META[mobileStage].label} deals`}
+                                        renderItem={renderDealCard}
+                                    />
+                                    {dealsByStage[mobileStage].length > stageLimits[mobileStage] ? (
+                                        <Button
+                                            variant="outline"
+                                            size="md"
+                                            className="shadow-md hover:shadow-lg"
+                                            onClick={() => loadMoreStage(mobileStage)}
+                                            aria-label={`Load more ${DEAL_STAGE_META[mobileStage].label.toLowerCase()} deals`}
+                                        >
+                                            Load more deals
+                                            <span className="body-xs rounded-full bg-ink/5 px-1.5 font-semibold text-ink-muted tabular-nums min-inline-5">
+                                                {dealsByStage[mobileStage].length -
+                                                    stageLimits[mobileStage]}
+                                            </span>
+                                        </Button>
+                                    ) : null}
+                                </>
+                            ) : (
+                                <p
+                                    className="
                                   body-sm rounded-card border border-dashed border-border-warm px-4
                                   py-10 text-center text-ink-muted
                                 "
-                            >
-                                No deals here yet.
-                            </p>
-                        )}
+                                >
+                                    No deals here yet.
+                                </p>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </TabsContent>
 
             <StageNoteModal
                 open={moveRequest != null}
@@ -819,6 +827,6 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     if (initialLeadId) router.replace("/broker/pipeline");
                 }}
             />
-        </div>
+        </Tabs>
     );
 }
