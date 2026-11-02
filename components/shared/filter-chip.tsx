@@ -62,7 +62,7 @@ export function FilterChipCount({
             >
                 {isLoading ? (
                     <Skeleton className="block-4 inline-7" />
-                ) : count != null ? (
+                ) : count != null && count > 0 ? (
                     <span
                         className={cn(
                             `

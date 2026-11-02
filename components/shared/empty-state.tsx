@@ -29,32 +29,29 @@ export function EmptyState({
         <div
             className={cn(
                 `
-                  flex flex-1 flex-col items-center justify-center gap-4 px-1 text-center
+                  flex flex-1 flex-col items-center justify-center gap-5 px-4 text-center
                   min-block-0
                 `,
                 className,
             )}
             aria-live="polite"
         >
-            <div className="flex max-w-prose flex-col items-center gap-3">
-                <span
+            <div className="flex max-w-sm flex-col items-center gap-3.5">
+                <Icon
                     aria-hidden
-                    className="
-                      flex items-center justify-center rounded-control text-brand block-12 inline-12
-                    "
-                >
-                    <Icon className="block-7 inline-7" strokeWidth={1.75} />
-                </span>
+                    className="text-brand-text/70 block-10 inline-10"
+                    strokeWidth={1.5}
+                />
 
                 <div className="flex flex-col gap-1.5">
-                    <h2 id={headingId} className="h6 text-ink">
+                    <h2 id={headingId} className="h3 text-ink text-balance">
                         {heading}
                     </h2>
                     <p className="body-sm text-pretty text-ink-muted">{description}</p>
                 </div>
             </div>
 
-            {children}
+            {children ? <div className="flex flex-col items-center pt-1">{children}</div> : null}
         </div>
     );
 }

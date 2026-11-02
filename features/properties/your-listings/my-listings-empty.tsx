@@ -1,15 +1,19 @@
 import Link from "next/link";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { Building2, Search } from "@/components/shared/icons";
+import { Building2, FileText, Search } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 export type MyListingsEmptyProps = {
-    variant: "filtered" | "first_run" | "no_sold";
+    variant: "filtered" | "first_run" | "no_sold" | "no_draft" | "no_published";
     searchQuery?: string;
     onClearFilters?: () => void;
     onAddProperty?: () => void;
 };
+
+/** Fills the results band so the teach block sits in the visual middle of the page. */
+const FIRST_RUN_FRAME =
+    "min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]";
 
 export function MyListingsEmpty({
     variant,
@@ -19,8 +23,8 @@ export function MyListingsEmpty({
 }: MyListingsEmptyProps) {
     if (variant === "filtered") {
         return (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">No properties match these filters</p>
+            <div className="flex flex-col items-center gap-4 py-16 text-center">
+                <p className="h5 text-ink">No properties match these filters</p>
                 <p className="body-sm max-w-prose text-ink-muted">
                     {searchQuery?.trim()
                         ? `No results for "${searchQuery.trim()}". Try clearing a filter or searching another locality.`
@@ -48,6 +52,29 @@ export function MyListingsEmpty({
                 icon={Building2}
                 heading="No sold properties yet"
                 description="When you mark a listing as sold, it moves here."
+                className={FIRST_RUN_FRAME}
+            />
+        );
+    }
+
+    if (variant === "no_draft") {
+        return (
+            <EmptyState
+                icon={FileText}
+                heading="No drafts"
+                description="Save a listing as a draft and it will show here until you publish."
+                className={FIRST_RUN_FRAME}
+            />
+        );
+    }
+
+    if (variant === "no_published") {
+        return (
+            <EmptyState
+                icon={Building2}
+                heading="Nothing published yet"
+                description="Publish a draft when it is ready — it will show up here."
+                className={FIRST_RUN_FRAME}
             />
         );
     }
@@ -57,12 +84,9 @@ export function MyListingsEmpty({
             icon={Building2}
             heading="No properties yet"
             description="Add your first property — it takes about 2 minutes."
+            className={FIRST_RUN_FRAME}
         >
-            <Button
-                size="lg"
-                className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-                onClick={onAddProperty}
-            >
+            <Button size="md" variant="accent" onClick={onAddProperty}>
                 Add property
             </Button>
         </EmptyState>
@@ -75,12 +99,9 @@ export function MyListingsRequestsEmpty() {
             icon={Search}
             heading="No requests sent yet"
             description="Find a property you'd like to sell and ask the owner."
+            className={FIRST_RUN_FRAME}
         >
-            <Button
-                size="lg"
-                className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-                render={<Link href="/broker/owner-listings" />}
-            >
+            <Button size="lg" variant="accent" render={<Link href="/broker/owner-listings" />}>
                 Browse Marketplace
             </Button>
         </EmptyState>

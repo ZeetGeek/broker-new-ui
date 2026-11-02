@@ -256,6 +256,19 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
     }, [deletingListing, refreshListings]);
 
     const loading = !scopeReady || query.isPending;
+    const inventoryTotal = summary?.total ?? 0;
+    const isFirstRunEmpty =
+        !loading && query.items.length === 0 && !hasActiveFilters && inventoryTotal === 0;
+
+    const emptyVariant = (() => {
+        if (hasActiveFilters) return "filtered" as const;
+        // True inventory empty always teaches Add — tab labels come second.
+        if (inventoryTotal === 0) return "first_run" as const;
+        if (filters.status === "sold") return "no_sold" as const;
+        if (filters.status === "draft") return "no_draft" as const;
+        if (filters.status === "published") return "no_published" as const;
+        return "first_run" as const;
+    })();
 
     return (
         <div className="flex flex-col gap-6">
@@ -276,7 +289,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 summary={summary}
                 isLoading={summaryQuery.isPending}
                 isInitialLoading={loading}
-                onAddProperty={() => setAddOpen(true)}
+                onAddProperty={isFirstRunEmpty ? undefined : () => setAddOpen(true)}
             />
 
             <section aria-label="My Listings results" aria-busy={loading || query.isFetching}>
@@ -296,7 +309,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     </div>
                 ) : query.items.length === 0 ? (
                     <MyListingsEmpty
-                        variant={hasActiveFilters ? "filtered" : "first_run"}
+                        variant={emptyVariant}
                         searchQuery={filters.q}
                         onClearFilters={hasActiveFilters ? clearFilters : undefined}
                         onAddProperty={() => setAddOpen(true)}
@@ -378,7 +391,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     </div>
                 )}
             </section>
-            <MyListingsAddFab onClick={() => setAddOpen(true)} />
+            {isFirstRunEmpty ? null : <MyListingsAddFab onClick={() => setAddOpen(true)} />}
             {isOwnerPortal && brokerListing ? (
                 <InvitePropertyBrokerModal
                     key={brokerInviteSession}

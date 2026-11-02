@@ -437,6 +437,7 @@ export function MyListingsHeader({
 
                             {STATUS_TABS.map((tab) => {
                                 const active = filters.status === tab.key;
+                                const count = tabCount(summary, tab.key);
                                 return (
                                     <OwnerListingsChipsCarouselSlide key={tab.key}>
                                         <FilterChip
@@ -452,9 +453,8 @@ export function MyListingsHeader({
                                                     {tab.label}
                                                 </span>
                                             }
-                                            count={tabCount(summary, tab.key)}
+                                            count={count != null && count > 0 ? count : undefined}
                                             isLoading={isLoading}
-                                            reserveCountSpace
                                             isActive={active}
                                             onClick={() => selectStatusTab(tab.key)}
                                             description={tab.description}
