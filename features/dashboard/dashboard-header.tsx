@@ -14,13 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 
-import { DashboardContactLine, hasPhoneNumber } from "./dashboard-contact-line";
-import {
-    countPhrase,
-    DashboardMetaDivider,
-    DashboardMetaItem,
-    DashboardPageHeader,
-} from "./dashboard-page-header";
+import { countPhrase, DashboardMetaItem, DashboardPageHeader } from "./dashboard-page-header";
 import type { ReraStatus } from "./mock-data";
 import { ReraStatusChip } from "./rera-status";
 
@@ -37,8 +31,6 @@ export type DashboardHeaderProps = DashboardSummaryStats & {
     now: Date;
     reraStatus: ReraStatus;
     serviceAreas: string[];
-    phoneDigits: string;
-    email: string;
 };
 
 const ICON_CLASS = "block-3 inline-3";
@@ -187,11 +179,7 @@ export function DashboardHeader({
     activityCount,
     reraStatus,
     serviceAreas,
-    phoneDigits,
-    email,
 }: DashboardHeaderProps) {
-    const showContact = hasPhoneNumber(phoneDigits) || Boolean(email);
-
     return (
         <DashboardPageHeader
             now={now}
@@ -211,14 +199,6 @@ export function DashboardHeader({
                             {FEATURE_RERA_VERIFICATION && <ReraStatusChip status={reraStatus} />}
                         </div>
                     </DashboardMetaItem>
-
-                    {showContact ? (
-                        <DashboardMetaItem>
-                            <DashboardContactLine phoneDigits={phoneDigits} email={email} />
-                        </DashboardMetaItem>
-                    ) : null}
-
-                    {showContact ? <DashboardMetaDivider /> : null}
 
                     <DashboardMetaItem>
                         <div className="flex flex-wrap items-center gap-2">

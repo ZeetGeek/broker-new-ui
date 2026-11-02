@@ -1129,6 +1129,7 @@ function OwnedOverlayPropertyCard({
                         onMarkSold={isSold ? undefined : onMarkSold}
                         isSaved={isSaved}
                         onToggleSave={onToggleSave}
+                        isDraft={listing.status === "draft"}
                         onAttachOwner={onAttachOwner}
                         attachOwnerLabel={
                             hasOwner ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL

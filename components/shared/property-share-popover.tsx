@@ -50,6 +50,10 @@ export type PropertySharePopoverProps = {
     listing: PropertyShareInput;
     /** Icon-only trigger for photo overlays. Style it through `className`. */
     iconOnly?: boolean;
+    /** Draft listings have no public page yet — render the trigger disabled. */
+    disabled?: boolean;
+    /** Tooltip shown on the disabled trigger. */
+    disabledReason?: string;
     className?: string;
 };
 
@@ -77,6 +81,8 @@ const rowClassName = `
 export function PropertySharePopover({
     listing,
     iconOnly = false,
+    disabled = false,
+    disabledReason = "Publish this property to share it",
     className,
 }: PropertySharePopoverProps) {
     const [open, setOpen] = useState(false);
@@ -187,6 +193,32 @@ export function PropertySharePopover({
             {iconOnly ? null : "Share"}
         </DropdownMenuTrigger>
     );
+
+    if (disabled) {
+        // A disabled button fires no pointer events, so the span carries the tooltip.
+        return (
+            <Tooltip>
+                <TooltipTrigger render={<span className="inline-flex" tabIndex={0} />}>
+                    <Button
+                        type="button"
+                        variant={iconOnly ? "ghost" : "link"}
+                        size={iconOnly ? "icon" : "sm"}
+                        aria-label="Share listing"
+                        disabled
+                        className={cn(!iconOnly && "gap-1.5 p-0 font-medium block-auto", className)}
+                    >
+                        <Share2
+                            aria-hidden
+                            className={iconOnly ? "block-4 inline-4" : "block-3.5 inline-3.5"}
+                            strokeWidth={1.75}
+                        />
+                        {iconOnly ? null : "Share"}
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{disabledReason}</TooltipContent>
+            </Tooltip>
+        );
+    }
 
     return (
         <DropdownMenu open={open} onOpenChange={handleOpenChange}>

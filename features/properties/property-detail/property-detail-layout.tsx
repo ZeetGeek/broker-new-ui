@@ -48,6 +48,7 @@ import { PropertySharePopover } from "@/components/shared/property-share-popover
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { NEARBY_PLACE_TYPE_OPTIONS, toLabel } from "@/constants/property";
 import {
@@ -114,6 +115,8 @@ export function PropertyDetailLayout({
     const queryClient = useQueryClient();
     const [saved, setSaved] = useState(Boolean(item.isBookmarked));
     const [saving, setSaving] = useState(false);
+    // A draft has no public page yet, so there is nothing to share or save.
+    const isDraft = item.status === "draft";
     const headerFacts = buildPropertyFacts(item);
     const headerLocation = item.locality || item.city;
     const summaryLines = [
@@ -181,6 +184,7 @@ export function PropertyDetailLayout({
                 <div className={styles.headerActions}>
                     <PropertySharePopover
                         iconOnly
+                        disabled={isDraft}
                         className={styles.circleButton}
                         listing={{
                             id: item.id,
@@ -196,18 +200,42 @@ export function PropertyDetailLayout({
                             listingKind: isRent ? "rent" : "sale",
                         }}
                     />
-                    <Button
-                        type="button"
-                        variant="surface"
-                        size="icon"
-                        className={styles.circleButton}
-                        aria-label={saved ? "Unsave property" : "Save property"}
-                        aria-pressed={saved}
-                        disabled={saving}
-                        onClick={() => void toggleSave()}
-                    >
-                        <Bookmark aria-hidden size={20} fill={saved ? "currentColor" : "none"} />
-                    </Button>
+                    {isDraft ? (
+                        <Tooltip>
+                            <TooltipTrigger render={<span className="inline-flex" tabIndex={0} />}>
+                                <Button
+                                    type="button"
+                                    variant="surface"
+                                    size="icon"
+                                    className={styles.circleButton}
+                                    aria-label="Save property"
+                                    disabled
+                                >
+                                    <Bookmark aria-hidden size={20} fill="none" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom">
+                                Publish this property to save it
+                            </TooltipContent>
+                        </Tooltip>
+                    ) : (
+                        <Button
+                            type="button"
+                            variant="surface"
+                            size="icon"
+                            className={styles.circleButton}
+                            aria-label={saved ? "Unsave property" : "Save property"}
+                            aria-pressed={saved}
+                            disabled={saving}
+                            onClick={() => void toggleSave()}
+                        >
+                            <Bookmark
+                                aria-hidden
+                                size={20}
+                                fill={saved ? "currentColor" : "none"}
+                            />
+                        </Button>
+                    )}
                     {actions}
                 </div>
             </header>
