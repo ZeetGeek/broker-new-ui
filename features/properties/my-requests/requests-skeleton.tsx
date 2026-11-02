@@ -41,30 +41,30 @@ function RequestsToolbarSkeleton() {
     return (
         <div aria-hidden className={DEALS_TOOLBAR_CLASS}>
             <div className="-my-1.5 flex flex-1 gap-2.5 overflow-hidden px-0.5 py-1.5 min-inline-0">
-                <div className={filterChipClassName(false)}>
+                <div className={filterChipClassName(false, { interactive: false })}>
                     <Skeleton className="shrink-0 block-4 inline-4" />
                     <SkeletonLabel>Filters</SkeletonLabel>
                     <CountSkeleton />
                 </div>
-                <div className={filterChipClassName(false)}>
+                <div className={filterChipClassName(false, { interactive: false })}>
                     <SkeletonLabel>Representing</SkeletonLabel>
                     <CountSkeleton />
                 </div>
-                <div className={filterChipClassName(false)}>
+                <div className={filterChipClassName(false, { interactive: false })}>
                     <SkeletonLabel>
                         <span className="md:hidden">Sent</span>
                         <span className="hidden md:inline">Sent by you</span>
                     </SkeletonLabel>
                     <CountSkeleton />
                 </div>
-                <div className={cn(filterChipClassName(false), "gap-2")}>
+                <div className={cn(filterChipClassName(false, { interactive: false }), "gap-2")}>
                     <SkeletonLabel>
                         <span className="md:hidden">Invites</span>
                         <span className="hidden md:inline">Owner invitations</span>
                     </SkeletonLabel>
                     <CountSkeleton />
                 </div>
-                <div className={filterChipClassName(false)}>
+                <div className={filterChipClassName(false, { interactive: false })}>
                     <SkeletonLabel>Rejected</SkeletonLabel>
                     <CountSkeleton />
                 </div>
@@ -82,7 +82,13 @@ function RequestsToolbarSkeleton() {
                     <Skeleton className="shrink-0 block-4 inline-4" />
                     <Skeleton className="block-3 inline-24" />
                 </div>
-                <div className={cn(filterChipClassName(false), DEALS_SORT_CLASS, "gap-2")}>
+                <div
+                    className={cn(
+                        filterChipClassName(false, { interactive: false }),
+                        DEALS_SORT_CLASS,
+                        "gap-2",
+                    )}
+                >
                     <Skeleton className="shrink-0 block-4 inline-4" />
                     <SkeletonLabel>
                         <span className="hidden sm:inline">Newest first</span>

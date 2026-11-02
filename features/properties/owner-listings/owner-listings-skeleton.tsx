@@ -32,7 +32,7 @@ function OwnerListingsToolbarSkeleton({ filters }: { filters: OwnerListingsFilte
     return (
         <div aria-hidden className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
             <div className="-my-1.5 flex flex-1 gap-2.5 overflow-hidden px-0.5 py-1.5 min-inline-0">
-                <div className={filterChipClassName(false)}>
+                <div className={filterChipClassName(false, { interactive: false })}>
                     <Skeleton className="block-4 inline-4" />
                     <SkeletonLabel>Filters</SkeletonLabel>
                     <span className="flex items-center justify-center block-5 inline-8">
@@ -40,7 +40,7 @@ function OwnerListingsToolbarSkeleton({ filters }: { filters: OwnerListingsFilte
                     </span>
                 </div>
                 {visibility.showReadyToMove ? (
-                    <div className={filterChipClassName(false)}>
+                    <div className={filterChipClassName(false, { interactive: false })}>
                         <SkeletonLabel>
                             <span className="md:hidden">Move-in</span>
                             <span className="hidden md:inline">Ready to move</span>
@@ -63,7 +63,7 @@ function OwnerListingsToolbarSkeleton({ filters }: { filters: OwnerListingsFilte
                     <Skeleton className="shrink-0 block-4 inline-4" />
                     <Skeleton className="block-3 inline-24" />
                 </div>
-                <div className={`${filterChipClassName(false)} gap-2`}>
+                <div className={`${filterChipClassName(false, { interactive: false })} gap-2`}>
                     <Skeleton className="block-4 inline-4" />
                     <SkeletonLabel>
                         <span className="hidden sm:inline">{formatSortLabel(filters.sort)}</span>
