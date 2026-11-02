@@ -62,15 +62,27 @@ export function PipelineOutcomeTabs({
                         <span className="sm:hidden">{tab.compactLabel}</span>
                         <span className="hidden sm:inline">{tab.label}</span>
                     </span>
-                    <span className="body-xs inline-flex items-center justify-center rounded-full bg-ink/5 px-1.5 font-semibold text-ink-muted tabular-nums block-5 min-inline-6 group-data-active/pipeline-tab:bg-brand-text/10 group-data-active/pipeline-tab:text-brand-text">
-                        {counts[tab.view] != null ? (
-                            counts[tab.view]
-                        ) : isLoading ? (
+                    {isLoading && counts[tab.view] == null ? (
+                        <span
+                            className="
+                              inline-flex items-center justify-center block-5 min-inline-6
+                            "
+                            aria-hidden
+                        >
                             <Skeleton className="rounded-sm bg-ink/10 block-3 inline-3" />
-                        ) : (
-                            "-"
-                        )}
-                    </span>
+                        </span>
+                    ) : counts[tab.view] != null && counts[tab.view]! > 0 ? (
+                        <span
+                            className="
+                              body-xs inline-flex items-center justify-center rounded-full bg-ink/5
+                              px-1.5 font-semibold text-ink-muted tabular-nums block-5 min-inline-6
+                              group-data-active/pipeline-tab:bg-brand-text/10
+                              group-data-active/pipeline-tab:text-brand-text
+                            "
+                        >
+                            {counts[tab.view]! > 99 ? "99+" : counts[tab.view]}
+                        </span>
+                    ) : null}
                 </TabsPrimitive.Tab>
             ))}
         </TabsList>

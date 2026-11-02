@@ -60,9 +60,11 @@ export function StageTabs({
                             className={cn("shrink-0 rounded-full block-2 inline-2", meta.dotClass)}
                         />
                         {meta.label}
-                        <span className={cn("tabular", !isActive && "text-ink-subtle")}>
-                            {counts[stage]}
-                        </span>
+                        {counts[stage] > 0 ? (
+                            <span className={cn("tabular", !isActive && "text-ink-subtle")}>
+                                {counts[stage]}
+                            </span>
+                        ) : null}
                     </button>
                 );
             })}

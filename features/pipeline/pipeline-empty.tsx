@@ -6,6 +6,10 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { CircleCheck, CircleSlash, LostIcon, Search, Users } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
+/** Fills the results band so the teach block sits in the visual middle of the page. */
+const EMPTY_FRAME =
+    "min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]";
+
 /** A deal starts by linking a buyer to a property in Contacts. */
 export function PipelineFirstRunEmpty() {
     return (
@@ -13,9 +17,14 @@ export function PipelineFirstRunEmpty() {
             icon={Users}
             heading="No deals yet"
             description="Add a property to My Listings, then link a client to it from Clients. The deal will appear here automatically."
-            className="py-16"
+            className={EMPTY_FRAME}
         >
-            <Button size="lg" nativeButton={false} render={<Link href={BROKER_ADD_DEAL_HREF} />}>
+            <Button
+                size="md"
+                variant="accent"
+                nativeButton={false}
+                render={<Link href={BROKER_ADD_DEAL_HREF} />}
+            >
                 Link a client to a property
             </Button>
         </EmptyState>
@@ -45,7 +54,7 @@ export function PipelineDoneEmpty() {
             icon={CircleSlash}
             heading="No active deals"
             description="Your finished and lost deals are saved in their tabs. Active deals appear here."
-            className="py-16"
+            className={EMPTY_FRAME}
         />
     );
 }
@@ -57,14 +66,14 @@ export function PipelineOutcomeEmpty({ outcome }: { outcome: "sold" | "lost" }) 
             icon={CircleCheck}
             heading="No finished deals yet"
             description="When you mark a deal as sold, it moves here."
-            className="py-16"
+            className={EMPTY_FRAME}
         />
     ) : (
         <EmptyState
             icon={LostIcon}
             heading="No lost deals"
             description="Deals you mark as lost move here, so the board only shows what you are still working on."
-            className="py-16"
+            className={EMPTY_FRAME}
         />
     );
 }
