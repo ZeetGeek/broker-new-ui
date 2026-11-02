@@ -140,7 +140,7 @@ const MENU_SURFACE_CLASS = `
 
 /* Kill shadcn’s focus:**:text-accent-foreground so icons never go white. */
 const ITEM_CLASS = `
-  body-sm min-h-11 cursor-pointer gap-3 rounded-inner px-3 font-medium text-ink
+  text-sm min-h-10 pointer-coarse:min-h-11 cursor-pointer gap-2.5 rounded-inner px-3 font-medium text-ink
   focus:bg-surface-muted! focus:text-ink!
   data-highlighted:bg-surface-muted! data-highlighted:text-ink!
   data-popup-open:bg-surface-muted! data-popup-open:text-ink!
@@ -152,7 +152,7 @@ const ITEM_CLASS = `
 `;
 
 const ICON_CLASS = "menu-stroke-icon block-4.5 inline-4.5 shrink-0 text-ink!";
-const SEPARATOR_CLASS = "mx-1.5 my-1.5 bg-border-warm";
+const SEPARATOR_CLASS = "my-1";
 
 /**
  * Listing actions grouped by sharing, people, management, and destructive actions.

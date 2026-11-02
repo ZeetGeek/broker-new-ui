@@ -35,8 +35,8 @@ function PopoverContent({
                     data-slot="popover-content"
                     className={cn(
                         `
-                          z-50 flex origin-(--transform-origin) flex-col gap-4 rounded-card
-                          border border-border-warm bg-popover p-4 text-sm text-popover-foreground
+                          z-50 flex origin-(--transform-origin) flex-col gap-3 rounded-card
+                          border border-border-warm bg-popover p-3 text-sm text-popover-foreground
                           shadow-xl ring-0 outline-hidden duration-100 inline-72
                           data-[side=bottom]:slide-in-from-top-2
                           data-[side=inline-end]:slide-in-from-start-2

@@ -28,7 +28,7 @@ import { logout } from "@/store/slices/auth-slice";
 import { resetDashboard } from "@/store/slices/dashboard-slice";
 
 export const portalProfileMenuItemClass = `
-  min-block-11 cursor-pointer gap-3 rounded-inner px-3 body-sm font-medium text-ink
+  min-block-10 pointer-coarse:min-block-11 cursor-pointer gap-2.5 rounded-inner px-3 text-sm font-medium text-ink
 `;
 
 export const portalProfileMenuSurfaceClass = `
@@ -48,7 +48,7 @@ export const portalProfileMenuSurfaceClass = `
 `;
 
 export function PortalProfileMenuSeparator() {
-    return <DropdownMenuSeparator className="m-1.5 bg-border-warm" />;
+    return <DropdownMenuSeparator className="my-1" />;
 }
 
 export function PortalProfileShortcutHint({

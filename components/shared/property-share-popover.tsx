@@ -275,7 +275,7 @@ export function PropertySharePopover({
                     })}
                 </div>
 
-                <DropdownMenuSeparator className="mx-2.5 my-1.5 bg-border-warm" />
+                <DropdownMenuSeparator className="my-1" />
 
                 <button
                     type="button"

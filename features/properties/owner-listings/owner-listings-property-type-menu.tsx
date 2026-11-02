@@ -217,7 +217,7 @@ export function OwnerListingsPropertyTypeMenu({
                                             <span
                                                 data-slot="property-type-title"
                                                 className="
-                                                  truncate text-[15px] leading-snug font-medium
+                                                  truncate text-sm/snug font-medium
                                                   text-ink
                                                 "
                                             >

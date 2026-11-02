@@ -244,7 +244,7 @@ export function OwnerListingsCategoryMenu({
                                             <span
                                                 data-slot="category-title"
                                                 className="
-                                                  truncate text-[15px] leading-snug font-medium
+                                                  truncate text-sm/snug font-medium
                                                   text-ink
                                                 "
                                             >

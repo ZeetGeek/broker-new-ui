@@ -123,9 +123,7 @@ const WHERE_META_CLASS = cn(
     "truncate text-[12px] leading-snug font-medium tracking-[0.04em] text-ink-muted",
 );
 
-const WHERE_TITLE_CLASS = cn(
-    "truncate text-[15px] leading-snug font-medium tracking-[-0.01em] text-ink",
-);
+const WHERE_TITLE_CLASS = cn("truncate text-sm/snug font-medium tracking-[-0.01em] text-ink");
 
 const WHERE_MENU_LIST_PANEL_CLASS = cn(
     "relative overflow-hidden min-block-0",

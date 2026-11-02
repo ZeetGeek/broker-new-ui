@@ -228,7 +228,7 @@ export function OwnerListingsFurnishingMenu({
                                             <span
                                                 data-slot="furnishing-title"
                                                 className="
-                                                  truncate text-[15px] leading-snug font-medium
+                                                  truncate text-sm/snug font-medium
                                                   text-ink
                                                 "
                                             >

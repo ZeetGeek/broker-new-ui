@@ -94,12 +94,11 @@ function DropdownMenuItem({
             data-variant={variant}
             className={cn(
                 `
-                  group/dropdown-menu-item relative flex cursor-pointer items-center gap-2
-                  rounded-inner px-2.5 py-2 text-[15px] font-medium text-ink outline-hidden transition-[background-color,color]
-                  duration-160 ease-[cubic-bezier(0.22,1,0.36,1)]
-                  select-none focus:bg-surface-muted
-                  focus:text-ink not-data-[variant=destructive]:focus:**:text-ink
-                  data-highlighted:bg-surface-muted
+                  group/dropdown-menu-item relative flex cursor-pointer items-center gap-2 rounded-inner
+                  px-2.5 py-1.5 text-sm font-medium text-ink outline-hidden transition-[background-color,color] duration-160
+                  ease-[cubic-bezier(0.22,1,0.36,1)] select-none
+                  focus:bg-surface-muted focus:text-ink
+                  not-data-[variant=destructive]:focus:**:text-ink data-highlighted:bg-surface-muted
                   data-highlighted:text-ink
                   data-inset:ps-9.5
                   data-[variant=destructive]:text-danger
@@ -107,6 +106,7 @@ function DropdownMenuItem({
                   data-[variant=destructive]:focus:text-danger
                   data-[variant=destructive]:data-highlighted:bg-danger-soft
                   data-[variant=destructive]:data-highlighted:text-danger
+                  pointer-coarse:min-block-11
                   data-disabled:pointer-events-none data-disabled:opacity-50
                   [&_svg]:pointer-events-none [&_svg]:shrink-0
                   [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
@@ -137,15 +137,15 @@ function DropdownMenuSubTrigger({
             data-inset={inset}
             className={cn(
                 `
-                  flex cursor-pointer items-center gap-2 rounded-inner px-2.5 py-2 text-[15px] font-medium text-ink
-                  outline-hidden transition-[background-color,color]
-                  duration-160 ease-[cubic-bezier(0.22,1,0.36,1)]
-                  select-none focus:bg-surface-muted
-                  focus:text-ink not-data-[variant=destructive]:focus:**:text-ink
-                  data-highlighted:bg-surface-muted
+                  flex cursor-pointer items-center gap-2 rounded-inner px-2.5 py-1.5 text-sm font-medium text-ink outline-hidden
+                  transition-[background-color,color] duration-160
+                  ease-[cubic-bezier(0.22,1,0.36,1)] select-none
+                  focus:bg-surface-muted focus:text-ink
+                  not-data-[variant=destructive]:focus:**:text-ink data-highlighted:bg-surface-muted
                   data-highlighted:text-ink
                   data-inset:ps-9.5
-                  data-popup-open:bg-surface-muted data-popup-open:text-ink
+                  data-popup-open:bg-surface-muted
+                  data-popup-open:text-ink pointer-coarse:min-block-11
                   data-open:bg-surface-muted data-open:text-ink
                   [&_svg]:pointer-events-none [&_svg]:shrink-0
                   [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
@@ -200,14 +200,14 @@ function DropdownMenuCheckboxItem({
             data-inset={inset}
             className={cn(
                 `
-                  relative flex cursor-pointer items-center gap-2 rounded-inner py-2 ps-2.5 pe-8
-                  text-[15px] font-medium text-ink outline-hidden transition-[background-color,color]
-                  duration-160 ease-[cubic-bezier(0.22,1,0.36,1)]
-                  select-none focus:bg-surface-muted
-                  focus:text-ink focus:**:text-ink
-                  data-highlighted:bg-surface-muted
+                  relative flex cursor-pointer items-center gap-2 rounded-inner py-1.5 ps-2.5 pe-8 text-sm
+                  font-medium text-ink outline-hidden transition-[background-color,color] duration-160
+                  ease-[cubic-bezier(0.22,1,0.36,1)] select-none
+                  focus:bg-surface-muted focus:text-ink
+                  focus:**:text-ink data-highlighted:bg-surface-muted
                   data-highlighted:text-ink
                   data-inset:ps-9.5
+                  pointer-coarse:min-block-11
                   data-disabled:pointer-events-none data-disabled:opacity-50
                   [&_svg]:pointer-events-none [&_svg]:shrink-0
                   [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
@@ -248,14 +248,14 @@ function DropdownMenuRadioItem({
             data-inset={inset}
             className={cn(
                 `
-                  relative flex cursor-pointer items-center gap-2 rounded-inner py-2 ps-2.5 pe-8
-                  text-[15px] font-medium text-ink outline-hidden transition-[background-color,color]
-                  duration-160 ease-[cubic-bezier(0.22,1,0.36,1)]
-                  select-none focus:bg-surface-muted
-                  focus:text-ink focus:**:text-ink
-                  data-highlighted:bg-surface-muted
+                  relative flex cursor-pointer items-center gap-2 rounded-inner py-1.5 ps-2.5 pe-8 text-sm
+                  font-medium text-ink outline-hidden transition-[background-color,color] duration-160
+                  ease-[cubic-bezier(0.22,1,0.36,1)] select-none
+                  focus:bg-surface-muted focus:text-ink
+                  focus:**:text-ink data-highlighted:bg-surface-muted
                   data-highlighted:text-ink
                   data-inset:ps-9.5
+                  pointer-coarse:min-block-11
                   data-disabled:pointer-events-none data-disabled:opacity-50
                   [&_svg]:pointer-events-none [&_svg]:shrink-0
                   [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
@@ -277,15 +277,8 @@ function DropdownMenuRadioItem({
     );
 }
 
-function DropdownMenuSeparator({ className, ...props }: MenuPrimitive.Separator.Props) {
-    return (
-        <MenuPrimitive.Separator
-            data-slot="dropdown-menu-separator"
-            className={cn("pointer-events-none -mx-1 my-1 bg-border-warm block-px", className)}
-            {...props}
-        />
-    );
-}
+// Keep the public API compatible while omitting dividers from every dropdown.
+const DropdownMenuSeparator: React.FC<MenuPrimitive.Separator.Props> = () => null;
 
 function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"span">) {
     return (
