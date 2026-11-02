@@ -9,10 +9,10 @@ import { FilterChip, filterChipClassName } from "@/components/shared/filter-chip
 import {
     ArrowDownUp,
     ChevronDown,
+    ClientsTabIcon,
+    OwnersTabIcon,
     Plus,
     Search,
-    UserRound,
-    Users,
 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -114,7 +114,7 @@ export function ContactsHeader({
                                     value: "buyers" as const,
                                     label: "Clients",
                                     mobileLabel: "Clients",
-                                    icon: Users,
+                                    icon: ClientsTabIcon,
                                     count: summary?.buyerCount ?? 0,
                                     description: "People you’re helping find a property",
                                 },
@@ -122,7 +122,7 @@ export function ContactsHeader({
                                     value: "owners" as const,
                                     label: "Owners",
                                     mobileLabel: "Owners",
-                                    icon: UserRound,
+                                    icon: OwnersTabIcon,
                                     count: summary?.ownerCount ?? 0,
                                     description: FEATURE_PLATFORM_OWNER
                                         ? "Owners you represent or added yourself"

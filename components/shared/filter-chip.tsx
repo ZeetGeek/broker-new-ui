@@ -16,7 +16,7 @@ export function filterChipClassName(isActive: boolean, { interactive = true } = 
     return cn(
         `
           touch-target inline-flex shrink-0 items-center gap-1.5 rounded-control border px-3.5
-          text-sm font-semibold whitespace-nowrap block-[38px]
+          text-sm font-semibold whitespace-nowrap block-[38px] [&_svg]:text-inherit!
         `,
         interactive && CHIP_HOVER_TRANSITION,
         isActive
@@ -187,7 +187,7 @@ export function FilterChip({
                     aria-hidden
                     className={cn(
                         "block-4 inline-4",
-                        isActive ? "text-brand-text" : warning ? "text-pending" : "text-brand",
+                        isActive ? "text-brand-text" : warning ? "text-pending" : "text-ink-muted",
                     )}
                     strokeWidth={1.75}
                 />
