@@ -5,7 +5,7 @@ import Link from "next/link";
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
-import { MapPin, Pencil, Search, UserRoundPlus } from "@/components/shared/icons";
+import { ChartBar, MapPin, Pencil, Search, UserRoundPlus } from "@/components/shared/icons";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 
-import {
-    countPhrase,
-    DashboardMetaItem,
-    DashboardPageHeader,
-} from "./dashboard-page-header";
+import { countPhrase, DashboardMetaItem, DashboardPageHeader } from "./dashboard-page-header";
 import type { ReraStatus } from "./mock-data";
 import { ReraStatusChip } from "./rera-status";
 
@@ -233,16 +229,29 @@ export function DashboardHeader({
                     ) : null}
                     <ShortcutTooltip shortcutId="pipeline" label="Pipeline">
                         <Button
-                            variant="accent"
+                            variant="outline"
+                            className="
+                              border-border-warm bg-surface font-medium text-ink shadow-sm
+                              hover:border-gray-300 hover:bg-gray-50 hover:text-ink
+                            "
                             size="md"
                             nativeButton={false}
                             render={<Link href="/broker/pipeline" />}
-                            aria-label="Add client"
+                            aria-label="Pipeline"
                         >
-                            <UserRoundPlus aria-hidden strokeWidth={1.75} />
-                            <span className="hidden md:inline">Add client</span>
+                            <ChartBar aria-hidden strokeWidth={1.75} />
+                            Pipeline
                         </Button>
                     </ShortcutTooltip>
+                    <Button
+                        variant="accent"
+                        size="md"
+                        nativeButton={false}
+                        render={<Link href="/broker/contacts" />}
+                    >
+                        <UserRoundPlus aria-hidden strokeWidth={1.75} />
+                        Add contact
+                    </Button>
                 </>
             }
         />

@@ -1,52 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import { formatInTimeZone } from "date-fns-tz";
-
-import { VISITS_TIME_ZONE } from "@/lib/visits/constants";
-
-import { CircleAlert, Clock3 } from "@/components/shared/icons";
-import { Badge } from "@/components/ui/badge";
+import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 
 import type { BrokerVisitSummary } from "@/features/site-visits/broker/model";
 
-export function BrokerVisitsHeader({ summary }: { summary: BrokerVisitSummary }) {
-    const [now, setNow] = useState(() => new Date());
-    const attentionCount = summary.awaitingOwner + summary.needsOutcome;
-
-    useEffect(() => {
-        const timer = window.setInterval(() => setNow(new Date()), 30_000);
-        return () => window.clearInterval(timer);
-    }, []);
-
-    const summaryLine =
+export function BrokerVisitsHeader({
+    summary,
+    isLoading = false,
+    hasError = false,
+}: {
+    summary: BrokerVisitSummary;
+    isLoading?: boolean;
+    hasError?: boolean;
+}) {
+    const lines = [
         summary.today > 0
-            ? `${summary.today} ${summary.today === 1 ? "visit" : "visits"} today${attentionCount > 0 ? `, ${attentionCount} need your attention` : ""}.`
-            : attentionCount > 0
-              ? `Nothing today, ${attentionCount} need your attention.`
-              : "Your schedule is clear today.";
+            ? `${summary.today} ${summary.today === 1 ? "visit" : "visits"} on your schedule today.`
+            : "Your schedule is clear today.",
+        ...(summary.awaitingOwner > 0
+            ? [
+                  `${summary.awaitingOwner} ${summary.awaitingOwner === 1 ? "visit is" : "visits are"} waiting for owner confirmation.`,
+              ]
+            : []),
+        ...(summary.tomorrow > 0
+            ? [
+                  `${summary.tomorrow} ${summary.tomorrow === 1 ? "visit" : "visits"} lined up for tomorrow.`,
+              ]
+            : []),
+        ...(summary.weekTotal > 0
+            ? [
+                  `${summary.weekTotal} upcoming ${summary.weekTotal === 1 ? "visit" : "visits"} in the next 7 days.`,
+              ]
+            : []),
+    ];
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-3 text-start">
             <h1 className="h3 min-inline-0">
                 <span className="text-ink">Site visits.</span>{" "}
-                <span className="text-ink-muted">{summaryLine}</span>
+                <RotatingHeaderSummary
+                    key={lines.join("|")}
+                    lines={lines}
+                    isLoading={isLoading}
+                    loadingLabel="Loading your visit summary"
+                    loadingPlaceholder="Your schedule and what needs attention."
+                    errorMessage={hasError ? "Could not load your visit summary." : undefined}
+                />
             </h1>
-
-            <div className="flex flex-wrap items-center gap-2">
-                {attentionCount > 0 ? (
-                    <Badge color="amber">
-                        <CircleAlert aria-hidden />
-                        {attentionCount} to handle
-                    </Badge>
-                ) : null}
-                <Badge color="sky" className="tabular-nums">
-                    <Clock3 aria-hidden />
-                    {formatInTimeZone(now, VISITS_TIME_ZONE, "EEE, d MMM · h:mm a")}
-                    <span className="sr-only">India Standard Time</span>
-                </Badge>
-            </div>
         </div>
     );
 }

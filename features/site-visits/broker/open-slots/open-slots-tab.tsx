@@ -9,16 +9,10 @@ import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { sortSlotsForBuyer } from "@/lib/visits/grouping";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { VirtualStack } from "@/components/shared/virtual-stack";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogClose,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogPopup } from "@/components/ui/dialog";
 
 import type {
     PersonSummary,
@@ -269,15 +263,15 @@ export function OpenSlotsTab({
                 setFiltersOpen(open);
             }}
         >
-            <DialogPopup className="gap-0 overflow-hidden p-0 max-inline-3xl sm:max-inline-3xl">
-                <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
-                    <DialogTitle>Filter open slots</DialogTitle>
-                    <DialogDescription>
-                        Pick a client or owner to narrow the leads, then pick a lead to see its
-                        property.
-                    </DialogDescription>
-                    <DialogClose />
-                </DialogHeader>
+            <DialogPopup
+                showCloseButton={false}
+                className="gap-0 overflow-hidden p-0 max-inline-3xl sm:max-inline-3xl"
+            >
+                <AppModalHeader title="Filter open slots" />
+                <DialogDescription className="px-(--dialog-pad) pbs-3">
+                    Pick a client or owner to narrow the leads, then pick a lead to see its
+                    property.
+                </DialogDescription>
                 <div className="overflow-y-auto p-5 max-block-[68dvh]">
                     <SlotFilters
                         buyers={buyers}

@@ -58,6 +58,7 @@ export function ContactLocationFields({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <ComboboxField
                 label="Country"
+                loading={countriesLoading && countryOptions.length === 0}
                 startIcon={Globe2}
                 required
                 value={country}
@@ -75,6 +76,7 @@ export function ContactLocationFields({
             />
             <ComboboxField
                 label="State"
+                loading={Boolean(country) && statesLoading && stateOptions.length === 0}
                 startIcon={Map}
                 disabled={!country}
                 required
@@ -92,6 +94,7 @@ export function ContactLocationFields({
             />
             <ComboboxField
                 label="City"
+                loading={Boolean(state) && citiesLoading && cityOptions.length === 0}
                 startIcon={Building2}
                 disabled={!state}
                 required

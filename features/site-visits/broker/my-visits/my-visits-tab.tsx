@@ -2,15 +2,11 @@
 
 import { useMemo, useState } from "react";
 
-import { formatPrice } from "@/lib/format/price";
 import { propertyCriteriaCount, type PropertyListCriteria } from "@/lib/properties/list-criteria";
 import { groupVisitsByDay } from "@/lib/visits/grouping";
 import { matchesVisitProperty } from "@/lib/visits/property-filters";
-import { isVisitCancelled } from "@/lib/visits/status";
 import { addVisitDays as addDays, addVisitMonths as addMonths } from "@/lib/visits/time";
 import { formatVisitDayHeading, formatVisitTime, istDateKey } from "@/lib/visits/time";
-
-import { VirtualStack } from "@/components/shared/virtual-stack";
 
 import type { BrokerSiteVisit, SummaryFilter } from "@/features/site-visits/broker/model";
 import { VisitCard } from "@/features/site-visits/broker/my-visits/visit-card";
@@ -102,47 +98,6 @@ function applyFocus(visits: BrokerSiteVisit[], focus?: SummaryFilter) {
             return visit.status === "cancelled_by_owner" || visit.status === "cancelled_by_broker";
         return true;
     });
-}
-
-function daySummary(items: BrokerSiteVisit[]) {
-    const active = items.filter((visit) => !isVisitCancelled(visit.status));
-    const saleTotal = active.reduce(
-        (total, visit) =>
-            total + (visit.property.purpose === "sale" ? visit.property.amountInr : 0),
-        0,
-    );
-    const visitLabel = `${items.length} ${items.length === 1 ? "visit" : "visits"}`;
-    if (active.length === 0) return `${visitLabel} · all cancelled`;
-    if (saleTotal <= 0) return visitLabel;
-    return `${visitLabel} · ${formatPrice(saleTotal)} in play`;
-}
-
-function VisitGroup({
-    group,
-    onOpen,
-    onAction,
-}: {
-    group: ReturnType<typeof groupVisitsByDay>[number];
-    onOpen: (id: string) => void;
-    onAction: (action: "outcome" | "reschedule" | "withdraw", id: string) => void;
-}) {
-    return (
-        <section id={`broker-visits-${group.key}`} className="space-y-3">
-            <header className="flex flex-wrap items-baseline justify-between gap-2 px-0.5">
-                <h3 className="body-sm font-semibold text-ink-muted">
-                    {formatVisitDayHeading(group.items[0].startsAt)}
-                </h3>
-                <span className="body-xs text-ink-muted tabular-nums">
-                    {daySummary(group.items)}
-                </span>
-            </header>
-            <div className="space-y-3">
-                {group.items.map((visit) => (
-                    <VisitCard key={visit.id} visit={visit} onOpen={onOpen} onAction={onAction} />
-                ))}
-            </div>
-        </section>
-    );
 }
 
 export function MyVisitsTab({
@@ -300,25 +255,13 @@ export function MyVisitsTab({
                     detail={nextVisitDetail}
                     onPrimary={nextVisit ? () => onOpen(nextVisit.id) : undefined}
                 />
-            ) : filtered.length > 40 ? (
-                <VirtualStack
-                    items={groups}
-                    estimateSize={280}
-                    getKey={(group) => group.key}
-                    renderItem={(group) => (
-                        <VisitGroup group={group} onOpen={onOpen} onAction={onAction} />
-                    )}
-                />
             ) : (
-                <div className="space-y-6">
-                    {groups.map((group) => (
-                        <VisitGroup
-                            key={group.key}
-                            group={group}
-                            onOpen={onOpen}
-                            onAction={onAction}
-                        />
-                    ))}
+                <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {groups
+                        .flatMap((group) => group.items)
+                        .map((visit) => (
+                            <VisitCard key={visit.id} visit={visit} onAction={onAction} />
+                        ))}
                 </div>
             )}
         </section>

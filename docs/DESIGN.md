@@ -758,6 +758,15 @@ the pill. Panel swaps use `.t-tabs-panel` (soft rise + fade). Prefer two or
 three tabs. Stage rows on mobile scroll horizontally with count badges.
 Minimum tap target 44px. `prefers-reduced-motion` snaps with no tween.
 
+Standalone page-view chips (Visits, Pipeline, Clients/Owners, listings, and
+requests) use `filterChipClassName` from `components/shared/filter-chip.tsx`.
+Both states retain the white `surface` fill. Inactive chips use `shadow-sm`;
+active chips use `shadow-md` for clearer elevation. Selection uses
+the `brand` border, `brand-text` label, and tinted count badge. Hover changes
+only the border to light gray (`ink/25`), preserving the white fill and each
+state's shadow. Filter and sort chips sharing this helper follow
+the same treatment.
+
 ### 4.16 Dialog
 
 base-ui Dialog, wrapped once in `components/ui/dialog.tsx`. Focused task or

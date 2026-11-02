@@ -7,7 +7,7 @@ import SimpleBar from "simplebar-react";
 import { cn } from "@/lib/utils";
 
 import { AppModalHeader } from "@/components/shared/app-modal-header";
-import { Dialog, DialogPopup, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogPopup } from "@/components/ui/dialog";
 
 import "simplebar-react/dist/simplebar.min.css";
 
@@ -125,9 +125,6 @@ export function AppModal({
     const pad = PAD_VALUE[padding];
     const showDescription = hasVisibleDescription(description);
     const titleClass = cn("font-display text-lg font-medium text-ink", titleClassName);
-    const titleIsSrOnly = typeof titleClassName === "string" && /\bsr-only\b/.test(titleClassName);
-    /** Custom `header` owns the chrome — keep DialogTitle for a11y only. */
-    const customHeaderOnly = Boolean(header) && titleIsSrOnly && !showDescription;
 
     return (
         <Dialog open={open} modal={modal} onOpenChange={onOpenChange}>
@@ -143,28 +140,26 @@ export function AppModal({
                     className,
                 )}
             >
-                {customHeaderOnly ? (
+                <AppModalHeader
+                    title={title}
+                    showCloseButton={showCloseButton}
+                    titleClassName={cn(titleClass, "not-sr-only")}
+                />
+                {showDescription || header ? (
                     <div
                         className={cn(
-                            "shrink-0 px-(--dialog-pad) pbs-(--dialog-pad)",
+                            "shrink-0 space-y-3 px-(--dialog-pad) pbs-3",
                             headerClassName,
                         )}
                     >
-                        <DialogTitle className={titleClass}>{title}</DialogTitle>
+                        {showDescription ? (
+                            <DialogDescription className={descriptionClassName}>
+                                {description}
+                            </DialogDescription>
+                        ) : null}
                         {header}
                     </div>
-                ) : (
-                    <AppModalHeader
-                        title={title}
-                        description={showDescription ? description : undefined}
-                        showCloseButton={showCloseButton}
-                        titleClassName={titleClass}
-                        descriptionClassName={descriptionClassName}
-                        className={headerClassName}
-                    >
-                        {header ? <div className="mbs-3">{header}</div> : null}
-                    </AppModalHeader>
-                )}
+                ) : null}
 
                 <div
                     ref={setViewport}

@@ -11,13 +11,19 @@ import type { NewBuyerInput } from "@/lib/api/clients";
 import { contactsApi } from "@/lib/api/contacts";
 import { brokerContactHref } from "@/lib/routes/broker";
 import {
-    buyerFormSchema,
     type BuyerFormValues,
+    createBuyerFormSchema,
     normalizeBuyerBudget,
-    normalizeBuyerPhone,
     parseBuyerLocalities,
 } from "@/lib/validation/buyer";
+import {
+    clientCallingCode,
+    clientPhoneCountry,
+    clientPhoneForStorage,
+    parseClientMobile,
+} from "@/lib/validation/client-phone";
 import { useLocationOptions } from "@/hooks/use-locations";
+import { useMarket } from "@/hooks/use-market";
 
 import { CallIcon, Link2, Tag, UserRound } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
@@ -94,12 +100,12 @@ function amountOrNull(value: string): number | null {
     return digits ? Number(digits) : null;
 }
 
-function toNewBuyerInput(values: BuyerFormValues): NewBuyerInput {
+function toNewBuyerInput(values: BuyerFormValues, countryIso2: string): NewBuyerInput {
     const wantsSale = values.lookingFor !== "rent";
     const wantsRent = values.lookingFor !== "buy";
     return {
         name: values.name.trim(),
-        phoneDigits: normalizeBuyerPhone(values.phone),
+        phoneDigits: clientPhoneForStorage(values.phone, countryIso2),
         email: values.email.trim() || null,
         lookingFor: values.lookingFor,
         propertyKind: values.propertyKind || "any",
@@ -166,15 +172,23 @@ export function AddBuyerModal({
     onAttach?: () => void;
 }) {
     const isEdit = Boolean(buyer);
+    const market = useMarket();
+    const phoneCountry = clientPhoneCountry(market?.iso2);
+    const callingCode = clientCallingCode(phoneCountry);
+    const phoneSchema = useMemo(
+        () => createBuyerFormSchema(phoneCountry, market?.name),
+        [phoneCountry, market?.name],
+    );
     const profile = useAppSelector((state) => state.dashboard.profile);
     const locationDefaults = useMemo(() => contactLocationDefaults(profile), [profile]);
 
     const form = useForm<BuyerFormValues>({
-        resolver: zodResolver(buyerFormSchema),
+        resolver: zodResolver(phoneSchema),
         defaultValues: valuesFromBuyer(buyer, locationDefaults),
     });
     const values = useWatch({ control: form.control });
     const [busy, setBusy] = useState(false);
+    const [initializedFor, setInitializedFor] = useState<BuyerRow | null | undefined>(undefined);
     const [formError, setFormError] = useState<string>();
     const [duplicate, setDuplicate] = useState<{
         id: string;
@@ -202,27 +216,31 @@ export function AddBuyerModal({
             setFormError(undefined);
             setDuplicate(null);
             setIgnoreDuplicate(false);
+            setInitializedFor(buyer);
         }, 0);
         return () => window.clearTimeout(timer);
     }, [buyer, form, locationDefaults, open]);
 
     useEffect(() => {
         if (!open || isEdit || ignoreDuplicate) return;
-        const phone = normalizeBuyerPhone(values.phone ?? "");
-        if (!/^[6-9]\d{9}$/.test(phone)) {
+        const parsedPhone = parseClientMobile(values.phone ?? "", phoneCountry);
+        if (!parsedPhone || !phoneCountry) {
             const timer = window.setTimeout(() => setDuplicate(null), 0);
             return () => window.clearTimeout(timer);
         }
         const timer = window.setTimeout(() => {
             void contactsApi
-                .checkDuplicate(phone)
+                .checkDuplicate(
+                    clientPhoneForStorage(values.phone ?? "", phoneCountry),
+                    phoneCountry,
+                )
                 .then((match) => {
                     setDuplicate(match);
                 })
                 .catch(() => setDuplicate(null));
         }, 350);
         return () => window.clearTimeout(timer);
-    }, [ignoreDuplicate, isEdit, open, values.phone]);
+    }, [ignoreDuplicate, isEdit, open, values.phone, phoneCountry]);
 
     const onInvalid = () => {
         document
@@ -243,7 +261,7 @@ export function AddBuyerModal({
         setBusy(true);
         setFormError(undefined);
         try {
-            const input = toNewBuyerInput(parsed);
+            const input = toNewBuyerInput(parsed, phoneCountry!);
             if (isEdit && buyer) {
                 await contactsApi.saveBuyer(input, buyer.id);
                 onUpdated?.(input.name);
@@ -279,7 +297,7 @@ export function AddBuyerModal({
         setBusy(true);
         setFormError(undefined);
         try {
-            const input = toNewBuyerInput(parsed);
+            const input = toNewBuyerInput(parsed, phoneCountry!);
             const savedId = await contactsApi.saveBuyer(input);
             onCreated(input.name, savedId);
             toast.success("Client added");
@@ -301,10 +319,13 @@ export function AddBuyerModal({
 
     return (
         <ContactFormDrawer
+            loading={initializedFor !== buyer}
+            skeletonVariant="buyer"
+            bothBudgets={values.lookingFor === "both"}
             open={open}
             onOpenChange={onOpenChange}
             title={isEdit ? "Edit client" : "Add client"}
-            description="Capture their requirement once, then match them to your private listings."
+            description=""
             isDirty={isDirty}
             busy={busy}
             primaryLabel={isEdit ? "Save changes" : "Save client"}
@@ -343,18 +364,28 @@ export function AddBuyerModal({
                             label="Mobile"
                             startIcon={CallIcon}
                             required
-                            inputMode="numeric"
-                            maxLength={10}
+                            inputMode="tel"
+                            autoComplete="tel"
+                            disabled={!phoneCountry}
+                            maxLength={25}
                             value={values.phone ?? ""}
                             onValueChange={(phone) =>
-                                form.setValue("phone", phone.replace(/\D/g, "").slice(0, 10), {
-                                    shouldDirty: true,
-                                    shouldValidate: true,
-                                })
+                                form.setValue(
+                                    "phone",
+                                    phone.replace(/[^\d+]/g, "").replace(/(?!^)\+/g, ""),
+                                    {
+                                        shouldDirty: true,
+                                        shouldValidate: true,
+                                    },
+                                )
                             }
                             error={form.formState.errors.phone?.message}
-                            placeholder="9876543210"
-                            hint="+91 India mobile"
+                            placeholder="Enter mobile number"
+                            hint={
+                                callingCode
+                                    ? `${market?.name} (${callingCode}) mobile number`
+                                    : "Loading your account’s country…"
+                            }
                         />
                     </div>
                 </WizardSection>

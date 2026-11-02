@@ -5,14 +5,8 @@ import { useState } from "react";
 import type { ApiLeadOption, ApiOwnerOption } from "@/lib/api/broker-visits-map";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import {
-    Dialog,
-    DialogClose,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { Dialog, DialogDescription, DialogPopup } from "@/components/ui/dialog";
 
 import type { PersonSummary } from "@/features/site-visits/broker/model";
 import type { VisitPeopleFilter } from "@/features/site-visits/broker/my-visits/visit-filter-options";
@@ -45,15 +39,14 @@ export function VisitFiltersDialog({
                 onOpenChange(next);
             }}
         >
-            <DialogPopup className="gap-0 overflow-hidden p-0 max-inline-3xl sm:max-inline-3xl">
-                <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
-                    <DialogTitle>Filter my visits</DialogTitle>
-                    <DialogDescription>
-                        Pick a client or owner to narrow the leads, then pick a lead to see its
-                        visits.
-                    </DialogDescription>
-                    <DialogClose />
-                </DialogHeader>
+            <DialogPopup
+                showCloseButton={false}
+                className="gap-0 overflow-hidden p-0 max-inline-3xl sm:max-inline-3xl"
+            >
+                <AppModalHeader title="Filter my visits" />
+                <DialogDescription className="px-(--dialog-pad) pbs-3">
+                    Pick a client or owner to narrow the leads, then pick a lead to see its visits.
+                </DialogDescription>
                 <div className="overflow-y-auto p-5 max-block-[68dvh]">
                     <SlotFilters
                         buyers={buyers}

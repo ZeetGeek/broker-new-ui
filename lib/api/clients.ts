@@ -398,7 +398,12 @@ export function summarizeClientLeads(leads: ApiClientLead[] | undefined): Client
 function mapContact(contact: ApiClientContact): ClientItem {
     const phoneDigits = digitsOnly(contact.phone);
     // Keep last 10 digits for Indian mobiles stored as +91XXXXXXXXXX.
-    const normalized = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
+    const normalized =
+        contact.phone.trim().startsWith("+") && !phoneDigits.startsWith("91")
+            ? `+${phoneDigits}`
+            : phoneDigits.length === 12 && phoneDigits.startsWith("91")
+              ? phoneDigits.slice(2)
+              : phoneDigits;
 
     return {
         id: contact.id,
@@ -940,7 +945,7 @@ export const clientsApi = {
 function toClientPayload(input: NewBuyerInput) {
     return {
         name: input.name,
-        phone: `+91${input.phoneDigits}`,
+        phone: input.phoneDigits.startsWith("+") ? input.phoneDigits : `+91${input.phoneDigits}`,
         email: input.email?.trim() || undefined,
         clientType: clientTypeFromLookingFor(input.lookingFor),
         propertyKind: input.propertyKind,

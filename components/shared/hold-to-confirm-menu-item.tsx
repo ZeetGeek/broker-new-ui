@@ -72,10 +72,10 @@ export function HoldToConfirmMenuItem({
             aria-description="Press and hold for 1.2 seconds. You can also hold Enter or Space. Release to cancel."
             title="Hold for 1.2 seconds to confirm. Release to cancel."
             className="
-              body-sm relative cursor-pointer overflow-hidden rounded-inner bg-danger-soft px-3
-              font-medium text-danger! select-none min-block-11
-              focus:bg-danger-soft! focus:text-danger!
-              data-highlighted:bg-danger-soft! data-highlighted:text-danger!
+              relative cursor-pointer overflow-hidden rounded-inner bg-danger-soft px-3 text-sm
+              font-medium text-danger! select-none min-block-10 focus:bg-danger-soft!
+              focus:text-danger! data-highlighted:bg-danger-soft!
+              data-highlighted:text-danger! pointer-coarse:min-block-11
             "
             onPointerDown={(event) => {
                 if (event.button !== 0 || !event.isPrimary) return;
@@ -121,7 +121,7 @@ export function HoldToConfirmMenuItem({
                 "
                 style={{ transform: "scaleX(0)" }}
             />
-            <span className="relative flex items-center gap-3">
+            <span className="relative flex items-center gap-2.5">
                 <PropertyMenuIcon
                     name={icon}
                     aria-hidden

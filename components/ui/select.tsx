@@ -330,7 +330,7 @@ function SelectOptionsList({ children }: { children: React.ReactNode }) {
             ref={ref}
             data-slot="select-list"
             className="
-              dropdown-scroll-fade m-1.5 no-scrollbar flex flex-col overflow-y-auto overscroll-contain
+              dropdown-scroll-fade no-scrollbar flex flex-col overflow-y-auto overscroll-contain p-1.5
               max-block-[min(calc(--spacing(72)-(--spacing(9))),calc(var(--available-height)-(--spacing(9))))]
             "
         >
@@ -355,11 +355,11 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
             data-slot="select-item"
             className={cn(
                 `
-                  relative flex shrink-0 cursor-pointer items-center gap-2 rounded-inner px-2.5 py-2 pe-8
-                  text-[15px] font-medium text-ink outline-hidden
-                  transition-[background-color,color] duration-160
-                  ease-[cubic-bezier(0.22,1,0.36,1)] select-none inline-full
-                  data-highlighted:bg-surface-muted data-highlighted:text-ink
+                  relative flex shrink-0 cursor-pointer items-center gap-2 rounded-inner px-2.5 py-1.5 pe-8 text-sm
+                  font-medium text-ink outline-hidden transition-[background-color,color]
+                  duration-160 ease-[cubic-bezier(0.22,1,0.36,1)]
+                  select-none inline-full data-highlighted:bg-surface-muted
+                  data-highlighted:text-ink pointer-coarse:min-block-11
                   data-selected:bg-surface-muted
                   data-disabled:pointer-events-none data-disabled:opacity-50
                   [&_svg]:pointer-events-none [&_svg]:shrink-0
@@ -392,7 +392,10 @@ function SelectSeparator({ className, ...props }: SelectPrimitive.Separator.Prop
     return (
         <SelectPrimitive.Separator
             data-slot="select-separator"
-            className={cn("pointer-events-none -mx-1 my-1 bg-border-warm block-px", className)}
+            className={cn(
+                "pointer-events-none mx-1.5 my-1 shrink-0 bg-border-warm/50 block-px",
+                className,
+            )}
             {...props}
         />
     );

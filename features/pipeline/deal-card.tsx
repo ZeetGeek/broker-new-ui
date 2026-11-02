@@ -107,7 +107,7 @@ const DEAL_MENU_SURFACE_CLASS = `
 `;
 
 const DEAL_MENU_ITEM_CLASS = `
-  body-sm min-block-11 cursor-pointer gap-3 rounded-inner px-3 font-medium text-ink
+  text-sm min-block-10 pointer-coarse:min-block-11 cursor-pointer gap-2.5 rounded-inner px-3 font-medium text-ink
   focus:bg-surface-muted! focus:text-ink!
   data-highlighted:bg-surface-muted! data-highlighted:text-ink!
   not-data-[variant=destructive]:focus:**:text-ink!
@@ -115,7 +115,7 @@ const DEAL_MENU_ITEM_CLASS = `
 `;
 
 const DEAL_MENU_ICON_CLASS = "menu-stroke-icon shrink-0 text-ink! block-4.5! inline-4.5!";
-const DEAL_MENU_SEPARATOR_CLASS = "mx-1.5 my-1.5 bg-border-warm";
+const DEAL_MENU_SEPARATOR_CLASS = "my-1";
 
 /** Single cover thumb — leads the card row so the eye hits photo, then price. */
 function DealCoverImage({ property, muted = false }: { property: DealProperty; muted?: boolean }) {

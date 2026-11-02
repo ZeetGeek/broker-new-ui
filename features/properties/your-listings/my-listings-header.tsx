@@ -50,21 +50,25 @@ const STATUS_TABS: {
     key: StatusTab;
     label: string;
     description: string;
+    dotClassName: string;
 }[] = [
     {
         key: "published",
         label: "Published",
         description: "Visible listings",
+        dotClassName: "bg-emerald-400",
     },
     {
         key: "draft",
         label: "Draft",
         description: "Not published yet",
+        dotClassName: "bg-yellow-300",
     },
     {
         key: "sold",
         label: "Sold",
         description: "Marked as sold",
+        dotClassName: "bg-red-400",
     },
 ];
 
@@ -304,12 +308,15 @@ export function MyListingsToolbarSkeleton({
                       -my-1.5 flex flex-1 gap-2.5 overflow-hidden px-0.5 py-1.5 min-inline-0
                     "
                 >
-                    <div className={ownerListingsChipClassName(false)}>
+                    <div className={ownerListingsChipClassName(false, { interactive: false })}>
                         <Skeleton className="shrink-0 block-4 inline-4" />
                         <SkeletonLabel>Filters</SkeletonLabel>
                     </div>
                     {STATUS_TABS.map((tab) => (
-                        <div key={tab.key} className={ownerListingsChipClassName(false)}>
+                        <div
+                            key={tab.key}
+                            className={ownerListingsChipClassName(false, { interactive: false })}
+                        >
                             <SkeletonLabel>{tab.label}</SkeletonLabel>
                             <span
                                 className="
@@ -334,7 +341,12 @@ export function MyListingsToolbarSkeleton({
                         <Skeleton className="shrink-0 block-4 inline-4" />
                         <SkeletonLabel>Search listings</SkeletonLabel>
                     </div>
-                    <div className={cn(ownerListingsChipClassName(false), "gap-2")}>
+                    <div
+                        className={cn(
+                            ownerListingsChipClassName(false, { interactive: false }),
+                            "gap-2",
+                        )}
+                    >
                         <Skeleton className="shrink-0 block-4 inline-4" />
                         <SkeletonLabel>
                             <span className="hidden sm:inline">Newest first</span>
@@ -428,7 +440,18 @@ export function MyListingsHeader({
                                 return (
                                     <OwnerListingsChipsCarouselSlide key={tab.key}>
                                         <FilterChip
-                                            label={tab.label}
+                                            label={
+                                                <span className="inline-flex items-center gap-2.5">
+                                                    <span
+                                                        aria-hidden
+                                                        className={cn(
+                                                            "size-1.5 shrink-0 rounded-full",
+                                                            tab.dotClassName,
+                                                        )}
+                                                    />
+                                                    {tab.label}
+                                                </span>
+                                            }
                                             count={tabCount(summary, tab.key)}
                                             isLoading={isLoading}
                                             reserveCountSpace

@@ -210,7 +210,7 @@ export function SearchCombobox(props: SearchComboboxProps) {
                                         disabled={disabled}
                                         aria-invalid={Boolean(errorText) || undefined}
                                         aria-describedby={message ? messageId : undefined}
-                                        className="text-[15px] block-7 placeholder:text-ink-subtle"
+                                        className="text-sm block-7 placeholder:text-ink-subtle"
                                     />
                                 </>
                             )}

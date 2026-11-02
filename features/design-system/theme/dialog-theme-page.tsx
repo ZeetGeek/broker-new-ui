@@ -4,15 +4,14 @@ import { useState } from "react";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { StickyNote } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogClose,
     DialogDescription,
-    DialogHeader,
     DialogPopup,
-    DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,22 +38,22 @@ function CompoundDemo() {
                     </Button>
                 }
             />
-            <DialogPopup className="gap-4">
-                <DialogHeader>
-                    <DialogTitle>Approve this broker?</DialogTitle>
-                    <DialogDescription>
+            <DialogPopup showCloseButton={false} className="gap-0 p-0">
+                <AppModalHeader title="Approve this broker?" />
+                <div className="space-y-4 p-(--dialog-pad)">
+                    <DialogDescription className="px-(--dialog-pad) pbs-3">
                         They can show &ldquo;3 BHK in Vesu&rdquo; to clients. You can revoke later.
                     </DialogDescription>
-                </DialogHeader>
-                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                    <DialogClose
-                        render={
-                            <Button size="default" variant="ghost">
-                                Cancel
-                            </Button>
-                        }
-                    />
-                    <DialogClose render={<Button size="default">Approve broker</Button>} />
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <DialogClose
+                            render={
+                                <Button size="default" variant="ghost">
+                                    Cancel
+                                </Button>
+                            }
+                        />
+                        <DialogClose render={<Button size="default">Approve broker</Button>} />
+                    </div>
                 </div>
             </DialogPopup>
         </Dialog>

@@ -12,22 +12,21 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 const CHIP_HOVER_TRANSITION = "transition-[background-color,border-color,color] duration-160";
 
-export function filterChipClassName(isActive: boolean) {
+export function filterChipClassName(isActive: boolean, { interactive = true } = {}) {
     return cn(
         `
           touch-target inline-flex shrink-0 items-center gap-1.5 rounded-control border px-3.5
-          text-sm font-semibold whitespace-nowrap block-[38px]
+          text-sm font-semibold whitespace-nowrap block-[38px] [&_svg]:text-inherit!
         `,
-        CHIP_HOVER_TRANSITION,
+        interactive && CHIP_HOVER_TRANSITION,
         isActive
             ? `
-              border-brand bg-brand-soft text-brand-text shadow-none
-              hover:border-brand-text hover:bg-brand-soft/80
+              border-brand bg-surface text-brand-text shadow-md
             `
             : `
               border-border-warm bg-surface text-ink shadow-sm
-              hover:border-ink/25 hover:bg-surface-muted/60
             `,
+        interactive && "hover:border-ink/25 hover:bg-surface",
     );
 }
 
@@ -188,7 +187,7 @@ export function FilterChip({
                     aria-hidden
                     className={cn(
                         "block-4 inline-4",
-                        isActive ? "text-brand-text" : warning ? "text-pending" : "text-brand",
+                        isActive ? "text-brand-text" : warning ? "text-pending" : "text-ink-muted",
                     )}
                     strokeWidth={1.75}
                 />

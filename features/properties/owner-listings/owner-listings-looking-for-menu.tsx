@@ -219,7 +219,7 @@ export function OwnerListingsLookingForMenu({
                                             <span
                                                 data-slot="looking-for-title"
                                                 className="
-                                                  truncate text-[15px] leading-snug font-medium
+                                                  truncate text-sm/snug font-medium
                                                   text-ink
                                                 "
                                             >

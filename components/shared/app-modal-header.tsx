@@ -11,6 +11,7 @@ type AppModalHeaderProps = Omit<ComponentProps<"div">, "title"> & {
     title: ReactNode;
     description?: ReactNode;
     showCloseButton?: boolean;
+    closeDisabled?: boolean;
     titleClassName?: string;
     descriptionClassName?: string;
 };
@@ -20,6 +21,7 @@ export function AppModalHeader({
     title,
     description,
     showCloseButton = true,
+    closeDisabled = false,
     titleClassName,
     descriptionClassName,
     className,
@@ -30,7 +32,7 @@ export function AppModalHeader({
         <div
             data-slot="app-modal-header"
             className={cn(
-                "shrink-0 border-be border-(--dialog-divider) bg-surface px-(--dialog-pad) py-4",
+                "shrink-0 border-be border-(--dialog-divider) bg-surface px-(--dialog-pad) py-3",
                 className,
             )}
             {...props}
@@ -41,6 +43,7 @@ export function AppModalHeader({
                 </DialogTitle>
                 {showCloseButton ? (
                     <DialogClose
+                        disabled={closeDisabled}
                         aria-label="Close"
                         className="flex shrink-0 items-center justify-center rounded-control border border-border-warm bg-surface text-ink-muted outline-none block-9 inline-9 hover:bg-ink/5 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:pointer-events-none disabled:opacity-50"
                     >

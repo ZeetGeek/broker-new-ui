@@ -61,6 +61,23 @@ export const LostIcon = forwardRef<SVGSVGElement, IconProps>(function LostIcon(
     );
 });
 
+/** Contact tab icons use Tabler glyphs through Iconify. */
+export const ClientsTabIcon = forwardRef<SVGSVGElement, IconProps>(function ClientsTabIcon(
+    { size = 24, stroke: _stroke, onLoad: _onLoad, rotate: _rotate, ...props },
+    ref,
+) {
+    return (
+        <IconifyIcon ref={ref} icon="tabler:users-group" width={size} height={size} {...props} />
+    );
+});
+
+export const OwnersTabIcon = forwardRef<SVGSVGElement, IconProps>(function OwnersTabIcon(
+    { size = 24, stroke: _stroke, onLoad: _onLoad, rotate: _rotate, ...props },
+    ref,
+) {
+    return <IconifyIcon ref={ref} icon="tabler:user-key" width={size} height={size} {...props} />;
+});
+
 // Social marks use the same Tabler glyph family through Iconify.
 type SocialIconProps = Omit<IconifyProps, "icon">;
 export const InstagramIcon = (props: SocialIconProps) => (

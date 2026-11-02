@@ -195,11 +195,6 @@ export function RequestsTab({
                                                     "_blank",
                                                     "noopener,noreferrer",
                                                 );
-                                            void run(
-                                                request,
-                                                () => actions.nudge.mutateAsync(request.id),
-                                                "Owner nudge ready",
-                                            );
                                         }}
                                         onAccept={() =>
                                             void run(

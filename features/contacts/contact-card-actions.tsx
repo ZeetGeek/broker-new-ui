@@ -171,7 +171,7 @@ export function ContactCardActions({
                             <StickyNote aria-hidden /> Notes
                         </DropdownMenuItem>
                     ) : null}
-                    {onDelete ? <DropdownMenuSeparator className="m-1.5 bg-border-warm" /> : null}
+                    {onDelete ? <DropdownMenuSeparator className="my-1" /> : null}
                     {onDelete ? (
                         <HoldToConfirmMenuItem
                             label="Hold to delete"

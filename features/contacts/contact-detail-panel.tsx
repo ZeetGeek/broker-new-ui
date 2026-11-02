@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
-import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatListingPrice } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,6 @@ import {
     Tag,
     Trash2,
     UserRound,
-    X,
 } from "@/components/shared/icons";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -318,7 +317,6 @@ function PanelHeader({
     avatarUrl,
     badge,
     onEdit,
-    onClose,
     editLocked = false,
 }: {
     name: string;
@@ -326,7 +324,6 @@ function PanelHeader({
     avatarUrl?: string;
     badge?: ReactNode;
     onEdit: () => void;
-    onClose: () => void;
     editLocked?: boolean;
 }) {
     return (
@@ -347,7 +344,7 @@ function PanelHeader({
                 </span>
                 {phone ? (
                     <a
-                        href={`tel:+91${phone}`}
+                        href={formatTelUrl(phone)}
                         className="
                           body-sm tabular font-medium text-ink-muted
                           hover:text-brand-text hover:underline
@@ -365,15 +362,6 @@ function PanelHeader({
                         Edit
                     </Button>
                 )}
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    aria-label="Close client details"
-                    onClick={onClose}
-                >
-                    <X aria-hidden />
-                </Button>
             </div>
         </div>
     );
@@ -390,7 +378,7 @@ function ContactCallFooter({ phone, name }: { phone?: string; name: string }) {
                 size="md"
                 className="inline-full"
                 nativeButton={false}
-                render={<a href={`tel:+91${phone}`} aria-label={`Call ${name}`} />}
+                render={<a href={formatTelUrl(phone)} aria-label={`Call ${name}`} />}
             >
                 <Phone aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                 Call
@@ -973,8 +961,6 @@ export function ContactDetailPanel({
             size="md"
             padding="md"
             className="contacts-detail-drawer"
-            titleClassName="sr-only"
-            showCloseButton={false}
             headerClassName="
               !space-y-0 !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-b border-border-warm
             "
@@ -988,7 +974,6 @@ export function ContactDetailPanel({
                     avatarUrl={owner?.avatarUrl}
                     badge={badge}
                     onEdit={edit}
-                    onClose={() => onOpenChange(false)}
                     editLocked={owner?.origin === "platform"}
                 />
             }

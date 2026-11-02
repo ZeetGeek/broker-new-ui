@@ -3,15 +3,10 @@
 import { type SyntheticEvent, useCallback, useRef, useState } from "react";
 import ReactCrop, { centerCrop, type Crop, makeAspectCrop, type PixelCrop } from "react-image-crop";
 
+import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { CropIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogPopup } from "@/components/ui/dialog";
 
 import "react-image-crop/dist/ReactCrop.css";
 
@@ -165,13 +160,11 @@ export function ProfileImageCropper({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup className="gap-0 p-0 max-inline-lg" showCloseButton={!isCropping}>
-                <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
-                    <DialogTitle>Crop your photo</DialogTitle>
-                    <DialogDescription>
-                        Move and resize the square so your face sits in the centre.
-                    </DialogDescription>
-                </DialogHeader>
+            <DialogPopup className="gap-0 p-0 max-inline-lg" showCloseButton={false}>
+                <AppModalHeader title="Crop your photo" />
+                <DialogDescription className="px-(--dialog-pad) pbs-3">
+                    Move and resize the square so your face sits in the centre.
+                </DialogDescription>
 
                 <div
                     className="

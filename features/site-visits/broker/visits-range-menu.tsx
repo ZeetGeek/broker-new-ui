@@ -9,16 +9,10 @@ import { formatDateIso, formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { CalendarRange, ChevronDown, Search } from "@/components/shared/icons";
 import { Calendar } from "@/components/ui/calendar";
-import {
-    Dialog,
-    DialogClose,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogPopup } from "@/components/ui/dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -212,12 +206,14 @@ export function VisitsRangeMenu({
             </DropdownMenu>
 
             <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-                <DialogPopup className="gap-0 overflow-hidden p-0 max-inline-md sm:max-inline-md">
-                    <DialogHeader className="border-be border-border-warm px-5 py-4 text-start">
-                        <DialogTitle>Custom date range</DialogTitle>
-                        <DialogDescription>{customDescription}</DialogDescription>
-                        <DialogClose />
-                    </DialogHeader>
+                <DialogPopup
+                    showCloseButton={false}
+                    className="gap-0 overflow-hidden p-0 max-inline-md sm:max-inline-md"
+                >
+                    <AppModalHeader title="Custom date range" />
+                    <DialogDescription className="px-(--dialog-pad) pbs-3">
+                        {customDescription}
+                    </DialogDescription>
                     <div className="flex justify-center p-3">
                         <Calendar
                             timeZone={APP_TIME_ZONE}

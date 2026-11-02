@@ -12,6 +12,7 @@ import {
 } from "@/lib/api/exclusive-owners";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { InfinitePage } from "@/lib/pagination/infinite-page";
+import { clientPhoneForStorage, parseClientMobile } from "@/lib/validation/client-phone";
 import type { ExclusiveOwnerFormValues } from "@/lib/validation/exclusive-owner";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
@@ -667,9 +668,10 @@ export const contactsApi = {
 
     async checkDuplicate(
         rawPhone: string,
+        countryIso2 = "IN",
     ): Promise<{ id: string; name: string; type: "buyer" | "owner" } | null> {
-        const phone = normalizeIndianPhone(rawPhone);
-        if (!/^[6-9]\d{9}$/.test(phone)) return null;
+        if (!parseClientMobile(rawPhone, countryIso2)) return null;
+        const phone = clientPhoneForStorage(rawPhone, countryIso2);
         const buyers = await clientsApi.list({ search: phone });
         const buyer = buyers.find((item) => item.phoneDigits === phone);
         if (buyer) return { id: buyer.id, name: buyer.name, type: "buyer" };
