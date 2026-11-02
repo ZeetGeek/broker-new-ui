@@ -67,7 +67,14 @@ export const ClientsTabIcon = forwardRef<SVGSVGElement, IconProps>(function Clie
     ref,
 ) {
     return (
-        <IconifyIcon ref={ref} icon="tabler:users-group" width={size} height={size} {...props} />
+        <IconifyIcon
+            ref={ref}
+            icon="tabler:users-group"
+            width={size}
+            height={size}
+            {...props}
+            mode="svg"
+        />
     );
 });
 
@@ -75,7 +82,16 @@ export const OwnersTabIcon = forwardRef<SVGSVGElement, IconProps>(function Owner
     { size = 24, stroke: _stroke, onLoad: _onLoad, rotate: _rotate, ...props },
     ref,
 ) {
-    return <IconifyIcon ref={ref} icon="tabler:user-key" width={size} height={size} {...props} />;
+    return (
+        <IconifyIcon
+            ref={ref}
+            icon="tabler:user-key"
+            width={size}
+            height={size}
+            {...props}
+            mode="svg"
+        />
+    );
 });
 
 // Social marks use the same Tabler glyph family through Iconify.
