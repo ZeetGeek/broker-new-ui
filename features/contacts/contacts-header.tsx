@@ -93,7 +93,7 @@ export function ContactsHeader({
     onFiltersChange: (next: ContactsFilters) => void;
     summary: ContactsSummary | null;
     isLoading?: boolean;
-    onAdd: () => void;
+    onAdd?: () => void;
 }) {
     const isBuyers = filters.tab === "buyers";
     const addLabel = isBuyers ? "Add client" : "Add owner";
@@ -115,7 +115,10 @@ export function ContactsHeader({
                                     label: "Clients",
                                     mobileLabel: "Clients",
                                     icon: ClientsTabIcon,
-                                    count: summary?.buyerCount ?? 0,
+                                    count:
+                                        summary != null && summary.buyerCount > 0
+                                            ? summary.buyerCount
+                                            : undefined,
                                     description: "People you’re helping find a property",
                                 },
                                 {
@@ -123,7 +126,10 @@ export function ContactsHeader({
                                     label: "Owners",
                                     mobileLabel: "Owners",
                                     icon: OwnersTabIcon,
-                                    count: summary?.ownerCount ?? 0,
+                                    count:
+                                        summary != null && summary.ownerCount > 0
+                                            ? summary.ownerCount
+                                            : undefined,
                                     description: FEATURE_PLATFORM_OWNER
                                         ? "Owners you represent or added yourself"
                                         : "Owners you added yourself",
@@ -153,17 +159,26 @@ export function ContactsHeader({
                                       {
                                           value: "all" as const,
                                           label: "All",
-                                          count: summary?.ownerCount ?? 0,
+                                          count:
+                                              summary != null && summary.ownerCount > 0
+                                                  ? summary.ownerCount
+                                                  : undefined,
                                       },
                                       {
                                           value: "platform" as const,
                                           label: "Platform",
-                                          count: summary?.platformOwnerCount ?? 0,
+                                          count:
+                                              summary != null && summary.platformOwnerCount > 0
+                                                  ? summary.platformOwnerCount
+                                                  : undefined,
                                       },
                                       {
                                           value: "custom" as const,
                                           label: "Added by you",
-                                          count: summary?.customOwnerCount ?? 0,
+                                          count:
+                                              summary != null && summary.customOwnerCount > 0
+                                                  ? summary.customOwnerCount
+                                                  : undefined,
                                       },
                                   ] as const
                               ).map((chip) => {
@@ -257,32 +272,34 @@ export function ContactsHeader({
                             </DropdownMenuContent>
                         </DropdownMenu>
 
-                        <Button
-                            type="button"
-                            variant="accent"
-                            size="sm"
-                            onClick={onAdd}
-                            aria-label={addLabel}
-                            className="hidden gap-2 px-3.5 block-[38px]! md:inline-flex"
-                        >
-                            <Plus aria-hidden strokeWidth={1.75} />
-                            {addLabel}
-                            {addShortcut ? (
-                                <KbdGroup className="gap-0.5">
-                                    {addShortcut.displayKeys.map((key) => (
-                                        <Kbd
-                                            key={key}
-                                            className="
-                                              border-surface/25 bg-surface/15 px-1.5 text-[10px]
-                                              text-surface [box-shadow:none] min-inline-4
-                                            "
-                                        >
-                                            {key}
-                                        </Kbd>
-                                    ))}
-                                </KbdGroup>
-                            ) : null}
-                        </Button>
+                        {onAdd ? (
+                            <Button
+                                type="button"
+                                variant="accent"
+                                size="sm"
+                                onClick={onAdd}
+                                aria-label={addLabel}
+                                className="hidden gap-2 px-3.5 block-[38px]! md:inline-flex"
+                            >
+                                <Plus aria-hidden strokeWidth={1.75} />
+                                {addLabel}
+                                {addShortcut ? (
+                                    <KbdGroup className="gap-0.5">
+                                        {addShortcut.displayKeys.map((key) => (
+                                            <Kbd
+                                                key={key}
+                                                className="
+                                                  border-surface/25 bg-surface/15 px-1.5 text-[10px]
+                                                  text-surface [box-shadow:none] min-inline-4
+                                                "
+                                            >
+                                                {key}
+                                            </Kbd>
+                                        ))}
+                                    </KbdGroup>
+                                ) : null}
+                            </Button>
+                        ) : null}
                     </div>
                 </div>
             </TooltipProvider>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BROKER_ADD_DEAL_HREF } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { CircleCheck, CircleSlash, LostIcon, Search, Users } from "@/components/shared/icons";
+import { CircleCheck, CircleSlash, LayoutGrid, LostIcon, Search } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 /** Fills the results band so the teach block sits in the visual middle of the page. */
@@ -14,7 +14,7 @@ const EMPTY_FRAME =
 export function PipelineFirstRunEmpty() {
     return (
         <EmptyState
-            icon={Users}
+            icon={LayoutGrid}
             heading="No deals yet"
             description="Add a property to My Listings, then link a client to it from Clients. The deal will appear here automatically."
             className={EMPTY_FRAME}

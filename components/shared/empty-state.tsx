@@ -1,11 +1,13 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 
 import { cn } from "@/lib/utils";
 
 import type { AppIcon } from "@/components/shared/icons";
 
+type EmptyStateIcon = AppIcon | ComponentType<SVGProps<SVGSVGElement> & { strokeWidth?: number }>;
+
 export type EmptyStateProps = {
-    icon: AppIcon;
+    icon: EmptyStateIcon;
     heading: ReactNode;
     description: string;
     children?: ReactNode;

@@ -16,12 +16,13 @@ import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { AddFab } from "@/components/shared/add-fab";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Search, UserPlus, UserRound, UserRoundPlus, Users } from "@/components/shared/icons";
+import { ClientsTabIcon, OwnersTabIcon, Search } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
 import { AddOwnerModal } from "@/features/contacts/add-owner-modal";
 import {
@@ -61,6 +62,10 @@ const CONTACT_GRID_BREAKPOINTS = [
     { minWidth: 1024, columns: 4 },
     { minWidth: 1280, columns: 5 },
 ];
+
+/** Fills the results band so the teach block sits in the visual middle of the page. */
+const CONTACTS_EMPTY_FRAME =
+    "min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]";
 
 function isContactsFilters(value: unknown): value is ContactsFilters {
     if (typeof value !== "object" || value === null) return false;
@@ -284,6 +289,8 @@ export function ContactsPage({
     );
     const rows = isBuyers ? buyers : ownersQuery.items;
     const activeQuery = isBuyers ? buyersQuery : ownersQuery;
+    const isFirstRunEmpty =
+        !activeQuery.isPending && !activeQuery.isError && rows.length === 0 && !hasSearch;
     const openAdd = useCallback(() => {
         if (isBuyers) setIsAddOpen(true);
         else setIsOwnerAddOpen(true);
@@ -487,7 +494,7 @@ export function ContactsPage({
                         onFiltersChange={setFilters}
                         summary={summary}
                         isLoading={summaryQuery.isPending}
-                        onAdd={openAdd}
+                        onAdd={isFirstRunEmpty ? undefined : openAdd}
                     />
                 )}
 
@@ -526,25 +533,31 @@ export function ContactsPage({
                         </EmptyState>
                     ) : isBuyers ? (
                         <EmptyState
-                            icon={Users}
+                            icon={ClientsTabIcon}
                             heading="No clients yet"
                             description="Add the people looking to buy or rent. You can link them to a property once they are on your list."
-                            className="py-16"
+                            className={CONTACTS_EMPTY_FRAME}
                         >
-                            <Button size="lg" onClick={() => setIsAddOpen(true)}>
-                                <UserPlus aria-hidden strokeWidth={1.75} />
+                            <Button size="md" variant="accent" onClick={() => setIsAddOpen(true)}>
                                 Add your first client
                             </Button>
                         </EmptyState>
                     ) : (
                         <EmptyState
-                            icon={UserRound}
+                            icon={OwnersTabIcon}
                             heading="No owners yet"
-                            description="Platform owners appear after accepting your request. You can also add an owner for a private listing."
-                            className="py-16"
+                            description={
+                                FEATURE_PLATFORM_OWNER
+                                    ? "Platform owners appear after accepting your request. You can also add an owner for a private listing."
+                                    : "Add an owner to start linking their properties to your listings."
+                            }
+                            className={CONTACTS_EMPTY_FRAME}
                         >
-                            <Button size="lg" onClick={() => setIsOwnerAddOpen(true)}>
-                                <UserRoundPlus aria-hidden strokeWidth={1.75} />
+                            <Button
+                                size="md"
+                                variant="accent"
+                                onClick={() => setIsOwnerAddOpen(true)}
+                            >
                                 Add your first owner
                             </Button>
                         </EmptyState>
@@ -603,16 +616,18 @@ export function ContactsPage({
                     </div>
                 )}
 
-                <AddFab
-                    onClick={openAdd}
-                    label={isBuyers ? "Add client" : "Add owner"}
-                    hint={
-                        isBuyers
-                            ? "Add someone you’re helping find a property"
-                            : "Add an owner for a private listing"
-                    }
-                    className="md:hidden"
-                />
+                {isFirstRunEmpty ? null : (
+                    <AddFab
+                        onClick={openAdd}
+                        label={isBuyers ? "Add client" : "Add owner"}
+                        hint={
+                            isBuyers
+                                ? "Add someone you’re helping find a property"
+                                : "Add an owner for a private listing"
+                        }
+                        className="md:hidden"
+                    />
+                )}
 
                 <AddBuyerModal
                     open={isAddOpen}
