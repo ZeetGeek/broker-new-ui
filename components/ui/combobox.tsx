@@ -467,8 +467,18 @@ function ComboboxEmpty({ className, ...props }: ComboboxPrimitive.Empty.Props) {
     );
 }
 
-// Keep the public API compatible while omitting dividers from every dropdown.
-const ComboboxSeparator: React.FC<ComboboxPrimitive.Separator.Props> = () => null;
+function ComboboxSeparator({ className, ...props }: ComboboxPrimitive.Separator.Props) {
+    return (
+        <ComboboxPrimitive.Separator
+            data-slot="combobox-separator"
+            className={cn(
+                "pointer-events-none mx-1.5 my-1 shrink-0 bg-border-warm/50 block-px",
+                className,
+            )}
+            {...props}
+        />
+    );
+}
 
 function ComboboxChips({
     className,

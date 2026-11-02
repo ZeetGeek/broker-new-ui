@@ -388,8 +388,18 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
     );
 }
 
-// Keep the public API compatible while omitting dividers from every dropdown.
-const SelectSeparator: React.FC<SelectPrimitive.Separator.Props> = () => null;
+function SelectSeparator({ className, ...props }: SelectPrimitive.Separator.Props) {
+    return (
+        <SelectPrimitive.Separator
+            data-slot="select-separator"
+            className={cn(
+                "pointer-events-none mx-1.5 my-1 shrink-0 bg-border-warm/50 block-px",
+                className,
+            )}
+            {...props}
+        />
+    );
+}
 
 function SelectScrollUpButton({
     className,
