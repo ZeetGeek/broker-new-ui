@@ -139,7 +139,7 @@ export function StepDetails() {
                     <TextField
                         name="basics.title"
                         label="Listing title"
-                        placeholder={suggestedTitle || "e.g. 2 BHK Apartment in Vesu, Surat"}
+                        placeholder={suggestedTitle || "e.g. 2 BHK Apartment in Green Park, Mumbai"}
                         hint="Auto-filled from BHK, type, locality, and city. You can edit it anytime."
                         startIcon={Type}
                         onChange={() => setTitleTouched(true)}

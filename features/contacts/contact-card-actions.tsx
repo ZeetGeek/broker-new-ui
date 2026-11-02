@@ -127,9 +127,7 @@ export function ContactCardActions({
                                         size="icon-sm"
                                         aria-label={`More actions for ${name}`}
                                         onClick={stop}
-                                        className="
-                                          rounded-full border-border-warm bg-surface shadow-xs
-                                        "
+                                        className="rounded-full"
                                     />
                                 }
                             >

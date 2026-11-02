@@ -1702,8 +1702,8 @@ function MobileDealSummary({
 
 function cloneDefaultDraft(portal: "broker" | "owner" = "broker"): PropertyDraftValues {
     const draft = JSON.parse(JSON.stringify(DEFAULT_PROPERTY_DRAFT)) as PropertyDraftValues;
-    // A listing is always offered in the holder's country. The Surat / Gujarat
-    // starting place only makes sense for the launch market.
+    // A listing is always offered in the holder's country. State and city stay
+    // empty until the user picks them.
     const marketName = getStoredUser()?.country?.name;
     if (marketName && marketName !== draft.location.country) {
         draft.location.country = marketName;

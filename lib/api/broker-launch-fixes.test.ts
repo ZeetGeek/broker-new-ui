@@ -89,7 +89,7 @@ for (const source of ["platform", "exclusive"] as const) {
             );
             assert.equal(url.searchParams.get("limit"), "1");
             assert.equal(url.searchParams.get("propertyId"), "qa-property");
-            assert.equal(url.searchParams.get("search"), "Vesu");
+            assert.equal(url.searchParams.get("search"), "Andheri West");
             const page = Number(url.searchParams.get("page"));
             pages.push(page);
             return {
@@ -99,7 +99,7 @@ for (const source of ["platform", "exclusive"] as const) {
                             property: {
                                 id: `property-${page}`,
                                 title: `Home ${page}`,
-                                city: "Surat",
+                                city: "Mumbai",
                             },
                             propertySource: source === "exclusive" ? "own_listing" : "marketplace",
                             access: "accepted",
@@ -120,7 +120,11 @@ for (const source of ["platform", "exclusive"] as const) {
         };
         const observer = new InfiniteQueryObserver(
             client,
-            slotsQueryOptions(true, { limit: 1, propertyId: "qa-property", q: "Vesu" }, source),
+            slotsQueryOptions(
+                true,
+                { limit: 1, propertyId: "qa-property", q: "Andheri West" },
+                source,
+            ),
         );
         await observer.refetch();
         assert.equal(observer.getCurrentResult().hasNextPage, true);

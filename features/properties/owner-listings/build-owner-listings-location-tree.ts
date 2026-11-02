@@ -5,6 +5,7 @@ import type { OwnerListingItem } from "@/features/properties/owner-listings/type
 
 const CITY_STATE_MAP: Record<string, string> = {
     Surat: "Gujarat",
+    Ahmedabad: "Gujarat",
     Bengaluru: "Karnataka",
     Mumbai: "Maharashtra",
     Pune: "Maharashtra",

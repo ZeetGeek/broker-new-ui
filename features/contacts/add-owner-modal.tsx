@@ -323,7 +323,7 @@ export function AddOwnerModal({
                                 size="lg"
                                 cityId={selectedCity?.id}
                                 value={values.area ?? ""}
-                                placeholder="Search an area, e.g. Vesu"
+                                placeholder="Search an area, e.g. Green Park"
                                 errorText={errors.area?.message}
                                 onValueChange={(area: string) =>
                                     setValue("area", area, {

@@ -74,7 +74,7 @@ export function toBuyerContactCardModel(buyer: BuyerRow): BuyerContactCardModel 
                 id: property.id,
                 leadId: property.leadId || lead?.leadId || "",
                 title: property.title,
-                locality: property.locality || lead?.city || buyer.city || "Surat",
+                locality: property.locality || lead?.city || buyer.city || "",
                 priceLabel:
                     property.priceLabel ||
                     (lead?.listPriceInr
@@ -119,7 +119,7 @@ export function toOwnerContactCardModel(owner: OwnerRow): OwnerContactCardModel 
               id: property.id,
               leadId: "",
               title: property.title,
-              locality: property.locality || locality || city || "Surat",
+              locality: property.locality || locality || city || "",
               priceLabel: property.priceLabel || askingPrice,
               coverUrl: property.coverUrl,
               propertyType: property.propertyType || owner.propertyType || "Property",
@@ -132,7 +132,7 @@ export function toOwnerContactCardModel(owner: OwnerRow): OwnerContactCardModel 
                           : `${owner.id}_${index}`,
                   leadId: "",
                   title: titleForOwnerProperty(owner, index),
-                  locality: owner.localities[index] || locality || city || "Surat",
+                  locality: owner.localities[index] || locality || city || "",
                   priceLabel: askingPrice,
                   propertyType: owner.propertyType || details?.propertyType || "Property",
               }),

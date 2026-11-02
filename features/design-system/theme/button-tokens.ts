@@ -11,11 +11,15 @@ export const BUTTON_VARIANTS = [
         label: "Highlight outline",
         note: "Dark surfaces only. One per screen, max.",
     },
-    { name: "outline", label: "Outline", note: "Secondary action." },
+    {
+        name: "outline",
+        label: "Outline",
+        note: "Polaris white face — bordered actions + icon buttons.",
+    },
     {
         name: "surface",
         label: "Surface",
-        note: "White fill, warm border. Filter chips and quiet actions on canvas.",
+        note: "Polaris white face. Same as outline.",
     },
     { name: "secondary", label: "Secondary", note: "Alternate fill." },
     { name: "ghost", label: "Ghost", note: "Tertiary, inside cards." },

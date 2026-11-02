@@ -247,7 +247,7 @@ export const VISIT_DURATION_OPTIONS = [30, 45, 60, 90] as const;
 
 /**
  * How long before a visit the "starting soon" state kicks in. Ninety minutes
- * is roughly when a broker in Surat traffic has to leave.
+ * is roughly when a broker in city traffic has to leave.
  */
 export const VISIT_IMMINENT_MINUTES = 90;
 

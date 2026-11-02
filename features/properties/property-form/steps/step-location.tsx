@@ -90,7 +90,6 @@ export function StepLocation() {
         cityName: location.city,
     });
     const country = location.country;
-    const pincode = location.pincode;
     const fullAddress = location.fullAddress;
     const lastAutoAddress = useRef("");
     const market = useMarket();
@@ -124,16 +123,6 @@ export function StepLocation() {
             location.country,
         ],
     );
-
-    // Surat PIN shortcut for the launch city. Only valid while the country is
-    // India — other countries reuse the same 6 digit range for other places.
-    useEffect(() => {
-        if (country !== "India") return;
-        if (/^395\d{3}$/.test(pincode)) {
-            setValue("location.city", "Surat", { shouldDirty: true });
-            setValue("location.state", "Gujarat", { shouldDirty: true });
-        }
-    }, [country, pincode, setValue]);
 
     useEffect(() => {
         if (editingAddress) return;
@@ -255,7 +244,7 @@ export function StepLocation() {
                             name="location.locality"
                             label="Locality"
                             cityId={selectedCity?.id}
-                            placeholder="Search a locality, e.g. Vesu"
+                            placeholder="Search a locality, e.g. Green Park"
                         />
                     </div>
                     <div className={FORM_GRID_3_CLASS}>
@@ -264,8 +253,8 @@ export function StepLocation() {
                             label="PIN code"
                             inputMode="numeric"
                             maxLength={6}
-                            placeholder="395007"
-                            hint="Surat PIN codes fill the city and state automatically."
+                            placeholder="400001"
+                            hint="Enter the 6-digit PIN for this property."
                             startIcon={Hash}
                         />
                         <TextField
@@ -292,7 +281,7 @@ export function StepLocation() {
                         <TextField
                             name="location.landmark"
                             label="Nearby landmark"
-                            placeholder="Near D-Mart, opposite VR Mall"
+                            placeholder="Near Mart, opposite Mall"
                             startIcon={Landmark}
                         />
                         <TextAreaField

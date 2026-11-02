@@ -330,7 +330,7 @@ export type PropertyCardOwner = {
     name: string;
     avatarUrl?: string;
     phoneDigits?: string;
-    /** Where the owner is based, e.g. "Adajan, Surat". Hidden when absent. */
+    /** Where the owner is based, e.g. "Andheri West, Mumbai". Hidden when absent. */
     locationLabel?: string;
     /** Broker-facing owner profile. Name becomes a link when set. */
     profileHref?: string;
@@ -704,7 +704,7 @@ function PropertyCardOwnerBlock({
             <Button
                 variant="outline"
                 size="icon-sm"
-                className="shrink-0 border-border-warm text-brand"
+                className="shrink-0 text-brand"
                 render={
                     <a
                         href={formatWhatsAppUrl(owner.phoneDigits)}
@@ -840,7 +840,7 @@ function RepresentedPropertyCard({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="flex-1 border-border-warm min-inline-0"
+                        className="flex-1 min-inline-0"
                         onClick={onShare}
                     >
                         Share

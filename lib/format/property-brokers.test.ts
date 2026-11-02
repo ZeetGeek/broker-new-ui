@@ -88,10 +88,10 @@ test("retains future consent and falls back to organization names", () => {
             representation({
                 endsAt: "2026-10-15T10:00:00Z",
                 brokerName: " ",
-                brokerOrgName: "Surat Realty",
+                brokerOrgName: "Mumbai Realty",
             }),
         ],
         now,
     );
-    assert.equal(summary.get("property-1")?.brokers[0].name, "Surat Realty");
+    assert.equal(summary.get("property-1")?.brokers[0].name, "Mumbai Realty");
 });

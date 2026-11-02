@@ -357,7 +357,7 @@ badge at top-right, then content.
 │ ● NEXT SHOWING    [Confirmed]│  brand mark · eyebrow ink-muted · badge brand-soft
 │                              │
 │ Today, 9:30 AM               │  h2, ink
-│ Vesu · meet at the gate      │  small, ink-muted
+│ Andheri · meet at the gate   │  small, ink-muted
 │                              │
 │ [Directions]  [Reschedule]   │  primary action · secondary action
 └──────────────────────────────┘
@@ -377,16 +377,18 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 
 ### 4.3 Buttons
 
-| Variant           | Fill                                      | Text            | Use                                                                                                                                                         |
-| ----------------- | ----------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Primary           | `brand-ink`                               | white           | One per screen. Request to represent, Approve, Add property                                                                                                 |
-| Accent            | `brand`                                   | `canvas`        | One per screen, marketing/hero CTAs only. Not for in-app screens — `Primary` owns those                                                                     |
-| Highlight         | `highlight`                               | `highlight-ink` | Dark surfaces only (`brand-deep`/`brand-ink` cards). One per screen, max — the one action that leads on a dark attention card. Never on `canvas`/`surface`. |
-| Highlight outline | transparent, 1px `highlight`              | `highlight-ink` | Same dark-surface restriction as Highlight, lower emphasis.                                                                                                 |
-| Secondary         | transparent, 1px `border`                 | `ink`           | Reschedule, Cancel, Map view                                                                                                                                |
-| Surface           | `surface`, 1px `border-warm`, `shadow-sm` | `ink`           | White fill on canvas. Filter chips and quiet contained actions. Hover keeps the white fill and darkens the border so it does not blend into `canvas`.       |
-| Destructive       | transparent, 1px `danger`                 | `danger`        | Reject, Delete                                                                                                                                              |
-| Ghost             | none                                      | `ink-muted`     | Tertiary, inside cards                                                                                                                                      |
+| Variant           | Fill                                     | Text            | Use                                                                                                                                                                   |
+| ----------------- | ---------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary           | `brand-ink`                              | white           | One per screen. Request to represent, Approve, Add property                                                                                                           |
+| Accent            | `brand`                                  | `canvas`        | One per screen, marketing/hero CTAs only. Not for in-app screens — `Primary` owns those                                                                               |
+| Highlight         | `highlight`                              | `highlight-ink` | Dark surfaces only (`brand-deep`/`brand-ink` cards). One per screen, max — the one action that leads on a dark attention card. Never on `canvas`/`surface`.           |
+| Highlight outline | transparent, 1px `highlight`             | `highlight-ink` | Same dark-surface restriction as Highlight, lower emphasis.                                                                                                           |
+| Outline           | Polaris white face (`btn-polaris-white`) | `#282828`       | Bordered actions site-wide (Call, Cancel, Share, icon buttons). Hover lightly darkens the face; pressed uses a top inset shadow. Keyboard focus rings remain visible. |
+| Outline dark      | transparent, 1px `ink-muted`             | `ink`           | On dark / tinted surfaces where a white face would clash                                                                                                              |
+| Secondary         | `secondary` fill                         | secondary fg    | Alternate filled action                                                                                                                                               |
+| Surface           | Polaris white face (`btn-polaris-white`) | `#282828`       | White face on canvas. Quiet contained actions. Same face as Outline.                                                                                                  |
+| Destructive       | transparent, 1px `danger`                | `danger`        | Reject, Delete                                                                                                                                                        |
+| Ghost             | none                                     | `ink-muted`     | Tertiary, inside cards                                                                                                                                                |
 
 `brand-soft` fills hover to `brand-soft-hover` — one step deeper in the same green, never a different hue.
 
@@ -448,9 +450,9 @@ top corners, 4:3 aspect ratio, `object-cover`.
 │         photo 4:3            │
 │                              │
 ├──────────────────────────────┤
-│ 3 BHK · Vesu        ₹85 L    │  ink / brand, tabular, right-aligned
+│ 3 BHK · Andheri     ₹85 L    │  ink / brand, tabular, right-aligned
 │ 1,450 sq ft · Semi-furnished │  small, ink-muted
-│ 📍 Surat                     │
+│ 📍 Mumbai                    │
 │ ─────────────────────────    │
 │ 2 requests · listed 4d ago   │  small, ink-subtle
 └──────────────────────────────┘
@@ -606,11 +608,11 @@ Input of the same size.
 
 ```
 ┌──────────────────────────────┐
-│ 📍  Vesu                  ▾  │  start icon · value · chevron
+│ 📍  Andheri               ▾  │  start icon · value · chevron
 ├──────────────────────────────┤
 │ 🏢  Choose type           ▾  │  placeholder is ink-subtle
 ├──────────────────────────────┤
-│ 📍  Adajan                ◌  │  loading — Tailspin replaces chevron
+│ 📍  Baner                 ◌  │  loading — Tailspin replaces chevron
 ├──────────────────────────────┤
 │    Choose a locality      ▾  │  error — danger border + ring
 │ Choose a locality to continue│  message region, danger text
@@ -1082,7 +1084,7 @@ bug, not a style preference.
 | Date                   | `dd/mm/yyyy`                  | `18/08/2026`      |
 | Date, conversational   | `18 Aug` or `Today, 9:30 AM`  |                   |
 | Phone                  | `+91 XXXXX XXXXX`             | `+91 98765 43210` |
-| PIN code               | 6 digits, no space            | `395007`          |
+| PIN code               | 6 digits, no space            | `400001`          |
 | Configuration          | `X BHK`, never `X bedroom`    | `3 BHK`           |
 
 One rupee helper formats all of these. It lives in `lib/format.ts` and no component

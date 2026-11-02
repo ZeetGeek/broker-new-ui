@@ -467,7 +467,7 @@ export function AddBuyerModal({
                                 size="lg"
                                 cityId={selectedCity?.id}
                                 value={localityList}
-                                placeholder="Search an area, e.g. Vesu"
+                                placeholder="Search an area, e.g. Green Park"
                                 errorText={form.formState.errors.localities?.message}
                                 onValueChange={(next: string[]) =>
                                     form.setValue("localities", next.join(", "), {

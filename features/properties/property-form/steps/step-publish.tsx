@@ -470,7 +470,7 @@ function ContactSearchPanel({
                         variant="outline"
                         size="default"
                         onClick={onClear}
-                        className="shrink-0 border text-ink hover:bg-surface-muted/35"
+                        className="shrink-0"
                     >
                         Change
                     </Button>

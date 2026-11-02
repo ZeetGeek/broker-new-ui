@@ -105,14 +105,14 @@ Rules for this project:
   real owner.
 - Reference data that genuinely never changes within a session (locality lists,
   amenity lists, property types) can take a very long `cacheLife`. There is no
-  reason to re-fetch a list of Surat localities every request.
+  reason to re-fetch a list of city localities every request.
 - Never `use cache` anything scoped to a user. Broker client lists, owner
   contact details, and representation state are per-request, always.
 
 ### Keep filters in the URL
 
 Encode search and filter state in the URL, not client state or dynamic APIs.
-`/browse?city=surat&bhk=3&max=8000000` is shareable, back-button-correct, and
+`/browse?city=mumbai&bhk=3&max=8000000` is shareable, back-button-correct, and
 cacheable per-combination. Reaching for `headers()`, `cookies()`, or
 `searchParams` inside a component opts that whole subtree out of the static
 shell.

@@ -27,7 +27,7 @@ import { type TimeRequestFormValues, timeRequestSchema } from "@/schemas/visits"
 
 const PRESETS = [
     "Client works till 5, evening suits better",
-    "Client is visiting Surat only tomorrow",
+    "Client is visiting the city only tomorrow",
     "Client wants to see it in daylight",
 ];
 

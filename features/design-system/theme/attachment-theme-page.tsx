@@ -78,11 +78,11 @@ function ImageDemo() {
                 />
             </AttachmentMedia>
             <AttachmentContent>
-                <AttachmentTitle>vesu-living.jpg</AttachmentTitle>
+                <AttachmentTitle>andheri-living.jpg</AttachmentTitle>
                 <AttachmentDescription>JPG · 820 KB</AttachmentDescription>
             </AttachmentContent>
             <AttachmentActions>
-                <AttachmentAction aria-label="Download vesu-living.jpg">
+                <AttachmentAction aria-label="Download andheri-living.jpg">
                     <Download aria-hidden strokeWidth={2} />
                 </AttachmentAction>
             </AttachmentActions>

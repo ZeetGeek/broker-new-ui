@@ -311,6 +311,50 @@
     inline-size: auto;
 }
 
+/* Polaris secondary face: Figma 105:20 / 105:21.
+   The paint layer includes the reserved 1px border without changing control metrics.
+   Keep the bright inset ABOVE the darker bevel, in Figma's CSS shadow order. */
+@utility btn-polaris-white {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-color: transparent;
+    background: transparent;
+    color: #282828;
+    letter-spacing: -0.02em;
+    --polaris-face: linear-gradient(180deg, #f8f8f8 0%, #fefefe 100%);
+    --polaris-bevel: inset 0 0 2px #fcfcfc, inset 0 -1px 1px 1px #b0b0b0;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        z-index: -1;
+        border-radius: inherit;
+        pointer-events: none;
+        background: var(--polaris-face);
+        box-shadow: var(--polaris-bevel);
+    }
+
+    &:hover:not(:disabled):not([aria-disabled="true"]):not([data-loading]),
+    &[aria-expanded="true"]:not(:disabled):not([aria-disabled="true"]):not([data-loading]) {
+        --polaris-face: linear-gradient(180deg, #f6f6f6 0%, #fbfbfb 100%);
+    }
+
+    &:active:not([aria-haspopup]):not(:disabled):not([aria-disabled="true"]):not([data-loading]) {
+        --polaris-face: linear-gradient(
+            180deg,
+            #e5e5e5 0%,
+            #f3f3f3 9.38%,
+            #f6f6f6 21.88%,
+            #f4f4f4 60.94%,
+            #fefefe 100%
+        );
+        --polaris-bevel: inset 0 3px 2px 1px #b4b4b4;
+        scale: 1;
+    }
+}
+
 /* Approved single-hue gradient for the broker dashboard status rail. */
 @utility dashboard-status-rail {
     border: 1px solid transparent;

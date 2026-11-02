@@ -90,7 +90,7 @@ function phoneDigits(value: string | null | undefined): string {
 }
 
 /**
- * API titles arrive in two shapes: delimited ("3 BHK · Vesu") and prose
+ * API titles arrive in two shapes: delimited ("3 BHK · Andheri West") and prose
  * ("2BHK Apartment in Baner"). Split on whichever is present so the locality
  * does not end up duplicated into the config label.
  */

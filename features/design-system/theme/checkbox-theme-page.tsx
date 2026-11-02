@@ -140,7 +140,11 @@ function CardsDemo({
 }
 
 function IndeterminateDemo() {
-    const [children, setChildren] = useState({ vesu: true, adajan: false, piplod: true });
+    const [children, setChildren] = useState({
+        andheri: true,
+        baner: false,
+        indiranagar: true,
+    });
     const values = Object.values(children);
     const all = values.every(Boolean);
     const none = values.every((value) => !value);
@@ -148,7 +152,7 @@ function IndeterminateDemo() {
     const parentIndeterminate = !all && !none;
 
     function setAll(next: boolean) {
-        setChildren({ vesu: next, adajan: next, piplod: next });
+        setChildren({ andheri: next, baner: next, indiranagar: next });
     }
 
     return (
@@ -165,9 +169,9 @@ function IndeterminateDemo() {
             <div className="ms-2 space-y-2 border-s border-border-warm ps-4">
                 {(
                     [
-                        { id: "vesu", label: "Vesu" },
-                        { id: "adajan", label: "Adajan" },
-                        { id: "piplod", label: "Piplod" },
+                        { id: "andheri", label: "Andheri West" },
+                        { id: "baner", label: "Baner" },
+                        { id: "indiranagar", label: "Indiranagar" },
                     ] as const
                 ).map((item) => (
                     <label

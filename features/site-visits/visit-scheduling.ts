@@ -15,7 +15,7 @@ export const VISIT_DAY_START_HOUR = 8;
 export const VISIT_DAY_END_HOUR = 21;
 
 /**
- * Minutes a broker needs between two showings. Surat traffic makes
+ * Minutes a broker needs between two showings. City traffic makes
  * back-to-back visits in different localities a promise nobody can keep, so
  * the calendar warns rather than letting the broker discover it on the road.
  */

@@ -1,11 +1,11 @@
 import type { UserProfile } from "@/lib/api/profile";
 import { sessionCountryName } from "@/lib/auth/session";
 
-/** Launch defaults when the broker profile has no city yet (Surat first). */
+/** Country-only fallback when the broker profile has no location yet. */
 export const CONTACT_LOCATION_FALLBACK = {
     country: "India",
-    state: "Gujarat",
-    city: "Surat",
+    state: "",
+    city: "",
 } as const;
 
 export type ContactLocationDefaults = {
@@ -15,16 +15,12 @@ export type ContactLocationDefaults = {
 };
 
 /**
- * Prefer the signed-in broker’s profile location, then their market. The
- * Surat / Gujarat defaults only apply inside the launch country.
+ * Prefer the signed-in broker’s profile location, then their market country.
+ * State and city stay empty until the user or profile provides them.
  */
 export function contactLocationDefaults(profile?: UserProfile | null): ContactLocationDefaults {
     const country = profile?.country?.trim() || sessionCountryName();
-    const inLaunchCountry = country === CONTACT_LOCATION_FALLBACK.country;
-    const state =
-        profile?.broker?.reraState?.trim() ||
-        profile?.reraState?.trim() ||
-        (inLaunchCountry ? CONTACT_LOCATION_FALLBACK.state : "");
-    const city = profile?.city?.trim() || (inLaunchCountry ? CONTACT_LOCATION_FALLBACK.city : "");
+    const state = profile?.broker?.reraState?.trim() || profile?.reraState?.trim() || "";
+    const city = profile?.city?.trim() || "";
     return { country, state, city };
 }

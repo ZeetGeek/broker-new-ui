@@ -75,14 +75,15 @@ export const TRANSACTION_TYPE_OPTIONS = [
     { value: "resale", label: "Resale" },
 ] as const satisfies readonly PropertyOption[];
 
-export const SURAT_LOCALITY_OPTIONS = [
-    { value: "Vesu", label: "Vesu" },
-    { value: "Adajan", label: "Adajan" },
-    { value: "Althan", label: "Althan" },
-    { value: "City Light", label: "City Light" },
-    { value: "Piplod", label: "Piplod" },
-    { value: "Pal", label: "Pal" },
-    { value: "Katargam", label: "Katargam" },
+/** Example locality options for demos — locality lists come from the city API. */
+export const EXAMPLE_LOCALITY_OPTIONS = [
+    { value: "Andheri West", label: "Andheri West" },
+    { value: "Baner", label: "Baner" },
+    { value: "Satellite", label: "Satellite" },
+    { value: "Indiranagar", label: "Indiranagar" },
+    { value: "Banjara Hills", label: "Banjara Hills" },
+    { value: "Powai", label: "Powai" },
+    { value: "Malviya Nagar", label: "Malviya Nagar" },
 ] as const satisfies readonly PropertyOption[];
 
 export const NEARBY_PLACE_TYPE_OPTIONS = [

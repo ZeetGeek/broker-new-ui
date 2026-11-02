@@ -10,7 +10,7 @@ import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-list
 const base: OwnerListingsSummaryInput = {
     totalCount: 21,
     newThisWeekCount: 4,
-    serviceAreas: ["Vesu"],
+    serviceAreas: ["Andheri West"],
     filters: { ...DEFAULT_OWNER_LISTINGS_FILTERS, yourAreas: false },
     poolSummary: {
         slotsOpenCount: 0,

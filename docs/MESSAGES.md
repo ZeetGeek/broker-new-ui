@@ -235,7 +235,7 @@ because it answers the question the user was about to ask.
 Name the thing. Say the consequence. Put the verb on the button.
 
 > **Delete this property?**
-> "3 BHK in Vesu" will be removed permanently. Brokers currently representing
+> "3 BHK in Andheri West" will be removed permanently. Brokers currently representing
 > it will be notified.
 > `[Cancel]` `[Delete property]`
 

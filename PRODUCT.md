@@ -10,7 +10,7 @@ web
 
 The product serves two user roles in the Indian real-estate market: Owners and Brokers. Organization accounts may manage team members later, but team membership does not create another role. Buyers are offline contacts created and managed by brokers; they are not users and do not log in.
 
-The first launch is in Surat. Users are generally non-technical and primarily use inexpensive Android phones, often while travelling between properties and reading the screen outdoors.
+The product launches for India nationwide. Users are generally non-technical and primarily use inexpensive Android phones, often while travelling between properties and reading the screen outdoors.
 
 ## Product Purpose
 
@@ -30,7 +30,7 @@ Owners publish property visit slots. Brokers book those slots for one to three b
 - The frontend is a Next.js App Router application. The NestJS, Prisma, and PostgreSQL backend is a separate repository and is accessed over HTTP.
 - Store visit timestamps as UTC ISO strings and render them in `Asia/Kolkata`.
 - Money is INR and is displayed using lakh/crore conventions.
-- The initial product must work well in Surat on narrow, lower-powered Android devices.
+- The product must work well across India on narrow, lower-powered Android devices.
 - Representation is the consent-gated owner/broker relationship for one property.
 - Deferred scope: team-management screens, payments, WhatsApp Business automation, in-app chat, ratings/reviews, AI features, and buyer-facing accounts.
 - Open decisions: final product name and domain; the meaning/duration of “free”; exact pipeline stage names and count.

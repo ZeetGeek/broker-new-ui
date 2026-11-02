@@ -232,11 +232,7 @@ function BrowsePropertyFallback({
                         Browse Marketplace
                     </Button>
                 ) : null}
-                <Button
-                    variant="outline"
-                    className="border-border-warm"
-                    render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}
-                >
+                <Button variant="outline" render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}>
                     My Listings
                 </Button>
             </div>

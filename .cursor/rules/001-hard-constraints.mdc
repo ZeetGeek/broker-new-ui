@@ -20,7 +20,7 @@ These are expensive to get wrong even in planning. Full detail lives in
 
 ## Market & UX
 
-6. **India / Surat first.** INR as `₹85 L` / `₹1.25 Cr`. Dates `dd/mm/yyyy`.
+6. **India nationwide.** INR as `₹85 L` / `₹1.25 Cr`. Dates `dd/mm/yyyy`.
    Phones `+91 …`. Never `en-US` / `USA` locale strings.
 7. **360px Android-first.** Design the phone layout first; desktop is enhancement.
 8. **Portals never mix.** Owner and broker routes do not import each other.

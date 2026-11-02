@@ -8,7 +8,7 @@ Single source of truth for telling the user something is happening.
 ## Why this matters more here than elsewhere
 
 On a development laptop, loading states barely appear. On a ₹9,000 Android
-phone on congested 4G in Surat, they are a **significant share of the actual
+phone on congested 4G in India, they are a **significant share of the actual
 experience**. A screen that flashes blank for two seconds does not read as
 "slow" to a non-technical user — it reads as **broken**, and their next move is
 to tap again or close the app.

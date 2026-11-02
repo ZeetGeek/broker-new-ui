@@ -49,16 +49,7 @@ export function NotFoundPage() {
                             <Home aria-hidden="true" data-icon="inline-start" />
                             Back to home
                         </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="lg"
-                            className="
-                              border-border-warm bg-surface text-ink
-                              hover:bg-brand-soft hover:text-brand-text
-                            "
-                            onClick={goBack}
-                        >
+                        <Button type="button" variant="outline" size="lg" onClick={goBack}>
                             <ArrowLeft aria-hidden="true" data-icon="inline-start" />
                             Go back
                         </Button>

@@ -112,7 +112,7 @@ function PendingRequestRow({
                     variant="outline"
                     disabled={busy}
                     onClick={() => onRespond("rejected")}
-                    className="border-border-warm bg-surface px-2.5 text-ink"
+                    className="px-2.5"
                 >
                     <X aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
                     Cancel

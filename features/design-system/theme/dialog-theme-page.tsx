@@ -42,7 +42,8 @@ function CompoundDemo() {
                 <AppModalHeader title="Approve this broker?" />
                 <div className="space-y-4 p-(--dialog-pad)">
                     <DialogDescription className="px-(--dialog-pad) pbs-3">
-                        They can show &ldquo;3 BHK in Vesu&rdquo; to clients. You can revoke later.
+                        They can show &ldquo;3 BHK in Andheri West&rdquo; to clients. You can revoke
+                        later.
                     </DialogDescription>
                     <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                         <DialogClose
@@ -73,7 +74,7 @@ function AppModalDemo({ size }: { size?: "sm" | "md" | "lg" }) {
                 onOpenChange={setOpen}
                 size={size ?? "md"}
                 title="Note on Priya Shah"
-                description="3 BHK · Vesu"
+                description="3 BHK · Andheri West"
                 footer={
                     <AppModalFooter
                         primaryLabel="Save note"
@@ -111,8 +112,8 @@ function DestructiveDemo() {
                 title="Delete this property?"
                 description={
                     <>
-                        &ldquo;3 BHK in Vesu&rdquo; will be removed permanently. Brokers currently
-                        representing it will be notified.
+                        &ldquo;3 BHK in Andheri West&rdquo; will be removed permanently. Brokers
+                        currently representing it will be notified.
                     </>
                 }
                 footer={

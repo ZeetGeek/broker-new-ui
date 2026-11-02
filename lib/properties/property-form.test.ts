@@ -21,13 +21,15 @@ import { isVisible, missingRequiredFields, stripHidden } from "@/lib/visibility/
 function listing() {
     const values = structuredClone(DEFAULT_PROPERTY_DRAFT);
     Object.assign(values.basics, {
-        title: "2 BHK Apartment in Vesu",
+        title: "2 BHK Apartment in Andheri West",
         description:
             "A bright apartment near the main road with a spacious living room and balcony.",
     });
     Object.assign(values.location, {
-        locality: "Vesu",
-        pincode: "395007",
+        state: "Maharashtra",
+        city: "Mumbai",
+        locality: "Andheri West",
+        pincode: "400058",
         projectOrSociety: "Society",
         landmark: "Mall",
     });

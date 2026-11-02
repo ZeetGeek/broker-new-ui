@@ -230,10 +230,7 @@ export function DashboardHeader({
                     <ShortcutTooltip shortcutId="pipeline" label="Pipeline">
                         <Button
                             variant="outline"
-                            className="
-                              border-border-warm bg-surface font-medium text-ink shadow-sm
-                              hover:border-gray-300 hover:bg-gray-50 hover:text-ink
-                            "
+                            className="font-medium"
                             size="md"
                             nativeButton={false}
                             render={<Link href="/broker/pipeline" />}

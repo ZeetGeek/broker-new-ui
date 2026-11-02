@@ -19,11 +19,11 @@ import { DesignSystemShell } from "@/features/design-system/design-system-shell"
 import { COMBOBOX_SIZES } from "@/features/design-system/theme/combobox-tokens";
 
 const LOCALITIES = [
-    { value: "vesu", label: "Vesu" },
-    { value: "adajan", label: "Adajan" },
-    { value: "pal", label: "Pal" },
-    { value: "citylight", label: "Citylight" },
-    { value: "athwa", label: "Athwa" },
+    { value: "andheri", label: "Andheri West" },
+    { value: "baner", label: "Baner" },
+    { value: "satellite", label: "Satellite" },
+    { value: "koregaon", label: "Koregaon Park" },
+    { value: "indiranagar", label: "Indiranagar" },
 ] as const;
 
 function Swatch({ label, children }: { label: string; children: React.ReactNode }) {
@@ -204,7 +204,7 @@ export function ComboboxThemePage() {
                         <Swatch label="Start icon · preselected · clear">
                             <LocalityCombobox
                                 startIcon={MapPin}
-                                defaultValue="vesu"
+                                defaultValue="andheri"
                                 placeholder="Locality"
                                 showClear
                             />
@@ -267,14 +267,14 @@ export function ComboboxThemePage() {
                     <h2 className="h4 text-ink">Static states</h2>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <Swatch label="Disabled">
-                            <LocalityCombobox disabled defaultValue="vesu" />
+                            <LocalityCombobox disabled defaultValue="andheri" />
                         </Swatch>
                         <Swatch label="Error">
                             <LocalityCombobox errorText="Choose a locality to continue" />
                         </Swatch>
                         <Swatch label="Success">
                             <LocalityCombobox
-                                defaultValue="vesu"
+                                defaultValue="andheri"
                                 success
                                 helperText="In your service area"
                             />

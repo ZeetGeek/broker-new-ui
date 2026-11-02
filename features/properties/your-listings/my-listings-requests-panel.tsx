@@ -116,7 +116,7 @@ function RequestRow({
                     <Button
                         size="sm"
                         variant="outline"
-                        className="shrink-0 self-start border-border-warm sm:self-center"
+                        className="shrink-0 self-start sm:self-center"
                         disabled={!item.canRemind || busy}
                         onClick={() => onRemind(item.id)}
                     >
@@ -126,7 +126,7 @@ function RequestRow({
                     <Button
                         size="sm"
                         variant="outline"
-                        className="shrink-0 self-start border-border-warm sm:self-center"
+                        className="shrink-0 self-start sm:self-center"
                         render={<Link href={item.action.href} />}
                     >
                         {item.action.label}

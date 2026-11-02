@@ -29,7 +29,7 @@ import { CancelRepresentationDialog } from "@/features/representation/cancel-rep
 addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
 
 function listingPlace(item: OwnerRequestCardItem): string {
-    return [item.locality, item.city].filter(Boolean).join(", ") || "Surat";
+    return [item.locality, item.city].filter(Boolean).join(", ") || "India";
 }
 
 export function ActiveBrokerCard({

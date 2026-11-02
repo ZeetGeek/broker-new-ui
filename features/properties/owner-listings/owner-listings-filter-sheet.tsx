@@ -287,10 +287,7 @@ function CountFilter({
                     aria-label={`Decrease ${label.toLowerCase()}`}
                     disabled={selected.length === 0}
                     onClick={() => step(-1)}
-                    className="
-                      rounded-full border-border-warm bg-surface shadow-none block-11 inline-11
-                      hover:bg-surface-muted
-                    "
+                    className="rounded-full block-11 inline-11"
                 >
                     <Minus aria-hidden />
                 </Button>
@@ -316,10 +313,7 @@ function CountFilter({
                     aria-label={`Increase ${label.toLowerCase()}`}
                     disabled={index === options.length - 1 && selected.length === 1}
                     onClick={() => step(1)}
-                    className="
-                      rounded-full border-border-warm bg-surface shadow-none block-11 inline-11
-                      hover:bg-surface-muted
-                    "
+                    className="rounded-full block-11 inline-11"
                 >
                     <Plus aria-hidden />
                 </Button>

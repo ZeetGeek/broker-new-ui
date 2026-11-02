@@ -263,7 +263,7 @@ function exclusiveOwnerPropertyToCard(
             property.address?.trim() ||
             property.city?.trim() ||
             fallbackLocality ||
-            "Surat",
+            "—",
         coverUrl: coverFromPhotos(property.photos),
         propertyType: property.propertyType ?? undefined,
         configuration: property.bhkConfig ?? undefined,
@@ -292,7 +292,7 @@ function exclusiveOwnerToRow(item: ExclusiveOwnerItem): OwnerRow {
         createPrivateListing: false,
     };
 
-    const fallbackLocality = item.area?.trim() || item.city?.trim() || "Surat";
+    const fallbackLocality = item.area?.trim() || item.city?.trim() || "";
     const properties = (item.properties ?? [])
         .filter((property): property is NonNullable<typeof property> => Boolean(property?.id))
         .map((property) => exclusiveOwnerPropertyToCard(property, fallbackLocality));
@@ -375,7 +375,7 @@ async function attachExclusiveOwnerListings(
                         propertyType: listing.propertyType,
                         bhkConfig: listing.bhkConfig,
                     },
-                    listing.city?.trim() || "Surat",
+                    listing.city?.trim() || "",
                 );
                 const list = byOwner.get(ownerId) ?? [];
                 if (!list.some((property) => property.id === next.id)) list.push(next);

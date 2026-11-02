@@ -74,7 +74,7 @@ The full form collects carpet area, property age, property condition, and unit/a
 
 The form sends `streetOrRoad || fullAddress` as its legacy address. Both create and update payload mappers concatenate this address with the public property description. The public page hides the address section with `revealAddress={false}`, but still renders the description verbatim.
 
-**Probe:** Address `Flat 23, Example Society, Vesu` plus description `Bright apartment with a balcony.` produces a description containing both, and the detail mapper retains it.
+**Probe:** Address `Flat 23, Example Society, Andheri West` plus description `Bright apartment with a balcony.` produces a description containing both, and the detail mapper retains it.
 
 **Impact:** Hiding the dedicated address section does not protect an exact address copied into the public description. This is a verified frontend exposure path; whether the deployed public API independently removes it was **not verified**. Treat that as a release check, not as proof of an actual production disclosure.
 

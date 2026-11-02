@@ -18,11 +18,11 @@ import { DesignSystemShell } from "@/features/design-system/design-system-shell"
 import { SELECT_SIZES } from "@/features/design-system/theme/select-tokens";
 
 const LOCALITIES = [
-    { value: "vesu", label: "Vesu" },
-    { value: "adajan", label: "Adajan" },
-    { value: "pal", label: "Pal" },
-    { value: "citylight", label: "Citylight" },
-    { value: "athwa", label: "Athwa" },
+    { value: "andheri", label: "Andheri West" },
+    { value: "baner", label: "Baner" },
+    { value: "satellite", label: "Satellite" },
+    { value: "koregaon", label: "Koregaon Park" },
+    { value: "indiranagar", label: "Indiranagar" },
 ] as const;
 
 function Swatch({ label, children }: { label: string; children: React.ReactNode }) {
@@ -182,7 +182,7 @@ export function SelectThemePage() {
                         <Swatch label="Start icon · preselected">
                             <LocalitySelect
                                 startIcon={MapPin}
-                                defaultValue="vesu"
+                                defaultValue="andheri"
                                 placeholder="Locality"
                             />
                         </Swatch>
@@ -243,14 +243,14 @@ export function SelectThemePage() {
                     <h2 className="h4 text-ink">Static states</h2>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <Swatch label="Disabled">
-                            <LocalitySelect disabled defaultValue="vesu" />
+                            <LocalitySelect disabled defaultValue="andheri" />
                         </Swatch>
                         <Swatch label="Error">
                             <LocalitySelect errorText="Choose a locality to continue" />
                         </Swatch>
                         <Swatch label="Success">
                             <LocalitySelect
-                                defaultValue="vesu"
+                                defaultValue="andheri"
                                 success
                                 helperText="In your service area"
                             />

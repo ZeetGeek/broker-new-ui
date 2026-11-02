@@ -760,7 +760,7 @@ export function ProfilePage() {
                                                 value={field.value}
                                                 onValueChange={field.onChange}
                                                 onBlur={field.onBlur}
-                                                placeholder="Search a locality, e.g. Vesu"
+                                                placeholder="Search a locality, e.g. Green Park"
                                                 errorText={fieldState.error?.message}
                                                 helperText={`Pick up to ${MAX_SERVICE_AREAS} localities in this city.`}
                                             />
@@ -880,7 +880,7 @@ export function ProfilePage() {
                                             id="profile-preferred-cities"
                                             size="lg"
                                             startIcon={MapPin}
-                                            placeholder="Surat, Ahmedabad"
+                                            placeholder="Mumbai, Ahmedabad"
                                             errorText={fieldState.error?.message}
                                             helperText="Separate them with commas."
                                         />
@@ -901,7 +901,7 @@ export function ProfilePage() {
                                             id="profile-preferred-localities"
                                             size="lg"
                                             startIcon={MapPinned}
-                                            placeholder="Adajan, Vesu"
+                                            placeholder="Andheri, Baner"
                                             errorText={fieldState.error?.message}
                                             helperText="Separate them with commas."
                                         />
@@ -1013,7 +1013,7 @@ export function ProfilePage() {
                                                     id="profile-slug"
                                                     size="lg"
                                                     startIcon={Link2}
-                                                    placeholder="rajesh-patel-surat"
+                                                    placeholder="rajesh-patel"
                                                     errorText={fieldState.error?.message}
                                                     helperText="Public profile links are not available yet."
                                                 />

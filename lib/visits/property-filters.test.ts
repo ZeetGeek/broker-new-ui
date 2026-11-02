@@ -10,9 +10,9 @@ const property: VisitPropertySummary = {
     title: "Apartment",
     configLabel: "2 BHK",
     propertyType: "Residential",
-    locality: "Vesu",
-    city: "Surat",
-    address: "Vesu, Surat",
+    locality: "Andheri West",
+    city: "Mumbai",
+    address: "Andheri West, Mumbai",
     areaSqft: 1200,
     amountInr: 7500000,
     purpose: "sale",
@@ -23,7 +23,7 @@ const property: VisitPropertySummary = {
 test("visit filters match property facts, location, budget and BHK", () => {
     assert.equal(
         matchesVisitProperty(property, {
-            where: "Vesu",
+            where: "Andheri West",
             type: "sale",
             min: "7000000",
             max: "8000000",

@@ -389,19 +389,19 @@ export function QuickAdd({
                         name="location.locality"
                         label="Locality"
                         cityId={selectedCity?.id}
-                        placeholder="Search a locality, e.g. Vesu"
+                        placeholder="Search a locality, e.g. Green Park"
                     />
                     <TextField
                         name="location.pincode"
                         label="PIN code"
                         inputMode="numeric"
                         maxLength={6}
-                        placeholder="395007"
+                        placeholder="400001"
                     />
                     <TextField
                         name="location.landmark"
                         label="Landmark"
-                        placeholder="e.g. Near VR Mall"
+                        placeholder="e.g. Near Mart, opposite Mall"
                     />
                     <TextField
                         name="location.projectOrSociety"
@@ -470,7 +470,7 @@ export function QuickAdd({
                     <TextField
                         name="basics.title"
                         label="Property title"
-                        placeholder={suggestedTitle || "e.g. 3 BHK Apartment in Vesu, Surat"}
+                        placeholder={suggestedTitle || "e.g. 3 BHK Apartment in Green Park, Mumbai"}
                         hint="Auto-filled from BHK, type, locality, and city. You can edit it anytime."
                         className="md:col-span-2"
                         onChange={() => setTitleTouched(true)}

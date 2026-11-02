@@ -49,7 +49,7 @@ function PasswordDemo() {
 }
 
 function ClearableDemo() {
-    const [value, setValue] = useState("Vesu, Surat");
+    const [value, setValue] = useState("Andheri West, Mumbai");
     return (
         <Input
             startIcon={Search}
@@ -176,7 +176,7 @@ export function InputThemePage() {
                             />
                         </Swatch>
                         <Swatch label="Success">
-                            <Input defaultValue="395007" success helperText="Valid PIN code" />
+                            <Input defaultValue="400001" success helperText="Valid PIN code" />
                         </Swatch>
                     </div>
                 </section>

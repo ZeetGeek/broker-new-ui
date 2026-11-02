@@ -1,6 +1,13 @@
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 
-const LOCALITIES = ["Vesu", "Adajan", "Pal", "Athwa", "City Light", "Piplod"] as const;
+const LOCALITIES = [
+    "Andheri West",
+    "Baner",
+    "Satellite",
+    "Banjara Hills",
+    "Koregaon Park",
+    "Indiranagar",
+] as const;
 const IMAGES = [
     "/properties/1.jpg",
     "/properties/2.jpg",
@@ -12,12 +19,12 @@ const IMAGES = [
 
 /** Where each mock owner lives — pairs with OWNER_NAMES by index. */
 const OWNER_LOCATIONS = [
-    "Adajan, Surat",
-    "Piplod, Surat",
-    "Vesu, Surat",
-    "Athwa, Surat",
-    "Pal, Surat",
-    "Katargam, Surat",
+    "Baner, Pune",
+    "Indiranagar, Bengaluru",
+    "Andheri West, Mumbai",
+    "Banjara Hills, Hyderabad",
+    "Satellite, Ahmedabad",
+    "Malviya Nagar, Jaipur",
 ] as const;
 
 const OWNER_NAMES = [
@@ -53,8 +60,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "3 BHK",
         bhk: 3,
-        locality: "Vesu",
-        city: "Surat",
+        locality: "Andheri West",
+        city: "Mumbai",
         saleAmountInr: 11_500_000,
         rentAmountInr: 45_000,
         areaSqft: 1250,
@@ -70,8 +77,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "2 BHK",
         bhk: 2,
-        locality: "Adajan",
-        city: "Surat",
+        locality: "Baner",
+        city: "Pune",
         saleAmountInr: null,
         rentAmountInr: 22_000,
         areaSqft: 890,
@@ -87,8 +94,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "3 BHK",
         bhk: 3,
-        locality: "Pal",
-        city: "Surat",
+        locality: "Satellite",
+        city: "Ahmedabad",
         saleAmountInr: 8_500_000,
         rentAmountInr: null,
         areaSqft: 1180,
@@ -105,8 +112,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "4 BHK",
         bhk: 4,
-        locality: "Piplod",
-        city: "Surat",
+        locality: "Indiranagar",
+        city: "Bengaluru",
         saleAmountInr: 1_85_00_000,
         rentAmountInr: null,
         areaSqft: 2100,
@@ -122,8 +129,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "2 BHK",
         bhk: 2,
-        locality: "Vesu",
-        city: "Surat",
+        locality: "Andheri West",
+        city: "Mumbai",
         saleAmountInr: null,
         rentAmountInr: 18_500,
         areaSqft: 950,
@@ -138,8 +145,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "3 BHK",
         bhk: 3,
-        locality: "Athwa",
-        city: "Surat",
+        locality: "Banjara Hills",
+        city: "Hyderabad",
         saleAmountInr: 72_00_000,
         rentAmountInr: 28_000,
         areaSqft: 1320,
@@ -155,8 +162,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "1 BHK",
         bhk: 1,
-        locality: "Adajan",
-        city: "Surat",
+        locality: "Baner",
+        city: "Pune",
         saleAmountInr: null,
         rentAmountInr: 12_500,
         areaSqft: 520,
@@ -171,8 +178,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "3 BHK",
         bhk: 3,
-        locality: "City Light",
-        city: "Surat",
+        locality: "Koregaon Park",
+        city: "Pune",
         saleAmountInr: 95_00_000,
         rentAmountInr: 38_000,
         areaSqft: 1450,
@@ -187,8 +194,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "2 BHK",
         bhk: 2,
-        locality: "Pal",
-        city: "Surat",
+        locality: "Satellite",
+        city: "Ahmedabad",
         saleAmountInr: 58_00_000,
         rentAmountInr: null,
         areaSqft: 980,
@@ -203,8 +210,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "4 BHK",
         bhk: 4,
-        locality: "Vesu",
-        city: "Surat",
+        locality: "Andheri West",
+        city: "Mumbai",
         saleAmountInr: 2_10_00_000,
         rentAmountInr: null,
         areaSqft: 2400,
@@ -220,8 +227,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "3 BHK",
         bhk: 3,
-        locality: "Piplod",
-        city: "Surat",
+        locality: "Indiranagar",
+        city: "Bengaluru",
         saleAmountInr: null,
         rentAmountInr: 25_000,
         areaSqft: 1150,
@@ -236,8 +243,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "2 BHK",
         bhk: 2,
-        locality: "Athwa",
-        city: "Surat",
+        locality: "Banjara Hills",
+        city: "Hyderabad",
         saleAmountInr: 42_00_000,
         rentAmountInr: null,
         areaSqft: 860,
@@ -252,8 +259,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "3 BHK",
         bhk: 3,
-        locality: "Adajan",
-        city: "Surat",
+        locality: "Baner",
+        city: "Pune",
         saleAmountInr: 68_00_000,
         rentAmountInr: null,
         areaSqft: 1280,
@@ -268,8 +275,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "1 BHK",
         bhk: 1,
-        locality: "Vesu",
-        city: "Surat",
+        locality: "Andheri West",
+        city: "Mumbai",
         saleAmountInr: null,
         rentAmountInr: 9_500,
         areaSqft: 480,
@@ -284,8 +291,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "4 BHK",
         bhk: 4,
-        locality: "City Light",
-        city: "Surat",
+        locality: "Koregaon Park",
+        city: "Pune",
         saleAmountInr: 1_45_00_000,
         rentAmountInr: 55_000,
         areaSqft: 1980,
@@ -300,8 +307,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "2 BHK",
         bhk: 2,
-        locality: "Pal",
-        city: "Surat",
+        locality: "Satellite",
+        city: "Ahmedabad",
         saleAmountInr: null,
         rentAmountInr: 16_000,
         areaSqft: 820,
@@ -316,8 +323,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "3 BHK",
         bhk: 3,
-        locality: "Piplod",
-        city: "Surat",
+        locality: "Indiranagar",
+        city: "Bengaluru",
         saleAmountInr: 1_05_00_000,
         rentAmountInr: null,
         areaSqft: 1520,
@@ -332,8 +339,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "2 BHK",
         bhk: 2,
-        locality: "Vesu",
-        city: "Surat",
+        locality: "Andheri West",
+        city: "Mumbai",
         saleAmountInr: 62_00_000,
         rentAmountInr: null,
         areaSqft: 910,
@@ -348,8 +355,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "3 BHK",
         bhk: 3,
-        locality: "Athwa",
-        city: "Surat",
+        locality: "Banjara Hills",
+        city: "Hyderabad",
         saleAmountInr: null,
         rentAmountInr: 20_500,
         areaSqft: 1200,
@@ -364,8 +371,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "4 BHK",
         bhk: 4,
-        locality: "Adajan",
-        city: "Surat",
+        locality: "Baner",
+        city: "Pune",
         saleAmountInr: 1_72_00_000,
         rentAmountInr: null,
         areaSqft: 2250,
@@ -380,8 +387,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "1 BHK",
         bhk: 1,
-        locality: "City Light",
-        city: "Surat",
+        locality: "Koregaon Park",
+        city: "Pune",
         saleAmountInr: 35_00_000,
         rentAmountInr: null,
         areaSqft: 560,
@@ -396,8 +403,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "3 BHK",
         bhk: 3,
-        locality: "Pal",
-        city: "Surat",
+        locality: "Satellite",
+        city: "Ahmedabad",
         saleAmountInr: 78_00_000,
         rentAmountInr: 32_000,
         areaSqft: 1380,
@@ -412,8 +419,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "2 BHK",
         bhk: 2,
-        locality: "Piplod",
-        city: "Surat",
+        locality: "Indiranagar",
+        city: "Bengaluru",
         saleAmountInr: null,
         rentAmountInr: 19_000,
         areaSqft: 880,
@@ -428,8 +435,8 @@ const ENTRIES: MockOwnerListingSeed[] = [
     {
         configLabel: "3 BHK",
         bhk: 3,
-        locality: "Vesu",
-        city: "Surat",
+        locality: "Andheri West",
+        city: "Mumbai",
         saleAmountInr: 88_00_000,
         rentAmountInr: null,
         areaSqft: 1420,

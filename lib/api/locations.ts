@@ -32,7 +32,7 @@ export type CityItem = {
 export type LocalityItem = {
     id: string;
     name: string;
-    /** Google's secondary line, e.g. "Surat, Gujarat, India". */
+    /** Google's secondary line, e.g. "Mumbai, Maharashtra, India". */
     description: string | null;
 };
 

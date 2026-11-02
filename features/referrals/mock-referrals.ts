@@ -31,7 +31,7 @@ function daysAhead(days: number): string {
  * got accepted, an owner who listed, and a dead link. A fixture set that is
  * all happy path is how an empty-handed state ships unnoticed.
  *
- * Names and localities match the Surat fixtures used by pipeline and visits.
+ * Names and localities match the India-wide fixtures used by pipeline and visits.
  */
 export const MOCK_REFERRALS: ReferralItem[] = [
     {
@@ -42,7 +42,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
             id: "rp_301",
             name: "Kalpesh Chauhan",
             phoneDigits: "9825014477",
-            city: "Surat",
+            city: "Mumbai",
             agencyName: "Chauhan Estates",
         },
         channel: "whatsapp",
@@ -72,7 +72,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
             id: "rp_302",
             name: "Nishit Vora",
             phoneDigits: "9727038812",
-            city: "Surat",
+            city: "Pune",
         },
         channel: "whatsapp",
         // Past the stale threshold with no nudge yet — this is the row the
@@ -105,7 +105,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
             name: "Bhavika Shah",
             phoneDigits: "9558872301",
             email: "bhavika.shah@gmail.com",
-            city: "Surat",
+            city: "Bengaluru",
             agencyName: "Shah Realty",
             avatarUrl: "/avatars/2.jpg",
         },
@@ -142,7 +142,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
             name: "Devang Mistry",
             phoneDigits: "9714452038",
             email: "devang.mistry@gmail.com",
-            city: "Surat",
+            city: "Ahmedabad",
         },
         channel: "whatsapp",
         invitedAt: daysAgo(9),
@@ -178,7 +178,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
             {
                 id: "re_3075",
                 at: daysAgo(3),
-                label: "Devang asked an owner in Adajan to represent a property",
+                label: "Devang asked an owner in Baner to represent a property",
                 kind: "awaiting_approval",
             },
         ],
@@ -192,7 +192,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
             name: "Rakesh Patel",
             phoneDigits: "9879012345",
             email: "rakesh.patel@gmail.com",
-            city: "Surat",
+            city: "Mumbai",
             agencyName: "Patel Property Hub",
             avatarUrl: "/avatars/1.jpg",
         },
@@ -229,7 +229,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
             {
                 id: "re_3045",
                 at: daysAgo(31),
-                label: "Rakesh asked an owner in Vesu to represent a property",
+                label: "Rakesh asked an owner in Andheri West to represent a property",
                 kind: "awaiting_approval",
             },
             {
@@ -249,7 +249,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
             name: "Hetal Desai",
             phoneDigits: "9909188342",
             email: "hetal.desai@gmail.com",
-            city: "Surat",
+            city: "Bengaluru",
             avatarUrl: "/avatars/4.jpg",
         },
         channel: "whatsapp",
@@ -285,7 +285,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
             {
                 id: "re_3085",
                 at: daysAgo(24),
-                label: "Hetal listed her first property in Piplod. You earned 80 credits",
+                label: "Hetal listed her first property in Indiranagar. You earned 80 credits",
                 kind: "qualified",
             },
         ],
@@ -298,7 +298,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
             id: "rp_306",
             name: "Mehul Desai",
             phoneDigits: "9426617790",
-            city: "Navsari",
+            city: "Jaipur",
         },
         channel: "sms",
         invitedAt: daysAgo(48),
@@ -333,7 +333,7 @@ export const MOCK_CREDIT_LEDGER: CreditEntry[] = [
         id: "cl_407",
         kind: "listing_published",
         amount: -LISTING_COST_CREDITS,
-        label: "Published a listing in Vesu",
+        label: "Published a listing in Andheri West",
         at: daysAgo(2),
         referralId: null,
     },
@@ -341,7 +341,7 @@ export const MOCK_CREDIT_LEDGER: CreditEntry[] = [
         id: "cl_406",
         kind: "listing_published",
         amount: -LISTING_COST_CREDITS,
-        label: "Published a listing in Pal",
+        label: "Published a listing in Satellite",
         at: daysAgo(11),
         referralId: null,
     },

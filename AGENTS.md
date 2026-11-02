@@ -85,8 +85,8 @@ show users. "Request to represent" reads better to an owner as something like
 
 ## Market context
 
-- Target market is **India**; first launch is a **single city** (Surat),
-  not a nationwide rollout
+- Target market is **India**; the product is built for nationwide use,
+  not a single-city rollout
 - Users are onboarded **by hand** in the first phase, from personal contacts —
   not through marketing or paid acquisition
 - Users are **not technical**, and will mostly be on **inexpensive Android
@@ -110,8 +110,8 @@ this repo. Data comes from the API over HTTP.
 
 ## Scope — what is NOT being built yet
 
-The first phase is deliberately narrow: make the core loop work well in one
-city, on a phone. The following are explicitly **deferred** and should not be
+The first phase is deliberately narrow: make the core loop work well across
+India, on a phone. The following are explicitly **deferred** and should not be
 built, scaffolded, or designed for right now:
 
 - WhatsApp Business API automation

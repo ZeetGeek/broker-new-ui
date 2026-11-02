@@ -19,7 +19,7 @@ import {
 
 test("criteria round-trip without removing unrelated page state", () => {
     const criteria = normalizePropertyCriteria({
-        where: "Vesu",
+        where: "Andheri West",
         category: "commercial",
         propertyType: "office",
         minAreaSqft: "200",
@@ -50,8 +50,8 @@ test("category changes strip invalid subtypes and malformed ranges", () => {
 
 test("filter matching uses locality, subtype, area and the selected sale/rent price", () => {
     const property = {
-        locality: "Vesu",
-        city: "Surat",
+        locality: "Andheri West",
+        city: "Mumbai",
         category: "residential",
         propertyType: "apartment",
         transactionType: "both",
@@ -61,7 +61,7 @@ test("filter matching uses locality, subtype, area and the selected sale/rent pr
     };
     assert.equal(
         matchesPropertyCriteria(property, {
-            where: "vesu",
+            where: "andheri west",
             type: "rent",
             min: "20000",
             max: "30000",
@@ -82,7 +82,7 @@ test("filter matching uses locality, subtype, area and the selected sale/rent pr
         ),
         true,
     );
-    assert.equal(matchesPropertyCriteria({ city: "Surat" }, { minAreaSqft: "10" }), false);
+    assert.equal(matchesPropertyCriteria({ city: "Mumbai" }, { minAreaSqft: "10" }), false);
     assert.equal(
         matchesPropertyCriteria(
             { propertyTypeLabel: "Office", isRent: true, amountInr: 18000 },
@@ -155,8 +155,8 @@ test("collection filtering sees later pages rather than filtering a partial firs
     const calls: number[] = [];
     const rows = await collectPropertyPages(async (page) => {
         calls.push(page);
-        return { items: [{ city: page === 3 ? "Surat" : "Mumbai" }], totalPages: 3 };
+        return { items: [{ city: page === 3 ? "Pune" : "Mumbai" }], totalPages: 3 };
     });
     assert.deepEqual(calls, [1, 2, 3]);
-    assert.equal(rows.filter((row) => matchesPropertyCriteria(row, { where: "Surat" })).length, 1);
+    assert.equal(rows.filter((row) => matchesPropertyCriteria(row, { where: "Pune" })).length, 1);
 });

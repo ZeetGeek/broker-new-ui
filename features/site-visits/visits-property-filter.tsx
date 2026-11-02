@@ -24,7 +24,7 @@ type VisitsPropertyFilterProps = {
 /**
  * Narrows the visits list to one property.
  *
- * The question it answers is "when am I showing the Vesu flat" — a broker
+ * The question it answers is "when am I showing the Andheri flat" — a broker
  * juggling six live properties cannot read that off a list sorted by time,
  * because the six are interleaved. Picking one leaves only its slots, in
  * order, which is the shape needed to spot a clash or promise a buyer a time.

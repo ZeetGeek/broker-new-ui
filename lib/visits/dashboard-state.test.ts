@@ -42,7 +42,7 @@ test("agenda counts use persisted statuses and Next showing omits terminal visit
                 id: status,
                 status,
                 scheduledAt: `2026-10-29T0${index + 4}:00:00Z`,
-                propertyTitle: "Office in Surat",
+                propertyTitle: "Office in Mumbai",
                 statusLabel: "",
                 clientName: "Buyer",
             }) as DashboardVisit,

@@ -61,7 +61,7 @@ export type OwnerListingItem = {
     ownerAvatarUrl?: string;
     /** `users.id` for the listing owner — used to open their profile. */
     ownerUserId?: string;
-    /** Where the owner is based, e.g. "Adajan, Surat". Absent until the API sends it. */
+    /** Where the owner is based, e.g. "Andheri West, Mumbai". Absent until the API sends it. */
     ownerLocationLabel?: string;
     photoCount: number;
     isNew: boolean;

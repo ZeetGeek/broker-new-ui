@@ -104,7 +104,7 @@ class, everywhere. Colour is not in the class (except `.eyebrow`) — add
 
 ```tsx
 <h1 className="h1 text-ink">12 requests. 3 waiting on you.</h1>
-<p className="body text-ink-muted">3 BHK · Vesu · 1,240 sq ft</p>
+<p className="body text-ink-muted">3 BHK · Andheri West · 1,240 sq ft</p>
 <p className="eyebrow">Next showing</p>
 ```
 

@@ -23,7 +23,7 @@ function seedThread(peer: ChatPeer): ChatMessage[] {
         {
             id: `${peer.id}-2`,
             isOwn: true,
-            text: "A family from Adajan. They want to move in before Diwali.",
+            text: "A family from Baner. They want to move in before Diwali.",
             sentAt: minutesAgo(48),
             status: "read",
         },

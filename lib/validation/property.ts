@@ -343,7 +343,7 @@ export const DEFAULT_PROPERTY_FORM_VALUES: PropertyFormValues = {
     bhk: 2,
     title: "",
     locality: "",
-    city: "Surat",
+    city: "",
     address: "",
     pinCode: "",
     saleAmountInr: null,

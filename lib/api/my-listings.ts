@@ -363,7 +363,7 @@ export const myListingsApi = {
             bhk: Number(owner.configuration.match(/\d+/)?.[0] ?? 0),
             title: owner.societyName,
             locality: owner.locality,
-            city: owner.city || "Surat",
+            city: owner.city || "",
             address: owner.fullAddress,
             pinCode: owner.pincode,
             landmark: "",

@@ -264,7 +264,7 @@ export function StepDetails({
                                     id="city"
                                     aria-invalid={errors.city != null}
                                     className={FORM_CONTROL_CLASS}
-                                    placeholder="e.g. Surat"
+                                    placeholder="e.g. Mumbai"
                                     {...register("city")}
                                 />
                                 <FieldError>{errors.city?.message}</FieldError>
@@ -277,7 +277,7 @@ export function StepDetails({
                                     id="locality"
                                     aria-invalid={errors.locality != null}
                                     className={FORM_CONTROL_CLASS}
-                                    placeholder="e.g. Vesu"
+                                    placeholder="e.g. Green Park"
                                     {...register("locality")}
                                 />
                                 <FieldError>{errors.locality?.message}</FieldError>
@@ -323,7 +323,7 @@ export function StepDetails({
                                 id="title"
                                 aria-invalid={errors.title != null}
                                 className={FORM_CONTROL_CLASS}
-                                placeholder="e.g. 2 BHK Apartment in Vesu, Surat"
+                                placeholder="e.g. 2 BHK Apartment in Green Park, Mumbai"
                                 {...register("title", {
                                     onChange: () => onTitleTouched(),
                                 })}

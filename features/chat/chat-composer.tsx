@@ -54,9 +54,6 @@ const ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.doc,.docx,.xls,.xlsx,appli
 
 const TOOL_BUTTON_CLASS = `
   text-ink/65
-  hover:bg-ink/5 hover:text-ink
-  aria-expanded:bg-ink/5 aria-expanded:text-ink
-  focus-visible:border-ink/25 focus-visible:ring-ink/10
   sm:block-control-md sm:inline-control-md
 `;
 
@@ -227,10 +224,7 @@ export function ChatComposer({
                                 type="button"
                                 variant="outline"
                                 size="icon-md"
-                                className={cn(
-                                    TOOL_BUTTON_CLASS,
-                                    "rounded-full border-border-warm bg-surface shadow-sm",
-                                )}
+                                className={cn(TOOL_BUTTON_CLASS, "rounded-full")}
                                 aria-label="Add an attachment"
                                 disabled={disabled || sending}
                             />

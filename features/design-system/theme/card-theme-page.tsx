@@ -26,7 +26,7 @@ function SurfaceDemo() {
     return (
         <Card className="shadow-sm ring-border-warm/60 inline-full">
             <CardHeader>
-                <CardTitle>3 BHK in Vesu</CardTitle>
+                <CardTitle>3 BHK in Andheri West</CardTitle>
                 <CardDescription>Listed 4 days ago · 2 requests</CardDescription>
             </CardHeader>
             <CardContent>
@@ -43,7 +43,7 @@ function DarkDemo() {
                 <p className="eyebrow text-highlight">Needs you</p>
                 <CardTitle className="text-white">3 brokers waiting</CardTitle>
                 <CardDescription className="text-[#B8CFC4]">
-                    Approve who can show your Vesu flat.
+                    Approve who can show your Andheri West flat.
                 </CardDescription>
             </CardHeader>
             <CardFooter>
@@ -63,7 +63,7 @@ function SizeDemo({ size }: { size: "default" | "sm" }) {
                 <CardDescription>Site visit · Tomorrow</CardDescription>
             </CardHeader>
             <CardContent>
-                <p className="body-sm text-ink-muted">Vesu · meet at the gate</p>
+                <p className="body-sm text-ink-muted">Andheri West · meet at the gate</p>
             </CardContent>
         </Card>
     );
