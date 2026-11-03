@@ -6,7 +6,7 @@ import { buildMyListingsSummaryLines } from "./my-listings-summary";
 const base = {
     summary: { total: 17, published: 14, draft: 1, unpublished: 0, sold: 2, sale: 12, rent: 3 },
     resultTotal: 14,
-    status: "published" as "published" | "draft" | "sold",
+    status: "published" as "published" | "draft" | "deleted",
     hasActiveFilters: false,
 };
 
@@ -66,21 +66,22 @@ test("empty draft tab and unavailable summary do not claim the inventory is empt
     );
 });
 
-test("sold tab counts sold listings and never nudges to publish drafts", () => {
-    assert.deepEqual(buildMyListingsSummaryLines({ ...base, status: "sold", resultTotal: 2 }), [
-        "2 listings sold",
+test("deleted tab counts deleted listings and never nudges to publish drafts", () => {
+    assert.deepEqual(buildMyListingsSummaryLines({ ...base, status: "deleted", resultTotal: 2 }), [
+        "2 listings in Deleted",
+        "Restore a property or delete it permanently",
     ]);
-    assert.deepEqual(buildMyListingsSummaryLines({ ...base, status: "sold", resultTotal: 0 }), [
-        "No sold listings yet",
-        "Listings you mark as sold show up here",
+    assert.deepEqual(buildMyListingsSummaryLines({ ...base, status: "deleted", resultTotal: 0 }), [
+        "No properties in Deleted",
+        "Properties you delete can be restored here",
     ]);
     assert.deepEqual(
         buildMyListingsSummaryLines({
             ...base,
-            status: "sold",
+            status: "deleted",
             hasActiveFilters: true,
             resultTotal: 0,
         }),
-        ["No sold listings match your filters", "Try changing or clearing a filter"],
+        ["No deleted listings match your filters", "Try changing or clearing a filter"],
     );
 });

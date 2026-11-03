@@ -5,7 +5,7 @@ import { Building2, FileText, Search } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 export type MyListingsEmptyProps = {
-    variant: "filtered" | "first_run" | "no_sold" | "no_draft" | "no_published";
+    variant: "filtered" | "first_run" | "no_deleted" | "no_draft" | "no_published";
     searchQuery?: string;
     onClearFilters?: () => void;
     onAddProperty?: () => void;
@@ -46,12 +46,12 @@ export function MyListingsEmpty({
         );
     }
 
-    if (variant === "no_sold") {
+    if (variant === "no_deleted") {
         return (
             <EmptyState
                 icon={Building2}
-                heading="No sold properties yet"
-                description="When you mark a listing as sold, it moves here."
+                heading="No properties in Deleted"
+                description="Deleted properties appear here. Restore them when needed, or delete them permanently."
                 className={FIRST_RUN_FRAME}
             />
         );

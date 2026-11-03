@@ -35,10 +35,7 @@ export function parseMyListingsFilters(
 
     const statusRaw = first(params.status);
     const status: MyListingsStatusTab | "" =
-        statusRaw === "draft" ||
-        statusRaw === "published" ||
-        statusRaw === "unpublished" ||
-        statusRaw === "sold"
+        statusRaw === "draft" || statusRaw === "published" || statusRaw === "deleted"
             ? statusRaw
             : DEFAULT_MY_LISTINGS_FILTERS.status;
 

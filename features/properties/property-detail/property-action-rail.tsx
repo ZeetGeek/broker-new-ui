@@ -24,7 +24,6 @@ import { AttachExclusiveOwnerModal } from "../your-listings/attach-exclusive-own
 import type { MyListingItem } from "../your-listings/types";
 
 import { HoldToDeleteProperty } from "./hold-to-delete-property";
-import { PropertyBuyersCard } from "./property-buyers-card";
 import { listedAgoLabel } from "./property-detail-facts";
 import { PropertyPriceBlock } from "./property-price-block";
 
@@ -36,8 +35,6 @@ export type PropertyActionRailProps = {
     busy: boolean;
     onTogglePublish: () => void;
     onRequestDelete: () => Promise<void>;
-    /** Broker exclusive listings. Caller opens the sold confirm. */
-    onMarkSold?: () => void;
     editHref: string;
     /** Broker inventory: lead analytics for this listing. */
     analyticsHref?: string;
@@ -54,7 +51,6 @@ export function PropertyActionRail({
     busy,
     onTogglePublish,
     onRequestDelete,
-    onMarkSold,
     editHref,
     analyticsHref,
     requestsHref,
@@ -145,10 +141,16 @@ export function PropertyActionRail({
                                   : "A private property in your inventory. Keep its details up to date as you work the deal."}
                         </p>
                         <div className={styles.actionButtons}>
-                            <Button variant="accent" size="lg" render={<Link href={editHref} />}>
-                                <Pencil size={18} aria-hidden />
-                                Edit property
-                            </Button>
+                            {!item.isSold ? (
+                                <Button
+                                    variant="accent"
+                                    size="lg"
+                                    render={<Link href={editHref} />}
+                                >
+                                    <Pencil size={18} aria-hidden />
+                                    Edit property
+                                </Button>
+                            ) : null}
                             {analyticsHref ? (
                                 <Button
                                     size="lg"
@@ -157,16 +159,6 @@ export function PropertyActionRail({
                                 >
                                     <ChartBar size={18} aria-hidden />
                                     Analytics
-                                </Button>
-                            ) : null}
-                            {!item.isSold && onMarkSold ? (
-                                <Button
-                                    size="lg"
-                                    variant="outline"
-                                    disabled={busy}
-                                    onClick={onMarkSold}
-                                >
-                                    Mark as sold
                                 </Button>
                             ) : null}
                         </div>
@@ -246,7 +238,7 @@ export function PropertyActionRail({
                                 WhatsApp
                             </Button>
                         </div>
-                    ) : !item.ownerName ? (
+                    ) : !item.isSold && !item.ownerName ? (
                         <div className={styles.contactActions}>
                             <Button
                                 type="button"
@@ -266,13 +258,17 @@ export function PropertyActionRail({
                     />
                 </section>
             ) : null}
-            {!isOwner ? <PropertyBuyersCard item={item} /> : null}
+            {!isOwner ? (
+                <Button variant="outline" render={<Link href="/broker/pipeline" />}>
+                    Manage clients in Pipeline
+                </Button>
+            ) : null}
             <section className={styles.management} aria-label="Listing management">
                 <div className={styles.managementRow}>
                     <span>Added</span>
                     <strong>{listedAgoLabel(item.listedDaysAgo)}</strong>
                 </div>
-                {isOwner ? (
+                {isOwner && !item.isSold ? (
                     <div className={styles.secondaryActions}>
                         <Button variant="outline" render={<Link href={editHref} />}>
                             <Pencil size={17} aria-hidden />

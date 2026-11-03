@@ -267,6 +267,7 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         });
 
     return {
+        deletedAt: listing.deletedAt,
         id: listing.id,
         title,
         configLabel: configLabel(bhk, propertyType),

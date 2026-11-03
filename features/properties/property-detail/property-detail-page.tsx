@@ -28,7 +28,6 @@ import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { PropertyActionRail } from "@/features/properties/property-detail/property-action-rail";
 import { PropertyDetailLayout } from "@/features/properties/property-detail/property-detail-layout";
 import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
-import { MarkSoldDialog } from "@/features/properties/your-listings/mark-sold-dialog";
 import type { MyListingItem, MyListingStatus } from "@/features/properties/your-listings/types";
 import { useAppSelector } from "@/store/hooks";
 
@@ -48,7 +47,6 @@ function OwnedPropertyDetail({
     const router = useRouter();
     const [item, setItem] = useState(listing);
     const [busy, setBusy] = useState(false);
-    const [soldOpen, setSoldOpen] = useState(false);
     const brokersQuery = useQuery({
         queryKey: ["owner-property-representations"],
         queryFn: () => representativeApi.ownerList(),
@@ -90,7 +88,7 @@ function OwnedPropertyDetail({
         setBusy(true);
         try {
             await myListingsApi.remove(item.id);
-            toast.success("Property removed");
+            toast.success("Moved to Deleted");
             router.push(listHref);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Couldn't remove property");
@@ -124,11 +122,6 @@ function OwnedPropertyDetail({
                         busy={busy}
                         onTogglePublish={() => void togglePublish()}
                         onRequestDelete={handleDelete}
-                        onMarkSold={
-                            portal === "broker" && !item.isSold
-                                ? () => setSoldOpen(true)
-                                : undefined
-                        }
                         editHref={editHref}
                         analyticsHref={
                             portal === "broker" ? brokerPropertyAnalyticsHref(item.id) : undefined
@@ -158,7 +151,7 @@ function OwnedPropertyDetail({
                     />
                 }
                 mobileAction={
-                    portal === "broker" || item.isSold ? (
+                    portal === "broker" ? (
                         <Button variant="accent" size="lg" render={<Link href={editHref} />}>
                             Edit property
                         </Button>
@@ -175,29 +168,6 @@ function OwnedPropertyDetail({
                     )
                 }
             />
-            {portal === "broker" ? (
-                <MarkSoldDialog
-                    open={soldOpen}
-                    onOpenChange={setSoldOpen}
-                    portal="broker"
-                    propertyId={item.id}
-                    propertyTitle={item.title || "This property"}
-                    onSold={() => {
-                        void myListingsApi
-                            .get(item.id)
-                            .then((updated) => {
-                                if (updated) setItem(updated);
-                                else setItem((current) => ({ ...current, isSold: true }));
-                            })
-                            .catch(() => {
-                                setItem((current) => ({ ...current, isSold: true }));
-                                toast.error(
-                                    "Property marked sold, but details could not reload. Refresh to try again.",
-                                );
-                            });
-                    }}
-                />
-            ) : null}
         </>
     );
 }

@@ -56,7 +56,7 @@ export function PropertyBuyersCard({ item }: { item: MyListingItem }) {
                     <p>No clients attached yet.</p>
                 </div>
             )}
-            {!query.isPending && !query.isError ? (
+            {!item.isSold && !query.isPending && !query.isError ? (
                 <div className={styles.contactActions}>
                     <Button variant="outline" size="md" onClick={() => setOpen(true)}>
                         <UserPlus size={18} aria-hidden />

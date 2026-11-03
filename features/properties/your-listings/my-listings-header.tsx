@@ -41,7 +41,7 @@ import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/o
 import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
 import type { MyListingsFilters, MyListingSort } from "@/features/properties/your-listings/types";
 
-type StatusTab = "published" | "draft" | "sold";
+type StatusTab = "published" | "draft" | "deleted";
 
 const SEARCH_WIDTH_CLASS =
     "flex-1 min-inline-0 inline-full shadow-sm sm:flex-none sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64";
@@ -65,9 +65,9 @@ const STATUS_TABS: {
         dotClassName: "bg-yellow-300",
     },
     {
-        key: "sold",
-        label: "Sold",
-        description: "Marked as sold",
+        key: "deleted",
+        label: "Deleted",
+        description: "Restore a property or delete it permanently",
         dotClassName: "bg-red-400",
     },
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 import { PREF_KEYS } from "@/lib/prefs/keys";
 import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
@@ -30,7 +30,14 @@ function isMyListingsFilters(value: unknown): value is MyListingsFilters {
 }
 
 function forStorage(filters: MyListingsFilters): MyListingsFilters {
-    return { ...filters, page: 1 };
+    return {
+        ...filters,
+        status:
+            filters.status === "draft" || filters.status === "deleted"
+                ? filters.status
+                : "published",
+        page: 1,
+    };
 }
 
 function parse(params: URLSearchParams): MyListingsFilters {
@@ -82,8 +89,9 @@ export function useMyListingsFilters() {
         replace({ ...DEFAULT_MY_LISTINGS_FILTERS });
     }, [replace]);
 
+    const normalizedFilters = useMemo(() => forStorage(filters), [filters]);
     return {
-        filters,
+        filters: normalizedFilters,
         setFilters,
         clearFilters,
         hasActiveFilters: hasActiveMyListingsFilters(filters),

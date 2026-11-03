@@ -22,14 +22,10 @@ export type MyListingsGridProps = {
     portal?: "broker" | "owner";
     /** When set, "Edit property" opens a modal instead of the edit route. */
     onEditListing?: (listing: MyListingItem) => void;
-    /** When set, each card offers "Add buyer" for that listing. */
-    onAddBuyer?: (listing: MyListingItem) => void;
     /** When set, each card offers "Attach owner" for that listing. */
     onAttachOwner?: (listing: MyListingItem) => void;
     /** When set, each card offers delete (caller shows confirm). */
     onDeleteListing?: (listing: MyListingItem) => void;
-    /** Each unsold card offers "Mark as sold" (caller shows confirm). */
-    onMarkSold?: (listing: MyListingItem) => void;
     onInviteBroker?: (listing: MyListingItem) => void;
     brokersByProperty?: Map<string, PropertyBrokersSummary>;
     brokerSummaryState?: "loading" | "error" | "ready";
@@ -49,10 +45,8 @@ export function MyListingsGrid({
     items,
     portal = "broker",
     onEditListing,
-    onAddBuyer,
     onAttachOwner,
     onDeleteListing,
-    onMarkSold,
     onInviteBroker,
     brokersByProperty,
     brokerSummaryState,
@@ -83,7 +77,6 @@ export function MyListingsGrid({
                         detailsHref={detailHref(item.id)}
                         editHref={editHref(item.id)}
                         onEdit={onEditListing ? () => onEditListing(item) : undefined}
-                        onAddBuyer={onAddBuyer ? () => onAddBuyer(item) : undefined}
                         onAttachOwner={onAttachOwner ? () => onAttachOwner(item) : undefined}
                         onAnalytics={
                             portal === "broker"
@@ -91,9 +84,8 @@ export function MyListingsGrid({
                                 : undefined
                         }
                         onDelete={onDeleteListing ? () => onDeleteListing(item) : undefined}
-                        onMarkSold={onMarkSold && !item.isSold ? () => onMarkSold(item) : undefined}
                         onInviteBroker={
-                            portal === "owner" && onInviteBroker
+                            portal === "owner" && onInviteBroker && !item.isSold
                                 ? () => onInviteBroker(item)
                                 : undefined
                         }

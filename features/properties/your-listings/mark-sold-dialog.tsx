@@ -7,7 +7,7 @@ import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { TriangleAlert } from "@/components/shared/icons";
+import { Info } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -35,6 +35,15 @@ export function MarkSoldDialog({
 }) {
     const [reason, setReason] = useState("");
     const [busy, setBusy] = useState(false);
+    const isOwner = portal === "owner";
+
+    const changes = isOwner
+        ? [
+              "Brokers selling it for you are told right away",
+              "Any buyers still in progress on it are marked as lost",
+              "It leaves the listings brokers browse",
+          ]
+        : ["Any buyers still in progress on it are marked as lost"];
 
     function handleOpenChange(next: boolean) {
         if (busy) return;
@@ -89,30 +98,18 @@ export function MarkSoldDialog({
             }
         >
             <div className="flex flex-col gap-4">
-                <div
-                    className="
-                  flex gap-3 rounded-inner border border-amber-300/60 bg-amber-50 p-3.5
-                "
-                >
-                    <TriangleAlert
+                <div className="flex gap-3 rounded-inner border border-border-warm bg-canvas p-3.5">
+                    <Info
                         aria-hidden
-                        className="mbs-0.5 shrink-0 text-pending block-5 inline-5"
+                        className="mbs-0.5 shrink-0 text-brand block-5 inline-5"
                         strokeWidth={1.75}
                     />
                     <div className="flex flex-col gap-1.5 min-inline-0">
-                        <p className="body-sm font-semibold text-ink">This happens right away</p>
+                        <p className="body-sm font-semibold text-ink">This can&apos;t be undone</p>
                         <ul className="body-sm flex list-disc flex-col gap-1 ps-4 text-ink">
-                            <li>Every open deal on this property is closed as lost</li>
-                            {portal === "owner" ? (
-                                <li>Brokers representing it get a notification</li>
-                            ) : (
-                                <li>The note is saved on each closed deal</li>
-                            )}
-                            <li>
-                                {portal === "owner"
-                                    ? "It stops showing to brokers looking for listings"
-                                    : "The listing is marked sold"}
-                            </li>
+                            {changes.map((line) => (
+                                <li key={line}>{line}</li>
+                            ))}
                         </ul>
                     </div>
                 </div>
@@ -131,9 +128,9 @@ export function MarkSoldDialog({
                         className="border-2 border-border-warm bg-surface"
                     />
                     <span className="body-xs text-ink-muted">
-                        {portal === "owner"
-                            ? "Shared with your brokers and saved on the closed deals."
-                            : "Saved on the closed deals."}{" "}
+                        {isOwner
+                            ? "Shared with your brokers and saved on those contacts."
+                            : "Saved on those contacts."}{" "}
                         {reason.length}/{REASON_MAX}
                     </span>
                 </label>

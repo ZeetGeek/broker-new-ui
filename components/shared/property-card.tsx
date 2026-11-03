@@ -458,8 +458,6 @@ export type PropertyCardProps = {
     onAnalytics?: () => void;
     /** Owned cards: ask to delete this listing (caller shows confirm). */
     onDelete?: () => void;
-    /** Owner cards: mark this listing as sold (caller shows confirm). */
-    onMarkSold?: () => void;
     /** Saved (bookmarked) state. The Save button shows only when `onToggleSave` is set. */
     isSaved?: boolean;
     onToggleSave?: () => void;
@@ -1032,7 +1030,6 @@ function OwnedOverlayPropertyCard({
     brokerSummaryState,
     onAnalytics,
     onDelete,
-    onMarkSold,
     isSaved = false,
     onToggleSave,
     audience = "broker",
@@ -1056,20 +1053,22 @@ function OwnedOverlayPropertyCard({
     const hasBuyers = buyers.length > 0;
     const hasOwnerPhone = ownerPhoneDigits.length >= 10;
     const hasWorkingBrokers = (brokerSummary?.brokers.length ?? 0) > 0;
-    /** Broker inventory only — owner portal uses Invite broker instead. */
-    const showContactBar = hasOwner && Boolean(onAttachOwner || onAddBuyer);
+    /** Sold listings keep call/WhatsApp; attach/edit actions are off. */
+    const canManagePeople = !isSold && Boolean(onAttachOwner || onAddBuyer);
+    const showContactBar = hasOwner && (canManagePeople || (isSold && hasOwnerPhone));
     const isAddBuyerBlocked = audience === "broker" && !hasOwner;
-    const handleAddBuyer = onAddBuyer
-        ? () => {
-              if (isAddBuyerBlocked) {
-                  toast.error("Attach an owner first to enable attaching clients.", {
-                      id: "listing-owner-required",
-                  });
-                  return;
+    const handleAddBuyer =
+        !isSold && onAddBuyer
+            ? () => {
+                  if (isAddBuyerBlocked) {
+                      toast.error("Attach an owner first to enable attaching clients.", {
+                          id: "listing-owner-required",
+                      });
+                      return;
+                  }
+                  onAddBuyer();
               }
-              onAddBuyer();
-          }
-        : undefined;
+            : undefined;
 
     return (
         <TooltipProvider>
@@ -1126,11 +1125,10 @@ function OwnedOverlayPropertyCard({
                         onEdit={onEdit}
                         onAnalytics={onAnalytics}
                         onDelete={onDelete}
-                        onMarkSold={isSold ? undefined : onMarkSold}
                         isSaved={isSaved}
                         onToggleSave={onToggleSave}
                         isDraft={listing.status === "draft"}
-                        onAttachOwner={onAttachOwner}
+                        onAttachOwner={isSold ? undefined : onAttachOwner}
                         attachOwnerLabel={
                             hasOwner ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL
                         }
@@ -1172,7 +1170,7 @@ function OwnedOverlayPropertyCard({
 
                     {hasOwner ? (
                         <OverlayPersonLine label="Owner" name={ownerName} />
-                    ) : onAttachOwner ? (
+                    ) : !isSold && onAttachOwner ? (
                         <OverlayPersonAttachLine
                             label="Owner"
                             actionLabel={OWNED_ATTACH_OWNER_LABEL}
@@ -1180,7 +1178,7 @@ function OwnedOverlayPropertyCard({
                         />
                     ) : null}
 
-                    {hasBuyers || onAddBuyer ? (
+                    {hasBuyers || handleAddBuyer ? (
                         <AttachedBuyersRow
                             buyers={buyers}
                             onAttach={handleAddBuyer}
@@ -1254,7 +1252,7 @@ function OwnedOverlayPropertyCard({
                             ownerName={ownerName || "Owner"}
                             ownerPhoneDigits={hasOwnerPhone ? ownerPhoneDigits : null}
                         />
-                    ) : audience === "broker" && !hasOwner && (onAttachOwner || onAddBuyer) ? (
+                    ) : audience === "broker" && !hasOwner && canManagePeople ? (
                         <p
                             className="
                               body-xs flex items-center justify-center rounded-control

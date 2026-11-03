@@ -19,15 +19,12 @@ import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { Button } from "@/components/ui/button";
 
-import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
-import type { RequestItem } from "@/features/properties/my-requests/types";
 import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
 import { SAVED_PROPERTIES_QUERY_KEY } from "@/features/properties/saved-properties/saved-properties-query";
 import { AttachExclusiveOwnerModal } from "@/features/properties/your-listings/attach-exclusive-owner-modal";
 import { hasActiveMyListingsFilters } from "@/features/properties/your-listings/filter-my-listings";
 import { InvitePropertyBrokerModal } from "@/features/properties/your-listings/invite-property-broker-modal";
-import { MarkSoldDialog } from "@/features/properties/your-listings/mark-sold-dialog";
 import { MyListingsEmpty } from "@/features/properties/your-listings/my-listings-empty";
 import { MyListingsGrid } from "@/features/properties/your-listings/my-listings-grid";
 import { MyListingsHeader } from "@/features/properties/your-listings/my-listings-header";
@@ -53,45 +50,6 @@ function isEditable(el: EventTarget | null): boolean {
     );
 }
 
-/**
- * The buyers modal is written against a request. A listing the broker owns
- * carries the same fields it reads, so adapt rather than duplicate the picker.
- */
-function asRequestShape(item: MyListingItem): RequestItem {
-    const isRent = item.transactionType === "rent";
-
-    return {
-        id: item.id,
-        propertyId: item.id,
-        stage: "approved",
-        title: item.title,
-        configLabel: item.configLabel,
-        propertyTypeLabel: item.propertyTypeLabel,
-        locality: item.locality,
-        city: item.city,
-        areaSqft: item.areaSqft,
-        bhk: item.bhk,
-        amountInr: (isRent ? item.rentAmountInr : item.saleAmountInr) ?? 0,
-        isRent,
-        commissionPercent: 0,
-        ownerName: "You",
-        ownerSeen: true,
-        requestedAt: item.createdAt,
-        resolvedAt: null,
-        daysWaiting: 0,
-        clientsAttached: item.attachedClients?.length ?? 0,
-        attachedClients: item.attachedClients ?? [],
-        brokerSlotsOpen: 0,
-        brokerSlotsTotal: 0,
-        attemptNumber: 1,
-        reminderCount: 0,
-        reminderUsed: false,
-        nudgedAt: null,
-        imageSrc: item.imageSrc,
-        timeline: [],
-    };
-}
-
 export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const queryClient = useQueryClient();
     const userId = useAppSelector((state) => state.auth.user?.id);
@@ -101,10 +59,9 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
     const [editingListing, setEditingListing] = useState<MyListingItem | null>(null);
     const [deletingListing, setDeletingListing] = useState<MyListingItem | null>(null);
     const [deleteBusy, setDeleteBusy] = useState(false);
-    const [sellingListing, setSellingListing] = useState<MyListingItem | null>(null);
+    const [restoringId, setRestoringId] = useState<string | null>(null);
+    const isDeletedView = filters.status === "deleted";
     /** Kept after close so the modal can animate out with its listing intact. */
-    const [buyersListing, setBuyersListing] = useState<MyListingItem | null>(null);
-    const [isBuyersOpen, setIsBuyersOpen] = useState(false);
     const [ownerListing, setOwnerListing] = useState<MyListingItem | null>(null);
     const [isOwnerAttachOpen, setIsOwnerAttachOpen] = useState(false);
     const [brokerListing, setBrokerListing] = useState<MyListingItem | null>(null);
@@ -174,7 +131,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 { ...infiniteFilters, page: cursor ? Number(cursor) : 1 },
                 signal,
                 {
-                    withAttachedClients: !isOwnerPortal,
+                    withAttachedClients: false,
                     attachedClients: () =>
                         queryClient.fetchQuery({
                             queryKey: ["inventory-lead-summary", userId],
@@ -225,46 +182,45 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 if (isEditable(event.target)) return;
                 if (event.repeat) return;
                 if (addOpen || editingListing != null || deletingListing != null) return;
-                if (isBuyersOpen || isOwnerAttachOpen || isBrokerInviteOpen) return;
+                if (isOwnerAttachOpen || isBrokerInviteOpen) return;
                 setAddOpen(true);
             },
         });
 
         return () => unsubscribe();
-    }, [
-        addOpen,
-        editingListing,
-        deletingListing,
-        isBuyersOpen,
-        isOwnerAttachOpen,
-        isBrokerInviteOpen,
-    ]);
+    }, [addOpen, editingListing, deletingListing, isOwnerAttachOpen, isBrokerInviteOpen]);
 
     const confirmDelete = useCallback(async () => {
         if (!deletingListing) return;
         setDeleteBusy(true);
         try {
-            await myListingsApi.remove(deletingListing.id);
+            if (isDeletedView) await myListingsApi.removePermanently(deletingListing.id);
+            else await myListingsApi.remove(deletingListing.id);
             setDeletingListing(null);
-            toast.success("Property removed");
+            toast.success(isDeletedView ? "Property permanently deleted" : "Moved to Deleted");
             refreshListings();
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Couldn't remove property");
         } finally {
             setDeleteBusy(false);
         }
-    }, [deletingListing, refreshListings]);
+    }, [deletingListing, refreshListings, isDeletedView]);
 
     const loading = !scopeReady || query.isPending;
     const inventoryTotal = summary?.total ?? 0;
     const isFirstRunEmpty =
-        !loading && query.items.length === 0 && !hasActiveFilters && inventoryTotal === 0;
+        !loading &&
+        !isDeletedView &&
+        query.items.length === 0 &&
+        !hasActiveFilters &&
+        summary != null &&
+        inventoryTotal === 0;
 
     const emptyVariant = (() => {
         if (hasActiveFilters) return "filtered" as const;
+        if (isDeletedView) return "no_deleted" as const;
         // True inventory empty always teaches Add — tab labels come second.
-        if (inventoryTotal === 0) return "first_run" as const;
-        if (filters.status === "sold") return "no_sold" as const;
+        if (summary != null && inventoryTotal === 0) return "first_run" as const;
         if (filters.status === "draft") return "no_draft" as const;
         if (filters.status === "published") return "no_published" as const;
         return "first_run" as const;
@@ -333,47 +289,96 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                                 </Button>
                             </div>
                         ) : null}
-                        <MyListingsGrid
-                            items={query.items}
-                            portal={portal}
-                            brokersByProperty={isOwnerPortal ? brokersByProperty : undefined}
-                            brokerSummaryState={isOwnerPortal ? brokerSummaryState : undefined}
-                            onInviteBroker={
-                                isOwnerPortal
-                                    ? (listing) => {
-                                          setBrokerListing(listing);
-                                          setBrokerInviteSession((session) => session + 1);
-                                          setIsBrokerInviteOpen(true);
-                                          void representations.refetch();
-                                      }
-                                    : undefined
-                            }
-                            onEditListing={setEditingListing}
-                            onDeleteListing={setDeletingListing}
-                            onMarkSold={setSellingListing}
-                            onAddBuyer={
-                                isOwnerPortal
-                                    ? undefined
-                                    : (listing) => {
-                                          setBuyersListing(listing);
-                                          setIsBuyersOpen(true);
-                                      }
-                            }
-                            onAttachOwner={
-                                isOwnerPortal
-                                    ? undefined
-                                    : (listing) => {
-                                          setOwnerListing(listing);
-                                          setIsOwnerAttachOpen(true);
-                                      }
-                            }
-                            onToggleSave={
-                                isOwnerPortal
-                                    ? undefined
-                                    : (listing) => void handleToggleSave(listing)
-                            }
-                            isSaved={isOwnerPortal ? undefined : isListingSaved}
-                        />
+                        {isDeletedView ? (
+                            <div className="flex flex-col gap-4">
+                                <p className="body-sm text-ink-muted">
+                                    Restore a property as a draft, or delete it permanently. Deal
+                                    history stays in Pipeline.
+                                </p>
+                                {query.items.map((listing) => (
+                                    <div
+                                        key={listing.id}
+                                        className="flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
+                                    >
+                                        <div className="min-inline-0">
+                                            <h2 className="body font-semibold text-ink">
+                                                {listing.title || "Untitled property"}
+                                            </h2>
+                                            <p className="body-sm text-ink-muted">
+                                                {[listing.locality, listing.city]
+                                                    .filter(Boolean)
+                                                    .join(", ")}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            <Button
+                                                variant="outline"
+                                                disabled={restoringId != null || deleteBusy}
+                                                loading={restoringId === listing.id}
+                                                onClick={async () => {
+                                                    setRestoringId(listing.id);
+                                                    try {
+                                                        await myListingsApi.restore(listing.id);
+                                                        toast.success("Property restored to Draft");
+                                                        refreshListings();
+                                                    } catch (error) {
+                                                        toast.error(
+                                                            error instanceof Error
+                                                                ? error.message
+                                                                : "Could not restore property",
+                                                        );
+                                                    } finally {
+                                                        setRestoringId(null);
+                                                    }
+                                                }}
+                                            >
+                                                Restore to Draft
+                                            </Button>
+                                            <Button
+                                                variant="destructive"
+                                                disabled={restoringId != null || deleteBusy}
+                                                onClick={() => setDeletingListing(listing)}
+                                            >
+                                                Delete permanently
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <MyListingsGrid
+                                items={query.items}
+                                portal={portal}
+                                brokersByProperty={isOwnerPortal ? brokersByProperty : undefined}
+                                brokerSummaryState={isOwnerPortal ? brokerSummaryState : undefined}
+                                onInviteBroker={
+                                    isOwnerPortal
+                                        ? (listing) => {
+                                              setBrokerListing(listing);
+                                              setBrokerInviteSession((session) => session + 1);
+                                              setIsBrokerInviteOpen(true);
+                                              void representations.refetch();
+                                          }
+                                        : undefined
+                                }
+                                onEditListing={setEditingListing}
+                                onDeleteListing={setDeletingListing}
+                                onAttachOwner={
+                                    isOwnerPortal
+                                        ? undefined
+                                        : (listing) => {
+                                              setOwnerListing(listing);
+                                              setIsOwnerAttachOpen(true);
+                                          }
+                                }
+                                onToggleSave={
+                                    isOwnerPortal
+                                        ? undefined
+                                        : (listing) => void handleToggleSave(listing)
+                                }
+                                isSaved={isOwnerPortal ? undefined : isListingSaved}
+                            />
+                        )}
                         {query.isFetchingNextPage ? (
                             <div className="pbs-6">
                                 <MyListingsResultsSkeleton
@@ -430,25 +435,6 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     refreshListings();
                 }}
             />
-            {sellingListing ? (
-                <MarkSoldDialog
-                    open
-                    onOpenChange={(next) => {
-                        if (!next) setSellingListing(null);
-                    }}
-                    propertyId={sellingListing.id}
-                    propertyTitle={sellingListing.title || "This property"}
-                    portal={portal}
-                    onSold={() => {
-                        setSellingListing(null);
-                        refreshListings();
-                        void queryClient.invalidateQueries({
-                            queryKey: ["owner-property-representations"],
-                        });
-                        void queryClient.invalidateQueries({ queryKey: ["pipeline"] });
-                    }}
-                />
-            ) : null}
             <PropertyDeleteDialog
                 open={deletingListing != null}
                 onOpenChange={(next) => {
@@ -456,16 +442,9 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 }}
                 title={deletingListing?.title ?? "Property"}
                 busy={deleteBusy}
+                permanent={isDeletedView}
                 onConfirm={() => void confirmDelete()}
             />
-            {buyersListing ? (
-                <AttachBuyersModal
-                    open={isBuyersOpen}
-                    onOpenChange={setIsBuyersOpen}
-                    request={asRequestShape(buyersListing)}
-                    onSaved={refreshListings}
-                />
-            ) : null}
             <AttachExclusiveOwnerModal
                 open={isOwnerAttachOpen}
                 onOpenChange={setIsOwnerAttachOpen}

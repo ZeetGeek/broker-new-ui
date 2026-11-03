@@ -4,6 +4,7 @@ import { AppModal } from "@/components/shared/app-modal";
 import { Button } from "@/components/ui/button";
 
 export type PropertyDeleteDialogProps = {
+    permanent?: boolean;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     title: string;
@@ -15,6 +16,7 @@ export type PropertyDeleteDialogProps = {
  * Destructive confirm. Own footer — primary is danger, not brand.
  */
 export function PropertyDeleteDialog({
+    permanent = false,
     open,
     onOpenChange,
     title,
@@ -26,8 +28,12 @@ export function PropertyDeleteDialog({
             open={open}
             onOpenChange={onOpenChange}
             size="sm"
-            title="Delete this property?"
-            description={`“${title}” will be removed permanently.`}
+            title={permanent ? "Delete this property permanently?" : "Delete this property?"}
+            description={
+                permanent
+                    ? `"${title}" will be removed permanently.`
+                    : `"${title}" will move to Deleted.`
+            }
             footer={
                 <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
                     <Button
@@ -48,14 +54,15 @@ export function PropertyDeleteDialog({
                         onClick={onConfirm}
                         className="inline-auto"
                     >
-                        {busy ? "Removing…" : "Delete property"}
+                        {busy ? "Removing…" : permanent ? "Delete permanently" : "Delete property"}
                     </Button>
                 </div>
             }
         >
             <p className="body text-ink-muted">
-                This cannot be undone. If you only want to hide it from brokers, unpublish it
-                instead — the listing and its photos stay in your account.
+                {permanent
+                    ? "This cannot be undone. The property and its photos will be permanently removed."
+                    : "You can restore it as a draft from Deleted. Deal outcomes are managed separately in Pipeline."}
             </p>
         </AppModal>
     );

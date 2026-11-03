@@ -102,6 +102,7 @@ export type PublicPropertyListing = PropertyListing & {
 };
 
 export type PropertyListing = PropertyBrowseListing & {
+    deletedAt?: string | null;
     visibility?: "public" | "private" | string | null;
     publishStatus?: PropertyPublishStatus | string | null;
     isDraft?: boolean;
@@ -218,6 +219,7 @@ export type PropertyListingOptions = {
         published: number;
         /** Listings marked as sold. Not part of `draft` / `published`. */
         sold?: number;
+        deleted?: number;
     };
     capabilities?: {
         canView?: boolean;
@@ -277,6 +279,7 @@ export type PropertyBrowseQuery = {
 };
 
 export type PropertyListQuery = {
+    deleted?: "only";
     search?: string;
     city?: string;
     transactionType?: "sale" | "rent" | "both";
@@ -420,6 +423,7 @@ function buildListQuery(params?: PropertyListQuery) {
     const q = new URLSearchParams();
     if (!params) return "";
 
+    if (params.deleted) q.set("deleted", params.deleted);
     if (params.search) q.set("search", params.search);
     if (params.city) q.set("city", params.city);
     if (params.transactionType) q.set("transactionType", params.transactionType);
@@ -632,7 +636,10 @@ export const propertiesApi = {
 
     /** Caller's inventory listings (My listings). */
     list(params?: PropertyListQuery, signal?: AbortSignal) {
-        return apiFetch<PropertyListPage>(`/properties${buildListQuery(params)}`, { signal });
+        return apiFetch<PropertyListPage>(
+            `${params?.deleted === "only" ? "/properties/deleted" : "/properties"}${buildListQuery(params)}`,
+            { signal },
+        );
     },
 
     options() {
@@ -734,6 +741,19 @@ export const propertiesApi = {
         });
     },
 
+    // Dedicated soft-delete endpoint: never fall back to the legacy permanent DELETE.
+    moveToDeleted(id: string) {
+        return apiFetch<void>(`/properties/${id}/delete`, { method: "POST" });
+    },
+
+    restore(id: string) {
+        return apiFetch<void>(`/properties/${id}/restore`, { method: "POST" });
+    },
+
+    removePermanently(id: string) {
+        return apiFetch<void>(`/properties/${id}/permanent`, { method: "DELETE" });
+    },
+
     remove(id: string) {
         return apiFetch<{ id: string; deleted: boolean }>(`/properties/${id}`, {
             method: "DELETE",
@@ -757,6 +777,16 @@ export const propertiesApi = {
         return apiFetch<PropertyListing>(`/properties/${id}/mark-sold`, {
             method: "POST",
             body: JSON.stringify({ reason: reason?.trim() || undefined }),
+        });
+    },
+
+    /**
+     * Put a sold listing back on the market (`status: available`). Closed
+     * contacts stay closed — this only clears sold availability.
+     */
+    markAvailable(id: string) {
+        return apiFetch<PropertyListing>(`/properties/${id}/mark-available`, {
+            method: "POST",
         });
     },
 };

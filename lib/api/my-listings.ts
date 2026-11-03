@@ -72,10 +72,10 @@ function filterMockMyListings(filters: MyListingsFilters): MyListingItem[] {
             return false;
         }
         if (filters.bhk.length && !filters.bhk.includes(String(item.bhk))) return false;
-        if (filters.status === "sold") {
-            if (!item.isSold) return false;
-        } else if (filters.status) {
-            if (item.isSold || item.status !== filters.status) return false;
+        if (filters.status === "deleted") {
+            if (!item.deletedAt) return false;
+        } else {
+            if (item.deletedAt || (filters.status && item.status !== filters.status)) return false;
         }
         if (!matchesListingCriteria(item, filters)) return false;
         return true;
@@ -107,15 +107,16 @@ function matchesListingCriteria(item: MyListingItem, filters: MyListingsFilters)
 }
 
 function mockMyListingsSummary(): MyListingsSummary {
-    const live = mockMyListings.filter((item) => !item.isSold);
+    const live = mockMyListings.filter((item) => !item.deletedAt);
     return {
-        total: mockMyListings.length,
+        total: live.length,
         published: live.filter((item) => item.status === "published").length,
         draft: live.filter((item) => item.status === "draft").length,
         unpublished: live.filter((item) => item.status === "unpublished").length,
-        sold: mockMyListings.length - live.length,
-        sale: mockMyListings.filter((item) => item.transactionType !== "rent").length,
-        rent: mockMyListings.filter((item) => item.transactionType !== "sale").length,
+        sold: live.filter((item) => item.isSold).length,
+        deleted: mockMyListings.length - live.length,
+        sale: live.filter((item) => item.transactionType !== "rent").length,
+        rent: live.filter((item) => item.transactionType !== "sale").length,
     };
 }
 
@@ -124,18 +125,14 @@ export type MyListingsSummary = {
     published: number;
     draft: number;
     unpublished: number;
-    /** Marked as sold. Not counted in `published` / `draft`. */
+    /** Legacy availability count; inventory tabs do not use it. */
     sold: number;
+    deleted?: number;
     sale: number;
     rent: number;
 };
 
 function filtersToQuery(filters: MyListingsFilters): PropertyListQuery | null {
-    // API only has draft | published — unpublished is a UI-only state with no rows.
-    if (filters.status === "unpublished") {
-        return null;
-    }
-
     const typeFilters = propertyTypeToApiFilters(filters.propertyType);
     return {
         search: filters.q.trim() || undefined,
@@ -146,12 +143,7 @@ function filtersToQuery(filters: MyListingsFilters): PropertyListQuery | null {
             filters.status === "draft" || filters.status === "published"
                 ? filters.status
                 : undefined,
-        // Sold listings live on their own tab, whatever their publish state.
-        ...(filters.status === "sold"
-            ? { status: "sold" as const }
-            : filters.status
-              ? { excludeSold: true }
-              : {}),
+        deleted: filters.status === "deleted" ? "only" : undefined,
         sort: filters.sort,
         page: filters.page,
         limit: PAGE_SIZE,
@@ -163,18 +155,20 @@ export const myListingsApi = {
         if (isMockMode()) {
             return mockMyListingsSummary();
         }
-        const [options, salePage, rentPage] = await Promise.all([
-            propertiesApi.options(),
+        const [published, draft, deleted, salePage, rentPage] = await Promise.all([
+            propertiesApi.list({ publishStatus: "published", limit: 1 }),
+            propertiesApi.list({ publishStatus: "draft", limit: 1 }),
+            propertiesApi.list({ deleted: "only", limit: 1 }),
             propertiesApi.list({ transactionType: "sale", limit: 1 }),
             propertiesApi.list({ transactionType: "rent", limit: 1 }),
         ]);
-
         return {
-            total: options.counts.total,
-            published: options.counts.published,
-            draft: options.counts.draft,
+            total: published.total + draft.total,
+            published: published.total,
+            draft: draft.total,
             unpublished: 0,
-            sold: options.counts.sold ?? 0,
+            sold: 0,
+            deleted: deleted.total,
             sale: salePage.total,
             rent: rentPage.total,
         };
@@ -511,15 +505,65 @@ export const myListingsApi = {
         }
     },
 
+    /** Clear sold availability so the listing can show again. */
+    async markAvailable(propertyId: string): Promise<MyListingItem | null> {
+        if (isMockMode()) {
+            const index = mockMyListings.findIndex((item) => item.id === propertyId);
+            if (index < 0) return null;
+            const next: MyListingItem = {
+                ...mockMyListings[index],
+                isSold: false,
+                soldAt: null,
+                soldReason: null,
+                status: "published",
+                updatedAt: new Date().toISOString(),
+            };
+            mockMyListings = [
+                ...mockMyListings.slice(0, index),
+                next,
+                ...mockMyListings.slice(index + 1),
+            ];
+            return next;
+        }
+        try {
+            const updated = await propertiesApi.markAvailable(propertyId);
+            return mapPropertyListingToMyItem(updated);
+        } catch {
+            return null;
+        }
+    },
+
+    async restore(propertyId: string): Promise<void> {
+        if (isMockMode()) {
+            const item = mockMyListings.find((item) => item.id === propertyId && item.deletedAt);
+            if (!item) throw new Error("Deleted property not found");
+            item.deletedAt = null;
+            item.status = "draft";
+            return;
+        }
+        await propertiesApi.restore(propertyId);
+    },
+
+    async removePermanently(propertyId: string): Promise<void> {
+        if (isMockMode()) {
+            const item = mockMyListings.find((item) => item.id === propertyId && item.deletedAt);
+            if (!item) throw new Error("Deleted property not found");
+            mockMyListings = mockMyListings.filter((item) => item.id !== propertyId);
+            return;
+        }
+        await propertiesApi.removePermanently(propertyId);
+    },
+
     async remove(propertyId: string): Promise<void> {
         if (isMockMode()) {
-            const before = mockMyListings.length;
-            mockMyListings = mockMyListings.filter((item) => item.id !== propertyId);
-            if (mockMyListings.length === before) {
+            mockMyListings = mockMyListings.map((item) =>
+                item.id === propertyId ? { ...item, deletedAt: new Date().toISOString() } : item,
+            );
+            if (!mockMyListings.some((item) => item.id === propertyId)) {
                 throw new Error("Property not found");
             }
             return;
         }
-        await propertiesApi.remove(propertyId);
+        await propertiesApi.moveToDeleted(propertyId);
     },
 };

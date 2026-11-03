@@ -687,16 +687,16 @@ function photoAttachmentState(status: DraftPhoto["status"]): "error" | "done" {
     return status === "error" ? "error" : "done";
 }
 
-function photoStatusLabel(photo: DraftPhoto, badge?: string): string {
+function photoStatusLabel(photo: DraftPhoto, badge?: string): string | null {
+    // Upload finishes in place — no queued/ready chatter under the filename.
     const status =
         photo.status === "processing"
             ? "Compressing…"
             : photo.status === "error"
               ? (photo.errorMessage ?? "Upload failed. Try again.")
-              : photo.status === "queued"
-                ? "Queued · waiting for upload"
-                : "Ready";
-    return badge ? `${badge} · ${status}` : status;
+              : null;
+    if (badge && status) return `${badge} · ${status}`;
+    return badge ?? status;
 }
 
 function PhotoAttachment({
@@ -711,6 +711,7 @@ function PhotoAttachment({
     onRetry: () => void;
 }) {
     const state = photoAttachmentState(photo.status);
+    const statusLabel = photoStatusLabel(photo, badge);
 
     return (
         <Attachment
@@ -745,7 +746,7 @@ function PhotoAttachment({
                 <AttachmentTitle className="text-sm [&.shimmer]:animate-none">
                     {photo.name}
                 </AttachmentTitle>
-                <AttachmentDescription>{photoStatusLabel(photo, badge)}</AttachmentDescription>
+                {statusLabel ? <AttachmentDescription>{statusLabel}</AttachmentDescription> : null}
             </AttachmentContent>
             <AttachmentActions className="gap-0.5">
                 {photo.status === "error" ? (

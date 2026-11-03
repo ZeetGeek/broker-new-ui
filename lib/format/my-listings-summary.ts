@@ -18,9 +18,9 @@ export function buildMyListingsSummaryLines({
     hasActiveFilters: boolean;
 }): string[] {
     const isDraft = status === "draft";
-    const isSold = status === "sold";
+    const isDeleted = status === "deleted";
     if (hasActiveFilters) {
-        const noun = isDraft ? "draft" : isSold ? "sold listing" : "listing";
+        const noun = isDraft ? "draft" : isDeleted ? "deleted listing" : "listing";
         return resultTotal === 0
             ? [`No ${noun}s match your filters`, "Try changing or clearing a filter"]
             : [`${countLabel(resultTotal, `${noun} matches`, `${noun}s match`)} your filters`];
@@ -35,10 +35,13 @@ export function buildMyListingsSummaryLines({
               ];
     }
 
-    if (isSold) {
+    if (isDeleted) {
         return resultTotal === 0
-            ? ["No sold listings yet", "Listings you mark as sold show up here"]
-            : [`${countLabel(resultTotal, "listing", "listings")} sold`];
+            ? ["No properties in Deleted", "Properties you delete can be restored here"]
+            : [
+                  `${countLabel(resultTotal, "listing", "listings")} in Deleted`,
+                  "Restore a property or delete it permanently",
+              ];
     }
 
     if (summary?.total === 0 && resultTotal === 0)

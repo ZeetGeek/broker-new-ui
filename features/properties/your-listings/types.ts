@@ -2,8 +2,8 @@ import type { PropertyType } from "@/lib/validation/property";
 
 export type MyListingStatus = "draft" | "published" | "unpublished";
 
-/** My Listings tabs. `sold` is availability, not publish state, so it is tab-only. */
-export type MyListingsStatusTab = MyListingStatus | "sold";
+/** Inventory lifecycle is independent of deal outcomes. */
+export type MyListingsStatusTab = "published" | "draft" | "deleted";
 
 export type MyListingFurnishing = "furnished" | "semi" | "unfurnished";
 
@@ -41,6 +41,7 @@ export type MyListingParking = "none" | "1" | "2" | "3plus";
 export type MyListingAmenity = string;
 
 export type MyListingItem = {
+    deletedAt?: string | null;
     id: string;
     title: string;
     configLabel: string;
