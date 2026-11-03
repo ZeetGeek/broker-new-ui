@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 
+import { CreateContactButton } from "@/features/contacts/create-contact-button";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 import { DEFAULT_CONTACTS_FILTERS } from "@/features/contacts/types";
 import {
@@ -504,7 +505,11 @@ function ContactSearchPanel({
                                 ? ` · ${activeQuery.total}`
                                 : ""}
                         </span>
-                        <span>{mode === "owner" ? "Choose one" : "Choose one or more"}</span>
+                        <CreateContactButton
+                            kind={mode === "owner" ? "owner" : "contact"}
+                            disabled={busy}
+                            onCreated={(name) => setQuery(name)}
+                        />
                     </div>
                     <div
                         className="
@@ -563,7 +568,9 @@ function ContactSearchPanel({
                                 <p className="text-xs text-ink-muted">
                                     {deferredQuery
                                         ? "Try a different name or phone number."
-                                        : "Add a contact from Contacts, then select them here."}
+                                        : mode === "owner"
+                                          ? "Create an owner above, then select them here."
+                                          : "Create a contact above, then select them here."}
                                 </p>
                             </div>
                         ) : mode === "owner" ? (

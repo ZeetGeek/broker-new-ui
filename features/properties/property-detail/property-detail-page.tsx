@@ -143,6 +143,18 @@ function OwnedPropertyDetail({
                                   : "ready"
                         }
                         onRetryBrokers={() => void brokersQuery.refetch()}
+                        onOwnerAttached={() => {
+                            void myListingsApi
+                                .get(item.id)
+                                .then((updated) => {
+                                    if (updated) setItem(updated);
+                                })
+                                .catch(() =>
+                                    toast.error(
+                                        "Owner attached, but details could not refresh. Reload this page to try again.",
+                                    ),
+                                );
+                        }}
                     />
                 }
                 mobileAction={

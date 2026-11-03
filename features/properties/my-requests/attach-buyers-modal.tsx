@@ -19,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 
 import type { ClientItem } from "@/features/clients/types";
+import { CreateContactButton } from "@/features/contacts/create-contact-button";
 import type { RequestItem } from "@/features/properties/my-requests/types";
 
 type BuyerProperty = Pick<RequestItem, "propertyId" | "title" | "isRent" | "amountInr" | "bhk">;
@@ -253,6 +254,27 @@ export function AttachBuyersModal({
                     <span className="body-sm shrink-0 font-medium text-ink-muted">
                         {selectedIds.length} selected
                     </span>
+                    <CreateContactButton
+                        kind="contact"
+                        disabled={isSaving}
+                        onCreated={(_name, id) => {
+                            setQuery("");
+                            if (id) setSelectedIds((current) => [...new Set([...current, id])]);
+                            setIsLoading(true);
+                            void clientsApi
+                                .listForProperty(request.propertyId)
+                                .then((result) => {
+                                    setClients(result.clients);
+                                    setAttachedIds(result.attachedIds);
+                                })
+                                .catch(() =>
+                                    toast.error(
+                                        "Contact created, but the list could not refresh. Reopen this dialog to try again.",
+                                    ),
+                                )
+                                .finally(() => setIsLoading(false));
+                        }}
+                    />
                 </div>
             }
             footer={
@@ -274,7 +296,7 @@ export function AttachBuyersModal({
                     description={
                         query
                             ? "Try a different name, phone number or area."
-                            : "Add contacts to your list first, then you can link them to a property."
+                            : "Create a contact above, then link them to this property."
                     }
                 />
             ) : (

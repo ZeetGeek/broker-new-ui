@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
@@ -19,6 +20,7 @@ import {
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
+import { AttachExclusiveOwnerModal } from "../your-listings/attach-exclusive-owner-modal";
 import type { MyListingItem } from "../your-listings/types";
 
 import { HoldToDeleteProperty } from "./hold-to-delete-property";
@@ -43,6 +45,7 @@ export type PropertyActionRailProps = {
     brokers?: PropertyBroker[];
     brokersState?: "loading" | "ready" | "error";
     onRetryBrokers?: () => void;
+    onOwnerAttached?: () => void;
 };
 
 export function PropertyActionRail({
@@ -58,7 +61,9 @@ export function PropertyActionRail({
     brokers = [],
     brokersState = "ready",
     onRetryBrokers,
+    onOwnerAttached,
 }: PropertyActionRailProps) {
+    const [ownerAttachOpen, setOwnerAttachOpen] = useState(false);
     const isOwner = portal === "owner";
     const isPublished = item.status === "published";
     const phone = item.ownerPhoneDigits?.replace(/\D/g, "");
@@ -210,7 +215,9 @@ export function PropertyActionRail({
                             <p>
                                 {phone
                                     ? formatPhoneIn(phone)
-                                    : "Add owner details by editing this property."}
+                                    : item.ownerName
+                                      ? "Add owner details by editing this property."
+                                      : "Attach an existing owner or create one."}
                             </p>
                         </div>
                     </div>
@@ -239,7 +246,24 @@ export function PropertyActionRail({
                                 WhatsApp
                             </Button>
                         </div>
+                    ) : !item.ownerName ? (
+                        <div className={styles.contactActions}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="md"
+                                onClick={() => setOwnerAttachOpen(true)}
+                            >
+                                Attach or create owner
+                            </Button>
+                        </div>
                     ) : null}
+                    <AttachExclusiveOwnerModal
+                        open={ownerAttachOpen}
+                        onOpenChange={setOwnerAttachOpen}
+                        listing={item}
+                        onAttached={onOwnerAttached}
+                    />
                 </section>
             ) : null}
             {!isOwner ? <PropertyBuyersCard item={item} /> : null}

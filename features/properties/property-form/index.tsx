@@ -372,6 +372,7 @@ export function PropertyForm({
     useEffect(() => {
         function onKeyDown(event: KeyboardEvent) {
             if (isDialog && !open) return;
+            if ((event.target as HTMLElement | null)?.closest(".contacts-form-drawer")) return;
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
                 event.preventDefault();
                 void saveDraftLocally();
@@ -824,6 +825,8 @@ export function PropertyForm({
     }
 
     function handleFormKeyDown(event: React.KeyboardEvent<HTMLFormElement>) {
+        // Contact drawers render through a portal; their shortcuts belong to that drawer.
+        if (!event.currentTarget.contains(event.target as Node)) return;
         if (event.key !== "Enter" || event.shiftKey) return;
         const target = event.target as HTMLElement;
         if (

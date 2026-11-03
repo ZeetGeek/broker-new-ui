@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
+import { CreateContactButton } from "@/features/contacts/create-contact-button";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
 export function AttachExclusiveOwnerModal({
@@ -143,6 +144,17 @@ export function AttachExclusiveOwnerModal({
                         clearable
                         wrapperClassName="min-inline-56 flex-1"
                     />
+                    <div>
+                        <CreateContactButton
+                            kind="owner"
+                            disabled={busy}
+                            onCreated={(name, id) => {
+                                setQuery(name);
+                                setSearch(name);
+                                if (id) setSelectedId(id);
+                            }}
+                        />
+                    </div>
                 </div>
             }
             footer={
@@ -189,7 +201,7 @@ export function AttachExclusiveOwnerModal({
                     description={
                         query
                             ? "Try a different name, phone, or society."
-                            : "Add an exclusive owner from Contacts, then attach them here."
+                            : "Create an owner above, then attach them here."
                     }
                 />
             ) : (

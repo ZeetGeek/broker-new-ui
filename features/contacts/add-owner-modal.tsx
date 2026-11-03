@@ -103,7 +103,7 @@ export function AddOwnerModal({
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    onSaved: (name: string, mode: "created" | "updated") => void;
+    onSaved: (name: string, mode: "created" | "updated", id?: string) => void;
     owner?: OwnerRow | null;
 }) {
     const isEdit = Boolean(owner);
@@ -160,7 +160,7 @@ export function AddOwnerModal({
             ...parsed,
             phone: normalizeExclusiveOwnerPhone(parsed.phone),
         });
-        onSaved(saved.fullName, "created");
+        onSaved(saved.fullName, "created", saved.id);
         return saved;
     };
 
