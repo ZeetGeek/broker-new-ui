@@ -70,7 +70,7 @@ export function ContactsSkeleton({
     return (
         <div role="status" aria-busy="true" className="motion-safe:animate-pulse">
             <span className="sr-only">
-                Loading your {variant === "buyer" ? "contacts" : "owners"}
+                Loading your {variant === "buyer" ? "clients" : "owners"}
             </span>
             <div
                 aria-hidden
@@ -91,7 +91,7 @@ export function ContactsIntroSkeleton() {
             aria-busy="true"
             className="flex flex-wrap items-center gap-2 min-block-8 motion-safe:animate-pulse"
         >
-            <span className="sr-only">Loading contact summary</span>
+            <span className="sr-only">Loading client summary</span>
             <Bone className="bg-border-warm block-6 inline-28" />
             <Bone className="bg-border-warm block-6 inline-96 max-inline-full" />
         </div>
@@ -105,7 +105,7 @@ export function ContactsHeaderSkeleton() {
             aria-busy="true"
             className="flex items-center justify-between gap-3 motion-safe:animate-pulse sm:gap-4"
         >
-            <span className="sr-only">Loading contact filters</span>
+            <span className="sr-only">Loading client filters</span>
             <div className="flex flex-1 gap-2 overflow-hidden min-inline-0">
                 {[0, 1].map((index) => (
                     <div
@@ -162,9 +162,7 @@ export function ContactFormSkeleton({
 }) {
     return (
         <div role="status" aria-busy="true" className="motion-safe:animate-pulse">
-            <span className="sr-only">
-                Loading {variant === "buyer" ? "contact" : "owner"} form
-            </span>
+            <span className="sr-only">Loading {variant === "buyer" ? "client" : "owner"} form</span>
             <div
                 aria-hidden
                 className="flex flex-col divide-y divide-border-warm [&>*+*]:pbs-6 [&>*:not(:last-child)]:pbe-6"

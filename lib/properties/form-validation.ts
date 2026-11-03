@@ -11,6 +11,27 @@ import {
     valueAtPath,
 } from "@/lib/visibility/rules";
 
+/** Broker publishing requires real selections; search text and display names do not count. */
+export function propertyPublishAttachmentIssues(
+    values: PropertyDraftValues,
+    portal: "broker" | "owner",
+    existingContactIds: readonly string[] = [],
+): { path: "owner.contactId" | "attachedBuyers"; message: string }[] {
+    if (portal !== "broker") return [];
+    const issues: { path: "owner.contactId" | "attachedBuyers"; message: string }[] = [];
+    if (!values.owner.contactId?.trim())
+        issues.push({ path: "owner.contactId", message: "Attach an owner before publishing." });
+    if (
+        !values.attachedBuyers.some((contact) => contact.id.trim()) &&
+        !existingContactIds.some((id) => id.trim())
+    )
+        issues.push({
+            path: "attachedBuyers",
+            message: "Attach at least one contact before publishing.",
+        });
+    return issues;
+}
+
 /** Drafts can be incomplete, but values already entered must satisfy their constraints. */
 export function propertyDraftValidationIssues(values: PropertyDraftValues) {
     return (Object.keys(stepSchemas) as (keyof typeof stepSchemas)[]).flatMap((step) => {

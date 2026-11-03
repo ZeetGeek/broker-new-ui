@@ -1,26 +1,27 @@
 "use client";
 
+import type { ListingScoreTask } from "@/lib/hooks/use-listing-score";
 import { cn } from "@/lib/utils";
 
-import { ArrowRight, Check } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, Check, LockKeyhole } from "@/components/shared/icons";
 
 import type { PropertyFormStep } from "@/constants/property";
 
 export function ListingScoreCard({
     score,
-    tips,
+    tasks,
     onTip,
     className,
 }: {
     score: number;
-    tips: { label: string; step: PropertyFormStep; points: number }[];
+    tasks: ListingScoreTask[];
     onTip: (step: PropertyFormStep) => void;
     className?: string;
 }) {
     const safeScore = Math.max(0, Math.min(100, score));
+    const allComplete = tasks.every((task) => task.completed);
     return (
-        <article className={cn("rounded-card bg-surface p-4 shadow-sm", className)}>
+        <article className={cn("rounded-card bg-surface p-4 shadow-md", className)}>
             <div className="flex items-center justify-between gap-3">
                 <h2 className="text-sm font-semibold text-ink">Listing score</h2>
                 <span className="tabular text-xl font-semibold text-brand-text">{safeScore}%</span>
@@ -39,42 +40,59 @@ export function ListingScoreCard({
                 />
             </div>
             <p className="mbs-2 text-xs/5 text-ink-muted">
-                {tips.length
-                    ? "Add these details to improve your listing."
-                    : "All score improvements complete."}
+                {allComplete
+                    ? "All score improvements complete."
+                    : "Complete each task to unlock the next."}
             </p>
-            {tips.length ? (
-                <div className="mbs-3 flex flex-col divide-y divide-border-warm">
-                    {tips.map((tip) => (
-                        <Button
-                            key={tip.label}
+            <ol className="mbs-3 flex flex-col gap-1">
+                {tasks.map((task) => (
+                    <li key={task.label}>
+                        <button
                             type="button"
-                            variant="ghost"
-                            onClick={() => onTip(tip.step)}
-                            className="
-                              justify-between gap-2 rounded-none px-0 py-3 text-start
-                              whitespace-normal block-auto min-block-11
-                              hover:bg-surface-muted/35
-                            "
+                            disabled={task.locked || task.completed}
+                            aria-current={!task.completed && !task.locked ? "step" : undefined}
+                            onClick={() => {
+                                if (!task.locked && !task.completed) onTip(task.step);
+                            }}
+                            className={cn(
+                                "flex items-center justify-between gap-2 rounded-control bg-transparent py-3 text-start inline-full min-block-11 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
+                                task.completed
+                                    ? "text-brand-text"
+                                    : task.locked
+                                      ? "cursor-not-allowed text-ink-subtle"
+                                      : "cursor-pointer text-ink hover:text-brand-text",
+                            )}
                         >
-                            <span className="flex-1 text-xs/5 font-medium text-ink min-inline-0">
-                                {tip.label}
+                            <span className="flex-1 text-xs/5 font-medium min-inline-0">
+                                {task.label}
                             </span>
-                            <span className="tabular shrink-0 text-xs font-semibold text-brand-text">
-                                +{tip.points}
+                            <span
+                                className={cn(
+                                    "tabular shrink-0 text-xs font-semibold",
+                                    !task.locked && "text-brand-text",
+                                )}
+                            >
+                                {task.completed ? "Complete" : `+${task.points}`}
                             </span>
-                            <ArrowRight
-                                className="text-ink-muted block-3.5 inline-3.5"
-                                aria-hidden
-                            />
-                        </Button>
-                    ))}
-                </div>
-            ) : (
-                <p className="mbs-3 flex items-center gap-1.5 text-xs font-medium text-brand-text">
-                    <Check className="block-4 inline-4" aria-hidden /> Score complete
-                </p>
-            )}
+                            {task.completed ? (
+                                <Check className="shrink-0 block-4 inline-4" aria-hidden />
+                            ) : task.locked ? (
+                                <>
+                                    <LockKeyhole
+                                        className="shrink-0 block-3.5 inline-3.5"
+                                        aria-hidden
+                                    />
+                                    <span className="sr-only">
+                                        Locked. Complete the previous task first.
+                                    </span>
+                                </>
+                            ) : (
+                                <ArrowRight className="shrink-0 block-3.5 inline-3.5" aria-hidden />
+                            )}
+                        </button>
+                    </li>
+                ))}
+            </ol>
         </article>
     );
 }

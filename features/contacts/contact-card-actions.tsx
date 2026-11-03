@@ -55,7 +55,7 @@ export function ContactCardActions({
     phoneDigits,
     onOpen,
     onEdit,
-    editLabel = "Edit contact",
+    editLabel = "Edit client",
     onAttach,
     onNotes,
     onDelete,

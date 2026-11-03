@@ -729,8 +729,8 @@ function RepresentedMeta({ listing }: { listing: RepresentedPropertyCardListing 
             : `${listing.visitsBookedCount} visits booked`;
     const clientLabel =
         listing.clientsMatchedCount === 1
-            ? "1 contact matched"
-            : `${listing.clientsMatchedCount} contacts matched`;
+            ? "1 client matched"
+            : `${listing.clientsMatchedCount} clients matched`;
     const sharedLabel =
         listing.sharedBrokerCount === 1
             ? "Shared with 1 other broker"
@@ -1062,7 +1062,7 @@ function OwnedOverlayPropertyCard({
     const handleAddBuyer = onAddBuyer
         ? () => {
               if (isAddBuyerBlocked) {
-                  toast.error("Attach an owner first to enable attaching contacts.", {
+                  toast.error("Attach an owner first to enable attaching clients.", {
                       id: "listing-owner-required",
                   });
                   return;

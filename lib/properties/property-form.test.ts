@@ -153,6 +153,36 @@ test("score reaches 100 with available controls and tips point to their fields",
     assert.ok(!calculateListingScore(values).tips.some((tip) => tip.label.includes("floor plan")));
 });
 
+test("listing score unlocks tasks in order and preserves completed tasks", () => {
+    const values = structuredClone(DEFAULT_PROPERTY_DRAFT);
+    let tasks = calculateListingScore(values).tasks;
+    assert.equal(tasks[0]!.locked, false);
+    assert.ok(tasks.slice(1).every((task) => task.completed || task.locked));
+
+    values.basics.title = "Apartment in Mumbai";
+    values.basics.propertyType = "apartment";
+    values.area.areaSqft = 1200;
+    tasks = calculateListingScore(values).tasks;
+    assert.equal(tasks[0]!.completed, true);
+    assert.equal(tasks[1]!.locked, false);
+    assert.equal(tasks[2]!.locked, true);
+
+    values.media.photos = Array.from({ length: 6 }, (_, index) => ({
+        ...listing().media.photos[0]!,
+        id: String(index),
+    }));
+    tasks = calculateListingScore(values).tasks;
+    assert.equal(tasks[1]!.completed, true);
+    assert.equal(tasks[2]!.locked, false);
+
+    values.area.areaSqft = 0;
+    tasks = calculateListingScore(values).tasks;
+    assert.equal(tasks[0]!.completed, false);
+    assert.equal(tasks[0]!.locked, false);
+    assert.equal(tasks[1]!.completed, true);
+    assert.equal(tasks[2]!.locked, true);
+});
+
 test("drafts are isolated by account, portal, property and kind", () => {
     const keys = [
         propertyDraftKey("a", "owner"),

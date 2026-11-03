@@ -34,7 +34,7 @@ const HERO_COPY = {
     primary: { label: "Create broker account", href: BROKER_SIGNUP_HREF },
     features: [
         { icon: Building2, label: "Property listings" },
-        { icon: Contact, label: "Contact records" },
+        { icon: Contact, label: "Client records" },
         { icon: Calendar, label: "Site visits" },
     ],
     note: "Built for real estate brokers.",

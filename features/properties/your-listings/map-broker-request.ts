@@ -50,7 +50,7 @@ function requestNote(type: BrokerRequestRowType, daysWaiting: number): string {
     if (type === "declined") return "The owner said no to this one";
     if (type === "approved_untouched") {
         const days = daysWaiting === 1 ? "1 day" : `${daysWaiting} days`;
-        return `Approved ${days} ago · no contact added yet`;
+        return `Approved ${days} ago · no client added yet`;
     }
     if (type === "approved") return "Approved - you can start working this property";
     if (type === "pending_stale") {

@@ -15,7 +15,7 @@ import { DASHBOARD_CARD_SHELL } from "./card-shell";
 import type { FollowUp, FollowUpDue, FollowUpsData } from "./mock-data";
 
 const FOLLOW_UPS_INFO =
-    "Follow-ups to review. Reach contacts directly. Completion is not available here yet.";
+    "Follow-ups to review. Reach clients directly. Completion is not available here yet.";
 
 const MAX_ROWS = 4;
 

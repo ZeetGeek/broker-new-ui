@@ -19,22 +19,6 @@ export function normalizePhotoOrder(list: DraftPhoto[]): DraftPhoto[] {
     return [...(cover ? [cover] : []), ...gallery].map((photo, order) => ({ ...photo, order }));
 }
 
-function isPortraitImage(file: File): Promise<boolean> {
-    return new Promise((resolve) => {
-        const url = URL.createObjectURL(file);
-        const img = new window.Image();
-        img.onload = () => {
-            URL.revokeObjectURL(url);
-            resolve(img.naturalHeight > img.naturalWidth);
-        };
-        img.onerror = () => {
-            URL.revokeObjectURL(url);
-            resolve(true);
-        };
-        img.src = url;
-    });
-}
-
 function revokePhoto(
     photo: DraftPhoto | null | undefined,
     photoFilesRef: MutableRefObject<Map<string, File>>,
@@ -135,10 +119,6 @@ export async function replaceCoverPhoto({
             `Remove a photo before adding a cover. The limit is ${MAX_PROPERTY_PHOTOS} photos in total.`,
         );
         return;
-    }
-    const portrait = await isPortraitImage(file);
-    if (!portrait) {
-        toast.error("Cover works best as a vertical photo (taller than wide).");
     }
     const currentCover = photos.find((photo) => photo.isCover) ?? null;
     revokePhoto(currentCover, photoFilesRef);

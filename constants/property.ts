@@ -537,7 +537,7 @@ export const LISTING_STATUS_OPTIONS = [
 ].map((value) => ({ value, label: toLabel(value) }));
 export const VISIBILITY_OPTIONS = [
     { value: "public", label: "Public", description: "Visible to approved brokers" },
-    { value: "my_clients_only", label: "My contacts only", description: "Keep it within your CRM" },
+    { value: "my_clients_only", label: "My clients only", description: "Keep it within your CRM" },
     { value: "private", label: "Private", description: "Only you can see it" },
 ] as const satisfies readonly PropertyOption[];
 export const CONTACT_DISPLAY_OPTIONS = [
@@ -589,7 +589,7 @@ export const FORM_STEPS = [
     { id: "pricing", label: "Price & deal", shortLabel: "Deal" },
     // Highlights UI commented out — was "Amenities & highlights"
     { id: "furnishing", label: "Amenities", shortLabel: "Extras" },
-    { id: "media", label: "Media & contacts", shortLabel: "Publish" },
+    { id: "media", label: "Media & clients", shortLabel: "Publish" },
 ] as const;
 
 export type PropertyFormStep = (typeof FORM_STEPS)[number]["id"];

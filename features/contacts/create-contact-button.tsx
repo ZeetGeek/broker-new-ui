@@ -45,7 +45,7 @@ export function CreateContactButton({
                 onClick={() => setOpen(true)}
             >
                 <UserPlus aria-hidden />
-                {kind === "owner" ? "Create owner" : "Create contact"}
+                {kind === "owner" ? "Create owner" : "Create client"}
             </Button>
             {kind === "owner" ? (
                 <AddOwnerModal

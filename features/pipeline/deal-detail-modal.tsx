@@ -523,7 +523,7 @@ export function DealDetailModal({
                 ) : deal ? (
                     `${deal.property.locality}, ${deal.property.city}`
                 ) : (
-                    "Contact, property, offer and stage history."
+                    "Client, property, offer and stage history."
                 )
             }
         >
@@ -584,7 +584,7 @@ export function DealDetailModal({
                             </div>
                         </div>
                         <div className={styles.details}>
-                            <h2 className={styles.sectionTitle}>Contact & owner</h2>
+                            <h2 className={styles.sectionTitle}>Client & owner</h2>
                             <div className={styles.contacts}>
                                 <div className="flex items-center gap-2.5 min-inline-0">
                                     <UserAvatar
@@ -592,7 +592,7 @@ export function DealDetailModal({
                                         imageUrl={deal.buyer.avatarUrl}
                                     />
                                     <div className="min-inline-0">
-                                        <p className="body-xs text-ink-muted">Contact</p>
+                                        <p className="body-xs text-ink-muted">Client</p>
                                         <p className="body-sm font-medium wrap-anywhere text-ink">
                                             {deal.buyer.name}
                                         </p>
@@ -644,7 +644,7 @@ export function DealDetailModal({
                                     <h2 className={styles.sectionTitle}>Deal summary</h2>
                                     <div className={styles.facts}>
                                         {deal.buyer.budgetMaxInr != null ? (
-                                            <DetailField label="Contact budget" icon={Wallet}>
+                                            <DetailField label="Client budget" icon={Wallet}>
                                                 {formatMoney(
                                                     deal.buyer.budgetMaxInr,
                                                     deal.property.isRent,

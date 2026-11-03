@@ -630,7 +630,7 @@ function leadClientRef(lead: ApiPropertyLead): AttachedClientRef | null {
     if (!id) return null;
     return {
         id,
-        name: lead.client?.name?.trim() || "Contact",
+        name: lead.client?.name?.trim() || "Client",
     };
 }
 

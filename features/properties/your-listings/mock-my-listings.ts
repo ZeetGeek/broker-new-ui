@@ -627,7 +627,7 @@ export const MOCK_BROKER_REQUESTS: BrokerRequestsResult = {
             isRent: false,
             approvedAt: "2026-09-05T09:10:00+05:30",
             daysSince: 2,
-            note: "Approved 2 days ago · no contact added yet",
+            note: "Approved 2 days ago · no client added yet",
             action: { label: "Open", href: "/broker/properties/pr_108" },
         },
         {
@@ -639,7 +639,7 @@ export const MOCK_BROKER_REQUESTS: BrokerRequestsResult = {
             isRent: false,
             approvedAt: "2026-09-06T14:00:00+05:30",
             daysSince: 1,
-            note: "Approved · 1 contact attached",
+            note: "Approved · 1 client attached",
             action: { label: "Open", href: "/broker/properties/pr_099" },
         },
         {
@@ -651,7 +651,7 @@ export const MOCK_BROKER_REQUESTS: BrokerRequestsResult = {
             isRent: true,
             approvedAt: "2026-09-03T11:20:00+05:30",
             daysSince: 4,
-            note: "Approved · 2 contacts attached",
+            note: "Approved · 2 clients attached",
             action: { label: "Open", href: "/broker/properties/pr_088" },
         },
         {

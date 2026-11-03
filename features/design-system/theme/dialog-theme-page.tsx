@@ -42,8 +42,8 @@ function CompoundDemo() {
                 <AppModalHeader title="Approve this broker?" />
                 <div className="space-y-4 p-(--dialog-pad)">
                     <DialogDescription className="px-(--dialog-pad) pbs-3">
-                        They can show &ldquo;3 BHK in Andheri West&rdquo; to contacts. You can
-                        revoke later.
+                        They can show &ldquo;3 BHK in Andheri West&rdquo; to clients. You can revoke
+                        later.
                     </DialogDescription>
                     <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                         <DialogClose

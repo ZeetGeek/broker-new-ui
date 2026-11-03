@@ -66,7 +66,7 @@ function ListingCardSkeleton({ portal }: { portal: "broker" | "owner" }) {
                                 Owner
                             </TextSkeleton>
                             <TextSkeleton className="body-sm" width="inline-2/3">
-                                Contacts
+                                Clients
                             </TextSkeleton>
                         </>
                     ) : null}

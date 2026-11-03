@@ -17,7 +17,7 @@ import { clientsApi } from "@/lib/api/clients";
 import { myListingsApi } from "@/lib/api/my-listings";
 import { getStoredUser } from "@/lib/auth/session";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
-import { useListingScore } from "@/lib/hooks/use-listing-score";
+import { type ListingScoreTask, useListingScore } from "@/lib/hooks/use-listing-score";
 import { useRouter } from "@/lib/navigation";
 import {
     loadPropertyDraft,
@@ -30,6 +30,7 @@ import {
 import { isUsablePropertyPhoto, MAX_PROPERTY_PHOTOS } from "@/lib/properties/form-media";
 import {
     propertyDraftValidationIssues,
+    propertyPublishAttachmentIssues,
     QUICK_ADD_VALIDATION_FIELDS,
     quickAddValidationIssues,
 } from "@/lib/properties/form-validation";
@@ -608,6 +609,44 @@ export function PropertyForm({
             persistInFlightRef.current = false;
             return;
         }
+        if (!forceDraft && portal === "broker") {
+            methods.clearErrors(["owner.contactId", "attachedBuyers"]);
+            let existingContactIds: string[] = [];
+            let contactVerificationFailed = false;
+            if (propertyId && !current.attachedBuyers.some((contact) => contact.id.trim())) {
+                setSaving(true);
+                setSavingIntent(intent);
+                try {
+                    existingContactIds = (await clientsApi.listForProperty(propertyId)).attachedIds;
+                } catch {
+                    contactVerificationFailed = true;
+                } finally {
+                    setSaving(false);
+                    setSavingIntent(null);
+                }
+            }
+            const issues = propertyPublishAttachmentIssues(current, portal, existingContactIds);
+            if (contactVerificationFailed) {
+                const contactIssue = issues.find((issue) => issue.path === "attachedBuyers");
+                if (contactIssue)
+                    contactIssue.message =
+                        "Couldn't verify attached contacts. Please try publishing again.";
+            }
+            if (issues.length) {
+                setEntryMode("full");
+                setStep("media");
+                setHighestUnlocked(FORM_STEPS.length - 1);
+                for (const issue of issues)
+                    methods.setError(issue.path, { type: "publish", message: issue.message });
+                setFormBanner("Attach an owner and at least one contact before publishing.");
+                pendingFocusPathRef.current = issues[0]!.path;
+                requestAnimationFrame(() => {
+                    if (focusFieldByPath(issues[0]!.path)) pendingFocusPathRef.current = null;
+                });
+                persistInFlightRef.current = false;
+                return;
+            }
+        }
         if (forceDraft && entryMode === "full") {
             const issues = propertyDraftValidationIssues(current);
             const first = issues[0];
@@ -675,9 +714,14 @@ export function PropertyForm({
             current.owner = { ...current.owner, contactId: "" };
             current.attachedBuyers = [];
         }
+        // New/unpublished broker listings go live only after their contacts are attached.
+        const publishAfterAttachments =
+            !forceDraft &&
+            portal === "broker" &&
+            (mode !== "edit" || initialListing?.status !== "published");
         const input = {
             ...draftToLegacyInput(stripHidden(current), photoFilesRef),
-            publish: !forceDraft,
+            publish: !forceDraft && !publishAfterAttachments,
         };
         setSaving(true);
         setSavingIntent(intent);
@@ -685,7 +729,7 @@ export function PropertyForm({
             if (mode === "edit" && propertyId) {
                 const updated = await myListingsApi.update(propertyId, {
                     ...input,
-                    status: forceDraft ? "draft" : "published",
+                    status: forceDraft || publishAfterAttachments ? "draft" : "published",
                 });
                 if (!updated) {
                     setFormBanner("Couldn't find that property.");
@@ -716,27 +760,43 @@ export function PropertyForm({
     ) {
         const buyerIds =
             portal === "broker"
-                ? [...new Set(current.attachedBuyers.map((buyer) => buyer.id))]
+                ? [
+                      ...new Set(
+                          current.attachedBuyers.map((buyer) => buyer.id.trim()).filter(Boolean),
+                      ),
+                  ]
                 : [];
-        if (buyerIds.length) {
-            try {
+        try {
+            if (buyerIds.length) {
                 await clientsApi.setPropertyClients(listing.id, buyerIds);
-            } catch {
-                const pending = { listing, buyerIds, draft };
-                pendingAttachmentRef.current = pending;
-                setAttachmentRetry(pending);
-                await writeLocalDraft(current).catch(() => {
-                    setStorageError(
-                        "The property is saved, but the pending contact links could not be saved on this device. Please retry before leaving.",
-                    );
-                });
-                setFormBanner(
-                    "The property was saved, but its contacts could not be attached. Retry below; this will not create another property.",
-                );
-                return;
             }
+            await finishAfterAttachments(listing, draft);
+        } catch {
+            const pending = { listing, buyerIds, draft };
+            pendingAttachmentRef.current = pending;
+            setAttachmentRetry(pending);
+            await writeLocalDraft(current).catch(() => {
+                setStorageError(
+                    "The property is saved, but the pending client links could not be saved on this device. Please retry before leaving.",
+                );
+            });
+            setFormBanner(
+                !draft && listing.status !== "published"
+                    ? "The property is saved as a draft. Contacts or publishing could not be completed. Retry below; this will not create another property."
+                    : "The property was saved, but its contacts could not be attached. Retry below; this will not create another property.",
+            );
+            return;
         }
-        await finishSave(listing, draft);
+    }
+
+    async function finishAfterAttachments(listing: MyListingItem, draft: boolean) {
+        let saved = listing;
+        if (!draft && portal === "broker" && listing.status !== "published") {
+            const published = await myListingsApi.setStatus(listing.id, "published");
+            if (!published) throw new Error("Couldn't publish the saved property.");
+            saved = published;
+        }
+        await finishSave(saved, draft);
     }
 
     async function retryBuyerAttachments() {
@@ -748,11 +808,11 @@ export function PropertyForm({
                 attachmentRetry.listing.id,
                 attachmentRetry.buyerIds,
             );
-            await finishSave(attachmentRetry.listing, attachmentRetry.draft);
+            await finishAfterAttachments(attachmentRetry.listing, attachmentRetry.draft);
             setAttachmentRetry(null);
         } catch {
             setFormBanner(
-                "The property is saved. Contacts still could not be attached. Please retry.",
+                "The property is saved. Contact attachment or publishing could not be completed. Please retry.",
             );
         } finally {
             persistInFlightRef.current = false;
@@ -854,7 +914,7 @@ export function PropertyForm({
     async function requestClose() {
         if (saving || persistInFlightRef.current) return;
         if (attachmentRetry) {
-            toast.error("Please retry attaching contacts before closing this form.");
+            toast.error("Please retry attaching clients before closing this form.");
             return;
         }
         let locallySaved = false;
@@ -962,6 +1022,7 @@ export function PropertyForm({
                                     <MobileListingScore
                                         score={listingScore.score}
                                         tips={listingScore.tips}
+                                        tasks={listingScore.tasks}
                                         open={mobileScoreOpen}
                                         onOpenChange={(next) => {
                                             setMobileScoreOpen(next);
@@ -982,7 +1043,7 @@ export function PropertyForm({
                                     <aside
                                         className="
                                           hidden flex-col rounded-card bg-surface px-4 py-5
-                                          shadow-sm min-block-0
+                                          shadow-md min-block-0
                                           xl:flex
                                         "
                                     >
@@ -998,13 +1059,14 @@ export function PropertyForm({
                                     </aside>
                                     <main
                                         className="
-                                          overflow-y-auto bg-surface-muted min-block-0 min-inline-0
+                                          overflow-y-auto rounded-card bg-surface-muted shadow-md
+                                          min-block-0 min-inline-0
                                         "
                                     >
                                         <div
                                             className="
                                               rounded-card border border-border-warm bg-surface p-5
-                                              shadow-sm min-block-full
+                                              min-block-full
                                               sm:p-6
                                               xl:p-7
                                             "
@@ -1046,7 +1108,7 @@ export function PropertyForm({
                                     </main>
                                     <aside
                                         className="
-                                          hidden overflow-y-auto bg-surface-muted min-block-0
+                                          -m-2 hidden overflow-y-auto bg-surface-muted p-2 min-block-0
                                           min-inline-0
                                           xl:block
                                         "
@@ -1063,7 +1125,7 @@ export function PropertyForm({
                                             />
                                             <ListingScoreCard
                                                 score={listingScore.score}
-                                                tips={listingScore.tips}
+                                                tasks={listingScore.tasks}
                                                 onTip={(tipStep) => {
                                                     changeStep(tipStep);
                                                 }}
@@ -1098,7 +1160,7 @@ export function PropertyForm({
                                 <div
                                     className="
                                       flex flex-1 flex-col rounded-card border border-border-warm
-                                      bg-surface p-5 shadow-sm
+                                      bg-surface p-5 shadow-md
                                       sm:p-6 sm:py-7
                                       xl:p-8
                                     "
@@ -1132,7 +1194,7 @@ export function PropertyForm({
                             "
                         >
                             <p className="flex-1 text-sm text-danger">
-                                Property saved. Contact attachment is pending.
+                                Property saved. Client attachment is pending.
                             </p>
                             <Button
                                 type="button"
@@ -1141,7 +1203,7 @@ export function PropertyForm({
                                 }}
                                 loading={saving}
                             >
-                                Retry attaching contacts
+                                Retry attaching clients
                             </Button>
                         </div>
                     ) : null}
@@ -1562,12 +1624,14 @@ function StepTransition({ step, children }: { step: PropertyFormStep; children: 
 function MobileListingScore({
     score,
     tips,
+    tasks,
     open,
     onOpenChange,
     onTip,
 }: {
     score: number;
     tips: { label: string; step: PropertyFormStep; points: number }[];
+    tasks: ListingScoreTask[];
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onTip: (step: PropertyFormStep) => void;
@@ -1624,7 +1688,7 @@ function MobileListingScore({
                     <div className="mx-auto max-inline-md">
                         <ListingScoreCard
                             score={score}
-                            tips={tips}
+                            tasks={tasks}
                             onTip={onTip}
                             className="p-0 shadow-none"
                         />

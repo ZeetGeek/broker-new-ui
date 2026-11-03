@@ -1,34 +1,44 @@
 "use client";
 
-import { type MutableRefObject, useMemo, useRef } from "react";
+import { type MutableRefObject, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
 import { formatMoney, formatMoneyCompact } from "@/lib/format/money";
+import { formatPropertyCardArea, formatPropertyTypeDisplay } from "@/lib/format/property-card-name";
 import { buildBasicsSuggestedTitle } from "@/lib/format/property-title";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
+import { derive } from "@/lib/visibility/derive";
+import { FIELD_RULES } from "@/lib/visibility/rules";
 
 import { AppImage } from "@/components/shared/app-image";
 import {
-    Bath,
-    BedDouble,
+    Check,
     CircleHelp,
     Copy,
-    Eye,
     ImageIcon,
     LockKeyhole,
     MapPin,
+    MoreHorizontal,
     RefreshCw,
-    Scaling,
     Upload,
     X,
 } from "@/components/shared/icons";
+import { OVERLAY_ICON_BUTTON_CLASS, OverlayPersonLine } from "@/components/shared/overlay-card";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
+import { BEDROOM_OPTIONS } from "@/constants/property";
 import {
     normalizePhotoOrder,
     removeCoverPhoto,
@@ -55,24 +65,6 @@ function draftTitle(values: PropertyDraftValues): string {
     );
 }
 
-function bedsLabel(values: PropertyDraftValues): string {
-    const bedrooms = String(values.details.bedrooms ?? "").trim();
-    if (!bedrooms || bedrooms === "0") return "-- Beds";
-    if (bedrooms === "5" || bedrooms === "5+") return "5+ Beds";
-    return `${bedrooms} Beds`;
-}
-
-function bathsLabel(values: PropertyDraftValues): string {
-    const baths = values.details.bathrooms;
-    if (baths == null || baths <= 0) return "-- Baths";
-    return `${baths} Baths`;
-}
-
-function areaLabel(values: PropertyDraftValues): string {
-    if (!values.area.areaSqft) return "-- Sq ft";
-    return `${values.area.areaSqft.toLocaleString("en-US")} Sq ft`;
-}
-
 export function LiveSummaryPanel({
     audience = "broker",
     values,
@@ -90,6 +82,10 @@ export function LiveSummaryPanel({
 }) {
     const { setValue, getValues } = useFormContext<PropertyDraftValues>();
     const coverInputRef = useRef<HTMLInputElement>(null);
+    const [copiedSummary, setCopiedSummary] = useState<string | null>(null);
+    const flags = derive(values);
+    const showBedrooms = FIELD_RULES["details.bedrooms"].visible(flags);
+    const showBathrooms = FIELD_RULES["details.bathrooms"].visible(flags);
     const isSale = values.basics.listingFor === "sell" || values.basics.listingFor === "both";
     const cover = values.media.photos.find((photo) => photo.isCover) ?? null;
     const price = isSale ? values.sale.expectedPrice : values.rent.monthlyRent;
@@ -149,6 +145,17 @@ export function LiveSummaryPanel({
     const coBrokerShare = (result.brokerRealIncome * coBrokerPercent) / 100;
     const brokerAfterSplit = Math.max(0, result.brokerRealIncome - coBrokerShare);
     const title = draftTitle(values);
+    const bedroomLabel = BEDROOM_OPTIONS.find(
+        (option) => option.value === values.details.bedrooms,
+    )?.label;
+    const cardHeadline = [
+        formatPropertyTypeDisplay(values.basics.propertyType),
+        showBedrooms ? bedroomLabel : null,
+        showBathrooms && values.details.bathrooms ? `${values.details.bathrooms} Bath` : null,
+        values.area.areaSqft ? formatPropertyCardArea(values.area.areaSqft) : null,
+    ]
+        .filter(Boolean)
+        .join(" · ");
     const locationLabel =
         [values.location.locality, values.location.city].filter(Boolean).join(", ") ||
         "Location not added";
@@ -184,6 +191,7 @@ export function LiveSummaryPanel({
     async function copySummary() {
         try {
             await navigator.clipboard.writeText(summaryText);
+            setCopiedSummary(summaryText);
             toast.success("Deal summary copied.");
         } catch {
             toast.error("Couldn't copy the summary.");
@@ -245,290 +253,271 @@ export function LiveSummaryPanel({
     }
 
     return (
-        <aside className="flex flex-col gap-4">
-            <article className="overflow-hidden rounded-card bg-surface px-4 py-5 shadow-sm">
-                <div className="mbe-4 flex items-center justify-between gap-2">
-                    <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-                        <Eye className="text-brand block-4 inline-4" aria-hidden />
-                        Listing preview
-                    </p>
-                    <Badge color="amber">Draft</Badge>
-                </div>
-
+        <aside
+            className="flex flex-col gap-4 min-inline-0"
+            aria-label="Property preview and deal summary"
+        >
+            <article className="overflow-hidden rounded-card bg-surface shadow-md">
+                <h2 className="sr-only">Listing preview</h2>
+                {photoFilesRef ? (
+                    <input
+                        ref={coverInputRef}
+                        type="file"
+                        aria-label="Upload listing cover photo"
+                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                        className="sr-only"
+                        onChange={(event) => {
+                            void handleReplaceCover(event.target.files?.[0]);
+                            event.currentTarget.value = "";
+                        }}
+                    />
+                ) : null}
                 <div
-                    className="
-                      group relative aspect-4/3 overflow-hidden rounded-inner bg-surface-muted
-                    "
+                    className={cn(
+                        "relative aspect-4/3 overflow-hidden",
+                        cover?.url
+                            ? "bg-surface-muted"
+                            : "mx-3 mbs-3 rounded-inner border border-dashed border-brand/30 bg-brand-soft/60",
+                    )}
                 >
-                    {cover ? (
-                        <>
-                            <AppImage
-                                src={cover.url}
-                                alt={cover.alt || title}
-                                fill
-                                sizes="320px"
-                                className="object-cover"
-                                unoptimized={
-                                    cover.url.startsWith("blob:") ||
-                                    cover.url.startsWith("http://") ||
-                                    cover.url.startsWith("https://")
-                                }
-                            />
-                            {photoFilesRef ? (
-                                <>
-                                    <input
-                                        ref={coverInputRef}
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                                        className="sr-only"
-                                        onChange={(event) => {
-                                            void handleReplaceCover(event.target.files?.[0]);
-                                            event.currentTarget.value = "";
-                                        }}
-                                    />
-                                    <div
-                                        className="
-                                          absolute inset-0 flex flex-col items-center justify-center
-                                          gap-2 bg-ink/55 p-3 opacity-100 transition-opacity
-                                          duration-160
-                                          md:opacity-0
-                                          md:group-focus-within:opacity-100
-                                          md:group-hover:opacity-100
-                                        "
-                                    >
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            className="
-                                              gap-1.5 border-0 bg-surface text-ink
-                                              hover:bg-surface
-                                            "
-                                            onClick={() => coverInputRef.current?.click()}
-                                        >
-                                            <RefreshCw
-                                                className="block-3.5 inline-3.5"
-                                                aria-hidden
-                                            />
-                                            Replace cover
-                                        </Button>
+                    <div className="absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap gap-1.5 pe-14">
+                        {isSale ? (
+                            <Badge color="emerald" blur={cover?.url ? "dark" : false}>
+                                For sale
+                            </Badge>
+                        ) : null}
+                        {values.basics.listingFor !== "sell" ? (
+                            <Badge color="orange" blur={cover?.url ? "dark" : false}>
+                                {values.basics.listingFor === "lease"
+                                    ? "For lease"
+                                    : values.basics.listingFor === "pg"
+                                      ? "PG"
+                                      : "For rent"}
+                            </Badge>
+                        ) : null}
+                    </div>
+                    {cover && photoFilesRef ? (
+                        <div className="absolute inset-e-3 inset-bs-3 z-20">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger
+                                    render={
                                         <Button
                                             type="button"
                                             variant="ghost"
-                                            size="sm"
-                                            className="
-                                              text-surface
-                                              hover:bg-surface/15 hover:text-surface
-                                            "
-                                            onClick={handleRemoveCover}
-                                        >
-                                            <X className="me-1 block-3.5 inline-3.5" aria-hidden />
-                                            Remove
-                                        </Button>
-                                    </div>
-                                </>
-                            ) : null}
-                        </>
-                    ) : (
-                        <div
-                            className="
-                              flex flex-col items-center justify-center gap-2.5 border border-dashed
-                              border-brand/30 bg-brand-soft/25 px-4 py-5 text-center block-full
-                            "
-                        >
-                            <span
-                                className="
-                                  flex items-center justify-center rounded-control bg-surface
-                                  text-brand block-10 inline-10
-                                "
-                            >
-                                <ImageIcon
-                                    className="block-5 inline-5"
-                                    strokeWidth={1.75}
-                                    aria-hidden
-                                />
-                            </span>
-                            <p className="text-sm font-semibold text-ink">Add a cover photo</p>
-                            {photoFilesRef ? (
-                                <>
-                                    <input
-                                        ref={coverInputRef}
-                                        type="file"
-                                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                                        className="sr-only"
-                                        onChange={(event) => {
-                                            void handleReplaceCover(event.target.files?.[0]);
-                                            event.currentTarget.value = "";
-                                        }}
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="accent"
-                                        size="sm"
+                                            size="icon"
+                                            className={OVERLAY_ICON_BUTTON_CLASS}
+                                            aria-label="Cover photo options"
+                                        />
+                                    }
+                                >
+                                    <MoreHorizontal aria-hidden />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
                                         onClick={() => coverInputRef.current?.click()}
-                                        className="gap-1.5"
                                     >
-                                        <Upload className="block-3.5 inline-3.5" aria-hidden />
-                                        Upload photo
-                                    </Button>
-                                </>
-                            ) : onGoToMedia ? (
+                                        <RefreshCw aria-hidden /> Replace cover
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={handleRemoveCover}>
+                                        <X aria-hidden /> Remove cover
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    ) : null}
+                    {cover?.url ? (
+                        <AppImage
+                            src={cover.url}
+                            alt={cover.alt || title}
+                            fill
+                            sizes="(max-width: 1279px) 100vw, 320px"
+                            className="object-cover"
+                            unoptimized={/^(blob:|https?:)/.test(cover.url)}
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center justify-center gap-2 px-4 pbs-12 pbe-4 text-center block-full">
+                            <ImageIcon
+                                className="text-brand block-7 inline-7"
+                                strokeWidth={1.5}
+                                aria-hidden
+                            />
+                            <div>
+                                <p className="text-sm font-semibold text-ink">
+                                    Your property, at a glance
+                                </p>
+                            </div>
+                            {photoFilesRef || onGoToMedia ? (
                                 <Button
                                     type="button"
-                                    variant="accent"
-                                    size="sm"
-                                    onClick={onGoToMedia}
-                                    className="gap-1.5"
+                                    variant="outline"
+                                    className="gap-2 border-brand/25 bg-surface text-brand-text min-block-11 hover:border-brand/50 hover:bg-surface"
+                                    onClick={() =>
+                                        photoFilesRef
+                                            ? coverInputRef.current?.click()
+                                            : onGoToMedia?.()
+                                    }
                                 >
-                                    <Upload className="block-3.5 inline-3.5" aria-hidden />
-                                    Upload photo
+                                    <Upload className="block-4 inline-4" aria-hidden /> Add cover
+                                    photo
                                 </Button>
                             ) : null}
                         </div>
                     )}
                 </div>
-
-                <div className="mbs-4 flex flex-col gap-2">
-                    <p className="tabular text-xl font-bold tracking-[-0.02em] text-brand">
-                        {price && price > 0 ? formatMoneyCompact(price) : "Price not set"}
-                    </p>
-                    <p className="line-clamp-2 text-sm/5 font-semibold text-ink">{title}</p>
-                    <p className="flex items-center gap-1.5 text-xs text-ink-muted">
-                        <MapPin className="shrink-0 block-3.5 inline-3.5" aria-hidden />
-                        <span className="truncate">{locationLabel}</span>
-                    </p>
-                    <div
-                        className="
-                          mts-1 grid grid-cols-3 gap-2 rounded-control bg-surface-muted px-2.5 py-2
-                          text-[11px] font-medium text-ink-muted
-                        "
-                    >
-                        <span className="inline-flex items-center justify-center gap-1 min-inline-0">
-                            <BedDouble className="shrink-0 block-3.5 inline-3.5" aria-hidden />
-                            <span className="truncate">
-                                {bedsLabel(values).replace(" Beds", "")}
-                            </span>
-                        </span>
-                        <span className="inline-flex items-center justify-center gap-1 min-inline-0">
-                            <Bath className="shrink-0 block-3.5 inline-3.5" aria-hidden />
-                            <span className="truncate">
-                                {bathsLabel(values).replace(" Baths", "")}
-                            </span>
-                        </span>
-                        <span className="inline-flex items-center justify-center gap-1 min-inline-0">
-                            <Scaling className="shrink-0 block-3.5 inline-3.5" aria-hidden />
-                            <span className="truncate">
-                                {areaLabel(values).replace(" Sq ft", "")}
-                            </span>
-                        </span>
+                <div className="flex flex-col gap-3.5 p-4">
+                    <div className="flex items-center gap-2">
+                        <span className="body-sm text-ink-muted">Status</span>
+                        <Badge color="stone">Draft</Badge>
                     </div>
+                    <div className="flex flex-col gap-2 min-inline-0">
+                        {hasPrice ? (
+                            <PriceWithCommission
+                                amountInr={price!}
+                                isRent={!isSale}
+                                audience={audience}
+                                commissionPercent={
+                                    isSale && "commissionAsPercent" in result
+                                        ? result.commissionAsPercent
+                                        : undefined
+                                }
+                                commissionAmountInr={result.gross || undefined}
+                                size="lg"
+                            />
+                        ) : (
+                            <p className="h5 font-semibold tracking-wide text-brand">
+                                Price not set
+                            </p>
+                        )}
+                        <h3 className="body font-semibold tracking-wide wrap-break-word text-ink">
+                            {cardHeadline || title}
+                        </h3>
+                        <p className="body-sm flex items-start gap-1.5 tracking-wide text-ink-muted">
+                            <MapPin className="mbs-0.5 shrink-0 block-3.5 inline-3.5" aria-hidden />
+                            <span className="wrap-break-word min-inline-0">{locationLabel}</span>
+                        </p>
+                    </div>
+                    {audience === "broker" ? (
+                        <>
+                            {values.owner.name?.trim() ? (
+                                <OverlayPersonLine label="Owner" name={values.owner.name.trim()} />
+                            ) : (
+                                <p className="body-sm flex gap-2 text-ink-muted">
+                                    <span className="shrink-0 inline-14">Owner</span>
+                                    <span>Not attached</span>
+                                </p>
+                            )}
+                            <p className="body-sm flex gap-2 text-ink-muted">
+                                <span className="shrink-0 inline-14">Clients</span>
+                                <span>
+                                    {values.attachedBuyers.length
+                                        ? `${values.attachedBuyers.length} ${values.attachedBuyers.length === 1 ? "client" : "clients"}`
+                                        : "None attached"}
+                                </span>
+                            </p>
+                        </>
+                    ) : null}
                 </div>
             </article>
 
-            {stepIndex >= 2 ? (
-                <article className="overflow-hidden rounded-card bg-surface px-4 py-5 shadow-sm">
-                    <div className="mbe-4 flex items-start justify-between gap-3">
-                        <div className="min-inline-0">
-                            <p className="text-sm font-semibold text-ink">
-                                {isSale ? "Sale deal summary" : "Rent deal summary"}
-                            </p>
-                            <p className="mbs-0.5 text-xs text-ink-muted">Updates as you type</p>
-                        </div>
-                        <span
-                            className="
-                              inline-flex shrink-0 items-center gap-1 rounded-control bg-brand-soft
-                              px-2 py-1 text-xs font-medium text-brand-text
-                            "
-                        >
-                            <LockKeyhole className="block-3.5 inline-3.5" aria-hidden />
-                            Private
-                        </span>
+            <article className="overflow-hidden rounded-card bg-surface shadow-md">
+                <header className="flex items-start justify-between gap-2 px-4 pbs-4">
+                    <div className="min-inline-0">
+                        <h2 className="text-sm font-semibold text-ink">
+                            {isSale ? "Sale deal summary" : "Rent deal summary"}
+                        </h2>
+                        <p className="mbs-1 text-xs/5 text-ink-muted">Updates as you type</p>
                     </div>
-
-                    <div className="rounded-control bg-brand-soft/50 px-4 py-3">
-                        <p className="text-xs font-medium text-brand-text">Estimated commission</p>
-                        <AnimatedMoney
-                            value={money(brokerAfterSplit)}
-                            className="mts-1 block text-2xl tracking-[-0.02em] text-brand"
-                        />
-                        <p className="mbs-2 text-xs text-brand-text">
-                            Before applicable taxes and deductions.
-                        </p>
-                    </div>
-
-                    <div className="flex flex-col gap-2 py-4">
-                        {isSale && "ownerNet" in result ? (
-                            <>
-                                <MoneyRow
-                                    label="Sale price"
-                                    value={values.sale.expectedPrice}
-                                    title="The current asking price."
-                                />
-                                {values.area.areaSqft ? (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-control bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted">
+                        <LockKeyhole className="block-3.5 inline-3.5" aria-hidden /> Private
+                    </span>
+                </header>
+                {stepIndex >= 2 ? (
+                    <>
+                        <div className="px-4 py-3">
+                            {isSale && "ownerNet" in result ? (
+                                <>
                                     <MoneyRow
-                                        label="Rate per sq ft"
-                                        value={money(result.effectiveRatePerSqft)}
-                                        title="Sale price divided by area."
+                                        label="Sale price"
+                                        value={values.sale.expectedPrice}
+                                        title="The current asking price."
                                     />
-                                ) : null}
-                            </>
-                        ) : "ownerFirstPayout" in result ? (
-                            <>
-                                <MoneyRow
-                                    label="Monthly rent"
-                                    value={values.rent.monthlyRent}
-                                    title="The agreed monthly asking rent."
-                                />
-                                {deposit > 0 ? (
+                                    {values.area.areaSqft ? (
+                                        <MoneyRow
+                                            label="Rate per sq ft"
+                                            value={money(result.effectiveRatePerSqft)}
+                                            title="Sale price divided by area."
+                                        />
+                                    ) : null}
+                                </>
+                            ) : "ownerFirstPayout" in result ? (
+                                <>
                                     <MoneyRow
-                                        label="Deposit"
-                                        value={money(deposit)}
-                                        title="The security deposit in rupees."
+                                        label="Monthly rent"
+                                        value={values.rent.monthlyRent}
+                                        title="The agreed monthly asking rent."
                                     />
-                                ) : null}
-                            </>
-                        ) : null}
-                        <MoneyRow
-                            label={isSale ? "Gross commission" : "Gross brokerage"}
-                            value={money(result.gross)}
-                            title="Agreed fee before any co-broker split."
-                        />
-                        {coBrokerShare > 0 ? (
+                                    {deposit > 0 ? (
+                                        <MoneyRow
+                                            label="Deposit"
+                                            value={money(deposit)}
+                                            title="The security deposit in rupees."
+                                        />
+                                    ) : null}
+                                </>
+                            ) : null}
                             <MoneyRow
-                                label={`Co-broker (${coBrokerPercent}%)`}
-                                value={money(coBrokerShare)}
-                                prefix="−"
-                                title="Share paid to the co-broker."
+                                label={isSale ? "Gross commission" : "Gross brokerage"}
+                                value={money(result.gross)}
+                                title="Agreed fee before any co-broker split."
                             />
-                        ) : null}
-                    </div>
-
-                    <div className="border-bs border-border-warm px-2 py-1">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => void copySummary()}
-                            className="
-                              flex items-center justify-center gap-2 text-xs font-semibold
-                              text-brand-text inline-full min-block-10
-                              hover:bg-brand-soft hover:text-brand-text
-                              focus-visible:ring-2 focus-visible:ring-brand
-                            "
-                        >
-                            <Copy className="block-3.5 inline-3.5" aria-hidden /> Copy summary
-                        </Button>
-                    </div>
-                </article>
-            ) : (
-                <div className="rounded-card bg-surface px-4 py-5 shadow-sm">
-                    <p className="text-sm font-semibold text-ink">Live deal summary</p>
-                    <p className="mbs-1 text-sm/5 text-ink-muted">
+                            {coBrokerShare > 0 ? (
+                                <MoneyRow
+                                    label={`Co-broker (${coBrokerPercent}%)`}
+                                    value={money(coBrokerShare)}
+                                    prefix="−"
+                                    title="Share paid to the co-broker."
+                                />
+                            ) : null}
+                        </div>
+                        <div className="bg-brand-deep p-4 text-surface">
+                            <p className="text-xs font-medium text-brand-soft">
+                                Estimated commission
+                            </p>
+                            <AnimatedMoney
+                                value={money(brokerAfterSplit)}
+                                className="mbs-1 block text-3xl tracking-[-0.02em] text-surface"
+                            />
+                            <p className="mbs-2 text-xs/5 text-brand-soft">
+                                Before applicable taxes and deductions.
+                            </p>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                disabled={!hasPrice}
+                                onClick={() => void copySummary()}
+                                className="mbs-4 gap-2 border border-brand-soft/30 text-xs text-surface inline-full min-block-11 hover:bg-brand-soft/10 hover:text-surface focus-visible:ring-brand-soft"
+                            >
+                                {copiedSummary === summaryText ? (
+                                    <Check className="block-4 inline-4" aria-hidden />
+                                ) : (
+                                    <Copy className="block-4 inline-4" aria-hidden />
+                                )}
+                                <span role="status">
+                                    {copiedSummary === summaryText
+                                        ? "Summary copied"
+                                        : "Copy deal summary"}
+                                </span>
+                            </Button>
+                        </div>
+                    </>
+                ) : (
+                    <p className="px-4 pbs-4 pbe-5 text-sm/6 text-ink-muted">
                         {audience === "owner"
                             ? "Add the price on Price & deal to see the broker commission."
                             : "Add the price on Price & deal to see what you earn."}
                     </p>
-                </div>
-            )}
+                )}
+            </article>
         </aside>
     );
 }
@@ -572,11 +561,11 @@ function MoneyRow({
     return (
         <div
             className={cn(
-                "flex items-baseline justify-between gap-4 py-1 text-xs",
+                "flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs min-block-11",
                 strong ? "font-bold text-ink" : "text-ink-muted",
             )}
         >
-            <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1 min-inline-0">
                 {label}
                 <Popover>
                     <PopoverTrigger
@@ -584,10 +573,10 @@ function MoneyRow({
                             <Button
                                 type="button"
                                 variant="ghost"
-                                size="icon-xs"
+                                size="icon-sm"
                                 aria-label={`Explain ${label}`}
                                 className="
-                                  text-ink-subtle
+                                  text-ink-subtle min-block-11 min-inline-11
                                   hover:bg-brand-soft hover:text-brand-text
                                 "
                             />

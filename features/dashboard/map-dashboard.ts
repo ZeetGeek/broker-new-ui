@@ -154,7 +154,7 @@ function mapTodayAgenda(
             const time = formatTime24(scheduledAt);
             const timeLabel = formatTimeIn(scheduledAt);
             const person =
-                portal === "owner" ? visit.brokerName || "Broker" : visit.clientName || "Contact";
+                portal === "owner" ? visit.brokerName || "Broker" : visit.clientName || "Client";
             const item: TodayItem = {
                 id: visit.id,
                 kind: "site_visit",
@@ -207,7 +207,7 @@ function mapNextShowing(visit: DashboardVisit | undefined, portal: "broker" | "o
         brokerNote: "",
         status: visit.status === "confirmed" ? ("confirmed" as const) : ("awaiting_owner" as const),
         clientName:
-            portal === "owner" ? visit.brokerName || "Broker" : visit.clientName || "Contact",
+            portal === "owner" ? visit.brokerName || "Broker" : visit.clientName || "Client",
         clientPhoneDigits: phoneDigits(visit.clientPhone),
     };
 }

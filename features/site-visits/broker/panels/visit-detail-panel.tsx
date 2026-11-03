@@ -154,8 +154,8 @@ export function VisitDetailPanel({
                         <ContactBlock
                             label={
                                 visit.buyers.length > 1
-                                    ? `Contacts · ${visit.buyers.length}`
-                                    : "Contact"
+                                    ? `Clients · ${visit.buyers.length}`
+                                    : "Client"
                             }
                             person={visit.buyers[0]}
                             message={buyerMessage}
@@ -198,7 +198,7 @@ export function VisitDetailPanel({
                                             ? `${visit.outcome.interest} · ${visit.outcome.nextStep.replaceAll("_", " ")}`
                                             : USE_MOCK_VISITS
                                               ? "Not logged yet"
-                                              : "Saving outcomes is not available yet. Manage contact notes and stages in Pipeline."}
+                                              : "Saving outcomes is not available yet. Manage client notes and stages in Pipeline."}
                                     </p>
                                 </div>
                                 {!visit.outcome && USE_MOCK_VISITS ? (

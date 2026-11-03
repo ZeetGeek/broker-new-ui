@@ -194,10 +194,9 @@ export const VisitCard = memo(function VisitCard({
                 highlightOnHover={false}
                 left={{ name: visit.owner.name, avatarUrl: visit.owner.avatarUrl, role: "Owner" }}
                 right={{
-                    name: buyer?.name ?? "No contact linked",
+                    name: buyer?.name ?? "No client linked",
                     avatarUrl: buyer?.avatarUrl,
-                    role:
-                        visit.buyers.length > 1 ? `Contact +${visit.buyers.length - 1}` : "Contact",
+                    role: visit.buyers.length > 1 ? `Client +${visit.buyers.length - 1}` : "Client",
                 }}
             />
 
@@ -208,7 +207,7 @@ export const VisitCard = memo(function VisitCard({
                     const actionLabel = isWhatsApp ? "WhatsApp" : "Call";
                     const contacts = [
                         { person: visit.owner, label: "Owner" },
-                        ...visit.buyers.map((person) => ({ person, label: "Contact" })),
+                        ...visit.buyers.map((person) => ({ person, label: "Client" })),
                     ];
                     return (
                         <DropdownMenu key={channel}>
@@ -219,7 +218,7 @@ export const VisitCard = memo(function VisitCard({
                                         variant={isWhatsApp ? "accent" : "outline"}
                                         size="md"
                                         className="flex-1 min-inline-0"
-                                        aria-label={`${actionLabel} contacts for ${visit.property.title}`}
+                                        aria-label={`${actionLabel} clients for ${visit.property.title}`}
                                     >
                                         <ActionIcon aria-hidden />
                                         {actionLabel}
@@ -259,7 +258,7 @@ export const VisitCard = memo(function VisitCard({
                                 {visit.buyers.length === 0 ? (
                                     <DropdownMenuItem disabled>
                                         <ActionIcon aria-hidden />
-                                        No contact linked
+                                        No client linked
                                     </DropdownMenuItem>
                                 ) : null}
                             </DropdownMenuContent>

@@ -124,10 +124,10 @@ export function BookingDrawer({
     );
     const selectedBuyers = allBuyers.filter((buyer) => buyerIds.includes(buyer.id));
     const buyerListMessage = bookableQuery.isPending
-        ? "Loading contacts for this property…"
+        ? "Loading clients for this property…"
         : bookableQuery.isError
-          ? "Couldn’t load contacts for this property. Close and try again."
-          : "No contacts have a lead on this property yet. Add a new contact, or link one from Contacts.";
+          ? "Couldn’t load clients for this property. Close and try again."
+          : "No clients have a lead on this property yet. Add a new client, or link one from Clients.";
     const localConflict = useMemo<ConflictResult>(
         () =>
             slot && item
@@ -245,7 +245,7 @@ export function BookingDrawer({
                 <AppModalHeader title="Book this visit" />
                 <div className="shrink-0 border-be border-border-warm p-5">
                     <p className="body-sm text-ink-muted">
-                        One screen. Your contact, the timing, and any clash.
+                        One screen. Your client, the timing, and any clash.
                     </p>
                     <div className="mbs-4 flex gap-3 rounded-inner bg-surface-muted p-3">
                         <div

@@ -76,7 +76,7 @@ export function createBuyerFormSchema(
 ) {
     return z
         .object({
-            name: z.string().trim().min(2, "Enter the contact's name").max(80, "Name is too long"),
+            name: z.string().trim().min(2, "Enter the client's name").max(80, "Name is too long"),
             phone: z
                 .string()
                 .refine(

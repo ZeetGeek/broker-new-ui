@@ -17,7 +17,7 @@ import { DigitPopIn } from "./digit-pop-in";
 import type { PipelineData, PipelineStage, PipelineStageKey } from "./mock-data";
 import { TextLinkButton } from "./text-link-button";
 
-const PIPELINE_INFO = "Your active contacts and which deal stage each one is in.";
+const PIPELINE_INFO = "Your active clients and which deal stage each one is in.";
 
 const STAGE_SWATCH_CLASS: Record<PipelineStageKey, string> = {
     new: "bg-stage-1",
@@ -69,7 +69,7 @@ function PipelineSegmentedBar({ stages }: { stages: PipelineStage[] }) {
                     >
                         <Link
                             href={stageHref(stage.key)}
-                            aria-label={`${stage.count} contacts in ${stage.label}`}
+                            aria-label={`${stage.count} clients in ${stage.label}`}
                             className={cn(
                                 "flex flex-1 items-center justify-center outline-none",
                                 "transition-[filter] duration-160",
@@ -131,8 +131,8 @@ function PipelineLegend({ stages, className }: { stages: PipelineStage[]; classN
 function StalledRow({ stalled }: { stalled: NonNullable<PipelineData["stalled"]> }) {
     const title =
         stalled.count === 1
-            ? "1 contact has gone quiet"
-            : `${stalled.count} contacts have gone quiet`;
+            ? "1 client has gone quiet"
+            : `${stalled.count} clients have gone quiet`;
 
     return (
         <div className="flex items-start gap-3 py-3">
@@ -204,10 +204,10 @@ function EmptyPipeline({ className }: { className?: string }) {
 
             <EmptyState
                 icon={Users}
-                heading="No contacts yet"
-                description="Add a contact to start tracking deals."
+                heading="No clients yet"
+                description="Add a client to start tracking deals."
             >
-                <TextLinkButton href={BROKER_ADD_BUYER_HREF}>Add contact</TextLinkButton>
+                <TextLinkButton href={BROKER_ADD_BUYER_HREF}>Add client</TextLinkButton>
             </EmptyState>
         </section>
     );
@@ -229,9 +229,7 @@ export function PipelineCard({ data, className }: PipelineCardProps) {
                 <CardLabel info={PIPELINE_INFO}>
                     <span id="pipeline-card-heading">Pipeline</span>
                 </CardLabel>
-                <p className="eyebrow shrink-0 text-ink-muted">
-                    {data.activeTotal} active contacts
-                </p>
+                <p className="eyebrow shrink-0 text-ink-muted">{data.activeTotal} active clients</p>
             </div>
 
             <div className="mbs-4 flex flex-1 flex-col min-block-0">

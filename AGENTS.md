@@ -75,7 +75,7 @@ Use these exact terms. They mean specific things.
 | **Portal**               | The owner-side vs broker-side split of the app. A user sees one portal, never both.                                  |
 | **Pipeline**             | The broker's CRM stages a contact moves through toward a closed deal.                                                |
 
-Broker UI terminology: use **Contact** / **Contacts** for the broker’s CRM records everywhere (navigation, counts, actions, forms, and messages). Buyer, Tenant, and Investor describe contact types. Reserve **Customer** for billing language about the broker as the platform’s customer. API fields, internal identifiers, and routes may retain their existing names.
+Broker UI terminology: use **Client** / **Clients** for the broker’s CRM records everywhere (navigation, counts, actions, forms, and messages). Buyer, Tenant, and Investor describe client types. Reserve **Customer** for billing language about the broker as the platform’s customer. API fields, internal identifiers, and routes may retain their existing names.
 
 Note on user-facing language: internal terms are not always the right words to
 show users. "Request to represent" reads better to an owner as something like

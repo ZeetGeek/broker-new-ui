@@ -157,8 +157,8 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
         id: "add_contact",
         keys: "KeyN",
         displayKeys: ["N"],
-        label: "Add contact / owner",
-        group: "Contacts",
+        label: "Add client / owner",
+        group: "Clients",
         scope: "list",
     },
 ] as const;

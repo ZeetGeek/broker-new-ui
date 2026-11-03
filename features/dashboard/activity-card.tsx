@@ -23,7 +23,7 @@ import type { ActivityData, ActivityEventType, ActivityItem } from "./mock-data"
 
 export type { ActivityData, ActivityItem } from "./mock-data";
 
-const ACTIVITY_INFO = "Recent updates across your properties, contacts, and visits.";
+const ACTIVITY_INFO = "Recent updates across your properties, clients, and visits.";
 const OWNER_ACTIVITY_INFO =
     "Recent updates across your properties, broker requests, visits, and offers.";
 
@@ -84,7 +84,7 @@ function EmptyActivity({ portal }: { portal: "broker" | "owner" }) {
             description={
                 portal === "owner"
                     ? "Broker requests, visit bookings, and offer updates will appear here."
-                    : "Updates to your properties, contacts, and visits will appear here."
+                    : "Updates to your properties, clients, and visits will appear here."
             }
         >
             <ShortcutKbdMessage shortcutId="notifications">to view all activity</ShortcutKbdMessage>

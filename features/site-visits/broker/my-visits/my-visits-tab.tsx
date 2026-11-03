@@ -162,7 +162,7 @@ export function MyVisitsTab({
                     .find((buyer) => buyer.id === buyerId)?.name;
                 next.push({
                     key: "buyer",
-                    label: name ?? "Selected contact",
+                    label: name ?? "Selected client",
                     clear: () => onClearPeople("buyerId"),
                 });
             }
@@ -179,7 +179,7 @@ export function MyVisitsTab({
                 next.push({
                     key: "lead",
                     label: visit
-                        ? `${visit.buyers[0]?.name ?? "Contact"} · ${visit.property.title}`
+                        ? `${visit.buyers[0]?.name ?? "Client"} · ${visit.property.title}`
                         : "Selected lead",
                     clear: () => onClearPeople("leadId"),
                 });

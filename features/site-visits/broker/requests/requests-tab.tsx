@@ -187,7 +187,7 @@ export function RequestsTab({
                                         }
                                         onNudge={() => {
                                             const text = encodeURIComponent(
-                                                `Hello ${request.owner.name}, I had asked for a ${formatVisitTime(request.preferredStartsAt)} visit at ${request.property.title} for my contact. Can you confirm if that time works?`,
+                                                `Hello ${request.owner.name}, I had asked for a ${formatVisitTime(request.preferredStartsAt)} visit at ${request.property.title} for my client. Can you confirm if that time works?`,
                                             );
                                             if (request.owner.phoneDigits)
                                                 window.open(

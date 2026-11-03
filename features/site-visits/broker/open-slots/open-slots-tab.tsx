@@ -207,7 +207,7 @@ export function OpenSlotsTab({
                   {
                       key: "buyer",
                       label:
-                          buyers.find((buyer) => buyer.id === buyerId)?.name ?? "Selected contact",
+                          buyers.find((buyer) => buyer.id === buyerId)?.name ?? "Selected client",
                       clear: () => onBuyerChange(undefined),
                   },
               ]
@@ -269,7 +269,7 @@ export function OpenSlotsTab({
             >
                 <AppModalHeader title="Filter open slots" />
                 <DialogDescription className="px-(--dialog-pad) pbs-3">
-                    Pick a contact or owner to narrow the leads, then pick a lead to see its
+                    Pick a client or owner to narrow the leads, then pick a lead to see its
                     property.
                 </DialogDescription>
                 <div className="overflow-y-auto p-5 max-block-[68dvh]">

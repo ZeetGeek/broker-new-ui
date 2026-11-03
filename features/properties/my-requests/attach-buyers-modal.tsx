@@ -175,7 +175,7 @@ export function AttachBuyersModal({
                 })
                 .catch(() => {
                     if (cancelled) return;
-                    toast.error("Could not load your contacts. Try again.");
+                    toast.error("Could not load your clients. Try again.");
                     setClients([]);
                     setAttachedIds([]);
                     setSelectedIds([]);
@@ -218,15 +218,15 @@ export function AttachBuyersModal({
             .then(() => {
                 toast.success(
                     toAttach.length === 1
-                        ? "Contact linked to this property."
-                        : `${toAttach.length} contacts linked to this property.`,
+                        ? "Client linked to this property."
+                        : `${toAttach.length} clients linked to this property.`,
                 );
                 onSaved();
                 onOpenChange(false);
             })
             .catch((error) => {
                 toast.error(
-                    error instanceof Error ? error.message : "Could not link contacts. Try again.",
+                    error instanceof Error ? error.message : "Could not link clients. Try again.",
                 );
             })
             .finally(() => setIsSaving(false));
@@ -237,7 +237,7 @@ export function AttachBuyersModal({
             open={open}
             onOpenChange={onOpenChange}
             size="lg"
-            title="Add contacts"
+            title="Add clients"
             description={`Pick who you will show ${request.title} to. You can select one or many.`}
             header={
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -245,8 +245,8 @@ export function AttachBuyersModal({
                         size="sm"
                         value={query}
                         onValueChange={setQuery}
-                        placeholder="Search contacts"
-                        aria-label="Search your contacts"
+                        placeholder="Search clients"
+                        aria-label="Search your clients"
                         startIcon={Search}
                         clearable
                         wrapperClassName="min-inline-56 flex-1"
@@ -269,7 +269,7 @@ export function AttachBuyersModal({
                                 })
                                 .catch(() =>
                                     toast.error(
-                                        "Contact created, but the list could not refresh. Reopen this dialog to try again.",
+                                        "Client created, but the list could not refresh. Reopen this dialog to try again.",
                                     ),
                                 )
                                 .finally(() => setIsLoading(false));
@@ -279,7 +279,7 @@ export function AttachBuyersModal({
             }
             footer={
                 <AppModalFooter
-                    primaryLabel={isSaving ? "Saving…" : "Save contacts"}
+                    primaryLabel={isSaving ? "Saving…" : "Save clients"}
                     primaryIcon={<UserPlus aria-hidden strokeWidth={1.75} />}
                     onPrimary={handleSave}
                     primaryDisabled={isLoading || isSaving}
@@ -292,11 +292,11 @@ export function AttachBuyersModal({
             {isLoading ? null : visibleClients.length === 0 ? (
                 <EmptyState
                     icon={Users}
-                    heading={query ? "No contacts match your search" : "You have no contacts yet"}
+                    heading={query ? "No clients match your search" : "You have no clients yet"}
                     description={
                         query
                             ? "Try a different name, phone number or area."
-                            : "Create a contact above, then link them to this property."
+                            : "Create a client above, then link them to this property."
                     }
                 />
             ) : (
@@ -304,7 +304,7 @@ export function AttachBuyersModal({
                     items={visibleClients}
                     getKey={(client) => client.id}
                     estimateItemHeight={96}
-                    ariaLabel="Contacts available to attach"
+                    ariaLabel="Clients available to attach"
                     renderItem={(client) => {
                         const isSelected = selectedIds.includes(client.id);
                         return (

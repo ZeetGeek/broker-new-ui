@@ -45,7 +45,7 @@ export function VisitFiltersDialog({
             >
                 <AppModalHeader title="Filter my visits" />
                 <DialogDescription className="px-(--dialog-pad) pbs-3">
-                    Pick a contact or owner to narrow the leads, then pick a lead to see its visits.
+                    Pick a client or owner to narrow the leads, then pick a lead to see its visits.
                 </DialogDescription>
                 <div className="overflow-y-auto p-5 max-block-[68dvh]">
                     <SlotFilters

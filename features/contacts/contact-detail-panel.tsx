@@ -594,7 +594,7 @@ function BuyerPanel({
             </AppModal>
 
             <section className="scroll-mbs-5 pbe-6">
-                <h3 className="body mbe-4 font-bold text-ink">Contact details</h3>
+                <h3 className="body mbe-4 font-bold text-ink">Client details</h3>
                 <IconFactGrid
                     onAdd={onEdit}
                     facts={[
@@ -632,7 +632,7 @@ function BuyerPanel({
                     {saved ? <span className="body-sm font-medium text-success">Saved</span> : null}
                 </div>
                 <textarea
-                    aria-label="Contact notes"
+                    aria-label="Client notes"
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
                     onBlur={() => void save({ notes })}
@@ -897,7 +897,7 @@ export function ContactDetailPanel({
             <AppModal
                 open
                 onOpenChange={onOpenChange}
-                title={loadError ? "Contact unavailable" : "Loading contact"}
+                title={loadError ? "Client unavailable" : "Loading client"}
                 size="md"
                 padding="md"
                 className="contacts-detail-drawer"

@@ -68,7 +68,7 @@ const rawNotificationsApi = {
                     actorUserId: "owner_1",
                     type: "representation_approved",
                     title: "Jayesh P. approved your request",
-                    body: "1 BHK · Satellite · you can add a contact now",
+                    body: "1 BHK · Satellite · you can add a client now",
                     href: "/broker/my-deals",
                     referenceType: "representation",
                     referenceId: "req_042",

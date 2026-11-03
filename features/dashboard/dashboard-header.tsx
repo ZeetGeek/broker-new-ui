@@ -73,11 +73,11 @@ function buildSummaryLines({
               ]
             : []),
         pipelineActiveTotal === 0 ? (
-            "Add a contact when a deal comes in"
+            "Add a client when a deal comes in"
         ) : (
             <>
                 You&apos;re working{" "}
-                {countPhrase(pipelineActiveTotal, "contact right now", "contacts right now")}
+                {countPhrase(pipelineActiveTotal, "client right now", "clients right now")}
             </>
         ),
         followUpCount === 0 ? (
@@ -86,8 +86,8 @@ function buildSummaryLines({
             <>
                 {countPhrase(
                     followUpsOverdueCount,
-                    "contact waiting for your call",
-                    "contacts waiting for your call",
+                    "client waiting for your call",
+                    "clients waiting for your call",
                 )}
             </>
         ) : (
@@ -247,7 +247,7 @@ export function DashboardHeader({
                         render={<Link href="/broker/contacts" />}
                     >
                         <UserRoundPlus aria-hidden strokeWidth={1.75} />
-                        Add contact
+                        Add client
                     </Button>
                 </>
             }

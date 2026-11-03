@@ -48,7 +48,7 @@ export function MyDealsIntro({
                 lines={lines}
                 isLoading={isLoading}
                 loadingLabel="Loading request and invitation counts"
-                loadingPlaceholder="Add interested contacts or tenants to start working on a property"
+                loadingPlaceholder="Add interested clients or tenants to start working on a property"
                 reservePlaceholder
             />
         </h1>

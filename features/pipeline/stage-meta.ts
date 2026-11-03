@@ -51,7 +51,7 @@ export type StageMeta = {
 export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
     new: {
         label: "New",
-        hint: "You have matched this contact to this property but not spoken to them about it yet.",
+        hint: "You have matched this client to this property but not spoken to them about it yet.",
         icon: Sparkles,
         dotClass: "bg-stage-1",
         advanceLabel: "Move to new",
@@ -63,7 +63,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
     },
     contacted: {
         label: "Contacted",
-        hint: "You have spoken to the contact about this property. Next step is booking a visit.",
+        hint: "You have spoken to the client about this property. Next step is booking a visit.",
         icon: PhoneCall,
         dotClass: "bg-stage-2",
         advanceLabel: "Mark contacted",
@@ -75,7 +75,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
     },
     visit: {
         label: "Site visit",
-        hint: "A visit is booked or done. Next step is an offer from the contact.",
+        hint: "A visit is booked or done. Next step is an offer from the client.",
         icon: CalendarCheck,
         dotClass: "bg-stage-3",
         advanceLabel: "Book a visit",
@@ -87,7 +87,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
     },
     negotiation: {
         label: "Negotiation",
-        hint: "The contact has made an offer and you are agreeing a price with the owner.",
+        hint: "The client has made an offer and you are agreeing a price with the owner.",
         icon: Handshake,
         dotClass: "bg-stage-4",
         advanceLabel: "Start negotiating",
@@ -110,14 +110,14 @@ export type OutcomeMeta = {
 export const DEAL_OUTCOME_META: Record<DealOutcome, OutcomeMeta> = {
     closed: {
         label: "Closed",
-        hint: "The contact bought this property. The deal is done.",
+        hint: "The client bought this property. The deal is done.",
         icon: CircleCheck,
         badgeVariant: "brand",
         toneClass: "text-success",
     },
     lost: {
         label: "Lost",
-        hint: "This contact will not be buying this property.",
+        hint: "This client will not be buying this property.",
         icon: LostIcon,
         badgeVariant: "neutral",
         toneClass: "text-ink-muted",
@@ -128,8 +128,8 @@ export const DEAL_OUTCOME_META: Record<DealOutcome, OutcomeMeta> = {
 export const DEAL_LOST_REASON_LABEL: Record<DealLostReason, string> = {
     price: "Could not agree a price",
     bought_elsewhere: "Bought somewhere else",
-    not_responding: "Contact stopped replying",
-    changed_mind: "Contact changed their mind",
+    not_responding: "Client stopped replying",
+    changed_mind: "Client changed their mind",
 };
 
 /** Known API codes use plain-language labels; saved free text stays as supplied. */

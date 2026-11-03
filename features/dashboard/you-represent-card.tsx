@@ -60,8 +60,8 @@ function activityStatus(property: RepresentedPropertyItem): {
 
     const interested =
         property.interestedCount === 1
-            ? "1 contact interested"
-            : `${property.interestedCount} contacts interested`;
+            ? "1 client interested"
+            : `${property.interestedCount} clients interested`;
 
     const lastActivity =
         property.daysSinceActivity === 0

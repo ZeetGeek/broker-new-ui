@@ -18,20 +18,20 @@ function buildLines(summary: ContactsSummary | null, tab: ContactsTab): string[]
             "Find the owner behind your next deal.",
         ];
     }
-    if (summary.buyerCount === 0) return ["Add your first contact and capture what they need."];
+    if (summary.buyerCount === 0) return ["Add your first client and capture what they need."];
     return [
         "Everyone you’re helping find a property.",
         "Keep budgets and preferred areas in view.",
-        "Link contacts to properties that fit.",
-        "Your next contact call starts here.",
+        "Link clients to properties that fit.",
+        "Your next client call starts here.",
     ];
 }
 
 function buildFact(summary: ContactsSummary | null, tab: ContactsTab): string {
-    if (!summary) return tab === "owners" ? "Owners" : "Contacts";
+    if (!summary) return tab === "owners" ? "Owners" : "Clients";
     const count = tab === "owners" ? summary.ownerCount : summary.buyerCount;
-    if (count === 0) return tab === "owners" ? "No owners yet" : "No contacts yet";
-    return `${count} ${tab === "owners" ? (count === 1 ? "owner" : "owners") : count === 1 ? "contact" : "contacts"}`;
+    if (count === 0) return tab === "owners" ? "No owners yet" : "No clients yet";
+    return `${count} ${tab === "owners" ? (count === 1 ? "owner" : "owners") : count === 1 ? "client" : "clients"}`;
 }
 
 export function ContactsIntro({
@@ -54,13 +54,13 @@ export function ContactsIntro({
                     key={`${tab}:${lines.join("|")}`}
                     lines={lines}
                     isLoading={isLoading}
-                    loadingLabel={`Loading your ${tab === "owners" ? "owner" : "contact"} summary`}
+                    loadingLabel={`Loading your ${tab === "owners" ? "owner" : "client"} summary`}
                     loadingPlaceholder={
                         tab === "owners"
                             ? "Your owners and their linked properties"
-                            : "Your contacts and what they’re looking for"
+                            : "Your clients and what they’re looking for"
                     }
-                    errorMessage={hasError ? "Could not load your contact counts." : undefined}
+                    errorMessage={hasError ? "Could not load your client counts." : undefined}
                 />
             </h1>
         </div>

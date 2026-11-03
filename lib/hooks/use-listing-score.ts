@@ -12,9 +12,15 @@ export type ListingScoreTip = {
     points: number;
 };
 
+export type ListingScoreTask = ListingScoreTip & {
+    completed: boolean;
+    locked: boolean;
+};
+
 export function useListingScore(values: PropertyDraftValues): {
     score: number;
     tips: ListingScoreTip[];
+    tasks: ListingScoreTask[];
 } {
     return useMemo(() => calculateListingScore(values), [values]);
 }
@@ -22,6 +28,7 @@ export function useListingScore(values: PropertyDraftValues): {
 export function calculateListingScore(values: PropertyDraftValues): {
     score: number;
     tips: ListingScoreTip[];
+    tasks: ListingScoreTask[];
 } {
     const checks: {
         done: boolean;
@@ -96,7 +103,15 @@ export function calculateListingScore(values: PropertyDraftValues): {
         return true;
     });
     const total = applicable.reduce((sum, check) => sum + check.points, 0);
+    const firstIncomplete = applicable.findIndex((check) => !check.done);
     return {
+        tasks: applicable.map(({ done, label, step, points }, index) => ({
+            label,
+            step,
+            points,
+            completed: done,
+            locked: !done && index !== firstIncomplete,
+        })),
         score: Math.round(
             (applicable.reduce((sum, check) => sum + (check.done ? check.points : 0), 0) / total) *
                 100,

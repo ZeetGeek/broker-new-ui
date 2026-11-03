@@ -335,7 +335,7 @@ export function PropertyCardMenu({
                             aria-disabled={isAddBuyerBlocked || undefined}
                             title={
                                 isAddBuyerBlocked
-                                    ? "Attach an owner first to attach contacts"
+                                    ? "Attach an owner first to attach clients"
                                     : undefined
                             }
                             onClick={() => {
@@ -344,7 +344,7 @@ export function PropertyCardMenu({
                             }}
                         >
                             <PropertyMenuIcon name="client" aria-hidden className={ICON_CLASS} />
-                            Attach contact
+                            Attach client
                         </DropdownMenuItem>
                     ) : null}
 

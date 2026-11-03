@@ -21,16 +21,18 @@ FORM: Warm workspace (user-locked, code-led). Signature interaction: step conten
 
 FINISH: Code-led finish review completed 2026-10-06 against the Warm workspace contract. Authenticated screenshot captures were unavailable (route gated). Material fixes applied: Draft badge → neutral, mobile listing-score chrome → surface, FormSection nested card flattened, SectionLabel sentence case. Live brand-ink deal summary kept as the one private-income attention card. `docs/DESIGN.md` remains system source of truth; no new global tokens.
 
-## Deal summary card refinement
+## Live sidebar contract
 
-THESIS: Read the deal breakdown first and finish on the estimated commission. Keep the calculation together in one surface.
+LISTING SCORE: Retain the ordered checklist as tasks are completed. Only the first unfinished applicable task is actionable; later unfinished tasks are disabled with a lock. Completed rows show a check and Complete. Recompute from draft values so clearing a requirement relocks later unfinished tasks. Rows use transparent backgrounds without a rectangular hover fill; keyboard focus remains visible. Desktop and mobile share the same checklist.
 
-OWN-WORLD: Existing white surface, warm canvas, brand-deep total section, brand-soft supporting text, shared radius and shadow tokens. Preserve the listing preview and surrounding form.
+THESIS: Recognize the property first, check the deal breakdown, then finish on estimated commission. The sidebar extends the existing warm workspace.
 
-STORY: Check price and fees, understand the commission after any co-broker split, and copy the summary.
+OWN-WORLD: Two white cards on cream canvas, shared card corners and light resting shadows, restrained green prices, and one deep-green commission footer with soft-green supporting text. Draft remains neutral. These choices follow `docs/DESIGN.md` colour, surface and mobile guidance; no global tokens or system rules change.
 
-FIRST VIEWPORT: Compact title and private indicator above aligned monetary rows. A full-width deep-green footer contains the commission, tax caveat and copy action. Rows wrap within narrow containers; help and copy targets are at least 44px.
+STORY: Recognize the property through the actual listing-card hierarchy: cover and availability, draft status, asking price, property headline and location, then the broker's attached owner and contacts. Check commission after any co-broker split and copy the summary.
 
-FORM: Local extension of the established warm workspace, code-led; no world-selection seed required. Existing digit animation remains the sole authored motion. Copy success stays visible until the summary changes.
+FIRST VIEWPORT: Photo first (full-width, 4:3), with no visible preview header. Availability badges overlay the photo; a top-right ellipsis menu holds cover replacement and removal. The empty state offers Add cover photo. Below: Status with neutral Draft, `PriceWithCommission`, a one-line headline using shared `formatPropertyTypeDisplay` / `formatPropertyCardArea` and exact `BEDROOM_OPTIONS` labels (preserving 1 RK and 6–10), then location. Broker owner/contact rows reflect actual draft attachments, including empty states. The deal card places aligned monetary rows on white before its full-width deep-green footer containing commission, the tax caveat and copy action. Rows wrap in narrow containers; help and copy targets are at least 44px.
 
-FINISH: Verify source, typecheck and scoped lint. Browser inventory is empty and IAB unavailable, so desktop/mobile screenshots and clipboard interaction cannot be verified in this session. Independent finish review is scoped to source. No new raster assets or global tokens.
+FORM: Local, code-led extension of the established warm workspace; no new visual world. Existing digit animation remains the sole authored motion. Copy success changes the icon and visible status and stays until the summary changes. The compact variant retains the commission and price summary.
+
+FINISH: Source verified against `live-summary-panel.tsx` and the incumbent warm workspace contract; typecheck passes. Live browser screenshots were unavailable, so rendered desktop/mobile layout and clipboard interaction remain unverified. No new raster assets or global tokens.

@@ -677,7 +677,7 @@ export function DealCard({
                                                     )}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    aria-label={`WhatsApp contact ${deal.buyer.name} at ${formatPhoneIn(deal.buyer.phoneDigits)}`}
+                                                    aria-label={`WhatsApp client ${deal.buyer.name} at ${formatPhoneIn(deal.buyer.phoneDigits)}`}
                                                     onClick={stopCard}
                                                 />
                                             }

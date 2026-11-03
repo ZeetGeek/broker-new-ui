@@ -16,7 +16,7 @@ export function PipelineFirstRunEmpty() {
         <EmptyState
             icon={LayoutGrid}
             heading="No deals yet"
-            description="Add a property to My Listings, then link a contact to it from Contacts. The deal will appear here automatically."
+            description="Add a property to My Listings, then link a client to it from Clients. The deal will appear here automatically."
             className={EMPTY_FRAME}
         >
             <Button
@@ -25,7 +25,7 @@ export function PipelineFirstRunEmpty() {
                 nativeButton={false}
                 render={<Link href={BROKER_ADD_DEAL_HREF} />}
             >
-                Link a contact to a property
+                Link a client to a property
             </Button>
         </EmptyState>
     );
