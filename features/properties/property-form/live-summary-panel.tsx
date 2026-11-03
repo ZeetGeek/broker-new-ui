@@ -14,6 +14,7 @@ import { derive } from "@/lib/visibility/derive";
 import { FIELD_RULES } from "@/lib/visibility/rules";
 
 import { AppImage } from "@/components/shared/app-image";
+import { AttachedBuyersRow } from "@/components/shared/attached-people-row";
 import {
     Check,
     CircleHelp,
@@ -236,16 +237,16 @@ export function LiveSummaryPanel({
         return (
             <div className="flex items-center justify-between gap-4">
                 <div className="min-inline-0">
-                    <p className="text-xs text-surface/65">Estimated commission</p>
+                    <p className="text-xs text-ink-muted">Estimated commission</p>
                     <AnimatedMoney
                         value={money(brokerAfterSplit)}
-                        className="text-base text-surface"
+                        className="text-base text-brand-text"
                     />
-                    <p className="text-xs text-surface/65">
+                    <p className="text-xs text-ink-muted">
                         Before applicable taxes and deductions.
                     </p>
                 </div>
-                <p className="truncate text-xs text-surface/70">
+                <p className="truncate text-xs text-ink-muted">
                     {price ? formatMoneyCompact(price) : "Add a price to calculate"}
                 </p>
             </div>
@@ -406,14 +407,10 @@ export function LiveSummaryPanel({
                                     <span>Not attached</span>
                                 </p>
                             )}
-                            <p className="body-sm flex gap-2 text-ink-muted">
-                                <span className="shrink-0 inline-14">Clients</span>
-                                <span>
-                                    {values.attachedBuyers.length
-                                        ? `${values.attachedBuyers.length} ${values.attachedBuyers.length === 1 ? "client" : "clients"}`
-                                        : "None attached"}
-                                </span>
-                            </p>
+                            <AttachedBuyersRow
+                                buyers={values.attachedBuyers}
+                                emptyLabel="None attached"
+                            />
                         </>
                     ) : null}
                 </div>
@@ -479,23 +476,23 @@ export function LiveSummaryPanel({
                                 />
                             ) : null}
                         </div>
-                        <div className="bg-brand-deep p-4 text-surface">
-                            <p className="text-xs font-medium text-brand-soft">
+                        <div className="border-bs border-border-warm bg-surface p-4">
+                            <p className="text-xs font-medium text-ink-muted">
                                 Estimated commission
                             </p>
                             <AnimatedMoney
                                 value={money(brokerAfterSplit)}
-                                className="mbs-1 block text-3xl tracking-[-0.02em] text-surface"
+                                className="mbs-1 block text-3xl tracking-[-0.02em] text-brand-text"
                             />
-                            <p className="mbs-2 text-xs/5 text-brand-soft">
+                            <p className="mbs-2 text-xs/5 text-ink-muted">
                                 Before applicable taxes and deductions.
                             </p>
                             <Button
                                 type="button"
-                                variant="ghost"
+                                variant="outline"
                                 disabled={!hasPrice}
                                 onClick={() => void copySummary()}
-                                className="mbs-4 gap-2 border border-brand-soft/30 text-xs text-surface inline-full min-block-11 hover:bg-brand-soft/10 hover:text-surface focus-visible:ring-brand-soft"
+                                className="mbs-4 gap-2 inline-full min-block-11"
                             >
                                 {copiedSummary === summaryText ? (
                                     <Check className="block-4 inline-4" aria-hidden />

@@ -126,6 +126,58 @@ test("photos being compressed cannot satisfy publish requirements", () => {
     assert.equal(stepSchemas.media.safeParse(values).success, false);
 });
 
+test("Quick add publishing requires a cover plus three gallery photos; drafts do not", () => {
+    const values = listing();
+    const allPhotos = structuredClone(values.media.photos);
+    for (const galleryCount of [0, 1, 2]) {
+        values.media.photos = allPhotos.slice(0, galleryCount + 1);
+        assert.ok(
+            !quickAddValidationIssues(values, "broker", "draft").some(
+                (issue) => issue.path === "media.photos",
+            ),
+        );
+        assert.ok(
+            quickAddValidationIssues(values, "broker", "publish").some(
+                (issue) => issue.path === "media.photos",
+            ),
+        );
+        assert.equal(fieldRuleSchemas.media.safeParse(values).success, false);
+    }
+    values.media.photos = allPhotos;
+    assert.ok(
+        !quickAddValidationIssues(values, "broker", "publish").some((issue) =>
+            issue.path.startsWith("media."),
+        ),
+    );
+    assert.equal(fieldRuleSchemas.media.safeParse(values).success, true);
+
+    values.media.photos = allPhotos.filter((photo) => !photo.isCover);
+    assert.ok(
+        quickAddValidationIssues(values, "broker", "publish").some(
+            (issue) => issue.path === "media.cover",
+        ),
+    );
+});
+
+test("Quick add photo requirements count only usable non-cover photos", () => {
+    const values = listing();
+    for (const status of ["error", "processing"] as const) {
+        values.media.photos[1]!.status = status;
+        assert.ok(
+            quickAddValidationIssues(values, "broker", "publish").some(
+                (issue) => issue.path === "media.photos",
+            ),
+        );
+        assert.equal(fieldRuleSchemas.media.safeParse(values).success, false);
+    }
+    values.media.photos[1]!.status = "queued";
+    assert.ok(
+        !quickAddValidationIssues(values, "broker", "publish").some(
+            (issue) => issue.path === "media.photos",
+        ),
+    );
+});
+
 test("carpet area cannot exceed total area", () => {
     const values = listing();
     values.area.carpetArea = 1600;

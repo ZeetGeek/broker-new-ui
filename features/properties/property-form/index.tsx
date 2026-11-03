@@ -34,6 +34,7 @@ import {
     QUICK_ADD_VALIDATION_FIELDS,
     quickAddValidationIssues,
 } from "@/lib/properties/form-validation";
+import { scrollPropertyFormField } from "@/lib/properties/scroll-form-field";
 import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { OWNER_PROPERTIES_HREF, ownerPropertyDetailHref } from "@/lib/routes/owner";
 import {
@@ -633,9 +634,10 @@ export function PropertyForm({
                         "Couldn't verify attached contacts. Please try publishing again.";
             }
             if (issues.length) {
-                setEntryMode("full");
-                setStep("media");
-                setHighestUnlocked(FORM_STEPS.length - 1);
+                if (entryMode === "full") {
+                    setStep("media");
+                    setHighestUnlocked(FORM_STEPS.length - 1);
+                }
                 for (const issue of issues)
                     methods.setError(issue.path, { type: "publish", message: issue.message });
                 setFormBanner("Attach an owner and at least one contact before publishing.");
@@ -671,14 +673,14 @@ export function PropertyForm({
                 return;
             }
         }
-        // Quick add checks only its own fields, for both drafts and publishing, and
-        // never sends the user to Full details.
+        // Report errors on Quick add controls first, including the publish photo minimum.
         if (entryMode === "quick") {
-            if (!validateQuickAdd(methods, current, portal)) {
+            if (!validateQuickAdd(methods, current, portal, intent)) {
                 persistInFlightRef.current = false;
                 return;
             }
-        } else if (forceDraft && portal === "owner") {
+        }
+        if (forceDraft && portal === "owner" && entryMode === "full") {
             // The API requires commission on every owner listing, drafts included.
             const commissionIssues = ownerCommissionIssues(current);
             if (commissionIssues.length > 0) {
@@ -699,6 +701,21 @@ export function PropertyForm({
             const required = activeSteps.map((item) => item.id);
             for (const requiredStep of required) {
                 if (!validateStep(requiredStep)) {
+                    // Quick add can fix its own fields in place. Required fields only
+                    // collected in Full details must be made reachable before returning.
+                    const firstPath = pendingFocusPathRef.current;
+                    if (
+                        entryMode === "quick" &&
+                        firstPath &&
+                        !QUICK_ADD_VALIDATION_FIELDS.some((path) => path === firstPath) &&
+                        firstPath !== "owner.contactId" &&
+                        firstPath !== "attachedBuyers"
+                    ) {
+                        setEntryMode("full");
+                        setFormBanner(
+                            "Complete the required details on this step before publishing. Your Quick add entries are kept.",
+                        );
+                    }
                     const problemIndex = FORM_STEPS.findIndex((item) => item.id === requiredStep);
                     setHighestUnlocked((value) => Math.max(value, problemIndex));
                     setStep(requiredStep);
@@ -972,7 +989,7 @@ export function PropertyForm({
                     noValidate
                     aria-busy={restoringDraft || undefined}
                     className={cn(
-                        `relative flex flex-1 flex-col overflow-hidden bg-surface min-block-0`,
+                        `relative flex flex-1 flex-col overflow-clip bg-surface min-block-0`,
                         className,
                     )}
                 >
@@ -1058,6 +1075,7 @@ export function PropertyForm({
                                         </div>
                                     </aside>
                                     <main
+                                        data-property-form-scroll
                                         className="
                                           overflow-y-auto rounded-card bg-surface-muted shadow-md
                                           min-block-0 min-inline-0
@@ -1147,9 +1165,11 @@ export function PropertyForm({
                             </>
                         ) : (
                             <main
+                                data-property-form-scroll
                                 className="
-                                  flex flex-1 flex-col overflow-y-auto bg-surface-muted p-4
+                                  flex flex-1 flex-col overflow-y-auto bg-surface-muted p-3
                                   min-block-0 min-inline-0
+                                  sm:p-4
                                 "
                             >
                                 {storageError ? (
@@ -1157,29 +1177,43 @@ export function PropertyForm({
                                         {storageError}
                                     </p>
                                 ) : null}
-                                <div
-                                    className="
-                                      flex flex-1 flex-col rounded-card border border-border-warm
-                                      bg-surface p-5 shadow-md
-                                      sm:p-6 sm:py-7
-                                      xl:p-8
+                                <div className="mx-auto grid items-start gap-4 inline-full max-inline-4xl xl:grid-cols-[minmax(0,1fr)_320px] xl:max-inline-7xl">
+                                    <div
+                                        className="
+                                      flex flex-col rounded-card border border-border-warm
+                                      bg-surface p-5 shadow-md min-inline-0
+                                      sm:p-6
+                                      xl:p-7
                                     "
-                                >
-                                    {formBanner ? (
-                                        <div
-                                            role="alert"
-                                            className="
+                                    >
+                                        {formBanner ? (
+                                            <div
+                                                role="alert"
+                                                className="
                                               mbe-5 rounded-control border border-danger/30
                                               bg-danger-soft px-4 py-3 text-sm font-medium
                                               text-danger
                                             "
-                                        >
-                                            {formBanner}
+                                            >
+                                                {formBanner}
+                                            </div>
+                                        ) : null}
+                                        <QuickAdd
+                                            photoFilesRef={photoFilesRef}
+                                            portal={portal}
+                                            propertyId={propertyId}
+                                        />
+                                        <div className="mbs-6 border-bs border-border-warm pbs-5">
+                                            {formActions}
                                         </div>
-                                    ) : null}
-                                    <QuickAdd photoFilesRef={photoFilesRef} portal={portal} />
-                                    <div className="mbs-6 border-bs border-border-warm pbs-5">
-                                        {formActions}
+                                    </div>
+                                    <div className="sticky inset-bs-0 hidden min-inline-0 xl:block">
+                                        <LiveSummaryPanel
+                                            audience={portal}
+                                            values={values}
+                                            stepIndex={2}
+                                            photoFilesRef={photoFilesRef}
+                                        />
                                     </div>
                                 </div>
                             </main>
@@ -1234,7 +1268,7 @@ export function PropertyForm({
             <DialogPopup
                 showCloseButton={false}
                 className="
-                  inset-0 flex translate-none flex-col gap-0 overflow-hidden rounded-none border-0
+                  inset-0 flex translate-none flex-col gap-0 overflow-clip rounded-none border-0
                   p-0 shadow-none block-dvh inline-dvw max-inline-none
                 "
             >
@@ -1447,6 +1481,36 @@ function PropertyFormActions({
     const primaryLabel =
         entryMode === "quick" ? "Save as draft" : isLastStep ? "Publish" : "Continue";
 
+    if (entryMode === "quick") {
+        return (
+            <div className="flex flex-wrap items-center justify-between gap-3 pbe-[env(safe-area-inset-bottom)]">
+                {showStartFresh ? (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        disabled={isSubmitting}
+                        onClick={onStartFresh}
+                        className="gap-2 text-ink-muted min-block-11"
+                    >
+                        <RotateCcw aria-hidden /> Start fresh
+                    </Button>
+                ) : (
+                    <span />
+                )}
+                <Button
+                    type="button"
+                    variant="accent"
+                    loading={isSubmitting}
+                    disabled={isSubmitting}
+                    onClick={onNext}
+                    className="gap-2 min-block-11"
+                >
+                    Save as draft <Check aria-hidden />
+                </Button>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col gap-4 pbe-[env(safe-area-inset-bottom)] text-center">
             <div className="flex flex-col gap-4 min-inline-0">
@@ -1530,11 +1594,7 @@ function PropertyFormActions({
                         className="inline-full"
                     >
                         {primaryLabel}
-                        {entryMode === "quick" || isLastStep ? (
-                            <Check aria-hidden />
-                        ) : (
-                            <ArrowRight aria-hidden />
-                        )}
+                        {isLastStep ? <Check aria-hidden /> : <ArrowRight aria-hidden />}
                     </Button>
                 ) : null}
             </div>
@@ -1724,9 +1784,10 @@ function MobileDealSummary({
                 aria-controls="mobile-deal-summary-panel"
                 onClick={() => onOpenChange(!open)}
                 className="
-                  flex items-center justify-between gap-4 bg-brand px-4 text-start inline-full
+                  flex items-center justify-between gap-4 border-bs border-border-warm bg-brand-soft/40 px-4 text-start inline-full
                   min-block-14
-                  focus-visible:ring-2 focus-visible:ring-brand-soft focus-visible:ring-inset
+                  hover:bg-brand-soft
+                  focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset
                 "
             >
                 <div className="flex-1 min-inline-0">
@@ -1739,7 +1800,7 @@ function MobileDealSummary({
                 </div>
                 <ChevronDown
                     className={cn(
-                        `text-surface transition-transform duration-160 block-5 inline-5`,
+                        `text-brand-text transition-transform duration-160 block-5 inline-5`,
                         open && `rotate-180`,
                     )}
                     aria-hidden
@@ -2109,19 +2170,13 @@ function focusFieldByPath(path: string): boolean {
         section.open = true;
         section = section.parentElement?.closest("details") ?? null;
     }
-    root.scrollIntoView({ behavior: "smooth", block: "center" });
+    scrollPropertyFormField(root);
     const focusable = root.matches("input, select, textarea, button, [tabindex]")
         ? root
         : root.querySelector<HTMLElement>("input, select, textarea, button, [tabindex]");
     focusable?.focus({ preventScroll: true });
     return true;
 }
-
-/**
- * Not a real form field — the draft schema raises the missing-cover error at
- * `media.cover` (photos live in `media.photos`), so the path needs a cast.
- */
-const MEDIA_COVER_ERROR_PATH = "media.cover" as FieldPath<PropertyDraftValues>;
 
 const QUICK_ADD_ERROR_FIELDS = [
     ...QUICK_ADD_VALIDATION_FIELDS,
@@ -2132,9 +2187,10 @@ function validateQuickAdd(
     methods: ReturnType<typeof useForm<PropertyDraftValues>>,
     values: PropertyDraftValues,
     portal: "broker" | "owner",
+    intent: "draft" | "publish",
 ): boolean {
     methods.clearErrors([...QUICK_ADD_ERROR_FIELDS]);
-    const issues = quickAddValidationIssues(values, portal);
+    const issues = quickAddValidationIssues(values, portal, intent);
 
     if (!issues.length) return true;
 
@@ -2147,12 +2203,6 @@ function validateQuickAdd(
     const firstPath = issues[0]!.path;
     requestAnimationFrame(() => {
         focusFieldByPath(firstPath);
-        if (firstPath === MEDIA_COVER_ERROR_PATH) {
-            document.getElementById("quick-cover-upload")?.scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-            });
-        }
     });
     return false;
 }

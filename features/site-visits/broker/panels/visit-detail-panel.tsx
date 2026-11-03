@@ -5,6 +5,7 @@ import { formatVisitDate, formatVisitDayHeading, formatVisitTime } from "@/lib/v
 
 import { AppImage } from "@/components/shared/app-image";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import { CalendarCheck, CallIcon, MapPin, Trash2, WhatsAppIcon } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -151,12 +152,11 @@ export function VisitDetailPanel({
                         </div>
                     </section>
                     <section className="grid gap-2">
+                        {visit.buyers.length > 1 ? (
+                            <AttachedClientsSummary clients={visit.buyers} className="body-sm" />
+                        ) : null}
                         <ContactBlock
-                            label={
-                                visit.buyers.length > 1
-                                    ? `Clients · ${visit.buyers.length}`
-                                    : "Client"
-                            }
+                            label={visit.buyers.length > 1 ? "Primary client" : "Client"}
                             person={visit.buyers[0]}
                             message={buyerMessage}
                         />

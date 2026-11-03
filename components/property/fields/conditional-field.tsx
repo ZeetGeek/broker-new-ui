@@ -55,8 +55,8 @@ export function ConditionalField({
             {!fieldIsVisible && showHidden ? (
                 children
             ) : (
-                <div className="t-acc-panel">
-                    <div className="t-acc-panel-inner">{children}</div>
+                <div className="t-acc-panel min-inline-0">
+                    <div className="t-acc-panel-inner min-inline-0">{children}</div>
                 </div>
             )}
             {!fieldIsVisible && showHidden ? (

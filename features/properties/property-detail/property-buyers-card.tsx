@@ -7,7 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { attachedClientsFor } from "@/lib/api/clients";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
 
-import { AvatarStack } from "@/components/shared/avatar-stack";
+import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import { UserPlus, Users } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
@@ -48,10 +48,7 @@ export function PropertyBuyersCard({ item }: { item: MyListingItem }) {
                 </div>
             ) : query.data.length ? (
                 <div className={styles.buyersSummary}>
-                    <AvatarStack people={query.data} max={3} size="md" />
-                    <span>
-                        {query.data.length} {query.data.length === 1 ? "client" : "clients"}
-                    </span>
+                    <AttachedClientsSummary clients={query.data} size="md" />
                 </div>
             ) : (
                 <div className={styles.buyersEmpty}>

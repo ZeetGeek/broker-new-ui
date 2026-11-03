@@ -3,6 +3,14 @@
 Single source of truth for making things common. `.claude/rules/` and
 `.cursor/rules/` only point here.
 
+## Attached client summaries
+
+Use `AttachedClientsSummary` from `components/shared/attached-clients-summary.tsx`
+for grouped clients: one client shows an avatar and name; multiple clients show
+two avatars followed by the total count. `AttachedBuyersRow` adds the Clients label
+and empty/attach state for property cards and previews. Keep individual contact
+actions tied to the named person. The draft schema preserves optional avatar URLs.
+
 ---
 
 ## First, a correction worth making

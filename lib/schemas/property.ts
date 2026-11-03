@@ -532,6 +532,7 @@ const ownerSchema = z.object({
 const attachedBuyerSchema = z.object({
     id: z.string(),
     name: z.string(),
+    avatarUrl: z.string().optional(),
     phoneDigits: z.string(),
 });
 

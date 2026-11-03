@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import { AvatarStack } from "@/components/shared/avatar-stack";
 import { UserPlus } from "@/components/shared/icons";
 import {
@@ -21,6 +22,7 @@ type PartyMeetSide = {
     /** Screen-reader role, e.g. "Owner" / "Buyer" / "Broker". */
     role: string;
     onOpen?: () => void;
+    people?: AttachedPerson[];
 };
 
 /**
@@ -37,7 +39,7 @@ export function PartyMeetRow({
     right: PartyMeetSide;
     highlightOnHover?: boolean;
 }) {
-    const ariaLabel = `${left.role} ${left.name}, ${right.role} ${right.name}`;
+    const ariaLabel = `${left.role} ${left.people?.map((person) => person.name).join(", ") || left.name}, ${right.role} ${right.people?.map((person) => person.name).join(", ") || right.name}`;
 
     return (
         <div
@@ -67,13 +69,29 @@ function PartyMeetPerson({
 }) {
     const content = (
         <>
-            <UserAvatar name={side.name} imageUrl={side.avatarUrl} size="xs" className="shrink-0" />
-            <span className="flex flex-col gap-0.5 text-start min-inline-0">
-                <span className="body-sm truncate font-semibold tracking-wide text-ink capitalize">
-                    {side.name}
+            {side.people?.length ? (
+                <span className="flex flex-col gap-0.5 min-inline-0">
+                    <AttachedClientsSummary clients={side.people} />
+                    {side.people.length === 1 ? (
+                        <span className="body-xs text-ink-muted">{side.role}</span>
+                    ) : null}
                 </span>
-                <span className="body-xs truncate text-ink-muted">{side.role}</span>
-            </span>
+            ) : (
+                <>
+                    <UserAvatar
+                        name={side.name}
+                        imageUrl={side.avatarUrl}
+                        size="xs"
+                        className="shrink-0"
+                    />
+                    <span className="flex flex-col gap-0.5 text-start min-inline-0">
+                        <span className="body-sm truncate font-semibold tracking-wide text-ink capitalize">
+                            {side.name}
+                        </span>
+                        <span className="body-xs truncate text-ink-muted">{side.role}</span>
+                    </span>
+                </>
+            )}
         </>
     );
 
@@ -156,20 +174,28 @@ function AttachedPeopleShell({
 
 /**
  * Buyers row — empty + `onAttach`: brand "Attach buyers" link (UserPlus).
- * Once any buyer is attached, only the stack + count (no Add control).
+ * One client shows their avatar and name; multiple clients show two avatars and a count.
  */
 export function AttachedBuyersRow({
     buyers,
     onAttach,
     isAttachBlocked = false,
+    emptyLabel,
 }: {
     buyers: AttachedPerson[];
     /** Opens the buyer picker when the row is empty. */
     onAttach?: () => void;
     isAttachBlocked?: boolean;
+    emptyLabel?: string;
 }) {
     if (buyers.length === 0) {
-        if (!onAttach) return null;
+        if (!onAttach)
+            return emptyLabel ? (
+                <div className="body-sm flex items-center gap-2 tracking-wide text-ink-muted min-inline-0">
+                    <span className={OVERLAY_PERSON_LABEL_CLASS}>Clients</span>
+                    <span>{emptyLabel}</span>
+                </div>
+            ) : null;
         return (
             <OverlayPersonAttachLine
                 label="Clients"
@@ -181,8 +207,6 @@ export function AttachedBuyersRow({
         );
     }
 
-    const title = buyers.length === 1 ? "1 client" : `${buyers.length} clients`;
-
     return (
         <div
             className="
@@ -190,10 +214,7 @@ export function AttachedBuyersRow({
             "
         >
             <span className={OVERLAY_PERSON_LABEL_CLASS}>Clients</span>
-            <span className="flex flex-1 items-center gap-1.5 min-inline-0">
-                <AvatarStack people={buyers} size="2xs" max={3} className="shrink-0" />
-                <span className="truncate font-semibold text-ink">{title}</span>
-            </span>
+            <AttachedClientsSummary clients={buyers} className="flex-1" />
         </div>
     );
 }

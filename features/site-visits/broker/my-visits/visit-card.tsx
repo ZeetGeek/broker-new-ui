@@ -196,7 +196,8 @@ export const VisitCard = memo(function VisitCard({
                 right={{
                     name: buyer?.name ?? "No client linked",
                     avatarUrl: buyer?.avatarUrl,
-                    role: visit.buyers.length > 1 ? `Client +${visit.buyers.length - 1}` : "Client",
+                    role: "Client",
+                    people: visit.buyers,
                 }}
             />
 

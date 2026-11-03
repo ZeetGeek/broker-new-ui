@@ -46,7 +46,7 @@ export function AvatarStack({
 
     return (
         <TooltipProvider>
-            <div className={cn("isolate flex items-center", className)}>
+            <span className={cn("isolate inline-flex items-center", className)}>
                 {visible.map((person, index) => (
                     <Tooltip key={person.id}>
                         <TooltipTrigger
@@ -133,7 +133,7 @@ export function AvatarStack({
                         </TooltipContent>
                     </Tooltip>
                 ) : null}
-            </div>
+            </span>
         </TooltipProvider>
     );
 }

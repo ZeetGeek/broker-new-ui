@@ -80,8 +80,10 @@ function DropzoneIcon({ children }: { children: ReactNode }) {
 
 export function StepMedia({
     photoFilesRef,
+    photosOnly = false,
 }: {
     photoFilesRef: MutableRefObject<Map<string, File>>;
+    photosOnly?: boolean;
 }) {
     const { watch, setValue, formState } = useFormContext<PropertyDraftValues>();
     const photos = watch("media.photos");
@@ -263,16 +265,20 @@ export function StepMedia({
         <div className={FORM_SECTIONS_CLASS}>
             <WizardSection
                 title={<>Property photos</>}
-                description="Add one cover image and at least 3 property photos. Both are required to publish."
+                description={
+                    photosOnly
+                        ? "Add a cover to save your draft. Add at least 3 property photos before publishing."
+                        : "Add one cover image and at least 3 property photos. Both are required to publish."
+                }
             >
-                <div className={FORM_STACK_CLASS}>
+                <div id="media-photos" tabIndex={-1} className={FORM_STACK_CLASS}>
                     <div
                         className="
                           grid gap-4
                           md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] md:items-stretch
                         "
                     >
-                        <div className="flex flex-col gap-3">
+                        <div id="media-cover" tabIndex={-1} className="flex flex-col gap-3">
                             <div className="flex flex-wrap items-baseline justify-between gap-2">
                                 <p
                                     className="
@@ -484,45 +490,47 @@ export function StepMedia({
                 </div>
             </WizardSection>
 
-            <WizardSection
-                title={<>Video and virtual tour</>}
-                description="Optional links for clients. Paste a hosted URL — no file upload here."
-            >
-                <div className={FORM_GRID_CLASS}>
-                    <div className="flex flex-col gap-3 min-inline-0">
-                        <TextField
-                            name="media.videoUrl"
-                            label="YouTube or Vimeo link"
-                            type="url"
-                            placeholder="https://youtube.com/… or https://vimeo.com/…"
-                            startIcon={Video}
-                        />
-                        {videoEmbed ? (
-                            <MediaEmbedPreview embed={videoEmbed} />
-                        ) : hasNonEmptyUrl(videoUrl) ? (
-                            <p className="text-sm text-ink-muted">
-                                Paste a full YouTube or Vimeo link to see a preview.
-                            </p>
-                        ) : null}
+            {!photosOnly ? (
+                <WizardSection
+                    title={<>Video and virtual tour</>}
+                    description="Optional links for clients. Paste a hosted URL — no file upload here."
+                >
+                    <div className={FORM_GRID_CLASS}>
+                        <div className="flex flex-col gap-3 min-inline-0">
+                            <TextField
+                                name="media.videoUrl"
+                                label="YouTube or Vimeo link"
+                                type="url"
+                                placeholder="https://youtube.com/… or https://vimeo.com/…"
+                                startIcon={Video}
+                            />
+                            {videoEmbed ? (
+                                <MediaEmbedPreview embed={videoEmbed} />
+                            ) : hasNonEmptyUrl(videoUrl) ? (
+                                <p className="text-sm text-ink-muted">
+                                    Paste a full YouTube or Vimeo link to see a preview.
+                                </p>
+                            ) : null}
+                        </div>
+                        <div className="flex flex-col gap-3 min-inline-0">
+                            <TextField
+                                name="media.virtualTourUrl"
+                                label="Virtual tour link"
+                                type="url"
+                                placeholder="Matterport or 360° tour"
+                                startIcon={View}
+                            />
+                            {tourEmbed ? (
+                                <MediaEmbedPreview embed={tourEmbed} />
+                            ) : hasNonEmptyUrl(virtualTourUrl) ? (
+                                <p className="text-sm text-ink-muted">
+                                    Paste a full https link to preview the tour.
+                                </p>
+                            ) : null}
+                        </div>
                     </div>
-                    <div className="flex flex-col gap-3 min-inline-0">
-                        <TextField
-                            name="media.virtualTourUrl"
-                            label="Virtual tour link"
-                            type="url"
-                            placeholder="Matterport or 360° tour"
-                            startIcon={View}
-                        />
-                        {tourEmbed ? (
-                            <MediaEmbedPreview embed={tourEmbed} />
-                        ) : hasNonEmptyUrl(virtualTourUrl) ? (
-                            <p className="text-sm text-ink-muted">
-                                Paste a full https link to preview the tour.
-                            </p>
-                        ) : null}
-                    </div>
-                </div>
-            </WizardSection>
+                </WizardSection>
+            ) : null}
         </div>
     );
 }

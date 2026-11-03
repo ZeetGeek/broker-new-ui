@@ -51,7 +51,7 @@ export function propertyDraftValidationIssues(values: PropertyDraftValues) {
     });
 }
 
-/** Only controls rendered by Quick add. Full publish validation remains separate. */
+/** Quick add controls; publishing also runs the complete Full details validation. */
 export const QUICK_ADD_VALIDATION_FIELDS = [
     "basics.listingFor",
     "basics.category",
@@ -77,6 +77,7 @@ export const QUICK_ADD_VALIDATION_FIELDS = [
 export function quickAddValidationIssues(
     values: PropertyDraftValues,
     portal: "broker" | "owner",
+    intent: "draft" | "publish" = "draft",
 ): { path: string; message: string }[] {
     const fields = new Set<string>(
         QUICK_ADD_VALIDATION_FIELDS.filter(
@@ -91,7 +92,10 @@ export function quickAddValidationIssues(
         for (const issue of result.error.issues) {
             const path = issue.path.join(".");
             // Quick drafts need one usable photo, not the full gallery required to publish.
-            if (path === "media.cover" || (path === "media.photos" && issue.code === "custom"))
+            if (
+                intent === "draft" &&
+                (path === "media.cover" || (path === "media.photos" && issue.code === "custom"))
+            )
                 continue;
             if (!fields.has(path) && !path.startsWith("media.photos.")) continue;
             const target = path.startsWith("media.photos.") ? "media.photos" : path;
@@ -99,7 +103,8 @@ export function quickAddValidationIssues(
         }
     }
     for (const missing of missingRequiredFields(values)) {
-        if (!fields.has(missing.path) || missing.path.startsWith("media.")) continue;
+        if (!fields.has(missing.path) || (intent === "draft" && missing.path.startsWith("media.")))
+            continue;
         if (!issues.has(missing.path))
             issues.set(missing.path, {
                 path: missing.path,

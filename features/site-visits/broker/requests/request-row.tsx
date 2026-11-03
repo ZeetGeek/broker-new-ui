@@ -9,6 +9,7 @@ import { REQUEST_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitTime, visitAge } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
+import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import {
     CalendarClock,
     Clock3,
@@ -62,9 +63,6 @@ export const RequestRow = memo(function RequestRow({
 }) {
     const status = REQUEST_STATUS[request.status];
     const action = status.action;
-    const buyer = request.buyers[0];
-    const buyerLabel =
-        request.buyers.length > 1 ? `Clients ${DOT} +${request.buyers.length - 1}` : "Client";
     const metaName =
         formatPropertyCardName(request.property.propertyType, request.property.areaSqft, {
             bhk: bhkFromConfigLabel(request.property.configLabel),
@@ -158,10 +156,9 @@ export const RequestRow = memo(function RequestRow({
                         <span className="text-ink-subtle" aria-hidden>
                             {DOT}
                         </span>
-                        <span className="truncate min-inline-0">
-                            <span className="text-ink-subtle">{buyerLabel}</span>
-                            <span className="text-ink-subtle/60"> </span>
-                            <span className="font-semibold text-ink capitalize">{buyer.name}</span>
+                        <span className="inline-flex items-center gap-1.5 min-inline-0">
+                            <span className="text-ink-subtle">Clients</span>
+                            <AttachedClientsSummary clients={request.buyers} />
                         </span>
                         <span className="text-ink-subtle" aria-hidden>
                             {DOT}

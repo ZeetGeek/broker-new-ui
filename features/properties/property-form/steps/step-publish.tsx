@@ -182,6 +182,7 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                       id: buyer.id,
                       name: buyer.name,
                       phoneDigits: buyer.phoneDigits,
+                      avatarUrl: buyer.avatarUrl,
                   },
               ];
         setValue("attachedBuyers", next, { shouldDirty: true, shouldValidate: true });
