@@ -194,9 +194,10 @@ export const VisitCard = memo(function VisitCard({
                 highlightOnHover={false}
                 left={{ name: visit.owner.name, avatarUrl: visit.owner.avatarUrl, role: "Owner" }}
                 right={{
-                    name: buyer?.name ?? "No client linked",
+                    name: buyer?.name ?? "No contact linked",
                     avatarUrl: buyer?.avatarUrl,
-                    role: visit.buyers.length > 1 ? `Client +${visit.buyers.length - 1}` : "Client",
+                    role:
+                        visit.buyers.length > 1 ? `Contact +${visit.buyers.length - 1}` : "Contact",
                 }}
             />
 
@@ -207,7 +208,7 @@ export const VisitCard = memo(function VisitCard({
                     const actionLabel = isWhatsApp ? "WhatsApp" : "Call";
                     const contacts = [
                         { person: visit.owner, label: "Owner" },
-                        ...visit.buyers.map((person) => ({ person, label: "Client" })),
+                        ...visit.buyers.map((person) => ({ person, label: "Contact" })),
                     ];
                     return (
                         <DropdownMenu key={channel}>
@@ -258,7 +259,7 @@ export const VisitCard = memo(function VisitCard({
                                 {visit.buyers.length === 0 ? (
                                     <DropdownMenuItem disabled>
                                         <ActionIcon aria-hidden />
-                                        No client linked
+                                        No contact linked
                                     </DropdownMenuItem>
                                 ) : null}
                             </DropdownMenuContent>

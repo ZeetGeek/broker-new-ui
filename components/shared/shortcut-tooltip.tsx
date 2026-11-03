@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 export type ShortcutTooltipProps = {
     /** Registry id — the tooltip renders that shortcut's own label unless overridden. */
     shortcutId: ShortcutId;
-    /** Override the registry label, e.g. "Add clients" for a button that lands on Clients. */
+    /** Override the registry label, e.g. "Add contacts" for a button that lands on Contacts. */
     label?: string;
     side?: "top" | "bottom" | "inline-start" | "inline-end";
     children: ReactElement;

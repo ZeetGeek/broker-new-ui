@@ -179,7 +179,7 @@ export function BrokerSiteVisitsPage() {
                 return {
                     ...slot,
                     bookedVisitId: slot.bookedVisitId ?? visit.id,
-                    bookedBuyerName: buyerNames || "Your client",
+                    bookedBuyerName: buyerNames || "Your contact",
                     bookedBuyerAvatarUrl: slot.bookedBuyerAvatarUrl ?? visit.buyers[0]?.avatarUrl,
                 };
             });
@@ -212,7 +212,7 @@ export function BrokerSiteVisitsPage() {
                     visit.buyers
                         .map((buyer) => buyer.name.trim())
                         .filter(Boolean)
-                        .join(", ") || "Your client";
+                        .join(", ") || "Your contact";
                 slots.push({
                     id: visit.slotId ?? `booked-${visit.id}`,
                     propertyId: visit.propertyId,
@@ -264,7 +264,7 @@ export function BrokerSiteVisitsPage() {
                 visit.buyers
                     .map((buyer) => buyer.name.trim())
                     .filter(Boolean)
-                    .join(", ") || "Your client";
+                    .join(", ") || "Your contact";
             propertyIds.add(visit.propertyId);
             mergedItems.push({
                 property: visit.property,

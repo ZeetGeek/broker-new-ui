@@ -78,8 +78,8 @@ export function PipelineIntro({
             const reasons = [
                 { key: "price", label: "lost on price" },
                 { key: "bought_elsewhere", label: "lost to another property" },
-                { key: "not_responding", label: "lost after clients stopped replying" },
-                { key: "changed_mind", label: "lost after clients changed their mind" },
+                { key: "not_responding", label: "lost after contacts stopped replying" },
+                { key: "changed_mind", label: "lost after contacts changed their mind" },
             ]
                 .map((reason) => ({
                     ...reason,

@@ -296,7 +296,7 @@ export const FIELD_RULES = {
     },
     "media.videoUploadName": { visible: () => false },
     "media.videoUrl": {},
-    "media.virtualTourUrl": { visible: (d) => !d.isPlot },
+    "media.virtualTourUrl": {},
     "media.floorPlanFiles": { visible: () => false },
     "media.brochureFileName": { visible: () => false },
     "media.agencyWatermark": { visible: () => false },
@@ -332,7 +332,7 @@ export const STEP_RULES: Record<PropertyFormStep, (d: DerivedPropertyFlags) => b
     basics: () => true,
     details: () => true,
     pricing: () => true,
-    furnishing: () => true,
+    furnishing: (d) => !d.isPlot,
     media: () => true,
 };
 

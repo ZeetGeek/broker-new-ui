@@ -104,10 +104,10 @@ export function buildMyDealsSummaryLines({
         );
     if (sentSummary.needsFollowUpCount > 0) {
         lines.push(
-            `${countLabel(sentSummary.needsFollowUpCount, "property from your requests still needs", "properties from your requests still need")} clients`,
+            `${countLabel(sentSummary.needsFollowUpCount, "property from your requests still needs", "properties from your requests still need")} contacts`,
         );
     } else {
-        lines.push("Add interested clients to start working on a property");
+        lines.push("Add interested contacts to start working on a property");
     }
     if (inviteSummary.waitingOnYouCount > 0)
         lines.push(

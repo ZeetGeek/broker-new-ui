@@ -64,7 +64,7 @@ export const RequestRow = memo(function RequestRow({
     const action = status.action;
     const buyer = request.buyers[0];
     const buyerLabel =
-        request.buyers.length > 1 ? `Clients ${DOT} +${request.buyers.length - 1}` : "Client";
+        request.buyers.length > 1 ? `Contacts ${DOT} +${request.buyers.length - 1}` : "Contact";
     const metaName =
         formatPropertyCardName(request.property.propertyType, request.property.areaSqft, {
             bhk: bhkFromConfigLabel(request.property.configLabel),

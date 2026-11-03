@@ -26,9 +26,9 @@ import { BuyerPicker } from "@/features/site-visits/broker/panels/buyer-picker";
 import { type TimeRequestFormValues, timeRequestSchema } from "@/schemas/visits";
 
 const PRESETS = [
-    "Client works till 5, evening suits better",
-    "Client is visiting the city only tomorrow",
-    "Client wants to see it in daylight",
+    "Contact works till 5, evening suits better",
+    "Contact is visiting the city only tomorrow",
+    "Contact wants to see it in daylight",
 ];
 
 export function TimeRequestModal({

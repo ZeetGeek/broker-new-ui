@@ -74,9 +74,9 @@ function rowHint(item: TodayItem): string {
     if (item.state === "missed")
         return "A no-show was recorded for this visit. Open it to review the details.";
     if (item.isNext) {
-        return `Your next ${what} today. Open it for directions and client details.`;
+        return `Your next ${what} today. Open it for directions and contact details.`;
     }
-    return `Coming up later today. Open this ${what} for directions and client details.`;
+    return `Coming up later today. Open this ${what} for directions and contact details.`;
 }
 
 function TimelineRow({ item }: { item: TodayItem }) {

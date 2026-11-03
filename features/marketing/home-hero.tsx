@@ -30,11 +30,11 @@ const SOCIAL_LINKS = [
 ];
 
 const HERO_COPY = {
-    lede: "Add property listings, keep client details handy and schedule site visits. Track your deals in one place, right from your phone.",
+    lede: "Add property listings, keep contact details handy and schedule site visits. Track your deals in one place, right from your phone.",
     primary: { label: "Create broker account", href: BROKER_SIGNUP_HREF },
     features: [
         { icon: Building2, label: "Property listings" },
-        { icon: Contact, label: "Client records" },
+        { icon: Contact, label: "Contact records" },
         { icon: Calendar, label: "Site visits" },
     ],
     note: "Built for real estate brokers.",

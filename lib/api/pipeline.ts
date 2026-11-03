@@ -451,7 +451,7 @@ export const pipelineApi = {
         const lead = await apiFetch<ApiLead>(`/clients/leads/${dealId}`);
         const detail = mapLeadToDetail(lead);
         if (!detail) {
-            throw new Error("Lead is missing property or client details.");
+            throw new Error("Lead is missing property or contact details.");
         }
         return detail;
     },

@@ -33,7 +33,7 @@ const STARTING_SOON_MINUTES = 30;
 const BROKER_NEXT_SHOWING_INFO =
     "Your next scheduled site visit — when, where, and who you're meeting.";
 const OWNER_NEXT_SHOWING_INFO =
-    "The next showing booked on one of your properties — when, where, and which broker is bringing the client.";
+    "The next showing booked on one of your properties — when, where, and which broker is bringing the contact.";
 
 export type NextShowing = {
     id: string;
@@ -86,7 +86,7 @@ function statusBadgeContent(
             label: "Confirmed · Starting soon",
             hint:
                 portal === "owner"
-                    ? `Starts in under ${STARTING_SOON_MINUTES} minutes. The broker should be on the way with their client.`
+                    ? `Starts in under ${STARTING_SOON_MINUTES} minutes. The broker should be on the way with their contact.`
                     : `Starts in under ${STARTING_SOON_MINUTES} minutes. Leave now if you aren't already on your way.`,
             color: "orange",
         };
@@ -211,7 +211,7 @@ function EmptyNextShowing({
                 description={
                     isOwner
                         ? "Open visit slots so brokers can book. Today and upcoming showings will appear here."
-                        : "Schedule one when a client is ready to see a property."
+                        : "Schedule one when a contact is ready to see a property."
                 }
             >
                 <TextLinkButton href={isOwner ? OWNER_VISITS_HREF : BROKER_VISIT_SLOTS_HREF}>
@@ -252,7 +252,7 @@ export function NextShowingCard({
     /** Prefer a real street address; fall back to the property line when the API omits one. */
     const locationLine = showing.address.trim() || propertyLine;
     const directionsHref = mapsSearchUrl(locationLine);
-    const personRole = isOwner ? "Broker" : "Client";
+    const personRole = isOwner ? "Broker" : "Contact";
     const secondaryHref = isOwner ? OWNER_VISITS_HREF : brokerVisitHref(showing.id);
     const secondaryLabel = isOwner ? "View visits" : "View visit";
 

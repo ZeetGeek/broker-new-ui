@@ -10,13 +10,11 @@ import { FORM_STEPS, type PropertyFormStep } from "@/constants/property";
 export function StepNav({
     steps,
     activeStep,
-    highestUnlocked,
     completedSteps,
     onStepChange,
 }: {
     steps: readonly (typeof FORM_STEPS)[number][];
     activeStep: PropertyFormStep;
-    highestUnlocked: number;
     completedSteps: Set<PropertyFormStep>;
     onStepChange: (step: PropertyFormStep) => void;
 }) {
@@ -33,8 +31,6 @@ export function StepNav({
             >
                 {steps.map((step, index) => {
                     const active = step.id === activeStep;
-                    const originalIndex = FORM_STEPS.findIndex((item) => item.id === step.id);
-                    const unlocked = originalIndex <= highestUnlocked;
                     const complete = completedSteps.has(step.id);
 
                     return (
@@ -42,7 +38,6 @@ export function StepNav({
                             <Button
                                 type="button"
                                 variant="ghost"
-                                disabled={!unlocked}
                                 aria-current={active ? "step" : undefined}
                                 onClick={() => onStepChange(step.id)}
                                 className={cn(
@@ -88,9 +83,7 @@ export function StepNav({
                                 <span className="text-sm font-semibold whitespace-nowrap xl:hidden">
                                     {step.shortLabel}
                                 </span>
-                                <span className="sr-only">
-                                    {complete ? "Complete" : unlocked ? null : "Locked"}
-                                </span>
+                                <span className="sr-only">{complete ? "Complete" : null}</span>
                             </Button>
                         </li>
                     );

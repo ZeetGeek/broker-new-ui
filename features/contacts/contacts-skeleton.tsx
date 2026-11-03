@@ -1,4 +1,4 @@
-﻿import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 import { Skeleton } from "@/components/shared/skeleton";
 
@@ -70,7 +70,7 @@ export function ContactsSkeleton({
     return (
         <div role="status" aria-busy="true" className="motion-safe:animate-pulse">
             <span className="sr-only">
-                Loading your {variant === "buyer" ? "clients" : "owners"}
+                Loading your {variant === "buyer" ? "contacts" : "owners"}
             </span>
             <div
                 aria-hidden
@@ -162,7 +162,9 @@ export function ContactFormSkeleton({
 }) {
     return (
         <div role="status" aria-busy="true" className="motion-safe:animate-pulse">
-            <span className="sr-only">Loading {variant === "buyer" ? "client" : "owner"} form</span>
+            <span className="sr-only">
+                Loading {variant === "buyer" ? "contact" : "owner"} form
+            </span>
             <div
                 aria-hidden
                 className="flex flex-col divide-y divide-border-warm [&>*+*]:pbs-6 [&>*:not(:last-child)]:pbe-6"

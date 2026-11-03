@@ -11,7 +11,7 @@ Library: **tinykeys** (~650 B).
 
 This is a **mobile-first product**. Most users are on inexpensive Android
 phones and will never press a key. Shortcuts serve one real case: a broker at a
-desk doing CRM work — adding clients, moving pipeline stages, scanning
+desk doing CRM work — adding contacts, moving pipeline stages, scanning
 listings. That is a minority, and shortcuts should be built accordingly.
 
 Two consequences:
@@ -144,7 +144,7 @@ disorienting.
 ## The guard — never fire while typing
 
 **tinykeys does not do this for you.** Without a guard, a broker typing a
-client's name triggers every single-letter shortcut in the app.
+contact's name triggers every single-letter shortcut in the app.
 
 ```ts
 function isEditable(el: EventTarget | null): boolean {
@@ -214,7 +214,7 @@ These map to the existing nav.
 | `g d` | Dashboard      |
 | `g o` | Owner listings |
 | `g p` | Your listings  |
-| `g c` | Clients        |
+| `g c` | Contacts       |
 | `g v` | Visits         |
 | `g r` | Referrals      |
 

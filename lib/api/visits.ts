@@ -354,7 +354,7 @@ export const visitsApi = {
             history: appendHistory(visit, {
                 actor: "broker",
                 kind: "note",
-                label: "Recorded what the client thought",
+                label: "Recorded what the contact thought",
             }),
         }));
     },

@@ -461,7 +461,7 @@ export const REQUESTS_PLACEHOLDER: RequestsData = {
             isRent: false,
             approvedAt: "2026-08-23T09:10:00+05:30",
             daysSince: 2,
-            note: "Approved 2 days ago · no client added yet",
+            note: "Approved 2 days ago · no contact added yet",
             action: { label: "Open", href: "/broker/properties/pr_108" },
         },
         {
@@ -473,7 +473,7 @@ export const REQUESTS_PLACEHOLDER: RequestsData = {
             isRent: false,
             approvedAt: "2026-08-24T14:00:00+05:30",
             daysSince: 1,
-            note: "Approved · 1 client attached",
+            note: "Approved · 1 contact attached",
             action: { label: "Open", href: "/broker/properties/pr_099" },
         },
         {

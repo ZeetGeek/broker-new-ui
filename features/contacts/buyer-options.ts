@@ -34,7 +34,7 @@ export const SOURCE_OPTIONS: Option<BuyerSource>[] = [
     { value: "walk_in", label: "Walk-in" },
     { value: "portal", label: "Portal", icon: Megaphone },
     { value: "social", label: "Social" },
-    { value: "repeat", label: "Repeat client", icon: Repeat },
+    { value: "repeat", label: "Repeat contact", icon: Repeat },
     { value: "other", label: "Other" },
 ];
 

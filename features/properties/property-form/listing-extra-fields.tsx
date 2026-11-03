@@ -305,6 +305,7 @@ export function ListingExtraFields() {
                                 render={({ field }) => (
                                     <AppDatePicker
                                         id="availableFrom"
+                                        className="border-2"
                                         value={field.value}
                                         onChange={field.onChange}
                                         onBlur={field.onBlur}
@@ -413,7 +414,7 @@ export function ListingExtraFields() {
                             <Textarea
                                 id="description"
                                 rows={5}
-                                placeholder="Optional · a short note for clients."
+                                placeholder="Optional · a short note for contacts."
                                 className="
                                   rounded-card border-2 border-border-warm bg-surface px-3.5 py-3
                                   text-[15px] text-ink min-block-32

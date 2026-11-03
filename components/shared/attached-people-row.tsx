@@ -172,8 +172,8 @@ export function AttachedBuyersRow({
         if (!onAttach) return null;
         return (
             <OverlayPersonAttachLine
-                label="Clients"
-                actionLabel="Attach clients"
+                label="Contacts"
+                actionLabel="Attach contacts"
                 onAttach={onAttach}
                 isBlocked={isAttachBlocked}
                 icon={UserPlus}
@@ -181,7 +181,7 @@ export function AttachedBuyersRow({
         );
     }
 
-    const title = buyers.length === 1 ? "1 client" : `${buyers.length} clients`;
+    const title = buyers.length === 1 ? "1 contact" : `${buyers.length} contacts`;
 
     return (
         <div
@@ -189,7 +189,7 @@ export function AttachedBuyersRow({
               body-sm flex items-center gap-2 tracking-wide text-ink-muted inline-full min-inline-0
             "
         >
-            <span className={OVERLAY_PERSON_LABEL_CLASS}>Clients</span>
+            <span className={OVERLAY_PERSON_LABEL_CLASS}>Contacts</span>
             <span className="flex flex-1 items-center gap-1.5 min-inline-0">
                 <AvatarStack people={buyers} size="2xs" max={3} className="shrink-0" />
                 <span className="truncate font-semibold text-ink">{title}</span>

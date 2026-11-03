@@ -760,7 +760,7 @@ the pill. Panel swaps use `.t-tabs-panel` (soft rise + fade). Prefer two or
 three tabs. Stage rows on mobile scroll horizontally with count badges.
 Minimum tap target 44px. `prefers-reduced-motion` snaps with no tween.
 
-Standalone page-view chips (Visits, Pipeline, Clients/Owners, listings, and
+Standalone page-view chips (Visits, Pipeline, Contacts/Owners, listings, and
 requests) use `filterChipClassName` from `components/shared/filter-chip.tsx`.
 Both states retain the white `surface` fill. Inactive chips use `shadow-sm`;
 active chips use `shadow-md` for clearer elevation. Selection uses
@@ -928,7 +928,7 @@ Content max-width 1280px, centred, 16px page gutter on mobile and 32px on deskto
 ### 5.3 Bottom navigation
 
 Five items, fixed, `surface` background with a top `border`. Home · Properties ·
-Clients · Visits · Profile. Active item is `brand`; inactive is `ink-subtle`. Icon
+Contacts · Visits · Profile. Active item is `brand`; inactive is `ink-subtle`. Icon
 above a 11px label. Height 56px plus `env(safe-area-inset-bottom)`.
 
 Owners and brokers get different middle items. The bar itself never changes shape
@@ -937,7 +937,7 @@ between roles.
 ### 5.4 Pipeline on mobile
 
 A six-column drag board does not fit a phone. On mobile the pipeline is horizontally
-scrollable stage tabs with a count badge, a vertical list of client cards below, and
+scrollable stage tabs with a count badge, a vertical list of contact cards below, and
 a **Move to next stage** button on each card. Kanban with drag-and-drop is desktop only.
 
 ### 5.5 Loading

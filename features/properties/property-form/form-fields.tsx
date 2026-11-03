@@ -646,7 +646,7 @@ export function DateField({
                         onBlur={field.onBlur}
                         placeholder={placeholder}
                         invalid={Boolean(error)}
-                        className="inline-full"
+                        className="border-2 inline-full"
                     />
                 )}
             />

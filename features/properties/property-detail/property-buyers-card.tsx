@@ -26,11 +26,11 @@ export function PropertyBuyersCard({ item }: { item: MyListingItem }) {
     });
     const { amountInr, isRent } = toLegacyAmountFields(item);
     return (
-        <section className={styles.contact} aria-label="Attached clients">
-            <h2>Clients</h2>
+        <section className={styles.contact} aria-label="Attached contacts">
+            <h2>Contacts</h2>
             {query.isPending ? (
                 <div role="status" aria-busy="true">
-                    <span className="sr-only">Loading attached clients</span>
+                    <span className="sr-only">Loading attached contacts</span>
                     <div className={styles.buyersSummary} aria-hidden>
                         <Skeleton className="rounded-full block-10 inline-10" />
                         <Skeleton className="block-4 inline-24" />
@@ -41,7 +41,7 @@ export function PropertyBuyersCard({ item }: { item: MyListingItem }) {
                 </div>
             ) : query.isError ? (
                 <div>
-                    <p className={styles.actionDescription}>Couldn’t load attached clients.</p>
+                    <p className={styles.actionDescription}>Couldn’t load attached contacts.</p>
                     <Button variant="link" onClick={() => void query.refetch()}>
                         Try again
                     </Button>
@@ -50,20 +50,20 @@ export function PropertyBuyersCard({ item }: { item: MyListingItem }) {
                 <div className={styles.buyersSummary}>
                     <AvatarStack people={query.data} max={3} size="md" />
                     <span>
-                        {query.data.length} {query.data.length === 1 ? "client" : "clients"}
+                        {query.data.length} {query.data.length === 1 ? "contact" : "contacts"}
                     </span>
                 </div>
             ) : (
                 <div className={styles.buyersEmpty}>
                     <Users size={24} strokeWidth={1.75} aria-hidden />
-                    <p>No clients attached yet.</p>
+                    <p>No contacts attached yet.</p>
                 </div>
             )}
             {!query.isPending && !query.isError ? (
                 <div className={styles.contactActions}>
                     <Button variant="outline" size="md" onClick={() => setOpen(true)}>
                         <UserPlus size={18} aria-hidden />
-                        Attach clients
+                        Attach contacts
                     </Button>
                 </div>
             ) : null}

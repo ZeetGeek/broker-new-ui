@@ -49,7 +49,7 @@ export function DealPartiesPanel({
                 right={{
                     name: buyer.name,
                     avatarUrl: buyer.avatarUrl,
-                    role: "Client",
+                    role: "Contact",
                     onOpen: onOpenBuyer,
                 }}
             />

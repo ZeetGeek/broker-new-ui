@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
-const BROKER_FEATURES = ["property listings.", "client records.", "site visits.", "ongoing deals."];
+const BROKER_FEATURES = [
+    "property listings.",
+    "contact records.",
+    "site visits.",
+    "ongoing deals.",
+];
 
 export function RotatingBrokerHeadline() {
     const containerRef = useRef<HTMLSpanElement>(null);
@@ -60,7 +65,8 @@ export function RotatingBrokerHeadline() {
     return (
         <h1 className="display-2 relative text-canvas [text-shadow:0_2px_24px_var(--color-brand-ink)]">
             <span className="sr-only">
-                One place for your property listings, client records, site visits and ongoing deals.
+                One place for your property listings, contact records, site visits and ongoing
+                deals.
             </span>
             <span aria-hidden="true">
                 <span className="block">One place for your</span>

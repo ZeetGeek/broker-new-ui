@@ -145,7 +145,7 @@ Teach. This is the most valuable screen in onboarding.
 | Screen                     | Message                                                                                                                       |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Owner, no properties       | **No properties yet**<br>Add your first property — it takes about 2 minutes.<br>`[Add property]`                              |
-| Broker, no clients         | **No clients yet**<br>Add a client to start tracking their property search.<br>`[Add client]`                                 |
+| Broker, no contacts        | **No contacts yet**<br>Add a contact to start tracking their property search.<br>`[Add contact]`                              |
 | Broker, no representations | **You're not representing any properties yet**<br>Browse properties and send a request to the owner.<br>`[Browse properties]` |
 | Owner, no requests         | **No broker requests yet**<br>Brokers will see your property and can request to sell it. We'll notify you.<br>—               |
 
@@ -220,7 +220,7 @@ result, a toast is noise.
 | Request sent to owner | ✅     | Request sent. The owner will be notified.       |
 | Request approved      | ✅     | Approved. The property is now in your pipeline. |
 | Photo uploaded        | ❌     | The thumbnail appearing is the confirmation     |
-| Client moved a stage  | ❌     | The card moved — that's the confirmation        |
+| Contact moved a stage | ❌     | The card moved — that's the confirmation        |
 | Filter changed        | ❌     | The list changed                                |
 | Profile saved         | ✅     | Changes saved.                                  |
 
@@ -255,12 +255,12 @@ Internal vocabulary is not user vocabulary.
 | --------------------- | ----------------------------------- |
 | Request to represent  | Broker wants to sell your property  |
 | Representation        | Working with this broker            |
-| Pipeline / CRM        | My clients                          |
+| Pipeline / CRM        | My contacts                         |
 | Site visit slot       | Visit time                          |
 | Validation failed     | Please check the highlighted fields |
 | Unauthorized          | You don't have access to this       |
 | Submit                | Save / Send / Publish (say which)   |
-| Entity / record / row | Property / client / request         |
+| Entity / record / row | Property / contact / request        |
 
 Also avoid: "oops", "uh-oh", "whoops". Cute error copy reads as unserious when
 someone's listing just failed to save.

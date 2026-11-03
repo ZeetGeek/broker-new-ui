@@ -274,7 +274,7 @@ test("booking does not book a slot when the buyer is absent or a later lead page
         };
         await assert.rejects(
             brokerVisitsApi.book(booking),
-            fail ? /Lead page unavailable/ : /Could not link this client/,
+            fail ? /Lead page unavailable/ : /Could not link this contact/,
         );
         assert.deepEqual(pages, [1, 2]);
         assert.deepEqual(writes, ["/clients/leads"]);

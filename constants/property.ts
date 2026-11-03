@@ -537,7 +537,7 @@ export const LISTING_STATUS_OPTIONS = [
 ].map((value) => ({ value, label: toLabel(value) }));
 export const VISIBILITY_OPTIONS = [
     { value: "public", label: "Public", description: "Visible to approved brokers" },
-    { value: "my_clients_only", label: "My clients only", description: "Keep it within your CRM" },
+    { value: "my_clients_only", label: "My contacts only", description: "Keep it within your CRM" },
     { value: "private", label: "Private", description: "Only you can see it" },
 ] as const satisfies readonly PropertyOption[];
 export const CONTACT_DISPLAY_OPTIONS = [

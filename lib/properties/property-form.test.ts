@@ -16,7 +16,12 @@ import {
     quickAddValidationIssues,
 } from "@/lib/properties/form-validation";
 import { DEFAULT_PROPERTY_DRAFT, fieldRuleSchemas, stepSchemas } from "@/lib/schemas/property";
-import { isVisible, missingRequiredFields, stripHidden } from "@/lib/visibility/rules";
+import {
+    isStepVisible,
+    isVisible,
+    missingRequiredFields,
+    stripHidden,
+} from "@/lib/visibility/rules";
 
 function listing() {
     const values = structuredClone(DEFAULT_PROPERTY_DRAFT);
@@ -564,4 +569,24 @@ test("Full details drafts allow incomplete data but reject malformed values", ()
             (issue) => issue.path === "details.propertyAge",
         ),
     );
+});
+
+test("land listings skip Amenities while buildings and houses keep it", () => {
+    const values = listing();
+    for (const propertyType of [
+        "residential_plot",
+        "commercial_plot",
+        "industrial_plot",
+        "agricultural_land",
+        "farm_land",
+        "na_plot",
+    ]) {
+        values.basics.propertyType = propertyType;
+        assert.equal(isStepVisible("furnishing", values), false, propertyType);
+        assert.equal(isStepVisible("media", values), true);
+    }
+    for (const propertyType of ["apartment", "villa", "independent_house", "office"]) {
+        values.basics.propertyType = propertyType;
+        assert.equal(isStepVisible("furnishing", values), true, propertyType);
+    }
 });

@@ -66,7 +66,6 @@ import {
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress, ProgressLabel } from "@/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { FORM_STEPS, PROPERTY_TYPES, type PropertyFormStep, toLabel } from "@/constants/property";
 import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
@@ -218,6 +217,14 @@ export function PropertyForm({
         () => FORM_STEPS.filter((item) => ruleStepIsVisible(item.id, values)),
         [values],
     );
+    // Restored drafts or a property-type change can leave the current step hidden.
+    if (!activeSteps.some((item) => item.id === step)) {
+        const originalIndex = FORM_STEPS.findIndex((item) => item.id === step);
+        const nextVisible = activeSteps.find(
+            (item) => FORM_STEPS.findIndex((candidate) => candidate.id === item.id) > originalIndex,
+        );
+        setStep(nextVisible?.id ?? activeSteps[0]!.id);
+    }
     const stepIndex = activeSteps.findIndex((item) => item.id === step);
     const isLastStep = stepIndex === activeSteps.length - 1;
 
@@ -495,14 +502,26 @@ export function PropertyForm({
 
         const goingForward = currentActiveIndex >= 0 && nextActiveIndex > currentActiveIndex;
 
-        // Already-unlocked steps, or the single next step after the current unlock wall.
-        if (nextOriginalIndex > highestUnlocked + 1) return;
-        if (nextOriginalIndex === highestUnlocked + 1 && !goingForward) return;
-
         if (goingForward) {
             setFormBanner(null);
-            if (!validateStep(step)) return;
-            setCompletedSteps((current) => new Set(current).add(step));
+            const validatedSteps = new Set<PropertyFormStep>();
+            for (const precedingStep of activeSteps.slice(0, nextActiveIndex)) {
+                if (!validateStep(precedingStep.id)) {
+                    setCompletedSteps(validatedSteps);
+                    setHighestUnlocked((current) =>
+                        Math.max(
+                            current,
+                            FORM_STEPS.findIndex((item) => item.id === precedingStep.id),
+                        ),
+                    );
+                    setMobileSummaryOpen(false);
+                    setMobileScoreOpen(false);
+                    setStep(precedingStep.id);
+                    return;
+                }
+                validatedSteps.add(precedingStep.id);
+            }
+            setCompletedSteps(validatedSteps);
             setHighestUnlocked((current) => Math.max(current, nextOriginalIndex));
         }
 
@@ -707,11 +726,11 @@ export function PropertyForm({
                 setAttachmentRetry(pending);
                 await writeLocalDraft(current).catch(() => {
                     setStorageError(
-                        "The property is saved, but the pending client links could not be saved on this device. Please retry before leaving.",
+                        "The property is saved, but the pending contact links could not be saved on this device. Please retry before leaving.",
                     );
                 });
                 setFormBanner(
-                    "The property was saved, but its clients could not be attached. Retry below; this will not create another property.",
+                    "The property was saved, but its contacts could not be attached. Retry below; this will not create another property.",
                 );
                 return;
             }
@@ -732,7 +751,7 @@ export function PropertyForm({
             setAttachmentRetry(null);
         } catch {
             setFormBanner(
-                "The property is saved. Clients still could not be attached. Please retry.",
+                "The property is saved. Contacts still could not be attached. Please retry.",
             );
         } finally {
             persistInFlightRef.current = false;
@@ -832,7 +851,7 @@ export function PropertyForm({
     async function requestClose() {
         if (saving || persistInFlightRef.current) return;
         if (attachmentRetry) {
-            toast.error("Please retry attaching clients before closing this form.");
+            toast.error("Please retry attaching contacts before closing this form.");
             return;
         }
         let locallySaved = false;
@@ -934,7 +953,6 @@ export function PropertyForm({
                                     <StepNav
                                         steps={activeSteps}
                                         activeStep={step}
-                                        highestUnlocked={highestUnlocked}
                                         completedSteps={completedSteps}
                                         onStepChange={changeStep}
                                     />
@@ -947,8 +965,7 @@ export function PropertyForm({
                                             if (next) setMobileSummaryOpen(false);
                                         }}
                                         onTip={(tipStep) => {
-                                            setHighestUnlocked(FORM_STEPS.length - 1);
-                                            setStep(tipStep);
+                                            changeStep(tipStep);
                                             setMobileScoreOpen(false);
                                         }}
                                     />
@@ -969,7 +986,6 @@ export function PropertyForm({
                                         <StepNav
                                             steps={activeSteps}
                                             activeStep={step}
-                                            highestUnlocked={highestUnlocked}
                                             completedSteps={completedSteps}
                                             onStepChange={changeStep}
                                         />
@@ -1039,16 +1055,14 @@ export function PropertyForm({
                                                 stepIndex={stepIndex}
                                                 photoFilesRef={photoFilesRef}
                                                 onGoToMedia={() => {
-                                                    setHighestUnlocked(FORM_STEPS.length - 1);
-                                                    setStep("media");
+                                                    changeStep("media");
                                                 }}
                                             />
                                             <ListingScoreCard
                                                 score={listingScore.score}
                                                 tips={listingScore.tips}
                                                 onTip={(tipStep) => {
-                                                    setHighestUnlocked(FORM_STEPS.length - 1);
-                                                    setStep(tipStep);
+                                                    changeStep(tipStep);
                                                 }}
                                             />
                                         </div>
@@ -1115,7 +1129,7 @@ export function PropertyForm({
                             "
                         >
                             <p className="flex-1 text-sm text-danger">
-                                Property saved. Client attachment is pending.
+                                Property saved. Contact attachment is pending.
                             </p>
                             <Button
                                 type="button"
@@ -1124,7 +1138,7 @@ export function PropertyForm({
                                 }}
                                 loading={saving}
                             >
-                                Retry attaching clients
+                                Retry attaching contacts
                             </Button>
                         </div>
                     ) : null}
@@ -1273,80 +1287,68 @@ function PropertyFormHeader({
                     {savedHint}
                 </div>
             )}
-            <TooltipProvider>
-                <div
-                    className="
-                      flex shrink-0 items-center justify-end gap-2 inline-full
-                      sm:inline-auto
-                    "
+            <div
+                className="
+                  flex shrink-0 items-center justify-end gap-2 inline-full
+                  sm:inline-auto
+                "
+            >
+                <SlidingTabs
+                    value={entryMode}
+                    onValueChange={onEntryModeChange}
+                    ariaLabel="Entry mode"
+                    options={ENTRY_MODE_TABS}
+                />
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="md"
+                    loading={savingIntent === "draft"}
+                    disabled={isBusy}
+                    onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onSaveDraft();
+                    }}
+                    className="hidden sm:inline-flex"
                 >
-                    <SlidingTabs
-                        value={entryMode}
-                        onValueChange={onEntryModeChange}
-                        ariaLabel="Entry mode"
-                        options={ENTRY_MODE_TABS}
-                    />
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="md"
-                        loading={savingIntent === "draft"}
-                        disabled={isBusy}
+                    Save as draft
+                </Button>
+                <Button
+                    type="button"
+                    variant="accent"
+                    size="md"
+                    loading={savingIntent === "publish"}
+                    disabled={isBusy}
+                    onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onPublish();
+                    }}
+                >
+                    Publish
+                </Button>
+                {showClose ? (
+                    <DialogClose
                         onClick={(event) => {
                             event.preventDefault();
-                            event.stopPropagation();
-                            onSaveDraft();
+                            onClose();
                         }}
-                        className="hidden sm:inline-flex"
+                        render={
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon-md"
+                                aria-label="Close"
+                                className="shrink-0"
+                            />
+                        }
                     >
-                        Save as draft
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="accent"
-                        size="md"
-                        loading={savingIntent === "publish"}
-                        disabled={isBusy}
-                        onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            onPublish();
-                        }}
-                    >
-                        Publish
-                    </Button>
-                    {showClose ? (
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <DialogClose
-                                        onClick={(event) => {
-                                            event.preventDefault();
-                                            onClose();
-                                        }}
-                                        render={
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="icon-md"
-                                                aria-label="Close"
-                                                className="shrink-0"
-                                            />
-                                        }
-                                    />
-                                }
-                            >
-                                <X className="block-4 inline-4" strokeWidth={2} aria-hidden />
-                                <span className="sr-only">Close</span>
-                            </TooltipTrigger>
-                            <TooltipContent side="inline-start">
-                                Close
-                                <Kbd className="px-1.5 text-[10px] min-inline-4">Esc</Kbd>
-                            </TooltipContent>
-                        </Tooltip>
-                    ) : null}
-                </div>
-            </TooltipProvider>
+                        <X className="block-4 inline-4" strokeWidth={2} aria-hidden />
+                        <span className="sr-only">Close</span>
+                    </DialogClose>
+                ) : null}
+            </div>
         </header>
     );
 }

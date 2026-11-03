@@ -17,7 +17,7 @@ export type PropertyShareInput = {
     listingKind?: "sale" | "rent";
 };
 
-/** Public listing URL brokers can share with clients. */
+/** Public listing URL brokers can share with contacts. */
 export function buildPropertyShareUrl(propertyId: string): string {
     return `${SITE_URL}/property/${propertyId}`;
 }

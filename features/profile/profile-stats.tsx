@@ -140,9 +140,9 @@ function buildMetrics(
         },
         secondary: [
             {
-                label: "Clients",
+                label: "Contacts",
                 value: clientsServed > 0 ? String(clientsServed) : "None yet",
-                hint: clientsServed > 0 ? "Buyers, tenants and investors" : "Add one from Clients",
+                hint: clientsServed > 0 ? "Buyers, tenants and investors" : "Add one from Contacts",
                 emphasize: clientsServed > 0,
             },
             {

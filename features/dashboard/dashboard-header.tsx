@@ -73,11 +73,11 @@ function buildSummaryLines({
               ]
             : []),
         pipelineActiveTotal === 0 ? (
-            "Add a client when a deal comes in"
+            "Add a contact when a deal comes in"
         ) : (
             <>
                 You&apos;re working{" "}
-                {countPhrase(pipelineActiveTotal, "client right now", "clients right now")}
+                {countPhrase(pipelineActiveTotal, "contact right now", "contacts right now")}
             </>
         ),
         followUpCount === 0 ? (
@@ -86,8 +86,8 @@ function buildSummaryLines({
             <>
                 {countPhrase(
                     followUpsOverdueCount,
-                    "client waiting for your call",
-                    "clients waiting for your call",
+                    "contact waiting for your call",
+                    "contacts waiting for your call",
                 )}
             </>
         ) : (

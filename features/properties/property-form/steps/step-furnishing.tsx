@@ -371,14 +371,7 @@ export function StepFurnishing() {
         );
     }
 
-    if (derived.isPlot) {
-        return (
-            <p className="text-sm text-ink-muted">
-                Furnishing and building amenities do not apply to this land listing. Continue to add
-                photos.
-            </p>
-        );
-    }
+    if (derived.isPlot) return null;
 
     return (
         <div className={FORM_SECTIONS_CLASS}>

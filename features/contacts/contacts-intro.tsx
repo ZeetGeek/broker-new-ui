@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 
@@ -18,20 +18,20 @@ function buildLines(summary: ContactsSummary | null, tab: ContactsTab): string[]
             "Find the owner behind your next deal.",
         ];
     }
-    if (summary.buyerCount === 0) return ["Add your first client and capture what they need."];
+    if (summary.buyerCount === 0) return ["Add your first contact and capture what they need."];
     return [
         "Everyone you’re helping find a property.",
         "Keep budgets and preferred areas in view.",
-        "Link clients to properties that fit.",
-        "Your next client call starts here.",
+        "Link contacts to properties that fit.",
+        "Your next contact call starts here.",
     ];
 }
 
 function buildFact(summary: ContactsSummary | null, tab: ContactsTab): string {
-    if (!summary) return tab === "owners" ? "Owners" : "Clients";
+    if (!summary) return tab === "owners" ? "Owners" : "Contacts";
     const count = tab === "owners" ? summary.ownerCount : summary.buyerCount;
-    if (count === 0) return tab === "owners" ? "No owners yet" : "No clients yet";
-    return `${count} ${tab === "owners" ? (count === 1 ? "owner" : "owners") : count === 1 ? "client" : "clients"}`;
+    if (count === 0) return tab === "owners" ? "No owners yet" : "No contacts yet";
+    return `${count} ${tab === "owners" ? (count === 1 ? "owner" : "owners") : count === 1 ? "contact" : "contacts"}`;
 }
 
 export function ContactsIntro({
@@ -54,11 +54,11 @@ export function ContactsIntro({
                     key={`${tab}:${lines.join("|")}`}
                     lines={lines}
                     isLoading={isLoading}
-                    loadingLabel={`Loading your ${tab === "owners" ? "owner" : "client"} summary`}
+                    loadingLabel={`Loading your ${tab === "owners" ? "owner" : "contact"} summary`}
                     loadingPlaceholder={
                         tab === "owners"
                             ? "Your owners and their linked properties"
-                            : "Your clients and what they’re looking for"
+                            : "Your contacts and what they’re looking for"
                     }
                     errorMessage={hasError ? "Could not load your contact counts." : undefined}
                 />

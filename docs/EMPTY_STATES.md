@@ -33,7 +33,7 @@ failure.
 | ❌                                | ✅                                         |
 | --------------------------------- | ------------------------------------------ |
 | 0 site visits, 0 requests waiting | No visits booked. No requests waiting.     |
-| 0 clients                         | No clients yet                             |
+| 0 contacts                        | No contacts yet                            |
 | 0 properties represented          | You're not representing any properties yet |
 | You have 0 follow-ups             | Nothing due today                          |
 | 0 new in your areas               | No new properties in your areas this week  |
@@ -64,7 +64,7 @@ them nothing about what follow-ups are.
 For a new user that card should say what follow-ups _are_:
 
 > **No follow-ups yet**
-> Set a reminder to call a client back, and it'll show here.
+> Set a reminder to call a contact back, and it'll show here.
 
 ---
 
@@ -76,11 +76,11 @@ For a new user that card should say what follow-ups _are_:
 │   ◍   ← icon, 40px, muted, in    │
 │         a soft tinted circle     │
 │                                  │
-│   No clients yet          ← h3   │
+│   No contacts yet         ← h3   │
 │   Add a buyer or tenant to       │
 │   start tracking deals.   ← sm,  │
 │                             muted│
-│   [ Add client ]     ← ONE button│
+│   [ Add contact ]    ← ONE button│
 │                                  │
 └──────────────────────────────────┘
 ```
@@ -144,7 +144,7 @@ show two or three cards, not six. Bring the rest back as data arrives.
 ### 3. Exactly one primary action on the screen
 
 The current dashboard offers `Schedule a visit`, `Book a site visit`, `Browse
-properties`, `Add a follow-up`, `Add client`, and `Browse` — six calls to
+properties`, `Add a follow-up`, `Add contact`, and `Browse` — six calls to
 action with no hierarchy. A new broker cannot tell which comes first.
 
 There is a correct order, and the screen should express it: **one solid button
@@ -168,7 +168,7 @@ for the prerequisite, not the goal.
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `PROFILE_INCOMPLETE`   | **Add your RERA number to get verified**<br>Owners approve verified brokers far more often.<br>`[Add RERA number]` |
 | No service areas       | **Tell us where you work**<br>We'll show you new properties in those areas.<br>`[Add service areas]`               |
-| `PENDING_VERIFICATION` | **Verification in progress**<br>You can browse and add clients now. We'll email you when it's approved.<br>—       |
+| `PENDING_VERIFICATION` | **Verification in progress**<br>You can browse and add contacts now. We'll email you when it's approved.<br>—      |
 | `VERIFIED`, no data    | The normal first-run empty state                                                                                   |
 
 The setup path is the empty state until setup is done. Everything else waits.
@@ -182,11 +182,11 @@ explains where it comes from, action is one verb.**
 
 | Surface           | First-run empty                                                                                            |
 | ----------------- | ---------------------------------------------------------------------------------------------------------- |
-| Next visit        | **No visits booked**<br>Schedule one when a client is ready to see a property.                             |
+| Next visit        | **No visits booked**<br>Schedule one when a contact is ready to see a property.                            |
 | Today             | **Nothing booked today**<br>Visits you schedule will appear here.                                          |
 | Requests          | **No requests sent yet**<br>Find a property you'd like to sell and ask the owner.                          |
-| Pipeline          | **No clients yet**<br>Add a buyer or tenant to start tracking deals.                                       |
-| Follow-ups        | **No follow-ups yet**<br>Set a reminder to call a client back, and it'll show here.                        |
+| Pipeline          | **No contacts yet**<br>Add a buyer or tenant to start tracking deals.                                      |
+| Follow-ups        | **No follow-ups yet**<br>Set a reminder to call a contact back, and it'll show here.                       |
 | Activity          | **Nothing yet**<br>Owner approvals, views, and updates will appear here.                                   |
 | You represent     | **Not representing any properties yet**<br>Once an owner approves your request, the property appears here. |
 | New in your areas | **Nothing new this week**<br>We'll show properties added in the areas you work in.                         |
@@ -286,5 +286,5 @@ And once there is real data, counting is finally correct:
 3. **Requests**, with the ghost-preview treatment so the shape is learnable
 
 Pipeline, Follow-ups, and Activity collapse to a single quiet line each, or
-wait until there is a client. They have nothing to teach a broker who has not
+wait until there is a contact. They have nothing to teach a broker who has not
 yet been verified.

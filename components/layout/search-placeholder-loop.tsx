@@ -10,7 +10,7 @@ import { TextLoop } from "@/components/motion-primitives/text-loop";
  */
 export const BROKER_SEARCH_HINTS = [
     "Search properties",
-    "Find a client",
+    "Find a contact",
     "Look up a visit",
     "Search by locality",
     "Find an owner",

@@ -29,7 +29,7 @@ Seven rules restated because they are the ones that cause conflicts and bugs:
 4. **Always call the returned `unsubscribe()` in the `useEffect` cleanup**, or
    bindings leak across navigations.
 5. **Guard against editable targets.** tinykeys does NOT do this. Without the
-   guard, a broker typing a client's name fires every single-letter shortcut.
+   guard, a broker typing a contact's name fires every single-letter shortcut.
    `$mod` combos may still fire; `Escape` always fires.
 6. **Never override browser or OS keys** — `$mod+T/W/N/R/L/F/P/S/D`, `$mod+1-9`,
    F-keys, Tab, Space, arrows alone.

@@ -224,7 +224,7 @@ export function PropertySharePopover({
         <DropdownMenu open={open} onOpenChange={handleOpenChange}>
             <Tooltip open={open ? false : undefined}>
                 <TooltipTrigger render={trigger} />
-                <TooltipContent side="bottom">Share this listing with a client</TooltipContent>
+                <TooltipContent side="bottom">Share this listing with a contact</TooltipContent>
             </Tooltip>
 
             <DropdownMenuContent

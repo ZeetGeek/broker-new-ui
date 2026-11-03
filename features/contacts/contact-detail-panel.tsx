@@ -632,7 +632,7 @@ function BuyerPanel({
                     {saved ? <span className="body-sm font-medium text-success">Saved</span> : null}
                 </div>
                 <textarea
-                    aria-label="Client notes"
+                    aria-label="Contact notes"
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
                     onBlur={() => void save({ notes })}
@@ -842,7 +842,7 @@ export type ContactDetailPanelProps = {
 
 function ContactPanelSkeleton() {
     return (
-        <div className="flex animate-pulse flex-col gap-6" aria-label="Loading client details">
+        <div className="flex animate-pulse flex-col gap-6" aria-label="Loading contact details">
             <div className="flex items-center gap-3">
                 <div className="rounded-full bg-surface-muted block-14 inline-14" />
                 <div className="flex flex-col gap-2">
@@ -897,7 +897,7 @@ export function ContactDetailPanel({
             <AppModal
                 open
                 onOpenChange={onOpenChange}
-                title={loadError ? "Client unavailable" : "Loading client"}
+                title={loadError ? "Contact unavailable" : "Loading contact"}
                 size="md"
                 padding="md"
                 className="contacts-detail-drawer"
@@ -957,7 +957,7 @@ export function ContactDetailPanel({
         <AppModal
             open={open}
             onOpenChange={onOpenChange}
-            title={`${row.name} client details`}
+            title={`${row.name} contact details`}
             size="md"
             padding="md"
             className="contacts-detail-drawer"
