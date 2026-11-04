@@ -5,10 +5,8 @@ import Link from "next/link";
 
 import { Label, PolarAngleAxis, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
 
-import { cn } from "@/lib/utils";
 import { formatBudgetAmount } from "@/lib/format/price";
-import { columnValue } from "@/features/pipeline/deal-attention";
-import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
+import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import {
@@ -17,17 +15,17 @@ import {
     CalendarClock,
     CalendarPlus,
     CallIcon,
-    Check,
     ChartBar,
+    Check,
     Clock,
     LockKeyhole,
     MapPin,
+    MoreHorizontal,
     Pencil,
     Plus,
     Trash2,
     X,
 } from "@/components/shared/icons";
-import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,6 +37,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 
+import { columnValue } from "@/features/pipeline/deal-attention";
+import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
+
 import {
     MOCK_PIPELINE,
     MOCK_TASKS,
@@ -49,6 +50,7 @@ import {
     type TaskPriority,
 } from "./mock-work-overview";
 
+import nextVisitStyles from "./next-visit.module.css";
 import taskStyles from "./task-card.module.css";
 import visitStyles from "./visit-card.module.css";
 
@@ -708,7 +710,7 @@ function PipelineOverview() {
                     </PolarRadiusAxis>
                 </RadialBarChart>
             </ChartContainer>
-            <dl className="mx-auto mbs-2 grid inline-full max-inline-80 grid-cols-2 text-center">
+            <dl className="mx-auto mbs-2 grid grid-cols-2 text-center inline-full max-inline-80">
                 <div className="px-3">
                     <dt className="text-xs font-semibold text-ink-muted">Total sale value</dt>
                     <dd className="h5 mbs-1 text-ink tabular-nums">{pipelineValue.sale ?? "—"}</dd>
@@ -794,45 +796,102 @@ function VisitDetails({ visit, children }: { visit: PreviewVisit; children: Reac
 }
 
 function NextVisit() {
-    const visit = MOCK_VISITS[1];
+    const visit = MOCK_VISITS.find((item) => !item.needsUpdate && !item.outcome);
+    if (!visit) return null;
+
     return (
-        <section
-            className="flex flex-col gap-4 rounded-card bg-brand-deep p-4 text-surface shadow-sm sm:p-5"
-            aria-labelledby="preview-next-visit-title"
-        >
-            <div className="flex items-center justify-between gap-3">
+        <section className={nextVisitStyles.card} aria-labelledby="preview-next-visit-title">
+            <div className={nextVisitStyles.header}>
                 <h2 id="preview-next-visit-title" className="body-sm font-semibold">
                     Your next visit
                 </h2>
-                <span className={cn(TAG, "bg-highlight text-highlight-ink")}>Confirmed</span>
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        render={
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className={nextVisitStyles.menuTrigger}
+                                aria-label="More visit actions"
+                            />
+                        }
+                    >
+                        <MoreHorizontal aria-hidden />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                            render={
+                                <a
+                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(visit.location)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                />
+                            }
+                        >
+                            <MapPin aria-hidden />
+                            View location on Maps
+                        </DropdownMenuItem>
+                        <DropdownMenuItem render={<Link href="/broker/visits" />}>
+                            <CalendarClock aria-hidden />
+                            View all visits
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="h3 tabular-nums">11:00–11:45 AM</p>
-                <span className="caption text-brand-soft">Starts in 1 hour</span>
+
+            <div className={nextVisitStyles.schedule}>
+                <p className={nextVisitStyles.time}>
+                    {visit.time.endsWith(visit.end.slice(-2))
+                        ? visit.time.slice(0, -3)
+                        : visit.time}
+                    &ndash;{visit.end}
+                </p>
+                <p className={nextVisitStyles.countdown}>
+                    <Clock aria-hidden className="block-4 inline-4" />
+                    Starts in 1 hour
+                </p>
             </div>
-            <dl className="grid grid-cols-2 gap-4">
-                <div>
-                    <dt className="caption text-brand-soft">Client</dt>
-                    <dd className="body-sm mbs-1 font-semibold">{visit.client}</dd>
+
+            <div className={nextVisitStyles.details}>
+                <div className={nextVisitStyles.cover}>
+                    <Building aria-hidden className={nextVisitStyles.coverFallback} />
+                    <AppImage src={visit.coverImage} alt="" fill sizes="64px" />
                 </div>
-                <div>
-                    <dt className="caption text-brand-soft">Property</dt>
-                    <dd className="body-sm mbs-1 font-semibold">{visit.property}</dd>
-                    <dd className="caption mbs-2 flex items-start gap-1.5 text-brand-soft">
+                <div className={nextVisitStyles.property}>
+                    <p className={nextVisitStyles.propertyName}>{visit.property}</p>
+                    <p className={nextVisitStyles.location}>
                         <MapPin aria-hidden className="shrink-0 block-3.5 inline-3.5" />
                         {visit.location}
-                    </dd>
+                    </p>
+                    <div className={nextVisitStyles.people}>
+                        <p className={nextVisitStyles.client}>
+                            <span>Client</span>
+                            <span className="font-semibold">{visit.client}</span>
+                        </p>
+                        <p className={nextVisitStyles.client}>
+                            <span>Owner</span>
+                            <span className="font-semibold">{visit.owner}</span>
+                        </p>
+                    </div>
                 </div>
-            </dl>
-            <div className="flex flex-wrap gap-2">
+            </div>
+
+            <div className={nextVisitStyles.actions}>
                 <VisitDetails visit={visit}>
-                    <Button variant="highlight" size="sm">
-                        <ArrowRight aria-hidden />
+                    <Button variant="highlight" className={nextVisitStyles.action}>
                         View visit
+                        <ArrowRight aria-hidden />
                     </Button>
                 </VisitDetails>
                 <Popover>
-                    <PopoverTrigger render={<Button variant="outline" size="sm" />}>
+                    <PopoverTrigger
+                        render={
+                            <Button
+                                variant="ghost"
+                                className={cn(nextVisitStyles.action, nextVisitStyles.call)}
+                            />
+                        }
+                    >
                         <CallIcon aria-hidden />
                         Call client
                     </PopoverTrigger>
@@ -1088,25 +1147,11 @@ function TodayVisits() {
                                                 <dl className={visitStyles.people}>
                                                     <div>
                                                         <dt>Client</dt>
-                                                        <dd>
-                                                            <UserAvatar
-                                                                name={visit.client}
-                                                                size="2xs"
-                                                                framed={false}
-                                                            />
-                                                            <span>{visit.client}</span>
-                                                        </dd>
+                                                        <dd>{visit.client}</dd>
                                                     </div>
                                                     <div>
                                                         <dt>Owner</dt>
-                                                        <dd>
-                                                            <UserAvatar
-                                                                name={visit.owner}
-                                                                size="2xs"
-                                                                framed={false}
-                                                            />
-                                                            <span>{visit.owner}</span>
-                                                        </dd>
+                                                        <dd>{visit.owner}</dd>
                                                     </div>
                                                 </dl>
                                                 <div className={visitStyles.actions}>

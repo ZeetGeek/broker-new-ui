@@ -124,15 +124,10 @@
     font-size: 0.75rem;
 }
 .people dd {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
+    min-inline-size: 0;
     color: var(--color-ink);
     font-weight: 500;
     overflow-wrap: anywhere;
-}
-.people dd > span:last-child {
-    min-inline-size: 0;
 }
 .time {
     padding-block-start: 4px;

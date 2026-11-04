@@ -35,6 +35,7 @@ import { dashboardMock } from "@/features/dashboard/mock-data";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
+import { CommissionEarned } from "./commission-earned";
 import { WorkOverview } from "./work-overview";
 
 const TIME_ZONE = "Asia/Kolkata";
@@ -318,6 +319,7 @@ export function NewBrokerDashboard() {
                 ))}
             </ul>
             <WorkOverview />
+            <CommissionEarned />
             <AddBuyerModal
                 open={addClientOpen}
                 onOpenChange={setAddClientOpen}
