@@ -22,6 +22,8 @@ const PROPERTIES: TaskAttachment[] = [
     { id: "property-4", kind: "property", name: "3 BHK, Pal", imageUrl: "/properties/4.jpg" },
 ];
 
+export type TaskPriority = "low" | "medium" | "high" | "urgent";
+
 export type PreviewTask = {
     id: string;
     title: string;
@@ -31,7 +33,14 @@ export type PreviewTask = {
     reminders: string[];
     group: "overdue" | "today" | "later";
     completed: boolean;
-    important?: boolean;
+    priority: TaskPriority;
+};
+
+export const TASK_PRIORITY_RANK: Record<TaskPriority, number> = {
+    urgent: 4,
+    high: 3,
+    medium: 2,
+    low: 1,
 };
 
 export const MOCK_TASKS: PreviewTask[] = [
@@ -44,10 +53,10 @@ export const MOCK_TASKS: PreviewTask[] = [
         reminders: ["At due time"],
         group: "overdue",
         completed: false,
+        priority: "high",
     },
     {
         id: "task-2",
-        important: true,
         title: "Collect signed owner consent",
         attachments: [OWNER, PROPERTIES[0]],
         due: "2 days ago",
@@ -55,10 +64,10 @@ export const MOCK_TASKS: PreviewTask[] = [
         reminders: ["Reminder sent"],
         group: "overdue",
         completed: false,
+        priority: "urgent",
     },
     {
         id: "task-3",
-        important: true,
         title: "Confirm visit with Priya Desai",
         attachments: [PRIYA, PROPERTIES[1]],
         due: "Today",
@@ -66,6 +75,7 @@ export const MOCK_TASKS: PreviewTask[] = [
         reminders: ["15 min before", "1 hour before", "1 day before"],
         group: "today",
         completed: false,
+        priority: "urgent",
     },
     {
         id: "task-4",
@@ -76,6 +86,7 @@ export const MOCK_TASKS: PreviewTask[] = [
         reminders: ["At due time"],
         group: "today",
         completed: false,
+        priority: "high",
     },
     {
         id: "task-5",
@@ -86,6 +97,7 @@ export const MOCK_TASKS: PreviewTask[] = [
         reminders: [],
         group: "today",
         completed: false,
+        priority: "low",
     },
     {
         id: "task-8",
@@ -96,6 +108,7 @@ export const MOCK_TASKS: PreviewTask[] = [
         reminders: [],
         group: "today",
         completed: false,
+        priority: "medium",
     },
     {
         id: "task-9",
@@ -106,7 +119,7 @@ export const MOCK_TASKS: PreviewTask[] = [
         reminders: [],
         group: "today",
         completed: false,
-        important: true,
+        priority: "urgent",
     },
     {
         id: "task-10",
@@ -117,6 +130,7 @@ export const MOCK_TASKS: PreviewTask[] = [
         reminders: [],
         group: "today",
         completed: false,
+        priority: "medium",
     },
     {
         id: "task-6",
@@ -127,6 +141,7 @@ export const MOCK_TASKS: PreviewTask[] = [
         reminders: ["At due time"],
         group: "later",
         completed: false,
+        priority: "medium",
     },
     {
         id: "task-7",
@@ -137,6 +152,7 @@ export const MOCK_TASKS: PreviewTask[] = [
         reminders: [],
         group: "later",
         completed: false,
+        priority: "low",
     },
 ];
 
@@ -156,11 +172,16 @@ export type PreviewVisit = {
     property: string;
     location: string;
     needsUpdate: boolean;
+    outcome?: "attended" | "notAttended";
+    coverImage: string;
+    owner: string;
 };
 
 export const MOCK_VISITS: PreviewVisit[] = [
     {
         id: "visit-1",
+        coverImage: "/properties/1.jpg",
+        owner: "Harsh Shah",
         time: "9:00 AM",
         end: "9:45 AM",
         client: "Aarav Shah",
@@ -169,7 +190,20 @@ export const MOCK_VISITS: PreviewVisit[] = [
         needsUpdate: true,
     },
     {
+        id: "visit-4",
+        coverImage: "/properties/4.jpg",
+        owner: "Jignesh Mehta",
+        time: "10:00 AM",
+        end: "10:45 AM",
+        client: "Riya Joshi",
+        property: "4 BHK � Palm Residency",
+        location: "Pal, Surat",
+        needsUpdate: true,
+    },
+    {
         id: "visit-2",
+        coverImage: "/properties/2.jpg",
+        owner: "Nisha Patel",
         time: "11:00 AM",
         end: "11:45 AM",
         client: "Priya Desai",
@@ -178,12 +212,106 @@ export const MOCK_VISITS: PreviewVisit[] = [
         needsUpdate: false,
     },
     {
+        id: "visit-5",
+        coverImage: "/properties/1.jpg",
+        owner: "Bhavna Shah",
+        time: "12:30 PM",
+        end: "1:15 PM",
+        client: "Rahul Mehta",
+        property: "3 BHK � Green Meadows",
+        location: "Althan, Surat",
+        needsUpdate: false,
+    },
+    {
+        id: "visit-6",
+        coverImage: "/properties/2.jpg",
+        owner: "Sanjay Patel",
+        time: "2:00 PM",
+        end: "2:45 PM",
+        client: "Ananya Shah",
+        property: "2 BHK � River View Apartments",
+        location: "Jahangirpura, Surat",
+        needsUpdate: false,
+    },
+    {
         id: "visit-3",
+        coverImage: "/properties/3.jpg",
+        owner: "Kiran Desai",
         time: "3:30 PM",
         end: "4:15 PM",
         client: "Mehul Patel",
         property: "Office · Business Centre",
         location: "Piplod, Surat",
         needsUpdate: false,
+    },
+    {
+        id: "visit-7",
+        coverImage: "/properties/3.jpg",
+        owner: "Pooja Desai",
+        time: "5:00 PM",
+        end: "5:45 PM",
+        client: "Dev Shah",
+        property: "Villa � Shantivan Bungalows",
+        location: "Dumas, Surat",
+        needsUpdate: false,
+    },
+    {
+        id: "visit-8",
+        coverImage: "/properties/4.jpg",
+        owner: "Manish Joshi",
+        time: "6:00 PM",
+        end: "6:45 PM",
+        client: "Neha Patel",
+        property: "Shop � High Street Plaza",
+        location: "City Light, Surat",
+        needsUpdate: false,
+    },
+    {
+        id: "visit-9",
+        coverImage: "/properties/1.jpg",
+        owner: "Kavita Shah",
+        time: "7:00 AM",
+        end: "7:30 AM",
+        client: "Ishaan Mehta",
+        property: "3 BHK � Sunrise Heights",
+        location: "Vesu, Surat",
+        needsUpdate: false,
+        outcome: "attended",
+    },
+    {
+        id: "visit-10",
+        coverImage: "/properties/2.jpg",
+        owner: "Rajesh Patel",
+        time: "8:00 AM",
+        end: "8:30 AM",
+        client: "Sneha Desai",
+        property: "2 BHK � Lakeview Residency",
+        location: "Pal, Surat",
+        needsUpdate: false,
+        outcome: "attended",
+    },
+    {
+        id: "visit-11",
+        coverImage: "/properties/3.jpg",
+        owner: "Alpa Mehta",
+        time: "7:30 AM",
+        end: "8:00 AM",
+        client: "Kunal Shah",
+        property: "Villa � Garden Enclave",
+        location: "Dumas, Surat",
+        needsUpdate: false,
+        outcome: "notAttended",
+    },
+    {
+        id: "visit-12",
+        coverImage: "/properties/4.jpg",
+        owner: "Vivek Joshi",
+        time: "8:30 AM",
+        end: "9:00 AM",
+        client: "Pooja Patel",
+        property: "Office � Trade Square",
+        location: "Piplod, Surat",
+        needsUpdate: false,
+        outcome: "notAttended",
     },
 ];
