@@ -21,13 +21,17 @@ export function formatCommissionMonth(monthKey: string, style: "short" | "long" 
     }).format(new Date(`${monthKey}-01T00:00:00Z`));
 }
 
-export function formatCommissionPeriod(first: string, last: string): string {
-    if (first === last) return formatCommissionMonth(first);
+export function formatCommissionPeriod(
+    first: string,
+    last: string,
+    style: "short" | "long" = "long",
+): string {
+    if (first === last) return formatCommissionMonth(first, style);
     const firstLabel =
         first.slice(0, 4) === last.slice(0, 4)
-            ? new Intl.DateTimeFormat("en-IN", { month: "long", timeZone: "UTC" }).format(
+            ? new Intl.DateTimeFormat("en-IN", { month: style, timeZone: "UTC" }).format(
                   new Date(`${first}-01T00:00:00Z`),
               )
-            : formatCommissionMonth(first);
-    return `${firstLabel}–${formatCommissionMonth(last)}`;
+            : formatCommissionMonth(first, style);
+    return `${firstLabel}–${formatCommissionMonth(last, style)}`;
 }

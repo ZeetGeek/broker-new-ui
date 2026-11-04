@@ -63,21 +63,32 @@ export function CommissionEarned() {
                     </h2>
                     <div aria-live="polite" aria-atomic="true">
                         <p className={`h1 ${styles.total}`}>{formatCommission(total)}</p>
-                        <p className={styles.period}>{period}</p>
                     </div>
                     <nav className={styles.navigation} aria-label="Commission periods">
                         <Button
-                            variant="outline"
-                            size="icon"
+                            variant="ghost"
+                            size="icon-sm"
                             aria-label={`Previous ${months} months`}
                             disabled={!window.hasPrevious}
                             onClick={() => setPage(window.pageIndex + 1)}
                         >
                             <ChevronLeft aria-hidden />
                         </Button>
+                        <p
+                            className={styles.period}
+                            aria-live="polite"
+                            aria-atomic="true"
+                            aria-label={period}
+                        >
+                            {formatCommissionPeriod(
+                                selectedMonths[0].monthKey,
+                                latest.monthKey,
+                                "short",
+                            )}
+                        </p>
                         <Button
-                            variant="outline"
-                            size="icon"
+                            variant="ghost"
+                            size="icon-sm"
                             aria-label={`Next ${months} months`}
                             disabled={!window.hasNext}
                             onClick={() => setPage(window.pageIndex - 1)}
@@ -110,35 +121,35 @@ export function CommissionEarned() {
 
             <div className={styles.detail}>
                 <header className={styles.chartHeader}>
-                    <div>
-                        <h3 className="h6">Earnings by month</h3>
-                    </div>
-                    <Select
-                        items={PERIOD_OPTIONS}
-                        value={months}
-                        onValueChange={(value) => {
-                            if (value === 3 || value === 6 || value === 12) {
-                                setMonths(value);
-                                setPage(0);
-                            }
-                        }}
-                    >
-                        <SelectTrigger
-                            size="sm"
-                            aria-label="Commission period length"
-                            className={styles.range}
-                            wrapperClassName={styles.rangeWrapper}
+                    <h3 className="h6">Earnings by month</h3>
+                    <div className={styles.rangeControl}>
+                        <Select
+                            items={PERIOD_OPTIONS}
+                            value={months}
+                            onValueChange={(value) => {
+                                if (value === 3 || value === 6 || value === 12) {
+                                    setMonths(value);
+                                    setPage(0);
+                                }
+                            }}
                         >
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {PERIOD_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                            <SelectTrigger
+                                size="xs"
+                                aria-label="Commission period length"
+                                className={styles.range}
+                                wrapperClassName={styles.rangeWrapper}
+                            >
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {PERIOD_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </header>
                 <div className={styles.chartViewport}>
                     <ChartContainer
