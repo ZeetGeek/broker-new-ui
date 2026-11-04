@@ -25,11 +25,11 @@ const buttonVariants = cva(
             variant: {
                 default: `bg-primary text-primary-foreground hover:bg-primary/80`,
                 outline: `
-                  border-border bg-background
-                  hover:bg-muted hover:text-foreground
-                  aria-expanded:bg-muted aria-expanded:text-foreground
-                  dark:bg-transparent
-                  dark:hover:bg-input/30
+                  border-border-warm bg-surface font-medium text-ink shadow-sm
+                  transition-[background-color,border-color,box-shadow,color,transform] duration-250
+                  hover:border-gray-300 hover:bg-gray-50 hover:text-ink
+                  aria-expanded:border-gray-300 aria-expanded:bg-gray-50 aria-expanded:text-ink
+                  motion-reduce:transition-none
                 `,
                 surface: `
                   border-border-warm bg-surface text-ink shadow-sm

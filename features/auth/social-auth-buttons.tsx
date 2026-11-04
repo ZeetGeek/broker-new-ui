@@ -44,10 +44,7 @@ function SocialButton({
             onClick={onClick}
             loading={loading}
             disabled={disabled}
-            className="
-              gap-3 border-border-warm bg-surface font-medium text-ink shadow-sm inline-full
-              hover:border-gray-300 hover:bg-gray-50 hover:text-ink
-            "
+            className="gap-3 inline-full"
         >
             {loading ? null : mark}
             {children}
