@@ -18,7 +18,8 @@ export type AvatarStackProps = {
     /** Tooltip text for the overflow chip. Defaults to listing the names. */
     overflowLabel?: string;
     /** Compact faces for inline metadata; existing people rows keep 36px faces. */
-    size?: "sm" | "md" | "2xs";
+    size?: "sm" | "md" | "2xs" | "xxs";
+    avatarClassName?: string;
     className?: string;
 };
 
@@ -37,12 +38,13 @@ export function AvatarStack({
     overflowLabel,
     size = "sm",
     className,
+    avatarClassName,
 }: AvatarStackProps) {
     if (people.length === 0) return null;
 
     const visible = people.slice(0, max);
     const overflow = people.slice(max);
-    const compact = size === "2xs";
+    const compact = size === "2xs" || size === "xxs";
 
     return (
         <TooltipProvider>
@@ -70,7 +72,7 @@ export function AvatarStack({
                                         name={person.name}
                                         imageUrl={person.avatarUrl}
                                         size={size}
-                                        className={STACK_FACE_CLASS}
+                                        className={cn(STACK_FACE_CLASS, avatarClassName)}
                                     />
                                 </span>
                             }
@@ -102,11 +104,13 @@ export function AvatarStack({
                                           focus-visible:outline-offset-2 focus-visible:outline-ring
                                           data-popup-open:z-10
                                         `,
-                                        compact
-                                            ? "-ms-1.5 block-6 inline-6"
-                                            : size === "md"
-                                              ? "-ms-2.5 block-10 inline-10"
-                                              : "-ms-2.5 block-9 inline-9",
+                                        size === "xxs"
+                                            ? "-ms-1.5 block-5 inline-5"
+                                            : compact
+                                              ? "-ms-1.5 block-6 inline-6"
+                                              : size === "md"
+                                                ? "-ms-2.5 block-10 inline-10"
+                                                : "-ms-2.5 block-9 inline-9",
                                     )}
                                 >
                                     +{overflow.length}

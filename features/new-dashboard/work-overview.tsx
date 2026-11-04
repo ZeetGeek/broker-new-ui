@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
@@ -13,7 +13,6 @@ import {
     Clock,
     LockKeyhole,
     MapPin,
-    MoreHorizontal,
     Plus,
     Trash2,
 } from "@/components/shared/icons";
@@ -55,9 +54,14 @@ function TaskAttachments({ attachments }: { attachments: TaskAttachment[] }) {
                 <span
                     key={person.id}
                     title={`${person.kind === "client" ? "Client" : "Owner"}: ${person.name}`}
-                    className="text-xs inline-flex items-center gap-1.5 font-semibold text-ink-subtle min-inline-0"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-subtle min-inline-0"
                 >
-                    <UserAvatar name={person.name} imageUrl={person.imageUrl} size="2xs" />
+                    <UserAvatar
+                        name={person.name}
+                        imageUrl={person.imageUrl}
+                        size="xxs"
+                        className="shadow-sm ring-2 ring-white"
+                    />
                     <span className="truncate max-inline-[18ch]">
                         <span className="sr-only">{person.kind}: </span>
                         {person.name}
@@ -72,11 +76,12 @@ function TaskAttachments({ attachments }: { attachments: TaskAttachment[] }) {
                             name: item.name,
                             avatarUrl: item.imageUrl,
                         }))}
-                        size="2xs"
+                        size="xxs"
+                        avatarClassName="shadow-sm ring-2 ring-white"
                     />
                     <Popover>
                         <PopoverTrigger
-                            className="text-xs rounded-control font-semibold whitespace-nowrap text-ink-subtle hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                            className="rounded-control text-xs font-semibold whitespace-nowrap text-ink-subtle hover:underline focus-visible:outline-2 focus-visible:outline-ring"
                             aria-label={`View ${properties.length} linked ${properties.length === 1 ? "property" : "properties"}`}
                         >
                             {properties.length} linked
@@ -97,7 +102,7 @@ function TaskAttachments({ attachments }: { attachments: TaskAttachment[] }) {
                                         <UserAvatar
                                             name={property.name}
                                             imageUrl={property.imageUrl}
-                                            size="2xs"
+                                            size="xxs"
                                         />
                                         <span className="wrap-anywhere min-inline-0">
                                             {property.name}
@@ -113,7 +118,33 @@ function TaskAttachments({ attachments }: { attachments: TaskAttachment[] }) {
     );
 }
 
+/** Track remaining content so fixed footers only cast a shadow over a scrollable list. */
+function useScrollFooter() {
+    const viewportRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+    const [hasMore, setHasMore] = useState(false);
+    const measure = useCallback(() => {
+        const viewport = viewportRef.current;
+        if (viewport) {
+            setHasMore(viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1);
+        }
+    }, []);
+    useEffect(() => {
+        const observer = new ResizeObserver(measure);
+        if (viewportRef.current) observer.observe(viewportRef.current);
+        if (contentRef.current) observer.observe(contentRef.current);
+        return () => observer.disconnect();
+    }, [measure]);
+    return { viewportRef, contentRef, hasMore, measure };
+}
+
 function TasksCard() {
+    const {
+        viewportRef: taskViewportRef,
+        contentRef: taskContentRef,
+        hasMore: tasksHaveMore,
+        measure: measureTasks,
+    } = useScrollFooter();
     const [tasks, setTasks] = useState(MOCK_TASKS);
     const [filter, setFilter] = useState<"focus" | "important" | "completed">("focus");
     const [showAll, setShowAll] = useState(false);
@@ -137,16 +168,21 @@ function TasksCard() {
     const groups = filter === "completed" ? ["completed"] : ["overdue", "today", "later"];
 
     return (
-        <section className={cn(CARD, taskStyles.card)} aria-labelledby="preview-tasks-title">
+        <section
+            className={cn(CARD, taskStyles.card, taskStyles.fixedCard)}
+            aria-labelledby="preview-tasks-title"
+        >
             <header className="flex flex-wrap items-center justify-between gap-3">
-                <h2 id="preview-tasks-title" className="h5 text-ink">
-                    My tasks
-                </h2>
-                <div className="ms-auto flex flex-wrap items-center justify-end gap-3">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <h2 id="preview-tasks-title" className="h5 text-ink">
+                        My tasks
+                    </h2>
+                    <span aria-hidden className="shrink-0 bg-border-warm block-5 inline-px" />
                     <p className="body-sm text-ink-muted">
                         {open.length} tasks to do &middot; {important} important
                     </p>
-                    <span aria-hidden className="shrink-0 bg-border-warm block-5 inline-px" />
+                </div>
+                <div className="ms-auto">
                     <Button
                         variant="outline"
                         size="sm"
@@ -216,172 +252,177 @@ function TasksCard() {
                     </Button>
                 </form>
             )}
-            <div className={taskStyles.list}>
-                {groups.map((group) => {
-                    const items = visible.filter(
-                        (task) => group === "completed" || task.group === group,
-                    );
-                    if (!items.length) return null;
-                    return (
-                        <div key={group}>
-                            <h3
-                                className={cn(
-                                    taskStyles.group,
-                                    group === "overdue" && "text-urgent",
-                                )}
-                            >
-                                {group === "overdue"
-                                    ? "Overdue"
-                                    : group === "today"
-                                      ? "Today"
-                                      : group === "later"
-                                        ? "Upcoming"
-                                        : "Completed"}
-                                <span className="text-ink-subtle">{items.length}</span>
-                            </h3>
-                            <ul className="divide-y divide-border-warm/60">
-                                {items.map((task) => (
-                                    <li
-                                        key={task.id}
+            <div
+                ref={taskViewportRef}
+                onScroll={measureTasks}
+                className={taskStyles.scrollViewport}
+                tabIndex={0}
+                role="region"
+                aria-label="Task list"
+            >
+                <div ref={taskContentRef} className={taskStyles.list}>
+                    {groups.map((group) => {
+                        const items = visible.filter(
+                            (task) => group === "completed" || task.group === group,
+                        );
+                        if (!items.length) return null;
+                        return (
+                            <div key={group}>
+                                <h3
+                                    className={cn(
+                                        taskStyles.group,
+                                        group === "overdue" && "text-urgent",
+                                    )}
+                                >
+                                    {group === "overdue"
+                                        ? "Overdue"
+                                        : group === "today"
+                                          ? "Today"
+                                          : group === "later"
+                                            ? "Upcoming"
+                                            : "Completed"}
+                                    <span
                                         className={cn(
-                                            taskStyles.row,
-                                            task.completed && taskStyles.completed,
+                                            group === "overdue" ? "text-urgent" : "text-ink-subtle",
                                         )}
                                     >
-                                        <Checkbox
-                                            checked={task.completed}
-                                            className="mbs-1 rounded-full"
-                                            onCheckedChange={(checked) =>
-                                                update(task.id, { completed: Boolean(checked) })
-                                            }
-                                            aria-label={`Mark ${task.title} ${task.completed ? "incomplete" : "complete"}`}
-                                        />
-                                        <div className="min-inline-0">
-                                            <p
-                                                className={cn(
-                                                    "body-sm font-semibold wrap-anywhere text-ink",
-                                                    task.completed &&
-                                                        "text-ink-subtle line-through",
-                                                )}
-                                            >
-                                                {task.title}
-                                            </p>
-                                            <div className={taskStyles.metadata}>
-                                                <span
+                                        {items.length}
+                                    </span>
+                                </h3>
+                                <ul className="divide-y divide-border-warm/60">
+                                    {items.map((task) => (
+                                        <li
+                                            key={task.id}
+                                            className={cn(
+                                                taskStyles.row,
+                                                task.completed && taskStyles.completed,
+                                            )}
+                                        >
+                                            <Checkbox
+                                                checked={task.completed}
+                                                className="mbs-1 cursor-pointer rounded-full hover:border-brand"
+                                                onCheckedChange={(checked) =>
+                                                    update(task.id, { completed: Boolean(checked) })
+                                                }
+                                                aria-label={`Mark ${task.title} ${task.completed ? "incomplete" : "complete"}`}
+                                            />
+                                            <div className="min-inline-0">
+                                                <p
                                                     className={cn(
-                                                        "text-xs font-semibold inline-flex items-center gap-1 whitespace-nowrap",
-                                                        task.group === "overdue" && !task.completed
-                                                            ? "text-urgent"
-                                                            : "text-ink-subtle",
+                                                        "body-sm font-semibold wrap-anywhere text-ink",
+                                                        task.completed &&
+                                                            "text-ink-subtle line-through",
                                                     )}
                                                 >
-                                                    <CalendarClock
-                                                        aria-hidden
-                                                        className="block-3.5 inline-3.5"
+                                                    {task.title}
+                                                </p>
+                                                <div className={taskStyles.metadata}>
+                                                    <span
+                                                        className={cn(
+                                                            "inline-flex items-center gap-1 text-xs font-semibold whitespace-nowrap",
+                                                            task.group === "overdue" &&
+                                                                !task.completed
+                                                                ? "text-urgent"
+                                                                : "text-ink-subtle",
+                                                        )}
+                                                    >
+                                                        <CalendarClock
+                                                            aria-hidden
+                                                            className="block-3.5 inline-3.5"
+                                                        />
+                                                        {task.due}
+                                                        {task.dueTime !== "Any time" &&
+                                                            ` \u00b7 ${task.dueTime}`}
+                                                    </span>
+                                                    <TaskAttachments
+                                                        attachments={task.attachments}
                                                     />
-                                                    {task.due}
-                                                    {task.dueTime !== "Any time" &&
-                                                        ` \u00b7 ${task.dueTime}`}
-                                                </span>
-                                                <TaskAttachments attachments={task.attachments} />
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger
-                                                    render={
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            aria-label={`Reschedule ${task.title}`}
-                                                            title="Reschedule task"
-                                                        />
+                                            <div className="flex items-center">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger
+                                                        render={
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                aria-label={`Reschedule ${task.title}`}
+                                                                title="Reschedule task"
+                                                            />
+                                                        }
+                                                    >
+                                                        <CalendarClock aria-hidden />
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem
+                                                            onClick={() =>
+                                                                update(task.id, {
+                                                                    due: "Today",
+                                                                    dueTime: "4:00 PM",
+                                                                    group: "today",
+                                                                })
+                                                            }
+                                                        >
+                                                            Later today
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onClick={() =>
+                                                                update(task.id, {
+                                                                    due: "Tomorrow",
+                                                                    group: "later",
+                                                                })
+                                                            }
+                                                        >
+                                                            Tomorrow
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-danger hover:bg-danger/5 hover:text-danger"
+                                                    aria-label={`Delete ${task.title}`}
+                                                    title="Delete task"
+                                                    onClick={() =>
+                                                        setTasks((current) =>
+                                                            current.filter(
+                                                                (item) => item.id !== task.id,
+                                                            ),
+                                                        )
                                                     }
                                                 >
-                                                    <CalendarClock aria-hidden />
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            update(task.id, {
-                                                                due: "Today",
-                                                                dueTime: "4:00 PM",
-                                                                group: "today",
-                                                            })
-                                                        }
-                                                    >
-                                                        Later today
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            update(task.id, {
-                                                                due: "Tomorrow",
-                                                                group: "later",
-                                                            })
-                                                        }
-                                                    >
-                                                        Tomorrow
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger
-                                                    render={
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            aria-label={`Actions for ${task.title}`}
-                                                        />
-                                                    }
-                                                >
-                                                    <MoreHorizontal aria-hidden />
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            update(task.id, {
-                                                                important: !task.important,
-                                                            })
-                                                        }
-                                                    >
-                                                        {task.important
-                                                            ? "Remove importance"
-                                                            : "Mark important"}
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onClick={() =>
-                                                            setTasks((current) =>
-                                                                current.filter(
-                                                                    (item) => item.id !== task.id,
-                                                                ),
-                                                            )
-                                                        }
-                                                    >
-                                                        <Trash2 aria-hidden /> Delete task
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    );
-                })}
-                {!visible.length && (
-                    <p className="body-sm py-8 text-center text-ink-muted">
-                        {filter === "important"
-                            ? "Mark a task as important to keep it in focus."
-                            : filter === "completed"
-                              ? "Completed tasks will appear here."
-                              : "All caught up. Your next task can wait."}
-                    </p>
-                )}
+                                                    <Trash2 aria-hidden />
+                                                </Button>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        );
+                    })}
+                    {!visible.length && (
+                        <p className="body-sm py-8 text-center text-ink-muted">
+                            {filter === "important"
+                                ? "Mark a task as important to keep it in focus."
+                                : filter === "completed"
+                                  ? "Completed tasks will appear here."
+                                  : "All caught up. Your next task can wait."}
+                        </p>
+                    )}
+                </div>
             </div>
-            <footer className="mbs-3 flex flex-wrap items-center justify-between gap-2 border-bs border-border-warm pbs-2">
-                <button
+            <footer
+                data-scroll-shadow={tasksHaveMore}
+                className={cn(
+                    taskStyles.fixedFooter,
+                    "flex flex-wrap items-center justify-between gap-2 border-bs border-border-warm",
+                )}
+            >
+                <Button
                     type="button"
-                    className={LINK}
+                    variant="link"
+                    size="sm"
+                    className="px-0 text-brand"
                     onClick={() => {
                         setShowAll(!showAll);
                         setFilter("focus");
@@ -389,8 +430,8 @@ function TasksCard() {
                 >
                     {showAll ? "Show today & overdue" : "View all tasks"}
                     <ArrowRight aria-hidden className="block-4 inline-4" />
-                </button>
-                <span className="caption inline-flex items-center gap-1.5 text-ink-subtle">
+                </Button>
+                <span className={taskStyles.privacyStatus}>
                     <LockKeyhole aria-hidden className="block-3 inline-3" />
                     Private to you
                 </span>
@@ -402,8 +443,8 @@ function TasksCard() {
 function PipelineOverview() {
     const total = MOCK_PIPELINE.reduce((sum, stage) => sum + stage.count, 0);
     return (
-        <section className={CARD} aria-labelledby="preview-pipeline-title">
-            <div className="flex items-start justify-between gap-3">
+        <section className={cn(CARD, "block-full")} aria-labelledby="preview-pipeline-title">
+            <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h2 id="preview-pipeline-title" className="h5 text-ink">
                         Pipeline overview
@@ -424,7 +465,7 @@ function PipelineOverview() {
                     />
                 ))}
             </div>
-            <ul className="mbs-3 grid grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4">
+            <ul className="mbs-3 grid grid-cols-1 gap-3">
                 {MOCK_PIPELINE.map((stage) => (
                     <li key={stage.id}>
                         <Link
@@ -448,7 +489,7 @@ function PipelineOverview() {
             </ul>
             <Link
                 href="/broker/pipeline"
-                className="body-sm mbs-4 flex flex-wrap items-center gap-2 border-bs border-border-warm pbs-3 text-ink outline-none min-block-11 hover:text-brand focus-visible:ring-2 focus-visible:ring-ring"
+                className="body-sm mbs-auto flex flex-wrap items-center gap-2 border-bs border-border-warm pbs-3 text-ink outline-none min-block-11 hover:text-brand focus-visible:ring-2 focus-visible:ring-ring"
             >
                 <span className={cn(TAG, "bg-urgent-soft text-urgent")}>Needs attention</span>
                 <span>4 clients have had no activity for 7+ days</span>
@@ -542,9 +583,18 @@ function NextVisit() {
 }
 
 function TodayVisits() {
+    const {
+        viewportRef: visitViewportRef,
+        contentRef: visitContentRef,
+        hasMore: visitsHaveMore,
+        measure: measureVisits,
+    } = useScrollFooter();
     const [expanded, setExpanded] = useState(false);
     return (
-        <section className={cn(CARD, "flex-1")} aria-labelledby="preview-today-visits-title">
+        <section
+            className={cn(CARD, taskStyles.fixedCard)}
+            aria-labelledby="preview-today-visits-title"
+        >
             <div className="flex items-start justify-between gap-3">
                 <div>
                     <h2 id="preview-today-visits-title" className="h5 text-ink">
@@ -563,59 +613,79 @@ function TodayVisits() {
                     {expanded ? "Show less" : "View all"}
                 </button>
             </div>
-            <ul className="mbs-2 divide-y divide-border-warm/70">
-                {MOCK_VISITS.map((visit) => (
-                    <li key={visit.id} className="py-4">
-                        <VisitDetails visit={visit}>
-                            <button
-                                type="button"
-                                className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-control text-start outline-none inline-full hover:bg-surface-muted/40 focus-visible:ring-2 focus-visible:ring-ring sm:grid-cols-[5.5rem_minmax(0,1fr)_auto]"
-                            >
-                                <span
-                                    className={cn(
-                                        "body-sm flex items-center gap-1.5 self-start whitespace-nowrap",
-                                        visit.needsUpdate ? "text-urgent" : "text-brand",
-                                    )}
-                                >
-                                    <Clock aria-hidden className="shrink-0 block-3.5 inline-3.5" />
-                                    {visit.time}
-                                </span>
-                                <span className="flex flex-col gap-1 min-inline-0">
-                                    <span className="body-sm font-medium text-ink">
-                                        {visit.client}
-                                    </span>
-                                    <span className="caption wrap-anywhere text-ink-muted">
-                                        {visit.property}
-                                    </span>
-                                    <span className="caption text-ink-subtle">
-                                        {visit.location}
-                                    </span>
-                                </span>
-                                <span
-                                    className={cn(
-                                        TAG,
-                                        "col-start-2 place-self-start sm:col-start-auto sm:justify-self-end",
-                                        visit.needsUpdate
-                                            ? "bg-urgent-soft text-urgent"
-                                            : "bg-brand-soft text-brand-text",
-                                    )}
-                                >
-                                    {visit.needsUpdate ? "Needs update" : "Confirmed"}
-                                </span>
-                            </button>
-                        </VisitDetails>
-                        {expanded ? (
-                            <p className="caption mbs-3 ps-2 text-ink-muted">
-                                {visit.time}–{visit.end} ·{" "}
-                                {visit.needsUpdate
-                                    ? "Record the outcome of this visit."
-                                    : "Meet the client at the property entrance."}
-                            </p>
-                        ) : null}
-                    </li>
-                ))}
-            </ul>
-            <p className="caption mbs-auto border-bs border-border-warm pbs-3 text-urgent">
+            <div
+                ref={visitViewportRef}
+                onScroll={measureVisits}
+                className={taskStyles.scrollViewport}
+                tabIndex={0}
+                role="region"
+                aria-label="Today's visit list"
+            >
+                <div ref={visitContentRef}>
+                    <ul className="mbs-2 divide-y divide-border-warm/70">
+                        {MOCK_VISITS.map((visit) => (
+                            <li key={visit.id} className="py-4">
+                                <VisitDetails visit={visit}>
+                                    <button
+                                        type="button"
+                                        className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-control text-start outline-none inline-full hover:bg-surface-muted/40 focus-visible:ring-2 focus-visible:ring-ring"
+                                    >
+                                        <span
+                                            className={cn(
+                                                "body-sm flex items-center gap-1.5 self-start whitespace-nowrap",
+                                                visit.needsUpdate ? "text-urgent" : "text-brand",
+                                            )}
+                                        >
+                                            <Clock
+                                                aria-hidden
+                                                className="shrink-0 block-3.5 inline-3.5"
+                                            />
+                                            {visit.time}
+                                        </span>
+                                        <span className="flex flex-col gap-1 min-inline-0">
+                                            <span className="body-sm font-medium text-ink">
+                                                {visit.client}
+                                            </span>
+                                            <span className="caption wrap-anywhere text-ink-muted">
+                                                {visit.property}
+                                            </span>
+                                            <span className="caption text-ink-subtle">
+                                                {visit.location}
+                                            </span>
+                                        </span>
+                                        <span
+                                            className={cn(
+                                                TAG,
+                                                "col-start-2 place-self-start",
+                                                visit.needsUpdate
+                                                    ? "bg-urgent-soft text-urgent"
+                                                    : "bg-brand-soft text-brand-text",
+                                            )}
+                                        >
+                                            {visit.needsUpdate ? "Needs update" : "Confirmed"}
+                                        </span>
+                                    </button>
+                                </VisitDetails>
+                                {expanded ? (
+                                    <p className="caption mbs-3 ps-2 text-ink-muted">
+                                        {visit.time}–{visit.end} ·{" "}
+                                        {visit.needsUpdate
+                                            ? "Record the outcome of this visit."
+                                            : "Meet the client at the property entrance."}
+                                    </p>
+                                ) : null}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </div>
+            <p
+                data-scroll-shadow={visitsHaveMore}
+                className={cn(
+                    taskStyles.fixedFooter,
+                    "caption border-bs border-border-warm text-urgent",
+                )}
+            >
                 1 earlier visit needs its outcome recorded
             </p>
         </section>
@@ -625,14 +695,18 @@ function TodayVisits() {
 /** Local preview only: this section does not read or write API data. */
 export function WorkOverview() {
     return (
-        <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)_minmax(0,1.15fr)]">
             <div className="flex flex-col gap-5 min-inline-0">
-                <TasksCard />
-                <PipelineOverview />
-            </div>
-            <div className="flex flex-col gap-5 min-inline-0 xl:self-stretch">
                 <NextVisit />
+                <div className="flex-1 min-inline-0">
+                    <PipelineOverview />
+                </div>
+            </div>
+            <div className="flex flex-col min-inline-0">
                 <TodayVisits />
+            </div>
+            <div className="min-inline-0">
+                <TasksCard />
             </div>
         </div>
     );
