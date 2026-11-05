@@ -39,9 +39,9 @@ const CHART_CONFIG = {
 } satisfies ChartConfig;
 
 const PERIOD_OPTIONS = [
-    { value: 3, label: "3 months" },
-    { value: 6, label: "6 months" },
-    { value: 12, label: "1 year" },
+    { value: 3, label: "3 Months" },
+    { value: 6, label: "6 Months" },
+    { value: 12, label: "1 Year" },
 ];
 
 export function CommissionEarned() {
@@ -97,26 +97,32 @@ export function CommissionEarned() {
                         </Button>
                     </nav>
                 </div>
-                <div className={styles.currentMonth}>
-                    <dl className={styles.monthTotal}>
-                        <dt>{monthLabel}</dt>
-                        <dd className="h4">{formatCommission(latest.total)}</dd>
+                <div className={styles.monthSnapshot}>
+                    <div className={styles.snapshotHeader}>
+                        <p>{monthLabel}</p>
+                        <p className={styles.deals}>
+                            <strong>{latest.deals}</strong>{" "}
+                            {latest.deals === 1 ? "deal closed" : "deals closed"}
+                        </p>
+                    </div>
+                    <p className={`h4 ${styles.monthAmount}`}>{formatCommission(latest.total)}</p>
+                    <dl className={styles.breakdown}>
+                        <div>
+                            <dt>
+                                <span className={styles.saleSwatch} aria-hidden />
+                                Sale commission
+                            </dt>
+                            <dd>{formatCommission(latest.sale)}</dd>
+                        </div>
+                        <div>
+                            <dt>
+                                <span className={styles.rentSwatch} aria-hidden />
+                                Rent commission
+                            </dt>
+                            <dd>{formatCommission(latest.rent)}</dd>
+                        </div>
                     </dl>
-                    <p className={styles.deals}>
-                        <strong>{latest.deals}</strong> {latest.deals === 1 ? "deal" : "deals"}{" "}
-                        closed
-                    </p>
                 </div>
-                <dl className={styles.breakdown}>
-                    <div>
-                        <dt>Sale commission</dt>
-                        <dd>{formatCommission(latest.sale)}</dd>
-                    </div>
-                    <div>
-                        <dt>Rent commission</dt>
-                        <dd>{formatCommission(latest.rent)}</dd>
-                    </div>
-                </dl>
             </div>
 
             <div className={styles.detail}>

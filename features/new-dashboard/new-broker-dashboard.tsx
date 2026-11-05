@@ -36,6 +36,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
 import { CommissionEarned } from "./commission-earned";
+import { InventoryAndUpdates } from "./inventory-and-updates";
 import { WorkOverview } from "./work-overview";
 
 const TIME_ZONE = "Asia/Kolkata";
@@ -320,6 +321,7 @@ export function NewBrokerDashboard() {
             </ul>
             <WorkOverview />
             <CommissionEarned />
+            <InventoryAndUpdates activity={view.activity} now={now} preview />
             <AddBuyerModal
                 open={addClientOpen}
                 onOpenChange={setAddClientOpen}

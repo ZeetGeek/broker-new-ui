@@ -84,6 +84,8 @@ export type PriceWithCommissionProps = TipInput & {
     tooltipSide?: "top" | "bottom" | "left" | "right";
     /** Extra classes merged after `size` (colour, truncate, etc.). */
     className?: string;
+    /** Optional styling for the monthly rent suffix, independent of the amount. */
+    rentSuffixClassName?: string;
 };
 
 type CommissionTip = {
@@ -193,10 +195,20 @@ export function PriceWithCommission({
     tooltipSide = "top",
     currency,
     className,
+    rentSuffixClassName,
 }: PriceWithCommissionProps) {
     const emptyTip = resolveShowEmptyTip({ showEmptyTip, showNoRentCommission });
     const money = currency ?? undefined;
     const priceLabel = isRent ? formatRent(amountInr, money) : formatPrice(amountInr, money);
+    const priceContent =
+        isRent && rentSuffixClassName ? (
+            <>
+                {formatPrice(amountInr, money)}
+                <span className={cn("inline-block", rentSuffixClassName)}>/mo</span>
+            </>
+        ) : (
+            priceLabel
+        );
     const tip = listingCommissionTip({
         amountInr,
         isRent,
@@ -216,7 +228,7 @@ export function PriceWithCommission({
     );
 
     if (!tip) {
-        return <span className={priceClass}>{priceLabel}</span>;
+        return <span className={priceClass}>{priceContent}</span>;
     }
 
     const ariaLabel = tip.plain
@@ -244,7 +256,7 @@ export function PriceWithCommission({
                                 event.stopPropagation();
                             }}
                         >
-                            <span className={priceClass}>{priceLabel}</span>
+                            <span className={priceClass}>{priceContent}</span>
                         </button>
                     }
                 />

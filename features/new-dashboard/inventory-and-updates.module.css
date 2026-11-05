@@ -1,0 +1,631 @@
+.layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    min-inline-size: 0;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    block-size: 600px;
+    min-block-size: 0;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgb(25 28 26 / 5%);
+}
+
+.header,
+.listingsHeader,
+.inventorySummary {
+    flex-shrink: 0;
+}
+
+.scrollViewport {
+    flex: 1 1 0;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding-inline: 4px;
+    margin-inline: -4px;
+    scrollbar-width: none;
+}
+.scrollViewport::-webkit-scrollbar {
+    display: none;
+}
+.scrollViewport:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: -2px;
+    border-radius: 4px;
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-block-end: 1rem;
+}
+
+.listingsPanel {
+    container: dashboard-listings / inline-size;
+    --listings-inset: 1.25rem;
+    overflow: hidden;
+}
+.listingsPanel .scrollViewport {
+    padding-inline: 12px;
+    margin-inline: -12px;
+}
+
+.listingsHeader {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.inventorySummary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.375rem 1rem;
+    padding-block: 1rem 0.875rem;
+    color: var(--color-ink-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.listingTabs {
+    max-inline-size: 100%;
+}
+.listingTabs :global(.t-tabs-pill) {
+    border-radius: 8px;
+}
+.inventoryContent {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-inline-size: 0;
+    min-block-size: 0;
+    outline: none;
+}
+.inventoryContent:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+    border-radius: var(--radius-control);
+}
+@media (pointer: coarse) {
+    .listingTabs :global(.t-tab),
+    .listingTabs :global(.t-tabs-pill) {
+        block-size: 44px;
+    }
+}
+
+.description,
+.secondary,
+.footer,
+.updatedCell,
+.eventTime {
+    color: var(--color-ink-subtle);
+    font-size: 0.75rem;
+    line-height: 1.6;
+}
+
+.description {
+    margin-block-start: 0.375rem;
+}
+.secondary {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.textLink {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.375rem;
+    min-block-size: 2.75rem;
+    color: var(--color-brand-text);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: var(--radius-control);
+}
+
+.textLink svg {
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+}
+.textLink:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+.textLink:focus-visible,
+.propertyLink:focus-visible,
+.updateLink:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+}
+
+.table {
+    table-layout: fixed;
+    inline-size: 100%;
+    border-collapse: collapse;
+    text-align: start;
+}
+.table col:nth-child(1) {
+    inline-size: 32%;
+}
+.table col:nth-child(2) {
+    inline-size: 19%;
+}
+.table col:nth-child(3) {
+    inline-size: 21%;
+}
+.table col:nth-child(4) {
+    inline-size: 17%;
+}
+.table col:last-child {
+    inline-size: 11%;
+}
+.rowActions {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.25rem;
+}
+.rowActions > a,
+.rowActions > button {
+    justify-content: flex-start;
+    padding-inline: 0;
+}
+.table thead {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 2;
+    background: var(--color-surface);
+    isolation: isolate;
+}
+.table thead::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline: -12px;
+    z-index: -1;
+    background: var(--color-surface);
+}
+.table thead::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 1;
+    block-size: 1px;
+    background: var(--color-border-warm);
+    pointer-events: none;
+}
+.table th {
+    background: var(--color-surface);
+    padding: 0.625rem 0.75rem;
+    color: var(--color-ink-subtle);
+    text-align: start;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+.listingRow td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+}
+.table th:first-child,
+.listingRow td:first-child {
+    padding-inline-start: 0;
+}
+.listingRow + .listingRow {
+    border-block-start: 1px solid var(--color-border-warm);
+}
+.propertyLink {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: var(--radius-control);
+    min-block-size: 2.75rem;
+}
+.propertyLink:hover .propertyTitle {
+    color: var(--color-brand-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.propertyText {
+    display: grid;
+    gap: 0.25rem;
+    min-inline-size: 0;
+}
+.location {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--color-ink-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+.location svg {
+    flex-shrink: 0;
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+}
+.listingType {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-block-start: 0.125rem;
+}
+.transactionBadge {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.375rem 0.625rem;
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+.transactionBadge[data-type="rent"] {
+    background: color-mix(in oklab, var(--color-stage-3-soft) 45%, transparent);
+    color: var(--color-stage-3);
+}
+.propertyTitle,
+.eventTitle {
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+.propertyTitle {
+    font-size: 0.875rem;
+}
+.thumbnail {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 5.5rem;
+    block-size: 5.5rem;
+    overflow: hidden;
+    border: 3px solid var(--color-surface);
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgb(25 28 26 / 12%);
+    background: var(--color-surface-muted);
+}
+.fallbackIcon {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    color: var(--color-brand-text);
+}
+.prices {
+    display: grid;
+    gap: 0.5rem;
+}
+.askingPrice {
+    font-size: 1.0625rem;
+}
+.price {
+    display: grid;
+    justify-items: start;
+    gap: 0.375rem;
+}
+.commission {
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--color-ink-muted);
+}
+.commissionAmount {
+    color: var(--color-ink);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.clientsCell {
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+.clientList {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.625rem;
+}
+.clientTotal {
+    color: var(--color-ink-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.clientAvatar {
+    border: 2px solid var(--color-surface);
+    box-shadow: 0 2px 6px rgb(25 28 26 / 14%);
+}
+.overflowClients {
+    display: grid;
+    gap: 0.5rem;
+    justify-items: start;
+}
+.clientPerson {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    color: var(--color-ink-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+.clientName {
+    overflow: hidden;
+    max-inline-size: 16ch;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.moreClients {
+    border-radius: 4px;
+    color: var(--color-ink);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.moreClients:hover {
+    color: var(--color-brand-text);
+}
+.moreClients:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+}
+.overflowClients {
+    max-block-size: 16rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.25rem;
+}
+@media (pointer: coarse) {
+    .moreClients {
+        min-block-size: 44px;
+    }
+}
+.updatedCell {
+    font-weight: 600;
+    white-space: nowrap;
+}
+.updatedCell time {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+.updatedCell time svg {
+    flex-shrink: 0;
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+    color: var(--color-ink-subtle);
+}
+.listingsPanel .secondary {
+    font-weight: 500;
+}
+.updatedContent {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.375rem;
+}
+.table th:last-child {
+    padding-inline-end: 0;
+    text-align: start;
+}
+.listingRow td:last-child {
+    padding-inline-end: 0;
+}
+.footer {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 1rem;
+    min-block-size: 56px;
+    margin-block-start: auto;
+    margin-inline: calc(-1 * var(--listings-inset));
+    margin-block-end: calc(-1 * var(--listings-inset));
+    padding: 0.375rem var(--listings-inset);
+    border-block-start: 1px solid var(--color-border-warm);
+    background: var(--color-surface);
+}
+.footer[data-scroll-shadow="true"] {
+    box-shadow: 0 -10px 18px -12px rgb(25 28 26 / 28%);
+}
+.footerLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 2.75rem;
+    border-radius: var(--radius-control);
+    color: var(--color-brand-text);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+.footerLink svg {
+    inline-size: 1rem;
+    block-size: 1rem;
+}
+.footerLink:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+.footerLink:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+}
+.footerNote {
+    color: var(--color-ink-subtle);
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+.updates {
+    margin-block-start: -0.375rem;
+}
+.updates li + li {
+    border-block-start: 1px solid var(--color-border-warm);
+}
+.updateLink {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 0.25rem;
+    border-radius: var(--radius-control);
+}
+.updateLink:hover {
+    background: var(--color-surface-muted);
+}
+.eventIcon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 2rem;
+    block-size: 2rem;
+    border-radius: var(--radius-control);
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
+}
+.eventIcon svg {
+    inline-size: 1rem;
+    block-size: 1rem;
+}
+.updateText {
+    display: grid;
+    flex: 1;
+    gap: 0.25rem;
+    min-inline-size: 0;
+}
+.eventTime {
+    flex-shrink: 0;
+    padding-block-start: 0.125rem;
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+}
+.empty {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    min-block-size: 15rem;
+    padding: 1.5rem;
+    text-align: center;
+}
+.empty > svg {
+    inline-size: 1.75rem;
+    block-size: 1.75rem;
+    color: var(--color-brand-text);
+}
+.empty p {
+    max-inline-size: 36ch;
+    color: var(--color-ink-subtle);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+}
+.loading {
+    display: grid;
+    gap: 1rem;
+    padding-block: 0.5rem;
+}
+
+@media (min-width: 1280px) {
+    .layout {
+        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 639px) {
+    .panel {
+        padding: 1rem;
+        block-size: 540px;
+    }
+    .listingsPanel {
+        --listings-inset: 1rem;
+    }
+    .header {
+        gap: 0.5rem;
+        margin-block-end: 0.5rem;
+    }
+    .textLink {
+        gap: 0.25rem;
+    }
+    .textLink svg {
+        display: none;
+    }
+    .eventTime {
+        font-size: 0.625rem;
+    }
+    .updateLink {
+        gap: 0.625rem;
+    }
+}
+
+@container dashboard-listings (max-width: 44rem) {
+    .table,
+    .table tbody {
+        display: block;
+    }
+    .table thead {
+        display: none;
+    }
+    .table colgroup {
+        display: none;
+    }
+    .listingRow {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        column-gap: 0.75rem;
+        padding-block: 1rem;
+    }
+    .listingRow td {
+        inline-size: auto;
+        padding: 0;
+    }
+    .propertyCell {
+        grid-column: 1 / -1;
+        margin-block-end: 0.875rem;
+    }
+    .priceCell {
+        grid-column: 1;
+        grid-row: 2 / 4;
+    }
+    .clientsCell {
+        grid-column: 2;
+        text-align: end;
+    }
+    .updatedCell {
+        grid-column: 2;
+        text-align: end;
+        margin-block-start: 0.25rem;
+    }
+    .actionsCell {
+        grid-column: 1 / -1;
+        margin-block-start: 0.5rem;
+    }
+    .footerNote {
+        font-size: 0.6875rem;
+    }
+}
