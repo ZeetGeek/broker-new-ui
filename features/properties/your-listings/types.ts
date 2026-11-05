@@ -199,6 +199,8 @@ export type CreateMyListingInput = {
     title: string;
     locality: string;
     city: string;
+    /** State / province name, as picked in the location step. */
+    state?: string | null;
     address: string;
     pinCode: string;
     landmark: string;

@@ -2087,6 +2087,7 @@ function draftToLegacyInput(
         title: values.basics.title.trim() || generatedTitle,
         locality: values.location.locality,
         city: values.location.city,
+        state: values.location.state,
         address: values.location.streetOrRoad || values.location.fullAddress,
         pinCode: values.location.pincode,
         landmark: values.location.landmark,
