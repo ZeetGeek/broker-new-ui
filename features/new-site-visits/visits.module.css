@@ -1,0 +1,931 @@
+.page {
+    color: var(--color-ink);
+    padding-block-end: 5rem;
+    min-width: 0;
+}
+.page ::selection {
+    color: var(--color-surface);
+    background: var(--color-brand);
+}
+.page button,
+.picker button,
+.datePicker button {
+    cursor: pointer;
+}
+.page button:disabled {
+    cursor: default;
+}
+.previewBar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    margin-block: 0.25rem 1.5rem;
+    padding-block: 0.5rem;
+    color: var(--color-ink-subtle);
+    font-size: 0.75rem;
+}
+.previewBar > div {
+    display: flex;
+    gap: 1rem;
+}
+.previewBar button {
+    min-height: 44px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-block-end: 1.75rem;
+}
+.heading h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 3vw, 2.25rem);
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+}
+.heading p {
+    color: var(--color-ink-muted);
+    margin-block-start: 0.5rem;
+    font-size: 0.875rem;
+}
+.back {
+    margin-inline-start: -0.75rem;
+    margin-block-end: 1rem;
+}
+.workGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 0.48fr);
+    align-items: start;
+    gap: 2rem;
+    max-width: 1120px;
+}
+.panel {
+    min-width: 0;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.panelHeader {
+    padding: 1.5rem;
+    border-block-end: 1px solid var(--color-border);
+}
+.panelHeader h2,
+.aside > h2 {
+    font-size: 1rem;
+    font-weight: 650;
+}
+.panelHeader p {
+    margin-block-start: 0.35rem;
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+}
+.formFields {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    min-width: 0;
+    border: 0;
+}
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+.field input,
+.field select,
+.field textarea,
+.selectButton {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    outline: none;
+    caret-color: var(--color-brand);
+}
+.field textarea {
+    resize: vertical;
+}
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible,
+.selectButton:focus-visible,
+.option:focus-visible,
+.tabs button:focus-visible,
+.iconButton:focus-visible,
+.previewBar button:focus-visible {
+    outline: 3px solid var(--color-brand);
+    outline-offset: 3px;
+}
+.field [aria-invalid="true"],
+.field [data-invalid="true"] {
+    border-color: var(--color-danger);
+}
+.field input::placeholder,
+.field textarea::placeholder {
+    color: var(--color-ink-subtle);
+}
+.selectButton {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    text-align: start;
+}
+.selectButton > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.selectButton svg,
+.hint svg,
+.asideSection svg,
+.iconText svg,
+.pageFooter svg,
+.success svg,
+.detailSection h3 svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+.selectButton:disabled {
+    background: var(--color-surface-muted);
+    color: var(--color-ink-muted);
+}
+.twoColumns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+.dateTimeFields {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 1rem;
+}
+.errorSummary {
+    padding: 1.25rem;
+    border-radius: 8px;
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+.errorSummary h3 {
+    font-weight: 600;
+    margin-block-end: 0.5rem;
+}
+.hint {
+    display: flex;
+    align-items: start;
+    gap: 0.5rem;
+    color: var(--color-ink-muted);
+    font-size: 0.75rem;
+    line-height: 1.6;
+}
+.formFooter {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-block-start: 1px solid var(--color-border);
+}
+.aside {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-block: 0.25rem;
+}
+.summary,
+.warning {
+    padding: 1.25rem;
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+.warning {
+    background: var(--color-warning-soft, #fff3d8);
+    color: var(--color-warning, #785113);
+}
+.summary > svg {
+    width: 22px;
+    height: 22px;
+    margin-block-end: 0.5rem;
+}
+.summary h2,
+.summary h3,
+.warning h2,
+.warning h3 {
+    margin-block-end: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 650;
+}
+.summary > strong {
+    display: block;
+    margin-block: 0.5rem;
+}
+.asideSection {
+    line-height: 1.7;
+}
+.asideSection h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-block-end: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 650;
+}
+.asideSection p,
+.asideSection ul {
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+}
+.asideSection ul {
+    list-style: none;
+    padding: 0;
+}
+.error {
+    margin: 1rem 1.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+}
+.error strong {
+    font-weight: 650;
+}
+.fieldError {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--color-danger);
+}
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+.picker {
+    max-width: 580px;
+}
+.pickerList {
+    max-height: min(55vh, 480px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: var(--color-border) transparent;
+}
+.option {
+    display: flex;
+    width: 100%;
+    min-height: 72px;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 1rem 0.5rem;
+    text-align: start;
+    border-block-end: 1px solid var(--color-border);
+}
+.option:hover,
+.option[aria-pressed="true"] {
+    background: var(--color-brand-soft);
+}
+.option > span:nth-child(2) {
+    flex: 1;
+    min-width: 0;
+}
+.option strong,
+.option small {
+    display: block;
+}
+.option strong {
+    font-size: 0.875rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.option small {
+    margin-block: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--color-ink-muted);
+}
+.option > svg {
+    width: 18px;
+    height: 18px;
+    color: var(--color-brand-text);
+}
+.propertyIcon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: var(--color-surface-muted);
+}
+.propertyIcon svg {
+    width: 22px;
+    height: 22px;
+    color: var(--color-ink-muted);
+}
+.emptySearch,
+.muted {
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+    line-height: 1.7;
+}
+.emptySearch {
+    padding: 2rem 1rem;
+    text-align: center;
+}
+.datePicker {
+    max-width: 660px;
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+}
+.datePickerGrid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 1.5rem;
+}
+.timeFields {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-block-start: 1rem;
+}
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.5rem;
+    border-block-end: 1px solid var(--color-border);
+}
+.tabs {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.75rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    min-width: 0;
+}
+.tabs button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+    color: var(--color-ink-muted);
+    font-weight: 550;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+}
+.tabs button:hover {
+    background: var(--color-surface-muted);
+}
+.tabs button[aria-selected="true"] {
+    background: var(--color-brand-deep);
+    color: var(--color-surface);
+}
+.tabs button span {
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.9;
+}
+.searchRow {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-block: 1.5rem 2.5rem;
+}
+.searchRow > :first-child {
+    flex: 1;
+    min-width: 220px;
+    max-width: 540px;
+}
+.searchRow > span {
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+.dayGroup {
+    margin-block-end: 1.75rem;
+}
+.dayGroup > h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-block-end: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 650;
+}
+.dayGroup > h2 span {
+    color: var(--color-ink-subtle);
+    font-weight: 400;
+    font-size: 0.75rem;
+}
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+}
+.tableHead,
+.visitRow {
+    display: grid;
+    grid-template-columns: minmax(190px, 0.8fr) minmax(220px, 1.6fr) 120px 140px;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: var(--color-surface);
+    border-radius: 10px;
+    min-height: 100px;
+}
+.tableHead {
+    background: var(--color-surface-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--color-ink-muted);
+}
+.visitRow strong,
+.rowTime time {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.visitRow small {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-ink-muted);
+    margin-block-start: 0.3rem;
+}
+.rowTime {
+    font-variant-numeric: tabular-nums;
+}
+.rowTime time {
+    margin-block-start: 0.5rem;
+    font-size: 1rem;
+}
+.rowClient {
+    display: flex;
+    align-items: start;
+    gap: 0.75rem;
+    min-width: 0;
+}
+.rowClient > svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-block-start: 0.15rem;
+    color: var(--color-ink-muted);
+}
+.rowClient strong {
+    font-size: 0.9375rem;
+}
+.rowClient p {
+    margin-block-start: 0.375rem;
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+}
+.searchField {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 550;
+}
+.rangeSelect select {
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    min-height: 44px;
+    padding-inline: 1rem;
+    font-size: 0.8125rem;
+    min-width: 150px;
+}
+.rangeSelect select:focus-visible {
+    outline: 3px solid var(--color-brand);
+    outline-offset: 2px;
+}
+.timezone {
+    margin-inline-start: auto;
+    align-self: flex-end;
+    padding-block-end: 0.75rem;
+}
+.listIntro {
+    margin-block-end: 1.5rem;
+}
+.listIntro h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+.listIntro p {
+    margin-block-start: 0.5rem;
+    color: var(--color-ink-muted);
+    font-size: 0.875rem;
+}
+.stepBody {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+.selectionWidth {
+    max-width: 1050px;
+}
+.reminderOptions {
+    border: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.reminderOption {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 56px;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+.reminderOption:has(input:checked) {
+    background: var(--color-brand-soft);
+    border-color: var(--color-brand);
+}
+.reminderOption input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--color-brand);
+}
+.reminderOption svg {
+    margin-inline-start: auto;
+    width: 18px;
+    height: 18px;
+}
+.panelHeader .propertyHeading {
+    font-size: 1.5rem;
+    margin-block-start: 1rem;
+}
+.visitActions h2 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+.visitActions .stackedActions {
+    margin-block-start: 0.75rem;
+}
+.notification {
+    margin-block-start: 1.5rem;
+}
+.person {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+.person > div {
+    min-width: 0;
+}
+.person p {
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+    margin-block-start: 0.25rem;
+}
+.status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    padding: 0.35rem 0.6rem;
+    border-radius: 5px;
+    font-size: 0.6875rem;
+    line-height: 1.4;
+    font-weight: 600;
+    white-space: nowrap;
+    background: var(--color-surface-muted);
+    color: var(--color-ink-muted);
+}
+.status[data-state="upcoming"],
+.status[data-state="completed"] {
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
+}
+.status[data-state="running"],
+.status[data-state="needs_update"],
+.status[data-state="not_attended"] {
+    background: var(--color-warning-soft, #fff3d8);
+    color: var(--color-warning, #785113);
+}
+.notification {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    margin-block-end: 1.5rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    border-radius: 8px;
+}
+.notification > svg {
+    width: 22px;
+    height: 22px;
+    color: var(--color-brand-text);
+    flex-shrink: 0;
+}
+.notification > div {
+    flex: 1;
+    min-width: 0;
+}
+.notification strong {
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+.notification p {
+    font-size: 0.75rem;
+    color: var(--color-ink-muted);
+    margin-block-start: 0.25rem;
+    overflow-wrap: anywhere;
+}
+.iconButton {
+    display: grid;
+    place-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 6px;
+}
+.iconButton svg {
+    width: 18px;
+    height: 18px;
+}
+.empty,
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 4rem 1.5rem;
+    min-height: 300px;
+    text-align: center;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-surface);
+}
+.empty > svg,
+.loading > svg {
+    width: 36px;
+    height: 36px;
+    color: var(--color-brand);
+}
+.empty h1,
+.empty h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+.empty p,
+.loading p {
+    color: var(--color-ink-muted);
+    max-width: 400px;
+    font-size: 0.875rem;
+    line-height: 1.7;
+}
+.detailBody {
+    padding: 0 1.5rem;
+}
+.detailSection {
+    padding-block: 1.25rem;
+    border-block-end: 1px solid var(--color-border);
+    font-size: 0.875rem;
+}
+.detailSection:last-child {
+    border: 0;
+}
+.detailSection h3 {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-block-end: 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-ink-muted);
+}
+.detailSection > p {
+    margin-block-start: 0.5rem;
+    color: var(--color-ink-muted);
+}
+.note {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.iconText {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    margin-block-end: 0.75rem;
+}
+.history {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 1rem;
+}
+.history li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.history time {
+    font-size: 0.75rem;
+    color: var(--color-ink-subtle);
+}
+.stackedActions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-block-start: 1.25rem;
+}
+.success {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    margin-block-end: 1.5rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
+}
+.confirmSummary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    background: var(--color-surface-muted);
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 0.8125rem;
+}
+.confirmSummary span {
+    color: var(--color-ink-muted);
+}
+.pageFooter {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    align-items: start;
+    margin-block-start: 2rem;
+    color: var(--color-ink-subtle);
+    font-size: 0.75rem;
+    line-height: 1.6;
+}
+@media (max-width: 1100px) {
+    .tableHead,
+    .visitRow {
+        grid-template-columns: 160px minmax(180px, 1fr) 105px 120px;
+    }
+    .tableHead > :last-child {
+        display: none;
+    }
+    .visitRow > button {
+        grid-column: 4;
+        grid-row: 1;
+    }
+    .visitRow > .status {
+        grid-column: 3;
+        grid-row: 1;
+    }
+}
+@media (max-width: 760px) {
+    .dateTimeFields {
+        grid-template-columns: 1fr;
+    }
+    .heading {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+    .workGrid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    .aside {
+        padding: 0;
+    }
+    .toolbar {
+        align-items: flex-start;
+    }
+    .tabs {
+        display: flex;
+        flex-wrap: nowrap;
+        padding-block: 3px;
+    }
+    .tabs button {
+        padding-inline: 0.75rem;
+    }
+    .searchRow {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    .searchRow > :first-child {
+        flex-basis: 100%;
+        max-width: none;
+    }
+    .tableHead {
+        display: none;
+    }
+    .visitRow {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 1rem 0.75rem;
+        padding: 1.25rem;
+    }
+    .rowTime {
+        grid-column: 1;
+    }
+    .visitRow > .status {
+        grid-column: 2;
+        grid-row: 1;
+    }
+    .rowClient {
+        grid-column: 1 / -1;
+    }
+    .visitRow .rowTime time {
+        font-size: 0.875rem;
+    }
+    .person {
+        grid-column: 1 / -1;
+    }
+    .rowProperty {
+        grid-column: 1 / -1;
+    }
+    .visitRow > button {
+        grid-column: 2;
+        grid-row: 3;
+    }
+    .notification {
+        flex-wrap: wrap;
+    }
+    .notification > div {
+        flex-basis: 70%;
+    }
+    .notification > button:not(.iconButton) {
+        margin-inline-start: 2.25rem;
+    }
+    .notification .iconButton {
+        margin-inline-start: auto;
+    }
+    .datePickerGrid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    .timeFields {
+        padding: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    .timeFields p {
+        grid-column: 1 / -1;
+    }
+    .datePickerGrid > :first-child {
+        margin-inline: auto;
+    }
+    .formFields,
+    .panelHeader,
+    .detailBody {
+        padding-inline: 1.125rem;
+    }
+    .formFooter {
+        padding-inline: 1.125rem;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .page *,
+    .picker *,
+    .datePicker * {
+        scroll-behavior: auto;
+    }
+}
