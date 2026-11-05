@@ -106,6 +106,9 @@ function Section({
 
 const COUNTRY_LOCKED_HELPER = "Chosen when you registered. Contact support to change this.";
 
+/** Cities of a big state run into the thousands — filter after typing pauses. */
+const CITY_SEARCH_DEBOUNCE_MS = 300;
+
 /** Matches property-form TextAreaField — same height language as Input size="lg". */
 const PROFILE_TEXTAREA_CLASS = `
   field-sizing-fixed resize-y rounded-control border-2 border-border-warm bg-surface
@@ -712,6 +715,7 @@ export function ProfilePage() {
                                                     size="lg"
                                                     value={field.value}
                                                     options={cityOptions}
+                                                    searchDebounceMs={CITY_SEARCH_DEBOUNCE_MS}
                                                     placeholder={
                                                         selectedState
                                                             ? "Choose a city"
