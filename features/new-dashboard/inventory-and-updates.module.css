@@ -530,7 +530,7 @@
     flex-shrink: 0;
     align-self: center;
     font-weight: 600;
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
 }
 .empty {
@@ -586,7 +586,7 @@
         display: none;
     }
     .eventTime {
-        font-size: 0.625rem;
+        font-size: 0.6875rem;
     }
     .updateLink {
         gap: 0.625rem;
