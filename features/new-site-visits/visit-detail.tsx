@@ -14,10 +14,12 @@ import {
     User,
 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 import { FlowStep } from "./flow-step";
-import { REMINDERS, type SiteVisit, STATE_LABELS, visitState } from "./model";
+import { REMINDERS, type SiteVisit, visitState } from "./model";
 import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
+import { VisitStatusBadge } from "./visit-status";
 
 import styles from "./visits.module.css";
 
@@ -104,7 +106,7 @@ export function AttendanceConfirmation({
             </div>
             <label className={styles.field}>
                 {intent === "completed" ? "Visit note (optional)" : "Reason (optional)"}
-                <textarea
+                <Textarea
                     rows={4}
                     maxLength={2000}
                     value={note}
@@ -212,7 +214,7 @@ export function VisitDetail({
             </Button>
             <header className={styles.heading}>
                 <div>
-                    <h1>{title}</h1>
+                    <h1 className="h3 text-ink">{title}</h1>
                     <p>{description}</p>
                 </div>
             </header>
@@ -225,9 +227,7 @@ export function VisitDetail({
             <div className={styles.workGrid}>
                 <section className={styles.panel} aria-label="Visit details">
                     <div className={styles.panelHeader}>
-                        <span className={styles.status} data-state={state}>
-                            {state === "upcoming" ? "Scheduled" : STATE_LABELS[state]}
-                        </span>
+                        <VisitStatusBadge state={state} />
                         <h2 className={styles.propertyHeading}>{property?.title}</h2>
                         <p>
                             {property?.configLabel} · {property?.locality}, {property?.city}

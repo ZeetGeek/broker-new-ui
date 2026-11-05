@@ -13,6 +13,8 @@ import {
     Clock,
 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 import { EMPTY_DRAFT, REMINDERS, type SiteVisit, validateDraft, type VisitDraft } from "./model";
 import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
@@ -121,7 +123,9 @@ export function ScheduleForm({
             </Button>
             <header className={styles.heading}>
                 <div>
-                    <h1>{visit ? "Reschedule visit" : "Schedule a visit"}</h1>
+                    <h1 className="h3 text-ink">
+                        {visit ? "Reschedule visit" : "Schedule a visit"}
+                    </h1>
                     <p>
                         {visit
                             ? "Choose a new time. Your reminder will move with the visit."
@@ -138,9 +142,10 @@ export function ScheduleForm({
                     <fieldset disabled={busy} className={styles.formFields}>
                         <div className={styles.field}>
                             <label id="client-label">Client</label>
-                            <button
+                            <Button
                                 type="button"
-                                className={styles.selectButton}
+                                variant="outline"
+                                className="justify-between text-start inline-full min-inline-0"
                                 aria-labelledby="client-label client-value"
                                 data-invalid={submitted && !!errors.clientId}
                                 aria-describedby={
@@ -151,14 +156,15 @@ export function ScheduleForm({
                             >
                                 <span id="client-value">{client?.name ?? "Select a client"}</span>
                                 <ChevronDown aria-hidden />
-                            </button>
+                            </Button>
                             {errorFor("clientId")}
                         </div>
                         <div className={styles.field}>
                             <label id="property-label">Property</label>
-                            <button
+                            <Button
                                 type="button"
-                                className={styles.selectButton}
+                                variant="outline"
+                                className="justify-between text-start inline-full min-inline-0"
                                 aria-labelledby="property-label property-value"
                                 data-invalid={submitted && !!errors.propertyId}
                                 aria-describedby={
@@ -171,15 +177,16 @@ export function ScheduleForm({
                                     {property?.title ?? "Select a property"}
                                 </span>
                                 <ChevronDown aria-hidden />
-                            </button>
+                            </Button>
                             {errorFor("propertyId")}
                         </div>
                         <div className={styles.dateTimeFields}>
                             <div className={styles.field}>
                                 <label id="date-label">Visit date</label>
-                                <button
+                                <Button
                                     type="button"
-                                    className={styles.selectButton}
+                                    variant="outline"
+                                    className="justify-between text-start inline-full min-inline-0"
                                     aria-labelledby="date-label date-value"
                                     data-invalid={submitted && !!errors.date}
                                     aria-describedby={
@@ -193,13 +200,13 @@ export function ScheduleForm({
                                             : "Select a date"}
                                     </span>
                                     <CalendarDays aria-hidden />
-                                </button>
+                                </Button>
                                 {errorFor("date")}
                             </div>
                             <div className={styles.twoColumns}>
                                 <label className={styles.field}>
                                     Start time
-                                    <input
+                                    <Input
                                         type="time"
                                         value={draft.startTime}
                                         aria-invalid={submitted && !!errors.startTime}
@@ -214,7 +221,7 @@ export function ScheduleForm({
                                 </label>
                                 <label className={styles.field}>
                                     End time
-                                    <input
+                                    <Input
                                         type="time"
                                         value={draft.endTime}
                                         aria-invalid={submitted && !!errors.endTime}
@@ -231,9 +238,10 @@ export function ScheduleForm({
                         </div>
                         <div className={styles.field}>
                             <label id="reminder-label">Extra reminder</label>
-                            <button
+                            <Button
                                 type="button"
-                                className={styles.selectButton}
+                                variant="outline"
+                                className="justify-between text-start inline-full min-inline-0"
                                 aria-labelledby="reminder-label reminder-value"
                                 onClick={() => setPicker("reminder")}
                             >
@@ -244,11 +252,11 @@ export function ScheduleForm({
                                     }
                                 </span>
                                 <ChevronDown aria-hidden />
-                            </button>
+                            </Button>
                         </div>
                         <label className={styles.field}>
                             Notes (optional)
-                            <textarea
+                            <Textarea
                                 value={draft.notes}
                                 maxLength={2000}
                                 rows={3}

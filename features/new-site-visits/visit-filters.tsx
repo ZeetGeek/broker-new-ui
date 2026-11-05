@@ -2,19 +2,15 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { Dialog, DialogPopup } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { DATE_RANGES, VISIT_TABS } from "./model";
 import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
-
-import styles from "./visits.module.css";
+import { VisitSelect } from "./visit-select";
 
 export type VisitFilters = {
     client: string;
@@ -52,105 +48,87 @@ export function VisitFiltersDialog({
                 if (!open) onClose();
             }}
         >
-            <DialogPopup>
-                <DialogHeader>
-                    <DialogTitle>Filter visits</DialogTitle>
-                    <DialogDescription>
-                        Narrow your visits by client, property or date.
-                    </DialogDescription>
-                </DialogHeader>
-                <label className={styles.field}>
-                    Date range
-                    <select
-                        value={draft.range || "all"}
-                        onChange={(e) => patch({ range: e.target.value, from: "", to: "" })}
-                    >
-                        {DATE_RANGES.map((r) => (
-                            <option key={r.value} value={r.value}>
-                                {r.label}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                <label className={styles.field}>
-                    Client
-                    <select
-                        value={draft.client}
-                        onChange={(e) => patch({ client: e.target.value })}
-                    >
-                        <option value="">All clients</option>
-                        {PREVIEW_CLIENTS.map((c) => (
-                            <option key={c.id} value={c.id}>
-                                {c.name}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                <label className={styles.field}>
-                    Property
-                    <select
-                        value={draft.property}
-                        onChange={(e) => patch({ property: e.target.value })}
-                    >
-                        <option value="">All properties</option>
-                        {PREVIEW_PROPERTIES.map((p) => (
-                            <option key={p.id} value={p.id}>
-                                {p.title}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                {draft.range === "custom" && (
-                    <div className={styles.twoColumns}>
-                        <label className={styles.field}>
-                            From
-                            <input
-                                type="date"
-                                value={draft.from}
-                                onChange={(e) => patch({ from: e.target.value })}
-                            />
-                        </label>
-                        <label className={styles.field}>
-                            To
-                            <input
-                                type="date"
-                                min={draft.from || undefined}
-                                value={draft.to}
-                                onChange={(e) => patch({ to: e.target.value })}
-                                aria-invalid={invalid}
-                            />
-                        </label>
+            <DialogPopup
+                showCloseButton={false}
+                className="flex flex-col gap-0 overflow-hidden p-0 inline-[min(40rem,calc(100vw-1rem))] max-block-[90dvh] max-inline-[min(40rem,calc(100vw-1rem))]"
+            >
+                <AppModalHeader
+                    title="Filter visits"
+                    description="Narrow your visits by client, property or date."
+                />
+                <ScrollArea className="flex-1 min-block-0">
+                    <div className="flex flex-col gap-5 p-6">
+                        <VisitSelect
+                            label="Date range"
+                            value={draft.range || "all"}
+                            options={DATE_RANGES}
+                            onChange={(range) => patch({ range, from: "", to: "" })}
+                        />
+                        <VisitSelect
+                            label="Client"
+                            value={draft.client}
+                            options={[
+                                { value: "", label: "All clients" },
+                                ...PREVIEW_CLIENTS.map((c) => ({ value: c.id, label: c.name })),
+                            ]}
+                            onChange={(client) => patch({ client })}
+                        />
+                        <VisitSelect
+                            label="Property"
+                            value={draft.property}
+                            options={[
+                                { value: "", label: "All properties" },
+                                ...PREVIEW_PROPERTIES.map((p) => ({ value: p.id, label: p.title })),
+                            ]}
+                            onChange={(property) => patch({ property })}
+                        />
+                        {draft.range === "custom" && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <label className="body-sm flex flex-col gap-2 font-semibold">
+                                    From
+                                    <Input
+                                        type="date"
+                                        value={draft.from}
+                                        onValueChange={(from) => patch({ from })}
+                                    />
+                                </label>
+                                <label className="body-sm flex flex-col gap-2 font-semibold">
+                                    To
+                                    <Input
+                                        type="date"
+                                        min={draft.from || undefined}
+                                        value={draft.to}
+                                        onValueChange={(to) => patch({ to })}
+                                        errorText={
+                                            invalid
+                                                ? "End date must be on or after start date."
+                                                : undefined
+                                        }
+                                    />
+                                </label>
+                            </div>
+                        )}
+                        <VisitSelect
+                            label="Status"
+                            value={draft.archive}
+                            options={[
+                                { value: "", label: "Selected visit tab" },
+                                { value: "all", label: "All statuses" },
+                                ...VISIT_TABS.map((t) => ({ value: t.value, label: t.label })),
+                                { value: "cancelled", label: "Cancelled visits" },
+                            ]}
+                            onChange={(archive) => patch({ archive })}
+                        />
                     </div>
-                )}
-                {invalid && (
-                    <p role="alert" className={styles.fieldError}>
-                        End date must be on or after start date.
-                    </p>
-                )}
-                <label className={styles.field}>
-                    Status
-                    <select
-                        value={draft.archive}
-                        onChange={(e) => patch({ archive: e.target.value })}
-                    >
-                        <option value="">Selected visit tab</option>
-                        <option value="all">All statuses</option>
-                        {VISIT_TABS.map((t) => (
-                            <option key={t.value} value={t.value}>
-                                {t.label}
-                            </option>
-                        ))}
-                        <option value="cancelled">Cancelled visits</option>
-                    </select>
-                </label>
-                <div className={styles.actions}>
-                    <Button variant="ghost" onClick={() => setDraft({ ...EMPTY_FILTERS })}>
-                        Reset
-                    </Button>
-                    <Button disabled={invalid} onClick={() => onApply(draft)}>
-                        Apply filters
-                    </Button>
-                </div>
+                </ScrollArea>
+                <AppModalFooter
+                    className="border-bs border-border-warm p-6"
+                    secondaryLabel="Reset filters"
+                    onSecondary={() => setDraft({ ...EMPTY_FILTERS })}
+                    primaryLabel="Apply filters"
+                    primaryDisabled={invalid}
+                    onPrimary={() => onApply(draft)}
+                />
             </DialogPopup>
         </Dialog>
     );

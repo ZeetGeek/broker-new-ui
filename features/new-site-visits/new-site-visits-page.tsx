@@ -304,7 +304,7 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
                 </div>
             ) : query.isError ? (
                 <div role="alert" className={styles.empty}>
-                    <h1>Visits couldn’t be loaded</h1>
+                    <h1 className="h3 text-ink">Visits couldn’t be loaded</h1>
                     <p>{query.error.message}</p>
                     <div className={styles.actions}>
                         <Button variant="outline" onClick={() => void query.refetch()}>
@@ -396,7 +396,7 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
                 />
             ) : selectedId ? (
                 <div className={styles.empty}>
-                    <h1>Visit not found</h1>
+                    <h1 className="h3 text-ink">Visit not found</h1>
                     <p>This sample visit is no longer in the preview.</p>
                     <Button onClick={back}>Back to visits</Button>
                 </div>

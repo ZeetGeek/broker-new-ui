@@ -1,21 +1,23 @@
 "use client";
 
+import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
+
+import { cn } from "@/lib/utils";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { EmptyState } from "@/components/shared/empty-state";
+import { FilterChip, filterChipClassName, FilterChipCount } from "@/components/shared/filter-chip";
 import { CalendarDays, Plus, Search, SlidersHorizontal, User } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 
-import {
-    DATE_RANGES,
-    type SiteVisit,
-    STATE_LABELS,
-    VISIT_TABS,
-    visitState,
-    type VisitTab,
-} from "./model";
+import { DATE_RANGES, type SiteVisit, VISIT_TABS, visitState, type VisitTab } from "./model";
 import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
 import type { VisitFilters } from "./visit-filters";
+import { VisitSelect } from "./visit-select";
+import { VisitStatusBadge } from "./visit-status";
 
 import styles from "./visits.module.css";
 
@@ -73,103 +75,96 @@ export function VisitList({
               ? ["Cancelled visits", "Cancelled visits stay in your history."]
               : LIST_COPY[tab];
     return (
-        <>
-            <header className={styles.heading}>
-                <div>
-                    <h1>Site visits</h1>
-                    <p>
-                        {visits.length
-                            ? "Your clients, properties and visit times in one place."
-                            : "Plan your client visits and keep the timing in one place."}
-                    </p>
-                </div>
-                <Button onClick={onSchedule}>
-                    <Plus aria-hidden />
-                    Schedule visit
-                </Button>
-            </header>
-            <div
-                role="tablist"
-                aria-label="Visit status"
-                className={styles.tabs}
-                onKeyDown={(event) => {
-                    const buttons = Array.from(
-                        event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
-                    );
-                    const index = buttons.indexOf(event.target as HTMLButtonElement);
-                    const next =
-                        event.key === "ArrowRight"
-                            ? (index + 1) % buttons.length
-                            : event.key === "ArrowLeft"
-                              ? (index + buttons.length - 1) % buttons.length
-                              : event.key === "Home"
-                                ? 0
-                                : event.key === "End"
-                                  ? buttons.length - 1
-                                  : -1;
-                    if (next >= 0) {
-                        event.preventDefault();
-                        buttons[next].focus();
-                        buttons[next].click();
-                    }
-                }}
-            >
-                {VISIT_TABS.map((t) => (
-                    <button
-                        type="button"
-                        role="tab"
-                        id={`visit-tab-${t.value}`}
-                        aria-controls="visit-list"
-                        aria-selected={!filters.archive && t.value === tab}
-                        tabIndex={t.value === tab ? 0 : -1}
-                        key={t.value}
-                        onClick={() => onTab(t.value)}
-                    >
-                        {t.label}
-                        <span>· {visits.filter((v) => visitState(v, now) === t.value).length}</span>
-                    </button>
-                ))}
-            </div>
-            {visits.length > 0 && (
-                <div className={styles.searchRow}>
-                    <label className={styles.searchField}>
-                        <span>Search visits</span>
-                        <Input
-                            startIcon={Search}
-                            placeholder="Search client or property"
-                            value={search}
-                            onValueChange={onSearch}
-                            clearable
-                        />
-                    </label>
-                    <Button variant="outline" onClick={onFilters}>
-                        <SlidersHorizontal aria-hidden />
-                        Filters{count > 0 ? ` (${count})` : ""}
+        <Tabs
+            className="gap-6"
+            value={filters.archive || tab}
+            onValueChange={(value) => {
+                if (VISIT_TABS.some((t) => t.value === value)) onTab(value as VisitTab);
+            }}
+        >
+            <PortalSectionNav>
+                <header className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h1 className="h3 text-ink">Site visits</h1>
+                        <p className="body-sm mbs-1 text-ink-muted">
+                            {visits.length
+                                ? "Your clients, properties and visit times in one place."
+                                : "Plan your client visits and keep the timing in one place."}
+                        </p>
+                    </div>
+                    <Button onClick={onSchedule}>
+                        <Plus aria-hidden />
+                        Schedule visit
                     </Button>
-                    <label className={styles.rangeSelect}>
-                        <span className="sr-only">Visit date range</span>
-                        <select value={range} onChange={(e) => onRange(e.target.value)}>
-                            {DATE_RANGES.map((r) => (
-                                <option key={r.value} value={r.value}>
-                                    {r.label}
-                                </option>
+                </header>
+            </PortalSectionNav>
+            <div className={styles.listToolbar}>
+                <div className="flex flex-wrap items-center gap-3 max-inline-full min-inline-0">
+                    <FilterChip
+                        label="Filters"
+                        icon={SlidersHorizontal}
+                        count={count}
+                        isActive={count > 0}
+                        clearable={count > 0}
+                        onClick={onFilters}
+                        onClear={onClear}
+                    />
+                    <div className="overflow-x-auto max-inline-full">
+                        <TabsList
+                            aria-label="Visit status"
+                            className="gap-3 bg-transparent p-0 block-auto! max-inline-full"
+                        >
+                            {VISIT_TABS.map((t) => (
+                                <TabsPrimitive.Tab
+                                    key={t.value}
+                                    value={t.value}
+                                    className={cn(
+                                        "group/visit-tab",
+                                        filterChipClassName(!filters.archive && tab === t.value),
+                                    )}
+                                >
+                                    {t.label}
+                                    <FilterChipCount
+                                        count={
+                                            visits.filter((v) => visitState(v, now) === t.value)
+                                                .length
+                                        }
+                                        isActive={!filters.archive && tab === t.value}
+                                    />
+                                </TabsPrimitive.Tab>
                             ))}
-                        </select>
-                    </label>
-                    <span className={styles.timezone}>Times in IST</span>
-                    {filtered && (
-                        <Button variant="ghost" size="sm" onClick={onClear}>
-                            Clear filters
-                        </Button>
-                    )}
+                        </TabsList>
+                    </div>
                 </div>
-            )}
-            <section
-                id="visit-list"
-                role="tabpanel"
-                aria-labelledby={filters.archive ? undefined : `visit-tab-${tab}`}
-                aria-label={filters.archive ? copy[0] : undefined}
-            >
+                {visits.length > 0 && (
+                    <div className={styles.searchRow}>
+                        <label className={styles.searchField}>
+                            <span className="sr-only">Search visits</span>
+                            <Input
+                                startIcon={Search}
+                                placeholder="Search client or property"
+                                value={search}
+                                onValueChange={onSearch}
+                                clearable
+                            />
+                        </label>
+                        <VisitSelect
+                            compact
+                            label="Visit date range"
+                            value={range}
+                            options={DATE_RANGES}
+                            onChange={onRange}
+                        />
+                        <span className={styles.timezone}>Times in IST</span>
+                        {filtered && (
+                            <Button variant="ghost" size="sm" onClick={onClear}>
+                                Clear filters
+                            </Button>
+                        )}
+                    </div>
+                )}
+            </div>
+            <TabsContent value={filters.archive || tab} aria-label={copy[0]}>
                 {visits.length > 0 && (
                     <div className={styles.listIntro}>
                         <h2>{copy[0]}</h2>
@@ -177,35 +172,35 @@ export function VisitList({
                     </div>
                 )}
                 {visits.length === 0 ? (
-                    <div className={styles.empty}>
-                        <CalendarDays aria-hidden />
-                        <h2>Schedule your first site visit</h2>
-                        <p>
-                            Choose a client, a property and a start and end time. We will remind you
-                            when it starts and ask how it went.
-                        </p>
+                    <EmptyState
+                        className="py-16"
+                        icon={CalendarDays}
+                        heading="Schedule your first site visit"
+                        description="Choose a client, a property and a start and end time. We will remind you when it starts and ask how it went."
+                    >
                         <Button onClick={onSchedule}>Schedule a visit</Button>
-                        <p>Upcoming → Running → Needs update → Attendance recorded</p>
-                    </div>
+                    </EmptyState>
                 ) : shown.length === 0 ? (
-                    <div className={styles.empty}>
-                        <CalendarDays aria-hidden />
-                        <h2>
-                            {filtered
+                    <EmptyState
+                        className="py-16"
+                        icon={CalendarDays}
+                        heading={
+                            filtered
                                 ? "No visits match your filters"
                                 : tab === "needs_update"
-                                  ? "You’re all up to date"
-                                  : "No visits to show"}
-                        </h2>
-                        <p>
-                            {filtered
+                                  ? "You're all up to date"
+                                  : "No visits to show"
+                        }
+                        description={
+                            filtered
                                 ? "Try another search or clear your filters."
-                                : "Your visits will appear here when there’s something to show."}
-                        </p>
+                                : "Your visits will appear here when there's something to show."
+                        }
+                    >
                         <Button onClick={filtered ? onClear : onSchedule}>
                             {filtered ? "Clear filters" : "Schedule a visit"}
                         </Button>
-                    </div>
+                    </EmptyState>
                 ) : (
                     <div className={styles.list}>
                         {shown.map((visit) => {
@@ -235,9 +230,9 @@ export function VisitList({
                                             </small>
                                         </div>
                                     </div>
-                                    <span className={styles.status} data-state={state}>
-                                        {state === "upcoming" ? "Scheduled" : STATE_LABELS[state]}
-                                    </span>
+                                    <div className={styles.rowStatus}>
+                                        <VisitStatusBadge state={state} />
+                                    </div>
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -251,7 +246,7 @@ export function VisitList({
                         })}
                     </div>
                 )}
-            </section>
-        </>
+            </TabsContent>
+        </Tabs>
     );
 }

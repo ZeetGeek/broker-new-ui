@@ -9,6 +9,7 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import { FlowStep } from "./flow-step";
 import { REMINDERS, type VisitDraft } from "./model";
@@ -140,7 +141,7 @@ export function DateTimePicker({
                 <div className={styles.timeFields}>
                     <label className={styles.field}>
                         Start time
-                        <input
+                        <Input
                             type="time"
                             value={startTime}
                             onChange={(e) => setStartTime(e.target.value)}
@@ -149,7 +150,7 @@ export function DateTimePicker({
                     </label>
                     <label className={styles.field}>
                         End time
-                        <input
+                        <Input
                             type="time"
                             value={endTime}
                             onChange={(e) => setEndTime(e.target.value)}
@@ -215,21 +216,20 @@ export function ReminderPicker({
                 </>
             }
         >
-            <fieldset disabled={busy} className={styles.reminderOptions}>
-                <legend className="sr-only">Extra reminder</legend>
+            <RadioGroup
+                disabled={busy}
+                aria-label="Extra reminder"
+                value={String(selected)}
+                onValueChange={(value) => setSelected(Number(value))}
+            >
                 {REMINDERS.map((r) => (
                     <label key={r.value} className={styles.reminderOption}>
-                        <input
-                            type="radio"
-                            name="extra-reminder"
-                            checked={selected === r.value}
-                            onChange={() => setSelected(r.value)}
-                        />
+                        <RadioGroupItem value={String(r.value)} />
                         <span>{r.label}</span>
                         {selected === r.value && <Check aria-hidden />}
                     </label>
                 ))}
-            </fieldset>
+            </RadioGroup>
             {error && (
                 <p role="alert" className={styles.error}>
                     {error}

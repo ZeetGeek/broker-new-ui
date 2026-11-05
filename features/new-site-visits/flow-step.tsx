@@ -28,7 +28,7 @@ export function FlowStep({
             </Button>
             <header className={styles.heading}>
                 <div>
-                    <h1>{title}</h1>
+                    <h1 className="h3 text-ink">{title}</h1>
                     <p>{description}</p>
                 </div>
             </header>
