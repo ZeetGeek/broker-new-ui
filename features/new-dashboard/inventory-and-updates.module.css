@@ -44,7 +44,7 @@
 
 .header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 1rem;
     margin-block-end: 1rem;
@@ -206,7 +206,7 @@
     inset-block-end: 0;
     z-index: 1;
     block-size: 1px;
-    background: var(--color-border-warm);
+    background: color-mix(in oklab, var(--color-border-warm) 60%, transparent);
     pointer-events: none;
 }
 .table th {
@@ -227,7 +227,7 @@
     padding-inline-start: 0;
 }
 .listingRow + .listingRow {
-    border-block-start: 1px solid var(--color-border-warm);
+    border-block-start: 1px solid color-mix(in oklab, var(--color-border-warm) 60%, transparent);
 }
 .propertyLink {
     display: flex;
@@ -286,13 +286,10 @@
 .propertyTitle,
 .eventTitle {
     color: var(--color-ink);
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 600;
     line-height: 1.5;
     overflow-wrap: anywhere;
-}
-.propertyTitle {
-    font-size: 0.875rem;
 }
 .thumbnail {
     position: relative;
@@ -478,14 +475,27 @@
 .footerNote {
     color: var(--color-ink-subtle);
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1.5;
 }
 .updates {
     margin-block-start: -0.375rem;
 }
+.updatesPanel {
+    position: relative;
+}
+.updatesPanel[data-scroll-fade="true"]::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    block-size: 3.5rem;
+    z-index: 2;
+    background: linear-gradient(to bottom, transparent, var(--color-surface) 85%);
+    pointer-events: none;
+}
 .updates li + li {
-    border-block-start: 1px solid var(--color-border-warm);
+    border-block-start: 1px solid color-mix(in oklab, var(--color-border-warm) 60%, transparent);
 }
 .updateLink {
     display: flex;
@@ -494,22 +504,17 @@
     padding: 1rem 0.25rem;
     border-radius: var(--radius-control);
 }
-.updateLink:hover {
-    background: var(--color-surface-muted);
-}
 .eventIcon {
     display: grid;
     place-items: center;
     flex-shrink: 0;
     inline-size: 2rem;
-    block-size: 2rem;
-    border-radius: var(--radius-control);
-    background: var(--color-brand-soft);
+    block-size: 2.5rem;
     color: var(--color-brand-text);
 }
 .eventIcon svg {
-    inline-size: 1rem;
-    block-size: 1rem;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
 }
 .updateText {
     display: grid;
@@ -517,9 +522,14 @@
     gap: 0.25rem;
     min-inline-size: 0;
 }
+.updateText .secondary {
+    color: var(--color-ink-muted);
+    font-weight: 600;
+}
 .eventTime {
     flex-shrink: 0;
-    padding-block-start: 0.125rem;
+    align-self: center;
+    font-weight: 600;
     font-size: 0.6875rem;
     font-variant-numeric: tabular-nums;
 }

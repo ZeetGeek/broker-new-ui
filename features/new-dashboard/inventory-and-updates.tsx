@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 
@@ -18,13 +18,18 @@ import {
     ArrowRight,
     Building2,
     CalendarCheck,
-    CheckCheck,
+    CalendarClock,
+    CalendarPlus,
+    CheckCircle2,
     Clock,
+    ImagePlus,
+    List,
     MapPin,
     Pencil,
     Plus,
     Trash2,
     UserRoundPlus,
+    UserRoundSearch,
 } from "@/components/shared/icons";
 import {
     listingCommissionTip,
@@ -61,30 +66,42 @@ function InventoryTabs({
     const barRef = useRef<HTMLDivElement>(null);
     const pillRef = useRef<HTMLSpanElement>(null);
     const painted = useRef(false);
+    const placed = useRef<{ x: number; w: number } | null>(null);
+
+    const movePill = useCallback((animate: boolean) => {
+        const bar = barRef.current;
+        const pill = pillRef.current;
+        const active = bar?.querySelector<HTMLElement>('[aria-selected="true"]');
+        if (!pill || !active) return;
+        const x = active.offsetLeft;
+        const w = active.offsetWidth;
+        // ResizeObserver reports the box we just wrote. Rewriting transform
+        // with the transition cleared would cancel the slide in progress.
+        if (placed.current?.x === x && placed.current.w === w) return;
+        placed.current = { x, w };
+        const transition = pill.style.transition;
+        if (!animate) pill.style.transition = "none";
+        pill.style.transform = `translateX(${x}px)`;
+        pill.style.width = `${w}px`;
+        if (!animate) {
+            void pill.offsetWidth;
+            pill.style.transition = transition;
+        }
+    }, []);
+
+    useLayoutEffect(() => {
+        movePill(painted.current);
+        painted.current = true;
+    }, [value, counts?.published, counts?.draft, movePill]);
 
     useLayoutEffect(() => {
         const bar = barRef.current;
-        const pill = pillRef.current;
-        if (!bar || !pill) return;
-        function position(animate: boolean) {
-            const active = bar!.querySelector<HTMLElement>('[aria-selected="true"]');
-            if (!active) return;
-            const transition = pill!.style.transition;
-            if (!animate) pill!.style.transition = "none";
-            pill!.style.transform = `translateX(${active.offsetLeft}px)`;
-            pill!.style.width = `${active.offsetWidth}px`;
-            if (!animate) {
-                void pill!.offsetWidth;
-                pill!.style.transition = transition;
-            }
-        }
-        position(painted.current);
-        painted.current = true;
-        const observer = new ResizeObserver(() => position(false));
+        if (!bar) return;
+        const observer = new ResizeObserver(() => movePill(false));
         observer.observe(bar);
         bar.querySelectorAll<HTMLElement>('[role="tab"]').forEach((tab) => observer.observe(tab));
         return () => observer.disconnect();
-    }, [value, counts?.published, counts?.draft]);
+    }, [movePill]);
 
     return (
         <div
@@ -352,7 +369,7 @@ function previewUpdates(now: Date) {
             subtitle: "Priya Desai · Orchid Homes",
             href: "/broker/visits",
             minutes: 20,
-            icon: CalendarCheck,
+            icon: CalendarPlus,
         },
         {
             id: "preview-task",
@@ -360,7 +377,7 @@ function previewUpdates(now: Date) {
             subtitle: "Confirm visit with Priya Desai",
             href: "#preview-tasks-title",
             minutes: 35,
-            icon: CheckCheck,
+            icon: List,
         },
         {
             id: "preview-client",
@@ -377,6 +394,70 @@ function previewUpdates(now: Date) {
             href: "/broker/your-listings",
             minutes: 120,
             icon: Pencil,
+        },
+        {
+            id: "preview-visit-completed",
+            title: "Visit marked as attended",
+            subtitle: "Aarav Shah · Happy Elegance",
+            href: "/broker/visits",
+            minutes: 180,
+            icon: CalendarCheck,
+        },
+        {
+            id: "preview-client-preferences",
+            title: "Client preferences updated",
+            subtitle: "Rahul Mehta · Looking for a 3 BHK in Vesu",
+            href: "/broker/contacts",
+            minutes: 240,
+            icon: UserRoundSearch,
+        },
+        {
+            id: "preview-task-completed",
+            title: "Task completed",
+            subtitle: "Share Orchid Homes documents with Priya",
+            href: "#preview-tasks-title",
+            minutes: 300,
+            icon: CheckCircle2,
+        },
+        {
+            id: "preview-listing-published",
+            title: "Listing published",
+            subtitle: "4 BHK · Palm Residency · Pal, Surat",
+            href: "/broker/your-listings",
+            minutes: 420,
+            icon: Building2,
+        },
+        {
+            id: "preview-visit-rescheduled",
+            title: "Visit rescheduled",
+            subtitle: "Mehul Patel · Business Centre · New time saved",
+            href: "/broker/visits",
+            minutes: 1500,
+            icon: CalendarClock,
+        },
+        {
+            id: "preview-client-buyer",
+            title: "Client added",
+            subtitle: "Ananya Shah · Buyer",
+            href: "/broker/contacts",
+            minutes: 1620,
+            icon: UserRoundPlus,
+        },
+        {
+            id: "preview-listing-photos",
+            title: "Listing photos updated",
+            subtitle: "2 BHK · River View Apartments · Jahangirpura",
+            href: "/broker/your-listings",
+            minutes: 1800,
+            icon: ImagePlus,
+        },
+        {
+            id: "preview-follow-up-task",
+            title: "Follow-up task created",
+            subtitle: "Call Rahul about the Vesu shortlist",
+            href: "#preview-tasks-title",
+            minutes: 2940,
+            icon: List,
         },
     ].map((item) => ({
         ...item,
@@ -509,6 +590,27 @@ export function InventoryAndUpdates({
     const listingViewportRef = useRef<HTMLDivElement>(null);
     const listingContentRef = useRef<HTMLDivElement>(null);
     const [hasMoreListings, setHasMoreListings] = useState(false);
+    const updateViewportRef = useRef<HTMLDivElement>(null);
+    const updateContentRef = useRef<HTMLDivElement>(null);
+    const [hasMoreUpdates, setHasMoreUpdates] = useState(false);
+
+    useEffect(() => {
+        const viewport = updateViewportRef.current;
+        const content = updateContentRef.current;
+        if (!viewport || !content) return;
+        const measure = () =>
+            setHasMoreUpdates(
+                viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1,
+            );
+        const observer = new ResizeObserver(measure);
+        observer.observe(viewport);
+        observer.observe(content);
+        viewport.addEventListener("scroll", measure, { passive: true });
+        return () => {
+            observer.disconnect();
+            viewport.removeEventListener("scroll", measure);
+        };
+    }, []);
 
     useEffect(() => {
         const viewport = listingViewportRef.current;
@@ -595,14 +697,13 @@ export function InventoryAndUpdates({
                     className={styles.inventoryContent}
                 >
                     <div
-                        key={selectedTab}
                         ref={listingViewportRef}
                         className={styles.scrollViewport}
                         role="region"
                         aria-label={`${selectedTab === "draft" ? "Draft" : "Active"} listing list`}
                         tabIndex={0}
                     >
-                        <div ref={listingContentRef}>
+                        <div key={selectedTab} ref={listingContentRef} className="t-tabs-panel">
                             {!preview && listings.isPending ? (
                                 <div
                                     role="status"
@@ -705,62 +806,71 @@ export function InventoryAndUpdates({
                     </footer>
                 </div>
             </section>
-            <section className={styles.panel} aria-labelledby="dashboard-updates-heading">
+            <section
+                className={`${styles.panel} ${styles.updatesPanel}`}
+                data-scroll-fade={hasMoreUpdates}
+                aria-labelledby="dashboard-updates-heading"
+            >
                 <header className={styles.header}>
-                    <div>
-                        <h2 id="dashboard-updates-heading" className="h6">
-                            Recent updates
-                        </h2>
-                        <p className={styles.description}>
-                            {preview || isMockMode()
-                                ? "Illustrative activity across your work"
-                                : "The latest across your work"}
-                        </p>
-                    </div>
-                    <Link href="/broker/notifications" className={styles.textLink}>
+                    <h2 id="dashboard-updates-heading" className="h5 text-ink">
+                        Recent updates
+                    </h2>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        nativeButton={false}
+                        render={<Link href="/broker/notifications" />}
+                    >
                         View all <ArrowRight aria-hidden />
-                    </Link>
+                    </Button>
                 </header>
                 <div
                     className={styles.scrollViewport}
                     role="region"
                     aria-label="Recent update list"
+                    ref={updateViewportRef}
                     tabIndex={0}
                 >
-                    {updates.length ? (
-                        <ol className={styles.updates}>
-                            {updates.map((item) => (
-                                <li key={item.id}>
-                                    <Link
-                                        href={item.href || "/broker/notifications"}
-                                        className={styles.updateLink}
-                                    >
-                                        <span className={styles.eventIcon}>
-                                            <item.icon aria-hidden />
-                                        </span>
-                                        <span className={styles.updateText}>
-                                            <span className={styles.eventTitle}>{item.title}</span>
-                                            <span className={styles.secondary}>
-                                                {item.subtitle}
-                                            </span>
-                                        </span>
-                                        <time
-                                            dateTime={item.occurredAt}
-                                            className={styles.eventTime}
+                    <div ref={updateContentRef}>
+                        {updates.length ? (
+                            <ol className={styles.updates}>
+                                {updates.map((item) => (
+                                    <li key={item.id}>
+                                        <Link
+                                            href={item.href || "/broker/notifications"}
+                                            className={styles.updateLink}
                                         >
-                                            {formatRelativePast(new Date(item.occurredAt), now)}
-                                        </time>
-                                    </Link>
-                                </li>
-                            ))}
-                        </ol>
-                    ) : (
-                        <div className={styles.empty}>
-                            <Activity aria-hidden />
-                            <h3 className="body font-semibold">You&apos;re up to date</h3>
-                            <p>Updates to your listings, clients and visits will appear here.</p>
-                        </div>
-                    )}
+                                            <span className={styles.eventIcon}>
+                                                <item.icon aria-hidden strokeWidth={1.75} />
+                                            </span>
+                                            <span className={styles.updateText}>
+                                                <span className={styles.eventTitle}>
+                                                    {item.title}
+                                                </span>
+                                                <span className={styles.secondary}>
+                                                    {item.subtitle}
+                                                </span>
+                                            </span>
+                                            <time
+                                                dateTime={item.occurredAt}
+                                                className={styles.eventTime}
+                                            >
+                                                {formatRelativePast(new Date(item.occurredAt), now)}
+                                            </time>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ol>
+                        ) : (
+                            <div className={styles.empty}>
+                                <Activity aria-hidden />
+                                <h3 className="body font-semibold">You&apos;re up to date</h3>
+                                <p>
+                                    Updates to your listings, clients and visits will appear here.
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </section>
             <PropertyDeleteDialog
