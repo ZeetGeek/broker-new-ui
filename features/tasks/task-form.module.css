@@ -1,0 +1,229 @@
+.panel:global(.t-modal) {
+    --dialog-pad: 1.5rem;
+    inset: 0 0 0 auto;
+    translate: none;
+    transform: translateX(0);
+    transform-origin: right center;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    block-size: 100dvh;
+    max-block-size: 100dvh;
+    border-radius: 0;
+    border: 0;
+    padding: 0;
+    overflow: hidden;
+    opacity: 1;
+    scale: 1;
+    transition: transform var(--panel-open-dur) var(--panel-ease);
+    will-change: transform;
+}
+
+.panel:global(.t-modal)[data-starting-style],
+.panel:global(.t-modal)[data-ending-style],
+.panel:global(.t-modal)[data-closed] {
+    transform: translateX(100%);
+    opacity: 1;
+    scale: 1;
+}
+
+.panel:global(.t-modal)[data-ending-style] {
+    transition-duration: var(--panel-close-dur);
+}
+
+@starting-style {
+    .panel:global(.t-modal)[data-open] {
+        transform: translateX(100%);
+        opacity: 1;
+        scale: 1;
+    }
+}
+
+.panelScroll {
+    flex: 1;
+    min-block-size: 0;
+}
+
+.panelBody {
+    padding: 1.5rem;
+}
+
+.panelFooter {
+    flex-shrink: 0;
+    border-block-start: 1px solid var(--color-border-warm);
+    background: var(--color-surface);
+    padding: 1rem 1.5rem max(1rem, env(safe-area-inset-bottom));
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    color: var(--color-ink);
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.section + .section {
+    border-block-start: 1px solid var(--color-border-warm);
+    padding-block-start: 1.5rem;
+}
+
+.sectionHeading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    font-weight: 650;
+}
+
+.sectionHeading svg {
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+    color: var(--color-brand);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-inline-size: 0;
+}
+
+.label {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.optional {
+    font-weight: 400;
+    color: var(--color-ink-subtle);
+}
+
+.row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+}
+.weekdayField {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    min-inline-size: 0;
+}
+.weekdayField legend {
+    margin-block-end: 0.5rem;
+}
+.weekdays {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+.weekdays button {
+    min-inline-size: 3rem;
+    min-block-size: 3rem;
+}
+
+.shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: var(--color-ink-muted);
+}
+
+.hint svg {
+    flex-shrink: 0;
+    inline-size: 1rem;
+    block-size: 1rem;
+    margin-block-start: 0.125rem;
+}
+
+.reminderHint {
+    display: flex;
+    gap: 0.625rem;
+    border-radius: var(--radius-inner);
+    background: var(--color-surface-muted);
+    padding: 0.875rem;
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+}
+
+.reminderHint svg {
+    flex-shrink: 0;
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+    margin-block-start: 0.125rem;
+    color: var(--color-brand);
+}
+
+.error {
+    color: var(--color-danger);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+}
+
+.summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding-block-end: 1.25rem;
+    border-block-end: 1px solid var(--color-border-warm);
+}
+
+.summary strong {
+    font-size: 1.125rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.discard {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.discard p {
+    color: var(--color-ink);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.discardActions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+    .panel:global(.t-modal) {
+        inline-size: 34rem;
+        max-inline-size: calc(100vw - 2rem);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .panel:global(.t-modal) {
+        transition: none;
+    }
+}

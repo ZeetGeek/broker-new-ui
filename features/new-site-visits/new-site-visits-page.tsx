@@ -276,28 +276,6 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
     const visitResult = selected && result?.id === selected.id ? result.message : "";
     return (
         <main className={styles.page}>
-            <div className={styles.previewBar}>
-                <span>
-                    <strong>Design preview</strong> · Sample visits, saved only in this tab.
-                    Notifications appear while this page is open.
-                </span>
-                <div>
-                    <button disabled={busy} onClick={() => void commit([], back)}>
-                        Start empty
-                    </button>
-                    <button
-                        disabled={busy}
-                        onClick={() =>
-                            void commit(sampleVisits(), () => {
-                                setDismissed([]);
-                                back();
-                            })
-                        }
-                    >
-                        Reset samples
-                    </button>
-                </div>
-            </div>
             {query.isPending ? (
                 <div role="status" className={styles.loading}>
                     Loading your visits…

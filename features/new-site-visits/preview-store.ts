@@ -37,9 +37,21 @@ export const PREVIEW_CLIENTS = [
         phoneDigits: "",
     },
 ];
-export const PREVIEW_PROPERTIES = [
+export type PreviewProperty = {
+    id: string;
+    title: string;
+    configLabel: string;
+    locality: string;
+    city: string;
+    address: string;
+    imageUrl?: string;
+    owner?: { name: string; imageUrl?: string };
+};
+
+export const PREVIEW_PROPERTIES: PreviewProperty[] = [
     {
         id: "preview-happy",
+        imageUrl: "/properties/1.jpg",
         title: "Happy Elegance",
         configLabel: "3 BHK apartment",
         locality: "Vesu",
@@ -48,6 +60,7 @@ export const PREVIEW_PROPERTIES = [
     },
     {
         id: "preview-ibc",
+        imageUrl: "/properties/2.jpg",
         title: "International Business Center",
         configLabel: "Office",
         locality: "Piplod",
@@ -56,6 +69,7 @@ export const PREVIEW_PROPERTIES = [
     },
     {
         id: "preview-orchid",
+        imageUrl: "/properties/3.jpg",
         title: "Orchid Homes",
         configLabel: "2 BHK apartment",
         locality: "Adajan",
@@ -64,6 +78,7 @@ export const PREVIEW_PROPERTIES = [
     },
     {
         id: "preview-green",
+        imageUrl: "/properties/4.jpg",
         title: "Green Residency",
         configLabel: "3 BHK apartment",
         locality: "Pal",

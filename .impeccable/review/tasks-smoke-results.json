@@ -1,0 +1,263 @@
+{
+  "results": [
+    {
+      "name": "create title-only task",
+      "ok": true
+    },
+    {
+      "name": "complete task",
+      "ok": true
+    },
+    {
+      "name": "reopen task",
+      "ok": true
+    },
+    {
+      "name": "edit task",
+      "ok": true
+    },
+    {
+      "name": "reschedule task",
+      "ok": true
+    },
+    {
+      "name": "set reminder",
+      "ok": true
+    },
+    {
+      "name": "search tasks",
+      "ok": true
+    },
+    {
+      "name": "filter undated tasks",
+      "ok": true
+    },
+    {
+      "name": "refresh persistence",
+      "ok": true
+    },
+    {
+      "name": "dashboard shares created task",
+      "ok": true
+    },
+    {
+      "name": "delete task",
+      "ok": true
+    },
+    {
+      "name": "deletion persists after refresh",
+      "ok": true
+    },
+    {
+      "name": "desktop overflow",
+      "ok": true
+    },
+    {
+      "name": "mobile overflow",
+      "ok": true
+    },
+    {
+      "name": "tablet overflow",
+      "ok": true
+    }
+  ],
+  "errors": [],
+  "hitAreas": [
+    {
+      "width": 1440,
+      "overflow": false,
+      "rows": [
+        {
+          "controls": [
+            {
+              "label": "Complete Collect signed owner consent",
+              "x": 41,
+              "y": 375.171875,
+              "width": 48,
+              "height": 48,
+              "centerHit": true
+            },
+            {
+              "label": "Collect signed owner consent",
+              "x": 93.796875,
+              "y": 376.515625,
+              "width": 214.90625,
+              "height": 22.5,
+              "centerHit": true
+            }
+          ],
+          "checkboxFrame": {
+            "width": "20px",
+            "height": "20px"
+          }
+        },
+        {
+          "controls": [
+            {
+              "label": "Complete Call Aarav about Vesu options",
+              "x": 41,
+              "y": 467.671875,
+              "width": 48,
+              "height": 48,
+              "centerHit": true
+            },
+            {
+              "label": "Call Aarav about Vesu options",
+              "x": 93.796875,
+              "y": 469.015625,
+              "width": 215.9375,
+              "height": 22.5,
+              "centerHit": true
+            },
+            {
+              "label": "15 minutes before",
+              "x": 1018.890625,
+              "y": 491.75,
+              "width": 119.265625,
+              "height": 24,
+              "centerHit": true
+            }
+          ],
+          "checkboxFrame": {
+            "width": "20px",
+            "height": "20px"
+          }
+        },
+        {
+          "controls": [
+            {
+              "label": "Complete Confirm the visit with Priya",
+              "x": 41,
+              "y": 616.359375,
+              "width": 48,
+              "height": 48,
+              "centerHit": true
+            },
+            {
+              "label": "Confirm the visit with Priya",
+              "x": 93.796875,
+              "y": 617.703125,
+              "width": 194.546875,
+              "height": 22.5,
+              "centerHit": true
+            },
+            {
+              "label": "15 minutes before",
+              "x": 1018.890625,
+              "y": 640.4375,
+              "width": 119.265625,
+              "height": 24,
+              "centerHit": true
+            }
+          ],
+          "checkboxFrame": {
+            "width": "20px",
+            "height": "20px"
+          }
+        }
+      ]
+    },
+    {
+      "width": 360,
+      "overflow": false,
+      "rows": [
+        {
+          "controls": [
+            {
+              "label": "Complete Collect signed owner consent",
+              "x": 28.1875,
+              "y": 506.703125,
+              "width": 48,
+              "height": 48,
+              "centerHit": true
+            },
+            {
+              "label": "Collect signed owner consent",
+              "x": 83.375,
+              "y": 506.703125,
+              "width": 197.25,
+              "height": 48,
+              "centerHit": true
+            }
+          ],
+          "checkboxFrame": {
+            "width": "20px",
+            "height": "20px"
+          }
+        },
+        {
+          "controls": [
+            {
+              "label": "Complete Call Aarav about Vesu options",
+              "x": 28.1875,
+              "y": 648.046875,
+              "width": 48,
+              "height": 48,
+              "centerHit": true
+            },
+            {
+              "label": "Call Aarav about Vesu options",
+              "x": 83.375,
+              "y": 648.046875,
+              "width": 197.25,
+              "height": 48,
+              "centerHit": true
+            },
+            {
+              "label": "15 minutes before",
+              "x": 83.375,
+              "y": 768.5625,
+              "width": 119.265625,
+              "height": 48,
+              "centerHit": false
+            }
+          ],
+          "checkboxFrame": {
+            "width": "20px",
+            "height": "20px"
+          }
+        },
+        {
+          "controls": [
+            {
+              "label": "Complete Confirm the visit with Priya",
+              "x": 28.1875,
+              "y": 898.53125,
+              "width": 48,
+              "height": 48,
+              "centerHit": false
+            },
+            {
+              "label": "Confirm the visit with Priya",
+              "x": 83.375,
+              "y": 898.53125,
+              "width": 181.578125,
+              "height": 48,
+              "centerHit": false
+            },
+            {
+              "label": "15 minutes before",
+              "x": 83.375,
+              "y": 1039.546875,
+              "width": 119.265625,
+              "height": 48,
+              "centerHit": false
+            }
+          ],
+          "checkboxFrame": {
+            "width": "20px",
+            "height": "20px"
+          }
+        }
+      ]
+    }
+  ],
+  "checked": {
+    "ariaChecked": "true",
+    "frameBackground": "rgb(27, 122, 90)",
+    "indicatorDisplay": "block",
+    "indicatorColor": "rgb(255, 255, 255)",
+    "html": "<span data-checked=\"\" role=\"checkbox\" tabindex=\"0\" id=\"base-ui-_r_1g_\" aria-checked=\"true\" data-slot=\"checkbox\" aria-label=\"Reopen Collect signed owner consent\" class=\"t-check group/checkbox peer relative flex shrink-0 items-center justify-center rounded-sm border-2 border-border-warm bg-surface text-surface outline-none block-5 inline-5 after:absolute after:-inset-2 hover:border-ink-subtle focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-danger-mid aria-invalid:focus-visible:ring-danger/20 data-indeterminate:border-brand data-indeterminate:bg-brand data-indeterminate:text-surface data-indeterminate:hover:border-brand data-checked:border-brand data-checked:bg-brand data-checked:text-surface data-checked:hover:border-brand tasks-module__fEqF-G__checkboxHitArea\" style=\"inline-size: 3rem; block-size: 3rem; border: 0px; background: transparent;\"><span data-checked=\"\" data-slot=\"checkbox-indicator\" class=\"relative grid place-content-center text-current block-3 inline-3\"><svg viewBox=\"0 0 10.1668 10.1668\" class=\"   t-check-mark absolute inset-0   group-data-indeterminate/checkbox:invisible   \" fill=\"none\" aria-hidden=\"true\"><path class=\"t-check-path\" d=\"M1 5.52L3.92 9.17L9.17 1\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"></path></svg><svg viewBox=\"0 0 12 12\" class=\"   t-check-dash invisible absolute inset-0   group-data-indeterminate/checkbox:visible   \" fill=\"none\" aria-hidden=\"true\"><path d=\"M3 6H9\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\"></path></svg></span></span>"
+  },
+  "hitAreaRuntimeErrors": []
+}

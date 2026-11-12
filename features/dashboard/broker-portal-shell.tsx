@@ -28,6 +28,7 @@ import { BrokerProfileMenu } from "@/features/broker/profile-menu";
 import { ChatProvider } from "@/features/chat/chat-provider";
 import { ShortcutsCheatsheet } from "@/features/shortcuts/shortcuts-cheatsheet";
 import { useGlobalShortcuts } from "@/features/shortcuts/use-global-shortcuts";
+import { TaskReminderListener } from "@/features/tasks/task-reminder-listener";
 import { NotificationProvider } from "@/providers/notification-provider";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setProfile } from "@/store/slices/dashboard-slice";
@@ -110,6 +111,7 @@ function BrokerPortalShellInner({ children }: { children: ReactNode }) {
     return (
         <NotificationProvider>
             <ChatProvider>
+                <TaskReminderListener />
                 <PortalHeader
                     navItems={BROKER_NAV_ITEMS}
                     notificationsHref={BROKER_NOTIFICATIONS_HREF}

@@ -12,13 +12,21 @@ import {
     Briefcase,
     Building2,
     Calendar,
+    CheckCircle2,
     Contact,
     Gift,
     LayoutDashboard,
+    MoreHorizontal,
     Send,
     UserRoundSearch,
     Users,
 } from "@/components/shared/icons";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import type { NavItem } from "@/config/nav";
 
@@ -34,6 +42,7 @@ const NAV_ICONS: Record<string, AppIcon> = {
     "/broker/pipeline": Users,
     "/broker/contacts": Contact,
     "/broker/visits": Calendar,
+    "/broker/tasks": CheckCircle2,
     "/broker/referrals": Gift,
     "/owner": LayoutDashboard,
     "/owner/properties": Building2,
@@ -52,6 +61,10 @@ function NavIcon({ href }: { href: string }) {
 export function PortalMobileNav({ items }: PortalMobileNavProps) {
     const pathname = usePathname();
     const activeHref = resolveActiveNavHref(pathname, items);
+    const primaryItems = items.length > 5 ? items.slice(0, 4) : items;
+    const overflowItems = items.length > 5 ? items.slice(4) : [];
+    const activeOverflow = overflowItems.find((item) => item.href === activeHref);
+    const slotCount = primaryItems.length + (overflowItems.length ? 1 : 0);
 
     return (
         <nav
@@ -61,13 +74,13 @@ export function PortalMobileNav({ items }: PortalMobileNavProps) {
               md:hidden
             "
             aria-label="Portal"
-            style={{ "--nav-count": items.length } as CSSProperties}
+            style={{ "--nav-count": slotCount } as CSSProperties}
         >
             <ul
                 className="grid gap-1 px-2"
-                style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+                style={{ gridTemplateColumns: `repeat(${slotCount}, minmax(0, 1fr))` }}
             >
-                {items.map((item) => {
+                {primaryItems.map((item) => {
                     const isActive = item.href === activeHref;
                     const label = item.mobileLabel ?? item.label;
 
@@ -93,6 +106,40 @@ export function PortalMobileNav({ items }: PortalMobileNavProps) {
                         </li>
                     );
                 })}
+                {overflowItems.length > 0 && (
+                    <li>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger
+                                className={cn(
+                                    "flex flex-col items-center justify-center gap-1 rounded-inner px-1 py-1.5 text-center outline-none inline-full min-block-12 focus-visible:ring-2 focus-visible:ring-ring",
+                                    activeOverflow ? "text-brand" : "text-ink-muted",
+                                )}
+                                aria-label="More pages"
+                            >
+                                <MoreHorizontal aria-hidden className="block-5 inline-5" />
+                                <span className="body-xs truncate font-medium inline-full">
+                                    {activeOverflow?.mobileLabel ?? activeOverflow?.label ?? "More"}
+                                </span>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent side="top" align="end" className="min-inline-52">
+                                {overflowItems.map((item) => (
+                                    <DropdownMenuItem
+                                        key={item.href}
+                                        render={<Link href={item.href} />}
+                                        className={cn(
+                                            item.href === activeHref &&
+                                                "bg-brand-soft text-brand-text",
+                                        )}
+                                        aria-current={item.href === activeHref ? "page" : undefined}
+                                    >
+                                        <NavIcon href={item.href} />
+                                        {item.mobileLabel ?? item.label}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </li>
+                )}
             </ul>
         </nav>
     );

@@ -1,0 +1,114 @@
+{
+  "results": [
+    {
+      "name": "custom Enter adds without submitting parent",
+      "ok": true
+    },
+    {
+      "name": "multiple presets and custom minutes days",
+      "ok": true
+    },
+    {
+      "name": "equivalent minutes duplicate rejected",
+      "ok": true
+    },
+    {
+      "name": "equivalent hours duplicate rejected",
+      "ok": true
+    },
+    {
+      "name": "custom zero equals at due time",
+      "ok": true
+    },
+    {
+      "name": "invalid blank blocked",
+      "ok": true
+    },
+    {
+      "name": "invalid negative blocked",
+      "ok": true
+    },
+    {
+      "name": "invalid fraction blocked",
+      "ok": true
+    },
+    {
+      "name": "invalid above365days blocked",
+      "ok": true
+    },
+    {
+      "name": "invalid pastLead blocked",
+      "ok": true
+    },
+    {
+      "name": "mobile reminder picker no horizontal overflow",
+      "ok": true
+    },
+    {
+      "name": "Escape closes only reminder picker",
+      "ok": true
+    },
+    {
+      "name": "remove a selected reminder",
+      "ok": true
+    },
+    {
+      "name": "save all reminder offsets",
+      "ok": true
+    },
+    {
+      "name": "details show all schedules",
+      "ok": true
+    },
+    {
+      "name": "reopen and refresh retain every reminder",
+      "ok": true
+    },
+    {
+      "name": "list summarizes multiple reminders",
+      "ok": true
+    },
+    {
+      "name": "reminder inbox shows individual schedules",
+      "ok": true
+    },
+    {
+      "name": "first offset delivers independently",
+      "ok": true
+    },
+    {
+      "name": "second offset delivers independently",
+      "ok": true
+    },
+    {
+      "name": "removed offset does not deliver and repeats dedupe",
+      "ok": true
+    },
+    {
+      "name": "delivery history survives refresh without duplicates",
+      "ok": true
+    }
+  ],
+  "errors": [
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'",
+    "SyntaxError: Unexpected token ':'"
+  ]
+}

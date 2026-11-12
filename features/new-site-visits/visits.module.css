@@ -13,24 +13,26 @@
 .page button:disabled {
     cursor: default;
 }
-.previewBar {
+.pageHeader {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem 1.5rem;
-    margin-block: 0 0.75rem;
-    color: var(--color-ink-subtle);
-    font-size: 0.75rem;
-}
-.previewBar > div {
-    display: flex;
     gap: 1rem;
+    min-width: 0;
+    padding-block: 0.25rem;
+    flex-wrap: wrap;
 }
-.previewBar button {
-    min-height: 44px;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+.scheduleButton {
+    block-size: 38px;
+    padding-inline: 1rem;
+}
+@media (max-width: 400px) {
+    .pageHeader {
+        gap: 0.75rem;
+    }
+    .scheduleButton {
+        padding-inline: 0.75rem;
+    }
 }
 .heading {
     display: flex;
@@ -143,6 +145,7 @@
     flex-direction: column;
     gap: 1.5rem;
     padding-block: 0.25rem;
+    flex-wrap: wrap;
 }
 .summary,
 .warning {
@@ -294,15 +297,16 @@
 .searchRow {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
     margin-inline-start: auto;
     min-width: 0;
 }
 .searchRow > :first-child {
     flex: 1;
-    min-width: 200px;
-    max-width: 300px;
+    width: 256px;
+    min-width: 220px;
+    max-width: 256px;
 }
 .searchRow > span {
     color: var(--color-ink-muted);
@@ -324,7 +328,9 @@
 }
 .visitRow {
     display: grid;
-    grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.8fr) 120px 140px;
+    grid-template-columns:
+        minmax(210px, 0.8fr) minmax(260px, 1.15fr) minmax(320px, 1.25fr)
+        auto auto;
     align-items: center;
     gap: 1.25rem;
     min-width: 0;
@@ -332,6 +338,7 @@
     padding: 1.25rem 1.5rem;
     background: var(--color-surface);
     border-radius: 16px;
+    box-shadow: 0 2px 8px rgb(11 31 23 / 4%);
 }
 .visitRow > * {
     min-width: 0;
@@ -351,43 +358,143 @@
 .visitRow strong,
 .rowTime time {
     display: block;
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 600;
+    line-height: 1.4;
     overflow-wrap: anywhere;
 }
 .visitRow small {
     display: block;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.5;
     color: var(--color-ink-muted);
-    margin-block-start: 0.3rem;
+    margin-block-start: 0.25rem;
+}
+.rowTime small {
+    margin-block-start: 0;
+    font-weight: 500;
 }
 .rowTime {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     font-variant-numeric: tabular-nums;
 }
-.rowTime time {
+.dateMark {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 32px;
+    block-size: 44px;
+    color: var(--color-brand-text);
+}
+.dateMark svg {
+    inline-size: 30px;
+    block-size: 30px;
+}
+.visitRow .rowLocation {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
     margin-block-start: 0.5rem;
+}
+.rowLocation svg {
+    inline-size: 14px;
+    block-size: 14px;
+    flex-shrink: 0;
+}
+.rowAction {
+    justify-self: end;
+    gap: 0.5rem;
+}
+
+.rowTime time {
+    margin-block-start: 0.375rem;
     font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
 }
 .rowClient {
     display: flex;
-    align-items: start;
-    gap: 0.75rem;
+    align-items: center;
+    gap: 0.875rem;
     min-width: 0;
 }
-.rowClient > svg {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    margin-block-start: 0.15rem;
-    color: var(--color-ink-muted);
+.rowProfiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 1.5rem;
+}
+.rowProfiles > .rowClient + .rowClient {
+    padding-inline-start: 1rem;
+    border-inline-start: 1px solid var(--color-border);
+}
+.rowClient > div {
+    min-width: 0;
 }
 .rowClient strong {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
 }
-.rowClient p {
-    margin-block-start: 0.375rem;
+.rowProperty {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    min-inline-size: 0;
+}
+.rowProperty > div {
+    min-inline-size: 0;
+}
+.propertyThumbnail {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 72px;
+    block-size: 72px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: var(--color-surface-muted);
     color: var(--color-ink-muted);
-    font-size: 0.8125rem;
+}
+.propertyThumbnail > svg {
+    inline-size: 24px;
+    block-size: 24px;
+}
+.rowProperty strong {
+    max-inline-size: 34ch;
+    font-size: 1rem;
+    letter-spacing: -0.01em;
+}
+.rowProperty p {
+    margin-block-start: 0.25rem;
+    color: var(--color-ink-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+.rowClient small {
+    font-size: 0.75rem;
+    line-height: 1.5;
+}
+.rowClient [data-missing] {
+    color: var(--color-ink-muted);
+    font-weight: 400;
+}
+.missingProfile {
+    display: grid;
+    place-items: center;
+    inline-size: 36px;
+    block-size: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--color-surface-muted);
+    color: var(--color-ink-muted);
+}
+.missingProfile svg {
+    inline-size: 20px;
+    block-size: 20px;
 }
 .searchField {
     display: flex;
@@ -396,14 +503,19 @@
     font-size: 0.8125rem;
     font-weight: 550;
 }
-.timezone {
-    align-self: center;
-}
 .listIntro {
-    margin-block-end: 1.5rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-block-end: 1rem;
+}
+.listCount {
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
 }
 .listIntro h2 {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 .listIntro p {
@@ -640,16 +752,39 @@
     font-size: 0.75rem;
     line-height: 1.6;
 }
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
+    .dateMark {
+        display: none;
+    }
     .visitRow {
-        grid-template-columns: 160px minmax(180px, 1fr) 105px 120px;
+        grid-template-columns: minmax(175px, 0.8fr) minmax(0, 1fr) minmax(180px, 1fr) auto;
+    }
+    .rowTime,
+    .rowProperty {
+        grid-row: 1 / 3;
+    }
+    .rowTime {
+        grid-column: 1;
+    }
+    .rowProperty {
+        grid-column: 2;
+    }
+    .rowProfiles {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        grid-column: 3;
+        grid-row: 1 / 3;
+    }
+    .rowProfiles > .rowClient + .rowClient {
+        padding-inline-start: 0;
+        border-inline-start: 0;
     }
     .visitRow > button {
         grid-column: 4;
-        grid-row: 1;
+        grid-row: 2;
     }
     .rowStatus {
-        grid-column: 3;
+        grid-column: 4;
         grid-row: 1;
     }
 }
@@ -685,24 +820,47 @@
     }
     .rowTime {
         grid-column: 1;
+        grid-row: 1;
     }
     .rowStatus {
         grid-column: 2;
         grid-row: 1;
     }
-    .rowClient {
+    .rowProperty {
         grid-column: 1 / -1;
         grid-row: 2;
     }
+    .rowProfiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-column: 1 / -1;
+        grid-row: 3;
+        gap: 0.75rem;
+        padding-block: 0.75rem;
+        border-block-start: 1px solid var(--color-border);
+    }
     .visitRow .rowTime time {
-        font-size: 0.875rem;
+        font-size: 1rem;
     }
     .person {
         grid-column: 1 / -1;
     }
     .visitRow > button {
-        grid-column: 2;
-        grid-row: 3;
+        grid-column: 1 / -1;
+        grid-row: 4;
+        justify-self: stretch;
+        justify-content: center;
+        border-radius: var(--radius-control, 8px);
+        padding-inline: 0.75rem;
+    }
+    .visitRow > button[data-attention] {
+        border-radius: 8px;
+        padding-inline: 0.75rem;
+    }
+    .dateMark {
+        display: none;
+    }
+    .rowClient {
+        padding-block: 0.25rem;
     }
     .notification {
         flex-wrap: wrap;

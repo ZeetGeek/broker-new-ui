@@ -1,0 +1,65 @@
+{
+  "results": [
+    {
+      "name": "start date defaults to India today",
+      "ok": true
+    },
+    {
+      "name": "mobile repeat controls stay inside viewport",
+      "ok": true
+    },
+    {
+      "name": "owner urgent start repeat and multiple reminders save together",
+      "ok": true
+    },
+    {
+      "name": "details expose start repeat urgent and owner",
+      "ok": true
+    },
+    {
+      "name": "completion creates linked future occurrence with fresh reminders",
+      "ok": true
+    },
+    {
+      "name": "reopening removes untouched successor without duplication",
+      "ok": true
+    },
+    {
+      "name": "edited successor protected from reopening its parent",
+      "ok": true
+    },
+    {
+      "name": "owners participate in search and linked filters",
+      "ok": true
+    },
+    {
+      "name": "turning repeat off stops future generation",
+      "ok": true
+    },
+    {
+      "name": "title-only creation keeps default start with no due date",
+      "ok": true
+    },
+    {
+      "name": "today view includes tasks starting today",
+      "ok": true
+    },
+    {
+      "name": "due date cannot precede start date",
+      "ok": true
+    },
+    {
+      "name": "invalid custom repeat cannot save",
+      "ok": true
+    },
+    {
+      "name": "refresh retains custom repeat and both dates",
+      "ok": true
+    },
+    {
+      "name": "final mobile panel fits viewport",
+      "ok": true
+    }
+  ],
+  "errors": []
+}

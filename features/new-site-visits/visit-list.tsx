@@ -1,17 +1,27 @@
 "use client";
 
-import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
-
-import { cn } from "@/lib/utils";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { AppImage } from "@/components/shared/app-image";
 import { EmptyState } from "@/components/shared/empty-state";
-import { FilterChip, filterChipClassName, FilterChipCount } from "@/components/shared/filter-chip";
-import { CalendarDays, Plus, Search, SlidersHorizontal, User } from "@/components/shared/icons";
+import { FilterChip } from "@/components/shared/filter-chip";
+import {
+    Building2,
+    CalendarDays,
+    ChevronRight,
+    MapPin,
+    Plus,
+    Search,
+    SlidersHorizontal,
+    User,
+} from "@/components/shared/icons";
+import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
+import { StatusTabs } from "@/components/shared/status-tabs";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 import { DATE_RANGES, type SiteVisit, VISIT_TABS, visitState, type VisitTab } from "./model";
 import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
@@ -74,6 +84,27 @@ export function VisitList({
             : filters.archive === "cancelled"
               ? ["Cancelled visits", "Cancelled visits stay in your history."]
               : LIST_COPY[tab];
+    const summaryLines = visits.length
+        ? VISIT_TABS.map(({ value }) => {
+              const total = visits.filter((visit) => visitState(visit, now) === value).length;
+              const label = total === 1 ? "visit" : "visits";
+              return {
+                  total,
+                  text:
+                      value === "upcoming"
+                          ? `${total} upcoming ${label}`
+                          : value === "running"
+                            ? `${total} ${label} happening now`
+                            : value === "needs_update"
+                              ? `${total} ${label} ${total === 1 ? "needs" : "need"} an update`
+                              : value === "completed"
+                                ? `${total} completed ${label}`
+                                : `${total} ${label} not attended`,
+              };
+          })
+              .filter(({ total }) => total > 0)
+              .map(({ text }) => text)
+        : ["Schedule your first visit"];
     return (
         <Tabs
             className="gap-6"
@@ -83,19 +114,25 @@ export function VisitList({
             }}
         >
             <PortalSectionNav>
-                <header className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                        <h1 className="h3 text-ink">Site visits</h1>
-                        <p className="body-sm mbs-1 text-ink-muted">
-                            {visits.length
-                                ? "Your clients, properties and visit times in one place."
-                                : "Plan your client visits and keep the timing in one place."}
-                        </p>
-                    </div>
-                    <Button onClick={onSchedule}>
-                        <Plus aria-hidden />
-                        Schedule visit
-                    </Button>
+                <header className={styles.pageHeader}>
+                    <h1 className="h3 text-start min-inline-0">
+                        <span className="text-ink">Site visits.</span>{" "}
+                        <RotatingHeaderSummary
+                            key={summaryLines.join("|")}
+                            lines={summaryLines}
+                            loadingPlaceholder="Your visits at a glance"
+                        />
+                    </h1>
+                    {visits.length === 0 && (
+                        <Button
+                            variant="accent"
+                            className={styles.scheduleButton}
+                            onClick={onSchedule}
+                        >
+                            <Plus aria-hidden />
+                            Schedule visit
+                        </Button>
+                    )}
                 </header>
             </PortalSectionNav>
             <div className={styles.listToolbar}>
@@ -109,39 +146,30 @@ export function VisitList({
                         onClick={onFilters}
                         onClear={onClear}
                     />
-                    <div className="overflow-x-auto max-inline-full">
-                        <TabsList
-                            aria-label="Visit status"
-                            className="gap-3 bg-transparent p-0 block-auto! max-inline-full"
-                        >
-                            {VISIT_TABS.map((t) => (
-                                <TabsPrimitive.Tab
-                                    key={t.value}
-                                    value={t.value}
-                                    className={cn(
-                                        "group/visit-tab",
-                                        filterChipClassName(!filters.archive && tab === t.value),
-                                    )}
-                                >
-                                    {t.label}
-                                    <FilterChipCount
-                                        count={
-                                            visits.filter((v) => visitState(v, now) === t.value)
-                                                .length
-                                        }
-                                        isActive={!filters.archive && tab === t.value}
-                                    />
-                                </TabsPrimitive.Tab>
-                            ))}
-                        </TabsList>
-                    </div>
+                    <StatusTabs
+                        label="Visit status"
+                        value={filters.archive || tab}
+                        tabs={VISIT_TABS.map((t) => ({
+                            ...t,
+                            count: visits.filter((v) => visitState(v, now) === t.value).length,
+                            dotClassName:
+                                t.value === "upcoming" || t.value === "completed"
+                                    ? "bg-emerald-400"
+                                    : t.value === "not_attended"
+                                      ? "bg-red-400"
+                                      : "bg-yellow-300",
+                        }))}
+                    />
                 </div>
                 {visits.length > 0 && (
                     <div className={styles.searchRow}>
                         <label className={styles.searchField}>
                             <span className="sr-only">Search visits</span>
                             <Input
+                                size="sm"
                                 startIcon={Search}
+                                wrapperClassName="rounded-control shadow-sm inline-full"
+                                className="rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20"
                                 placeholder="Search client or property"
                                 value={search}
                                 onValueChange={onSearch}
@@ -150,12 +178,20 @@ export function VisitList({
                         </label>
                         <VisitSelect
                             compact
+                            toolbar
                             label="Visit date range"
                             value={range}
                             options={DATE_RANGES}
                             onChange={onRange}
                         />
-                        <span className={styles.timezone}>Times in IST</span>
+                        <Button
+                            variant="accent"
+                            className={styles.scheduleButton}
+                            onClick={onSchedule}
+                        >
+                            <Plus aria-hidden />
+                            Schedule visit
+                        </Button>
                         {filtered && (
                             <Button variant="ghost" size="sm" onClick={onClear}>
                                 Clear filters
@@ -168,7 +204,9 @@ export function VisitList({
                 {visits.length > 0 && (
                     <div className={styles.listIntro}>
                         <h2>{copy[0]}</h2>
-                        <p>{copy[1]}</p>
+                        <span className={styles.listCount}>
+                            {shown.length} {shown.length === 1 ? "visit" : "visits"}
+                        </span>
                     </div>
                 )}
                 {visits.length === 0 ? (
@@ -212,34 +250,86 @@ export function VisitList({
                             return (
                                 <article className={styles.visitRow} key={visit.id}>
                                     <div className={styles.rowTime}>
-                                        <small>{formatVisitDate(visit.startsAt)}</small>
-                                        <time dateTime={visit.startsAt}>
-                                            {formatVisitTime(visit.startsAt)} –{" "}
-                                            {formatVisitTime(visit.endsAt)}
-                                        </time>
-                                    </div>
-                                    <div className={styles.rowClient}>
-                                        <User aria-hidden />
+                                        <span className={styles.dateMark} aria-hidden>
+                                            <CalendarDays />
+                                        </span>
                                         <div>
-                                            <strong>{client?.name}</strong>
-                                            <p>
-                                                {property?.configLabel} · {property?.title}
-                                            </p>
-                                            <small>
+                                            <small>{formatVisitDate(visit.startsAt)}</small>
+                                            <time dateTime={visit.startsAt}>
+                                                {formatVisitTime(visit.startsAt)} –{" "}
+                                                {formatVisitTime(visit.endsAt)}
+                                            </time>
+                                        </div>
+                                    </div>
+                                    <div className={styles.rowProperty}>
+                                        <span className={styles.propertyThumbnail}>
+                                            <Building2 aria-hidden />
+                                            {property?.imageUrl && (
+                                                <AppImage
+                                                    src={property.imageUrl}
+                                                    alt={property.title}
+                                                    fill
+                                                    sizes="72px"
+                                                />
+                                            )}
+                                        </span>
+                                        <div>
+                                            <strong>{property?.title}</strong>
+                                            <p>{property?.configLabel}</p>
+                                            <small className={styles.rowLocation}>
+                                                <MapPin aria-hidden />
                                                 {property?.locality}, {property?.city}
                                             </small>
+                                        </div>
+                                    </div>
+                                    <div className={styles.rowProfiles}>
+                                        <div className={styles.rowClient}>
+                                            <UserAvatar
+                                                name={client?.name ?? "Client"}
+                                                size="sm"
+                                                framed={false}
+                                            />
+                                            <div>
+                                                <strong>{client?.name ?? "Not added"}</strong>
+                                                <small>Client</small>
+                                            </div>
+                                        </div>
+                                        <div className={styles.rowClient}>
+                                            {property?.owner ? (
+                                                <UserAvatar
+                                                    name={property.owner.name}
+                                                    imageUrl={property.owner.imageUrl}
+                                                    size="sm"
+                                                    framed={false}
+                                                />
+                                            ) : (
+                                                <span className={styles.missingProfile} aria-hidden>
+                                                    <User />
+                                                </span>
+                                            )}
+                                            <div>
+                                                <strong
+                                                    data-missing={!property?.owner || undefined}
+                                                >
+                                                    {property?.owner?.name ?? "Not added"}
+                                                </strong>
+                                                <small>Owner</small>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className={styles.rowStatus}>
                                         <VisitStatusBadge state={state} />
                                     </div>
                                     <Button
-                                        variant="outline"
+                                        variant={state === "needs_update" ? "accent" : "outline"}
+                                        className={styles.rowAction}
+                                        data-attention={state === "needs_update" || undefined}
                                         size="sm"
                                         aria-label={`${state === "needs_update" ? "Update" : "View"} visit with ${client?.name}`}
                                         onClick={() => onOpen(visit.id)}
                                     >
                                         {state === "needs_update" ? "Update visit" : "View visit"}
+                                        <ChevronRight aria-hidden />
                                     </Button>
                                 </article>
                             );
