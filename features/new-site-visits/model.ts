@@ -3,8 +3,11 @@ import { z } from "zod";
 import { isReminderOffset, MAX_REMINDER_MINUTES, reminderLabel } from "@/lib/reminders";
 import { addVisitDays, inputValueInIst, inputValueToUtc, istDateKey } from "@/lib/visits/time";
 
+export const MAX_VISIT_REMINDERS = 6;
+
 const remindersSchema = z
     .array(z.number().int().min(0).max(MAX_REMINDER_MINUTES))
+    .max(MAX_VISIT_REMINDERS)
     .refine((values) => new Set(values).size === values.length, "Choose each reminder only once.");
 
 export const visitSchema = z.preprocess(
@@ -167,7 +170,7 @@ export function validateDraft(
     const times = draftTimes(draft);
     if (!remindersSchema.safeParse(draft.reminders).success)
         errors.reminders =
-            "Use different reminders between 0 minutes and 365 days before the visit.";
+            "Choose up to six different reminders between 0 minutes and 365 days before the visit.";
     if (times) {
         const original = visits.find((visit) => visit.id === excludeId);
         const recorded = original?.status === "completed" || original?.status === "not_attended";

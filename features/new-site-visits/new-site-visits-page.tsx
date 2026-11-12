@@ -434,10 +434,10 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
                     }}
                 />
             )}
-            {query.isSuccess && (
+            {query.isSuccess && shown.length > 0 && (
                 <footer className={styles.pageFooter}>
                     <span className={styles.footerLine} aria-hidden />
-                    <p>Only you manage these visits. No messages are sent to clients.</p>
+                    <p>After each visit, mark it as completed or not attended.</p>
                     <span className={styles.footerLine} aria-hidden />
                 </footer>
             )}

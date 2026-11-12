@@ -18,6 +18,7 @@ export function VisitOverlay({
     error,
     footer,
     children,
+    lightboxOpen = false,
 }: {
     title: string;
     description?: string;
@@ -28,6 +29,7 @@ export function VisitOverlay({
     error?: string;
     footer: (close: () => void) => ReactNode;
     children: ReactNode;
+    lightboxOpen?: boolean;
 }) {
     const [discardOpen, setDiscardOpen] = useState(false);
     const close = () => {
@@ -39,6 +41,7 @@ export function VisitOverlay({
         <>
             <AppModal
                 open
+                modal={!lightboxOpen}
                 nativeScroll
                 onOpenChange={(open) => {
                     if (!open) close();

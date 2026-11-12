@@ -4,13 +4,20 @@ import { useId, useState } from "react";
 
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
-import { AppImage } from "@/components/shared/app-image";
-import { Bell, Building2, CalendarDays, Clock, MapPin } from "@/components/shared/icons";
+import { CalendarDays, Clock, MapPin } from "@/components/shared/icons";
+import { PropertyPhotoGallery } from "@/components/shared/property-photo-gallery";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { getVisitActions, type SiteVisit, visitReminderLabel, visitState } from "./model";
+import {
+    getVisitActions,
+    type SiteVisit,
+    visitReminderLabel,
+    visitReminders,
+    visitState,
+} from "./model";
 import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
 import { VISIT_ACTIONS } from "./visit-actions";
 import { VisitOverlay } from "./visit-overlay";
@@ -158,57 +165,76 @@ export function VisitDetail({
     const live = visit.status === "scheduled";
     const ended = state === "needs_update";
     const minutes = Math.round((Date.parse(visit.endsAt) - Date.parse(visit.startsAt)) / 60_000);
+    const reminders = visitReminders(visit);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
     return (
         <VisitOverlay
             title="Visit details"
+            lightboxOpen={lightboxOpen}
             busy={busy}
             onClose={onBack}
             footer={(close) => (
-                <>
-                    {getVisitActions(visit, now).map((action) => {
-                        const { label, icon: Icon, danger } = VISIT_ACTIONS[action];
-                        return (
-                            <Button
-                                key={action}
-                                disabled={busy}
-                                variant={
-                                    danger
-                                        ? "destructive"
-                                        : action === "completed" || action === "edit"
-                                          ? "accent"
-                                          : "outline"
-                                }
-                                onClick={() => {
-                                    if (action === "edit") onEdit();
-                                    else if (action === "delete") onDelete();
-                                    else if (action === "view") close();
-                                    else onConfirm(action);
-                                }}
-                            >
-                                <Icon aria-hidden />
-                                {action === "view" ? "Close" : label}
-                            </Button>
-                        );
-                    })}
-                </>
+                <div className={styles.detailFooter}>
+                    {getVisitActions(visit, now)
+                        .sort((a, b) => {
+                            const rank = (action: string) =>
+                                VISIT_ACTIONS[action as keyof typeof VISIT_ACTIONS].danger
+                                    ? 0
+                                    : action === "completed" || action === "edit"
+                                      ? 2
+                                      : 1;
+                            return rank(a) - rank(b);
+                        })
+                        .map((action) => {
+                            const { label, icon: Icon, danger } = VISIT_ACTIONS[action];
+                            return (
+                                <Button
+                                    key={action}
+                                    size="sm"
+                                    className={danger ? styles.detailFooterDanger : undefined}
+                                    disabled={busy}
+                                    variant={
+                                        danger
+                                            ? "ghost"
+                                            : action === "completed" || action === "edit"
+                                              ? "accent"
+                                              : "outline"
+                                    }
+                                    onClick={() => {
+                                        if (action === "edit") onEdit();
+                                        else if (action === "delete") onDelete();
+                                        else if (action === "view") close();
+                                        else onConfirm(action);
+                                    }}
+                                >
+                                    <Icon aria-hidden />
+                                    {action === "view" ? "Close" : label}
+                                </Button>
+                            );
+                        })}
+                </div>
             )}
         >
-            <div className={styles.visitFields}>
+            <div className={styles.detailLayout}>
                 <div className={styles.detailProperty}>
-                    <div className={styles.detailCover}>
-                        <Building2 aria-hidden />
-                        {property?.imageUrl && (
-                            <AppImage src={property.imageUrl} alt="" fill sizes="88px" />
-                        )}
-                    </div>
                     <div>
-                        <VisitStatusBadge state={state} />
-                        <h2>{property?.title}</h2>
+                        <h2>{property?.title ?? "Property not available"}</h2>
                         <p>
                             {property?.configLabel} · {property?.locality}, {property?.city}
                         </p>
                     </div>
+                    <VisitStatusBadge state={state} />
                 </div>
+                <PropertyPhotoGallery
+                    key={visit.propertyId}
+                    thumbnailPosition="right"
+                    property={{
+                        title: property?.title ?? "Property",
+                        imageSrc: property?.imageUrl ?? "",
+                        imageSrcs: property?.imageUrls,
+                    }}
+                    onLightboxChange={setLightboxOpen}
+                />
                 {ended && (
                     <div className={styles.attendancePrompt}>
                         <Clock aria-hidden />
@@ -221,60 +247,109 @@ export function VisitDetail({
                         </div>
                     </div>
                 )}
-                <section className={styles.detailGroup} aria-label="Visit information">
-                    <div className={styles.detailLine}>
+                <section className={styles.detailSchedule} aria-label="Visit date and time">
+                    <div>
                         <CalendarDays aria-hidden />
                         <div>
-                            <span>Date & time</span>
-                            <strong>{formatVisitDate(visit.startsAt)}</strong>
+                            <span>Visit date</span>
+                            <time dateTime={visit.startsAt}>{formatVisitDate(visit.startsAt)}</time>
+                        </div>
+                    </div>
+                    <div>
+                        <Clock aria-hidden />
+                        <div>
+                            <span>{minutes} minutes · IST</span>
                             <p>
-                                {formatVisitTime(visit.startsAt)} – {formatVisitTime(visit.endsAt)}{" "}
-                                · {minutes} minutes · IST
+                                {formatVisitTime(visit.startsAt)} – {formatVisitTime(visit.endsAt)}
                             </p>
                         </div>
                     </div>
+                </section>
+                <section
+                    className={styles.detailGroup}
+                    aria-label="Client, owner and meeting point"
+                >
                     <div className={styles.detailLine}>
                         <UserAvatar name={client?.name ?? "Client"} size="sm" />
                         <div>
                             <span>Client</span>
-                            <strong>{client?.name}</strong>
-                            <p>
-                                {client?.type} · {client?.requirement}
-                            </p>
+                            <strong>{client?.name ?? "Client not available"}</strong>
                         </div>
                     </div>
                     <div className={styles.detailLine}>
-                        <MapPin aria-hidden />
+                        <UserAvatar
+                            name={property?.owner?.name ?? "Owner"}
+                            imageUrl={property?.owner?.imageUrl}
+                            size="sm"
+                        />
+                        <div>
+                            <span>Owner</span>
+                            <strong>{property?.owner?.name ?? "Not added"}</strong>
+                        </div>
+                    </div>
+                    <div className={`${styles.detailLine} ${styles.detailMeetingPoint}`}>
+                        <span className={styles.meetingPointIcon} aria-hidden>
+                            <MapPin />
+                        </span>
                         <div>
                             <span>Meeting point</span>
-                            <strong>{property?.address}</strong>
+                            <strong>{property?.address || "No meeting point added"}</strong>
                         </div>
                     </div>
-                    <div className={styles.detailLine}>
-                        <Bell aria-hidden />
-                        <div>
-                            <span>Reminders</span>
-                            {live && !ended && visit.reminders.length ? (
-                                <ul className="flex list-none flex-col gap-1 p-0 text-sm font-semibold">
-                                    {[...visit.reminders]
-                                        .sort((a, b) => b - a)
-                                        .map((minutes) => (
-                                            <li key={minutes}>{visitReminderLabel(minutes)}</li>
-                                        ))}
-                                </ul>
-                            ) : (
-                                <strong>
-                                    {live && !ended ? "No reminders" : "No upcoming reminders"}
-                                </strong>
-                            )}
-                        </div>
+                </section>
+                <section
+                    className={styles.detailReminders}
+                    aria-labelledby="visit-reminders-heading"
+                >
+                    <div className={styles.detailSectionHeading}>
+                        <h3 id="visit-reminders-heading">Reminders</h3>
+                        {!live && reminders.length > 0 && <span>Reminders stopped</span>}
                     </div>
+                    {reminders.length > 0 ? (
+                        <TooltipProvider>
+                            <ul className={styles.detailReminderList} aria-label="Visit reminders">
+                                {reminders.map((reminder) => (
+                                    <li key={reminder.key}>
+                                        <Tooltip>
+                                            <TooltipTrigger
+                                                render={
+                                                    <span
+                                                        tabIndex={0}
+                                                        className={styles.detailReminderChip}
+                                                    />
+                                                }
+                                            >
+                                                {visitReminderLabel(reminder.minutes).replace(
+                                                    /\bminutes?\b/g,
+                                                    "min",
+                                                )}
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <time dateTime={reminder.at}>
+                                                    {formatVisitDate(reminder.at)} ·{" "}
+                                                    {formatVisitTime(reminder.at)} IST
+                                                </time>
+                                                {" · "}
+                                                {!live
+                                                    ? "Stopped"
+                                                    : Date.parse(reminder.at) <= now
+                                                      ? "Time passed"
+                                                      : "Upcoming"}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </li>
+                                ))}
+                            </ul>
+                        </TooltipProvider>
+                    ) : (
+                        <p className={styles.muted}>No reminders set for this visit.</p>
+                    )}
                 </section>
                 {(visit.notes || visit.attendanceNote) && (
                     <section className={styles.detailNotes} aria-label="Visit notes">
                         {visit.notes && (
                             <div>
-                                <h3>Visit note</h3>
+                                <h3>Notes</h3>
                                 <p className={styles.note}>{visit.notes}</p>
                             </div>
                         )}

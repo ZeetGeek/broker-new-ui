@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { formatVisitDate, istDateKey } from "@/lib/visits/time";
 
+import { AppImage } from "@/components/shared/app-image";
 import { Building2, CalendarDays, ChevronDown, UserRound } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -42,14 +43,16 @@ export function VisitEntityCombobox({
             ? PREVIEW_CLIENTS.map((client) => ({
                   value: client.id,
                   label: client.name,
-                  detail: `${client.type} · ${client.requirement}`,
-                  search: client.phoneDigits,
+                  detail: client.type,
+                  search: `${client.phoneDigits} ${client.requirement}`,
+                  imageUrl: undefined,
               }))
             : PREVIEW_PROPERTIES.map((property) => ({
                   value: property.id,
                   label: property.title,
                   detail: `${property.configLabel} · ${property.locality}, ${property.city}`,
                   search: property.address,
+                  imageUrl: property.imageUrl,
               }));
     const labelFor = (item: string) => options.find((option) => option.value === item)?.label ?? "";
     return (
@@ -69,16 +72,17 @@ export function VisitEntityCombobox({
             <ComboboxInput
                 id={id}
                 size="lg"
+                className="font-normal"
                 startIcon={kind === "client" ? UserRound : Building2}
                 placeholder={`Select a ${kind}`}
                 errorText={error}
                 disabled={disabled}
             />
-            <ComboboxContent>
+            <ComboboxContent align="center" className="inline-[min(26rem,calc(100dvw-2rem))]">
                 <ComboboxEmpty>
                     No {kind === "client" ? "clients" : "properties"} found. Try another search.
                 </ComboboxEmpty>
-                <ComboboxList>
+                <ComboboxList className="py-2 max-block-[min(20rem,var(--available-height))]">
                     {(item: string) => {
                         const option = options.find((candidate) => candidate.value === item);
                         return (
@@ -89,6 +93,14 @@ export function VisitEntityCombobox({
                                     ) : (
                                         <span className={styles.entityIcon}>
                                             <Building2 aria-hidden />
+                                            {option?.imageUrl && (
+                                                <AppImage
+                                                    src={option.imageUrl}
+                                                    alt=""
+                                                    fill
+                                                    sizes="40px"
+                                                />
+                                            )}
                                         </span>
                                     )}
                                     <span>
@@ -135,7 +147,7 @@ export function VisitDatePicker({
                             disabled={disabled}
                             variant="outline"
                             size="lg"
-                            className={styles.dateTrigger}
+                            className={`${styles.dateTrigger} shadow-none hover:border-ring/50 hover:bg-surface aria-expanded:border-ring aria-expanded:bg-surface aria-invalid:border-danger-mid aria-invalid:hover:border-danger-mid aria-invalid:focus-visible:ring-danger/20`}
                             aria-invalid={!!error}
                             aria-describedby={error ? `${id}-error` : undefined}
                         />
@@ -147,11 +159,11 @@ export function VisitDatePicker({
                 </PopoverTrigger>
                 <PopoverContent
                     aria-label="Choose visit date"
-                    align="start"
+                    align="center"
                     className="p-0 inline-[min(21rem,calc(100vw-1.5rem))]"
                 >
                     <Calendar
-                        className="inline-full [&_button]:aspect-auto [&_button]:min-inline-0! [&_table]:table-fixed [&_td]:min-inline-0"
+                        className="inline-full [&_table]:table-fixed [&_td]:min-inline-0"
                         mode="single"
                         weekStartsOn={1}
                         timeZone="Asia/Kolkata"
