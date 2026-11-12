@@ -51,10 +51,20 @@ import {
     TextField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
+import { useBathroomsFollowBhk } from "@/features/properties/property-form/use-bathrooms-follow-bhk";
 
 export function StepDetails() {
     const { watch, setValue, getValues } = useFormContext<PropertyDraftValues>();
-    const { isVisible } = useFieldRules();
+    const { isVisible, derived } = useFieldRules();
+    useBathroomsFollowBhk();
+    const buildingFacts = [
+        "details.floorNumber",
+        "details.totalFloors",
+        "details.facing",
+        "details.propertyAge",
+        "details.propertyCondition",
+        "details.electricityLoadKva",
+    ].some(isVisible);
     const roomDetails = isVisible("details.bedrooms") || isVisible("details.bathrooms");
     const commercial =
         isVisible("details.commercial.suitableFor") ||
@@ -197,63 +207,65 @@ export function StepDetails() {
                 </div>
             </WizardSection>
 
-            <WizardSection
-                title={<>Building facts</>}
-                description="These details help brokers qualify a visit before they call."
-            >
-                <div className={FORM_STACK_CLASS}>
-                    <div className={FORM_GRID_3_CLASS}>
+            {buildingFacts ? (
+                <WizardSection
+                    title={derived.isPlot ? <>Plot facts</> : <>Building facts</>}
+                    description="These details help brokers qualify a visit before they call."
+                >
+                    <div className={FORM_STACK_CLASS}>
+                        <div className={FORM_GRID_3_CLASS}>
+                            <NumberField
+                                name="details.floorNumber"
+                                label="Floor number"
+                                min={0}
+                                max={MAX_PROPERTY_FLOORS}
+                                placeholder="e.g. 3"
+                                startIcon={Layers}
+                            />
+                            <NumberField
+                                name="details.totalFloors"
+                                label="Total floors"
+                                max={MAX_PROPERTY_FLOORS}
+                                placeholder="e.g. 12"
+                                startIcon={Building2}
+                            />
+                            <SelectField
+                                name="details.facing"
+                                label="Facing"
+                                options={FACING_OPTIONS}
+                                placeholder="Select facing"
+                                startIcon={Compass}
+                            />
+                        </div>
+                        <div className={FORM_GRID_CLASS}>
+                            <NumberField
+                                name="details.propertyAge"
+                                label="How many years old?"
+                                min={0}
+                                max={MAX_PROPERTY_AGE_YEARS}
+                                placeholder="e.g. 5"
+                                hint="Enter 0 for a new property"
+                                startIcon={CalendarClock}
+                            />
+                            <SelectField
+                                name="details.propertyCondition"
+                                label="Property condition"
+                                options={PROPERTY_CONDITION_OPTIONS}
+                                placeholder="Select condition"
+                                startIcon={ShieldCheck}
+                            />
+                        </div>
                         <NumberField
-                            name="details.floorNumber"
-                            label="Floor number"
-                            min={0}
-                            max={MAX_PROPERTY_FLOORS}
-                            placeholder="e.g. 3"
-                            startIcon={Layers}
-                        />
-                        <NumberField
-                            name="details.totalFloors"
-                            label="Total floors"
-                            max={MAX_PROPERTY_FLOORS}
-                            placeholder="e.g. 12"
-                            startIcon={Building2}
-                        />
-                        <SelectField
-                            name="details.facing"
-                            label="Facing"
-                            options={FACING_OPTIONS}
-                            placeholder="Select facing"
-                            startIcon={Compass}
-                        />
-                    </div>
-                    <div className={FORM_GRID_CLASS}>
-                        <NumberField
-                            name="details.propertyAge"
-                            label="How many years old?"
-                            min={0}
-                            max={MAX_PROPERTY_AGE_YEARS}
+                            name="details.electricityLoadKva"
+                            label="Electricity load (kVA)"
+                            step={0.1}
                             placeholder="e.g. 5"
-                            hint="Enter 0 for a new property"
-                            startIcon={CalendarClock}
-                        />
-                        <SelectField
-                            name="details.propertyCondition"
-                            label="Property condition"
-                            options={PROPERTY_CONDITION_OPTIONS}
-                            placeholder="Select condition"
-                            startIcon={ShieldCheck}
+                            startIcon={Zap}
+                            className="md:col-span-2"
                         />
                     </div>
-                    <NumberField
-                        name="details.electricityLoadKva"
-                        label="Electricity load (kVA)"
-                        step={0.1}
-                        placeholder="e.g. 5"
-                        startIcon={Zap}
-                        className="md:col-span-2"
-                    />
-                </div>
-            </WizardSection>
+                </WizardSection>
+            ) : null}
 
             {commercial ? (
                 <WizardSection

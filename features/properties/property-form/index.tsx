@@ -612,27 +612,7 @@ export function PropertyForm({
         }
         if (!forceDraft && portal === "broker") {
             methods.clearErrors(["owner.contactId", "attachedBuyers"]);
-            let existingContactIds: string[] = [];
-            let contactVerificationFailed = false;
-            if (propertyId && !current.attachedBuyers.some((contact) => contact.id.trim())) {
-                setSaving(true);
-                setSavingIntent(intent);
-                try {
-                    existingContactIds = (await clientsApi.listForProperty(propertyId)).attachedIds;
-                } catch {
-                    contactVerificationFailed = true;
-                } finally {
-                    setSaving(false);
-                    setSavingIntent(null);
-                }
-            }
-            const issues = propertyPublishAttachmentIssues(current, portal, existingContactIds);
-            if (contactVerificationFailed) {
-                const contactIssue = issues.find((issue) => issue.path === "attachedBuyers");
-                if (contactIssue)
-                    contactIssue.message =
-                        "Couldn't verify attached contacts. Please try publishing again.";
-            }
+            const issues = propertyPublishAttachmentIssues(current, portal);
             if (issues.length) {
                 if (entryMode === "full") {
                     setStep("media");
@@ -640,7 +620,7 @@ export function PropertyForm({
                 }
                 for (const issue of issues)
                     methods.setError(issue.path, { type: "publish", message: issue.message });
-                setFormBanner("Attach an owner and at least one contact before publishing.");
+                setFormBanner("Attach an owner before publishing.");
                 pendingFocusPathRef.current = issues[0]!.path;
                 requestAnimationFrame(() => {
                     if (focusFieldByPath(issues[0]!.path)) pendingFocusPathRef.current = null;
@@ -1931,7 +1911,8 @@ function listingToDraft(
     draft.location.landmark = listing.landmark || listing.address || listing.locality;
     draft.location.pincode = listing.pinCode;
     draft.location.projectOrSociety = listing.society || "";
-    draft.details.bedrooms = String(listing.bhk || 2);
+    // Only residential listings carry a BHK; never invent one for a shop or plot.
+    draft.details.bedrooms = listing.bhk ? String(listing.bhk) : "";
     draft.details.bathrooms = listing.bathrooms;
     draft.details.balconies = listing.balconies;
     draft.details.floorNumber = listing.floorNumber ?? null;

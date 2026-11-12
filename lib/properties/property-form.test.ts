@@ -3,6 +3,7 @@ import test, { type TestContext } from "node:test";
 
 import { formatDateIso } from "@/lib/format/date";
 import { calculateListingScore } from "@/lib/hooks/use-listing-score";
+import { bathroomsForBhk } from "@/lib/properties/bhk";
 import {
     loadPropertyDraft,
     propertyDraftKey,
@@ -19,6 +20,8 @@ import { DEFAULT_PROPERTY_DRAFT, fieldRuleSchemas, stepSchemas } from "@/lib/sch
 import {
     isStepVisible,
     isVisible,
+    labelOf,
+    levelOf,
     missingRequiredFields,
     stripHidden,
 } from "@/lib/visibility/rules";
@@ -671,4 +674,72 @@ test("land listings skip Amenities while buildings and houses keep it", () => {
         values.basics.propertyType = propertyType;
         assert.equal(isStepVisible("furnishing", values), true, propertyType);
     }
+});
+
+test("open fields and farms hide facing; plots keep it as a recommendation", () => {
+    for (const [category, propertyType] of [
+        ["land", "agricultural_land"],
+        ["land", "farm_land"],
+        ["agricultural", "orchard"],
+        ["agricultural", "poultry_farm"],
+    ] as const) {
+        const values = listing();
+        Object.assign(values.basics, { category, propertyType });
+        assert.equal(isVisible("details.facing", values), false, propertyType);
+        assert.ok(
+            !missingRequiredFields(values).some((field) => field.path === "details.facing"),
+            propertyType,
+        );
+    }
+    const plot = listing();
+    Object.assign(plot.basics, { category: "land", propertyType: "residential_plot" });
+    assert.equal(isVisible("details.facing", plot), true);
+    assert.equal(levelOf("details.facing", plot), "recommended");
+});
+
+test("agricultural types are land, never a flat in a building", () => {
+    for (const propertyType of ["orchard", "poultry_farm"] as const) {
+        const values = listing();
+        Object.assign(values.basics, { category: "agricultural", propertyType });
+        for (const path of [
+            "details.floorNumber",
+            "details.totalFloors",
+            "details.bathrooms",
+            "details.propertyCondition",
+            "furnishing.status",
+            "area.carpetArea",
+        ])
+            assert.equal(isVisible(path, values), false, `${propertyType} ${path}`);
+        assert.equal(isStepVisible("furnishing", values), false);
+        assert.equal(levelOf("location.projectOrSociety", values), "optional");
+    }
+});
+
+test("standalone warehouses and factories skip floor number and society", () => {
+    for (const [category, propertyType] of [
+        ["commercial", "warehouse"],
+        ["commercial", "godown"],
+        ["industrial", "factory"],
+        ["industrial", "cold_storage"],
+    ] as const) {
+        const values = listing();
+        Object.assign(values.basics, { category, propertyType });
+        values.details.floorNumber = null;
+        values.location.projectOrSociety = "";
+        assert.equal(isVisible("details.floorNumber", values), false, propertyType);
+        assert.equal(levelOf("location.projectOrSociety", values), "optional", propertyType);
+        assert.equal(labelOf("details.totalFloors", values), "Total floors in the building");
+    }
+    const shop = listing();
+    Object.assign(shop.basics, { category: "commercial", propertyType: "shop" });
+    assert.equal(isVisible("details.floorNumber", shop), true);
+});
+
+test("bathrooms default to one per BHK", () => {
+    assert.equal(bathroomsForBhk("1rk"), 1);
+    assert.equal(bathroomsForBhk("2"), 2);
+    assert.equal(bathroomsForBhk("4"), 4);
+    assert.equal(bathroomsForBhk("10_plus"), 10);
+    assert.equal(bathroomsForBhk(""), null);
+    assert.equal(bathroomsForBhk("0"), null);
 });
