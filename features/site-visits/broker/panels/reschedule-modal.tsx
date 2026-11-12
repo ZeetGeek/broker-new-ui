@@ -10,6 +10,7 @@ import {
     inputValueToUtc,
 } from "@/lib/visits/time";
 
+import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 
@@ -141,22 +142,18 @@ export function RescheduleModal({
                 <p id={`${timeId}-help`} className="body-xs text-ink-muted">
                     Times are in IST. Choose a time in the future.
                 </p>
-                <input
+                <AppDateTimePicker
                     id={timeId}
-                    aria-invalid={Boolean(saveError)}
+                    aria-label="New visit time (IST)"
+                    invalid={Boolean(saveError)}
                     aria-describedby={`${timeId}-help${saveError ? ` ${timeId}-error` : ""}`}
-                    type="datetime-local"
-                    step={900}
+                    minuteStep={15}
                     min={inputValueInIst(new Date())}
                     value={custom}
-                    onChange={(event) => {
-                        setCustom(event.target.value);
+                    onChange={(next) => {
+                        setCustom(next);
                         setSelected("");
                     }}
-                    className="
-                      body-sm rounded-control border border-border-warm bg-surface px-3 text-ink
-                      inline-full min-block-11
-                    "
                 />
             </div>
         </AppModal>

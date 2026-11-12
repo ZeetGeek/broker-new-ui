@@ -3,6 +3,7 @@
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
+import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { Bell, CalendarClock, Link2, LockKeyhole, Repeat } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
@@ -276,49 +277,34 @@ export function TaskForm({
                             </p>
                         )}
                     </div>
-                    <div className={draft.dueDate ? styles.row : styles.field}>
+                    <div className={styles.field}>
                         <div className={styles.field}>
                             <label htmlFor={`${formId}-date`} className={styles.label}>
-                                Due date <span className={styles.optional}>(optional)</span>
+                                Due date & time <span className={styles.optional}>(optional)</span>
                             </label>
-                            <AppDatePicker
+                            <AppDateTimePicker
                                 id={`${formId}-date`}
-                                value={draft.dueDate || null}
-                                onChange={setDate}
-                                placeholder="No due date"
-                                size="md"
+                                aria-label="Task due date and time (IST)"
+                                value={draft.dueDate ? `${draft.dueDate}T${draft.dueTime}` : ""}
+                                onChange={(value) => {
+                                    const [dueDate = "", dueTime = ""] = value.split("T");
+                                    patch({
+                                        dueDate,
+                                        dueTime,
+                                        ...(!dueTime ? { reminders: [] } : {}),
+                                    });
+                                }}
+                                timeOptional
+                                clearable
                                 disabled={busy}
-                                allowPast
-                                invalid={submitted && !!validation.errors.dueDate}
+                                error={
+                                    submitted
+                                        ? validation.errors.dueDate || validation.errors.dueTime
+                                        : undefined
+                                }
                             />
                         </div>
-                        {draft.dueDate ? (
-                            <div className={styles.field}>
-                                <label htmlFor={`${formId}-time`} className={styles.label}>
-                                    Time <span className={styles.optional}>(optional)</span>
-                                </label>
-                                <Input
-                                    type="time"
-                                    id={`${formId}-time`}
-                                    value={draft.dueTime}
-                                    size="md"
-                                    disabled={busy}
-                                    onValueChange={(dueTime) =>
-                                        patch({
-                                            dueTime,
-                                            ...(!dueTime ? { reminders: [] } : {}),
-                                        })
-                                    }
-                                    errorText={submitted ? validation.errors.dueTime : undefined}
-                                />
-                            </div>
-                        ) : null}
                     </div>
-                    {submitted && validation.errors.dueDate ? (
-                        <p role="alert" className={styles.error}>
-                            {validation.errors.dueDate}
-                        </p>
-                    ) : null}
                     <div className={styles.shortcuts}>
                         <Button
                             variant="outline"

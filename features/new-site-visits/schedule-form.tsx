@@ -1,24 +1,26 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useId, useState } from "react";
 
-import { formatVisitDate, formatVisitTime, inputValueInIst } from "@/lib/visits/time";
+import { formatVisitTime, inputValueInIst } from "@/lib/visits/time";
+import { istDateKey } from "@/lib/visits/time";
 
-import {
-    ArrowLeft,
-    Bell,
-    CalendarDays,
-    CheckCircle2,
-    ChevronDown,
-    Clock,
-} from "@/components/shared/icons";
+import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
+import { AppTimePicker } from "@/components/shared/app-time-picker";
+import { Bell, Clock } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import {
+    FORM_SECTIONS_CLASS,
+    FORM_STACK_CLASS,
+    WizardSection,
+} from "@/features/properties/property-form/form-fields";
+
 import { EMPTY_DRAFT, REMINDERS, type SiteVisit, validateDraft, type VisitDraft } from "./model";
-import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
-import { DateTimePicker, ReminderPicker, VisitPicker } from "./visit-pickers";
+import { VisitOverlay } from "./visit-overlay";
+import { VisitEntityCombobox } from "./visit-pickers";
+import { VisitSelect } from "./visit-select";
 
 import styles from "./visits.module.css";
 
@@ -41,7 +43,8 @@ export function ScheduleForm({
     onSave: (draft: VisitDraft) => Promise<void>;
     onBack: () => void;
 }) {
-    const [draft, setDraft] = useState<VisitDraft>(() =>
+    const formId = useId();
+    const [initial] = useState<VisitDraft>(() =>
         visit
             ? {
                   clientId: visit.clientId,
@@ -54,326 +57,169 @@ export function ScheduleForm({
               }
             : { ...EMPTY_DRAFT, ...prefill },
     );
-    const [picker, setPicker] = useState<"client" | "property" | "date" | "reminder" | null>(null);
+    const [draft, setDraft] = useState(initial);
     const [submitted, setSubmitted] = useState(false);
-    const patch = (value: Partial<VisitDraft>) => setDraft((d) => ({ ...d, ...value }));
-    const validation = validateDraft(draft, visits, now, visit?.id);
-    const { errors, times } = validation;
-    const conflict = visits.find((v) => v.id === errors.conflict);
-    const client = PREVIEW_CLIENTS.find((c) => c.id === draft.clientId);
-    const property = PREVIEW_PROPERTIES.find((p) => p.id === draft.propertyId);
+    const patch = (next: Partial<VisitDraft>) => setDraft((current) => ({ ...current, ...next }));
+    const { errors, valid } = validateDraft(draft, visits, now, visit?.id);
+    const conflict = visits.find((candidate) => candidate.id === errors.conflict);
+    const dirty = JSON.stringify(draft) !== JSON.stringify(initial);
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (busy) return;
         setSubmitted(true);
-        if (validation.valid) await onSave(draft);
+        if (valid) await onSave(draft);
         else {
             const form = event.currentTarget;
             requestAnimationFrame(() =>
-                form
-                    .querySelector<HTMLElement>('[data-invalid="true"], [aria-invalid="true"]')
-                    ?.focus(),
+                form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(),
             );
         }
     };
-    const errorFor = (key: keyof VisitDraft) =>
-        submitted && errors[key] ? (
-            <span id={`${key}-error`} className={styles.fieldError}>
-                {errors[key]}
-            </span>
-        ) : null;
-    if (picker === "client" || picker === "property")
-        return (
-            <VisitPicker
-                kind={picker}
-                selected={picker === "client" ? draft.clientId : draft.propertyId}
-                onClose={() => setPicker(null)}
-                onSelect={(id) => {
-                    patch(picker === "client" ? { clientId: id } : { propertyId: id });
-                    setPicker(null);
-                }}
-            />
-        );
-    if (picker === "date")
-        return (
-            <DateTimePicker
-                draft={draft}
-                onClose={() => setPicker(null)}
-                onApply={(next) => {
-                    patch(next);
-                    setPicker(null);
-                }}
-            />
-        );
-    if (picker === "reminder")
-        return (
-            <ReminderPicker
-                value={draft.reminderMinutes}
-                onClose={() => setPicker(null)}
-                onSave={(minutes) => {
-                    patch({ reminderMinutes: minutes });
-                    setPicker(null);
-                }}
-            />
-        );
     return (
-        <>
-            <Button variant="ghost" className={styles.back} onClick={onBack} disabled={busy}>
-                <ArrowLeft aria-hidden />
-                Back to visits
-            </Button>
-            <header className={styles.heading}>
-                <div>
-                    <h1 className="h3 text-ink">
-                        {visit ? "Reschedule visit" : "Schedule a visit"}
-                    </h1>
-                    <p>
-                        {visit
-                            ? "Choose a new time. Your reminder will move with the visit."
-                            : "Choose a client and property, then set the visit time."}
-                    </p>
-                </div>
-            </header>
-            <div className={styles.workGrid}>
-                <form className={styles.panel} onSubmit={submit} noValidate>
-                    <div className={styles.panelHeader}>
-                        <h2>Visit details</h2>
-                        <p>One client and one property per visit.</p>
-                    </div>
-                    <fieldset disabled={busy} className={styles.formFields}>
-                        <div className={styles.field}>
-                            <label id="client-label">Client</label>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="justify-between text-start inline-full min-inline-0"
-                                aria-labelledby="client-label client-value"
-                                data-invalid={submitted && !!errors.clientId}
-                                aria-describedby={
-                                    submitted && errors.clientId ? "clientId-error" : undefined
-                                }
-                                disabled={!!visit}
-                                onClick={() => setPicker("client")}
-                            >
-                                <span id="client-value">{client?.name ?? "Select a client"}</span>
-                                <ChevronDown aria-hidden />
-                            </Button>
-                            {errorFor("clientId")}
-                        </div>
-                        <div className={styles.field}>
-                            <label id="property-label">Property</label>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="justify-between text-start inline-full min-inline-0"
-                                aria-labelledby="property-label property-value"
-                                data-invalid={submitted && !!errors.propertyId}
-                                aria-describedby={
-                                    submitted && errors.propertyId ? "propertyId-error" : undefined
-                                }
-                                disabled={!!visit}
-                                onClick={() => setPicker("property")}
-                            >
-                                <span id="property-value">
-                                    {property?.title ?? "Select a property"}
-                                </span>
-                                <ChevronDown aria-hidden />
-                            </Button>
-                            {errorFor("propertyId")}
-                        </div>
-                        <div className={styles.dateTimeFields}>
-                            <div className={styles.field}>
-                                <label id="date-label">Visit date</label>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="justify-between text-start inline-full min-inline-0"
-                                    aria-labelledby="date-label date-value"
-                                    data-invalid={submitted && !!errors.date}
-                                    aria-describedby={
-                                        submitted && errors.date ? "date-error" : undefined
-                                    }
-                                    onClick={() => setPicker("date")}
-                                >
-                                    <span id="date-value">
-                                        {draft.date
-                                            ? formatVisitDate(`${draft.date}T12:00:00+05:30`)
-                                            : "Select a date"}
-                                    </span>
-                                    <CalendarDays aria-hidden />
-                                </Button>
-                                {errorFor("date")}
-                            </div>
-                            <div className={styles.twoColumns}>
-                                <label className={styles.field}>
-                                    Start time
-                                    <Input
-                                        type="time"
-                                        value={draft.startTime}
-                                        aria-invalid={submitted && !!errors.startTime}
-                                        aria-describedby={
-                                            submitted && errors.startTime
-                                                ? "startTime-error"
-                                                : undefined
-                                        }
-                                        onChange={(e) => patch({ startTime: e.target.value })}
-                                    />
-                                    {errorFor("startTime")}
-                                </label>
-                                <label className={styles.field}>
-                                    End time
-                                    <Input
-                                        type="time"
-                                        value={draft.endTime}
-                                        aria-invalid={submitted && !!errors.endTime}
-                                        aria-describedby={
-                                            submitted && errors.endTime
-                                                ? "endTime-error"
-                                                : undefined
-                                        }
-                                        onChange={(e) => patch({ endTime: e.target.value })}
-                                    />
-                                    {errorFor("endTime")}
-                                </label>
-                            </div>
-                        </div>
-                        <div className={styles.field}>
-                            <label id="reminder-label">Extra reminder</label>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="justify-between text-start inline-full min-inline-0"
-                                aria-labelledby="reminder-label reminder-value"
-                                onClick={() => setPicker("reminder")}
-                            >
-                                <span id="reminder-value">
-                                    {
-                                        REMINDERS.find((r) => r.value === draft.reminderMinutes)
-                                            ?.label
-                                    }
-                                </span>
-                                <ChevronDown aria-hidden />
-                            </Button>
-                        </div>
-                        <label className={styles.field}>
-                            Notes (optional)
-                            <Textarea
-                                value={draft.notes}
-                                maxLength={2000}
-                                rows={3}
-                                placeholder="Meeting point or anything to remember"
-                                onChange={(e) => patch({ notes: e.target.value })}
-                            />
-                        </label>
-                        <p className={styles.hint}>
-                            <Clock aria-hidden />
-                            All times in IST. Start and end notifications are included.
-                        </p>
-                    </fieldset>
-                    {saveError && (
-                        <div role="alert" className={styles.error}>
-                            <strong>Visit couldn’t be saved</strong>
-                            <p>{saveError} Your details are still here. Try saving again.</p>
-                        </div>
-                    )}
-                    <div className={styles.formFooter}>
-                        <Button type="button" variant="outline" disabled={busy} onClick={onBack}>
-                            Cancel
-                        </Button>
-                        <Button
-                            type={conflict ? "button" : "submit"}
-                            disabled={busy || !draft.clientId || !draft.propertyId || !times}
-                            onClick={conflict ? () => setPicker("date") : undefined}
-                        >
-                            {busy
-                                ? "Saving…"
-                                : conflict
-                                  ? "Choose another time"
-                                  : saveError
-                                    ? "Try saving again"
-                                    : visit
-                                      ? "Save new time"
-                                      : "Schedule visit"}
-                        </Button>
-                    </div>
-                </form>
-                <aside className={styles.aside}>
-                    <h2>
-                        {saveError
-                            ? "Your details are kept"
-                            : conflict
-                              ? "Time conflict"
-                              : "Visit summary"}
-                    </h2>
-                    <div
-                        className={
-                            saveError
-                                ? styles.errorSummary
-                                : conflict
-                                  ? styles.warning
-                                  : styles.summary
-                        }
+        <VisitOverlay
+            title={visit ? "Edit visit" : "Schedule a visit"}
+            onClose={onBack}
+            busy={busy}
+            dirty={dirty}
+            error={saveError}
+            footer={(close) => (
+                <>
+                    <Button variant="outline" disabled={busy} onClick={close}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="accent"
+                        type="submit"
+                        form={formId}
+                        disabled={busy}
+                        loading={busy}
                     >
-                        {saveError ? (
-                            <>
-                                <h3>Visit could not be saved</h3>
-                                <p>
-                                    Check your connection and try again. No visit or reminder has
-                                    been created yet.
-                                </p>
-                            </>
-                        ) : conflict ? (
-                            <>
-                                <h3>Time conflict</h3>
-                                <p>
-                                    You already have a visit from{" "}
-                                    {formatVisitTime(conflict.startsAt)} to{" "}
-                                    {formatVisitTime(conflict.endsAt)}. Choose another time.
-                                </p>
-                            </>
-                        ) : client && property && times ? (
-                            <>
-                                <CheckCircle2 aria-hidden />
-                                <h3>Ready to {visit ? "reschedule" : "schedule"}</h3>
-                                <p>{client.name}</p>
-                                <strong>{property.title}</strong>
-                                <p>
-                                    {formatVisitDate(times.startsAt)}
-                                    <br />
-                                    {formatVisitTime(times.startsAt)} –{" "}
-                                    {formatVisitTime(times.endsAt)} IST
-                                </p>
-                            </>
-                        ) : (
-                            <>
-                                <CalendarDays aria-hidden />
-                                <h3>Ready when you are</h3>
-                                <p>
-                                    Choose a client, a property and a time. Your visit will appear
-                                    here.
-                                </p>
-                            </>
-                        )}
+                        {visit ? "Save changes" : "Schedule visit"}
+                    </Button>
+                </>
+            )}
+        >
+            <form id={formId} onSubmit={submit} noValidate>
+                <fieldset disabled={busy} className="m-0 border-0 p-0 min-inline-0">
+                    <div className={FORM_SECTIONS_CLASS}>
+                        <WizardSection title="Client & property">
+                            <div className={FORM_STACK_CLASS}>
+                                <div className={styles.field}>
+                                    <label htmlFor={`${formId}-client`}>
+                                        Client <span className={styles.required}>*</span>
+                                    </label>
+                                    <VisitEntityCombobox
+                                        id={`${formId}-client`}
+                                        kind="client"
+                                        value={draft.clientId}
+                                        onChange={(clientId) => patch({ clientId })}
+                                        disabled={busy}
+                                        error={submitted ? errors.clientId : undefined}
+                                    />
+                                </div>
+                                <div className={styles.field}>
+                                    <label htmlFor={`${formId}-property`}>
+                                        Property <span className={styles.required}>*</span>
+                                    </label>
+                                    <VisitEntityCombobox
+                                        id={`${formId}-property`}
+                                        kind="property"
+                                        value={draft.propertyId}
+                                        onChange={(propertyId) => patch({ propertyId })}
+                                        disabled={busy}
+                                        error={submitted ? errors.propertyId : undefined}
+                                    />
+                                </div>
+                            </div>
+                        </WizardSection>
+                        <WizardSection title="Date & time (IST)">
+                            <div className={FORM_STACK_CLASS}>
+                                <div className={styles.field}>
+                                    <label htmlFor={`${formId}-date`}>
+                                        Visit date & start time{" "}
+                                        <span className={styles.required}>*</span>
+                                    </label>
+                                    <AppDateTimePicker
+                                        id={`${formId}-date`}
+                                        aria-label="Visit date and start time (IST)"
+                                        value={`${draft.date}T${draft.startTime}`}
+                                        onChange={(value) => {
+                                            const [date = "", startTime = ""] = value.split("T");
+                                            patch({ date, startTime });
+                                        }}
+                                        min={
+                                            visit?.status === "completed" ||
+                                            visit?.status === "not_attended"
+                                                ? undefined
+                                                : `${istDateKey(new Date(now))}T00:00`
+                                        }
+                                        max={
+                                            visit?.status === "completed" ||
+                                            visit?.status === "not_attended"
+                                                ? `${istDateKey(new Date(now))}T23:59`
+                                                : undefined
+                                        }
+                                        disabled={busy}
+                                        error={
+                                            submitted ? errors.date || errors.startTime : undefined
+                                        }
+                                    />
+                                </div>
+                                <div className={styles.field}>
+                                    <label htmlFor={`${formId}-end`}>
+                                        End time <span className={styles.required}>*</span>
+                                    </label>
+                                    <AppTimePicker
+                                        id={`${formId}-end`}
+                                        aria-label="Visit end time (IST)"
+                                        value={draft.endTime}
+                                        onChange={(endTime) => patch({ endTime })}
+                                        error={submitted ? errors.endTime : undefined}
+                                        disabled={busy}
+                                        required
+                                    />
+                                </div>
+                                {conflict && (
+                                    <p role="alert" className={styles.conflict}>
+                                        <Clock aria-hidden />
+                                        <span>
+                                            You already have a visit from{" "}
+                                            {formatVisitTime(conflict.startsAt)} to{" "}
+                                            {formatVisitTime(conflict.endsAt)}. Choose another time.
+                                        </span>
+                                    </p>
+                                )}
+                            </div>
+                        </WizardSection>
+                        <WizardSection title="Reminder & notes">
+                            <div className={FORM_STACK_CLASS}>
+                                <VisitSelect
+                                    label="Extra reminder"
+                                    size="lg"
+                                    startIcon={Bell}
+                                    value={String(draft.reminderMinutes)}
+                                    options={REMINDERS.map((reminder) => ({
+                                        value: String(reminder.value),
+                                        label: reminder.label,
+                                    }))}
+                                    onChange={(value) => patch({ reminderMinutes: Number(value) })}
+                                />
+                                <label className={styles.field}>
+                                    Notes (optional)
+                                    <Textarea
+                                        className={styles.notesInput}
+                                        value={draft.notes}
+                                        onChange={(event) => patch({ notes: event.target.value })}
+                                        maxLength={2000}
+                                        rows={3}
+                                        placeholder="Meeting point or anything to remember"
+                                    />
+                                </label>
+                            </div>
+                        </WizardSection>
                     </div>
-                    <div className={styles.asideSection}>
-                        <h3>
-                            <Bell aria-hidden />
-                            Your visit notifications
-                        </h3>
-                        <ul>
-                            <li>Before: optional extra reminder</li>
-                            <li>At start time: visit notification</li>
-                            <li>At end time: attendance prompt</li>
-                        </ul>
-                    </div>
-                    <div className={styles.asideSection}>
-                        <h3>Only you manage this visit.</h3>
-                        <p>
-                            This visit stays in your CRM. Notifications are for you and do not
-                            message the client.
-                        </p>
-                    </div>
-                </aside>
-            </div>
-        </>
+                </fieldset>
+            </form>
+        </VisitOverlay>
     );
 }

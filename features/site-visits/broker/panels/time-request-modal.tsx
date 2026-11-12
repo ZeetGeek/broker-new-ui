@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +17,7 @@ import {
 } from "@/lib/visits/time";
 import { useCreateTimeRequest } from "@/hooks/use-time-requests";
 
+import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppModal } from "@/components/shared/app-modal";
 import { Clock3, Plus, Trash2 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
@@ -254,25 +255,23 @@ export function TimeRequestModal({
                     <p className="body-xs text-danger">{form.formState.errors.buyerIds.message}</p>
                 ) : null}
                 <div>
-                    <label className="body-sm font-bold text-ink">
+                    <div className="body-sm font-bold text-ink">
                         Preferred time
-                        <input
-                            type="datetime-local"
-                            step={900}
-                            min={inputValueInIst(new Date())}
-                            {...form.register("preferredStartsAt")}
-                            className="
-                              body-sm mbs-2 block rounded-control border border-border-warm
-                              bg-surface px-3 text-ink outline-none inline-full min-block-11
-                              focus:border-brand focus:ring-3 focus:ring-brand/15
-                            "
+                        <Controller
+                            control={form.control}
+                            name="preferredStartsAt"
+                            render={({ field, fieldState }) => (
+                                <AppDateTimePicker
+                                    {...field}
+                                    aria-label="Preferred visit date and time (IST)"
+                                    minuteStep={15}
+                                    min={inputValueInIst(new Date())}
+                                    className="mbs-2 font-normal"
+                                    error={fieldState.error?.message}
+                                />
+                            )}
                         />
-                    </label>
-                    {form.formState.errors.preferredStartsAt ? (
-                        <p className="body-xs mbs-1 text-danger">
-                            {form.formState.errors.preferredStartsAt.message}
-                        </p>
-                    ) : null}
+                    </div>
                     {usualPattern ? (
                         <p className="body-xs mbs-2 flex items-center gap-1.5 text-ink-muted">
                             <Clock3 aria-hidden className="block-3.5 inline-3.5" />
@@ -323,24 +322,21 @@ export function TimeRequestModal({
                         Owners accept faster when you give options.
                     </p>
                     {alternates.map((value, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                            <input
-                                type="datetime-local"
-                                step={900}
+                        <div key={index} className="flex items-start gap-2">
+                            <AppDateTimePicker
+                                aria-label={`Backup visit time ${index + 1} (IST)`}
+                                minuteStep={15}
                                 min={inputValueInIst(new Date())}
                                 value={value}
-                                onChange={(event) =>
+                                onChange={(next) =>
                                     form.setValue(
                                         "alternates",
                                         alternates.map((item, itemIndex) =>
-                                            itemIndex === index ? event.target.value : item,
+                                            itemIndex === index ? next : item,
                                         ),
                                     )
                                 }
-                                className="
-                                  body-sm flex-1 rounded-control border border-border-warm
-                                  bg-surface px-3 text-ink min-block-11
-                                "
+                                className="flex-1"
                             />
                             <Button
                                 type="button"

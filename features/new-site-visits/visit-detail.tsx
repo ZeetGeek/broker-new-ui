@@ -1,24 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
-import {
-    ArrowLeft,
-    Bell,
-    CalendarDays,
-    CheckCircle2,
-    Clock,
-    MapPin,
-    User,
-} from "@/components/shared/icons";
+import { AppImage } from "@/components/shared/app-image";
+import { Bell, Building2, CalendarDays, Clock, MapPin } from "@/components/shared/icons";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-import { FlowStep } from "./flow-step";
-import { REMINDERS, type SiteVisit, visitState } from "./model";
+import { getVisitActions, REMINDERS, type SiteVisit, visitState } from "./model";
 import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
+import { VISIT_ACTIONS } from "./visit-actions";
+import { VisitOverlay } from "./visit-overlay";
 import { VisitStatusBadge } from "./visit-status";
 
 import styles from "./visits.module.css";
@@ -40,356 +35,272 @@ export function AttendanceConfirmation({
     onClose: () => void;
     onConfirm: (note: string) => Promise<void>;
 }) {
-    const [note, setNote] = useState("");
-    const client = PREVIEW_CLIENTS.find((c) => c.id === visit.clientId);
-    const property = PREVIEW_PROPERTIES.find((p) => p.id === visit.propertyId);
+    const formId = useId();
+    const originalNote = visit.status === "scheduled" ? "" : visit.attendanceNote;
+    const [note, setNote] = useState(originalNote);
+    const client = PREVIEW_CLIENTS.find((item) => item.id === visit.clientId);
+    const property = PREVIEW_PROPERTIES.find((item) => item.id === visit.propertyId);
     const copy = {
         completed: {
-            title: "Complete this visit",
-            description: "Record that the visit happened and keep any useful follow-up notes.",
-            action: "Mark completed",
+            title: "Mark visit as attended?",
+            description: "Save the visit outcome and any notes for your follow-up.",
+            action: "Mark attended",
         },
         not_attended: {
             title: "Mark visit as not attended?",
-            description: "Keep this result separate from completed visits.",
+            description: "Keep this visit in your history. You can schedule another when ready.",
             action: "Mark not attended",
         },
         cancelled: {
             title: "Cancel this visit?",
-            description: "Stop the upcoming visit and its reminders.",
+            description: "The visit will stay in your history. Its reminders will stop.",
             action: "Cancel visit",
         },
     }[intent];
     return (
-        <FlowStep
-            title={copy.title}
-            description={copy.description}
-            backLabel="Back to visit"
-            onBack={busy ? () => {} : onClose}
-            aside={
-                <>
-                    <div className={styles.asideSection}>
-                        <h3>
-                            {intent === "completed" ? "After completion" : "Your visit history"}
-                        </h3>
-                        <p>
-                            {intent === "completed"
-                                ? "Your note stays with this visit. Completing it does not change the client’s pipeline stage."
-                                : "The original visit is kept. You can schedule another visit later without losing this record."}
-                        </p>
-                    </div>
-                    <div className={intent === "completed" ? styles.summary : styles.warning}>
-                        <h3>
-                            {intent === "completed"
-                                ? "No more visit reminders"
-                                : "This changes the visit status"}
-                        </h3>
-                        <p>
-                            {intent === "completed"
-                                ? "The completed visit has no upcoming reminder."
-                                : "The client and property records are kept."}
-                        </p>
-                    </div>
-                </>
+        <VisitOverlay
+            compact
+            title={
+                visit.status === "scheduled"
+                    ? copy.title
+                    : `Change outcome to ${intent === "completed" ? "Completed" : "Not attended"}?`
             }
-        >
-            <div className={styles.confirmSummary}>
-                <strong>{client?.name}</strong>
-                <span>
-                    {property?.title} · {property?.configLabel} · {property?.locality},{" "}
-                    {property?.city}
-                </span>
-                <span>
-                    {formatVisitDate(visit.startsAt)} · {formatVisitTime(visit.startsAt)} –{" "}
-                    {formatVisitTime(visit.endsAt)} · IST
-                </span>
-            </div>
-            <label className={styles.field}>
-                {intent === "completed" ? "Visit note (optional)" : "Reason (optional)"}
-                <Textarea
-                    rows={4}
-                    maxLength={2000}
-                    value={note}
-                    disabled={busy}
-                    placeholder={
-                        intent === "completed"
-                            ? "Anything useful for your follow-up"
-                            : "Why didn’t this visit happen?"
-                    }
-                    onChange={(e) => setNote(e.target.value)}
-                />
-            </label>
-            <p className={styles.muted}>
-                {intent === "cancelled"
-                    ? "This visit is kept in history with a Cancelled status."
-                    : `This visit will appear under ${intent === "completed" ? "Completed" : "Not attended"}.`}
-            </p>
-            {error && (
-                <p role="alert" className={styles.error}>
-                    {error} Try again; your note is still here.
-                </p>
+            description={
+                visit.status === "scheduled"
+                    ? copy.description
+                    : "Correct the attendance result. The change is recorded in this visit's activity history."
+            }
+            busy={busy}
+            dirty={note !== originalNote}
+            onClose={onClose}
+            error={error}
+            footer={(close) => (
+                <>
+                    <Button variant="outline" disabled={busy} onClick={close}>
+                        {intent === "cancelled" ? "Keep visit" : "Go back"}
+                    </Button>
+                    <Button
+                        variant={intent === "cancelled" ? "destructive" : "accent"}
+                        type="submit"
+                        form={formId}
+                        disabled={busy}
+                        loading={busy}
+                    >
+                        {copy.action}
+                    </Button>
+                </>
             )}
-            <div className={styles.actions}>
-                <Button variant="outline" disabled={busy} onClick={onClose}>
-                    {intent === "cancelled"
-                        ? "Keep visit"
-                        : intent === "completed"
-                          ? "Back to attendance"
-                          : "Go back"}
-                </Button>
-                <Button
-                    variant={intent === "cancelled" ? "destructive" : "default"}
-                    disabled={busy}
-                    onClick={() => void onConfirm(note)}
-                >
-                    {busy ? "Saving…" : copy.action}
-                </Button>
-            </div>
-        </FlowStep>
+        >
+            <form
+                id={formId}
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!busy) void onConfirm(note);
+                }}
+                className={styles.visitFields}
+            >
+                <div className={styles.confirmSummary}>
+                    <strong>{client?.name}</strong>
+                    <span>
+                        {property?.title} · {property?.locality}, {property?.city}
+                    </span>
+                    <span>
+                        {formatVisitDate(visit.startsAt)} · {formatVisitTime(visit.startsAt)} –{" "}
+                        {formatVisitTime(visit.endsAt)} IST
+                    </span>
+                </div>
+                <label className={styles.field}>
+                    {intent === "completed" ? "Visit note (optional)" : "Reason (optional)"}
+                    <Textarea
+                        className={styles.notesInput}
+                        rows={3}
+                        maxLength={2000}
+                        value={note}
+                        disabled={busy}
+                        placeholder={
+                            intent === "completed"
+                                ? "Anything useful for your follow-up"
+                                : "Why didn't this visit happen?"
+                        }
+                        onChange={(event) => setNote(event.target.value)}
+                    />
+                </label>
+                {intent === "completed" && (
+                    <p className={styles.muted}>
+                        This records attendance. The client’s pipeline stage stays the same.
+                    </p>
+                )}
+            </form>
+        </VisitOverlay>
     );
 }
 
 export function VisitDetail({
     visit,
     now,
-    result,
     busy,
     onBack,
-    onReschedule,
     onConfirm,
-    onEditReminder,
-    onNewVisit,
-    onViewStatus,
+    onEdit,
+    onDelete,
 }: {
     visit: SiteVisit;
     now: number;
-    result: string;
     busy: boolean;
     onBack: () => void;
-    onReschedule: () => void;
     onConfirm: (intent: VisitIntent) => void;
-    onEditReminder: () => void;
-    onNewVisit: () => void;
-    onViewStatus: () => void;
+    onEdit: () => void;
+    onDelete: () => void;
 }) {
     const state = visitState(visit, now);
-    const client = PREVIEW_CLIENTS.find((c) => c.id === visit.clientId);
-    const property = PREVIEW_PROPERTIES.find((p) => p.id === visit.propertyId);
+    const client = PREVIEW_CLIENTS.find((item) => item.id === visit.clientId);
+    const property = PREVIEW_PROPERTIES.find((item) => item.id === visit.propertyId);
     const live = visit.status === "scheduled";
     const ended = state === "needs_update";
-    const minutes = Math.round((Date.parse(visit.endsAt) - Date.parse(visit.startsAt)) / 60_000);
     const reminder =
-        REMINDERS.find((r) => r.value === visit.reminderMinutes)?.label ?? "No extra reminder";
-    const title =
-        result ||
-        (ended
-            ? "Did you attend this visit?"
-            : state === "running"
-              ? "Your site visit starts now"
-              : state === "completed"
-                ? "Visit completed"
-                : state === "not_attended"
-                  ? "Visit not attended"
-                  : state === "cancelled"
-                    ? "Visit cancelled"
-                    : "Visit details");
-    const description = ended
-        ? "Your scheduled time has ended. Record attendance or choose another time."
-        : state === "running"
-          ? `${formatVisitTime(visit.startsAt)} · Your visit is now in Running until ${formatVisitTime(visit.endsAt)}.`
-          : state === "completed"
-            ? "Attendance is recorded. This visit is saved under Completed."
-            : state === "not_attended"
-              ? "This result stays in your history. Schedule a new visit when ready."
-              : state === "cancelled"
-                ? "The visit is cancelled and its reminder has been stopped."
-                : result === "Visit rescheduled"
-                  ? "The new time is saved. Your old reminder has been replaced."
-                  : "Manage the visit time, reminder and meeting details.";
+        REMINDERS.find((item) => item.value === visit.reminderMinutes)?.label ??
+        "No extra reminder";
+    const minutes = Math.round((Date.parse(visit.endsAt) - Date.parse(visit.startsAt)) / 60_000);
     return (
-        <>
-            <Button variant="ghost" className={styles.back} onClick={onBack}>
-                <ArrowLeft aria-hidden />
-                Back to visits
-            </Button>
-            <header className={styles.heading}>
-                <div>
-                    <h1 className="h3 text-ink">{title}</h1>
-                    <p>{description}</p>
-                </div>
-            </header>
-            {result && (
-                <p role="status" className={styles.success}>
-                    <CheckCircle2 aria-hidden />
-                    {result}
-                </p>
+        <VisitOverlay
+            title="Visit details"
+            busy={busy}
+            onClose={onBack}
+            footer={(close) => (
+                <>
+                    {getVisitActions(visit, now).map((action) => {
+                        const { label, icon: Icon, danger } = VISIT_ACTIONS[action];
+                        return (
+                            <Button
+                                key={action}
+                                disabled={busy}
+                                variant={
+                                    danger
+                                        ? "destructive"
+                                        : action === "completed" || action === "edit"
+                                          ? "accent"
+                                          : "outline"
+                                }
+                                onClick={() => {
+                                    if (action === "edit") onEdit();
+                                    else if (action === "delete") onDelete();
+                                    else if (action === "view") close();
+                                    else onConfirm(action);
+                                }}
+                            >
+                                <Icon aria-hidden />
+                                {action === "view" ? "Close" : label}
+                            </Button>
+                        );
+                    })}
+                </>
             )}
-            <div className={styles.workGrid}>
-                <section className={styles.panel} aria-label="Visit details">
-                    <div className={styles.panelHeader}>
+        >
+            <div className={styles.visitFields}>
+                <div className={styles.detailProperty}>
+                    <div className={styles.detailCover}>
+                        <Building2 aria-hidden />
+                        {property?.imageUrl && (
+                            <AppImage src={property.imageUrl} alt="" fill sizes="88px" />
+                        )}
+                    </div>
+                    <div>
                         <VisitStatusBadge state={state} />
-                        <h2 className={styles.propertyHeading}>{property?.title}</h2>
+                        <h2>{property?.title}</h2>
                         <p>
                             {property?.configLabel} · {property?.locality}, {property?.city}
                         </p>
                     </div>
-                    <div className={styles.detailBody}>
-                        <div className={styles.detailSection}>
-                            <h3>
-                                <CalendarDays aria-hidden />
-                                {formatVisitDate(visit.startsAt)}
-                            </h3>
-                            <strong>
+                </div>
+                {ended && (
+                    <div className={styles.attendancePrompt}>
+                        <Clock aria-hidden />
+                        <div>
+                            <strong>Did this visit happen?</strong>
+                            <p>
+                                The scheduled time has ended. Record attendance or choose a new
+                                time.
+                            </p>
+                        </div>
+                    </div>
+                )}
+                <section className={styles.detailGroup} aria-label="Visit information">
+                    <div className={styles.detailLine}>
+                        <CalendarDays aria-hidden />
+                        <div>
+                            <span>Date & time</span>
+                            <strong>{formatVisitDate(visit.startsAt)}</strong>
+                            <p>
                                 {formatVisitTime(visit.startsAt)} – {formatVisitTime(visit.endsAt)}{" "}
                                 · {minutes} minutes · IST
-                            </strong>
-                        </div>
-                        <div className={styles.detailSection}>
-                            <div className={styles.person}>
-                                <User aria-hidden />
-                                <div>
-                                    <strong>{client?.name}</strong>
-                                    <p>Client · {client?.type}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className={styles.detailSection}>
-                            <h3>
-                                <MapPin aria-hidden />
-                                Meeting point
-                            </h3>
-                            <p>{property?.address}</p>
-                        </div>
-                        <div className={styles.detailSection}>
-                            <h3>
-                                {live
-                                    ? "Visit note"
-                                    : visit.status === "completed"
-                                      ? "Visit outcome note"
-                                      : visit.status === "cancelled"
-                                        ? "Cancellation reason"
-                                        : "Reason"}
-                            </h3>
-                            <p className={styles.note}>
-                                {live
-                                    ? visit.notes || "No note added."
-                                    : visit.attendanceNote || "No note added."}
                             </p>
                         </div>
-                        <div className={styles.detailSection}>
-                            <p className={styles.iconText}>
-                                <Bell aria-hidden />
-                                {live
-                                    ? ended
-                                        ? "Visit ended · Attendance not yet recorded"
-                                        : state === "running"
-                                          ? `Start notification · ${formatVisitTime(visit.startsAt)}`
-                                          : visit.reminderMinutes
-                                            ? `Extra reminder: ${reminder} · ${formatVisitTime(new Date(Date.parse(visit.startsAt) - visit.reminderMinutes * 60_000).toISOString())}`
-                                            : "No extra reminder"
-                                    : "No upcoming reminder"}
+                    </div>
+                    <div className={styles.detailLine}>
+                        <UserAvatar name={client?.name ?? "Client"} size="sm" />
+                        <div>
+                            <span>Client</span>
+                            <strong>{client?.name}</strong>
+                            <p>
+                                {client?.type} · {client?.requirement}
                             </p>
+                        </div>
+                    </div>
+                    <div className={styles.detailLine}>
+                        <MapPin aria-hidden />
+                        <div>
+                            <span>Meeting point</span>
+                            <strong>{property?.address}</strong>
+                        </div>
+                    </div>
+                    <div className={styles.detailLine}>
+                        <Bell aria-hidden />
+                        <div>
+                            <span>Extra reminder</span>
+                            <strong>{live && !ended ? reminder : "No upcoming reminder"}</strong>
                         </div>
                     </div>
                 </section>
-                <aside className={styles.aside}>
-                    <section className={styles.visitActions}>
-                        <h2>{ended ? "Record attendance" : "Visit actions"}</h2>
-                        <div className={styles.stackedActions}>
-                            {ended ? (
-                                <>
-                                    <Button disabled={busy} onClick={() => onConfirm("completed")}>
-                                        Attended
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        disabled={busy}
-                                        onClick={() => onConfirm("not_attended")}
-                                    >
-                                        Not attended
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        disabled={busy}
-                                        onClick={onReschedule}
-                                    >
-                                        Reschedule visit
-                                    </Button>
-                                </>
-                            ) : live ? (
-                                <>
-                                    <Button disabled={busy} onClick={onReschedule}>
-                                        Reschedule visit
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        disabled={busy}
-                                        onClick={onEditReminder}
-                                    >
-                                        Edit extra reminder
-                                    </Button>
-                                    <Button
-                                        variant="destructive"
-                                        disabled={busy}
-                                        onClick={() => onConfirm("cancelled")}
-                                    >
-                                        Cancel visit
-                                    </Button>
-                                </>
-                            ) : (
-                                <>
-                                    <Button disabled={busy} onClick={onViewStatus}>
-                                        View{" "}
-                                        {state === "completed"
-                                            ? "completed"
-                                            : state === "not_attended"
-                                              ? "not attended"
-                                              : "upcoming"}{" "}
-                                        visits
-                                    </Button>
-                                    <Button variant="outline" disabled={busy} onClick={onNewVisit}>
-                                        Schedule a new visit
-                                    </Button>
-                                </>
-                            )}
-                        </div>
+                {(visit.notes || visit.attendanceNote) && (
+                    <section className={styles.detailNotes} aria-label="Visit notes">
+                        {visit.notes && (
+                            <div>
+                                <h3>Visit note</h3>
+                                <p className={styles.note}>{visit.notes}</p>
+                            </div>
+                        )}
+                        {visit.attendanceNote && (
+                            <div>
+                                <h3>
+                                    {visit.status === "completed"
+                                        ? "Outcome note"
+                                        : visit.status === "cancelled"
+                                          ? "Cancellation reason"
+                                          : "Reason"}
+                                </h3>
+                                <p className={styles.note}>{visit.attendanceNote}</p>
+                            </div>
+                        )}
                     </section>
-                    <div className={ended ? styles.warning : styles.summary}>
-                        <h3>
-                            {ended
-                                ? "Time passing is not attendance"
-                                : live
-                                  ? state === "running"
-                                      ? `What happens at ${formatVisitTime(visit.endsAt)}?`
-                                      : "Attendance after the visit"
-                                  : "Your record is kept"}
-                        </h3>
-                        <p>
-                            {ended
-                                ? "Your visit stays in Needs update until you record what happened."
-                                : live
-                                  ? "At the end time, choose Attended, Not attended, or Reschedule."
-                                  : "Scheduling another visit keeps this result in your history."}
-                        </p>
-                    </div>
-                    <div className={styles.asideSection}>
-                        <h3>
-                            <Clock aria-hidden />
-                            Activity
-                        </h3>
-                        <ol className={styles.history}>
-                            {visit.history.map((event, i) => (
-                                <li key={`${event.at}-${i}`}>
-                                    <span>{event.label}</span>
+                )}
+                <section className={styles.activitySection} aria-label="Activity">
+                    <h3>Activity</h3>
+                    <ol className={styles.activityList}>
+                        {[...visit.history].reverse().map((event, index) => (
+                            <li key={`${event.at}-${index}`}>
+                                <span className={styles.activityDot} aria-hidden />
+                                <div>
+                                    <p>{event.label}</p>
                                     <time dateTime={event.at}>
-                                        {formatVisitDate(event.at)} · {formatVisitTime(event.at)}
+                                        {formatVisitDate(event.at)} · {formatVisitTime(event.at)}{" "}
+                                        IST
                                     </time>
-                                </li>
-                            ))}
-                        </ol>
-                    </div>
-                </aside>
+                                </div>
+                            </li>
+                        ))}
+                    </ol>
+                </section>
             </div>
-        </>
+        </VisitOverlay>
     );
 }

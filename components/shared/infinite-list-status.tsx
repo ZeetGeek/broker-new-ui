@@ -60,7 +60,7 @@ export function InfiniteListStatus({
             ) : hasNextPage ? (
                 <span className="sr-only">More results load as you scroll.</span>
             ) : (
-                <p className="body flex items-center justify-center gap-3 text-ink-muted">
+                <p className="flex items-center justify-center gap-3 text-sm font-semibold text-ink-muted">
                     <span aria-hidden className="shrink-0 bg-ink-subtle/70 block-px inline-8" />
                     You’ve reached the end
                     <span aria-hidden className="shrink-0 bg-ink-subtle/70 block-px inline-8" />

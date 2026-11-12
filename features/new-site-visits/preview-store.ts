@@ -86,7 +86,7 @@ export const PREVIEW_PROPERTIES: PreviewProperty[] = [
         address: "Green Residency, Pal, Surat",
     },
 ];
-const envelope = z.object({ version: z.literal(1), visits: z.array(visitSchema) });
+const envelope = z.object({ version: z.literal(2), visits: z.array(visitSchema) });
 
 export function sampleVisits(now = Date.now()): SiteVisit[] {
     const base = (
@@ -131,14 +131,14 @@ export function sampleVisits(now = Date.now()): SiteVisit[] {
     ];
 }
 
-const keyFor = (accountId: string) => `crm.site-visits.penpot-preview.v1.${accountId}`;
+const keyFor = (accountId: string) => `crm.site-visits.penpot-preview.v2.${accountId}`;
 
 export const visitPreviewStore = {
     async list(accountId: string): Promise<SiteVisit[]> {
         const saved = sessionStorage.getItem(keyFor(accountId));
         if (saved === null) {
             const visits = sampleVisits();
-            sessionStorage.setItem(keyFor(accountId), JSON.stringify({ version: 1, visits }));
+            sessionStorage.setItem(keyFor(accountId), JSON.stringify({ version: 2, visits }));
             return visits;
         }
         let decoded: unknown;
@@ -164,7 +164,7 @@ export const visitPreviewStore = {
         return parsed.data.visits;
     },
     async save(accountId: string, visits: SiteVisit[]): Promise<SiteVisit[]> {
-        const checked = envelope.parse({ version: 1, visits });
+        const checked = envelope.parse({ version: 2, visits });
         if (
             !checked.visits.every(
                 (v) =>

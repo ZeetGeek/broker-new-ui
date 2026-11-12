@@ -4,11 +4,17 @@ import test from "node:test";
 import {
     draftTimes,
     EMPTY_DRAFT,
+    getVisitActions,
     notificationKind,
     type SiteVisit,
     validateDraft,
     visitState,
 } from "@/features/new-site-visits/model";
+import {
+    PREVIEW_CLIENTS,
+    PREVIEW_PROPERTIES,
+    visitPreviewStore,
+} from "@/features/new-site-visits/preview-store";
 
 const draft = {
     ...EMPTY_DRAFT,
@@ -51,6 +57,45 @@ test("clock boundaries derive running and needs-update without overwriting atten
     assert.equal(visit.status, "scheduled");
 });
 
+test("actions follow each visit state and allow outcome corrections only after recording attendance", () => {
+    assert.deepEqual(getVisitActions(visit, Date.parse(visit.startsAt) - 1), ["edit", "cancelled"]);
+    for (const at of [Date.parse(visit.startsAt), Date.parse(visit.endsAt)]) {
+        assert.deepEqual(getVisitActions(visit, at), ["edit", "completed", "cancelled"]);
+    }
+    assert.deepEqual(getVisitActions({ ...visit, status: "completed" }, now), [
+        "edit",
+        "not_attended",
+        "delete",
+    ]);
+    assert.deepEqual(getVisitActions({ ...visit, status: "not_attended" }, now), [
+        "edit",
+        "completed",
+        "delete",
+    ]);
+    assert.deepEqual(getVisitActions({ ...visit, status: "cancelled" }, now), ["view"]);
+});
+
+test("recorded visits can correct past times without becoming future appointments", () => {
+    const afterVisit = Date.parse(visit.endsAt) + 60_000;
+    for (const status of ["completed", "not_attended"] as const) {
+        const recorded = { ...visit, status };
+        assert.equal(
+            validateDraft(
+                { ...draft, startTime: "09:00", endTime: "10:00" },
+                [recorded],
+                afterVisit,
+                recorded.id,
+            ).valid,
+            true,
+        );
+        assert.equal(
+            validateDraft({ ...draft, date: "2030-01-03" }, [recorded], afterVisit, recorded.id)
+                .valid,
+            false,
+        );
+    }
+});
+
 test("overlapping appointments block saves, but touching boundaries and rescheduling self do not", () => {
     assert.equal(validateDraft(draft, [visit], now).errors.conflict, "visit");
     assert.equal(
@@ -74,6 +119,33 @@ test("incomplete, past and reversed times are rejected", () => {
     assert.equal(validateDraft(draft, [], Date.parse(visit.startsAt)).valid, false);
 });
 
+test("editing a running or ended visit can keep its time, but moving it requires a future time", () => {
+    for (const editingNow of [Date.parse(visit.startsAt), Date.parse(visit.endsAt)]) {
+        assert.equal(
+            validateDraft(
+                { ...draft, notes: "Updated meeting point" },
+                [visit],
+                editingNow,
+                visit.id,
+            ).valid,
+            true,
+        );
+        assert.equal(
+            validateDraft(
+                { ...draft, startTime: "09:00", endTime: "10:00" },
+                [visit],
+                editingNow,
+                visit.id,
+            ).valid,
+            false,
+        );
+        assert.equal(
+            validateDraft({ ...draft, date: "2030-01-03" }, [visit], editingNow, visit.id).valid,
+            true,
+        );
+    }
+});
+
 test("optional reminder advances to start and attendance; terminal visits suppress notifications", () => {
     assert.equal(notificationKind(visit, Date.parse(visit.startsAt) - 31 * 60_000), null);
     assert.equal(notificationKind(visit, Date.parse(visit.startsAt) - 30 * 60_000), "reminder");
@@ -85,5 +157,53 @@ test("optional reminder advances to start and attendance; terminal visits suppre
     assert.equal(notificationKind(visit, Date.parse(visit.endsAt)), "attendance");
     for (const status of ["completed", "not_attended", "cancelled"] as const) {
         assert.equal(notificationKind({ ...visit, status }, Date.parse(visit.endsAt)), null);
+    }
+});
+
+test("visit changes survive storage reloads and invalid links do not overwrite saved visits", async () => {
+    const previous = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
+    const storage = new Map<string, string>();
+    Object.defineProperty(globalThis, "sessionStorage", {
+        configurable: true,
+        value: {
+            getItem: (key: string) => storage.get(key) ?? null,
+            setItem: (key: string, value: string) => storage.set(key, value),
+        },
+    });
+    try {
+        const record: SiteVisit = {
+            ...visit,
+            clientId: PREVIEW_CLIENTS[0].id,
+            propertyId: PREVIEW_PROPERTIES[0].id,
+        };
+        await visitPreviewStore.save("test-account", [record]);
+        assert.deepEqual(await visitPreviewStore.list("test-account"), [record]);
+
+        const updated = {
+            ...record,
+            notes: "Meet at reception",
+            reminderMinutes: 15,
+            status: "completed" as const,
+            attendanceNote: "Client attended",
+        };
+        await visitPreviewStore.save("test-account", [updated]);
+        assert.deepEqual(await visitPreviewStore.list("test-account"), [updated]);
+
+        const corrected = { ...updated, status: "not_attended" as const };
+        await visitPreviewStore.save("test-account", [corrected]);
+        assert.equal((await visitPreviewStore.list("test-account"))[0].status, "not_attended");
+        await visitPreviewStore.save("test-account", [updated]);
+
+        await assert.rejects(
+            visitPreviewStore.save("test-account", [
+                { ...updated, propertyId: "missing-property" },
+            ]),
+        );
+        assert.deepEqual(await visitPreviewStore.list("test-account"), [updated]);
+        await visitPreviewStore.save("test-account", []);
+        assert.deepEqual(await visitPreviewStore.list("test-account"), []);
+    } finally {
+        if (previous) Object.defineProperty(globalThis, "sessionStorage", previous);
+        else Reflect.deleteProperty(globalThis, "sessionStorage");
     }
 });

@@ -7,14 +7,14 @@ import { AppImage } from "@/components/shared/app-image";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
 import {
+    type AppIcon,
     Building2,
+    CalendarClock,
     CalendarDays,
-    ChevronRight,
     MapPin,
     Plus,
     Search,
     SlidersHorizontal,
-    User,
 } from "@/components/shared/icons";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { StatusTabs } from "@/components/shared/status-tabs";
@@ -22,14 +22,56 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { DATE_RANGES, type SiteVisit, VISIT_TABS, visitState, type VisitTab } from "./model";
+import {
+    DATE_RANGES,
+    getVisitActions,
+    type SiteVisit,
+    VISIT_TABS,
+    type VisitActionKind,
+    visitState,
+    type VisitTab,
+} from "./model";
 import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
+import { VISIT_ACTIONS } from "./visit-actions";
 import type { VisitFilters } from "./visit-filters";
 import { VisitSelect } from "./visit-select";
-import { VisitStatusBadge } from "./visit-status";
+import { VISIT_STATUS_COLORS, VisitStatusBadge } from "./visit-status";
 
 import styles from "./visits.module.css";
+
+function VisitAction({
+    label,
+    icon: Icon,
+    onClick,
+    danger = false,
+}: {
+    label: string;
+    icon: AppIcon;
+    onClick: () => void;
+    danger?: boolean;
+}) {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger
+                    render={
+                        <button
+                            type="button"
+                            aria-label={label}
+                            className={`${styles.circleAction} ${danger ? styles.dangerAction : ""}`}
+                            onClick={onClick}
+                        />
+                    }
+                >
+                    <Icon aria-hidden size={20} strokeWidth={1.8} />
+                </TooltipTrigger>
+                <TooltipContent>{label}</TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+}
 
 const LIST_COPY = {
     upcoming: ["Your next visits", "Scheduled visits appear here until their start time."],
@@ -60,6 +102,8 @@ export function VisitList({
     onClear,
     onSchedule,
     onOpen,
+    onEdit,
+    onAction,
 }: {
     visits: SiteVisit[];
     shown: SiteVisit[];
@@ -75,6 +119,8 @@ export function VisitList({
     onClear: () => void;
     onSchedule: () => void;
     onOpen: (id: string) => void;
+    onEdit: (id: string) => void;
+    onAction: (id: string, action: VisitActionKind) => void;
 }) {
     const count = Object.entries(filters).filter(([key, value]) => key !== "range" && value).length;
     const filtered = count > 0 || !!search || filters.range === "custom";
@@ -152,12 +198,7 @@ export function VisitList({
                         tabs={VISIT_TABS.map((t) => ({
                             ...t,
                             count: visits.filter((v) => visitState(v, now) === t.value).length,
-                            dotClassName:
-                                t.value === "upcoming" || t.value === "completed"
-                                    ? "bg-emerald-400"
-                                    : t.value === "not_attended"
-                                      ? "bg-red-400"
-                                      : "bg-yellow-300",
+                            dotClassName: VISIT_STATUS_COLORS[t.value].dotClassName,
                         }))}
                     />
                 </div>
@@ -201,14 +242,6 @@ export function VisitList({
                 )}
             </div>
             <TabsContent value={filters.archive || tab} aria-label={copy[0]}>
-                {visits.length > 0 && (
-                    <div className={styles.listIntro}>
-                        <h2>{copy[0]}</h2>
-                        <span className={styles.listCount}>
-                            {shown.length} {shown.length === 1 ? "visit" : "visits"}
-                        </span>
-                    </div>
-                )}
                 {visits.length === 0 ? (
                     <EmptyState
                         className="py-16"
@@ -249,18 +282,6 @@ export function VisitList({
                             const state = visitState(visit, now);
                             return (
                                 <article className={styles.visitRow} key={visit.id}>
-                                    <div className={styles.rowTime}>
-                                        <span className={styles.dateMark} aria-hidden>
-                                            <CalendarDays />
-                                        </span>
-                                        <div>
-                                            <small>{formatVisitDate(visit.startsAt)}</small>
-                                            <time dateTime={visit.startsAt}>
-                                                {formatVisitTime(visit.startsAt)} –{" "}
-                                                {formatVisitTime(visit.endsAt)}
-                                            </time>
-                                        </div>
-                                    </div>
                                     <div className={styles.rowProperty}>
                                         <span className={styles.propertyThumbnail}>
                                             <Building2 aria-hidden />
@@ -269,68 +290,93 @@ export function VisitList({
                                                     src={property.imageUrl}
                                                     alt={property.title}
                                                     fill
-                                                    sizes="72px"
+                                                    sizes="64px"
                                                 />
                                             )}
                                         </span>
                                         <div>
-                                            <strong>{property?.title}</strong>
-                                            <p>{property?.configLabel}</p>
-                                            <small className={styles.rowLocation}>
-                                                <MapPin aria-hidden />
-                                                {property?.locality}, {property?.city}
-                                            </small>
+                                            <button
+                                                type="button"
+                                                className={styles.propertyLink}
+                                                aria-label={`Visit details for ${property?.title} with ${client?.name}`}
+                                                onClick={() => onOpen(visit.id)}
+                                            >
+                                                {property?.title}
+                                            </button>
+                                            <div className={styles.propertyMeta}>
+                                                <span className={styles.propertyLocation}>
+                                                    <MapPin aria-hidden />
+                                                    {property?.locality}, {property?.city}
+                                                </span>
+                                                <span aria-hidden>·</span>
+                                                <p>{property?.configLabel}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className={styles.rowTime}>
+                                        <span className={styles.detailIcon} aria-hidden>
+                                            <CalendarClock />
+                                        </span>
+                                        <div>
+                                            <small>{formatVisitDate(visit.startsAt)}</small>
+                                            <time dateTime={visit.startsAt}>
+                                                {formatVisitTime(visit.startsAt)} {"\u2013"}{" "}
+                                                {formatVisitTime(visit.endsAt)}{" "}
+                                                <span className={styles.timeZone}>IST</span>
+                                            </time>
                                         </div>
                                     </div>
                                     <div className={styles.rowProfiles}>
                                         <div className={styles.rowClient}>
                                             <UserAvatar
-                                                name={client?.name ?? "Client"}
+                                                name={property?.owner?.name ?? "Owner"}
+                                                imageUrl={property?.owner?.imageUrl}
                                                 size="sm"
-                                                framed={false}
+                                                className="shadow-sm ring-2 ring-surface"
                                             />
                                             <div>
-                                                <strong>{client?.name ?? "Not added"}</strong>
-                                                <small>Client</small>
-                                            </div>
-                                        </div>
-                                        <div className={styles.rowClient}>
-                                            {property?.owner ? (
-                                                <UserAvatar
-                                                    name={property.owner.name}
-                                                    imageUrl={property.owner.imageUrl}
-                                                    size="sm"
-                                                    framed={false}
-                                                />
-                                            ) : (
-                                                <span className={styles.missingProfile} aria-hidden>
-                                                    <User />
-                                                </span>
-                                            )}
-                                            <div>
+                                                <small>Owner</small>
                                                 <strong
                                                     data-missing={!property?.owner || undefined}
                                                 >
                                                     {property?.owner?.name ?? "Not added"}
                                                 </strong>
-                                                <small>Owner</small>
+                                            </div>
+                                        </div>
+                                        <div className={styles.rowClient}>
+                                            <UserAvatar
+                                                name={client?.name ?? "Client"}
+                                                size="sm"
+                                                className="shadow-sm ring-2 ring-surface"
+                                            />
+                                            <div>
+                                                <small>Client</small>
+                                                <strong>{client?.name ?? "Not added"}</strong>
                                             </div>
                                         </div>
                                     </div>
                                     <div className={styles.rowStatus}>
                                         <VisitStatusBadge state={state} />
                                     </div>
-                                    <Button
-                                        variant={state === "needs_update" ? "accent" : "outline"}
-                                        className={styles.rowAction}
-                                        data-attention={state === "needs_update" || undefined}
-                                        size="sm"
-                                        aria-label={`${state === "needs_update" ? "Update" : "View"} visit with ${client?.name}`}
-                                        onClick={() => onOpen(visit.id)}
+                                    <div
+                                        className={styles.rowActions}
+                                        role="group"
+                                        aria-label={`Actions for ${property?.title} with ${client?.name}`}
                                     >
-                                        {state === "needs_update" ? "Update visit" : "View visit"}
-                                        <ChevronRight aria-hidden />
-                                    </Button>
+                                        {getVisitActions(visit, now).map((action) => (
+                                            <VisitAction
+                                                key={action}
+                                                {...VISIT_ACTIONS[action]}
+                                                onClick={() =>
+                                                    action === "edit"
+                                                        ? onEdit(visit.id)
+                                                        : action === "view"
+                                                          ? onOpen(visit.id)
+                                                          : onAction(visit.id, action)
+                                                }
+                                            />
+                                        ))}
+                                    </div>
                                 </article>
                             );
                         })}

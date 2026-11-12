@@ -94,6 +94,25 @@ export function visitState(visit: SiteVisit, now: number): VisitState {
     return "upcoming";
 }
 
+export type VisitActionKind =
+    "edit" | "completed" | "cancelled" | "not_attended" | "delete" | "view";
+
+export function getVisitActions(visit: SiteVisit, now: number): VisitActionKind[] {
+    switch (visitState(visit, now)) {
+        case "upcoming":
+            return ["edit", "cancelled"];
+        case "running":
+        case "needs_update":
+            return ["edit", "completed", "cancelled"];
+        case "completed":
+            return ["edit", "not_attended", "delete"];
+        case "not_attended":
+            return ["edit", "completed", "delete"];
+        default:
+            return ["view"];
+    }
+}
+
 export function draftTimes(draft: VisitDraft): { startsAt: string; endsAt: string } | null {
     if (
         !/^\d{4}-\d{2}-\d{2}$/.test(draft.date) ||
@@ -131,7 +150,16 @@ export function validateDraft(
     if (!draft.endTime) errors.endTime = "Choose an end time.";
     const times = draftTimes(draft);
     if (times) {
-        if (Date.parse(times.startsAt) <= now) errors.startTime = "Choose a time in the future.";
+        const original = visits.find((visit) => visit.id === excludeId);
+        const recorded = original?.status === "completed" || original?.status === "not_attended";
+        const keepsTime =
+            original &&
+            Date.parse(times.startsAt) === Date.parse(original.startsAt) &&
+            Date.parse(times.endsAt) === Date.parse(original.endsAt);
+        if (!recorded && Date.parse(times.startsAt) <= now && !keepsTime)
+            errors.startTime = "Choose a time in the future.";
+        if (recorded && Date.parse(times.startsAt) > now && !keepsTime)
+            errors.startTime = "A recorded visit cannot start in the future.";
         if (Date.parse(times.endsAt) <= Date.parse(times.startsAt))
             errors.endTime = "End time must be after start time.";
         const conflict = visits.find(
@@ -141,7 +169,7 @@ export function validateDraft(
                 Date.parse(v.startsAt) < Date.parse(times.endsAt) &&
                 Date.parse(v.endsAt) > Date.parse(times.startsAt),
         );
-        if (conflict) errors.conflict = conflict.id;
+        if (conflict && !recorded) errors.conflict = conflict.id;
     } else if (draft.date && draft.startTime && draft.endTime)
         errors.date = "Choose a valid date and time.";
     return { errors, times, valid: Object.keys(errors).length === 0 && times !== null };
