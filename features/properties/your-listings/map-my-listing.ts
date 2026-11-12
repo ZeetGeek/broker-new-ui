@@ -394,6 +394,7 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
         publishStatus: input.publish ? ("published" as const) : ("draft" as const),
         transactionType: input.transactionType,
         city: input.city.trim(),
+        state: input.state?.trim() || undefined,
         propertyType: input.category,
         ...(subtype ? { subtype } : {}),
         ...(bhkConfig ? { bhkConfig } : {}),
@@ -467,6 +468,7 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.title != null) payload.title = input.title.trim();
     if (input.locality != null) payload.address = input.locality.trim();
     if (input.city != null) payload.city = input.city.trim();
+    if (input.state !== undefined) payload.state = input.state?.trim() || undefined;
     if (input.pinCode != null) payload.postalCode = input.pinCode.trim();
     if (input.society != null) payload.society = input.society.trim() || undefined;
     if (input.landmark != null) payload.landmark = input.landmark.trim() || undefined;

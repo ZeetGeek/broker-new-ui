@@ -1,6 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useMemo, useState } from "react";
+
+import { useDebouncedValue } from "@/hooks/use-locations";
 
 import type { AppIcon } from "@/components/shared/icons";
 import {
@@ -35,6 +37,7 @@ export function OptionCombobox({
     limit,
     size,
     textClassName,
+    searchDebounceMs,
 }: {
     id?: string;
     value: string;
@@ -54,9 +57,31 @@ export function OptionCombobox({
     size?: ComboboxInputProps["size"];
     /** Font treatment shared by the input and portalled options. */
     textClassName?: string;
+    /**
+     * Wait this long after the last keystroke before re-filtering. Use on long
+     * lists (a state's cities) so typing stays smooth on low-end phones.
+     */
+    searchDebounceMs?: number;
 }) {
     const labelFor = (item: string) =>
         options.find((option) => option.value === item)?.label ?? item;
+
+    const debounced = searchDebounceMs != null;
+    const [query, setQuery] = useState("");
+    const debouncedQuery = useDebouncedValue(query, searchDebounceMs ?? 0);
+    const allValues = useMemo(() => options.map((option) => option.value), [options]);
+    const selectedLabel = options.find((option) => option.value === value)?.label ?? value;
+
+    const filteredValues = useMemo(() => {
+        if (!debounced) return allValues;
+        const term = debouncedQuery.trim().toLowerCase();
+        // The input shows the chosen label after a pick — list everything then,
+        // same as the built-in filter, so the user can switch cities.
+        if (!term || term === selectedLabel.trim().toLowerCase()) return allValues;
+        return options
+            .filter((option) => option.label.toLowerCase().includes(term))
+            .map((option) => option.value);
+    }, [debounced, debouncedQuery, selectedLabel, options, allValues]);
 
     return (
         <Combobox
@@ -68,8 +93,11 @@ export function OptionCombobox({
             onOpenChange={(open) => {
                 if (!open) onBlur?.();
             }}
-            items={options.map((option) => option.value)}
+            items={filteredValues}
             itemToStringLabel={labelFor}
+            {...(debounced
+                ? { filter: null, onInputValueChange: (next: string) => setQuery(next) }
+                : {})}
             {...(limit == null ? {} : { limit })}
         >
             <ComboboxInput

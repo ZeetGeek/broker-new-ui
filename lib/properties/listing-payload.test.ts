@@ -87,6 +87,16 @@ test("update sends the same four details", () => {
     assert.equal(payload.propertyCondition, "ready_to_move");
 });
 
+test("create and update send the picked state", () => {
+    assert.equal(
+        myListingInputToCreatePayload(input({ state: " Uttar Pradesh " })).state,
+        "Uttar Pradesh",
+    );
+    assert.equal(myListingInputToCreatePayload(input({ state: "" })).state, undefined);
+    assert.equal(myListingInputToUpdatePayload({ state: "Uttar Pradesh" }).state, "Uttar Pradesh");
+    assert.equal("state" in myListingInputToUpdatePayload({}), false);
+});
+
 test("a saved listing reads back flatNo and carpetAreaSqft from the API", () => {
     const item = mapPropertyListingToMyItem({
         id: "p1",
