@@ -43,7 +43,7 @@ export function NewSiteVisitsPage() {
 
 function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
     const queryClient = useQueryClient();
-    const queryKey = useMemo(() => ["penpot-private-visits-preview-v1", accountId], [accountId]);
+    const queryKey = useMemo(() => ["penpot-private-visits-preview-v2", accountId], [accountId]);
     const query = useQuery({
         queryKey,
         queryFn: () => visitPreviewStore.list(accountId),
@@ -137,7 +137,7 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
                   clientId: draft.clientId,
                   propertyId: draft.propertyId,
                   ...validation.times,
-                  reminderMinutes: draft.reminderMinutes,
+                  reminders: [...draft.reminders],
                   notes: draft.notes.trim(),
                   history: [
                       ...editing.history,
@@ -157,7 +157,7 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
                   clientId: draft.clientId,
                   propertyId: draft.propertyId,
                   ...validation.times,
-                  reminderMinutes: draft.reminderMinutes,
+                  reminders: [...draft.reminders],
                   notes: draft.notes.trim(),
                   status: "scheduled",
                   attendanceNote: "",

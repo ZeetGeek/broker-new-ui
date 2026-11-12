@@ -86,7 +86,10 @@ export const PREVIEW_PROPERTIES: PreviewProperty[] = [
         address: "Green Residency, Pal, Surat",
     },
 ];
-const envelope = z.object({ version: z.literal(2), visits: z.array(visitSchema) });
+const envelope = z.object({
+    version: z.union([z.literal(2), z.literal(3)]),
+    visits: z.array(visitSchema),
+});
 
 export function sampleVisits(now = Date.now()): SiteVisit[] {
     const base = (
@@ -101,7 +104,7 @@ export function sampleVisits(now = Date.now()): SiteVisit[] {
         startsAt,
         endsAt,
         status,
-        reminderMinutes: 30,
+        reminders: [30],
         notes: "Meet at the main gate. Ask for parking access.",
         attendanceNote: "",
         history: [{ at: new Date(now - 86_400_000).toISOString(), label: "Visit scheduled" }],
@@ -138,7 +141,7 @@ export const visitPreviewStore = {
         const saved = sessionStorage.getItem(keyFor(accountId));
         if (saved === null) {
             const visits = sampleVisits();
-            sessionStorage.setItem(keyFor(accountId), JSON.stringify({ version: 2, visits }));
+            sessionStorage.setItem(keyFor(accountId), JSON.stringify({ version: 3, visits }));
             return visits;
         }
         let decoded: unknown;
@@ -161,10 +164,15 @@ export const visitPreviewStore = {
             throw new Error(
                 "This preview could not be loaded. Reset the sample visits to start again.",
             );
+        if (parsed.data.version === 2)
+            sessionStorage.setItem(
+                keyFor(accountId),
+                JSON.stringify({ version: 3, visits: parsed.data.visits }),
+            );
         return parsed.data.visits;
     },
     async save(accountId: string, visits: SiteVisit[]): Promise<SiteVisit[]> {
-        const checked = envelope.parse({ version: 2, visits });
+        const checked = envelope.parse({ version: 3, visits });
         if (
             !checked.visits.every(
                 (v) =>

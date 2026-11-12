@@ -1,19 +1,35 @@
 import { z } from "zod";
 
+import { isReminderOffset, MAX_REMINDER_MINUTES, reminderLabel } from "@/lib/reminders";
 import { addVisitDays, inputValueInIst, inputValueToUtc, istDateKey } from "@/lib/visits/time";
 
-export const visitSchema = z.object({
-    id: z.string(),
-    clientId: z.string(),
-    propertyId: z.string(),
-    startsAt: z.iso.datetime(),
-    endsAt: z.iso.datetime(),
-    reminderMinutes: z.number().int().nonnegative(),
-    notes: z.string(),
-    status: z.enum(["scheduled", "completed", "not_attended", "cancelled"]),
-    attendanceNote: z.string().default(""),
-    history: z.array(z.object({ at: z.iso.datetime(), label: z.string() })),
-});
+const remindersSchema = z
+    .array(z.number().int().min(0).max(MAX_REMINDER_MINUTES))
+    .refine((values) => new Set(values).size === values.length, "Choose each reminder only once.");
+
+export const visitSchema = z.preprocess(
+    (value) => {
+        if (!value || typeof value !== "object" || "reminders" in value) return value;
+        const legacy = value as Record<string, unknown>;
+        if (!("reminderMinutes" in legacy)) return value;
+        return {
+            ...legacy,
+            reminders: legacy.reminderMinutes === 0 ? [] : [legacy.reminderMinutes],
+        };
+    },
+    z.object({
+        id: z.string(),
+        clientId: z.string(),
+        propertyId: z.string(),
+        startsAt: z.iso.datetime(),
+        endsAt: z.iso.datetime(),
+        reminders: remindersSchema,
+        notes: z.string(),
+        status: z.enum(["scheduled", "completed", "not_attended", "cancelled"]),
+        attendanceNote: z.string().default(""),
+        history: z.array(z.object({ at: z.iso.datetime(), label: z.string() })),
+    }),
+);
 
 export type SiteVisit = z.infer<typeof visitSchema>;
 export type VisitState = "upcoming" | "running" | "needs_update" | SiteVisit["status"];
@@ -37,8 +53,8 @@ export const STATE_LABELS: Record<VisitState, string> = {
     cancelled: "Cancelled",
 };
 
-export const REMINDERS = [
-    { value: 0, label: "No extra reminder" },
+export const VISIT_REMINDERS = [
+    { value: 0, label: "At visit time" },
     { value: 15, label: "15 minutes before" },
     { value: 30, label: "30 minutes before" },
     { value: 60, label: "1 hour before" },
@@ -73,7 +89,7 @@ export type VisitDraft = {
     date: string;
     startTime: string;
     endTime: string;
-    reminderMinutes: number;
+    reminders: number[];
     notes: string;
 };
 
@@ -83,7 +99,7 @@ export const EMPTY_DRAFT: VisitDraft = {
     date: "",
     startTime: "",
     endTime: "",
-    reminderMinutes: 0,
+    reminders: [],
     notes: "",
 };
 
@@ -149,6 +165,9 @@ export function validateDraft(
     if (!draft.startTime) errors.startTime = "Choose a start time.";
     if (!draft.endTime) errors.endTime = "Choose an end time.";
     const times = draftTimes(draft);
+    if (!remindersSchema.safeParse(draft.reminders).success)
+        errors.reminders =
+            "Use different reminders between 0 minutes and 365 days before the visit.";
     if (times) {
         const original = visits.find((visit) => visit.id === excludeId);
         const recorded = original?.status === "completed" || original?.status === "not_attended";
@@ -156,6 +175,19 @@ export function validateDraft(
             original &&
             Date.parse(times.startsAt) === Date.parse(original.startsAt) &&
             Date.parse(times.endsAt) === Date.parse(original.endsAt);
+        const keepsStart = original && Date.parse(times.startsAt) === Date.parse(original.startsAt);
+        if (
+            draft.reminders.some((minutes) => {
+                const at = visitReminderAt(times.startsAt, minutes);
+                return (
+                    at &&
+                    Date.parse(at) <= now &&
+                    !(keepsStart && original.reminders.includes(minutes))
+                );
+            })
+        )
+            errors.reminders =
+                "A reminder time has already passed. Remove it or choose a later visit time.";
         if (!recorded && Date.parse(times.startsAt) <= now && !keepsTime)
             errors.startTime = "Choose a time in the future.";
         if (recorded && Date.parse(times.startsAt) > now && !keepsTime)
@@ -175,6 +207,26 @@ export function validateDraft(
     return { errors, times, valid: Object.keys(errors).length === 0 && times !== null };
 }
 
+export function visitReminderLabel(minutes: number): string {
+    return reminderLabel(minutes, "At visit time");
+}
+
+export function visitReminderAt(startsAt: string, minutes: number): string | null {
+    const start = Date.parse(startsAt);
+    if (!Number.isFinite(start) || !isReminderOffset(minutes)) return null;
+    return new Date(start - minutes * 60_000).toISOString();
+}
+
+/** Each selected offset has its own scheduled instant, earliest first. */
+export function visitReminders(visit: Pick<SiteVisit, "startsAt" | "reminders">) {
+    return [...new Set(visit.reminders)]
+        .flatMap((minutes) => {
+            const at = visitReminderAt(visit.startsAt, minutes);
+            return at ? [{ minutes, at, key: `${visit.startsAt}:${minutes}` }] : [];
+        })
+        .sort((a, b) => a.at.localeCompare(b.at));
+}
+
 export function notificationKind(
     visit: SiteVisit,
     now: number,
@@ -183,6 +235,6 @@ export function notificationKind(
     const start = Date.parse(visit.startsAt);
     if (now >= Date.parse(visit.endsAt)) return "attendance";
     if (now >= start) return "start";
-    if (visit.reminderMinutes && now >= start - visit.reminderMinutes * 60_000) return "reminder";
+    if (visitReminders(visit).some((reminder) => now >= Date.parse(reminder.at))) return "reminder";
     return null;
 }

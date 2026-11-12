@@ -8,6 +8,9 @@ import {
     notificationKind,
     type SiteVisit,
     validateDraft,
+    visitReminderAt,
+    visitReminderLabel,
+    visitReminders,
     visitState,
 } from "@/features/new-site-visits/model";
 import {
@@ -32,7 +35,7 @@ const visit: SiteVisit = {
     startsAt: "2030-01-02T04:30:00Z",
     endsAt: "2030-01-02T05:30:00Z",
     status: "scheduled",
-    reminderMinutes: 30,
+    reminders: [30],
     notes: "",
     attendanceNote: "",
     history: [],
@@ -150,7 +153,7 @@ test("optional reminder advances to start and attendance; terminal visits suppre
     assert.equal(notificationKind(visit, Date.parse(visit.startsAt) - 31 * 60_000), null);
     assert.equal(notificationKind(visit, Date.parse(visit.startsAt) - 30 * 60_000), "reminder");
     assert.equal(
-        notificationKind({ ...visit, reminderMinutes: 0 }, Date.parse(visit.startsAt) - 1),
+        notificationKind({ ...visit, reminders: [] }, Date.parse(visit.startsAt) - 1),
         null,
     );
     assert.equal(notificationKind(visit, Date.parse(visit.startsAt)), "start");
@@ -182,12 +185,18 @@ test("visit changes survive storage reloads and invalid links do not overwrite s
         const updated = {
             ...record,
             notes: "Meet at reception",
-            reminderMinutes: 15,
+            reminders: [1440, 90, 15, 0],
             status: "completed" as const,
             attendanceNote: "Client attended",
         };
         await visitPreviewStore.save("test-account", [updated]);
         assert.deepEqual(await visitPreviewStore.list("test-account"), [updated]);
+        for (const reminders of [[30, 30], [-1], [1.5], [365 * 1440 + 1]]) {
+            await assert.rejects(
+                visitPreviewStore.save("test-account", [{ ...updated, reminders }]),
+            );
+            assert.deepEqual(await visitPreviewStore.list("test-account"), [updated]);
+        }
 
         const corrected = { ...updated, status: "not_attended" as const };
         await visitPreviewStore.save("test-account", [corrected]);
@@ -202,8 +211,78 @@ test("visit changes survive storage reloads and invalid links do not overwrite s
         assert.deepEqual(await visitPreviewStore.list("test-account"), [updated]);
         await visitPreviewStore.save("test-account", []);
         assert.deepEqual(await visitPreviewStore.list("test-account"), []);
+
+        const { reminders: _reminders, ...legacy } = record;
+        const key = [...storage.keys()][0];
+        storage.set(
+            key,
+            JSON.stringify({
+                version: 2,
+                visits: [
+                    { ...legacy, reminderMinutes: 30 },
+                    { ...legacy, id: "legacy-without-reminder", reminderMinutes: 0 },
+                ],
+            }),
+        );
+        const migrated = await visitPreviewStore.list("test-account");
+        assert.deepEqual(
+            migrated.map((item) => item.reminders),
+            [[30], []],
+        );
+        const stored = JSON.parse(storage.get(key)!);
+        assert.equal(stored.version, 3);
+        assert.equal("reminderMinutes" in stored.visits[0], false);
+        assert.deepEqual(await visitPreviewStore.list("test-account"), migrated);
     } finally {
         if (previous) Object.defineProperty(globalThis, "sessionStorage", previous);
         else Reflect.deleteProperty(globalThis, "sessionStorage");
     }
+});
+
+test("multiple and custom visit reminders keep distinct IST instants and readable labels", () => {
+    const reminders = visitReminders({ ...visit, reminders: [0, 15, 90, 1440, 90] });
+    assert.deepEqual(
+        reminders.map(({ minutes, at }) => ({ minutes, at })),
+        [
+            { minutes: 1440, at: "2030-01-01T04:30:00.000Z" },
+            { minutes: 90, at: "2030-01-02T03:00:00.000Z" },
+            { minutes: 15, at: "2030-01-02T04:15:00.000Z" },
+            { minutes: 0, at: "2030-01-02T04:30:00.000Z" },
+        ],
+    );
+    assert.equal(new Set(reminders.map((item) => item.key)).size, 4);
+    assert.equal(visitReminderLabel(90), "1 hour 30 minutes before");
+    assert.equal(visitReminderLabel(0), "At visit time");
+    assert.equal(visitReminderAt(visit.startsAt, -1), null);
+    assert.equal(visitReminderAt(visit.startsAt, 0.5), null);
+    assert.equal(visitReminderAt("invalid", 30), null);
+});
+
+test("visit reminder validation rejects duplicates, invalid offsets and newly expired reminders", () => {
+    assert.equal(validateDraft({ ...draft, reminders: [1440, 90, 15, 0] }, [], now).valid, true);
+    for (const reminders of [[15, 15], [-1], [1.5], [365 * 1440 + 1]]) {
+        assert.ok(validateDraft({ ...draft, reminders }, [], now).errors.reminders);
+    }
+    const beforeStart = Date.parse(visit.startsAt) - 10 * 60_000;
+    assert.ok(validateDraft({ ...draft, reminders: [15] }, [], beforeStart).errors.reminders);
+    assert.equal(
+        validateDraft({ ...draft, reminders: [30] }, [visit], beforeStart, visit.id).valid,
+        true,
+    );
+    assert.ok(
+        validateDraft({ ...draft, reminders: [60] }, [visit], beforeStart, visit.id).errors
+            .reminders,
+    );
+    assert.equal(
+        validateDraft({ ...draft, reminders: [] }, [visit], beforeStart, visit.id).valid,
+        true,
+    );
+    assert.ok(
+        validateDraft(
+            { ...draft, startTime: "09:30", reminders: [30] },
+            [visit],
+            Date.parse(visit.startsAt) - 40 * 60_000,
+            visit.id,
+        ).errors.reminders,
+    );
 });

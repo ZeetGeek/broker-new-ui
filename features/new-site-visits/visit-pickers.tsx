@@ -113,12 +113,14 @@ export function VisitDatePicker({
     onChange,
     error,
     recorded = false,
+    disabled = false,
 }: {
     id: string;
     value: string;
     onChange: (value: string) => void;
     error?: string;
     recorded?: boolean;
+    disabled?: boolean;
 }) {
     const [open, setOpen] = useState(false);
     const selected = value ? new Date(`${value}T12:00:00+05:30`) : undefined;
@@ -130,6 +132,7 @@ export function VisitDatePicker({
                         <Button
                             id={id}
                             type="button"
+                            disabled={disabled}
                             variant="outline"
                             size="lg"
                             className={styles.dateTrigger}
@@ -145,9 +148,10 @@ export function VisitDatePicker({
                 <PopoverContent
                     aria-label="Choose visit date"
                     align="start"
-                    className="p-0 inline-auto max-inline-[calc(100vw-1.5rem)]"
+                    className="p-0 inline-[min(21rem,calc(100vw-1.5rem))]"
                 >
                     <Calendar
+                        className="inline-full [&_button]:aspect-auto [&_button]:min-inline-0! [&_table]:table-fixed [&_td]:min-inline-0"
                         mode="single"
                         weekStartsOn={1}
                         timeZone="Asia/Kolkata"
@@ -168,7 +172,7 @@ export function VisitDatePicker({
                 </PopoverContent>
             </Popover>
             {error && (
-                <p id={`${id}-error`} className={styles.fieldError}>
+                <p id={`${id}-error`} role="alert" className={styles.fieldError}>
                     {error}
                 </p>
             )}

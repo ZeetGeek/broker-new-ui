@@ -10,7 +10,7 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-import { getVisitActions, REMINDERS, type SiteVisit, visitState } from "./model";
+import { getVisitActions, type SiteVisit, visitReminderLabel, visitState } from "./model";
 import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
 import { VISIT_ACTIONS } from "./visit-actions";
 import { VisitOverlay } from "./visit-overlay";
@@ -157,9 +157,6 @@ export function VisitDetail({
     const property = PREVIEW_PROPERTIES.find((item) => item.id === visit.propertyId);
     const live = visit.status === "scheduled";
     const ended = state === "needs_update";
-    const reminder =
-        REMINDERS.find((item) => item.value === visit.reminderMinutes)?.label ??
-        "No extra reminder";
     const minutes = Math.round((Date.parse(visit.endsAt) - Date.parse(visit.startsAt)) / 60_000);
     return (
         <VisitOverlay
@@ -256,8 +253,20 @@ export function VisitDetail({
                     <div className={styles.detailLine}>
                         <Bell aria-hidden />
                         <div>
-                            <span>Extra reminder</span>
-                            <strong>{live && !ended ? reminder : "No upcoming reminder"}</strong>
+                            <span>Reminders</span>
+                            {live && !ended && visit.reminders.length ? (
+                                <ul className="flex list-none flex-col gap-1 p-0 text-sm font-semibold">
+                                    {[...visit.reminders]
+                                        .sort((a, b) => b - a)
+                                        .map((minutes) => (
+                                            <li key={minutes}>{visitReminderLabel(minutes)}</li>
+                                        ))}
+                                </ul>
+                            ) : (
+                                <strong>
+                                    {live && !ended ? "No reminders" : "No upcoming reminders"}
+                                </strong>
+                            )}
                         </div>
                     </div>
                 </section>
