@@ -206,6 +206,22 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         }
     }, [deletingListing, refreshListings, isDeletedView]);
 
+    const restoreListing = useCallback(
+        async (listing: MyListingItem) => {
+            setRestoringId(listing.id);
+            try {
+                await myListingsApi.restore(listing.id);
+                toast.success("Property restored to Draft");
+                refreshListings();
+            } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Could not restore property");
+            } finally {
+                setRestoringId(null);
+            }
+        },
+        [refreshListings],
+    );
+
     const loading = !scopeReady || query.isPending;
     const inventoryTotal = summary?.total ?? 0;
     const isFirstRunEmpty =
@@ -295,55 +311,16 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                                     Restore a property as a draft, or delete it permanently. Deal
                                     history stays in Pipeline.
                                 </p>
-                                {query.items.map((listing) => (
-                                    <div
-                                        key={listing.id}
-                                        className="flex flex-col gap-3 rounded-card border border-border-warm bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
-                                    >
-                                        <div className="min-inline-0">
-                                            <h2 className="body font-semibold text-ink">
-                                                {listing.title || "Untitled property"}
-                                            </h2>
-                                            <p className="body-sm text-ink-muted">
-                                                {[listing.locality, listing.city]
-                                                    .filter(Boolean)
-                                                    .join(", ")}
-                                            </p>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            <Button
-                                                variant="outline"
-                                                disabled={restoringId != null || deleteBusy}
-                                                loading={restoringId === listing.id}
-                                                onClick={async () => {
-                                                    setRestoringId(listing.id);
-                                                    try {
-                                                        await myListingsApi.restore(listing.id);
-                                                        toast.success("Property restored to Draft");
-                                                        refreshListings();
-                                                    } catch (error) {
-                                                        toast.error(
-                                                            error instanceof Error
-                                                                ? error.message
-                                                                : "Could not restore property",
-                                                        );
-                                                    } finally {
-                                                        setRestoringId(null);
-                                                    }
-                                                }}
-                                            >
-                                                Restore to Draft
-                                            </Button>
-                                            <Button
-                                                variant="destructive"
-                                                disabled={restoringId != null || deleteBusy}
-                                                onClick={() => setDeletingListing(listing)}
-                                            >
-                                                Delete permanently
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
+                                <MyListingsGrid
+                                    items={query.items}
+                                    portal={portal}
+                                    deletedActions={{
+                                        onRestore: (listing) => void restoreListing(listing),
+                                        onDeletePermanently: setDeletingListing,
+                                        restoringId,
+                                        disabled: deleteBusy,
+                                    }}
+                                />
                             </div>
                         ) : (
                             <MyListingsGrid

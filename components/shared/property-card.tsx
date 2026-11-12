@@ -30,7 +30,9 @@ import {
     CircleCheck,
     Clock,
     MapPin,
+    RotateCcw,
     Send,
+    Trash2,
     UserPlus,
     Users,
     WhatsAppIcon,
@@ -458,6 +460,18 @@ export type PropertyCardProps = {
     onAnalytics?: () => void;
     /** Owned cards: ask to delete this listing (caller shows confirm). */
     onDelete?: () => void;
+    /**
+     * Owned cards in the Deleted tab. Shows a Deleted status, no menu or attach
+     * actions, and a Restore / Delete permanently footer instead of contact buttons.
+     */
+    deleted?: {
+        onRestore: () => void;
+        onDeletePermanently: () => void;
+        /** Restore request in flight for this card. */
+        isRestoring?: boolean;
+        /** Another restore / delete is running: keep both buttons disabled. */
+        disabled?: boolean;
+    };
     /** Saved (bookmarked) state. The Save button shows only when `onToggleSave` is set. */
     isSaved?: boolean;
     onToggleSave?: () => void;
@@ -1034,7 +1048,20 @@ function OwnedOverlayPropertyCard({
     onToggleSave,
     audience = "broker",
     className,
+    deleted,
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
+    if (deleted) {
+        return (
+            <DeletedOwnedPropertyCard
+                listing={listing}
+                deleted={deleted}
+                priority={priority}
+                imageSizes={imageSizes}
+                audience={audience}
+                className={className}
+            />
+        );
+    }
     const isSold = Boolean(listing.isSold);
     const browse = ownedToBrowseListing(listing);
     const isRentOnly = offersRent(browse) && !offersSale(browse);
@@ -1266,6 +1293,105 @@ function OwnedOverlayPropertyCard({
                 </OverlayCardActions>
             </OverlayCard>
         </TooltipProvider>
+    );
+}
+
+/**
+ * Deleted-tab card: same layout as a draft card, read-only. The detail page is
+ * not linked (the listing is gone); the footer restores or removes it for good.
+ */
+function DeletedOwnedPropertyCard({
+    listing,
+    deleted,
+    priority = false,
+    imageSizes = "(max-width: 768px) 100vw, 50vw",
+    audience = "broker",
+    className,
+}: {
+    listing: OwnedPropertyCardListing;
+    deleted: NonNullable<PropertyCardProps["deleted"]>;
+    priority?: boolean;
+    imageSizes?: string;
+    audience?: CommissionAudience;
+    className?: string;
+}) {
+    const browse = ownedToBrowseListing(listing);
+    const headline =
+        formatPropertyCardName(listing.propertyTypeLabel, listing.areaSqft, {
+            bhk: listing.bhk,
+            bathrooms: listing.bathrooms,
+        }) || listing.title;
+    const ownerName = listing.ownerName?.trim() ?? "";
+    const buyers = listing.attachedClients ?? [];
+    const busy = Boolean(deleted.disabled || deleted.isRestoring);
+
+    return (
+        <OverlayCard
+            imageSrc={listing.imageSrc ?? listing.imageSrcs?.[0]}
+            images={listing.imageSrcs}
+            imageAlt={listing.title}
+            imageSizes={imageSizes}
+            priority={priority}
+            muted
+            className={className}
+            chips={
+                <>
+                    {offersSale(browse) ? (
+                        <Badge color="emerald" blur="dark">
+                            For sale
+                        </Badge>
+                    ) : null}
+                    {offersRent(browse) ? (
+                        <Badge color="orange" blur="dark">
+                            For rent
+                        </Badge>
+                    ) : null}
+                </>
+            }
+        >
+            <div className="flex flex-col gap-3.5 min-inline-0">
+                <div className="flex items-center gap-2">
+                    <span className="body-sm text-ink-muted">Status</span>
+                    <Badge color="red">Deleted</Badge>
+                </div>
+
+                <OverlayCardSummary
+                    price={<ListingAskPrices listing={browse} audience={audience} />}
+                    headline={headline}
+                    locationLabel={[listing.locality, listing.city].filter(Boolean).join(", ")}
+                />
+
+                {ownerName ? <OverlayPersonLine label="Owner" name={ownerName} /> : null}
+                {buyers.length ? <AttachedBuyersRow buyers={buyers} /> : null}
+            </div>
+
+            <OverlayCardActions>
+                <Button
+                    variant="outline"
+                    size="md"
+                    type="button"
+                    className="flex-1 min-inline-0"
+                    disabled={busy}
+                    loading={deleted.isRestoring}
+                    onClick={deleted.onRestore}
+                >
+                    <RotateCcw aria-hidden strokeWidth={1.75} />
+                    Restore to Draft
+                </Button>
+                <Button
+                    variant="destructive"
+                    size="md"
+                    type="button"
+                    className="flex-1 min-inline-0"
+                    disabled={busy}
+                    onClick={deleted.onDeletePermanently}
+                    aria-label={"Delete " + (listing.title || "property") + " permanently"}
+                >
+                    <Trash2 aria-hidden strokeWidth={1.75} />
+                    Delete
+                </Button>
+            </OverlayCardActions>
+        </OverlayCard>
     );
 }
 

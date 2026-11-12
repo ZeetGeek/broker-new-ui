@@ -107,7 +107,8 @@ export function OverlayCardSummary({
     locationLabel,
     specsLabel,
 }: {
-    href: string;
+    /** Omit to show the headline as plain text (no detail page). */
+    href?: string;
     priceLabel?: string;
     /** Custom price block. When set, `priceLabel` is ignored. */
     price?: ReactNode;
@@ -122,9 +123,17 @@ export function OverlayCardSummary({
             {price ?? (priceLabel ? <p className={PRICE_CLASS}>{priceLabel}</p> : null)}
             <div className="flex flex-col gap-1 min-inline-0">
                 <h3 className="max-inline-full min-inline-0">
-                    <PropertyTitleLink href={href} className={HEADLINE_CLASS}>
-                        <MarqueeText text={headline} />
-                    </PropertyTitleLink>
+                    {href ? (
+                        <PropertyTitleLink href={href} className={HEADLINE_CLASS}>
+                            <MarqueeText text={headline} />
+                        </PropertyTitleLink>
+                    ) : (
+                        <span
+                            className={cn("block truncate font-semibold text-ink", HEADLINE_CLASS)}
+                        >
+                            <MarqueeText text={headline} />
+                        </span>
+                    )}
                 </h3>
                 <p className={META_LINE_CLASS}>
                     <MapPin
@@ -248,7 +257,8 @@ export function OverlayCardActions({
 }
 
 export type OverlayCardProps = {
-    href: string;
+    /** Omit for a card with no detail page (e.g. a deleted listing). */
+    href?: string;
     imageSrc?: string | null;
     /** Extra photos. More than one turns on the hover arrows. */
     images?: readonly string[];

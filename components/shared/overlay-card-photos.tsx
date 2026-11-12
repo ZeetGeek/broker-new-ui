@@ -1,6 +1,14 @@
 "use client";
 
-import { type MouseEvent, type PointerEvent, useEffect, useRef, useState } from "react";
+import {
+    type DragEvent,
+    type MouseEvent,
+    type PointerEvent,
+    type ReactNode,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 import Link from "next/link";
 
 import useEmblaCarousel from "embla-carousel-react";
@@ -27,13 +35,47 @@ const PHOTO_NAV_BUTTON_CLASS = `
 `;
 
 export type OverlayCardPhotosProps = {
-    href: string;
+    /** Omit for a card with no detail page (e.g. a deleted listing). */
+    href?: string;
     images: readonly string[];
     imageAlt: string;
     imageSizes: string;
     priority?: boolean;
     muted?: boolean;
 };
+
+/** Photo tap target — a link when the card has a detail page, a plain box otherwise. */
+function PhotoLink({
+    href,
+    children,
+    onClick,
+    onDragStart,
+}: {
+    href?: string;
+    children: ReactNode;
+    onClick: (event: MouseEvent) => void;
+    onDragStart: (event: DragEvent) => void;
+}) {
+    if (!href)
+        return (
+            <span className="absolute inset-0 block" onDragStart={onDragStart}>
+                {children}
+            </span>
+        );
+    return (
+        <Link
+            href={href}
+            prefetch={false}
+            tabIndex={-1}
+            aria-hidden
+            className="absolute inset-0 block"
+            onClick={onClick}
+            onDragStart={onDragStart}
+        >
+            {children}
+        </Link>
+    );
+}
 
 function stopControlEvent(event: MouseEvent) {
     event.preventDefault();
@@ -155,12 +197,8 @@ export function OverlayCardPhotos({
                                         : undefined
                                 }
                             >
-                                <Link
+                                <PhotoLink
                                     href={href}
-                                    prefetch={false}
-                                    tabIndex={-1}
-                                    aria-hidden
-                                    className="absolute inset-0 block"
                                     onClick={blockDragClick}
                                     onDragStart={(event) => event.preventDefault()}
                                 >
@@ -184,7 +222,7 @@ export function OverlayCardPhotos({
                                     ) : (
                                         <span className="absolute inset-0 bg-surface-muted" />
                                     )}
-                                </Link>
+                                </PhotoLink>
                             </div>
                         ))}
                     </div>
