@@ -106,6 +106,16 @@ export const EMPTY_DRAFT: VisitDraft = {
     notes: "",
 };
 
+/** A repeat booking links existing records, but starts with a fresh schedule and outcome. */
+export function repeatVisitDraft(visit: SiteVisit): VisitDraft {
+    return {
+        ...EMPTY_DRAFT,
+        clientId: visit.clientId,
+        propertyId: visit.propertyId,
+        reminders: [],
+    };
+}
+
 export function visitState(visit: SiteVisit, now: number): VisitState {
     if (visit.status !== "scheduled") return visit.status;
     if (Date.parse(visit.endsAt) <= now) return "needs_update";
@@ -208,6 +218,34 @@ export function validateDraft(
     } else if (draft.date && draft.startTime && draft.endTime)
         errors.date = "Choose a valid date and time.";
     return { errors, times, valid: Object.keys(errors).length === 0 && times !== null };
+}
+
+/** A same-day duration exists only after both selected times form a valid interval. */
+export function visitDurationMinutes(startTime: string, endTime: string): number | null {
+    const validTime = /^([01]\d|2[0-3]):[0-5]\d$/;
+    if (!validTime.test(startTime) || !validTime.test(endTime)) return null;
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const [endHour, endMinute] = endTime.split(":").map(Number);
+    const minutes = (endHour - startHour) * 60 + endMinute - startMinute;
+    return minutes > 0 ? minutes : null;
+}
+
+/** Keep the chosen duration on the same IST day; never wrap an end time silently. */
+export function visitEndTime(startTime: string, minutes: number): string | null {
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime) || !Number.isInteger(minutes) || minutes <= 0)
+        return null;
+    const [hour, minute] = startTime.split(":").map(Number);
+    const end = hour * 60 + minute + minutes;
+    return end < 1440
+        ? `${String(Math.floor(end / 60)).padStart(2, "0")}:${String(end % 60).padStart(2, "0")}`
+        : null;
+}
+
+export function visitDurationLabel(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const remaining = minutes % 60;
+    if (!hours) return `${remaining} min`;
+    return `${hours} hour${hours === 1 ? "" : "s"}${remaining ? ` ${remaining} min` : ""}`;
 }
 
 export function visitReminderLabel(minutes: number): string {

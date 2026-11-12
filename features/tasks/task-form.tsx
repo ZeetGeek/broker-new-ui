@@ -80,6 +80,7 @@ export function TaskForm({
     onSave,
     onClose,
     error,
+    prefill,
 }: {
     task?: Task;
     mode: "create" | "edit" | "reschedule" | "reminder";
@@ -87,10 +88,13 @@ export function TaskForm({
     onSave: (draft: TaskDraft) => Promise<void>;
     onClose: () => void;
     error?: string;
+    prefill?: Partial<TaskDraft>;
 }) {
     const formId = useId();
     const titleRef = useRef<HTMLInputElement>(null);
-    const [initial] = useState(() => (task ? draftFromTask(task) : newTaskDraft()));
+    const [initial] = useState(() =>
+        task ? draftFromTask(task) : { ...newTaskDraft(), ...prefill },
+    );
     const [draft, setDraft] = useState<TaskDraft>(initial);
     const [now, setNow] = useState(() => Date.now());
     useEffect(() => {

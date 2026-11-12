@@ -6,8 +6,11 @@ import {
     EMPTY_DRAFT,
     getVisitActions,
     notificationKind,
+    repeatVisitDraft,
     type SiteVisit,
     validateDraft,
+    visitDurationMinutes,
+    visitEndTime,
     visitReminderAt,
     visitReminderLabel,
     visitReminders,
@@ -29,6 +32,24 @@ const draft = {
     endTime: "11:00",
 };
 const now = Date.parse("2030-01-01T00:00:00Z");
+
+test("duration shortcuts never silently roll into another day", () => {
+    assert.equal(visitEndTime("10:00", 45), "10:45");
+    assert.equal(visitEndTime("10:45", 30), "11:15");
+    assert.equal(visitEndTime("23:30", 60), null);
+    assert.equal(visitEndTime("25:00", 30), null);
+    assert.equal(visitEndTime("10:00", -1), null);
+});
+
+test("duration reflects selected times and stays unset until both times are valid", () => {
+    assert.equal(visitDurationMinutes("", ""), null);
+    assert.equal(visitDurationMinutes("10:00", ""), null);
+    assert.equal(visitDurationMinutes("", "11:15"), null);
+    assert.equal(visitDurationMinutes("10:00", "11:15"), 75);
+    assert.equal(visitDurationMinutes("10:00", "10:30"), 30);
+    assert.equal(visitDurationMinutes("11:15", "10:00"), null);
+    assert.equal(visitDurationMinutes("10:00", "10:00"), null);
+});
 
 test("site visits allow six reminders and reject a seventh when validating and saving", () => {
     const reminders = [0, 5, 10, 15, 30, 60];
@@ -53,6 +74,36 @@ const visit: SiteVisit = {
     attendanceNote: "",
     history: [],
 };
+
+test("repeat bookings retain linked records without copying dates, reminders or attendance", () => {
+    const original = {
+        ...visit,
+        status: "not_attended" as const,
+        attendanceNote: "Client unavailable",
+        notes: "Old meeting instructions",
+    };
+    const repeated = repeatVisitDraft(original);
+    assert.equal(repeated.clientId, original.clientId);
+    assert.equal(repeated.propertyId, original.propertyId);
+    assert.equal(repeated.date, "");
+    assert.equal(repeated.startTime, "");
+    assert.equal(repeated.endTime, "");
+    assert.equal(repeated.notes, "");
+    assert.deepEqual(repeated.reminders, []);
+    assert.notEqual(repeated.reminders, original.reminders);
+    assert.notEqual(repeated.reminders, EMPTY_DRAFT.reminders);
+    assert.deepEqual(original.reminders, [30]);
+    assert.deepEqual(EMPTY_DRAFT.reminders, []);
+    assert.equal(original.status, "not_attended");
+    assert.equal(
+        validateDraft(
+            { ...repeated, date: "2030-01-03", startTime: "10:00", endTime: "11:00" },
+            [original],
+            now,
+        ).valid,
+        true,
+    );
+});
 
 test("visit times use IST regardless of the device timezone", () => {
     assert.deepEqual(draftTimes(draft), {
