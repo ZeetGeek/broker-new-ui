@@ -61,6 +61,12 @@ export function ReminderPicker({
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
     const sorted = [...reminders].sort((a, b) => b - a);
+    const remove = (minutes: number) => {
+        if (disabled) return;
+        onChange(reminders.filter((value) => value !== minutes));
+        setError("");
+        setNotice(`Removed: ${getReminderLabel(minutes)}.`);
+    };
     const add = (minutes: number) => {
         if (disabled) return;
         setNotice("");
@@ -120,9 +126,7 @@ export function ReminderPicker({
                                     type="button"
                                     disabled={disabled}
                                     aria-label={`Remove ${label.toLowerCase()} reminder`}
-                                    onClick={() =>
-                                        onChange(reminders.filter((value) => value !== minutes))
-                                    }
+                                    onClick={() => remove(minutes)}
                                 >
                                     <X aria-hidden="true" />
                                 </Button>
@@ -171,9 +175,11 @@ export function ReminderPicker({
                                     type="button"
                                     key={reminder.value}
                                     className={styles.preset}
-                                    disabled={selected || disabled}
+                                    disabled={disabled}
                                     aria-pressed={selected}
-                                    onClick={() => add(reminder.value)}
+                                    onClick={() =>
+                                        selected ? remove(reminder.value) : add(reminder.value)
+                                    }
                                 >
                                     <Bell aria-hidden="true" />
                                     <span>{reminder.label}</span>
