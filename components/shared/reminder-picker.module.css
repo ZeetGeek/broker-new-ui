@@ -156,7 +156,10 @@
 .preset[aria-pressed="true"] {
     color: var(--color-brand-text);
     background: var(--color-brand-soft);
-    cursor: default;
+}
+
+.preset[aria-pressed="true"]:hover {
+    background: var(--color-brand-soft-hover);
 }
 
 .preset[aria-pressed="true"] svg {

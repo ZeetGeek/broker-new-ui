@@ -1,248 +1,181 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
-import { istDateKey } from "@/lib/visits/time";
+import { formatVisitDate, istDateKey } from "@/lib/visits/time";
 
-import { Building2, Check, Search } from "@/components/shared/icons";
+import { Building2, CalendarDays, ChevronDown, UserRound } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-import { FlowStep } from "./flow-step";
-import { REMINDERS, type VisitDraft } from "./model";
 import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
 
 import styles from "./visits.module.css";
 
-export function VisitPicker({
+export function VisitEntityCombobox({
     kind,
-    selected,
-    onSelect,
-    onClose,
+    id,
+    value,
+    onChange,
+    disabled,
+    error,
 }: {
     kind: "client" | "property";
-    selected: string;
-    onSelect: (id: string) => void;
-    onClose: () => void;
-}) {
-    const [query, setQuery] = useState("");
-    const needle = query.toLowerCase().trim();
-    const clients = PREVIEW_CLIENTS.filter((c) =>
-        `${c.name} ${c.phoneDigits}`.toLowerCase().includes(needle),
-    );
-    const properties = PREVIEW_PROPERTIES.filter((p) =>
-        `${p.title} ${p.locality} ${p.city}`.toLowerCase().includes(needle),
-    );
-    return (
-        <FlowStep
-            title={`Choose a ${kind}`}
-            description={
-                kind === "client"
-                    ? "Select an existing client. Their record stays linked to this visit."
-                    : "Use a property already in your CRM. No property details to re-enter."
-            }
-            onBack={onClose}
-        >
-            <Input
-                startIcon={Search}
-                aria-label={`Search ${kind === "client" ? "clients" : "properties"}`}
-                placeholder={`Search ${kind === "client" ? "clients by name or phone" : "properties by name or location"}`}
-                value={query}
-                onValueChange={setQuery}
-                clearable
-            />
-            <div className={styles.pickerList}>
-                {kind === "client"
-                    ? clients.map((c) => (
-                          <button
-                              type="button"
-                              key={c.id}
-                              className={styles.option}
-                              aria-pressed={c.id === selected}
-                              onClick={() => onSelect(c.id)}
-                          >
-                              <UserAvatar name={c.name} size="sm" />
-                              <span>
-                                  <strong>{c.name}</strong>
-                                  <small>
-                                      {c.type} · {c.requirement}
-                                  </small>
-                              </span>
-                              {c.id === selected && <Check aria-hidden />}
-                          </button>
-                      ))
-                    : properties.map((p) => (
-                          <button
-                              type="button"
-                              key={p.id}
-                              className={styles.option}
-                              aria-pressed={p.id === selected}
-                              onClick={() => onSelect(p.id)}
-                          >
-                              <span className={styles.propertyIcon}>
-                                  <Building2 aria-hidden />
-                              </span>
-                              <span>
-                                  <strong>{p.title}</strong>
-                                  <small>
-                                      {p.configLabel} · {p.locality}, {p.city}
-                                  </small>
-                              </span>
-                              {p.id === selected && <Check aria-hidden />}
-                          </button>
-                      ))}
-                {(kind === "client" ? clients.length : properties.length) === 0 && (
-                    <p className={styles.emptySearch}>
-                        No {kind === "client" ? "clients" : "properties"} found. Try another name.
-                    </p>
-                )}
-            </div>
-            <p className={styles.muted}>
-                {kind === "client"
-                    ? "One client per visit."
-                    : "The visit links the original property record."}
-            </p>
-        </FlowStep>
-    );
-}
-
-export function DateTimePicker({
-    draft,
-    onApply,
-    onClose,
-}: {
-    draft: VisitDraft;
-    onApply: (patch: Partial<VisitDraft>) => void;
-    onClose: () => void;
-}) {
-    const [date, setDate] = useState(draft.date);
-    const [startTime, setStartTime] = useState(draft.startTime);
-    const [endTime, setEndTime] = useState(draft.endTime);
-    const selected = date ? new Date(`${date}T12:00:00+05:30`) : undefined;
-    return (
-        <FlowStep
-            title="Set visit time"
-            description="Choose the start and end time. All visits use India Standard Time."
-            onBack={onClose}
-        >
-            <div className={styles.datePickerGrid}>
-                <Calendar
-                    mode="single"
-                    weekStartsOn={1}
-                    timeZone="Asia/Kolkata"
-                    selected={selected}
-                    defaultMonth={selected}
-                    onSelect={(value) => setDate(value ? istDateKey(value) : "")}
-                    disabled={{ before: new Date(`${istDateKey(new Date())}T00:00:00+05:30`) }}
-                />
-                <div className={styles.timeFields}>
-                    <label className={styles.field}>
-                        Start time
-                        <Input
-                            type="time"
-                            value={startTime}
-                            onChange={(e) => setStartTime(e.target.value)}
-                            required
-                        />
-                    </label>
-                    <label className={styles.field}>
-                        End time
-                        <Input
-                            type="time"
-                            value={endTime}
-                            onChange={(e) => setEndTime(e.target.value)}
-                            required
-                        />
-                    </label>
-                    <p className={styles.muted}>One client and one property per visit.</p>
-                </div>
-            </div>
-            <div className={styles.actions}>
-                <Button variant="outline" onClick={onClose}>
-                    Cancel
-                </Button>
-                <Button
-                    disabled={!date || !startTime || !endTime || endTime <= startTime}
-                    onClick={() => onApply({ date, startTime, endTime })}
-                >
-                    Use this time
-                </Button>
-            </div>
-        </FlowStep>
-    );
-}
-
-export function ReminderPicker({
-    value,
-    onSave,
-    onClose,
-    busy = false,
-    error = "",
-}: {
-    value: number;
-    onSave: (minutes: number) => void;
-    onClose: () => void;
-    busy?: boolean;
+    id: string;
+    value: string;
+    onChange: (value: string) => void;
+    disabled?: boolean;
     error?: string;
 }) {
-    const [selected, setSelected] = useState(value);
+    const options =
+        kind === "client"
+            ? PREVIEW_CLIENTS.map((client) => ({
+                  value: client.id,
+                  label: client.name,
+                  detail: `${client.type} · ${client.requirement}`,
+                  search: client.phoneDigits,
+              }))
+            : PREVIEW_PROPERTIES.map((property) => ({
+                  value: property.id,
+                  label: property.title,
+                  detail: `${property.configLabel} · ${property.locality}, ${property.city}`,
+                  search: property.address,
+              }));
+    const labelFor = (item: string) => options.find((option) => option.value === item)?.label ?? "";
     return (
-        <FlowStep
-            title="Set an extra reminder"
-            description="Choose an earlier reminder in addition to the start and end notifications."
-            onBack={onClose}
-            aside={
-                <>
-                    <div className={styles.asideSection}>
-                        <h3>Always included</h3>
-                        <p>
-                            At start time
-                            <br />
-                            Your visit moves to Running and you receive a notification.
-                        </p>
-                        <p>
-                            At end time
-                            <br />
-                            You are asked to record attendance or reschedule.
-                        </p>
-                    </div>
-                    <div className={styles.summary}>
-                        <h3>A reminder for you</h3>
-                        <p>These notifications do not message your client.</p>
-                    </div>
-                </>
-            }
+        <Combobox
+            items={options.map((option) => option.value)}
+            value={value || null}
+            disabled={disabled}
+            onValueChange={(next: string | null) => onChange(next ?? "")}
+            itemToStringLabel={labelFor}
+            filter={(item, query) => {
+                const option = options.find((candidate) => candidate.value === item);
+                return `${option?.label} ${option?.detail} ${option?.search}`
+                    .toLowerCase()
+                    .includes(query.trim().toLowerCase());
+            }}
         >
-            <RadioGroup
-                disabled={busy}
-                aria-label="Extra reminder"
-                value={String(selected)}
-                onValueChange={(value) => setSelected(Number(value))}
-            >
-                {REMINDERS.map((r) => (
-                    <label key={r.value} className={styles.reminderOption}>
-                        <RadioGroupItem value={String(r.value)} />
-                        <span>{r.label}</span>
-                        {selected === r.value && <Check aria-hidden />}
-                    </label>
-                ))}
-            </RadioGroup>
+            <ComboboxInput
+                id={id}
+                size="lg"
+                startIcon={kind === "client" ? UserRound : Building2}
+                placeholder={`Select a ${kind}`}
+                errorText={error}
+                disabled={disabled}
+            />
+            <ComboboxContent>
+                <ComboboxEmpty>
+                    No {kind === "client" ? "clients" : "properties"} found. Try another search.
+                </ComboboxEmpty>
+                <ComboboxList>
+                    {(item: string) => {
+                        const option = options.find((candidate) => candidate.value === item);
+                        return (
+                            <ComboboxItem key={item} value={item}>
+                                <span className={styles.entityOption}>
+                                    {kind === "client" ? (
+                                        <UserAvatar name={option?.label ?? "Client"} size="sm" />
+                                    ) : (
+                                        <span className={styles.entityIcon}>
+                                            <Building2 aria-hidden />
+                                        </span>
+                                    )}
+                                    <span>
+                                        <span className={styles.entityName}>{option?.label}</span>
+                                        <span className={styles.entityDetail}>
+                                            {option?.detail}
+                                        </span>
+                                    </span>
+                                </span>
+                            </ComboboxItem>
+                        );
+                    }}
+                </ComboboxList>
+            </ComboboxContent>
+        </Combobox>
+    );
+}
+
+export function VisitDatePicker({
+    id,
+    value,
+    onChange,
+    error,
+    recorded = false,
+    disabled = false,
+}: {
+    id: string;
+    value: string;
+    onChange: (value: string) => void;
+    error?: string;
+    recorded?: boolean;
+    disabled?: boolean;
+}) {
+    const [open, setOpen] = useState(false);
+    const selected = value ? new Date(`${value}T12:00:00+05:30`) : undefined;
+    return (
+        <div>
+            <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger
+                    render={
+                        <Button
+                            id={id}
+                            type="button"
+                            disabled={disabled}
+                            variant="outline"
+                            size="lg"
+                            className={styles.dateTrigger}
+                            aria-invalid={!!error}
+                            aria-describedby={error ? `${id}-error` : undefined}
+                        />
+                    }
+                >
+                    <CalendarDays className="block-4.5 inline-4.5" aria-hidden />
+                    <span>{selected ? formatVisitDate(selected) : "Select a date"}</span>
+                    <ChevronDown className="block-4.5 inline-4.5" aria-hidden />
+                </PopoverTrigger>
+                <PopoverContent
+                    aria-label="Choose visit date"
+                    align="start"
+                    className="p-0 inline-[min(21rem,calc(100vw-1.5rem))]"
+                >
+                    <Calendar
+                        className="inline-full [&_button]:aspect-auto [&_button]:min-inline-0! [&_table]:table-fixed [&_td]:min-inline-0"
+                        mode="single"
+                        weekStartsOn={1}
+                        timeZone="Asia/Kolkata"
+                        selected={selected}
+                        defaultMonth={selected}
+                        onSelect={(date) => {
+                            if (date) {
+                                onChange(istDateKey(date));
+                                setOpen(false);
+                            }
+                        }}
+                        disabled={
+                            recorded
+                                ? { after: new Date(`${istDateKey(new Date())}T23:59:59+05:30`) }
+                                : { before: new Date(`${istDateKey(new Date())}T00:00:00+05:30`) }
+                        }
+                    />
+                </PopoverContent>
+            </Popover>
             {error && (
-                <p role="alert" className={styles.error}>
+                <p id={`${id}-error`} role="alert" className={styles.fieldError}>
                     {error}
                 </p>
             )}
-            <div className={styles.actions}>
-                <Button variant="outline" disabled={busy} onClick={onClose}>
-                    Cancel
-                </Button>
-                <Button disabled={busy} onClick={() => onSave(selected)}>
-                    {busy ? "Saving…" : "Save reminder"}
-                </Button>
-            </div>
-        </FlowStep>
+        </div>
     );
 }

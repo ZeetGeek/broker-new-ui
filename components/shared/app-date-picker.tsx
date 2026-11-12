@@ -311,8 +311,11 @@ export function AppDatePicker({
     disabled,
     invalid,
     allowPast = false,
+    min,
+    max,
     size = "lg",
     className,
+    "aria-describedby": describedBy,
 }: {
     id?: string;
     value: string | null;
@@ -322,7 +325,11 @@ export function AppDatePicker({
     disabled?: boolean;
     invalid?: boolean;
     allowPast?: boolean;
+    /** Inclusive yyyy-MM-dd limits for range fields and constrained scheduling. */
+    min?: string;
+    max?: string;
     className?: string;
+    "aria-describedby"?: string;
 } & VariantProps<typeof datePickerTriggerVariants>) {
     const [open, setOpen] = useState(false);
     const { startYear, endYear, startMonth, endMonth } = useMemo(
@@ -355,6 +362,7 @@ export function AppDatePicker({
                         variant="outline"
                         disabled={disabled}
                         aria-invalid={invalid || undefined}
+                        aria-describedby={describedBy}
                         aria-expanded={open}
                         onBlur={onBlur}
                         className={cn(
@@ -396,7 +404,11 @@ export function AppDatePicker({
                         month={month}
                         onMonthChange={setMonth}
                         hideNavigation
-                        disabled={allowPast ? undefined : { before: today }}
+                        disabled={[
+                            ...(!allowPast ? [{ before: today }] : []),
+                            ...(min ? [{ before: new Date(`${min}T00:00:00`) }] : []),
+                            ...(max ? [{ after: new Date(`${max}T23:59:59`) }] : []),
+                        ]}
                         selected={hasValidDate ? selected : undefined}
                         onSelect={(next) => {
                             onChange(next ? formatDateIso(next) : null);

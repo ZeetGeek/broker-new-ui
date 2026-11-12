@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -10,6 +10,7 @@ import { formatMoneyInput, moneyWordHint, parseMoney } from "@/lib/format/money"
 import { cn } from "@/lib/utils";
 import { dateAtIstOffset, inputValueInIst } from "@/lib/visits/time";
 
+import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppModal } from "@/components/shared/app-modal";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -318,22 +319,21 @@ export default function OutcomeModal({
                     </div>
                     {nextStep === "schedule_followup" ? (
                         <>
-                            <input
-                                type="datetime-local"
-                                step={900}
-                                min={inputValueInIst(new Date())}
-                                aria-invalid={Boolean(form.formState.errors.followUpAt)}
-                                {...form.register("followUpAt")}
-                                className="
-                                  body-sm mbs-3 rounded-control border border-border-warm bg-surface
-                                  px-3 text-ink inline-full min-block-11
-                                "
+                            <Controller
+                                control={form.control}
+                                name="followUpAt"
+                                render={({ field, fieldState }) => (
+                                    <AppDateTimePicker
+                                        {...field}
+                                        value={field.value ?? ""}
+                                        aria-label="Follow-up date and time (IST)"
+                                        minuteStep={15}
+                                        min={inputValueInIst(new Date())}
+                                        className="mbs-3"
+                                        error={fieldState.error?.message}
+                                    />
+                                )}
                             />
-                            {form.formState.errors.followUpAt ? (
-                                <p role="alert" className="body-sm mbs-1.5 text-danger">
-                                    {form.formState.errors.followUpAt.message}
-                                </p>
-                            ) : null}
                         </>
                     ) : null}
                 </fieldset>

@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 
 import { formatShowingWhen } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
+import { inputValueInIst, inputValueToUtc } from "@/lib/visits/time";
 
+import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CircleAlert, TriangleAlert, Zap } from "@/components/shared/icons";
@@ -36,10 +38,7 @@ type VisitRescheduleModalProps = {
 };
 
 function toLocalInputValue(date: Date): string {
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-        date.getHours(),
-    )}:${pad(date.getMinutes())}`;
+    return inputValueInIst(date);
 }
 
 /**
@@ -72,7 +71,10 @@ export function VisitRescheduleModal({
         setDurationMin(visit.durationMin);
     }
 
-    const picked = useMemo(() => new Date(value), [value]);
+    const picked = useMemo(
+        () => (value ? new Date(inputValueToUtc(value)) : new Date(NaN)),
+        [value],
+    );
     const isValidDate = !Number.isNaN(picked.getTime());
 
     const conflicts = useMemo(() => {
@@ -130,17 +132,13 @@ export function VisitRescheduleModal({
                     <label htmlFor="visit-when" className="body-sm font-medium text-ink">
                         New date and time
                     </label>
-                    <input
+                    <AppDateTimePicker
                         id="visit-when"
-                        type="datetime-local"
+                        aria-label="New visit date and time (IST)"
                         min={toLocalInputValue(now)}
                         value={value}
-                        onChange={(event) => setValue(event.target.value)}
-                        className="
-                          body rounded-control border-2 border-border-warm bg-surface px-4 text-ink
-                          block-control-xl
-                          focus-visible:border-brand focus-visible:outline-none
-                        "
+                        onChange={setValue}
+                        disabled={isBusy}
                     />
 
                     <Button

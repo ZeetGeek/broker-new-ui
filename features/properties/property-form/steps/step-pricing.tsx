@@ -12,7 +12,7 @@ import { useMarketCurrency } from "@/hooks/use-market";
 
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
-import { BedDouble, Clock3, Ruler, Users, Utensils } from "@/components/shared/icons";
+import { BedDouble, Ruler, Users, Utensils } from "@/components/shared/icons";
 
 import { HOUSEKEEPING_OPTIONS, PG_BED_TYPE_OPTIONS, PG_GENDER_OPTIONS } from "@/constants/property";
 import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
@@ -25,7 +25,7 @@ import {
     FORM_STACK_CLASS,
     NumberField,
     SelectField,
-    TextField,
+    TimeField,
     ToggleField,
     WizardSection,
 } from "@/features/properties/property-form/form-fields";
@@ -376,12 +376,7 @@ export function StepPricing() {
                                 label="Rent per bed"
                                 placeholder="e.g. 8,000"
                             />
-                            <TextField
-                                name="rent.pg.gateClosingTime"
-                                label="Gate closing time"
-                                type="time"
-                                startIcon={Clock3}
-                            />
+                            <TimeField name="rent.pg.gateClosingTime" label="Gate closing time" />
                             <SelectField
                                 name="rent.pg.housekeepingFrequency"
                                 label="Housekeeping"

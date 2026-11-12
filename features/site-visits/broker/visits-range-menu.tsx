@@ -1,17 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { DateRange } from "react-day-picker";
 
 import { parseApiDateOnly } from "@/lib/datetime/api";
-import { APP_TIME_ZONE } from "@/lib/datetime/timezone";
 import { formatDateIso, formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { AppDateRangeFields } from "@/components/shared/app-date-range-fields";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { CalendarRange, ChevronDown, Search } from "@/components/shared/icons";
-import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogDescription, DialogPopup } from "@/components/ui/dialog";
 import {
     DropdownMenu,
@@ -131,16 +129,11 @@ export function VisitsRangeMenu({
 }) {
     const [pickerOpen, setPickerOpen] = useState(false);
     const isDefault = range === "week";
-    const from = parseKey(customFrom);
-    const to = parseKey(customTo);
-    const [draft, setDraft] = useState<DateRange | undefined>(
-        from || to ? { from, to: to ?? from } : undefined,
-    );
+    const [draft, setDraft] = useState({ from: customFrom, to: customTo });
+    const validRange = !!(draft.from && draft.to && draft.from <= draft.to);
 
     const openCustomPicker = () => {
-        const nextFrom = parseKey(customFrom);
-        const nextTo = parseKey(customTo);
-        setDraft(nextFrom || nextTo ? { from: nextFrom, to: nextTo ?? nextFrom } : undefined);
+        setDraft({ from: customFrom, to: customTo });
         setPickerOpen(true);
     };
 
@@ -214,29 +207,21 @@ export function VisitsRangeMenu({
                     <DialogDescription className="px-(--dialog-pad) pbs-3">
                         {customDescription}
                     </DialogDescription>
-                    <div className="flex justify-center p-3">
-                        <Calendar
-                            timeZone={APP_TIME_ZONE}
-                            mode="range"
-                            autoFocus
-                            selected={draft}
-                            onSelect={setDraft}
-                            defaultMonth={draft?.from ?? new Date()}
-                            numberOfMonths={1}
-                        />
+                    <div className="p-(--dialog-pad)">
+                        <AppDateRangeFields from={draft.from} to={draft.to} onChange={setDraft} />
                     </div>
                     <footer className="border-bs border-border-warm bg-surface px-5 py-4">
                         <AppModalFooter
                             secondaryLabel="Cancel"
                             onSecondary={() => setPickerOpen(false)}
                             primaryLabel="Apply range"
-                            primaryDisabled={!draft?.from}
+                            primaryDisabled={!validRange}
                             onPrimary={() => {
-                                if (!draft?.from) return;
+                                if (!validRange) return;
                                 onRangeChange({
                                     range: "custom",
-                                    customFrom: formatDateIso(draft.from),
-                                    customTo: formatDateIso(draft.to ?? draft.from),
+                                    customFrom: draft.from,
+                                    customTo: draft.to,
                                 });
                                 setPickerOpen(false);
                             }}

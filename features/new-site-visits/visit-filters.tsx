@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 
+import { AppDateRangeFields } from "@/components/shared/app-date-range-fields";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { Dialog, DialogPopup } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { DATE_RANGES, VISIT_TABS } from "./model";
@@ -83,30 +83,7 @@ export function VisitFiltersDialog({
                             onChange={(property) => patch({ property })}
                         />
                         {draft.range === "custom" && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <label className="body-sm flex flex-col gap-2 font-semibold">
-                                    From
-                                    <Input
-                                        type="date"
-                                        value={draft.from}
-                                        onValueChange={(from) => patch({ from })}
-                                    />
-                                </label>
-                                <label className="body-sm flex flex-col gap-2 font-semibold">
-                                    To
-                                    <Input
-                                        type="date"
-                                        min={draft.from || undefined}
-                                        value={draft.to}
-                                        onValueChange={(to) => patch({ to })}
-                                        errorText={
-                                            invalid
-                                                ? "End date must be on or after start date."
-                                                : undefined
-                                        }
-                                    />
-                                </label>
-                            </div>
+                            <AppDateRangeFields from={draft.from} to={draft.to} onChange={patch} />
                         )}
                         <VisitSelect
                             label="Status"

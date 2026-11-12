@@ -13,6 +13,7 @@ import { useMarketCurrency } from "@/hooks/use-market";
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { AppDatePicker } from "@/components/shared/app-date-picker";
+import { AppTimePicker } from "@/components/shared/app-time-picker";
 import { type AppIcon, Check, ChevronDown, Minus, Plus, X } from "@/components/shared/icons";
 import { currencyIcon } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
@@ -155,6 +156,32 @@ export function TextField({
             ) : (
                 input
             )}
+        </FieldShell>
+    );
+}
+
+export function TimeField({ name, label }: { name: Path; label: string }) {
+    const { control } = useFormContext<PropertyDraftValues>();
+    const id = name.replace(/\./g, "-");
+    return (
+        <FieldShell name={name} label={label} composite>
+            <Controller
+                control={control}
+                name={name}
+                render={({ field, fieldState }) => (
+                    <AppTimePicker
+                        id={id}
+                        name={field.name}
+                        inputRef={field.ref}
+                        aria-labelledby={`${id}-label`}
+                        value={typeof field.value === "string" ? field.value : null}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        disabled={field.disabled}
+                        error={fieldState.error?.message}
+                    />
+                )}
+            />
         </FieldShell>
     );
 }

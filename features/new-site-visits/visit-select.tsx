@@ -1,10 +1,11 @@
 "use client";
 
-import { useId } from "react";
+import { type ComponentProps, useId } from "react";
 
 import { cn } from "@/lib/utils";
 
 import { filterChipClassName } from "@/components/shared/filter-chip";
+import type { AppIcon } from "@/components/shared/icons";
 import { ArrowDownUp, ChevronDown } from "@/components/shared/icons";
 import {
     DropdownMenu,
@@ -27,6 +28,8 @@ export function VisitSelect({
     onChange,
     compact = false,
     toolbar = false,
+    size = "default",
+    startIcon,
 }: {
     label: string;
     value: string;
@@ -34,6 +37,8 @@ export function VisitSelect({
     onChange: (value: string) => void;
     compact?: boolean;
     toolbar?: boolean;
+    size?: ComponentProps<typeof SelectTrigger>["size"];
+    startIcon?: AppIcon;
 }) {
     const id = useId();
     if (toolbar) {
@@ -77,7 +82,7 @@ export function VisitSelect({
     return (
         <div className={compact ? "min-inline-36" : "flex flex-col gap-2"}>
             {!compact && (
-                <label className="body-sm font-semibold text-ink" htmlFor={id}>
+                <label className="text-sm font-semibold text-ink" htmlFor={id}>
                     {label}
                 </label>
             )}
@@ -91,7 +96,8 @@ export function VisitSelect({
                 <SelectTrigger
                     id={id}
                     aria-label={label}
-                    size={compact ? "sm" : "default"}
+                    size={compact ? "sm" : size}
+                    startIcon={startIcon}
                     className="inline-full"
                 >
                     <SelectValue />

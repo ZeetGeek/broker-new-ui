@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { DateRange } from "react-day-picker";
 
 import { formatDateIso, formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { AppDateRangeFields } from "@/components/shared/app-date-range-fields";
 import { CalendarRange } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -47,10 +47,8 @@ type VisitsDateRangeProps = {
  * already. This is how a broker answers "what does the rest of the month
  * look like", which is the question the strip cannot.
  *
- * The popover never closes itself. Picking a date updates the list behind
- * it, so staying open lets a broker try a few dates in a row and watch each
- * answer, rather than reopening the calendar between every guess. Dismissal
- * is the user's to make — click outside, or press Escape.
+ * Single-day choices update immediately. Ranges use separate start/end
+ * inputs and apply only once both dates form a valid window.
  */
 export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeProps) {
     const [open, setOpen] = useState(false);
@@ -64,7 +62,8 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
 
     const [mode, setMode] = useState<PickMode>(isRangeFilter ? "range" : "single");
 
-    const selected: DateRange | undefined = from || to ? { from, to } : undefined;
+    const [draftRange, setDraftRange] = useState({ from: dateFrom, to: dateTo });
+    const validRange = !!(draftRange.from && draftRange.to && draftRange.from <= draftRange.to);
 
     /**
      * Switching mode keeps the day the user already picked.
@@ -75,6 +74,7 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
      */
     const handleModeChange = (next: PickMode) => {
         setMode(next);
+        if (next === "range") setDraftRange({ from: dateFrom, to: dateTo });
         if (next === "single" && dateFrom && dateFrom !== dateTo) {
             onChange({ dateFrom, dateTo: dateFrom });
         }
@@ -83,16 +83,6 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
     const handleSelectSingle = (day: Date | undefined) => {
         const key = day ? formatDateIso(day) : "";
         onChange({ dateFrom: key, dateTo: key });
-    };
-
-    const handleSelectRange = (range: DateRange | undefined) => {
-        // react-day-picker reports the in-progress selection too, so the
-        // first click arrives as `{ from }` with no `to`. Writing both ends
-        // from `from` keeps the list showing that single day mid-pick rather
-        // than everything, which is what the click looked like it did.
-        const nextFrom = range?.from ? formatDateIso(range.from) : "";
-        const nextTo = range?.to ? formatDateIso(range.to) : nextFrom;
-        onChange({ dateFrom: nextFrom, dateTo: nextTo });
     };
 
     const label = (() => {
@@ -114,7 +104,10 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
                 // outside this component — the week strip writes the same two
                 // fields — so the mode cannot be settled once at mount.
                 onOpenChange={(next) => {
-                    if (next) setMode(isRangeFilter ? "range" : "single");
+                    if (next) {
+                        setMode(isRangeFilter ? "range" : "single");
+                        setDraftRange({ from: dateFrom, to: dateTo });
+                    }
                     setOpen(next);
                 }}
             >
@@ -138,7 +131,13 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
                     }
                 />
 
-                <PopoverContent align="end" className="p-0 inline-auto">
+                <PopoverContent
+                    align="end"
+                    className={cn(
+                        "p-0 inline-auto",
+                        mode === "range" && "inline-[min(32rem,calc(100vw-1.5rem))]",
+                    )}
+                >
                     <div
                         role="group"
                         aria-label="How to pick dates"
@@ -168,29 +167,36 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
                             numberOfMonths={1}
                         />
                     ) : (
-                        <Calendar
-                            mode="range"
-                            autoFocus
-                            selected={selected}
-                            onSelect={handleSelectRange}
-                            defaultMonth={from ?? new Date()}
-                            numberOfMonths={1}
+                        <AppDateRangeFields
+                            className="p-3"
+                            from={draftRange.from}
+                            to={draftRange.to}
+                            onChange={setDraftRange}
                         />
                     )}
 
-                    {/* Range mode only, and only once there is something to
-                        clear. In single mode every click replaces the one
-                        selected day, so there is no half-finished state to
-                        back out of — and clearing to no date at all is the
-                        one thing the day filter is never meant to be. */}
-                    {mode === "range" && hasRange ? (
-                        <div className="flex justify-end border-bs border-border-warm p-2">
+                    {mode === "range" ? (
+                        <div className="flex justify-end gap-2 border-bs border-border-warm p-2">
                             <Button
                                 variant="link"
                                 size="sm"
-                                onClick={() => onChange({ dateFrom: "", dateTo: "" })}
+                                onClick={() => {
+                                    setDraftRange({ from: "", to: "" });
+                                    onChange({ dateFrom: "", dateTo: "" });
+                                }}
                             >
                                 Clear selection
+                            </Button>
+                            <Button
+                                size="sm"
+                                disabled={!validRange}
+                                onClick={() => {
+                                    if (!validRange) return;
+                                    onChange({ dateFrom: draftRange.from, dateTo: draftRange.to });
+                                    setOpen(false);
+                                }}
+                            >
+                                Apply range
                             </Button>
                         </div>
                     ) : null}

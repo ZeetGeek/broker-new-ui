@@ -11,6 +11,34 @@ two avatars followed by the total count. `AttachedBuyersRow` adds the Clients la
 and empty/attach state for property cards and previews. Keep individual contact
 actions tied to the named person. The draft schema preserves optional avatar URLs.
 
+## Time and date/time pickers
+
+Tasks and visits share `ReminderPicker` from `components/shared/reminder-picker.tsx`
+for multiple preset or custom reminders, removable selections and IST previews.
+Store offsets as a unique `reminders` array in minutes. The zero offset means
+at the task due time or visit start; an empty array means no reminders. Existing
+visit preview records migrate their single reminder without changing its timing.
+
+Use `AppTimePicker` from `components/shared/app-time-picker.tsx` for time-only fields.
+The compact input-style trigger opens the time columns with Now, Clear and OK.
+Values are `HH:mm`; clearing emits an empty string. Now uses IST. Changes commit
+with OK; dismissing the popup discards the pending choice.
+
+Use `AppDateTimePicker` from `components/shared/app-date-time-picker.tsx` when a form
+collects both a date and a time. Its compact trigger opens the combined calendar
+and time columns from `c-time-picker-13`; OK commits the choice. Values are IST
+wall-clock strings, `yyyy-MM-ddTHH:mm`; callers
+keep their existing UTC conversion when saving. Pass `minuteStep`, `min`, `max`,
+and errors to retain the form's restrictions. Tasks use `timeOptional` and
+`clearable` to support a date without a time or an unscheduled task. The layout
+stacks inside the popup on phones. Published availability/booking slots retain their
+slot controls because each choice has its own availability and booking state.
+
+For a time interval on one day, use a separate Date field followed by Start time
+and End time fields, both using `AppTimePicker`. Do not combine the date with
+only the start time. Date ranges use `AppDateRangeFields` for independently
+labelled Start date and End date inputs; invalid reversed ranges cannot apply.
+
 ---
 
 ## First, a correction worth making

@@ -1,6 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
 
+import { isReminderOffset, MAX_REMINDER_MINUTES, reminderLabel } from "@/lib/reminders";
 import { inputValueInIst, inputValueToUtc, istDateKey } from "@/lib/visits/time";
 
 import { type TaskRepeat, taskRepeatSchema } from "./recurrence";
@@ -23,7 +24,7 @@ export const TASK_TABS = [
 export type TaskTab = (typeof TASK_TABS)[number]["value"];
 export type TaskGroup = "overdue" | "today" | "upcoming" | "undated" | "completed";
 
-export const MAX_REMINDER_MINUTES = 365 * 24 * 60;
+export { MAX_REMINDER_MINUTES };
 export const TASK_REMINDERS: { value: number; label: string }[] = [
     { value: 0, label: "At due time" },
     { value: 15, label: "15 minutes before" },
@@ -32,7 +33,7 @@ export const TASK_REMINDERS: { value: number; label: string }[] = [
 ];
 
 export function isTaskReminderOffset(minutes: number): boolean {
-    return Number.isInteger(minutes) && minutes >= 0 && minutes <= MAX_REMINDER_MINUTES;
+    return isReminderOffset(minutes);
 }
 
 const remindersSchema = z
@@ -218,21 +219,7 @@ export function taskDueReminders(task: Task, now = Date.now()): TaskReminder[] {
 }
 
 export function taskReminderLabel(minutes: number): string {
-    if (minutes === 0) return "At due time";
-    if (!isTaskReminderOffset(minutes)) return "Invalid reminder";
-    const units = [
-        { size: 1440, label: "day" },
-        { size: 60, label: "hour" },
-        { size: 1, label: "minute" },
-    ];
-    let remaining = minutes;
-    const parts: string[] = [];
-    for (const { size, label } of units) {
-        const count = Math.floor(remaining / size);
-        if (count) parts.push(`${count} ${label}${count === 1 ? "" : "s"}`);
-        remaining %= size;
-    }
-    return `${parts.join(" ")} before`;
+    return reminderLabel(minutes, "At due time");
 }
 
 export function taskRemindersSummary(task: Pick<Task, "reminders">): string {
