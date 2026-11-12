@@ -625,11 +625,13 @@
     line-height: 1.5;
 }
 .entityIcon {
+    position: relative;
     display: grid;
     place-items: center;
     flex-shrink: 0;
-    inline-size: 32px;
-    block-size: 32px;
+    inline-size: 40px;
+    block-size: 40px;
+    overflow: hidden;
     border-radius: 8px;
     background: var(--color-surface-muted);
     color: var(--color-ink-muted);

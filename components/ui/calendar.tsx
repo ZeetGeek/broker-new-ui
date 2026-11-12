@@ -3,7 +3,7 @@
 import * as React from "react";
 import { type DayButton, DayPicker, getDefaultClassNames, type Locale } from "react-day-picker";
 
-import { cn } from "cn";
+import { cn } from "@/lib/utils";
 
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/shared/icons";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -28,8 +28,8 @@ function Calendar({
             showOutsideDays={showOutsideDays}
             className={cn(
                 `
-                  group/calendar bg-background p-3 [--cell-radius:var(--radius-inner)]
-                  [--cell-size:--spacing(8)]
+                  group/calendar bg-surface p-3 text-ink [--cell-radius:var(--radius-inner)]
+                  [--cell-size:--spacing(11)]
                   in-data-[slot=card-content]:bg-transparent
                   in-data-[slot=popover-content]:bg-transparent
                 `,
@@ -47,7 +47,7 @@ function Calendar({
             classNames={{
                 root: cn("inline-fit", defaultClassNames.root),
                 months: cn("relative flex flex-col gap-4 md:flex-row", defaultClassNames.months),
-                month: cn("flex flex-col gap-4 inline-full", defaultClassNames.month),
+                month: cn("flex flex-col gap-3 inline-full", defaultClassNames.month),
                 nav: cn(
                     `
                       absolute inset-x-0 inset-bs-0 flex items-center justify-between gap-1
@@ -58,7 +58,9 @@ function Calendar({
                 button_previous: cn(
                     buttonVariants({ variant: buttonVariant }),
                     `
-                      p-0 select-none block-(--cell-size) inline-(--cell-size)
+                      p-0 text-brand-text select-none block-(--cell-size)
+                      inline-(--cell-size) hover:bg-brand-soft hover:text-brand-text
+                      active:translate-y-0 active:scale-100
                       aria-disabled:opacity-50
                     `,
                     defaultClassNames.button_previous,
@@ -66,7 +68,9 @@ function Calendar({
                 button_next: cn(
                     buttonVariants({ variant: buttonVariant }),
                     `
-                      p-0 select-none block-(--cell-size) inline-(--cell-size)
+                      p-0 text-brand-text select-none block-(--cell-size)
+                      inline-(--cell-size) hover:bg-brand-soft hover:text-brand-text
+                      active:translate-y-0 active:scale-100
                       aria-disabled:opacity-50
                     `,
                     defaultClassNames.button_next,
@@ -91,7 +95,7 @@ function Calendar({
                 ),
                 dropdown: cn("absolute inset-0 bg-popover opacity-0", defaultClassNames.dropdown),
                 caption_label: cn(
-                    "font-medium select-none",
+                    "font-semibold text-ink select-none",
                     captionLayout === "label"
                         ? "text-sm"
                         : `
@@ -104,12 +108,12 @@ function Calendar({
                 weekdays: cn("flex", defaultClassNames.weekdays),
                 weekday: cn(
                     `
-                      flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground
+                      flex-1 rounded-(--cell-radius) text-xs font-medium text-ink-muted
                       select-none
                     `,
                     defaultClassNames.weekday,
                 ),
-                week: cn("mbs-2 flex inline-full", defaultClassNames.week),
+                week: cn("mbs-1 flex inline-full", defaultClassNames.week),
                 week_number_header: cn(
                     "select-none inline-(--cell-size)",
                     defaultClassNames.week_number_header,
@@ -131,28 +135,22 @@ function Calendar({
                 ),
                 range_start: cn(
                     `
-                      relative isolate z-0 rounded-s-(--cell-radius) bg-muted
-                      after:absolute after:inset-y-0 after:inset-e-0 after:bg-muted after:inline-4
+                      relative isolate z-0 rounded-s-(--cell-radius) bg-brand-soft
+                      after:absolute after:inset-y-0 after:inset-e-0 after:bg-brand-soft after:inline-4
                     `,
                     defaultClassNames.range_start,
                 ),
                 range_middle: cn("rounded-none", defaultClassNames.range_middle),
                 range_end: cn(
                     `
-                      relative isolate z-0 rounded-e-(--cell-radius) bg-muted
-                      after:absolute after:inset-y-0 after:inset-s-0 after:bg-muted after:inline-4
+                      relative isolate z-0 rounded-e-(--cell-radius) bg-brand-soft
+                      after:absolute after:inset-y-0 after:inset-s-0 after:bg-brand-soft after:inline-4
                     `,
                     defaultClassNames.range_end,
                 ),
-                today: cn(
-                    `
-                      rounded-(--cell-radius) bg-muted text-foreground
-                      data-[selected=true]:rounded-none
-                    `,
-                    defaultClassNames.today,
-                ),
+                today: defaultClassNames.today,
                 outside: cn(
-                    "text-muted-foreground aria-selected:text-muted-foreground",
+                    "text-ink-subtle aria-selected:text-brand-text",
                     defaultClassNames.outside,
                 ),
                 disabled: cn("text-muted-foreground opacity-50", defaultClassNames.disabled),
@@ -231,6 +229,7 @@ function CalendarDayButton({
 
     return (
         <Button
+            ref={ref}
             variant="ghost"
             size="icon"
             data-day={day.date.toLocaleDateString(locale?.code)}
@@ -245,24 +244,29 @@ function CalendarDayButton({
             data-range-middle={modifiers.range_middle}
             className={cn(
                 `
-                  relative isolate z-10 flex aspect-square flex-col gap-1 border-0 leading-none
-                  font-normal block-auto inline-full min-inline-(--cell-size)
+                  relative isolate z-10 flex aspect-square flex-col gap-1 rounded-(--cell-radius) border-0
+                  leading-none font-medium text-ink shadow-none block-full inline-full min-inline-0
                   group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10
                   group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-[3px]
-                  group-data-[focused=true]/day:ring-ring/50
+                  group-data-[focused=true]/day:ring-ring/50 hover:bg-brand-soft
+                  hover:text-brand-text active:translate-y-0
+                  active:scale-100
                   data-[range-end=true]:rounded-(--cell-radius)
-                  data-[range-end=true]:rounded-e-(--cell-radius) data-[range-end=true]:bg-primary
-                  data-[range-end=true]:text-primary-foreground
-                  data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-muted
-                  data-[range-middle=true]:text-foreground
+                  data-[range-end=true]:rounded-e-(--cell-radius) data-[range-end=true]:bg-brand
+                  data-[range-end=true]:text-surface
+                  data-[range-end=true]:hover:bg-brand data-[range-end=true]:hover:text-surface
+                  data-[range-middle=true]:rounded-none data-[range-middle=true]:bg-brand-soft
+                  data-[range-middle=true]:text-brand-text
                   data-[range-start=true]:rounded-(--cell-radius)
                   data-[range-start=true]:rounded-s-(--cell-radius)
-                  data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground
-                  data-[selected-single=true]:bg-primary
-                  data-[selected-single=true]:text-primary-foreground
-                  dark:hover:text-foreground
+                  data-[range-start=true]:bg-brand data-[range-start=true]:text-surface
+                  data-[range-start=true]:hover:bg-brand data-[range-start=true]:hover:text-surface
+                  data-[selected-single=true]:bg-brand
+                  data-[selected-single=true]:text-surface
+                  data-[selected-single=true]:hover:bg-brand data-[selected-single=true]:hover:text-surface
                   [&>span]:text-xs [&>span]:opacity-70
                 `,
+                modifiers.today && !modifiers.selected && "bg-brand-soft text-brand-text",
                 defaultClassNames.day,
                 className,
             )}

@@ -138,7 +138,7 @@ function DatePickerDayButton({
                   relative isolate z-10 flex aspect-square items-center justify-center rounded-full
                   border-0 text-[13px] leading-none font-normal text-ink shadow-none block-auto
                   inline-full min-inline-(--cell-size)
-                  hover:bg-surface-muted hover:text-ink
+                  hover:bg-brand-soft hover:text-brand-text
                   focus-visible:ring-2 focus-visible:ring-ring/30
                   active:translate-y-0 active:scale-100
                   data-[selected-single=true]:bg-brand data-[selected-single=true]:font-medium
@@ -146,7 +146,9 @@ function DatePickerDayButton({
                   data-[selected-single=true]:hover:bg-brand
                   data-[selected-single=true]:hover:text-surface
                 `,
-                modifiers.today && !modifiers.selected && "bg-surface-muted font-medium text-ink",
+                modifiers.today &&
+                    !modifiers.selected &&
+                    "bg-brand-soft font-medium text-brand-text",
                 modifiers.outside && "text-ink-subtle/60 hover:text-ink-subtle",
                 modifiers.disabled && "text-ink-muted hover:bg-transparent disabled:opacity-80",
                 defaultClassNames.day,

@@ -587,7 +587,7 @@ export function TimePicker({
     open: openProp,
     defaultOpen = false,
     onOpenChange,
-    hourCycle = 24,
+    hourCycle = 12,
     granularity = "minute",
     periodPosition = "end",
     hourStep,
@@ -1069,7 +1069,10 @@ export function TimePickerContent({
             aria-label={
                 context.labelledBy ? undefined : (context.label ?? context.i18n.labels.panelLabel)
             }
-            className={cn("gap-0 overflow-hidden p-0 inline-auto", className)}
+            className={cn(
+                "gap-0 overflow-hidden rounded-card border-border-warm bg-surface p-0 text-ink inline-auto",
+                className,
+            )}
             onKeyDown={(event) => {
                 onKeyDown?.(event);
                 if (event.defaultPrevented || event.key !== "Tab") return;
@@ -1153,7 +1156,7 @@ export function TimePickerColumns({ className, children, ref, ...props }: TimePi
         <div
             dir="ltr"
             data-slot="time-picker-columns"
-            className={cn("flex divide-x", className)}
+            className={cn("flex divide-x divide-border-warm", className)}
             {...props}
             ref={(node) => {
                 context.registerColumns(node);
@@ -1184,13 +1187,13 @@ const LIST_SELECTOR = '[data-slot="time-picker-column-list"]:not([aria-disabled=
    per style, as custom properties so a list is exactly N rows tall. Lyra's
    group has no padding; it gets 4px here so the focus ring never clips. */
 const COLUMN_CLASS =
-    "group/time-picker-column flex min-w-16 flex-1 flex-col [--time-picker-option-height:calc(var(--spacing)*11)] [--time-picker-list-padding:calc(var(--spacing)*1.5)]";
+    "group/time-picker-column flex min-w-24 flex-1 flex-col [--time-picker-option-height:calc(var(--spacing)*11)] [--time-picker-list-padding:calc(var(--spacing)*1.5)]";
 
 /* The shadcn Select label, centered, with a little more room on top so the
    header clears the surface edge. It gains contrast while its list has
    keyboard focus, which says which column the arrows move. */
 const LABEL_CLASS =
-    "text-muted-foreground text-center text-xs whitespace-nowrap transition-colors select-none group-has-focus-visible/time-picker-column:text-foreground px-3 pt-3 pb-2.5";
+    "text-ink-muted text-center text-xs font-semibold whitespace-nowrap transition-colors select-none group-has-focus-visible/time-picker-column:text-brand-text px-3 pt-3 pb-2.5";
 
 /* Five rows unless an ancestor sets `--time-picker-rows`; keep it odd so the
    selection can sit in the middle. The fade masks only an end with rows
@@ -1204,7 +1207,7 @@ const LIST_CLASS =
    leaves room for it. The filled pill for the value is this primitive's own:
    a select marks its choice with a check. */
 const OPTION_CLASS =
-    "flex h-(--time-picker-option-height) shrink-0 cursor-default items-center justify-center tabular-nums transition-[color,background-color,box-shadow] duration-100 select-none not-aria-selected:hover:bg-accent not-aria-selected:hover:text-accent-foreground aria-selected:bg-primary aria-selected:font-medium aria-selected:text-primary-foreground aria-disabled:pointer-events-none aria-disabled:opacity-50 forced-colors:aria-selected:bg-[Highlight] forced-colors:aria-selected:text-[HighlightText] forced-colors:group-focus-visible/time-picker-list:data-highlighted:outline-solid forced-colors:group-focus-visible/time-picker-list:data-highlighted:outline-2 group-focus-visible/time-picker-list:data-highlighted:ring-3 ring-ring/30 rounded-2xl text-sm font-medium";
+    "flex h-(--time-picker-option-height) shrink-0 cursor-pointer items-center justify-center tabular-nums transition-[color,background-color,box-shadow] duration-100 select-none text-ink not-aria-selected:hover:bg-brand-soft not-aria-selected:hover:text-brand-text aria-selected:bg-brand aria-selected:font-semibold aria-selected:text-surface aria-disabled:pointer-events-none aria-disabled:opacity-50 forced-colors:aria-selected:bg-[Highlight] forced-colors:aria-selected:text-[HighlightText] forced-colors:group-focus-visible/time-picker-list:data-highlighted:outline-solid forced-colors:group-focus-visible/time-picker-list:data-highlighted:outline-2 group-focus-visible/time-picker-list:data-highlighted:ring-3 ring-ring/30 rounded-lg text-sm font-medium";
 
 /* Marks which ends of a list have rows scrolled out of view, for the fade.
    Written to the DOM directly: it changes every scroll frame and nothing
@@ -1580,21 +1583,21 @@ function findLast<T>(items: T[], test: (item: T) => boolean) {
 /* -------------------------------------------------------------------------- */
 
 /* Padding keeps the buttons clear of the popover's corner radius per style. */
-const FOOTER_CLASS = "flex items-center justify-between gap-2 border-t p-2.5";
+const FOOTER_CLASS =
+    "flex items-center justify-between gap-2 border-bs border-border-warm bg-surface p-2.5";
 
 export type TimePickerFooterProps = ComponentProps<"div">;
 
-/** The action row. Without children: Now and Clear, plus OK in a popover or under `requireConfirm`. */
+/** Now and Clear; explicit draft-based pickers also show a confirmation action. */
 export function TimePickerFooter({ className, children, ...props }: TimePickerFooterProps) {
     const context = useTimePickerContext("TimePickerFooter");
-    const popup = useContext(SurfaceContext) === "popup";
     return (
         <div data-slot="time-picker-footer" className={cn(FOOTER_CLASS, className)} {...props}>
             {children === undefined ? (
                 <>
                     <TimePickerNow />
                     <TimePickerClear />
-                    {(popup || context.requireConfirm) && <TimePickerConfirm />}
+                    {context.requireConfirm && <TimePickerConfirm />}
                 </>
             ) : (
                 children
@@ -1611,6 +1614,7 @@ export function TimePickerNow({
     size = "sm",
     onClick,
     children,
+    className,
     ...props
 }: TimePickerActionProps) {
     const context = useTimePickerContext("TimePickerNow");
@@ -1621,6 +1625,7 @@ export function TimePickerNow({
             size={size}
             disabled={context.disabled || context.readOnly}
             data-slot="time-picker-now"
+            className={cn("text-brand-text hover:bg-brand-soft hover:text-brand-text", className)}
             onClick={(event) => {
                 onClick?.(event);
                 if (!event.defaultPrevented) pickNow(context);
@@ -1678,7 +1683,7 @@ export function TimePickerConfirm({
     return (
         <Button
             type="button"
-            variant={variant ?? (context.requireConfirm ? "default" : "secondary")}
+            variant={variant ?? "accent"}
             size={size}
             disabled={context.disabled}
             data-slot="time-picker-confirm"
