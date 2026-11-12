@@ -23,7 +23,20 @@ export function buildPropertyShareUrl(propertyId: string): string {
 }
 
 export function buildPropertyShareText(input: PropertyShareInput): string {
-    return `${input.title} · ${input.locality}, ${input.city} · ${input.priceLabel} — view on ${APP_NAME}`;
+    const title = input.title.trim();
+    const placeParts = [input.locality, input.city]
+        .map((part) => part?.trim() ?? "")
+        .filter(Boolean);
+    // Most titles already end "in Locality, City"; only add the place when it is missing.
+    const titleNamesPlace = placeParts.some((part) =>
+        title.toLowerCase().includes(part.toLowerCase()),
+    );
+    const parts = [
+        title,
+        titleNamesPlace ? "" : placeParts.join(", "),
+        input.priceLabel.trim(),
+    ].filter(Boolean);
+    return `${parts.join(" · ")} — view on ${APP_NAME}`;
 }
 
 export function buildWhatsAppShareUrl(url: string, text: string): string {
