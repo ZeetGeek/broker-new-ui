@@ -1,10 +1,11 @@
 "use client";
 
 import { useId, useState } from "react";
+import Link from "next/link";
 
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
-import { CalendarDays, Clock, MapPin } from "@/components/shared/icons";
+import { CalendarDays, CalendarPlus, Clock, MapPin, Plus } from "@/components/shared/icons";
 import { PropertyPhotoGallery } from "@/components/shared/property-photo-gallery";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -150,6 +151,7 @@ export function VisitDetail({
     onConfirm,
     onEdit,
     onDelete,
+    onScheduleAnother,
 }: {
     visit: SiteVisit;
     now: number;
@@ -158,6 +160,7 @@ export function VisitDetail({
     onConfirm: (intent: VisitIntent) => void;
     onEdit: () => void;
     onDelete: () => void;
+    onScheduleAnother: () => void;
 }) {
     const state = visitState(visit, now);
     const client = PREVIEW_CLIENTS.find((item) => item.id === visit.clientId);
@@ -175,6 +178,23 @@ export function VisitDetail({
             onClose={onBack}
             footer={(close) => (
                 <div className={styles.detailFooter}>
+                    <Button size="sm" variant="outline" disabled={busy} onClick={onScheduleAnother}>
+                        <CalendarPlus aria-hidden />
+                        Schedule another visit
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy}
+                        render={
+                            <Link
+                                href={`/broker/tasks?${new URLSearchParams({ view: "create", visitClient: visit.clientId, visitProperty: visit.propertyId, visitTitle: `Follow up with ${client?.name ?? "client"} after ${property?.title ?? "site visit"}` })}`}
+                            />
+                        }
+                    >
+                        <Plus aria-hidden />
+                        Create follow-up task
+                    </Button>
                     {getVisitActions(visit, now)
                         .sort((a, b) => {
                             const rank = (action: string) =>

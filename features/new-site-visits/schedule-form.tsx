@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useId, useState } from "react";
+import { type FormEvent, Fragment, useId, useState } from "react";
 
 import { formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
@@ -9,7 +9,15 @@ import { Bell, Clock } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-import { EMPTY_DRAFT, type SiteVisit, validateDraft, type VisitDraft } from "./model";
+import {
+    EMPTY_DRAFT,
+    type SiteVisit,
+    validateDraft,
+    type VisitDraft,
+    visitDurationLabel,
+    visitDurationMinutes,
+    visitEndTime,
+} from "./model";
 import { VisitOverlay } from "./visit-overlay";
 import { VisitDatePicker, VisitEntityCombobox } from "./visit-pickers";
 import { VisitReminderPicker } from "./visit-reminder-picker";
@@ -51,6 +59,18 @@ export function ScheduleForm({
     );
     const [draft, setDraft] = useState(initial);
     const [submitted, setSubmitted] = useState(false);
+    const [manualDuration, setManualDuration] = useState(() =>
+        visitDurationMinutes(initial.startTime, initial.endTime),
+    );
+    const duration = visitDurationMinutes(draft.startTime, draft.endTime);
+    const presets = [30, 45, 60];
+    const customDuration =
+        manualDuration !== null && !presets.includes(manualDuration)
+            ? manualDuration
+            : duration !== null && !presets.includes(duration)
+              ? duration
+              : null;
+    const durationOptions = customDuration !== null ? [customDuration, ...presets] : presets;
     const patch = (next: Partial<VisitDraft>) => setDraft((current) => ({ ...current, ...next }));
     const { errors, valid } = validateDraft(draft, visits, now, visit?.id);
     const conflict = visits.find((candidate) => candidate.id === errors.conflict);
@@ -149,7 +169,25 @@ export function ScheduleForm({
                                         id={`${formId}-start`}
                                         aria-label="Visit start time (IST)"
                                         value={draft.startTime}
-                                        onChange={(startTime) => patch({ startTime })}
+                                        onChange={(startTime) => {
+                                            if (duration === null) {
+                                                const chosen = visitDurationMinutes(
+                                                    startTime,
+                                                    draft.endTime,
+                                                );
+                                                if (chosen !== null) setManualDuration(chosen);
+                                            }
+                                            patch({
+                                                startTime,
+                                                ...(duration !== null
+                                                    ? {
+                                                          endTime:
+                                                              visitEndTime(startTime, duration) ??
+                                                              "",
+                                                      }
+                                                    : {}),
+                                            });
+                                        }}
                                         error={submitted ? errors.startTime : undefined}
                                         disabled={busy}
                                         required
@@ -164,13 +202,63 @@ export function ScheduleForm({
                                         id={`${formId}-end`}
                                         aria-label="Visit end time (IST)"
                                         value={draft.endTime}
-                                        onChange={(endTime) => patch({ endTime })}
+                                        onChange={(endTime) => {
+                                            patch({ endTime });
+                                            const chosen = visitDurationMinutes(
+                                                draft.startTime,
+                                                endTime,
+                                            );
+                                            if (chosen !== null) setManualDuration(chosen);
+                                        }}
                                         error={submitted ? errors.endTime : undefined}
                                         disabled={busy}
                                         required
                                     />
                                 </div>
                             </div>
+                            {draft.date && duration !== null && (
+                                <div
+                                    role="group"
+                                    aria-label="Visit duration"
+                                    className="flex flex-wrap items-center gap-2"
+                                >
+                                    <span className="body-sm text-ink-muted">Duration</span>
+                                    {durationOptions.map((minutes, index) => (
+                                        <Fragment key={minutes}>
+                                            {customDuration !== null && index === 1 && (
+                                                <span
+                                                    aria-hidden="true"
+                                                    className="mx-1 shrink-0 bg-ink/20 block-6 inline-px"
+                                                />
+                                            )}
+                                            <Button
+                                                type="button"
+                                                variant={
+                                                    duration === minutes ? "accent" : "outline"
+                                                }
+                                                size="sm"
+                                                aria-pressed={duration === minutes}
+                                                disabled={
+                                                    busy ||
+                                                    visitEndTime(draft.startTime, minutes) === null
+                                                }
+                                                onClick={() => {
+                                                    if (draft.startTime)
+                                                        patch({
+                                                            endTime:
+                                                                visitEndTime(
+                                                                    draft.startTime,
+                                                                    minutes,
+                                                                ) ?? "",
+                                                        });
+                                                }}
+                                            >
+                                                {visitDurationLabel(minutes)}
+                                            </Button>
+                                        </Fragment>
+                                    ))}
+                                </div>
+                            )}
                             {conflict && (
                                 <p role="alert" className={styles.conflict}>
                                     <Clock aria-hidden />

@@ -134,7 +134,13 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     });
     const close = () => {
         setError("");
-        navigate({ view: undefined, task: undefined });
+        navigate({
+            view: undefined,
+            task: undefined,
+            visitClient: undefined,
+            visitProperty: undefined,
+            visitTitle: undefined,
+        });
     };
     const intent = (task: Task, nextView: string) => {
         setError("");
@@ -142,7 +148,13 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     };
     const create = () => {
         setError("");
-        navigate({ task: undefined, view: "create" });
+        navigate({
+            task: undefined,
+            view: "create",
+            visitClient: undefined,
+            visitProperty: undefined,
+            visitTitle: undefined,
+        });
     };
     const clear = () => navigate({ q: undefined, due: undefined, linked: undefined }, true);
     const commit = async (next: Task[], message: string, after?: () => void) => {
@@ -222,7 +234,14 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                       ? "Reminder updated"
                       : "Task updated"
                 : "Task created",
-            () => navigate({ view: "detail", task: next.id }),
+            () =>
+                navigate({
+                    view: "detail",
+                    task: next.id,
+                    visitClient: undefined,
+                    visitProperty: undefined,
+                    visitTitle: undefined,
+                }),
         );
     };
     const filtered = !!(due || linked || search.trim());
@@ -469,8 +488,19 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             )}
             {view === "create" && (
                 <TaskForm
-                    key="create"
+                    key={`create-${params.get("visitClient") ?? ""}-${params.get("visitProperty") ?? ""}-${params.get("visitTitle") ?? ""}`}
                     mode="create"
+                    prefill={{
+                        title: (params.get("visitTitle") ?? "").slice(0, 160),
+                        clientId: TASK_CLIENTS.some((item) => item.id === params.get("visitClient"))
+                            ? params.get("visitClient")!
+                            : "",
+                        propertyId: TASK_PROPERTIES.some(
+                            (item) => item.id === params.get("visitProperty"),
+                        )
+                            ? params.get("visitProperty")!
+                            : "",
+                    }}
                     busy={busy}
                     onSave={saveDraft}
                     onClose={close}

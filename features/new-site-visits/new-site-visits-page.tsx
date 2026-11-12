@@ -13,6 +13,7 @@ import { useAppSelector } from "@/store/hooks";
 
 import {
     getVisitActions,
+    repeatVisitDraft,
     type SiteVisit,
     validateDraft,
     VISIT_TABS,
@@ -60,6 +61,8 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
     const [error, setError] = useState("");
     const savingRef = useRef(false);
     const [editorParentId, setEditorParentId] = useState<string | null>(null);
+    const [scheduleSourceId, setScheduleSourceId] = useState<string | null>(null);
+    const scheduleSource = visits.find((visit) => visit.id === scheduleSourceId);
     const [filtersOpen, setFiltersOpen] = useState(false);
     const [filterRange, setFilterRange] = useState<string | null>(null);
     const [confirmation, setConfirmation] = useState<{ id: string; intent: VisitIntent } | null>(
@@ -85,6 +88,7 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
         setView(null);
         setSelectedId(null);
         setEditorParentId(null);
+        setScheduleSourceId(null);
     };
     const openVisit = (id: string) => {
         setError("");
@@ -92,12 +96,14 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
         setView("detail");
     };
     const closeEditor = () => {
+        setScheduleSourceId(null);
         if (editorParentId) openVisit(editorParentId);
         else back();
     };
-    const schedule = () => {
+    const schedule = (source?: SiteVisit) => {
         setError("");
-        setEditorParentId(null);
+        setEditorParentId(source?.id ?? null);
+        setScheduleSourceId(source?.id ?? null);
         setSelectedId(null);
         setView("schedule");
     };
@@ -166,7 +172,11 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
         await commit(
             editing ? visits.map((v) => (v.id === editing.id ? next : v)) : [...visits, next],
             () => {
-                back();
+                if (scheduleSourceId && !editing) {
+                    setEditorParentId(null);
+                    setScheduleSourceId(null);
+                    openVisit(next.id);
+                } else back();
                 toast.success(editing ? "Visit updated" : "Visit scheduled");
             },
         );
@@ -388,8 +398,13 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
                 ) : view === "schedule" ||
                   (view === "edit" && selected && selected.status !== "cancelled") ? (
                     <ScheduleForm
-                        key={`${view}-${selected?.id ?? "new"}-${selected?.startsAt ?? ""}`}
+                        key={`${view}-${scheduleSourceId ?? selected?.id ?? "new"}-${selected?.startsAt ?? ""}`}
                         visit={view === "schedule" ? undefined : selected}
+                        prefill={
+                            view === "schedule" && scheduleSource
+                                ? repeatVisitDraft(scheduleSource)
+                                : undefined
+                        }
                         visits={visits}
                         now={now}
                         busy={busy}
@@ -404,6 +419,7 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
                         busy={busy}
                         onBack={back}
                         onEdit={editFromDetail}
+                        onScheduleAnother={() => schedule(selected)}
                         onDelete={() => handleAction(selected.id, "delete")}
                         onConfirm={(intent) => {
                             setError("");
