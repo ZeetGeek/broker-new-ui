@@ -2,31 +2,17 @@
 
 import { type FormEvent, useId, useState } from "react";
 
-import { formatVisitTime, inputValueInIst, inputValueToUtc } from "@/lib/visits/time";
+import { formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
 import { AppTimePicker } from "@/components/shared/app-time-picker";
 import { Bell, Clock } from "@/components/shared/icons";
-import { ReminderPicker } from "@/components/shared/reminder-picker";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-import {
-    FORM_SECTIONS_CLASS,
-    FORM_STACK_CLASS,
-    WizardSection,
-} from "@/features/properties/property-form/form-fields";
-
-import {
-    EMPTY_DRAFT,
-    type SiteVisit,
-    validateDraft,
-    VISIT_REMINDERS,
-    type VisitDraft,
-    visitReminderAt,
-    visitReminderLabel,
-} from "./model";
+import { EMPTY_DRAFT, type SiteVisit, validateDraft, type VisitDraft } from "./model";
 import { VisitOverlay } from "./visit-overlay";
 import { VisitDatePicker, VisitEntityCombobox } from "./visit-pickers";
+import { VisitReminderPicker } from "./visit-reminder-picker";
 
 import styles from "./visits.module.css";
 
@@ -107,151 +93,131 @@ export function ScheduleForm({
         >
             <form id={formId} onSubmit={submit} noValidate>
                 <fieldset disabled={busy} className="m-0 border-0 p-0 min-inline-0">
-                    <div className={FORM_SECTIONS_CLASS}>
-                        <WizardSection title="Client & property">
-                            <div className={FORM_STACK_CLASS}>
-                                <div className={styles.field}>
-                                    <label htmlFor={`${formId}-client`}>
-                                        Client <span className={styles.required}>*</span>
-                                    </label>
-                                    <VisitEntityCombobox
-                                        id={`${formId}-client`}
-                                        kind="client"
-                                        value={draft.clientId}
-                                        onChange={(clientId) => patch({ clientId })}
-                                        disabled={busy}
-                                        error={submitted ? errors.clientId : undefined}
-                                    />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={`${formId}-property`}>
-                                        Property <span className={styles.required}>*</span>
-                                    </label>
-                                    <VisitEntityCombobox
-                                        id={`${formId}-property`}
-                                        kind="property"
-                                        value={draft.propertyId}
-                                        onChange={(propertyId) => patch({ propertyId })}
-                                        disabled={busy}
-                                        error={submitted ? errors.propertyId : undefined}
-                                    />
-                                </div>
-                            </div>
-                        </WizardSection>
-                        <WizardSection title="Date & time (IST)">
-                            <div className={FORM_STACK_CLASS}>
-                                <div className={styles.field}>
-                                    <label htmlFor={`${formId}-date`}>
-                                        Visit date <span className={styles.required}>*</span>
-                                    </label>
-                                    <VisitDatePicker
-                                        id={`${formId}-date`}
-                                        value={draft.date}
-                                        onChange={(date) => patch({ date })}
-                                        recorded={
-                                            visit?.status === "completed" ||
-                                            visit?.status === "not_attended"
-                                        }
-                                        disabled={busy}
-                                        error={submitted ? errors.date : undefined}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                    <div className={styles.field}>
-                                        <label htmlFor={`${formId}-start`}>
-                                            Start time <span className={styles.required}>*</span>
-                                        </label>
-                                        <AppTimePicker
-                                            id={`${formId}-start`}
-                                            aria-label="Visit start time (IST)"
-                                            value={draft.startTime}
-                                            onChange={(startTime) => patch({ startTime })}
-                                            error={submitted ? errors.startTime : undefined}
-                                            disabled={busy}
-                                            required
-                                        />
-                                    </div>
-                                    <div className={styles.field}>
-                                        <label htmlFor={`${formId}-end`}>
-                                            End time <span className={styles.required}>*</span>
-                                        </label>
-                                        <AppTimePicker
-                                            id={`${formId}-end`}
-                                            aria-label="Visit end time (IST)"
-                                            value={draft.endTime}
-                                            onChange={(endTime) => patch({ endTime })}
-                                            error={submitted ? errors.endTime : undefined}
-                                            disabled={busy}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                                {conflict && (
-                                    <p role="alert" className={styles.conflict}>
-                                        <Clock aria-hidden />
-                                        <span>
-                                            You already have a visit from{" "}
-                                            {formatVisitTime(conflict.startsAt)} to{" "}
-                                            {formatVisitTime(conflict.endsAt)}. Choose another time.
-                                        </span>
-                                    </p>
-                                )}
-                            </div>
-                        </WizardSection>
-                        <WizardSection title="Reminders & notes">
-                            <div className={FORM_STACK_CLASS}>
-                                {draft.date && draft.startTime ? (
-                                    <ReminderPicker
-                                        reminders={draft.reminders}
-                                        getReminderAt={(minutes) => {
-                                            try {
-                                                return visitReminderAt(
-                                                    inputValueToUtc(
-                                                        `${draft.date}T${draft.startTime}`,
-                                                    ),
-                                                    minutes,
-                                                );
-                                            } catch {
-                                                return null;
-                                            }
-                                        }}
-                                        getReminderLabel={visitReminderLabel}
-                                        presets={VISIT_REMINDERS}
-                                        subjectLabel="visit"
-                                        scheduleLabel="visit date and start time"
-                                        hint="Reminder times are based on the visit start. All times are IST."
-                                        now={now}
-                                        onChange={(reminders) => patch({ reminders })}
-                                        disabled={busy}
-                                    />
-                                ) : (
-                                    <p className="body-sm flex items-center gap-2 text-ink-muted">
-                                        <Bell
-                                            aria-hidden="true"
-                                            className="shrink-0 block-4 inline-4"
-                                        />
-                                        Add a visit date and start time to set one or more
-                                        reminders.
-                                    </p>
-                                )}
-                                {submitted && errors.reminders && (
-                                    <p role="alert" className={styles.fieldError}>
-                                        {errors.reminders}
-                                    </p>
-                                )}
-                                <label className={styles.field}>
-                                    Notes (optional)
-                                    <Textarea
-                                        className={styles.notesInput}
-                                        value={draft.notes}
-                                        onChange={(event) => patch({ notes: event.target.value })}
-                                        maxLength={2000}
-                                        rows={3}
-                                        placeholder="Meeting point or anything to remember"
-                                    />
+                    <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-4">
+                            <div className={styles.field}>
+                                <label htmlFor={`${formId}-client`}>
+                                    Client <span className={styles.required}>*</span>
                                 </label>
+                                <VisitEntityCombobox
+                                    id={`${formId}-client`}
+                                    kind="client"
+                                    value={draft.clientId}
+                                    onChange={(clientId) => patch({ clientId })}
+                                    disabled={busy}
+                                    error={submitted ? errors.clientId : undefined}
+                                />
                             </div>
-                        </WizardSection>
+                            <div className={styles.field}>
+                                <label htmlFor={`${formId}-property`}>
+                                    Property <span className={styles.required}>*</span>
+                                </label>
+                                <VisitEntityCombobox
+                                    id={`${formId}-property`}
+                                    kind="property"
+                                    value={draft.propertyId}
+                                    onChange={(propertyId) => patch({ propertyId })}
+                                    disabled={busy}
+                                    error={submitted ? errors.propertyId : undefined}
+                                />
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-4">
+                            <div className={styles.field}>
+                                <label htmlFor={`${formId}-date`}>
+                                    Visit date <span className={styles.required}>*</span>
+                                </label>
+                                <VisitDatePicker
+                                    id={`${formId}-date`}
+                                    value={draft.date}
+                                    onChange={(date) => patch({ date })}
+                                    recorded={
+                                        visit?.status === "completed" ||
+                                        visit?.status === "not_attended"
+                                    }
+                                    disabled={busy}
+                                    error={submitted ? errors.date : undefined}
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div className={styles.field}>
+                                    <label htmlFor={`${formId}-start`}>
+                                        Start time (IST) <span className={styles.required}>*</span>
+                                    </label>
+                                    <AppTimePicker
+                                        className={styles.timeInput}
+                                        id={`${formId}-start`}
+                                        aria-label="Visit start time (IST)"
+                                        value={draft.startTime}
+                                        onChange={(startTime) => patch({ startTime })}
+                                        error={submitted ? errors.startTime : undefined}
+                                        disabled={busy}
+                                        required
+                                    />
+                                </div>
+                                <div className={styles.field}>
+                                    <label htmlFor={`${formId}-end`}>
+                                        End time (IST) <span className={styles.required}>*</span>
+                                    </label>
+                                    <AppTimePicker
+                                        className={styles.timeInput}
+                                        id={`${formId}-end`}
+                                        aria-label="Visit end time (IST)"
+                                        value={draft.endTime}
+                                        onChange={(endTime) => patch({ endTime })}
+                                        error={submitted ? errors.endTime : undefined}
+                                        disabled={busy}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            {conflict && (
+                                <p role="alert" className={styles.conflict}>
+                                    <Clock aria-hidden />
+                                    <span>
+                                        You already have a visit from{" "}
+                                        {formatVisitTime(conflict.startsAt)} to{" "}
+                                        {formatVisitTime(conflict.endsAt)}. Choose another time.
+                                    </span>
+                                </p>
+                            )}
+                        </div>
+                        <div className="flex flex-col gap-4">
+                            {draft.date && draft.startTime ? (
+                                <VisitReminderPicker
+                                    reminders={draft.reminders}
+                                    date={draft.date}
+                                    startTime={draft.startTime}
+                                    now={now}
+                                    onChange={(reminders) => patch({ reminders })}
+                                    disabled={busy}
+                                />
+                            ) : (
+                                <p className="body-sm flex items-center gap-2 text-ink-muted">
+                                    <Bell
+                                        aria-hidden="true"
+                                        className="shrink-0 block-4 inline-4"
+                                    />
+                                    Add a visit date and start time to set one or more reminders.
+                                </p>
+                            )}
+                            {submitted && errors.reminders && (
+                                <p role="alert" className={styles.fieldError}>
+                                    {errors.reminders}
+                                </p>
+                            )}
+                            <label className={styles.field}>
+                                Notes (optional)
+                                <Textarea
+                                    className={styles.notesInput}
+                                    value={draft.notes}
+                                    onChange={(event) => patch({ notes: event.target.value })}
+                                    maxLength={2000}
+                                    rows={5}
+                                    placeholder="Meeting point or anything to remember"
+                                />
+                            </label>
+                        </div>
                     </div>
                 </fieldset>
             </form>

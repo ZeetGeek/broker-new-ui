@@ -11,6 +11,7 @@ import {
     visitReminderAt,
     visitReminderLabel,
     visitReminders,
+    visitSchema,
     visitState,
 } from "@/features/new-site-visits/model";
 import {
@@ -28,6 +29,18 @@ const draft = {
     endTime: "11:00",
 };
 const now = Date.parse("2030-01-01T00:00:00Z");
+
+test("site visits allow six reminders and reject a seventh when validating and saving", () => {
+    const reminders = [0, 5, 10, 15, 30, 60];
+    assert.equal(validateDraft({ ...draft, reminders }, [], now).valid, true);
+    assert.equal(visitSchema.safeParse({ ...visit, reminders }).success, true);
+    const tooMany = [...reminders, 90];
+    assert.match(
+        validateDraft({ ...draft, reminders: tooMany }, [], now).errors.reminders ?? "",
+        /six/,
+    );
+    assert.equal(visitSchema.safeParse({ ...visit, reminders: tooMany }).success, false);
+});
 const visit: SiteVisit = {
     id: "visit",
     clientId: "client",

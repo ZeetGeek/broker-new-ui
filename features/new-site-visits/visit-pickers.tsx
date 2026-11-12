@@ -69,6 +69,7 @@ export function VisitEntityCombobox({
             <ComboboxInput
                 id={id}
                 size="lg"
+                className="font-normal"
                 startIcon={kind === "client" ? UserRound : Building2}
                 placeholder={`Select a ${kind}`}
                 errorText={error}
@@ -135,7 +136,7 @@ export function VisitDatePicker({
                             disabled={disabled}
                             variant="outline"
                             size="lg"
-                            className={styles.dateTrigger}
+                            className={`${styles.dateTrigger} shadow-none hover:border-ring/50 hover:bg-surface aria-expanded:border-ring aria-expanded:bg-surface aria-invalid:border-danger-mid aria-invalid:hover:border-danger-mid aria-invalid:focus-visible:ring-danger/20`}
                             aria-invalid={!!error}
                             aria-describedby={error ? `${id}-error` : undefined}
                         />

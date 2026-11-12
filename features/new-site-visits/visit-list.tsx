@@ -87,6 +87,9 @@ const LIST_COPY = {
     ],
 };
 
+const EMPTY_FRAME =
+    "min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]";
+
 export function VisitList({
     visits,
     shown,
@@ -244,32 +247,43 @@ export function VisitList({
             <TabsContent value={filters.archive || tab} aria-label={copy[0]}>
                 {visits.length === 0 ? (
                     <EmptyState
-                        className="py-16"
+                        className={EMPTY_FRAME}
                         icon={CalendarDays}
                         heading="Schedule your first site visit"
                         description="Choose a client, a property and a start and end time. We will remind you when it starts and ask how it went."
                     >
-                        <Button onClick={onSchedule}>Schedule a visit</Button>
+                        <Button size="md" variant="accent" onClick={onSchedule}>
+                            Schedule a visit
+                        </Button>
                     </EmptyState>
+                ) : shown.length === 0 && filtered ? (
+                    <div
+                        className={`flex flex-col items-center justify-center gap-4 text-center ${EMPTY_FRAME}`}
+                        aria-live="polite"
+                    >
+                        <p className="h5 text-ink">No visits match these filters</p>
+                        <p className="body-sm max-w-prose text-ink-muted">
+                            Try another search or clear your filters.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={onClear}
+                            className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
+                        >
+                            Clear filters
+                        </button>
+                    </div>
                 ) : shown.length === 0 ? (
                     <EmptyState
-                        className="py-16"
+                        className={EMPTY_FRAME}
                         icon={CalendarDays}
                         heading={
-                            filtered
-                                ? "No visits match your filters"
-                                : tab === "needs_update"
-                                  ? "You're all up to date"
-                                  : "No visits to show"
+                            tab === "needs_update" ? "You're all up to date" : "No visits to show"
                         }
-                        description={
-                            filtered
-                                ? "Try another search or clear your filters."
-                                : "Your visits will appear here when there's something to show."
-                        }
+                        description="Your visits will appear here when there's something to show."
                     >
-                        <Button onClick={filtered ? onClear : onSchedule}>
-                            {filtered ? "Clear filters" : "Schedule a visit"}
+                        <Button size="md" variant="accent" onClick={onSchedule}>
+                            Schedule a visit
                         </Button>
                     </EmptyState>
                 ) : (

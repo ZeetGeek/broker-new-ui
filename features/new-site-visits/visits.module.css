@@ -516,6 +516,22 @@
     flex-wrap: wrap;
     gap: 0.5rem;
 }
+.detailFooter {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    inline-size: 100%;
+}
+.detailFooter .detailFooterDanger {
+    margin-inline-end: auto;
+    padding-inline: 0.75rem;
+    color: var(--color-danger);
+}
+.detailFooter .detailFooterDanger:hover {
+    background: var(--color-danger-soft);
+}
 .visitFields {
     display: flex;
     flex-direction: column;
@@ -542,7 +558,6 @@
     padding-inline: 1rem;
     border-width: 2px;
     font-size: 1rem;
-    box-shadow: none;
 }
 .dateTrigger span {
     flex: 1;
@@ -550,6 +565,23 @@
 }
 .dateTrigger > svg {
     color: var(--color-ink-subtle);
+}
+.timeInput [data-slot="time-picker-trigger"] {
+    border-width: 2px;
+    padding-inline: 1rem;
+    font-size: 1rem;
+    font-weight: 400;
+}
+.timeInput [data-slot="time-picker-trigger"]:hover:not(:disabled):not([aria-invalid="true"]) {
+    border-color: color-mix(in srgb, var(--ring) 50%, transparent);
+    background: var(--color-surface);
+}
+.timeInput
+    [data-slot="time-picker-trigger"]:is(:focus-visible, [aria-expanded="true"]):not(
+        [aria-invalid="true"]
+    ) {
+    border-color: var(--ring);
+    background: var(--color-surface);
 }
 .notesInput {
     field-sizing: fixed;
@@ -560,10 +592,9 @@
     font-size: 1rem;
     font-weight: 400;
     color: var(--color-ink);
-    box-shadow: none;
 }
 .notesInput:hover {
-    border-color: var(--color-ink-subtle);
+    border-color: color-mix(in srgb, var(--ring) 50%, transparent);
 }
 .notesInput:focus-visible {
     border-color: var(--ring);
@@ -640,18 +671,28 @@
     font-size: 0.8125rem;
     line-height: 1.6;
 }
+.detailLayout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-inline-size: 0;
+}
 .detailProperty {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 1rem;
 }
-.detailProperty > div:last-child {
+.detailProperty > div:first-child {
     min-inline-size: 0;
 }
+.detailProperty > :last-child {
+    flex-shrink: 0;
+}
 .detailProperty h2 {
-    margin-block-start: 0.625rem;
+    margin-block-start: 0;
     font-family: var(--font-display);
-    font-size: 1.375rem;
+    font-size: 1.5rem;
     font-weight: 600;
     line-height: 1.3;
     overflow-wrap: anywhere;
@@ -660,6 +701,7 @@
     margin-block-start: 0.375rem;
     color: var(--color-ink-muted);
     font-size: 0.8125rem;
+    font-weight: 600;
     line-height: 1.6;
 }
 .detailCover {
@@ -667,7 +709,7 @@
     display: grid;
     place-items: center;
     inline-size: 88px;
-    block-size: 96px;
+    block-size: 88px;
     flex-shrink: 0;
     border-radius: 10px;
     overflow: hidden;
@@ -678,19 +720,66 @@
     inline-size: 28px;
     block-size: 28px;
 }
+.detailSchedule {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    border-radius: 12px;
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
+}
+.detailSchedule > div {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-inline-size: 0;
+}
+.detailSchedule svg {
+    inline-size: 20px;
+    block-size: 20px;
+    flex-shrink: 0;
+}
+.detailSchedule span {
+    display: block;
+    margin-block-end: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.detailSchedule time,
+.detailSchedule p {
+    font-size: 1rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
 .detailGroup {
-    border-block: 1px solid var(--color-border-warm);
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 1.5rem;
+}
+.detailMeetingPoint {
+    grid-column: 1 / -1;
+}
+.meetingPointIcon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 36px;
+    block-size: 36px;
+    border: 1px solid var(--color-border-warm);
+    border-radius: 50%;
+    color: var(--color-ink-muted);
+}
+.meetingPointIcon svg {
+    inline-size: 20px;
+    block-size: 20px;
 }
 .detailLine {
     display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    padding-block: 1.25rem;
+    align-items: center;
+    gap: 0.75rem;
     font-size: 0.875rem;
     line-height: 1.6;
-}
-.detailLine + .detailLine {
-    border-block-start: 1px solid var(--color-border-warm);
 }
 .detailLine > svg {
     inline-size: 20px;
@@ -705,6 +794,7 @@
 .detailLine > div > span {
     display: block;
     font-size: 0.75rem;
+    font-weight: 600;
     color: var(--color-ink-muted);
     margin-block-end: 0.25rem;
 }
@@ -715,23 +805,35 @@
 }
 .detailLine p {
     color: var(--color-ink-muted);
+    font-weight: 600;
 }
 .detailNotes {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    padding-block-start: 1.25rem;
+    border-block-start: 1px solid var(--color-border-warm);
+}
+.detailNotes > div {
+    min-inline-size: 0;
 }
 .detailNotes h3 {
     font-size: 0.875rem;
-    margin-block-end: 0.5rem;
+    margin-block-end: 0.75rem;
 }
 .detailNotes p {
+    min-block-size: 104px;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--color-border-warm);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--color-surface-muted) 40%, var(--color-surface));
     font-size: 0.875rem;
-    color: var(--color-ink-muted);
+    color: var(--color-ink);
     line-height: 1.7;
 }
 .activitySection {
-    padding-block-start: 0.5rem;
+    padding-block-start: 1.25rem;
+    border-block-start: 1px solid var(--color-border-warm);
 }
 .activitySection h3 {
     margin-block-end: 1.25rem;
@@ -742,10 +844,88 @@
     gap: 1.25rem;
 }
 .activityList li {
+    position: relative;
     display: flex;
     gap: 0.875rem;
     font-size: 0.8125rem;
     line-height: 1.6;
+}
+.activityList li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    inset-inline-start: 3.5px;
+    inset-block-start: 1.1rem;
+    inset-block-end: -1.25rem;
+    inline-size: 1px;
+    background: var(--color-border-warm);
+}
+.detailReminders {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-block-start: 1rem;
+    border-block-start: 1px solid var(--color-border-warm);
+}
+.detailSectionHeading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.detailSectionHeading h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+.detailSectionHeading svg {
+    inline-size: 18px;
+    block-size: 18px;
+    color: var(--color-ink-muted);
+}
+.detailSectionHeading h3 span {
+    display: grid;
+    place-items: center;
+    inline-size: 22px;
+    block-size: 22px;
+    border-radius: 50%;
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
+    font-size: 0.75rem;
+}
+.detailSectionHeading > span {
+    font-size: 0.75rem;
+    color: var(--color-ink-muted);
+}
+.detailReminderList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.detailReminderList li {
+    min-inline-size: 0;
+}
+.detailReminderChip {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 32px;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    background: var(--color-surface-muted);
+    color: var(--color-ink);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+.detailReminderChip:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
 }
 .activityList li > div {
     min-inline-size: 0;
@@ -787,5 +967,10 @@
     }
     .detailProperty h2 {
         font-size: 1.125rem;
+    }
+    .detailSchedule,
+    .detailGroup {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
     }
 }

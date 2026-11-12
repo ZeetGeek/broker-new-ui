@@ -45,6 +45,7 @@ export type PreviewProperty = {
     city: string;
     address: string;
     imageUrl?: string;
+    imageUrls?: string[];
     owner?: { name: string; imageUrl?: string };
 };
 
@@ -52,6 +53,7 @@ export const PREVIEW_PROPERTIES: PreviewProperty[] = [
     {
         id: "preview-happy",
         imageUrl: "/properties/1.jpg",
+        imageUrls: ["/properties/1.jpg", "/properties/5.jpg", "/properties/6.jpg"],
         title: "Happy Elegance",
         configLabel: "3 BHK apartment",
         locality: "Vesu",
@@ -61,6 +63,7 @@ export const PREVIEW_PROPERTIES: PreviewProperty[] = [
     {
         id: "preview-ibc",
         imageUrl: "/properties/2.jpg",
+        imageUrls: ["/properties/2.jpg", "/properties/5.jpg", "/properties/6.jpg"],
         title: "International Business Center",
         configLabel: "Office",
         locality: "Piplod",
@@ -70,6 +73,7 @@ export const PREVIEW_PROPERTIES: PreviewProperty[] = [
     {
         id: "preview-orchid",
         imageUrl: "/properties/3.jpg",
+        imageUrls: ["/properties/3.jpg", "/properties/5.jpg", "/properties/6.jpg"],
         title: "Orchid Homes",
         configLabel: "2 BHK apartment",
         locality: "Adajan",
@@ -79,6 +83,7 @@ export const PREVIEW_PROPERTIES: PreviewProperty[] = [
     {
         id: "preview-green",
         imageUrl: "/properties/4.jpg",
+        imageUrls: ["/properties/4.jpg", "/properties/5.jpg", "/properties/6.jpg"],
         title: "Green Residency",
         configLabel: "3 BHK apartment",
         locality: "Pal",
