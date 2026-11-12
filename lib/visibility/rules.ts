@@ -85,9 +85,16 @@ export const FIELD_RULES = {
     "details.totalFloors": {
         visible: (d) => !d.isPlot,
         level: (d) => (d.isInBuilding ? "required" : "optional"),
-        label: (d) => (d.isIndependent ? "Floors in the house" : "Total floors in the building"),
+        label: (d) =>
+            d.isIndependent && d.isResidential
+                ? "Floors in the house"
+                : "Total floors in the building",
     },
-    "details.facing": { level: (d) => (d.isPlot ? "recommended" : "optional") },
+    // Facing matters for plots (vastu) but means nothing for an open field or farm.
+    "details.facing": {
+        visible: (d) => !d.isOpenField,
+        level: (d) => (d.isPlot ? "recommended" : "optional"),
+    },
     "details.roadWidthFt": {
         visible: () => false,
     },

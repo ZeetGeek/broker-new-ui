@@ -17,14 +17,31 @@ const INDEPENDENT_TYPES = new Set([
     "bungalow",
 ]);
 
+/** Commercial / industrial buildings that stand alone: no flat-style floor number or society. */
+const STANDALONE_BUILDING_TYPES = new Set([
+    "warehouse",
+    "godown",
+    "industrial_shed",
+    "factory",
+    "cold_storage",
+    "commercial_building",
+    "hotel_resort",
+]);
+
+/** Open land where facing has no meaning (fields, farms, orchards). */
+const OPEN_FIELD_TYPES = new Set(["agricultural_land", "farm_land", "orchard", "poultry_farm"]);
+
 export type DerivedPropertyFlags = ReturnType<typeof derive>;
 
 export function derive(values: PropertyDraftValues) {
     const listingFor = values.basics.listingFor;
     const category = values.basics.category;
     const propertyType = values.basics.propertyType;
-    const isPlot = PLOT_TYPES.has(propertyType);
-    const isIndependent = INDEPENDENT_TYPES.has(propertyType);
+    // Every agricultural type (orchard, poultry farm too) is land, not a flat in a building.
+    const isPlot = PLOT_TYPES.has(propertyType) || category === "agricultural";
+    const isIndependent =
+        !isPlot &&
+        (INDEPENDENT_TYPES.has(propertyType) || STANDALONE_BUILDING_TYPES.has(propertyType));
     const isUnderConstruction = ["under_construction", "new_launch"].includes(
         values.details.propertyCondition,
     );
@@ -43,6 +60,7 @@ export function derive(values: PropertyDraftValues) {
         isAgricultural: category === "agricultural",
         isLandCategory: category === "land" || category === "agricultural",
         isPlot,
+        isOpenField: isPlot && (category === "agricultural" || OPEN_FIELD_TYPES.has(propertyType)),
         isIndependent,
         isInBuilding: !isPlot && !isIndependent,
         isNewBooking: values.basics.transactionType === "new_booking",

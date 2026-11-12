@@ -252,15 +252,8 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
             </WizardSection>
 
             <WizardSection
-                title={
-                    <>
-                        Attach contacts{" "}
-                        <span className="text-danger" aria-hidden>
-                            *
-                        </span>
-                    </>
-                }
-                description="Required to publish. Attach at least one contact from your contact list."
+                title={<>Attach contacts</>}
+                description="Optional. Attach contacts from your list who may be interested."
                 tone="private"
             >
                 {existingBuyers.length ? (

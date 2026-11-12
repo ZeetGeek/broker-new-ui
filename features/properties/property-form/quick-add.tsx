@@ -36,6 +36,7 @@ import {
 import { StepBasics } from "@/features/properties/property-form/steps/step-basics";
 import { StepMedia } from "@/features/properties/property-form/steps/step-media";
 import { StepPublish } from "@/features/properties/property-form/steps/step-publish";
+import { useBathroomsFollowBhk } from "@/features/properties/property-form/use-bathrooms-follow-bhk";
 
 /**
  * Minimal create form: every field here maps to a value the create-property API
@@ -53,6 +54,7 @@ export function QuickAdd({
     const isOwner = portal === "owner";
     const { watch, setValue, getValues } = useFormContext<PropertyDraftValues>();
     const { derived } = useFieldRules();
+    useBathroomsFollowBhk();
     const values = watch();
     const {
         countryOptions,
