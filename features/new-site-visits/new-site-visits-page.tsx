@@ -5,6 +5,11 @@ import toast from "react-hot-toast";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+import {
+    EMPTY_PROPERTY_CRITERIA,
+    matchesPropertyCriteria,
+    type PropertyListCriteria,
+} from "@/lib/properties/list-criteria";
 import { formatVisitDate, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +21,6 @@ import {
     repeatVisitDraft,
     type SiteVisit,
     validateDraft,
-    VISIT_TABS,
     type VisitActionKind,
     visitDateBounds,
     type VisitDraft,
@@ -31,7 +35,12 @@ import {
 } from "./preview-store";
 import { ScheduleForm } from "./schedule-form";
 import { AttendanceConfirmation, VisitDetail, type VisitIntent } from "./visit-detail";
-import { EMPTY_FILTERS, type VisitFilters, VisitFiltersDialog } from "./visit-filters";
+import {
+    EMPTY_FILTERS,
+    VisitDateRangeDialog,
+    type VisitFilters,
+    VisitFiltersDialog,
+} from "./visit-filters";
 import { VisitList } from "./visit-list";
 import { VisitOverlay } from "./visit-overlay";
 
@@ -77,6 +86,9 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
     const confirmVisit = visits.find((visit) => visit.id === confirmation?.id);
     const [search, setSearch] = useState("");
     const [filterValues, setFilterValues] = useState<VisitFilters>({ ...EMPTY_FILTERS });
+    const [propertyFilters, setPropertyFilters] = useState<PropertyListCriteria>({
+        ...EMPTY_PROPERTY_CRITERIA,
+    });
     const range =
         filterValues.range ||
         (tab === "upcoming" ? "next7" : tab === "running" ? "today" : "past30");
@@ -108,6 +120,7 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
         setView("schedule");
     };
     const clear = () => {
+        setPropertyFilters({ ...EMPTY_PROPERTY_CRITERIA });
         setFilterValues({ ...EMPTY_FILTERS });
         setSearch("");
     };
@@ -251,6 +264,7 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
             if ((bounds.from && day < bounds.from) || (bounds.to && day > bounds.to)) return false;
             const client = PREVIEW_CLIENTS.find((c) => c.id === v.clientId);
             const property = PREVIEW_PROPERTIES.find((p) => p.id === v.propertyId);
+            if (!property || !matchesPropertyCriteria(property, propertyFilters)) return false;
             return `${client?.name} ${property?.title} ${property?.locality} ${property?.city} ${v.notes}`
                 .toLowerCase()
                 .includes(search.toLowerCase().trim());
@@ -293,6 +307,7 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
                         tab={tab}
                         now={now}
                         filters={filters}
+                        propertyFilters={propertyFilters}
                         range={range}
                         search={search}
                         onSchedule={() => schedule()}
@@ -438,17 +453,26 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
                         </p>
                     </VisitOverlay>
                 ) : null)}
-            {filtersOpen && (
-                <VisitFiltersDialog
-                    value={{ ...filters, range: filterRange ?? filters.range }}
+            {filtersOpen && filterRange === "custom" ? (
+                <VisitDateRangeDialog
+                    value={{ ...filters, range: "custom" }}
                     onClose={() => setFiltersOpen(false)}
                     onApply={(next) => {
-                        const isTab = VISIT_TABS.some((t) => t.value === next.archive);
-                        if (isTab) setTab(next.archive as VisitTab);
-                        setFilterValues({ ...next, archive: isTab ? "" : next.archive });
+                        setFilterValues(next);
                         setFiltersOpen(false);
                     }}
                 />
+            ) : (
+                filtersOpen && (
+                    <VisitFiltersDialog
+                        value={propertyFilters}
+                        onClose={() => setFiltersOpen(false)}
+                        onApply={(next) => {
+                            setPropertyFilters(next);
+                            setFiltersOpen(false);
+                        }}
+                    />
+                )
             )}
             {query.isSuccess && shown.length > 0 && (
                 <footer className={styles.pageFooter}>

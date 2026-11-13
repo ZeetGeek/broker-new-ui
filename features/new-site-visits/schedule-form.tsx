@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 import {
-    EMPTY_DRAFT,
+    newVisitDraft,
     type SiteVisit,
     validateDraft,
     type VisitDraft,
@@ -55,7 +55,7 @@ export function ScheduleForm({
                   reminders: [...visit.reminders],
                   notes: visit.notes,
               }
-            : { ...EMPTY_DRAFT, ...prefill },
+            : newVisitDraft(Date.now(), prefill),
     );
     const [draft, setDraft] = useState(initial);
     const [submitted, setSubmitted] = useState(false);

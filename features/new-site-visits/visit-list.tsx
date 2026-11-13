@@ -1,5 +1,6 @@
 "use client";
 
+import { propertyCriteriaCount, type PropertyListCriteria } from "@/lib/properties/list-criteria";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
@@ -97,6 +98,7 @@ export function VisitList({
     now,
     search,
     filters,
+    propertyFilters,
     range,
     onTab,
     onSearch,
@@ -114,6 +116,7 @@ export function VisitList({
     now: number;
     search: string;
     filters: VisitFilters;
+    propertyFilters: PropertyListCriteria;
     range: string;
     onTab: (tab: VisitTab) => void;
     onSearch: (query: string) => void;
@@ -125,7 +128,7 @@ export function VisitList({
     onEdit: (id: string) => void;
     onAction: (id: string, action: VisitActionKind) => void;
 }) {
-    const count = Object.entries(filters).filter(([key, value]) => key !== "range" && value).length;
+    const count = propertyCriteriaCount(propertyFilters);
     const filtered = count > 0 || !!search || filters.range === "custom";
     const copy =
         filters.archive === "all"
