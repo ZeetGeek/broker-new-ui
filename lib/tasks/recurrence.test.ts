@@ -193,7 +193,7 @@ test("owner attachments participate in filters and survive version two migration
             }) => t,
         );
         values.set(
-            "crm.private-tasks.mock.v1.legacy",
+            "crm.private-tasks.mock.v3.legacy",
             JSON.stringify({ version: 2, tasks: legacy }),
         );
         const migrated = await taskPreviewStore.list("legacy");
@@ -204,7 +204,7 @@ test("owner attachments participate in filters and survive version two migration
         assert.equal(migrated[0].repeat, null);
         assert.ok(migrated[0].startDate);
         assert.ok(migrated[0].startTime);
-        assert.equal(JSON.parse(values.get("crm.private-tasks.mock.v1.legacy")!).version, 3);
+        assert.equal(JSON.parse(values.get("crm.private-tasks.mock.v3.legacy")!).version, 3);
     } finally {
         if (original) Object.defineProperty(globalThis, "sessionStorage", original);
         else Reflect.deleteProperty(globalThis, "sessionStorage");

@@ -3,18 +3,17 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
+import { useSearchParams } from "@/lib/navigation";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
 import {
-    Bell,
     CheckCircle2,
-    List,
     Plus,
     Search,
     SlidersHorizontal,
+    Trash2,
     X,
 } from "@/components/shared/icons";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
@@ -36,12 +35,18 @@ import {
     taskMatchesDueFilter,
     taskMatchesLinkFilter,
     taskMatchesTab,
+    type TaskSort,
 } from "./model";
+import { taskListId } from "./notebook-model";
+import { useTaskNotebook } from "./notebook-store";
+import { createPlannerTask, movePlannerTask, setTaskDeleted } from "./planner-model";
 import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES, useTasks } from "./preview-store";
+import { changeTaskQuickly, type TaskQuickChange } from "./quick-actions";
 import { TaskDeleteDialog, TaskDetail, TaskReminders } from "./task-detail";
 import { TaskForm, TaskSelect } from "./task-form";
-import { TaskList, type TaskSort } from "./task-list";
+import { TaskArchive } from "./task-list";
 import { TaskPanel } from "./task-panel";
+import { TaskPlanner } from "./task-planner";
 
 import styles from "./tasks.module.css";
 
@@ -62,32 +67,61 @@ const LINK_FILTERS = [
 
 export function TasksPage() {
     const accountId = useAppSelector((state) => state.auth.user?.id) ?? "design-preview";
-    return <TasksWorkspace key={accountId} accountId={accountId} />;
+    const initialQuery = useSearchParams().toString();
+    return (
+        <TasksWorkspace
+            key={`${accountId}:${initialQuery}`}
+            accountId={accountId}
+            initialQuery={initialQuery}
+        />
+    );
 }
 
-function TasksWorkspace({ accountId }: { accountId: string }) {
+function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initialQuery: string }) {
     const { tasks, isLoading, error: loadError, save, update, reset, busy } = useTasks(accountId);
-    const router = useRouter();
-    const pathname = usePathname();
-    const params = useSearchParams();
+    const lists = useTaskNotebook(accountId);
+    // Read incoming links once; workspace interactions never navigate or write browser history.
+    const [params, setParams] = useState(() => new URLSearchParams(initialQuery));
     const [now, setNow] = useState(() => Date.now());
     const [error, setError] = useState("");
+    const [completionFeedback, setCompletionFeedback] = useState<Record<string, number>>({});
+    useEffect(() => {
+        const nextExpiry = Math.min(...Object.values(completionFeedback));
+        if (!Number.isFinite(nextExpiry)) return;
+        const timer = window.setTimeout(
+            () => {
+                setCompletionFeedback((current) =>
+                    Object.fromEntries(
+                        Object.entries(current).filter(([, expiry]) => expiry > Date.now()),
+                    ),
+                );
+            },
+            Math.max(0, nextExpiry - Date.now()),
+        );
+        return () => window.clearTimeout(timer);
+    }, [completionFeedback]);
+    const clearCompletionFeedback = (id: string) => {
+        setCompletionFeedback((current) => {
+            const next = { ...current };
+            delete next[id];
+            return next;
+        });
+    };
     useEffect(() => {
         const timer = window.setInterval(() => setNow(Date.now()), 15_000);
         return () => window.clearInterval(timer);
     }, []);
-    const navigate = (patch: Record<string, string | undefined>, replace = false) => {
-        const next = new URLSearchParams(params.toString());
-        Object.entries(patch).forEach(([key, value]) =>
-            value ? next.set(key, value) : next.delete(key),
-        );
-        const href = `${pathname}${next.size ? `?${next}` : ""}`;
-        if (replace) router.replace(href, { scroll: false });
-        else router.push(href, { scroll: false });
+    const updateWorkspace = (patch: Record<string, string | undefined>) => {
+        setParams((current) => {
+            const next = new URLSearchParams(current);
+            Object.entries(patch).forEach(([key, value]) =>
+                value ? next.set(key, value) : next.delete(key),
+            );
+            return next;
+        });
     };
     const rawTab = params.get("tab");
-    const tab =
-        rawTab === "today" || rawTab === "upcoming" || rawTab === "completed" ? rawTab : "all";
+    const tab = rawTab === "completed" || rawTab === "deleted" ? rawTab : "all";
     const view = params.get("view");
     const selected = tasks.find((task) => task.id === params.get("task"));
     const search = params.get("q") ?? "";
@@ -98,9 +132,12 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
         ? (params.get("linked") ?? "")
         : "";
     const rawSort = params.get("sort");
+    const defaultSort = tab === "all" ? "manual" : "due";
     const sort: TaskSort =
-        rawSort === "newest" || rawSort === "priority" || rawSort === "title" ? rawSort : "due";
-    const open = tasks.filter((task) => !task.completedAt);
+        rawSort === "due" || rawSort === "newest" || rawSort === "priority" || rawSort === "title"
+            ? rawSort
+            : defaultSort;
+    const open = tasks.filter((task) => !task.completedAt && !task.deletedAt);
     const overdue = open.filter((task) => taskGroup(task, now) === "overdue").length;
     const today = open.filter((task) => taskGroup(task, now) === "today").length;
     const summaryLines = [
@@ -113,24 +150,27 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             : "Add your next follow-up",
     ].filter(Boolean);
     const tabs = [
-        { value: "all", label: "All tasks", count: open.length, dotClassName: "bg-brand" },
-        { value: "today", label: "Today", count: today, dotClassName: "bg-pending" },
         {
-            value: "upcoming",
-            label: "Upcoming",
-            count: open.filter((t) => taskGroup(t, now) === "upcoming").length,
-            dotClassName: "bg-ink-subtle",
+            value: "all",
+            label: "To do",
+            count: open.length,
+            dotClassName: "bg-sky-400",
         },
         {
             value: "completed",
             label: "Completed",
-            compactLabel: "Done",
-            count: tasks.filter((t) => t.completedAt).length,
-            dotClassName: "bg-brand",
+            count: tasks.filter((task) => task.completedAt && !task.deletedAt).length,
+            dotClassName: "bg-emerald-400",
+        },
+        {
+            value: "deleted",
+            label: "Deleted",
+            count: tasks.filter((task) => task.deletedAt).length,
+            dotClassName: "bg-red-400",
         },
     ];
     const visible = tasks.filter((task) => {
-        if (!taskMatchesTab(task, tab, now)) return false;
+        if (!taskMatchesTab(task, tab, !!completionFeedback[task.id])) return false;
         if (!taskMatchesDueFilter(task, due as TaskDueFilter, now)) return false;
         if (!taskMatchesLinkFilter(task, linked as TaskLinkFilter)) return false;
         const client = TASK_CLIENTS.find((c) => c.id === task.clientId);
@@ -142,7 +182,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     });
     const close = () => {
         setError("");
-        navigate({
+        updateWorkspace({
             view: undefined,
             task: undefined,
             visitClient: undefined,
@@ -152,11 +192,11 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     };
     const intent = (task: Task, nextView: string) => {
         setError("");
-        navigate({ task: task.id, view: nextView });
+        updateWorkspace({ task: task.id, view: nextView });
     };
     const create = () => {
         setError("");
-        navigate({
+        updateWorkspace({
             task: undefined,
             view: "create",
             visitClient: undefined,
@@ -164,7 +204,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             visitTitle: undefined,
         });
     };
-    const clear = () => navigate({ q: undefined, due: undefined, linked: undefined }, true);
+    const clear = () => updateWorkspace({ q: undefined, due: undefined, linked: undefined });
     const commit = async (next: Task[], message: string, after?: () => void) => {
         setError("");
         try {
@@ -180,12 +220,21 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     const complete = async (task: Task) => {
         if (busy) return;
         setError("");
+        const showFeedback = !task.completedAt && tab === "all";
+        if (showFeedback) {
+            setCompletionFeedback((current) => ({ ...current, [task.id]: Infinity }));
+        }
         try {
             const now = Date.now();
             const nextId = crypto.randomUUID();
             await update((latest) =>
                 setTaskCompleted(latest, task.id, !task.completedAt, now, nextId),
             );
+            if (showFeedback) {
+                setCompletionFeedback((current) => ({ ...current, [task.id]: Date.now() + 2000 }));
+            } else {
+                clearCompletionFeedback(task.id);
+            }
             toast.success(
                 task.completedAt
                     ? "Task reopened"
@@ -194,12 +243,74 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                       : "Task completed",
             );
         } catch (failure) {
+            clearCompletionFeedback(task.id);
             setError(
                 failure instanceof Error
                     ? failure.message
                     : "Your change couldn’t be saved. Try again.",
             );
         }
+    };
+    const changeTasks = async (updater: (latest: Task[]) => Task[], message?: string) => {
+        if (busy) return false;
+        setError("");
+        try {
+            await update(updater);
+            if (message) toast.success(message);
+            return true;
+        } catch (failure) {
+            setError(
+                failure instanceof Error
+                    ? failure.message
+                    : "Your change couldn't be saved. Please try again.",
+            );
+            return false;
+        }
+    };
+    const restore = async (task: Task) => {
+        if (
+            await changeTasks((latest) => setTaskDeleted(latest, task.id, false), "Task restored")
+        ) {
+            if (view) close();
+        }
+    };
+    const rename = (task: Task, title: string) => {
+        // Only an explicit empty-title submission reaches here; blur cancels an empty edit.
+        if (!title.trim()) {
+            return changeTasks(
+                (latest) => setTaskDeleted(latest, task.id, true),
+                "Task moved to Deleted",
+            );
+        }
+        return changeTasks((latest) =>
+            latest.map((item) =>
+                item.id === task.id && !item.deletedAt
+                    ? { ...item, title, updatedAt: new Date().toISOString() }
+                    : item,
+            ),
+        );
+    };
+    const quickChange = (task: Task, change: TaskQuickChange) =>
+        changeTasks((latest) => changeTaskQuickly(latest, task.id, change));
+    const quickAdd = async (title: string, date: string | null, listId?: string) => {
+        const task = createPlannerTask(title, date, Date.now(), crypto.randomUUID(), listId);
+        return changeTasks((latest) => [...latest, task]);
+    };
+    const move = async (id: string, date: string | null, beforeId?: string, listId?: string) => {
+        const saved = await changeTasks(
+            (latest) =>
+                movePlannerTask(
+                    latest.map((task) => ({ ...task, listId: taskListId(task, lists.notebook) })),
+                    id,
+                    date,
+                    beforeId,
+                    Date.now(),
+                    listId,
+                ),
+            "Task moved",
+        );
+        if (saved && sort !== "manual") updateWorkspace({ sort: undefined });
+        return saved;
     };
     const saveDraft = async (draft: TaskDraft) => {
         const at = new Date().toISOString();
@@ -231,6 +342,9 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             propertyId: draft.propertyId || null,
             priority: draft.priority,
             completedAt: editing?.completedAt ?? null,
+            deletedAt: editing?.deletedAt ?? null,
+            plannerOrder: sameSchedule ? editing?.plannerOrder : undefined,
+            listId: editing?.listId,
             createdAt: editing?.createdAt ?? at,
             updatedAt: at,
             deliveredReminderKeys: editing?.deliveredReminderKeys ?? [],
@@ -245,7 +359,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                       : "Task updated"
                 : "Task created",
             () =>
-                navigate({
+                updateWorkspace({
                     view: "detail",
                     task: next.id,
                     visitClient: undefined,
@@ -279,7 +393,10 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             <Tabs
                 value={tab}
                 onValueChange={(value) =>
-                    navigate({ tab: value === "all" ? undefined : String(value), due: undefined })
+                    updateWorkspace({
+                        tab: value === "all" ? undefined : String(value),
+                        due: undefined,
+                    })
                 }
                 className={styles.workspace}
             >
@@ -291,8 +408,8 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                             count={Number(!!due) + Number(!!linked)}
                             isActive={!!(due || linked)}
                             clearable={!!(due || linked)}
-                            onClick={() => navigate({ view: "filters", task: undefined })}
-                            onClear={() => navigate({ due: undefined, linked: undefined }, true)}
+                            onClick={() => updateWorkspace({ view: "filters", task: undefined })}
+                            onClear={() => updateWorkspace({ due: undefined, linked: undefined })}
                         />
                         <StatusTabs
                             tabs={tabs}
@@ -306,11 +423,11 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                             <span className="sr-only">Search tasks</span>
                             <Input
                                 size="sm"
-                                wrapperClassName="rounded-control shadow-sm inline-full"
-                                className="rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20"
+                                wrapperClassName="rounded-control inline-full"
+                                className="rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20 pointer-coarse:min-block-11"
                                 placeholder="Search tasks or linked records"
                                 value={search}
-                                onValueChange={(q) => navigate({ q: q || undefined }, true)}
+                                onValueChange={(q) => updateWorkspace({ q: q || undefined })}
                                 startIcon={Search}
                                 clearable
                             />
@@ -320,16 +437,24 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                             label="Sort tasks"
                             value={sort}
                             options={[
+                                ...(tab === "all"
+                                    ? [{ value: "manual", label: "Default order" }]
+                                    : []),
                                 {
                                     value: "due",
-                                    label: tab === "completed" ? "Completion date" : "Due date",
+                                    label:
+                                        tab === "completed"
+                                            ? "Completion date"
+                                            : tab === "deleted"
+                                              ? "Deletion date"
+                                              : "Due date",
                                 },
                                 { value: "priority", label: "Priority" },
                                 { value: "newest", label: "Newest first" },
                                 { value: "title", label: "Task name" },
                             ]}
                             onChange={(value) =>
-                                navigate({ sort: value === "due" ? undefined : value }, true)
+                                updateWorkspace({ sort: value === defaultSort ? undefined : value })
                             }
                         />
                         <Button variant="accent" className={styles.toolbarButton} onClick={create}>
@@ -344,7 +469,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    onClick={() => navigate({ due: undefined }, true)}
+                                    onClick={() => updateWorkspace({ due: undefined })}
                                 >
                                     {DUE_FILTERS.find((f) => f.value === due)?.label}
                                     <X aria-hidden />
@@ -355,7 +480,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    onClick={() => navigate({ linked: undefined }, true)}
+                                    onClick={() => updateWorkspace({ linked: undefined })}
                                 >
                                     {LINK_FILTERS.find((f) => f.value === linked)?.label}
                                     <X aria-hidden />
@@ -367,24 +492,11 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                             </Button>
                         </div>
                     )}
-                    {tab === "today" && overdue > 0 && (
-                        <button
-                            className={styles.overdueNotice}
-                            onClick={() => navigate({ tab: undefined, due: "overdue" })}
-                        >
-                            <span>
-                                <ClockNotice />
-                                {overdue} overdue {overdue === 1 ? "task needs" : "tasks need"}{" "}
-                                attention
-                            </span>
-                            <span>View tasks →</span>
-                        </button>
-                    )}
                     {loadError && (
                         <div className={styles.error} role="alert">
                             <p>
-                                Sample tasks couldn’t load. Check that storage is available in this
-                                tab, or start again with the sample tasks.
+                                Tasks couldn’t load. Check that storage is available in this tab, or
+                                reset the task list to start empty.
                             </p>
                             <Button
                                 className="mbs-3"
@@ -399,7 +511,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                     )
                                 }
                             >
-                                Reset sample tasks
+                                Reset task list
                             </Button>
                         </div>
                     )}
@@ -418,59 +530,86 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 {Array.from({ length: 5 }, (_, i) => (
                                     <Skeleton
                                         key={i}
-                                        className="rounded-control block-18 inline-full"
+                                        className="rounded-control block-80 inline-full"
                                     />
                                 ))}
                             </div>
-                        ) : visible.length ? (
-                            <TaskList
+                        ) : loadError ? null : tab === "all" && !filtered ? (
+                            <TaskPlanner
+                                notebook={lists.notebook}
+                                notebookLoading={lists.isLoading}
+                                notebookError={lists.error?.message}
+                                notebookBusy={lists.busy}
+                                onNotebookChange={async (updater) => {
+                                    try {
+                                        await lists.update(updater);
+                                        return true;
+                                    } catch (failure) {
+                                        setError(
+                                            failure instanceof Error
+                                                ? failure.message
+                                                : "Your lists couldn't be saved. Try again.",
+                                        );
+                                        return false;
+                                    }
+                                }}
                                 tasks={visible}
                                 now={now}
                                 sort={sort}
-                                completed={tab === "completed"}
                                 busy={busy}
                                 onOpen={(task) => intent(task, "detail")}
                                 onComplete={complete}
                                 onIntent={intent}
+                                onRestore={restore}
+                                onRename={rename}
+                                onQuickChange={quickChange}
+                                onAdd={quickAdd}
+                                onMove={move}
+                            />
+                        ) : visible.length ? (
+                            <TaskArchive
+                                tasks={visible}
+                                tab={tab === "all" ? "results" : tab}
+                                now={now}
+                                sort={sort}
+                                busy={busy}
+                                onOpen={(task) => intent(task, "detail")}
+                                onComplete={complete}
+                                onIntent={intent}
+                                onRestore={restore}
+                                onRename={rename}
+                                onQuickChange={quickChange}
                             />
                         ) : (
                             <EmptyState
                                 className={styles.empty}
-                                icon={tab === "completed" ? CheckCircle2 : List}
+                                icon={tab === "deleted" ? Trash2 : CheckCircle2}
                                 heading={
                                     filtered
                                         ? "No tasks match these filters"
-                                        : tab === "today"
-                                          ? "A clear day ahead"
-                                          : tab === "upcoming"
-                                            ? "Nothing lined up yet"
-                                            : tab === "completed"
-                                              ? "Your finished tasks will live here"
-                                              : "Make room for your next step"
+                                        : tab === "deleted"
+                                          ? "No deleted tasks"
+                                          : "Your finished tasks will live here"
                                 }
                                 description={
                                     filtered
                                         ? "Try another search or clear your filters to see more tasks."
-                                        : tab === "completed"
-                                          ? "Check off a task when it’s done. You can reopen it whenever plans change."
-                                          : "Add a follow-up, a document to collect, or anything you want to remember."
+                                        : tab === "deleted"
+                                          ? "Tasks you delete will appear here. You can restore them whenever you need."
+                                          : "Check off a task when it's done. You can reopen it whenever plans change."
                                 }
                             >
                                 <Button
-                                    variant={filtered ? "outline" : "default"}
-                                    onClick={filtered ? clear : create}
+                                    variant="outline"
+                                    onClick={
+                                        filtered ? clear : () => updateWorkspace({ tab: undefined })
+                                    }
                                 >
-                                    {filtered ? "Clear search & filters" : "Add a task"}
+                                    {filtered ? "Clear search & filters" : "Back to To do"}
                                 </Button>
                             </EmptyState>
                         )}
                     </TabsContent>
-                    {!isLoading && !loadError && (
-                        <button type="button" className={styles.addTaskRow} onClick={create}>
-                            <Plus aria-hidden />
-                            Add task
-                        </button>
-                    )}
                 </div>
             </Tabs>
             {view === "filters" && (
@@ -478,7 +617,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                     due={due}
                     linked={linked}
                     onClose={close}
-                    onApply={(values) => navigate({ ...values, view: undefined }, true)}
+                    onApply={(values) => updateWorkspace({ ...values, view: undefined })}
                 />
             )}
             {view === "reminders" && (
@@ -511,41 +650,49 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                     error={error}
                 />
             )}
-            {selected && (view === "edit" || view === "reschedule" || view === "reminder") && (
-                <TaskForm
-                    key={`${view}-${selected.id}`}
-                    task={selected}
-                    mode={view}
-                    busy={busy}
-                    onSave={saveDraft}
-                    onClose={close}
-                    error={error}
-                />
-            )}
-            {selected && view === "detail" && (
-                <TaskDetail
-                    task={selected}
-                    now={now}
-                    busy={busy}
-                    error={error}
-                    onClose={close}
-                    onComplete={() => complete(selected)}
-                    onIntent={(next) => intent(selected, next)}
-                />
-            )}
-            {selected && view === "delete" && (
+            {selected &&
+                !selected.deletedAt &&
+                (view === "edit" || view === "reschedule" || view === "reminder") && (
+                    <TaskForm
+                        key={`${view}-${selected.id}`}
+                        task={selected}
+                        mode={view}
+                        busy={busy}
+                        onSave={saveDraft}
+                        onClose={close}
+                        error={error}
+                    />
+                )}
+            {selected &&
+                (view === "detail" ||
+                    (!!selected.deletedAt &&
+                        ["edit", "reschedule", "reminder", "delete"].includes(view ?? ""))) && (
+                    <TaskDetail
+                        task={selected}
+                        now={now}
+                        busy={busy}
+                        error={error}
+                        onClose={close}
+                        onComplete={() => complete(selected)}
+                        onRestore={() => restore(selected)}
+                        onIntent={(next) => intent(selected, next)}
+                    />
+                )}
+            {selected && !selected.deletedAt && view === "delete" && (
                 <TaskDeleteDialog
                     task={selected}
                     busy={busy}
                     error={error}
                     onClose={close}
-                    onConfirm={() =>
-                        void commit(
-                            tasks.filter((task) => task.id !== selected.id),
-                            "Task deleted",
-                            close,
+                    onConfirm={async () => {
+                        if (
+                            await changeTasks(
+                                (latest) => setTaskDeleted(latest, selected.id, true),
+                                "Task moved to Deleted",
+                            )
                         )
-                    }
+                            close();
+                    }}
                 />
             )}
             {panelMissing && (
@@ -561,10 +708,6 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             )}
         </div>
     );
-}
-
-function ClockNotice() {
-    return <Bell aria-hidden />;
 }
 
 function TaskFilters({

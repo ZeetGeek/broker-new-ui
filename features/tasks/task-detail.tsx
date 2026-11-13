@@ -19,6 +19,7 @@ import {
     User,
 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogDescription, DialogPopup, DialogTitle } from "@/components/ui/dialog";
 
 import { nextTaskDates } from "./lifecycle";
 import {
@@ -44,6 +45,7 @@ export function TaskDetail({
     error,
     onClose,
     onComplete,
+    onRestore,
     onIntent,
 }: {
     task: Task;
@@ -52,6 +54,7 @@ export function TaskDetail({
     error: string;
     onClose: () => void;
     onComplete: () => void;
+    onRestore: () => void;
     onIntent: (view: string) => void;
 }) {
     const client = TASK_CLIENTS.find((c) => c.id === task.clientId);
@@ -69,29 +72,58 @@ export function TaskDetail({
             busy={busy}
             footer={
                 <div className={styles.detailFooter}>
-                    <Button
-                        variant="ghost"
-                        className={styles.deleteAction}
-                        onClick={() => onIntent("delete")}
-                        disabled={busy}
-                    >
-                        <Trash2 aria-hidden />
-                        Delete task
-                    </Button>
-                    <Button variant="outline" onClick={() => onIntent("edit")} disabled={busy}>
-                        <Pencil aria-hidden />
-                        Edit task
-                    </Button>
-                    <Button variant="accent" disabled={busy} onClick={onComplete}>
-                        {task.completedAt ? <RotateCcw aria-hidden /> : <Check aria-hidden />}
-                        {task.completedAt ? "Reopen task" : "Mark done"}
-                    </Button>
+                    {task.deletedAt ? (
+                        <Button variant="accent" disabled={busy} onClick={onRestore}>
+                            <RotateCcw aria-hidden />
+                            Restore task
+                        </Button>
+                    ) : (
+                        <>
+                            <Button
+                                variant="ghost"
+                                className={styles.deleteAction}
+                                onClick={() => onIntent("delete")}
+                                disabled={busy}
+                            >
+                                <Trash2 aria-hidden />
+                                Delete task
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => onIntent("edit")}
+                                disabled={busy}
+                            >
+                                <Pencil aria-hidden />
+                                Edit task
+                            </Button>
+                            <Button variant="accent" disabled={busy} onClick={onComplete}>
+                                {task.completedAt ? (
+                                    <RotateCcw aria-hidden />
+                                ) : (
+                                    <Check aria-hidden />
+                                )}
+                                {task.completedAt ? "Reopen task" : "Mark done"}
+                            </Button>
+                        </>
+                    )}
                 </div>
             }
         >
             <span className={`${styles.statusBadge} ${overdue ? styles.overdueBadge : ""}`}>
-                {task.completedAt ? <CheckCircle2 aria-hidden /> : <Clock aria-hidden />}
-                {task.completedAt ? "Completed" : overdue ? "Overdue" : "To do"}
+                {task.deletedAt ? (
+                    <Trash2 aria-hidden />
+                ) : task.completedAt ? (
+                    <CheckCircle2 aria-hidden />
+                ) : (
+                    <Clock aria-hidden />
+                )}
+                {task.deletedAt
+                    ? "Deleted"
+                    : task.completedAt
+                      ? "Completed"
+                      : overdue
+                        ? "Overdue"
+                        : "To do"}
             </span>
             <h2 className={styles.detailTitle}>{task.title}</h2>
             {task.details && <p className={styles.detailDescription}>{task.details}</p>}
@@ -116,7 +148,7 @@ export function TaskDetail({
                                 : "No due date"}
                         </dd>
                     </div>
-                    {!task.completedAt && (
+                    {!task.completedAt && !task.deletedAt && (
                         <Button variant="outline" size="sm" onClick={() => onIntent("reschedule")}>
                             Reschedule
                         </Button>
@@ -148,8 +180,12 @@ export function TaskDetail({
                     <div>
                         <dt>Reminders</dt>
                         <dd>
-                            {task.completedAt ? (
-                                "Off · task completed"
+                            {task.completedAt || task.deletedAt ? (
+                                task.deletedAt ? (
+                                    "Off · task deleted"
+                                ) : (
+                                    "Off · task completed"
+                                )
                             ) : reminders.length === 0 ? (
                                 "No reminders"
                             ) : (
@@ -178,7 +214,7 @@ export function TaskDetail({
                             )}
                         </dd>
                     </div>
-                    {!task.completedAt && (
+                    {!task.completedAt && !task.deletedAt && (
                         <Button variant="ghost" size="sm" onClick={() => onIntent("reminder")}>
                             {reminders.length ? "Manage" : "Add"}
                         </Button>
@@ -285,16 +321,21 @@ export function TaskDeleteDialog({
     onConfirm: () => void;
 }) {
     return (
-        <TaskPanel
-            compact
-            title="Delete this task?"
-            description="The task and its reminders will be removed."
-            busy={busy}
-            onClose={onClose}
-            footer={
-                <div className={styles.detailFooter}>
+        <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
+            <DialogPopup showCloseButton={false} className={styles.deleteDialog}>
+                <DialogTitle>Delete task?</DialogTitle>
+                <p className={styles.deleteTaskName}>{task.title}</p>
+                <DialogDescription>
+                    Reminders will stop. You can restore it from Deleted.
+                </DialogDescription>
+                {error && (
+                    <p role="alert" className={styles.error}>
+                        {error}
+                    </p>
+                )}
+                <div className={styles.deleteActions}>
                     <Button variant="outline" disabled={busy} onClick={onClose}>
-                        Keep task
+                        Cancel
                     </Button>
                     <Button
                         variant="destructive"
@@ -302,23 +343,11 @@ export function TaskDeleteDialog({
                         loading={busy}
                         onClick={onConfirm}
                     >
-                        <Trash2 aria-hidden /> Delete task
+                        Delete task
                     </Button>
                 </div>
-            }
-        >
-            <div className="space-y-4">
-                <p className="body font-semibold wrap-anywhere text-ink">{task.title}</p>
-                <p className="body-sm text-ink-muted">
-                    Linked Clients and properties will stay unchanged. This can’t be undone.
-                </p>
-                {error && (
-                    <p role="alert" className={styles.error}>
-                        {error}
-                    </p>
-                )}
-            </div>
-        </TaskPanel>
+            </DialogPopup>
+        </Dialog>
     );
 }
 
@@ -336,7 +365,7 @@ export function TaskReminders({
     onEdit: (task: Task) => void;
 }) {
     const reminders = tasks
-        .filter((task) => !task.completedAt)
+        .filter((task) => !task.completedAt && !task.deletedAt)
         .flatMap((task) => taskReminders(task).map((reminder) => ({ task, ...reminder })))
         .sort((a, b) => (a.at ?? "9999").localeCompare(b.at ?? "9999"));
     const pending = reminders.filter(

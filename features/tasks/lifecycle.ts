@@ -24,11 +24,16 @@ export function setTaskCompleted(
     nextId = crypto.randomUUID(),
 ): Task[] {
     const task = tasks.find((item) => item.id === id);
-    if (!task || !!task.completedAt === completed) return tasks;
+    if (!task || task.deletedAt || !!task.completedAt === completed) return tasks;
     const at = new Date(now).toISOString();
     const successor = tasks.find((item) => item.repeatFromId === id);
     if (!completed) {
-        if (successor && (successor.completedAt || successor.updatedAt !== successor.createdAt)) {
+        if (
+            successor &&
+            (successor.deletedAt ||
+                successor.completedAt ||
+                successor.updatedAt !== successor.createdAt)
+        ) {
             throw new Error(
                 "The next occurrence has already been changed. Keep this occurrence completed and work on the next task.",
             );

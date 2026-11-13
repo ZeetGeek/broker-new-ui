@@ -18,6 +18,8 @@
 
 import { forwardRef } from "react";
 
+export { IconFlag as Flag, IconFlagFilled as FlagFilled } from "@tabler/icons-react";
+
 import { Icon as IconifyIcon, type IconProps as IconifyProps } from "@iconify/react";
 import { Icon as OfflineIcon } from "@iconify/react/offline";
 import type { IconProps, TablerIcon } from "@tabler/icons-react";
@@ -202,6 +204,7 @@ import {
     IconDots,
     IconDownload,
     IconDroplet,
+    IconEqual,
     IconExternalLink,
     IconEye,
     IconEyeOff,
@@ -411,6 +414,7 @@ export const Download = IconDownload;
 export const Droplets = IconDroplet;
 export const Dumbbell = IconBarbell;
 export const Ellipsis = IconDots;
+export const Equal = IconEqual;
 export const Expand = IconArrowsMaximize;
 export const ExternalLink = IconExternalLink;
 export const Eye = IconEye;
