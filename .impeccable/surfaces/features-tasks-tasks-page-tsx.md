@@ -41,7 +41,8 @@ the intended dialog and linked-record prefill.
 
 Task titles lead. Full text and linked Client, Owner, property, priority,
 recurrence, and reminder details remain accessible from the actions menu and
-the details drawer. Long titles truncate within the day column.
+the details drawer. Long task titles wrap within the day column, and rows grow
+to show the full text, including long words without spaces.
 
 Unfinished overdue tasks stay in their original due-date columns; they never
 automatically move into Today. Dragging between days explicitly changes the

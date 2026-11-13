@@ -1,5 +1,5 @@
 .menu {
-    inline-size: min(248px, calc(100vw - 24px));
+    inline-size: min(212px, calc(100vw - 24px));
     max-block-size: min(720px, var(--available-height));
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -188,13 +188,13 @@
     border-color: var(--color-border-warm);
 }
 .priorities button[data-priority="urgent"] {
-    color: var(--color-danger);
+    color: #3b6bdc;
 }
 .priorities button[data-priority="high"] {
-    color: var(--color-urgent);
+    color: #eab308;
 }
 .priorities button[data-priority="medium"] {
-    color: #3b6bdc;
+    color: var(--color-danger);
 }
 .priorities button[data-priority="low"] {
     color: var(--color-ink-muted);

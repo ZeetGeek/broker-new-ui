@@ -36,6 +36,7 @@ import { plannerColumnTasks, plannerDate, type PlannerDragPreview } from "./plan
 import { shiftTaskDate } from "./recurrence";
 import { TaskLine, type TaskRowActions } from "./task-list";
 import { TaskLists } from "./task-lists";
+import { TaskTitleInput } from "./task-title-input";
 
 import styles from "./planner.module.css";
 
@@ -587,16 +588,20 @@ function InlineTaskComposer({
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (busy || pending.current || !title.trim()) return;
+        const field = event.currentTarget.querySelector("textarea");
         pending.current = true;
         try {
-            if (await onAdd(title.trim(), date, listId)) setTitle("");
+            if (await onAdd(title.trim(), date, listId)) {
+                setTitle("");
+                field?.focus();
+            }
         } finally {
             pending.current = false;
         }
     };
     return (
         <form className={styles.composer} onSubmit={submit}>
-            <input
+            <TaskTitleInput
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 maxLength={160}

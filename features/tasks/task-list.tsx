@@ -20,6 +20,7 @@ import {
 } from "./model";
 import type { TaskQuickChange } from "./quick-actions";
 import { TaskActionsMenu } from "./task-actions-menu";
+import { TaskTitleInput } from "./task-title-input";
 
 import styles from "./planner.module.css";
 
@@ -53,9 +54,9 @@ export function TaskLine({
     const cancelled = useRef(false);
     const overdue =
         !task.completedAt && !task.deletedAt && !!task.dueDate && task.dueDate < taskDateKey(now);
-    const save = async () => {
+    const save = async (submit = false) => {
         if (cancelled.current || saving.current) return;
-        if (!title.trim() || title.trim() === task.title) {
+        if ((!title.trim() && !submit) || title.trim() === task.title) {
             setEditing(false);
             return;
         }
@@ -84,10 +85,10 @@ export function TaskLine({
                     className={styles.inlineEdit}
                     onSubmit={(event) => {
                         event.preventDefault();
-                        void save();
+                        void save(true);
                     }}
                 >
-                    <input
+                    <TaskTitleInput
                         autoFocus
                         aria-label="Edit task title"
                         value={title}

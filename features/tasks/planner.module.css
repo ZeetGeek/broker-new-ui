@@ -1,12 +1,13 @@
 .planner {
     --line-height: 40px;
+    --planner-inline-padding: 2rem;
     container-type: inline-size;
     min-inline-size: 0;
     color: var(--color-ink);
     background: var(--color-surface);
     border-radius: var(--radius-card);
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: 12px;
     caret-color: var(--color-brand);
 }
 .plannerNav {
@@ -15,7 +16,7 @@
     grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
     align-items: center;
     gap: 1rem;
-    padding: 0.75rem 1.25rem;
+    padding: 0.75rem var(--planner-inline-padding);
     min-block-size: 64px;
 }
 .plannerNav::after {
@@ -33,6 +34,7 @@
     color: var(--color-ink-muted);
     font-size: 0.875rem;
     font-weight: 600;
+    padding-inline-start: 0.625rem;
 }
 .dateControls {
     grid-column: 3;
@@ -86,8 +88,8 @@
 .somedayGrid {
     display: grid;
     grid-template-columns: repeat(var(--planner-columns), minmax(0, 1fr));
-    gap: 2rem;
-    padding: 1.5rem 3rem 1.25rem;
+    gap: 3.25rem;
+    padding: 1.5rem var(--planner-inline-padding) 1.25rem;
 }
 .dayColumn {
     min-inline-size: 0;
@@ -149,11 +151,13 @@
     cursor: inherit;
 }
 .blankLine {
-    /* Task and composer contents fill one line, plus their divider. */
+    /* Empty paper rules keep their baseline height; task rows can grow. */
     block-size: calc(var(--line-height) + 1px);
     min-block-size: calc(var(--line-height) + 1px);
 }
 .taskLine {
+    --task-action-size: 28px;
+    --task-action-gutter: 32px;
     position: relative;
     isolation: isolate;
     display: flex;
@@ -161,7 +165,7 @@
     gap: 0.25rem;
     min-inline-size: 0;
     min-block-size: var(--line-height);
-    padding-inline: 0.5rem 0.25rem;
+    padding-inline: 0.5rem;
     border-radius: 0;
 }
 .taskLine::before {
@@ -174,32 +178,29 @@
     pointer-events: none;
 }
 .taskLine[data-priority="urgent"] {
-    --task-row-bg: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface));
+    --task-row-bg: color-mix(in srgb, #3b6bdc 20%, var(--color-surface));
 }
 .taskLine[data-priority="high"] {
-    --task-row-bg: color-mix(in srgb, var(--color-urgent) 16%, var(--color-surface));
+    --task-row-bg: color-mix(in srgb, #eab308 20%, var(--color-surface));
 }
 .taskLine[data-priority="medium"] {
-    --task-row-bg: color-mix(in srgb, #3b6bdc 20%, var(--color-surface));
+    --task-row-bg: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface));
 }
 .taskLine[data-priority="low"] {
     --task-row-bg: transparent;
-}
-.taskLine:is([data-priority="urgent"], [data-priority="high"], [data-priority="medium"]) {
-    --task-action-bg: rgb(255 255 255 / 25%);
 }
 .lineTitle {
     flex: 1;
     min-inline-size: 0;
     min-block-size: var(--line-height);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    padding-block: 0.5rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
     text-align: start;
     color: inherit;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 1.5;
-    font-weight: 500;
+    font-weight: 600;
     cursor: text;
 }
 .completedLine .lineTitle {
@@ -234,10 +235,14 @@
 }
 .lineAction,
 .restoreAction {
+    position: absolute;
+    inset-inline-end: calc(-1 * var(--task-action-gutter));
+    inset-block-start: 50%;
+    transform: translateY(-50%);
     display: inline-grid;
     place-items: center;
     flex-shrink: 0;
-    inline-size: 22px;
+    inline-size: var(--task-action-size);
     block-size: 32px;
     color: var(--color-ink-subtle);
     border-radius: 6px;
@@ -245,15 +250,28 @@
 }
 .lineAction {
     opacity: 0;
-    inline-size: 28px;
-    block-size: 28px;
-    border-radius: 8px;
+    inline-size: 24px;
+    block-size: 24px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+}
+.lineAction::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 50%;
+    inset-block-start: 50%;
+    transform: translate(-50%, -50%);
+    inline-size: 24px;
+    block-size: 24px;
+    border: 1px solid var(--color-border-warm);
+    border-radius: 50%;
+    pointer-events: none;
 }
 .lineAction svg {
     inline-size: 14px;
     block-size: 14px;
 }
-.lineAction:hover,
 .restoreAction:hover {
     color: var(--color-brand-text);
     background: var(--color-brand-soft);
@@ -261,7 +279,11 @@
 .lineAction:hover,
 .lineAction[data-popup-open] {
     color: var(--color-ink-muted);
-    background: var(--task-action-bg, var(--color-surface-muted));
+    background: transparent;
+}
+.lineAction:hover::before,
+.lineAction[data-popup-open]::before {
+    border-color: var(--color-ink-subtle);
 }
 .taskLine:hover .lineCheck,
 .taskLine:focus-within .lineCheck,
@@ -280,16 +302,38 @@
     flex: 1;
     min-inline-size: 0;
 }
-.inlineEdit input {
+.taskTitleField {
+    flex: 1;
+    min-inline-size: 0;
+}
+.titleLimit {
+    display: none;
+    padding-block-end: 0.5rem;
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+}
+.taskTitleField:focus-within .titleLimit {
+    display: block;
+}
+.inlineEdit textarea {
+    display: block;
+    resize: none;
+    overflow: hidden;
+    overflow-wrap: anywhere;
     cursor: text;
     user-select: text;
     inline-size: 100%;
     min-inline-size: 0;
     min-block-size: var(--line-height);
     border: 0;
-    padding: 0;
+    padding: 0.5rem 0;
     background: transparent;
     font: inherit;
+    font-weight: 600;
+    line-height: 1.5;
     color: inherit;
     outline: none;
 }
@@ -308,7 +352,7 @@
     box-shadow: var(--shadow-md);
     border-radius: 6px;
     font-family: var(--font-sans);
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     line-height: 1.5;
     overflow-wrap: anywhere;
@@ -328,23 +372,29 @@
     min-block-size: var(--line-height);
     padding-inline: 0.5rem;
 }
-.composer input {
+.composer textarea {
+    display: block;
+    resize: none;
+    overflow: hidden;
+    overflow-wrap: anywhere;
     inline-size: 100%;
     min-inline-size: 0;
     min-block-size: var(--line-height);
     border: 0;
-    padding: 0;
+    padding: 0.5rem 0;
     outline: none;
     background: transparent;
     color: var(--color-ink);
     font: inherit;
+    font-weight: 600;
+    line-height: 1.5;
 }
-.composer input::placeholder {
-    color: var(--color-ink-subtle);
+.composer textarea::placeholder {
+    color: color-mix(in srgb, var(--color-ink-subtle) 75%, var(--color-surface));
     opacity: 0;
 }
-.dayColumn:hover .composer input::placeholder,
-.composer:focus-within input::placeholder {
+.dayColumn:hover .composer textarea::placeholder,
+.composer:focus-within textarea::placeholder {
     opacity: 1;
 }
 .composer:focus-within {
@@ -365,7 +415,7 @@
     display: flex;
     align-items: center;
     min-block-size: 56px;
-    padding-inline: 3rem;
+    padding-inline: var(--planner-inline-padding);
     border-block-start: 1px solid var(--color-border-warm);
     border-block-end: 1px solid var(--color-border-warm);
     gap: 0.5rem;
@@ -540,7 +590,7 @@
     cursor: grabbing;
 }
 .notebookEditor {
-    padding: 0.75rem 3rem;
+    padding: 0.75rem var(--planner-inline-padding);
     background: var(--color-surface-muted);
 }
 .nameForm {
@@ -580,7 +630,7 @@
 }
 .notebookError,
 .notebookLoading {
-    padding: 1rem 3rem;
+    padding: 1rem var(--planner-inline-padding);
     font-size: 13px;
     line-height: 1.6;
 }
@@ -620,6 +670,45 @@
     grid-column: 2;
     grid-row: 1;
     justify-self: center;
+}
+.columnPicker:global(.t-tabs-surface.t-tabs-compact) {
+    --tabs-bar-bg: transparent;
+    --tabs-pill-bg: var(--color-brand);
+    --tabs-text-active: var(--color-brand-text);
+    align-self: stretch;
+    gap: 1.25rem;
+    margin-block: -0.75rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+}
+.columnPicker:global(.t-tabs-surface.t-tabs-compact) > button {
+    align-self: stretch;
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    block-size: auto;
+    padding: 0 0.25rem;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ink-muted);
+}
+.columnPicker:global(.t-tabs-surface.t-tabs-compact) > button:hover,
+.columnPicker:global(.t-tabs-surface.t-tabs-compact) > button[aria-selected="true"] {
+    color: var(--color-brand-text);
+}
+.columnPicker:global(.t-tabs-surface.t-tabs-compact) > button:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: -2px;
+    box-shadow: none;
+}
+.columnPicker:global(.t-tabs-surface.t-tabs-compact) > :global(.t-tabs-pill) {
+    inset-block-start: auto;
+    inset-block-end: 0;
+    block-size: 2px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
 }
 .archive {
     padding: 2.5rem 3rem;
@@ -672,8 +761,8 @@
 @container (max-width: 1000px) {
     .dayGrid,
     .somedayGrid {
-        gap: 1.75rem;
-        padding-inline: 2.5rem;
+        gap: 3.25rem;
+        padding-inline: var(--planner-inline-padding);
     }
 }
 @container (min-width: 600px) and (max-width: 799px) {
@@ -685,6 +774,9 @@
     .columnPicker {
         grid-column: 1 / -1;
         grid-row: 2;
+    }
+    .columnPicker:global(.t-tabs-surface.t-tabs-compact) {
+        margin-block: 0 -0.5rem;
     }
     .dateControls {
         grid-column: 2;
@@ -713,14 +805,19 @@
     }
     .dateRange {
         font-size: 0.75rem;
+        padding-inline-start: 0;
     }
     .dayGrid,
     .somedayGrid {
-        padding-inline: 2.75rem 1rem;
+        padding-inline: 2.75rem 3.5rem;
         padding-block-start: 0.75rem;
     }
     .dayColumn {
         --line-height: 44px;
+    }
+    .taskLine {
+        --task-action-size: 44px;
+        --task-action-gutter: 48px;
     }
     .ruledList {
         min-block-size: calc(8 * var(--line-height));
@@ -742,9 +839,9 @@
         opacity: 1;
     }
     .lineTitle {
-        font-size: 14px;
+        font-size: 12px;
     }
-    .composer input::placeholder {
+    .composer textarea::placeholder {
         opacity: 1;
     }
     .somedayBar {
@@ -791,10 +888,12 @@
 }
 @media (max-width: 640px) {
     .archive {
-        padding: 1.5rem 1.25rem 1.5rem 2.75rem;
+        padding: 1.5rem 3.5rem 1.5rem 2.75rem;
     }
     .archive .taskLine {
         --line-height: 44px;
+        --task-action-size: 44px;
+        --task-action-gutter: 48px;
     }
     .archive .lineCheck,
     .archive .lineAction {
@@ -817,7 +916,7 @@
     .lineAction {
         opacity: 1;
     }
-    .composer input::placeholder {
+    .composer textarea::placeholder {
         opacity: 1;
     }
     .customListControls {

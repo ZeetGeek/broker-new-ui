@@ -154,19 +154,19 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             value: "all",
             label: "To do",
             count: open.length,
-            dotClassName: "bg-brand",
+            dotClassName: "bg-sky-400",
         },
         {
             value: "completed",
             label: "Completed",
             count: tasks.filter((task) => task.completedAt && !task.deletedAt).length,
-            dotClassName: "bg-brand",
+            dotClassName: "bg-emerald-400",
         },
         {
             value: "deleted",
             label: "Deleted",
             count: tasks.filter((task) => task.deletedAt).length,
-            dotClassName: "bg-ink-subtle",
+            dotClassName: "bg-red-400",
         },
     ];
     const visible = tasks.filter((task) => {
@@ -274,14 +274,22 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             if (view) close();
         }
     };
-    const rename = (task: Task, title: string) =>
-        changeTasks((latest) =>
+    const rename = (task: Task, title: string) => {
+        // Only an explicit empty-title submission reaches here; blur cancels an empty edit.
+        if (!title.trim()) {
+            return changeTasks(
+                (latest) => setTaskDeleted(latest, task.id, true),
+                "Task moved to Deleted",
+            );
+        }
+        return changeTasks((latest) =>
             latest.map((item) =>
                 item.id === task.id && !item.deletedAt
                     ? { ...item, title, updatedAt: new Date().toISOString() }
                     : item,
             ),
         );
+    };
     const quickChange = (task: Task, change: TaskQuickChange) =>
         changeTasks((latest) => changeTaskQuickly(latest, task.id, change));
     const quickAdd = async (title: string, date: string | null, listId?: string) => {
@@ -487,8 +495,8 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                     {loadError && (
                         <div className={styles.error} role="alert">
                             <p>
-                                Sample tasks couldn’t load. Check that storage is available in this
-                                tab, or start again with the sample tasks.
+                                Tasks couldn’t load. Check that storage is available in this tab, or
+                                reset the task list to start empty.
                             </p>
                             <Button
                                 className="mbs-3"
@@ -503,7 +511,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                     )
                                 }
                             >
-                                Reset sample tasks
+                                Reset task list
                             </Button>
                         </div>
                     )}

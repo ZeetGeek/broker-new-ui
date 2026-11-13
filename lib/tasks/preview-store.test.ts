@@ -1,9 +1,37 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { taskReminderAt, taskReminderKey, taskReminders } from "@/features/tasks/model";
+import {
+    taskDueReminders,
+    taskReminderAt,
+    taskReminderKey,
+    taskReminders,
+    taskSchema,
+} from "@/features/tasks/model";
 import { movePlannerTask, setTaskDeleted } from "@/features/tasks/planner-model";
-import { sampleTasks, taskPreviewStore } from "@/features/tasks/preview-store";
+import { placeholderTasks, sampleTasks, taskPreviewStore } from "@/features/tasks/preview-store";
+
+test("placeholder tasks cover every view, preserve valid schedules, and never send demo reminders", () => {
+    const now = Date.parse("2030-01-01T04:00:00Z");
+    const tasks = placeholderTasks(now);
+    assert.equal(tasks.length, 80);
+    assert.equal(new Set(tasks.map((task) => task.id)).size, 80);
+    assert.equal(tasks.filter((task) => !task.completedAt && !task.deletedAt).length, 60);
+    assert.equal(tasks.filter((task) => task.completedAt).length, 12);
+    assert.equal(tasks.filter((task) => task.deletedAt).length, 8);
+    assert.equal(tasks.filter((task) => !task.dueDate).length, 12);
+    assert.equal(new Set(tasks.map((task) => task.title)).size, 80);
+    const dayCounts = ["2030-01-01", "2030-01-02", "2030-01-03", "2030-01-04", "2030-01-05"].map(
+        (date) =>
+            tasks.filter((task) => task.dueDate === date && !task.completedAt && !task.deletedAt)
+                .length,
+    );
+    assert.deepEqual(dayCounts, [6, 11, 3, 13, 7]);
+    for (const task of tasks) {
+        assert.ok(taskSchema.safeParse(task).success);
+        assert.deepEqual(taskDueReminders(task, now + 7 * 86_400_000), []);
+    }
+});
 
 test("deleted state and manual planner order survive storage reads without losing existing tasks", async () => {
     const values = new Map<string, string>();
@@ -54,19 +82,20 @@ test("mock task storage isolates accounts, preserves empty lists, and rejects da
         },
     });
     try {
-        const tasks = await taskPreviewStore.list("broker-a");
+        assert.equal((await taskPreviewStore.list("broker-a")).length, 80);
+        const tasks = sampleTasks();
         await taskPreviewStore.save("broker-a", [{ ...tasks[0], startTime: "08:00" }]);
         assert.equal((await taskPreviewStore.list("broker-a"))[0].startTime, "08:00");
         await taskPreviewStore.save("broker-a", []);
         assert.deepEqual(await taskPreviewStore.list("broker-a"), []);
-        assert.equal((await taskPreviewStore.list("broker-b")).length, tasks.length);
+        assert.equal((await taskPreviewStore.list("broker-b")).length, 80);
         await assert.rejects(taskPreviewStore.save("broker-a", [tasks[0], tasks[0]]));
         await assert.rejects(
             taskPreviewStore.save("broker-a", [{ ...tasks[0], clientId: "missing" }]),
         );
-        values.set("crm.private-tasks.mock.v1.broker-a", "broken json");
+        values.set("crm.private-tasks.mock.v3.broker-a", "broken json");
         await assert.rejects(taskPreviewStore.list("broker-a"));
-        assert.ok((await taskPreviewStore.reset("broker-a")).length > 0);
+        assert.deepEqual(await taskPreviewStore.reset("broker-a"), []);
     } finally {
         if (original) Object.defineProperty(globalThis, "sessionStorage", original);
         else Reflect.deleteProperty(globalThis, "sessionStorage");
@@ -147,7 +176,7 @@ test("version one scalar tasks migrate without losing records or valid delivery 
         // A delivery for a previous schedule must not suppress the current reminder.
         legacy[3] = { ...legacy[3], reminderDeliveredFor: "2029-01-01T00:00:00.000Z" };
         values.set(
-            "crm.private-tasks.mock.v1.broker",
+            "crm.private-tasks.mock.v3.broker",
             JSON.stringify({ version: 1, tasks: legacy }),
         );
         const migrated = await taskPreviewStore.list("broker");
@@ -164,7 +193,7 @@ test("version one scalar tasks migrate without losing records or valid delivery 
         assert.deepEqual(migrated[2].deliveredReminderKeys, []);
         assert.deepEqual(migrated[3].reminders, [legacy[3].reminderMinutes]);
         assert.deepEqual(migrated[3].deliveredReminderKeys, []);
-        const stored = JSON.parse(values.get("crm.private-tasks.mock.v1.broker")!);
+        const stored = JSON.parse(values.get("crm.private-tasks.mock.v3.broker")!);
         assert.equal(stored.version, 3);
         assert.equal("reminderMinutes" in stored.tasks[0], false);
         assert.equal("reminderDeliveredFor" in stored.tasks[0], false);
