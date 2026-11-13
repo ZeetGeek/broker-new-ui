@@ -8,13 +8,28 @@ import { disconnectNotificationSocket } from "@/lib/socket/notifications";
 
 import { useAppSelector } from "@/store/hooks";
 
+/**
+ * Remounts the app below this point — dropping every cached query — only when
+ * an account's data could leak: signing out, or switching straight to another
+ * account. Signing in from signed out does not remount: the cache then holds
+ * only public data, and a remount there would reset the login screen to an
+ * empty form while the redirect to the portal is still loading.
+ */
 export function QueryProvider({ children }: { children: React.ReactNode }) {
-    const sessionKey = useAppSelector((state) =>
+    const identity = useAppSelector((state) =>
         state.auth.accessToken && state.auth.user
-            ? `${state.auth.user.id}:${state.auth.user.role}:${state.auth.sessionEpoch}`
-            : `signed-out:${state.auth.sessionEpoch}`,
+            ? `${state.auth.user.id}:${state.auth.user.role}`
+            : null,
     );
-    return <SessionQueries key={sessionKey}>{children}</SessionQueries>;
+    const [scope, setScope] = useState({ identity, key: 0 });
+
+    if (scope.identity !== identity) {
+        // Adjusted during render, so the old tree never commits with the new account.
+        const leavingAccount = scope.identity !== null;
+        setScope({ identity, key: leavingAccount ? scope.key + 1 : scope.key });
+    }
+
+    return <SessionQueries key={scope.key}>{children}</SessionQueries>;
 }
 
 function SessionQueries({ children }: { children: React.ReactNode }) {
