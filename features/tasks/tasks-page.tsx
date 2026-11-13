@@ -337,137 +337,142 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                         </Button>
                     </div>
                 </div>
-                {(due || linked) && (
-                    <div className={styles.activeFilters}>
-                        {due && (
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => navigate({ due: undefined }, true)}
-                            >
-                                {DUE_FILTERS.find((f) => f.value === due)?.label}
-                                <X aria-hidden />
-                                <span className="sr-only">Remove due date filter</span>
+                <div className={styles.board}>
+                    {(due || linked) && (
+                        <div className={styles.activeFilters}>
+                            {due && (
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => navigate({ due: undefined }, true)}
+                                >
+                                    {DUE_FILTERS.find((f) => f.value === due)?.label}
+                                    <X aria-hidden />
+                                    <span className="sr-only">Remove due date filter</span>
+                                </Button>
+                            )}
+                            {linked && (
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => navigate({ linked: undefined }, true)}
+                                >
+                                    {LINK_FILTERS.find((f) => f.value === linked)?.label}
+                                    <X aria-hidden />
+                                    <span className="sr-only">Remove linked record filter</span>
+                                </Button>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={clear}>
+                                Clear filters
                             </Button>
-                        )}
-                        {linked && (
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => navigate({ linked: undefined }, true)}
-                            >
-                                {LINK_FILTERS.find((f) => f.value === linked)?.label}
-                                <X aria-hidden />
-                                <span className="sr-only">Remove linked record filter</span>
-                            </Button>
-                        )}
-                        <Button variant="ghost" size="sm" onClick={clear}>
-                            Clear filters
-                        </Button>
-                    </div>
-                )}
-                {tab === "today" && overdue > 0 && (
-                    <button
-                        className={styles.overdueNotice}
-                        onClick={() => navigate({ tab: undefined, due: "overdue" })}
-                    >
-                        <span>
-                            <ClockNotice />
-                            {overdue} overdue {overdue === 1 ? "task needs" : "tasks need"}{" "}
-                            attention
-                        </span>
-                        <span>View tasks →</span>
-                    </button>
-                )}
-                {loadError && (
-                    <div className={styles.error} role="alert">
-                        <p>
-                            Sample tasks couldn’t load. Check that storage is available in this tab,
-                            or start again with the sample tasks.
-                        </p>
-                        <Button
-                            className="mbs-3"
-                            size="sm"
-                            variant="outline"
-                            disabled={busy}
-                            onClick={() =>
-                                void reset().catch(() =>
-                                    setError(
-                                        "Allow storage in this browser, then try loading tasks again.",
-                                    ),
-                                )
-                            }
-                        >
-                            Reset sample tasks
-                        </Button>
-                    </div>
-                )}
-                {error && !view && (
-                    <p className={styles.error} role="alert">
-                        {error}
-                    </p>
-                )}
-                <TabsContent value={tab} className={styles.content}>
-                    {isLoading ? (
-                        <div className={styles.loading} aria-label="Loading tasks" role="status">
-                            {Array.from({ length: 5 }, (_, i) => (
-                                <Skeleton
-                                    key={i}
-                                    className="rounded-control block-18 inline-full"
-                                />
-                            ))}
                         </div>
-                    ) : visible.length ? (
-                        <TaskList
-                            tasks={visible}
-                            now={now}
-                            sort={sort}
-                            completed={tab === "completed"}
-                            busy={busy}
-                            onOpen={(task) => intent(task, "detail")}
-                            onComplete={complete}
-                            onIntent={intent}
-                        />
-                    ) : (
-                        <EmptyState
-                            className={styles.empty}
-                            icon={tab === "completed" ? CheckCircle2 : List}
-                            heading={
-                                filtered
-                                    ? "No tasks match these filters"
-                                    : tab === "today"
-                                      ? "A clear day ahead"
-                                      : tab === "upcoming"
-                                        ? "Nothing lined up yet"
-                                        : tab === "completed"
-                                          ? "Your finished tasks will live here"
-                                          : "Make room for your next step"
-                            }
-                            description={
-                                filtered
-                                    ? "Try another search or clear your filters to see more tasks."
-                                    : tab === "completed"
-                                      ? "Check off a task when it’s done. You can reopen it whenever plans change."
-                                      : "Add a follow-up, a document to collect, or anything you want to remember."
-                            }
-                        >
-                            <Button
-                                variant={filtered ? "outline" : "default"}
-                                onClick={filtered ? clear : create}
-                            >
-                                {filtered ? "Clear search & filters" : "Add a task"}
-                            </Button>
-                        </EmptyState>
                     )}
-                </TabsContent>
+                    {tab === "today" && overdue > 0 && (
+                        <button
+                            className={styles.overdueNotice}
+                            onClick={() => navigate({ tab: undefined, due: "overdue" })}
+                        >
+                            <span>
+                                <ClockNotice />
+                                {overdue} overdue {overdue === 1 ? "task needs" : "tasks need"}{" "}
+                                attention
+                            </span>
+                            <span>View tasks →</span>
+                        </button>
+                    )}
+                    {loadError && (
+                        <div className={styles.error} role="alert">
+                            <p>
+                                Sample tasks couldn’t load. Check that storage is available in this
+                                tab, or start again with the sample tasks.
+                            </p>
+                            <Button
+                                className="mbs-3"
+                                size="sm"
+                                variant="outline"
+                                disabled={busy}
+                                onClick={() =>
+                                    void reset().catch(() =>
+                                        setError(
+                                            "Allow storage in this browser, then try loading tasks again.",
+                                        ),
+                                    )
+                                }
+                            >
+                                Reset sample tasks
+                            </Button>
+                        </div>
+                    )}
+                    {error && !view && (
+                        <p className={styles.error} role="alert">
+                            {error}
+                        </p>
+                    )}
+                    <TabsContent value={tab} className={styles.content}>
+                        {isLoading ? (
+                            <div
+                                className={styles.loading}
+                                aria-label="Loading tasks"
+                                role="status"
+                            >
+                                {Array.from({ length: 5 }, (_, i) => (
+                                    <Skeleton
+                                        key={i}
+                                        className="rounded-control block-18 inline-full"
+                                    />
+                                ))}
+                            </div>
+                        ) : visible.length ? (
+                            <TaskList
+                                tasks={visible}
+                                now={now}
+                                sort={sort}
+                                completed={tab === "completed"}
+                                busy={busy}
+                                onOpen={(task) => intent(task, "detail")}
+                                onComplete={complete}
+                                onIntent={intent}
+                            />
+                        ) : (
+                            <EmptyState
+                                className={styles.empty}
+                                icon={tab === "completed" ? CheckCircle2 : List}
+                                heading={
+                                    filtered
+                                        ? "No tasks match these filters"
+                                        : tab === "today"
+                                          ? "A clear day ahead"
+                                          : tab === "upcoming"
+                                            ? "Nothing lined up yet"
+                                            : tab === "completed"
+                                              ? "Your finished tasks will live here"
+                                              : "Make room for your next step"
+                                }
+                                description={
+                                    filtered
+                                        ? "Try another search or clear your filters to see more tasks."
+                                        : tab === "completed"
+                                          ? "Check off a task when it’s done. You can reopen it whenever plans change."
+                                          : "Add a follow-up, a document to collect, or anything you want to remember."
+                                }
+                            >
+                                <Button
+                                    variant={filtered ? "outline" : "default"}
+                                    onClick={filtered ? clear : create}
+                                >
+                                    {filtered ? "Clear search & filters" : "Add a task"}
+                                </Button>
+                            </EmptyState>
+                        )}
+                    </TabsContent>
+                    {!isLoading && !loadError && (
+                        <button type="button" className={styles.addTaskRow} onClick={create}>
+                            <Plus aria-hidden />
+                            Add task
+                        </button>
+                    )}
+                </div>
             </Tabs>
-            {!isLoading && visible.length > 0 && (
-                <footer className={styles.pageFooter}>
-                    <span className={styles.footerLine} aria-hidden />
-                    <p>Check off each task when it’s done. Your tasks are private to you.</p>
-                    <span className={styles.footerLine} aria-hidden />
-                </footer>
-            )}
             {view === "filters" && (
                 <TaskFilters
                     due={due}

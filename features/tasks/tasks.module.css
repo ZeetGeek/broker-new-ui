@@ -67,73 +67,75 @@
     font-size: 0.7rem;
     font-variant-numeric: tabular-nums;
 }
+.board {
+    background: var(--color-surface);
+    border-radius: 12px;
+    min-inline-size: 0;
+    inline-size: 100%;
+    max-inline-size: 1160px;
+    margin-inline: auto;
+    padding: 1.75rem 2rem;
+    min-block-size: 65dvh;
+}
 .content {
     min-inline-size: 0;
 }
 .groups {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-}
-.group {
-    min-inline-size: 0;
+    gap: 1.75rem;
 }
 .groupHeading {
     display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    padding-inline: 0.25rem;
-    margin-block-end: 0.7rem;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding-block-end: 0.65rem;
+    border-block-end: 1px solid var(--color-border-warm);
 }
 .groupHeading h2 {
     font-size: 0.875rem;
     font-weight: 650;
 }
 .groupCount {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-inline-size: 1.25rem;
-    block-size: 1.25rem;
-    padding-inline: 0.25rem;
-    border-radius: 999px;
-    background: var(--color-brand);
-    font-size: 0.6875rem;
-    font-weight: 700;
-    color: var(--color-surface);
+    font-size: 0.75rem;
+    font-weight: 500;
     font-variant-numeric: tabular-nums;
+    color: var(--color-ink-subtle);
 }
 .taskRows {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border-warm);
-    border-radius: 12px;
-    container-type: inline-size;
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 .taskRow {
     display: grid;
-    grid-template-columns:
-        minmax(0, 1.5fr) minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.4fr)
-        minmax(98px, 0.8fr);
-    grid-template-areas: "main schedule owner client priority actions";
-    align-items: center;
-    column-gap: 2rem;
-    padding: 1.25rem 1.5rem;
-    padding-inline-start: 1rem;
-    min-block-size: 104px;
-}
-.taskRow > * {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    grid-template-areas: "main main actions" ". schedule actions";
+    padding-block: 0.65rem 0.85rem;
     min-inline-size: 0;
 }
 .taskRow + .taskRow {
     border-block-start: 1px solid var(--color-border-warm);
 }
-.checkTarget {
+.taskRow > * {
+    min-inline-size: 0;
+}
+.taskMain {
+    grid-area: main;
     display: flex;
+    align-items: flex-start;
+    min-inline-size: 0;
+}
+.checkTarget {
+    inline-size: 44px;
+    min-block-size: 44px;
     flex-shrink: 0;
-    inline-size: 48px;
-    justify-content: center;
-    align-items: center;
-    min-block-size: 2.75rem;
+    display: grid;
+    place-items: center;
+}
+.checkTarget .checkboxHitArea {
+    inline-size: 44px !important;
+    block-size: 44px !important;
 }
 .checkboxHitArea::after {
     display: none;
@@ -141,186 +143,143 @@
 .checkboxHitArea::before {
     content: "";
     position: absolute;
-    inline-size: 1.5rem;
-    block-size: 1.5rem;
-    border: 2px solid var(--color-border-warm);
+    inline-size: 19px;
+    block-size: 19px;
+    border: 1.5px solid var(--color-ink-subtle);
     border-radius: 50%;
     background: var(--color-surface);
 }
-.checkboxHitArea:hover::before {
-    border-color: var(--color-ink-subtle);
+.taskRow[data-priority="urgent"] .checkboxHitArea::before {
+    border-color: var(--color-urgent);
+    background: var(--color-urgent-soft);
 }
-.checkboxHitArea[data-checked]::before {
+.taskRow[data-priority="high"] .checkboxHitArea::before {
+    border-color: var(--color-pending);
+    background: color-mix(in srgb, var(--color-pending) 8%, var(--color-surface));
+}
+.checkboxHitArea:hover::before {
+    border-color: var(--color-brand);
+}
+.taskRow .checkboxHitArea[data-checked]::before {
     background: var(--color-brand);
     border-color: var(--color-brand);
 }
-.checkboxHitArea[data-checked]:hover::before {
-    border-color: var(--color-brand-text);
-}
-.taskMain {
-    grid-area: main;
-    display: flex;
-    align-items: center;
-    gap: 0.875rem;
-    min-inline-size: 0;
-}
 .taskText {
+    flex: 1;
     min-inline-size: 0;
+    padding-block-start: 0.625rem;
 }
 .taskTitle {
-    display: block;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
     max-inline-size: 100%;
     text-align: start;
-    color: var(--color-ink);
-    font-size: 1rem;
-    font-weight: 650;
-    line-height: 1.4;
     overflow-wrap: anywhere;
+    color: var(--color-ink);
+    font-size: 0.9375rem;
+    font-weight: 550;
+    line-height: 1.5;
     cursor: pointer;
     border-radius: 3px;
 }
 .taskTitle:hover {
     color: var(--color-brand-text);
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
-}
-.taskTitle:focus-visible,
-.reminderLabel:focus-visible {
-    outline: 2px solid var(--color-brand);
-    outline-offset: 4px;
 }
 .taskMeta {
     display: flex;
-    align-items: center;
     flex-wrap: wrap;
-    gap: 0.35rem 0.5rem;
-    margin-block-start: 0.375rem;
-    color: var(--color-ink-muted);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1.5;
+    gap: 0.25rem 0.85rem;
+    margin-block: 0.35rem;
+    color: var(--color-ink-subtle);
+    font-size: 0.75rem;
+    line-height: 1.6;
 }
 .taskMeta > span {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    flex-wrap: wrap;
+    gap: 0.3rem;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+}
+.taskMeta > span > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .taskMeta svg {
-    inline-size: 14px;
-    block-size: 14px;
+    inline-size: 13px;
+    block-size: 13px;
     flex-shrink: 0;
 }
-.metaDivider {
-    opacity: 0.6;
+.taskSchedule {
+    grid-area: schedule;
 }
+.scheduleContent {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.1rem 0.85rem;
+    min-inline-size: 0;
+}
+.scheduleValue,
+.repeatLabel,
 .priority {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    color: var(--color-ink-muted);
-    font-size: 0.8125rem;
-    font-weight: 600;
-}
-.highPriority {
-    color: var(--color-pending);
-}
-.taskPriority {
-    grid-area: priority;
-    justify-self: center;
-}
-.taskPriority > small {
-    color: var(--color-ink-muted);
     font-size: 0.75rem;
-    line-height: 1.5;
-}
-.priority > span {
-    inline-size: 0.3rem;
-    block-size: 0.3rem;
-    background: currentColor;
-    border-radius: 50%;
-}
-.urgentPriority {
-    color: var(--color-urgent);
-}
-.taskSchedule {
-    grid-area: schedule;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: var(--color-ink);
-    font-size: 0.875rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-}
-.scheduleContent {
-    min-inline-size: 0;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--color-ink-muted);
     overflow-wrap: anywhere;
 }
 .scheduleValue {
-    display: block;
-    margin-block-start: 0.125rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
 }
-.scheduleIcon {
-    display: grid;
-    place-items: center;
+.scheduleValue svg,
+.repeatLabel svg {
+    inline-size: 14px;
+    block-size: 14px;
     flex-shrink: 0;
-    inline-size: 36px;
-    block-size: 36px;
-    border-radius: 8px;
-    color: var(--color-ink-muted);
 }
-.scheduleIcon svg {
-    inline-size: 20px;
-    block-size: 20px;
+.priority > span {
+    inline-size: 5px;
+    block-size: 5px;
+    border-radius: 50%;
+    background: currentColor;
 }
-.taskSchedule .repeatLabel {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    text-align: start;
+.taskRow[data-priority="urgent"] .priority {
+    color: var(--color-urgent);
 }
-.repeatLabel {
-    color: var(--color-brand-text);
-    font-size: 0.75rem;
-}
-.taskSchedule .repeatLabel svg {
-    inline-size: 0.9rem;
-    block-size: 0.9rem;
-    flex-shrink: 0;
+.taskRow[data-priority="high"] .priority {
+    color: var(--color-pending);
 }
 .overdue {
     color: var(--color-urgent);
 }
+.repeatLabel {
+    color: var(--color-brand-text);
+}
 .reminderLabel {
-    position: relative;
-    display: block;
-    margin-block-start: 0.25rem;
-    color: var(--color-ink-muted);
-    font-size: 0.75rem;
-    font-weight: 600;
-    line-height: 1.5;
-    text-align: start;
-    cursor: pointer;
-    inline-size: fit-content;
-    max-inline-size: 100%;
-    min-block-size: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-block-size: 44px;
     padding: 0;
-    border-radius: var(--radius-control);
-}
-.reminderLabel::after {
-    content: "";
-    position: absolute;
-    inset-block: -0.8125rem;
-    inset-inline: 0;
-}
-.timeZone {
+    font-size: 0.75rem;
+    line-height: 1.6;
+    text-align: start;
     color: var(--color-ink-muted);
-    font-size: 0.6875rem;
-    font-weight: 600;
+    cursor: pointer;
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
+}
+.reminderLabel svg {
+    inline-size: 14px;
+    block-size: 14px;
+    flex-shrink: 0;
 }
 .reminderLabel:hover {
     color: var(--color-brand-text);
@@ -328,6 +287,56 @@
 .reminderLabel:disabled {
     cursor: default;
     opacity: 0.5;
+}
+.rowActions {
+    grid-area: actions;
+    align-self: start;
+}
+.menuAction {
+    display: grid;
+    place-items: center;
+    inline-size: 44px;
+    block-size: 44px;
+    border-radius: 6px;
+    color: var(--color-ink-subtle);
+    cursor: pointer;
+}
+.menuAction:hover,
+.menuAction[data-popup-open] {
+    background: var(--color-surface-muted);
+    color: var(--color-ink);
+}
+.menuAction:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+.addTaskRow {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-block-size: 48px;
+    margin-block-start: 0.75rem;
+    padding-inline: 0.75rem;
+    color: var(--color-ink-muted);
+    font-size: 0.875rem;
+    cursor: pointer;
+    border-radius: 6px;
+}
+.addTaskRow svg {
+    inline-size: 20px;
+    block-size: 20px;
+    color: var(--color-brand);
+}
+.addTaskRow:hover {
+    color: var(--color-brand-text);
+    background: var(--color-brand-soft);
+}
+.taskTitle:focus-visible,
+.reminderLabel:focus-visible,
+.menuAction:focus-visible,
+.addTaskRow:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
 }
 .reminderPopoverList {
     display: flex;
@@ -364,133 +373,6 @@
     color: var(--color-ink-subtle);
     text-decoration: line-through;
     text-decoration-color: var(--color-border-warm);
-}
-.listFooter {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    color: var(--color-ink-subtle);
-    font-size: 0.75rem;
-    padding-inline: 0.25rem;
-}
-.listFooter > span:last-child {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-.taskOwner {
-    grid-area: owner;
-}
-.taskClient {
-    grid-area: client;
-}
-.taskPerson {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-inline-size: 0;
-}
-.taskPerson > div {
-    min-inline-size: 0;
-}
-.taskPerson small {
-    display: block;
-    color: var(--color-ink-muted);
-    font-size: 0.75rem;
-    font-weight: 600;
-    line-height: 1.5;
-}
-.taskPerson strong {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 600;
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-}
-.taskPerson .missingPerson {
-    color: var(--color-ink-muted);
-}
-.privateTask {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--color-ink-muted);
-    font-size: 0.75rem;
-}
-.privateTask svg {
-    inline-size: 1rem;
-    block-size: 1rem;
-    flex-shrink: 0;
-}
-.rowActions {
-    grid-area: actions;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.625rem;
-}
-.circleAction {
-    display: inline-grid;
-    place-items: center;
-    flex-shrink: 0;
-    inline-size: 44px;
-    block-size: 44px;
-    border: 1px solid var(--color-border-warm);
-    border-radius: 50%;
-    background: var(--color-surface);
-    color: var(--color-ink);
-    cursor: pointer;
-}
-.circleAction:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--color-surface-muted) 70%, var(--color-surface));
-    border-color: color-mix(in srgb, var(--color-border-warm) 80%, var(--color-ink-muted));
-    color: var(--color-ink);
-}
-.circleAction.dangerAction:hover:not(:disabled) {
-    background: var(--color-danger-soft);
-    border-color: var(--color-danger);
-    color: var(--color-danger);
-}
-.circleAction:focus-visible {
-    outline: 2px solid var(--color-brand);
-    outline-offset: 4px;
-}
-.circleAction:disabled {
-    cursor: default;
-    opacity: 0.5;
-}
-.pageFooter {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.75rem;
-    padding-block-start: 2.5rem;
-    color: var(--color-ink-muted);
-    font-size: 0.875rem;
-    font-weight: 600;
-    line-height: 1.6;
-    text-align: center;
-}
-.pageFooter p {
-    max-inline-size: 60ch;
-    text-wrap: balance;
-}
-.footerLine {
-    flex-shrink: 0;
-    inline-size: 2rem;
-    block-size: 1px;
-    background: var(--color-ink-subtle);
-}
-.listFooter svg {
-    inline-size: 0.85rem;
-    block-size: 0.85rem;
-    color: var(--color-brand);
-}
-.previewNote {
-    color: var(--color-ink-subtle);
-    font-size: 0.6875rem;
-    margin-block-start: 1.5rem;
 }
 .activeFilters {
     display: flex;
@@ -741,33 +623,12 @@
     font-weight: 600;
     margin-block: 1.75rem 0.5rem;
 }
-@container (max-width: 1100px) {
-    .taskRow {
-        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 112px 98px;
-        grid-template-areas: "main schedule priority actions" "owner client priority actions";
-        gap: 1rem 1.5rem;
-    }
-}
-@container (max-width: 640px) {
-    .taskRow {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-areas: "main main" "schedule schedule" "owner client" "priority actions";
-        gap: 1rem;
-        padding: 1rem;
+@media (max-width: 800px) {
+    .board {
+        padding: 1.25rem 1rem;
     }
     .taskTitle {
         min-block-size: 44px;
-        display: flex;
-        align-items: center;
-    }
-    .taskPriority {
-        justify-self: start;
-    }
-    .taskPerson {
-        gap: 0.5rem;
-    }
-    .taskPerson strong {
-        font-size: 0.8125rem;
     }
 }
 @media (max-width: 760px) {
@@ -780,13 +641,6 @@
         flex-basis: 100%;
         inline-size: 100%;
         min-inline-size: 0;
-    }
-    .filterTabs {
-        inline-size: 100%;
-    }
-    .toolbarButton {
-        min-block-size: 44px;
-        padding-inline: 0.75rem;
     }
     .overdueNotice {
         flex-wrap: wrap;

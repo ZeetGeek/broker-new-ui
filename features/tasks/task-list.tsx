@@ -5,18 +5,31 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
-import { Bell, CalendarClock, MapPin, Pencil, Repeat, Trash2 } from "@/components/shared/icons";
-import { UserAvatar } from "@/components/shared/user-avatar";
-import { Badge } from "@/components/ui/badge";
+import {
+    Bell,
+    Building2,
+    CalendarClock,
+    MoreHorizontal,
+    Pencil,
+    Repeat,
+    Trash2,
+    UserRound,
+} from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import {
     sortTasks,
     type Task,
     TASK_PRIORITY_LABELS,
+    taskDueLabel,
     taskGroup,
     type TaskReminder,
     taskReminderDescription,
@@ -139,7 +152,10 @@ function TaskRow({
     const overdue = taskGroup(task, now) === "overdue";
     const scheduleLabel = taskScheduleLabel(task, now);
     return (
-        <li className={cn(styles.taskRow, !!task.completedAt && styles.completedRow)}>
+        <li
+            className={cn(styles.taskRow, !!task.completedAt && styles.completedRow)}
+            data-priority={task.priority}
+        >
             <div className={styles.taskMain}>
                 <div className={styles.checkTarget}>
                     <Checkbox
@@ -157,26 +173,66 @@ function TaskRow({
                     />
                 </div>
                 <div className={styles.taskText}>
-                    <button className={styles.taskTitle} onClick={onOpen}>
+                    <button
+                        type="button"
+                        className={styles.taskTitle}
+                        onClick={onOpen}
+                        title={task.title}
+                    >
                         {task.title}
                     </button>
-                    {property && (
+                    {(property || owner || client) && (
                         <div className={styles.taskMeta}>
-                            <span>
-                                <MapPin aria-hidden />
-                                {property.locality}, {property.city} · {property.title}
-                            </span>
+                            {property && (
+                                <span
+                                    title={`${property.title} · ${property.locality}, ${property.city}`}
+                                >
+                                    <Building2 aria-hidden />
+                                    <span>{property.title}</span>
+                                </span>
+                            )}
+                            {client && (
+                                <span title={`Client: ${client.name}`}>
+                                    <UserRound aria-hidden />
+                                    <span>Client: {client.name}</span>
+                                </span>
+                            )}
+                            {owner && (
+                                <span title={`Owner: ${owner.name}`}>
+                                    <UserRound aria-hidden />
+                                    <span>Owner: {owner.name}</span>
+                                </span>
+                            )}
                         </div>
                     )}
                 </div>
             </div>
             <div className={styles.taskSchedule}>
-                {(scheduleLabel || !task.completedAt) && (
-                    <span className={styles.scheduleIcon} aria-hidden>
-                        <CalendarClock />
-                    </span>
-                )}
                 <div className={styles.scheduleContent}>
+                    <span
+                        className={cn(styles.scheduleValue, overdue && styles.overdue)}
+                        title={
+                            scheduleLabel ? `${scheduleLabel.replace(/ IST$/, "")} IST` : undefined
+                        }
+                    >
+                        <CalendarClock aria-hidden />
+                        {!task.completedAt && !task.dueDate && task.startDate
+                            ? `Starts ${scheduleLabel.replace(/ IST$/, "")}`
+                            : taskDueLabel(task, now)}
+                    </span>
+                    <span
+                        className={styles.priority}
+                        aria-label={`Priority: ${TASK_PRIORITY_LABELS[task.priority]}`}
+                    >
+                        <span aria-hidden />
+                        {TASK_PRIORITY_LABELS[task.priority]}
+                    </span>
+                    {task.repeat && !task.completedAt && (
+                        <span className={styles.repeatLabel}>
+                            <Repeat aria-hidden />
+                            {taskRepeatLabel(task.repeat)}
+                        </span>
+                    )}
                     {!task.completedAt && (
                         <TaskRowReminders
                             task={task}
@@ -184,94 +240,45 @@ function TaskRow({
                             onEdit={() => onIntent("reminder")}
                         />
                     )}
-                    {scheduleLabel && (
-                        <span className={cn(styles.scheduleValue, overdue && styles.overdue)}>
-                            {overdue && <span className="sr-only">Overdue: </span>}
-                            {scheduleLabel.replace(/ IST$/, "")}
-                        </span>
-                    )}
-                    {task.repeat && !task.completedAt && (
-                        <span className={styles.repeatLabel}>
-                            <Repeat aria-hidden />
-                            {taskRepeatLabel(task.repeat)}
-                        </span>
-                    )}
                 </div>
-            </div>
-            <div className={cn(styles.taskPerson, styles.taskOwner)}>
-                <UserAvatar
-                    name={owner?.name ?? "Owner"}
-                    size="sm"
-                    className="shadow-sm ring-2 ring-surface"
-                />
-                <div>
-                    <small>Owner</small>
-                    <strong className={!owner ? styles.missingPerson : undefined}>
-                        {owner?.name ?? "Not linked"}
-                    </strong>
-                </div>
-            </div>
-            <div className={cn(styles.taskPerson, styles.taskClient)}>
-                <UserAvatar
-                    name={client?.name ?? "Client"}
-                    size="sm"
-                    className="shadow-sm ring-2 ring-surface"
-                />
-                <div>
-                    <small>Client</small>
-                    <strong className={!client ? styles.missingPerson : undefined}>
-                        {client?.name ?? "Not linked"}
-                    </strong>
-                </div>
-            </div>
-            <div className={styles.taskPriority}>
-                <Badge
-                    color={
-                        task.priority === "urgent"
-                            ? "orange"
-                            : task.priority === "high"
-                              ? "amber"
-                              : "stone"
-                    }
-                >
-                    {TASK_PRIORITY_LABELS[task.priority]}
-                </Badge>
             </div>
             <div className={styles.rowActions}>
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <button
-                                    type="button"
-                                    className={styles.circleAction}
-                                    aria-label={`Edit ${task.title}`}
-                                    onClick={() => onIntent("edit")}
-                                    disabled={busy}
-                                />
-                            }
-                        >
-                            <Pencil aria-hidden size={20} strokeWidth={1.8} />
-                        </TooltipTrigger>
-                        <TooltipContent>Edit task</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger
-                            render={
-                                <button
-                                    type="button"
-                                    className={cn(styles.circleAction, styles.dangerAction)}
-                                    aria-label={`Delete ${task.title}`}
-                                    onClick={() => onIntent("delete")}
-                                    disabled={busy}
-                                />
-                            }
-                        >
-                            <Trash2 aria-hidden size={20} strokeWidth={1.8} />
-                        </TooltipTrigger>
-                        <TooltipContent>Delete task</TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        render={
+                            <button
+                                type="button"
+                                className={styles.menuAction}
+                                aria-label={`Actions for ${task.title}`}
+                                disabled={busy}
+                            />
+                        }
+                    >
+                        <MoreHorizontal aria-hidden size={20} />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={onOpen}>
+                            <CalendarClock aria-hidden />
+                            Task details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onIntent("edit")}>
+                            <Pencil aria-hidden />
+                            Edit task
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onIntent("reschedule")}>
+                            <CalendarClock aria-hidden />
+                            Reschedule
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onIntent("reminder")}>
+                            <Bell aria-hidden />
+                            Edit reminders
+                        </DropdownMenuItem>
+                        <DropdownMenuItem variant="destructive" onClick={() => onIntent("delete")}>
+                            <Trash2 aria-hidden />
+                            Delete task
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </li>
     );
@@ -300,7 +307,8 @@ function TaskRowReminders({
                 onClick={onEdit}
                 aria-label={`Edit reminder for ${task.title}: ${compactLabel(reminders[0])}`}
             >
-                {compactLabel(reminders[0])}
+                <Bell aria-hidden />
+                <span>{compactLabel(reminders[0])}</span>
             </button>
         );
     }
@@ -316,6 +324,7 @@ function TaskRowReminders({
                     />
                 }
             >
+                <Bell aria-hidden />
                 {reminders.length} reminders
             </PopoverTrigger>
             <PopoverContent
