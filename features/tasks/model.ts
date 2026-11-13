@@ -23,9 +23,8 @@ export const TASK_PRIORITY_RANK: Record<TaskPriority, number> = {
 
 export const TASK_TABS = [
     { value: "all", label: "All tasks" },
-    { value: "today", label: "Today" },
-    { value: "upcoming", label: "Upcoming" },
     { value: "completed", label: "Completed" },
+    { value: "deleted", label: "Deleted" },
 ] as const;
 export type TaskTab = (typeof TASK_TABS)[number]["value"];
 export type TaskGroup = "overdue" | "today" | "upcoming" | "undated" | "completed";
@@ -78,6 +77,9 @@ export const taskSchema = z
         ownerId: z.string().min(1).nullable().default(null),
         propertyId: z.string().min(1).nullable(),
         completedAt: z.iso.datetime().nullable(),
+        deletedAt: z.iso.datetime().nullable().optional(),
+        plannerOrder: z.number().finite().optional(),
+        listId: z.string().min(1).nullable().optional(),
         createdAt: z.iso.datetime(),
         updatedAt: z.iso.datetime(),
         priority: z.enum(["low", "medium", "high", "urgent"]),
@@ -279,7 +281,7 @@ export function taskReminders(
 }
 
 export function taskDueReminders(task: Task, now = Date.now()): TaskReminder[] {
-    if (task.completedAt) return [];
+    if (task.completedAt || task.deletedAt) return [];
     return taskReminders(task).filter(
         (reminder) =>
             !!reminder.at &&
@@ -315,9 +317,10 @@ export function taskGroup(task: Task, now = Date.now()): TaskGroup {
     return task.dueDate === today ? "today" : "upcoming";
 }
 
-export function taskMatchesTab(task: Task, tab: TaskTab, now = Date.now()): boolean {
-    if (tab === "all") return !task.completedAt;
-    return taskGroup(task, now) === tab;
+export function taskMatchesTab(task: Task, tab: TaskTab): boolean {
+    if (tab === "deleted") return !!task.deletedAt;
+    if (task.deletedAt) return false;
+    return tab === "all" || !!task.completedAt;
 }
 
 export type TaskDueFilter = "" | "any" | "overdue" | "today" | "week" | "undated";

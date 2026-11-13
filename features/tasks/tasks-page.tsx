@@ -9,12 +9,11 @@ import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
 import {
-    Bell,
     CheckCircle2,
-    List,
     Plus,
     Search,
     SlidersHorizontal,
+    Trash2,
     X,
 } from "@/components/shared/icons";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
@@ -36,12 +35,17 @@ import {
     taskMatchesDueFilter,
     taskMatchesLinkFilter,
     taskMatchesTab,
+    type TaskSort,
 } from "./model";
+import { taskListId } from "./notebook-model";
+import { useTaskNotebook } from "./notebook-store";
+import { createPlannerTask, movePlannerTask, setTaskDeleted } from "./planner-model";
 import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES, useTasks } from "./preview-store";
 import { TaskDeleteDialog, TaskDetail, TaskReminders } from "./task-detail";
 import { TaskForm, TaskSelect } from "./task-form";
-import { TaskList, type TaskSort } from "./task-list";
+import { TaskArchive } from "./task-list";
 import { TaskPanel } from "./task-panel";
+import { TaskPlanner } from "./task-planner";
 
 import styles from "./tasks.module.css";
 
@@ -67,6 +71,7 @@ export function TasksPage() {
 
 function TasksWorkspace({ accountId }: { accountId: string }) {
     const { tasks, isLoading, error: loadError, save, update, reset, busy } = useTasks(accountId);
+    const lists = useTaskNotebook(accountId);
     const router = useRouter();
     const pathname = usePathname();
     const params = useSearchParams();
@@ -86,8 +91,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
         else router.push(href, { scroll: false });
     };
     const rawTab = params.get("tab");
-    const tab =
-        rawTab === "today" || rawTab === "upcoming" || rawTab === "completed" ? rawTab : "all";
+    const tab = rawTab === "completed" || rawTab === "deleted" ? rawTab : "all";
     const view = params.get("view");
     const selected = tasks.find((task) => task.id === params.get("task"));
     const search = params.get("q") ?? "";
@@ -100,7 +104,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     const rawSort = params.get("sort");
     const sort: TaskSort =
         rawSort === "newest" || rawSort === "priority" || rawSort === "title" ? rawSort : "due";
-    const open = tasks.filter((task) => !task.completedAt);
+    const open = tasks.filter((task) => !task.completedAt && !task.deletedAt);
     const overdue = open.filter((task) => taskGroup(task, now) === "overdue").length;
     const today = open.filter((task) => taskGroup(task, now) === "today").length;
     const summaryLines = [
@@ -113,24 +117,27 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             : "Add your next follow-up",
     ].filter(Boolean);
     const tabs = [
-        { value: "all", label: "All tasks", count: open.length, dotClassName: "bg-brand" },
-        { value: "today", label: "Today", count: today, dotClassName: "bg-pending" },
         {
-            value: "upcoming",
-            label: "Upcoming",
-            count: open.filter((t) => taskGroup(t, now) === "upcoming").length,
-            dotClassName: "bg-ink-subtle",
+            value: "all",
+            label: "All tasks",
+            count: tasks.filter((task) => !task.deletedAt).length,
+            dotClassName: "bg-brand",
         },
         {
             value: "completed",
             label: "Completed",
-            compactLabel: "Done",
-            count: tasks.filter((t) => t.completedAt).length,
+            count: tasks.filter((task) => task.completedAt && !task.deletedAt).length,
             dotClassName: "bg-brand",
+        },
+        {
+            value: "deleted",
+            label: "Deleted",
+            count: tasks.filter((task) => task.deletedAt).length,
+            dotClassName: "bg-ink-subtle",
         },
     ];
     const visible = tasks.filter((task) => {
-        if (!taskMatchesTab(task, tab, now)) return false;
+        if (!taskMatchesTab(task, tab)) return false;
         if (!taskMatchesDueFilter(task, due as TaskDueFilter, now)) return false;
         if (!taskMatchesLinkFilter(task, linked as TaskLinkFilter)) return false;
         const client = TASK_CLIENTS.find((c) => c.id === task.clientId);
@@ -201,6 +208,57 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             );
         }
     };
+    const changeTasks = async (updater: (latest: Task[]) => Task[], message?: string) => {
+        if (busy) return false;
+        setError("");
+        try {
+            await update(updater);
+            if (message) toast.success(message);
+            return true;
+        } catch (failure) {
+            setError(
+                failure instanceof Error
+                    ? failure.message
+                    : "Your change couldn't be saved. Please try again.",
+            );
+            return false;
+        }
+    };
+    const restore = async (task: Task) => {
+        if (
+            await changeTasks((latest) => setTaskDeleted(latest, task.id, false), "Task restored")
+        ) {
+            if (view) close();
+        }
+    };
+    const rename = (task: Task, title: string) =>
+        changeTasks((latest) =>
+            latest.map((item) =>
+                item.id === task.id && !item.deletedAt
+                    ? { ...item, title, updatedAt: new Date().toISOString() }
+                    : item,
+            ),
+        );
+    const quickAdd = async (title: string, date: string | null, listId?: string) => {
+        const task = createPlannerTask(title, date, Date.now(), crypto.randomUUID(), listId);
+        return changeTasks((latest) => [...latest, task]);
+    };
+    const move = async (id: string, date: string | null, beforeId?: string, listId?: string) => {
+        const saved = await changeTasks(
+            (latest) =>
+                movePlannerTask(
+                    latest.map((task) => ({ ...task, listId: taskListId(task, lists.notebook) })),
+                    id,
+                    date,
+                    beforeId,
+                    Date.now(),
+                    listId,
+                ),
+            "Task moved",
+        );
+        if (saved && sort !== "due") navigate({ sort: undefined }, true);
+        return saved;
+    };
     const saveDraft = async (draft: TaskDraft) => {
         const at = new Date().toISOString();
         const editing = view !== "create" ? selected : undefined;
@@ -231,6 +289,9 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             propertyId: draft.propertyId || null,
             priority: draft.priority,
             completedAt: editing?.completedAt ?? null,
+            deletedAt: editing?.deletedAt ?? null,
+            plannerOrder: sameSchedule ? editing?.plannerOrder : undefined,
+            listId: editing?.listId,
             createdAt: editing?.createdAt ?? at,
             updatedAt: at,
             deliveredReminderKeys: editing?.deliveredReminderKeys ?? [],
@@ -322,7 +383,12 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                             options={[
                                 {
                                     value: "due",
-                                    label: tab === "completed" ? "Completion date" : "Due date",
+                                    label:
+                                        tab === "completed"
+                                            ? "Completion date"
+                                            : tab === "deleted"
+                                              ? "Deletion date"
+                                              : "Due date",
                                 },
                                 { value: "priority", label: "Priority" },
                                 { value: "newest", label: "Newest first" },
@@ -367,19 +433,6 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                             </Button>
                         </div>
                     )}
-                    {tab === "today" && overdue > 0 && (
-                        <button
-                            className={styles.overdueNotice}
-                            onClick={() => navigate({ tab: undefined, due: "overdue" })}
-                        >
-                            <span>
-                                <ClockNotice />
-                                {overdue} overdue {overdue === 1 ? "task needs" : "tasks need"}{" "}
-                                attention
-                            </span>
-                            <span>View tasks →</span>
-                        </button>
-                    )}
                     {loadError && (
                         <div className={styles.error} role="alert">
                             <p>
@@ -418,59 +471,82 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 {Array.from({ length: 5 }, (_, i) => (
                                     <Skeleton
                                         key={i}
-                                        className="rounded-control block-18 inline-full"
+                                        className="rounded-control block-80 inline-full"
                                     />
                                 ))}
                             </div>
-                        ) : visible.length ? (
-                            <TaskList
+                        ) : loadError ? null : tab === "all" && !filtered ? (
+                            <TaskPlanner
+                                notebook={lists.notebook}
+                                notebookLoading={lists.isLoading}
+                                notebookError={lists.error?.message}
+                                notebookBusy={lists.busy}
+                                onNotebookChange={async (updater) => {
+                                    try {
+                                        await lists.update(updater);
+                                        return true;
+                                    } catch (failure) {
+                                        setError(
+                                            failure instanceof Error
+                                                ? failure.message
+                                                : "Your lists couldn't be saved. Try again.",
+                                        );
+                                        return false;
+                                    }
+                                }}
                                 tasks={visible}
                                 now={now}
                                 sort={sort}
-                                completed={tab === "completed"}
                                 busy={busy}
                                 onOpen={(task) => intent(task, "detail")}
                                 onComplete={complete}
                                 onIntent={intent}
+                                onRestore={restore}
+                                onRename={rename}
+                                onAdd={quickAdd}
+                                onMove={move}
+                            />
+                        ) : visible.length ? (
+                            <TaskArchive
+                                tasks={visible}
+                                tab={tab === "all" ? "results" : tab}
+                                now={now}
+                                sort={sort}
+                                busy={busy}
+                                onOpen={(task) => intent(task, "detail")}
+                                onComplete={complete}
+                                onIntent={intent}
+                                onRestore={restore}
+                                onRename={rename}
                             />
                         ) : (
                             <EmptyState
                                 className={styles.empty}
-                                icon={tab === "completed" ? CheckCircle2 : List}
+                                icon={tab === "deleted" ? Trash2 : CheckCircle2}
                                 heading={
                                     filtered
                                         ? "No tasks match these filters"
-                                        : tab === "today"
-                                          ? "A clear day ahead"
-                                          : tab === "upcoming"
-                                            ? "Nothing lined up yet"
-                                            : tab === "completed"
-                                              ? "Your finished tasks will live here"
-                                              : "Make room for your next step"
+                                        : tab === "deleted"
+                                          ? "No deleted tasks"
+                                          : "Your finished tasks will live here"
                                 }
                                 description={
                                     filtered
                                         ? "Try another search or clear your filters to see more tasks."
-                                        : tab === "completed"
-                                          ? "Check off a task when it’s done. You can reopen it whenever plans change."
-                                          : "Add a follow-up, a document to collect, or anything you want to remember."
+                                        : tab === "deleted"
+                                          ? "Tasks you delete will appear here. You can restore them whenever you need."
+                                          : "Check off a task when it's done. You can reopen it whenever plans change."
                                 }
                             >
                                 <Button
-                                    variant={filtered ? "outline" : "default"}
-                                    onClick={filtered ? clear : create}
+                                    variant="outline"
+                                    onClick={filtered ? clear : () => navigate({ tab: undefined })}
                                 >
-                                    {filtered ? "Clear search & filters" : "Add a task"}
+                                    {filtered ? "Clear search & filters" : "Back to all tasks"}
                                 </Button>
                             </EmptyState>
                         )}
                     </TabsContent>
-                    {!isLoading && !loadError && (
-                        <button type="button" className={styles.addTaskRow} onClick={create}>
-                            <Plus aria-hidden />
-                            Add task
-                        </button>
-                    )}
                 </div>
             </Tabs>
             {view === "filters" && (
@@ -511,41 +587,49 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                     error={error}
                 />
             )}
-            {selected && (view === "edit" || view === "reschedule" || view === "reminder") && (
-                <TaskForm
-                    key={`${view}-${selected.id}`}
-                    task={selected}
-                    mode={view}
-                    busy={busy}
-                    onSave={saveDraft}
-                    onClose={close}
-                    error={error}
-                />
-            )}
-            {selected && view === "detail" && (
-                <TaskDetail
-                    task={selected}
-                    now={now}
-                    busy={busy}
-                    error={error}
-                    onClose={close}
-                    onComplete={() => complete(selected)}
-                    onIntent={(next) => intent(selected, next)}
-                />
-            )}
-            {selected && view === "delete" && (
+            {selected &&
+                !selected.deletedAt &&
+                (view === "edit" || view === "reschedule" || view === "reminder") && (
+                    <TaskForm
+                        key={`${view}-${selected.id}`}
+                        task={selected}
+                        mode={view}
+                        busy={busy}
+                        onSave={saveDraft}
+                        onClose={close}
+                        error={error}
+                    />
+                )}
+            {selected &&
+                (view === "detail" ||
+                    (!!selected.deletedAt &&
+                        ["edit", "reschedule", "reminder", "delete"].includes(view ?? ""))) && (
+                    <TaskDetail
+                        task={selected}
+                        now={now}
+                        busy={busy}
+                        error={error}
+                        onClose={close}
+                        onComplete={() => complete(selected)}
+                        onRestore={() => restore(selected)}
+                        onIntent={(next) => intent(selected, next)}
+                    />
+                )}
+            {selected && !selected.deletedAt && view === "delete" && (
                 <TaskDeleteDialog
                     task={selected}
                     busy={busy}
                     error={error}
                     onClose={close}
-                    onConfirm={() =>
-                        void commit(
-                            tasks.filter((task) => task.id !== selected.id),
-                            "Task deleted",
-                            close,
+                    onConfirm={async () => {
+                        if (
+                            await changeTasks(
+                                (latest) => setTaskDeleted(latest, selected.id, true),
+                                "Task moved to Deleted",
+                            )
                         )
-                    }
+                            close();
+                    }}
                 />
             )}
             {panelMissing && (
@@ -561,10 +645,6 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             )}
         </div>
     );
-}
-
-function ClockNotice() {
-    return <Bell aria-hidden />;
 }
 
 function TaskFilters({

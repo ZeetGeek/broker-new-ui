@@ -202,6 +202,7 @@ import {
     IconDots,
     IconDownload,
     IconDroplet,
+    IconEqual,
     IconExternalLink,
     IconEye,
     IconEyeOff,
@@ -411,6 +412,7 @@ export const Download = IconDownload;
 export const Droplets = IconDroplet;
 export const Dumbbell = IconBarbell;
 export const Ellipsis = IconDots;
+export const Equal = IconEqual;
 export const Expand = IconArrowsMaximize;
 export const ExternalLink = IconExternalLink;
 export const Eye = IconEye;

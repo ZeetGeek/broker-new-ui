@@ -168,7 +168,7 @@ test("next seven days spans India calendar dates inclusively, without including 
 
 test("due filters apply to original due dates on completed tasks and intersect the current tab", () => {
     const completed = { ...task, completedAt: new Date(now).toISOString() };
-    assert.equal(taskMatchesTab(completed, "completed", now), true);
+    assert.equal(taskMatchesTab(completed, "completed"), true);
     assert.equal(taskMatchesDueFilter(completed, "today", now), true);
     assert.equal(taskMatchesDueFilter(completed, "overdue", now), false);
     assert.equal(
@@ -179,7 +179,7 @@ test("due filters apply to original due dates on completed tasks and intersect t
     assert.equal(taskMatchesDueFilter({ ...completed, dueDate: null }, "today", now), false);
     assert.equal(taskMatchesDueFilter({ ...completed, dueDate: null }, "any", now), true);
     assert.equal(
-        taskMatchesTab({ ...task, dueDate: "2030-01-01" }, "today", now) &&
+        taskMatchesTab({ ...task, dueDate: "2030-01-01" }, "completed") &&
             taskMatchesDueFilter({ ...task, dueDate: "2030-01-01" }, "overdue", now),
         false,
     );
@@ -264,10 +264,10 @@ test("date-led groups use India midnight and keep today's timed tasks together",
         "completed",
     );
     assert.equal(
-        taskMatchesTab({ ...task, completedAt: new Date(now).toISOString() }, "all", now),
-        false,
+        taskMatchesTab({ ...task, completedAt: new Date(now).toISOString() }, "all"),
+        true,
     );
-    assert.equal(taskMatchesTab({ ...task, dueDate: "2030-01-01" }, "today", now), false);
+    assert.equal(taskMatchesTab({ ...task, dueDate: "2030-01-01" }, "completed"), false);
 });
 
 test("reminders use exact IST instants, fire at the boundary, and dedupe by schedule", () => {

@@ -81,6 +81,7 @@ const MAP = {
     Droplets: "IconDroplet",
     Dumbbell: "IconBarbell",
     Ellipsis: "IconDots",
+    Equal: "IconEqual",
     Expand: "IconArrowsMaximize",
     ExternalLink: "IconExternalLink",
     Eye: "IconEye",

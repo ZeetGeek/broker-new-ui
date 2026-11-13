@@ -2,7 +2,46 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { taskReminderAt, taskReminderKey, taskReminders } from "@/features/tasks/model";
+import { movePlannerTask, setTaskDeleted } from "@/features/tasks/planner-model";
 import { sampleTasks, taskPreviewStore } from "@/features/tasks/preview-store";
+
+test("deleted state and manual planner order survive storage reads without losing existing tasks", async () => {
+    const values = new Map<string, string>();
+    const original = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
+    Object.defineProperty(globalThis, "sessionStorage", {
+        configurable: true,
+        value: {
+            getItem: (key: string) => values.get(key) ?? null,
+            setItem: (key: string, value: string) => values.set(key, value),
+        },
+    });
+    try {
+        const now = Date.parse("2030-01-01T04:00:00Z");
+        const tasks = sampleTasks(now);
+        await taskPreviewStore.save("planner-review", tasks);
+        await taskPreviewStore.update("planner-review", (latest) =>
+            setTaskDeleted(latest, tasks[0].id, true, now),
+        );
+        const deleted = await taskPreviewStore.list("planner-review");
+        assert.equal(deleted.length, tasks.length);
+        assert.equal(deleted[0].deletedAt, new Date(now).toISOString());
+        assert.equal(deleted[0].clientId, tasks[0].clientId);
+        await taskPreviewStore.update("planner-review", (latest) =>
+            setTaskDeleted(latest, tasks[0].id, false, now + 1),
+        );
+        await taskPreviewStore.update("planner-review", (latest) =>
+            movePlannerTask(latest, tasks[0].id, "2030-01-02", undefined, now + 2),
+        );
+        const restored = (await taskPreviewStore.list("planner-review"))[0];
+        assert.equal(restored.deletedAt, null);
+        assert.equal(restored.dueDate, "2030-01-02");
+        assert.equal(typeof restored.plannerOrder, "number");
+        assert.equal(restored.clientId, tasks[0].clientId);
+    } finally {
+        if (original) Object.defineProperty(globalThis, "sessionStorage", original);
+        else Reflect.deleteProperty(globalThis, "sessionStorage");
+    }
+});
 
 test("mock task storage isolates accounts, preserves empty lists, and rejects damaged records", async () => {
     const values = new Map<string, string>();

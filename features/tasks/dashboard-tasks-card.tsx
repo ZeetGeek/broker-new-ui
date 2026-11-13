@@ -70,8 +70,12 @@ export function DashboardTasksCard() {
         };
     }, []);
 
-    const open = tasks.filter((task) => !task.completedAt || completing.includes(task.id));
-    const done = tasks.filter((task) => task.completedAt && !completing.includes(task.id));
+    const open = tasks.filter(
+        (task) => !task.deletedAt && (!task.completedAt || completing.includes(task.id)),
+    );
+    const done = tasks.filter(
+        (task) => !task.deletedAt && task.completedAt && !completing.includes(task.id),
+    );
     const urgent = open.filter((task) => task.priority === "urgent");
     const options = [
         ["open", "To do", open.length],

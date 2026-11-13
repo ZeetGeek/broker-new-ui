@@ -1,0 +1,848 @@
+.planner {
+    --line-height: 36px;
+    container-type: inline-size;
+    min-inline-size: 0;
+    color: var(--color-ink);
+    background: var(--color-surface);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    caret-color: var(--color-brand);
+}
+.plannerNav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+    padding: 0.35rem 1.5rem 0;
+    min-block-size: 52px;
+    border-block-end: 1px solid var(--color-border-warm);
+}
+.dateRange {
+    color: var(--color-ink-subtle);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.dateControls {
+    display: flex;
+    justify-self: end;
+    align-items: center;
+    gap: 0.125rem;
+}
+.navButton,
+.todayButton {
+    display: inline-grid;
+    place-items: center;
+    min-inline-size: 36px;
+    min-block-size: 36px;
+    border-radius: 4px;
+    color: var(--color-ink-muted);
+    cursor: pointer;
+}
+.todayButton {
+    font-size: 0.75rem;
+    padding-inline: 0.625rem;
+}
+.navButton:hover,
+.todayButton:hover {
+    color: var(--color-brand-text);
+    background: var(--color-surface-muted);
+}
+.dateJump {
+    inline-size: 36px;
+    flex-shrink: 0;
+}
+.dateJump button {
+    inline-size: 36px;
+    min-block-size: 36px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    justify-content: center;
+}
+.dateJump button > span {
+    display: none;
+}
+.dateJump button svg {
+    inline-size: 16px;
+    block-size: 16px;
+}
+.dayGrid,
+.somedayGrid {
+    display: grid;
+    grid-template-columns: repeat(var(--planner-columns), minmax(0, 1fr));
+    gap: 2rem;
+    padding: 1.25rem 3rem 0.75rem;
+}
+.dayColumn {
+    min-inline-size: 0;
+    padding: 0 0.125rem;
+}
+.dayHeading {
+    min-block-size: 72px;
+    padding: 0.5rem 0.5rem 1.25rem;
+}
+.dayHeading time {
+    display: block;
+    color: var(--color-ink-subtle);
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.025em;
+    line-height: 1.5;
+    text-transform: uppercase;
+}
+.dayHeading h2 {
+    color: var(--color-ink);
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+.dayColumn[data-today] .dayHeading h2 {
+    color: var(--color-brand);
+}
+.ruledList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    min-block-size: calc(10 * var(--line-height));
+}
+.sortableLine,
+.blankLine,
+.composerLine {
+    position: relative;
+    min-block-size: var(--line-height);
+    border-block-end: 1px solid
+        color-mix(in srgb, var(--color-border-warm) 55%, var(--color-surface));
+}
+.blankLine {
+    /* Task and composer contents fill one line, plus their divider. */
+    block-size: calc(var(--line-height) + 1px);
+    min-block-size: calc(var(--line-height) + 1px);
+}
+.taskLine {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-inline-size: 0;
+    min-block-size: var(--line-height);
+    padding-inline: 0.5rem 0.25rem;
+    border-radius: 4px;
+}
+.taskLine[data-priority="urgent"] {
+    background: color-mix(in srgb, var(--color-urgent-soft) 70%, var(--color-surface));
+}
+.lineTitle {
+    flex: 1;
+    min-inline-size: 0;
+    min-block-size: var(--line-height);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: start;
+    color: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+    cursor: text;
+}
+.completedLine .lineTitle {
+    color: var(--color-ink-subtle);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+.lineCheck {
+    position: absolute;
+    inset-inline-start: -19px;
+    inline-size: 17px;
+    block-size: 17px;
+    border-width: 1.5px;
+    border-radius: 4px;
+    opacity: 0;
+}
+.lineCheck::after {
+    inset: -9px -5px;
+}
+.lineCheck[data-checked] {
+    opacity: 1;
+}
+.noteAction,
+.lineAction,
+.restoreAction {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 22px;
+    block-size: 32px;
+    color: var(--color-ink-subtle);
+    border-radius: 3px;
+    cursor: pointer;
+}
+.noteAction,
+.lineAction {
+    opacity: 0;
+}
+.noteAction[data-has-context] {
+    opacity: 0.6;
+}
+.noteAction:hover,
+.lineAction:hover,
+.restoreAction:hover {
+    color: var(--color-brand-text);
+    background: var(--color-brand-soft);
+}
+.taskLine:hover .lineCheck,
+.taskLine:focus-within .lineCheck,
+.taskLine:hover .noteAction,
+.taskLine:focus-within .noteAction,
+.taskLine:hover .lineAction,
+.taskLine:focus-within .lineAction,
+.lineAction[data-popup-open] {
+    opacity: 1;
+}
+.overdueMark {
+    flex-shrink: 0;
+    color: var(--color-urgent);
+    font-size: 10px;
+    line-height: 1.5;
+}
+.inlineEdit {
+    flex: 1;
+    min-inline-size: 0;
+}
+.inlineEdit input {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: var(--line-height);
+    border: 0;
+    padding: 0;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    outline: none;
+}
+.taskLine[data-editing] {
+    box-shadow: inset 0 -1px 0 var(--color-brand);
+}
+.dragHandle {
+    position: absolute;
+    inset-inline-start: -35px;
+    inset-block-start: 0;
+    display: grid;
+    place-items: center;
+    inline-size: 16px;
+    block-size: var(--line-height);
+    color: var(--color-ink-subtle);
+    opacity: 0;
+    cursor: grab;
+    touch-action: none;
+}
+.sortableLine:hover .dragHandle,
+.sortableLine:focus-within .dragHandle {
+    opacity: 1;
+}
+.dragging {
+    opacity: 0.25;
+}
+.dragPreview {
+    max-inline-size: 300px;
+    padding: 0.65rem 0.75rem;
+    background: var(--color-surface);
+    box-shadow: 0 6px 18px -4px rgb(0 0 0 / 15%);
+    border-radius: 4px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+    cursor: grabbing;
+}
+.dropTarget {
+    background: color-mix(in srgb, var(--color-brand-soft) 30%, var(--color-surface));
+}
+.composer {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-block-size: var(--line-height);
+    padding-inline: 0.5rem;
+}
+.composer input {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: var(--line-height);
+    border: 0;
+    padding: 0;
+    outline: none;
+    background: transparent;
+    color: var(--color-ink);
+    font: inherit;
+}
+.composer input::placeholder {
+    color: var(--color-ink-subtle);
+    opacity: 0;
+}
+.dayColumn:hover .composer input::placeholder,
+.composer:focus-within input::placeholder {
+    opacity: 1;
+}
+.composer:focus-within {
+    box-shadow: inset 0 -1px 0 var(--color-brand);
+}
+.composer button {
+    display: none;
+    color: var(--color-brand-text);
+    font-size: 11px;
+    cursor: pointer;
+    min-block-size: var(--line-height);
+}
+.composer:focus-within button:not(:disabled) {
+    display: block;
+}
+.somedayBar {
+    display: flex;
+    align-items: center;
+    min-block-size: 44px;
+    padding-inline: 3rem;
+    border-block-end: 1px solid var(--color-surface-muted);
+    gap: 0.5rem;
+}
+.listTabs {
+    display: flex;
+    align-items: stretch;
+    gap: 1.25rem;
+    min-inline-size: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-warm) transparent;
+}
+.listTab {
+    display: flex;
+    align-items: center;
+    position: relative;
+    flex-shrink: 0;
+    color: var(--color-ink-subtle);
+}
+.selectedListTab {
+    color: var(--color-ink);
+}
+.selectedListTab::after {
+    content: "";
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline: 12px 0;
+    block-size: 2px;
+    background: var(--color-brand);
+}
+.listTabButton {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-block-size: 44px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+.listTabButton:active {
+    cursor: grabbing;
+}
+.listTabButton > span {
+    max-inline-size: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.listTabButton small {
+    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+}
+.tabMenu {
+    display: grid;
+    place-items: center;
+    inline-size: 16px;
+    min-block-size: 44px;
+    color: var(--color-ink-subtle);
+    cursor: pointer;
+}
+.addTabButton,
+.collapseLists {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 36px;
+    min-block-size: 44px;
+    cursor: pointer;
+    color: var(--color-ink-subtle);
+}
+.collapseLists {
+    margin-inline-start: auto;
+}
+.collapseLists svg[data-collapsed] {
+    transform: rotate(-90deg);
+}
+.addTabButton:hover,
+.collapseLists:hover,
+.tabMenu:hover,
+.listMenu:hover {
+    color: var(--color-brand-text);
+}
+.tabDropTarget {
+    background: var(--color-brand-soft);
+}
+.customList {
+    position: relative;
+    min-inline-size: 0;
+}
+.customListControls {
+    display: flex;
+    position: absolute;
+    inset-block-start: 0.6rem;
+    inset-inline-start: -14px;
+    z-index: 1;
+    opacity: 0;
+}
+.customList:hover > .customListControls,
+.customList:focus-within > .customListControls {
+    opacity: 1;
+}
+.listDragHandle,
+.listMenu {
+    display: grid;
+    place-items: center;
+    inline-size: 16px;
+    block-size: 32px;
+    color: var(--color-ink-subtle);
+    cursor: pointer;
+}
+.listDragHandle {
+    position: absolute;
+    inset-block-start: -1.5rem;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    inline-size: 44px;
+    block-size: 44px;
+    opacity: 0;
+    color: var(--color-ink);
+    cursor: grab;
+    touch-action: none;
+}
+.customList:hover > .listDragHandle,
+.customList:focus-within > .listDragHandle {
+    opacity: 1;
+}
+.listDragHandle:active {
+    cursor: grabbing;
+}
+.customList:hover {
+    background: color-mix(in srgb, var(--color-ink) 2%, transparent);
+}
+.dragTabPreview {
+    padding: 0.75rem 1rem;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px -4px rgb(0 0 0 / 20%);
+    cursor: grabbing;
+}
+.customList .dayHeading h2 {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.newListColumn {
+    min-inline-size: 0;
+}
+.newListButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-block-size: 28px;
+    max-inline-size: 100%;
+    margin-block: 0.5rem 1.6rem;
+    padding-inline: 0.5rem;
+    background: var(--color-surface-muted);
+    color: var(--color-ink-subtle);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.newListButton:hover {
+    color: var(--color-brand-text);
+    background: var(--color-brand-soft);
+}
+.newListRules {
+    pointer-events: none;
+}
+.dragListPreview {
+    inline-size: 230px;
+    min-block-size: 150px;
+    padding: 1.25rem;
+    color: var(--color-ink);
+    background: var(--color-surface-muted);
+    border-radius: 4px;
+    box-shadow: 0 8px 20px -8px rgb(0 0 0 / 20%);
+    font-size: 1.125rem;
+    text-transform: uppercase;
+    cursor: grabbing;
+}
+.notebookEditor {
+    padding: 0.75rem 3rem;
+    background: var(--color-surface-muted);
+}
+.nameForm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 12px;
+}
+.nameForm label {
+    color: var(--color-ink-muted);
+}
+.nameForm input {
+    flex: 1;
+    max-inline-size: 280px;
+    min-inline-size: 100px;
+    min-block-size: 44px;
+    padding-inline: 0.65rem;
+    border: 1px solid var(--color-border-warm);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    border-radius: 4px;
+    outline-color: var(--color-brand);
+}
+.nameForm button {
+    display: grid;
+    place-items: center;
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    padding-inline: 0.5rem;
+    color: var(--color-brand-text);
+    cursor: pointer;
+}
+.nameForm p {
+    flex-basis: 100%;
+    color: var(--color-danger);
+}
+.notebookError,
+.notebookLoading {
+    padding: 1rem 3rem;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.notebookError {
+    color: var(--color-danger);
+}
+.somedayToggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    inline-size: 100%;
+    min-block-size: 44px;
+    color: var(--color-ink);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.somedayToggle svg {
+    margin-inline-start: auto;
+    color: var(--color-ink-subtle);
+}
+.somedayToggle svg[data-collapsed] {
+    transform: rotate(-90deg);
+}
+.somedayGrid {
+    background: var(--color-notebook, #f6f7f8);
+    padding-block: 1.5rem 2rem;
+    min-block-size: 350px;
+}
+.somedayGrid .dayHeading {
+    min-block-size: 62px;
+}
+.somedayGrid .ruledList {
+    min-block-size: calc(9 * var(--line-height));
+}
+.columnPicker {
+    display: flex;
+    align-items: center;
+    justify-self: center;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--color-border-warm);
+    border-radius: 6px;
+    background: var(--color-surface-muted);
+}
+.columnPicker button {
+    min-inline-size: 56px;
+    min-block-size: 32px;
+    padding-inline: 0.625rem;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--color-ink-muted);
+    cursor: pointer;
+    border-radius: 4px;
+}
+.columnPicker button:hover {
+    color: var(--color-brand-text);
+    background: var(--color-surface);
+}
+.columnPicker button[aria-pressed="true"] {
+    color: var(--color-brand-text);
+    background: var(--color-surface);
+    font-weight: 700;
+}
+.archive {
+    padding: 2.5rem 3rem;
+    min-block-size: 60dvh;
+    background: var(--color-surface);
+    font-family: Arial, Helvetica, sans-serif;
+}
+.archiveHeading {
+    margin-block-end: 1.75rem;
+}
+.archiveHeading h2 {
+    font-size: 1.125rem;
+    font-weight: 650;
+}
+.archiveHeading p {
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    margin-block-start: 0.5rem;
+}
+.archiveList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-inline-size: 900px;
+}
+.archiveList > li {
+    border-block-end: 1px solid var(--color-border-warm);
+    padding-block: 0.4rem;
+}
+.archiveList .lineTitle {
+    cursor: pointer;
+}
+.archiveDate {
+    display: block;
+    padding-inline-start: 0.5rem;
+    color: var(--color-ink-subtle);
+    font-size: 0.6875rem;
+    line-height: 1.6;
+    margin-block-end: 0.3rem;
+}
+.planner button:focus-visible,
+.archive button:focus-visible,
+.dragHandle:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+}
+.planner button:disabled,
+.archive button:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+@container (max-width: 1000px) {
+    .dayGrid,
+    .somedayGrid {
+        gap: 1.75rem;
+        padding-inline: 2.5rem;
+    }
+}
+@container (min-width: 600px) and (max-width: 799px) {
+    .plannerNav {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.5rem 1rem;
+        padding-block: 0.5rem;
+    }
+    .columnPicker {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+    .dateControls {
+        grid-column: 2;
+        grid-row: 1;
+    }
+}
+@container (max-width: 599px) {
+    .plannerNav {
+        display: flex;
+        justify-content: space-between;
+        padding-inline: 1rem;
+        flex-wrap: wrap;
+        gap: 0;
+    }
+    .navButton,
+    .todayButton,
+    .dateJump,
+    .dateJump button {
+        min-inline-size: 44px;
+        inline-size: 44px;
+        min-block-size: 44px;
+    }
+    .dateControls > button:nth-child(2),
+    .dateControls > button:nth-child(5) {
+        display: none;
+    }
+    .dateRange {
+        font-size: 0.6875rem;
+    }
+    .dayGrid,
+    .somedayGrid {
+        padding-inline: 2.75rem 1rem;
+        padding-block-start: 0.75rem;
+    }
+    .dayHeading {
+        min-block-size: 70px;
+    }
+    .dayColumn {
+        --line-height: 44px;
+    }
+    .ruledList {
+        min-block-size: calc(8 * var(--line-height));
+    }
+    .ruledList > .blankLine:nth-child(n + 9) {
+        display: none;
+    }
+    .lineCheck {
+        inset-inline-start: -24px;
+        opacity: 1;
+    }
+    .lineCheck::after {
+        inset: -14px;
+    }
+    .noteAction,
+    .lineAction,
+    .restoreAction {
+        inline-size: 44px;
+        block-size: 44px;
+        opacity: 1;
+    }
+    .noteAction {
+        display: none;
+    }
+    .sortableLine {
+        display: flex;
+    }
+    .taskLine {
+        flex: 1;
+    }
+    .dragHandle {
+        position: static;
+        order: 2;
+        flex-shrink: 0;
+        inline-size: 44px;
+        block-size: 44px;
+        opacity: 1;
+    }
+    .lineTitle {
+        font-size: 14px;
+    }
+    .composer input::placeholder {
+        opacity: 1;
+    }
+    .somedayBar {
+        padding-inline: 1.25rem;
+    }
+    .listTabs {
+        gap: 0.5rem;
+    }
+    .listTabButton {
+        font-size: 11px;
+    }
+    .tabMenu,
+    .addTabButton,
+    .collapseLists {
+        inline-size: 44px;
+    }
+    .listTabButton > span {
+        max-inline-size: 120px;
+    }
+    .customListControls {
+        position: static;
+        justify-content: flex-end;
+        opacity: 1;
+        block-size: 44px;
+    }
+    .listDragHandle {
+        inset-block-start: 0;
+        opacity: 1;
+    }
+    .listDragHandle,
+    .listMenu,
+    .newListButton {
+        min-inline-size: 44px;
+        block-size: 44px;
+    }
+    .notebookEditor {
+        padding-inline: 1rem;
+    }
+    .newListRules {
+        display: none;
+    }
+    .somedayGrid .customList + .customList {
+        margin-block-start: 1rem;
+    }
+    .columnPicker {
+        display: none;
+    }
+}
+@media (max-width: 640px) {
+    .archive {
+        padding: 1.5rem 1.25rem 1.5rem 2.75rem;
+    }
+    .archive .taskLine {
+        --line-height: 44px;
+    }
+    .archive .lineCheck,
+    .archive .noteAction,
+    .archive .lineAction {
+        opacity: 1;
+    }
+    .archive .lineCheck {
+        inset-inline-start: -24px;
+    }
+    .archive .lineCheck::after {
+        inset: -14px;
+    }
+    .archive .noteAction {
+        display: none;
+    }
+    .archive .noteAction,
+    .archive .lineAction,
+    .archive .restoreAction {
+        inline-size: 44px;
+        block-size: 44px;
+    }
+}
+@media (hover: none) {
+    .lineCheck,
+    .noteAction,
+    .lineAction,
+    .dragHandle {
+        opacity: 1;
+    }
+    .composer input::placeholder {
+        opacity: 1;
+    }
+    .customListControls {
+        opacity: 1;
+    }
+    .listDragHandle {
+        opacity: 1;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sortableLine {
+        transition: none !important;
+    }
+}
