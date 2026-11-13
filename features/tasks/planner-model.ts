@@ -44,19 +44,13 @@ export function plannerColumnTasks(
     return projected;
 }
 
-/** Carry unfinished work into today's view without rewriting its real deadline. */
-export function plannerDate(task: Task, today: string): string | null {
-    if (!task.dueDate) return null;
-    return !task.completedAt && task.dueDate < today ? today : task.dueDate;
+/** Keep tasks on their saved due dates, including unfinished overdue work. */
+export function plannerDate(task: Task, _today: string): string | null {
+    return task.dueDate;
 }
 
 export function sortPlannerTasks(tasks: Task[], sort: TaskSort): Task[] {
-    const sorted = sortTasks(tasks, sort);
-    if (sort !== "due") return sorted;
-    const fallback = new Map(sorted.map((task, index) => [task.id, index]));
-    return sorted.sort(
-        (a, b) => (a.plannerOrder ?? fallback.get(a.id)!) - (b.plannerOrder ?? fallback.get(b.id)!),
-    );
+    return sortTasks(tasks, sort);
 }
 
 export function setTaskDeleted(
@@ -113,7 +107,7 @@ export function createPlannerTask(
         clientId: null,
         ownerId: null,
         propertyId: null,
-        priority: "medium",
+        priority: draft.priority,
         completedAt: null,
         deletedAt: null,
         listId,
@@ -176,7 +170,7 @@ export function movePlannerTask(
                 plannerDate(item, today) === date &&
                 (date !== null || !listId || item.listId === listId),
         ),
-        "due",
+        "manual",
     );
     const before = destination.findIndex((item) => item.id === beforeId);
     destination.splice(before < 0 ? destination.length : before, 0, moved);

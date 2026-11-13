@@ -138,14 +138,6 @@ export function TaskActionsMenu({
                     <DropdownMenuItem
                         className={portalProfileMenuItemClass}
                         disabled={disabled}
-                        onClick={() => act(() => onOpen(task))}
-                    >
-                        <FileText aria-hidden />
-                        Task details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                        className={portalProfileMenuItemClass}
-                        disabled={disabled}
                         onClick={() => act(() => onComplete(task))}
                     >
                         {task.completedAt ? <RotateCcw aria-hidden /> : <Check aria-hidden />}
@@ -287,6 +279,14 @@ export function TaskActionsMenu({
                     <DropdownMenuItem
                         className={portalProfileMenuItemClass}
                         disabled={disabled}
+                        onClick={() => act(() => onOpen(task))}
+                    >
+                        <FileText aria-hidden />
+                        Task details
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        className={portalProfileMenuItemClass}
+                        disabled={disabled}
                         onClick={() => act(() => onIntent(task, "edit"))}
                     >
                         <Pencil aria-hidden />
@@ -298,7 +298,7 @@ export function TaskActionsMenu({
                         disabled={disabled}
                         onClick={() => act(() => onIntent(task, "delete"))}
                     >
-                        <Trash2 aria-hidden />
+                        <Trash2 className="menu-stroke-icon is-danger" aria-hidden />
                         Delete task
                     </DropdownMenuItem>
                 </div>

@@ -131,7 +131,7 @@ test("task moves and ordering within named lists don't mix other list contents o
     assert.deepEqual(
         sortPlannerTasks(
             moved.filter((task) => task.listId === "papers"),
-            "due",
+            "manual",
         ).map((task) => task.id),
         ["b", "a", "c"],
     );

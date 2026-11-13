@@ -19,6 +19,7 @@ import {
     User,
 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogDescription, DialogPopup, DialogTitle } from "@/components/ui/dialog";
 
 import { nextTaskDates } from "./lifecycle";
 import {
@@ -320,16 +321,21 @@ export function TaskDeleteDialog({
     onConfirm: () => void;
 }) {
     return (
-        <TaskPanel
-            compact
-            title="Delete this task?"
-            description="Move this task to Deleted and stop its reminders."
-            busy={busy}
-            onClose={onClose}
-            footer={
-                <div className={styles.detailFooter}>
+        <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
+            <DialogPopup showCloseButton={false} className={styles.deleteDialog}>
+                <DialogTitle>Delete task?</DialogTitle>
+                <p className={styles.deleteTaskName}>{task.title}</p>
+                <DialogDescription>
+                    Reminders will stop. You can restore it from Deleted.
+                </DialogDescription>
+                {error && (
+                    <p role="alert" className={styles.error}>
+                        {error}
+                    </p>
+                )}
+                <div className={styles.deleteActions}>
                     <Button variant="outline" disabled={busy} onClick={onClose}>
-                        Keep task
+                        Cancel
                     </Button>
                     <Button
                         variant="destructive"
@@ -337,24 +343,11 @@ export function TaskDeleteDialog({
                         loading={busy}
                         onClick={onConfirm}
                     >
-                        <Trash2 aria-hidden /> Delete task
+                        Delete task
                     </Button>
                 </div>
-            }
-        >
-            <div className="space-y-4">
-                <p className="body font-semibold wrap-anywhere text-ink">{task.title}</p>
-                <p className="body-sm text-ink-muted">
-                    You can restore this task from the Deleted tab. Linked Clients and properties
-                    stay unchanged.
-                </p>
-                {error && (
-                    <p role="alert" className={styles.error}>
-                        {error}
-                    </p>
-                )}
-            </div>
-        </TaskPanel>
+            </DialogPopup>
+        </Dialog>
     );
 }
 

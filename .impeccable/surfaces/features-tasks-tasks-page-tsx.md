@@ -15,8 +15,10 @@ Mode: Operate. Brokers plan private follow-ups on phones and desktop.
 ## Approved direction
 
 The user pins the existing portal header, rotating task summary, Filters button,
-search, sort and Add task controls. There is no sidebar. Views are All tasks
-(all non-deleted records, including completed tasks), Completed, and Deleted.
+search, sort and Add task controls. There is no sidebar. Views are To do
+(unfinished tasks), Completed, and Deleted. Newly completed tasks show their
+checkmark and strikethrough in To do for two seconds, then disappear from that
+view. Save completion immediately; keep the brief feedback local to the UI.
 
 Below the toolbar, use the TeuxDeux day planner as the visual reference:
 https://teuxdeux.com/home. Flat white paper, ruled task lines, small uppercase
@@ -32,13 +34,18 @@ load a separate planner font or override body text with Arial.
 
 ## Behavior and constraints
 
+Task creation, details, editing, deletion, reminders, tabs, search, filters, and
+sorting use local workspace state. These interactions must not change the URL
+or add browser history entries. Existing incoming task links still initialize
+the intended dialog and linked-record prefill.
+
 Task titles lead. Full text and linked Client, Owner, property, priority,
 recurrence, and reminder details remain accessible from the actions menu and
 the details drawer. Long titles truncate within the day column.
 
-Unfinished overdue tasks appear in Today's column without rewriting their
-original deadlines. Dragging between days explicitly changes the schedule;
-reordering in Today's list preserves overdue deadlines. Deletion is recoverable
+Unfinished overdue tasks stay in their original due-date columns; they never
+automatically move into Today. Dragging between days explicitly changes the
+schedule; reordering within a day preserves deadlines. Deletion is recoverable
 and stops reminders. Restore keeps linked data and completion state and skips
 missed reminders. Deleted tasks are excluded from dashboard counts.
 

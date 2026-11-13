@@ -1,5 +1,5 @@
 .menu {
-    inline-size: min(288px, calc(100vw - 24px));
+    inline-size: min(248px, calc(100vw - 24px));
     max-block-size: min(720px, var(--available-height));
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -31,6 +31,11 @@
     flex-shrink: 0;
     stroke-width: 1.75;
 }
+.menu :global([data-slot="dropdown-menu-item"]),
+.menu :global([data-slot="dropdown-menu-sub-trigger"]) {
+    min-block-size: 36px;
+    padding-inline: 10px;
+}
 .actions {
     display: grid;
     gap: 0;
@@ -59,7 +64,7 @@
 .section {
     min-inline-size: 0;
     border: 0;
-    padding: 12px;
+    padding: 8px 10px;
     margin: 0;
 }
 .section legend {
@@ -69,7 +74,7 @@
     align-items: center;
     gap: 8px;
     padding: 0;
-    margin-block-end: 10px;
+    margin-block-end: 8px;
     font-size: 12px;
     font-weight: 600;
 }
@@ -81,7 +86,7 @@
 }
 .dateOptions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     clear: both;
 }
 .dateOptions button {
@@ -164,7 +169,7 @@
 .priorities {
     display: flex;
     clear: both;
-    gap: 8px;
+    gap: 6px;
 }
 .priorities button {
     display: flex;
@@ -282,6 +287,10 @@
     text-underline-offset: 3px;
 }
 @media (pointer: coarse) {
+    .menu :global([data-slot="dropdown-menu-item"]),
+    .menu :global([data-slot="dropdown-menu-sub-trigger"]) {
+        min-block-size: 44px;
+    }
     .reminderChip:global([data-slot="dropdown-menu-checkbox-item"]) {
         min-block-size: 44px;
     }
@@ -313,9 +322,12 @@
     font-size: 12px;
 }
 .actions .delete svg {
-    color: inherit;
+    color: var(--color-danger) !important;
 }
-.actions .delete:hover {
+.actions .delete:hover,
+.actions .delete:focus,
+.actions .delete:global([data-highlighted]) {
+    color: var(--color-danger) !important;
     background: var(--color-danger-soft);
 }
 .feedback {

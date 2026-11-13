@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
+import { useSearchParams } from "@/lib/navigation";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -67,29 +67,58 @@ const LINK_FILTERS = [
 
 export function TasksPage() {
     const accountId = useAppSelector((state) => state.auth.user?.id) ?? "design-preview";
-    return <TasksWorkspace key={accountId} accountId={accountId} />;
+    const initialQuery = useSearchParams().toString();
+    return (
+        <TasksWorkspace
+            key={`${accountId}:${initialQuery}`}
+            accountId={accountId}
+            initialQuery={initialQuery}
+        />
+    );
 }
 
-function TasksWorkspace({ accountId }: { accountId: string }) {
+function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initialQuery: string }) {
     const { tasks, isLoading, error: loadError, save, update, reset, busy } = useTasks(accountId);
     const lists = useTaskNotebook(accountId);
-    const router = useRouter();
-    const pathname = usePathname();
-    const params = useSearchParams();
+    // Read incoming links once; workspace interactions never navigate or write browser history.
+    const [params, setParams] = useState(() => new URLSearchParams(initialQuery));
     const [now, setNow] = useState(() => Date.now());
     const [error, setError] = useState("");
+    const [completionFeedback, setCompletionFeedback] = useState<Record<string, number>>({});
+    useEffect(() => {
+        const nextExpiry = Math.min(...Object.values(completionFeedback));
+        if (!Number.isFinite(nextExpiry)) return;
+        const timer = window.setTimeout(
+            () => {
+                setCompletionFeedback((current) =>
+                    Object.fromEntries(
+                        Object.entries(current).filter(([, expiry]) => expiry > Date.now()),
+                    ),
+                );
+            },
+            Math.max(0, nextExpiry - Date.now()),
+        );
+        return () => window.clearTimeout(timer);
+    }, [completionFeedback]);
+    const clearCompletionFeedback = (id: string) => {
+        setCompletionFeedback((current) => {
+            const next = { ...current };
+            delete next[id];
+            return next;
+        });
+    };
     useEffect(() => {
         const timer = window.setInterval(() => setNow(Date.now()), 15_000);
         return () => window.clearInterval(timer);
     }, []);
-    const navigate = (patch: Record<string, string | undefined>, replace = false) => {
-        const next = new URLSearchParams(params.toString());
-        Object.entries(patch).forEach(([key, value]) =>
-            value ? next.set(key, value) : next.delete(key),
-        );
-        const href = `${pathname}${next.size ? `?${next}` : ""}`;
-        if (replace) router.replace(href, { scroll: false });
-        else router.push(href, { scroll: false });
+    const updateWorkspace = (patch: Record<string, string | undefined>) => {
+        setParams((current) => {
+            const next = new URLSearchParams(current);
+            Object.entries(patch).forEach(([key, value]) =>
+                value ? next.set(key, value) : next.delete(key),
+            );
+            return next;
+        });
     };
     const rawTab = params.get("tab");
     const tab = rawTab === "completed" || rawTab === "deleted" ? rawTab : "all";
@@ -103,8 +132,11 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
         ? (params.get("linked") ?? "")
         : "";
     const rawSort = params.get("sort");
+    const defaultSort = tab === "all" ? "manual" : "due";
     const sort: TaskSort =
-        rawSort === "newest" || rawSort === "priority" || rawSort === "title" ? rawSort : "due";
+        rawSort === "due" || rawSort === "newest" || rawSort === "priority" || rawSort === "title"
+            ? rawSort
+            : defaultSort;
     const open = tasks.filter((task) => !task.completedAt && !task.deletedAt);
     const overdue = open.filter((task) => taskGroup(task, now) === "overdue").length;
     const today = open.filter((task) => taskGroup(task, now) === "today").length;
@@ -120,8 +152,8 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     const tabs = [
         {
             value: "all",
-            label: "All tasks",
-            count: tasks.filter((task) => !task.deletedAt).length,
+            label: "To do",
+            count: open.length,
             dotClassName: "bg-brand",
         },
         {
@@ -138,7 +170,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
         },
     ];
     const visible = tasks.filter((task) => {
-        if (!taskMatchesTab(task, tab)) return false;
+        if (!taskMatchesTab(task, tab, !!completionFeedback[task.id])) return false;
         if (!taskMatchesDueFilter(task, due as TaskDueFilter, now)) return false;
         if (!taskMatchesLinkFilter(task, linked as TaskLinkFilter)) return false;
         const client = TASK_CLIENTS.find((c) => c.id === task.clientId);
@@ -150,7 +182,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     });
     const close = () => {
         setError("");
-        navigate({
+        updateWorkspace({
             view: undefined,
             task: undefined,
             visitClient: undefined,
@@ -160,11 +192,11 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     };
     const intent = (task: Task, nextView: string) => {
         setError("");
-        navigate({ task: task.id, view: nextView });
+        updateWorkspace({ task: task.id, view: nextView });
     };
     const create = () => {
         setError("");
-        navigate({
+        updateWorkspace({
             task: undefined,
             view: "create",
             visitClient: undefined,
@@ -172,7 +204,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             visitTitle: undefined,
         });
     };
-    const clear = () => navigate({ q: undefined, due: undefined, linked: undefined }, true);
+    const clear = () => updateWorkspace({ q: undefined, due: undefined, linked: undefined });
     const commit = async (next: Task[], message: string, after?: () => void) => {
         setError("");
         try {
@@ -188,12 +220,21 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     const complete = async (task: Task) => {
         if (busy) return;
         setError("");
+        const showFeedback = !task.completedAt && tab === "all";
+        if (showFeedback) {
+            setCompletionFeedback((current) => ({ ...current, [task.id]: Infinity }));
+        }
         try {
             const now = Date.now();
             const nextId = crypto.randomUUID();
             await update((latest) =>
                 setTaskCompleted(latest, task.id, !task.completedAt, now, nextId),
             );
+            if (showFeedback) {
+                setCompletionFeedback((current) => ({ ...current, [task.id]: Date.now() + 2000 }));
+            } else {
+                clearCompletionFeedback(task.id);
+            }
             toast.success(
                 task.completedAt
                     ? "Task reopened"
@@ -202,6 +243,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                       : "Task completed",
             );
         } catch (failure) {
+            clearCompletionFeedback(task.id);
             setError(
                 failure instanceof Error
                     ? failure.message
@@ -259,7 +301,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                 ),
             "Task moved",
         );
-        if (saved && sort !== "due") navigate({ sort: undefined }, true);
+        if (saved && sort !== "manual") updateWorkspace({ sort: undefined });
         return saved;
     };
     const saveDraft = async (draft: TaskDraft) => {
@@ -309,7 +351,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                       : "Task updated"
                 : "Task created",
             () =>
-                navigate({
+                updateWorkspace({
                     view: "detail",
                     task: next.id,
                     visitClient: undefined,
@@ -343,7 +385,10 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             <Tabs
                 value={tab}
                 onValueChange={(value) =>
-                    navigate({ tab: value === "all" ? undefined : String(value), due: undefined })
+                    updateWorkspace({
+                        tab: value === "all" ? undefined : String(value),
+                        due: undefined,
+                    })
                 }
                 className={styles.workspace}
             >
@@ -355,8 +400,8 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                             count={Number(!!due) + Number(!!linked)}
                             isActive={!!(due || linked)}
                             clearable={!!(due || linked)}
-                            onClick={() => navigate({ view: "filters", task: undefined })}
-                            onClear={() => navigate({ due: undefined, linked: undefined }, true)}
+                            onClick={() => updateWorkspace({ view: "filters", task: undefined })}
+                            onClear={() => updateWorkspace({ due: undefined, linked: undefined })}
                         />
                         <StatusTabs
                             tabs={tabs}
@@ -374,7 +419,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 className="rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20 pointer-coarse:min-block-11"
                                 placeholder="Search tasks or linked records"
                                 value={search}
-                                onValueChange={(q) => navigate({ q: q || undefined }, true)}
+                                onValueChange={(q) => updateWorkspace({ q: q || undefined })}
                                 startIcon={Search}
                                 clearable
                             />
@@ -384,6 +429,9 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                             label="Sort tasks"
                             value={sort}
                             options={[
+                                ...(tab === "all"
+                                    ? [{ value: "manual", label: "Default order" }]
+                                    : []),
                                 {
                                     value: "due",
                                     label:
@@ -398,7 +446,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 { value: "title", label: "Task name" },
                             ]}
                             onChange={(value) =>
-                                navigate({ sort: value === "due" ? undefined : value }, true)
+                                updateWorkspace({ sort: value === defaultSort ? undefined : value })
                             }
                         />
                         <Button variant="accent" className={styles.toolbarButton} onClick={create}>
@@ -413,7 +461,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    onClick={() => navigate({ due: undefined }, true)}
+                                    onClick={() => updateWorkspace({ due: undefined })}
                                 >
                                     {DUE_FILTERS.find((f) => f.value === due)?.label}
                                     <X aria-hidden />
@@ -424,7 +472,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    onClick={() => navigate({ linked: undefined }, true)}
+                                    onClick={() => updateWorkspace({ linked: undefined })}
                                 >
                                     {LINK_FILTERS.find((f) => f.value === linked)?.label}
                                     <X aria-hidden />
@@ -545,9 +593,11 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                             >
                                 <Button
                                     variant="outline"
-                                    onClick={filtered ? clear : () => navigate({ tab: undefined })}
+                                    onClick={
+                                        filtered ? clear : () => updateWorkspace({ tab: undefined })
+                                    }
                                 >
-                                    {filtered ? "Clear search & filters" : "Back to all tasks"}
+                                    {filtered ? "Clear search & filters" : "Back to To do"}
                                 </Button>
                             </EmptyState>
                         )}
@@ -559,7 +609,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                     due={due}
                     linked={linked}
                     onClose={close}
-                    onApply={(values) => navigate({ ...values, view: undefined }, true)}
+                    onApply={(values) => updateWorkspace({ ...values, view: undefined })}
                 />
             )}
             {view === "reminders" && (

@@ -22,7 +22,7 @@ export const TASK_PRIORITY_RANK: Record<TaskPriority, number> = {
 };
 
 export const TASK_TABS = [
-    { value: "all", label: "All tasks" },
+    { value: "all", label: "To do" },
     { value: "completed", label: "Completed" },
     { value: "deleted", label: "Deleted" },
 ] as const;
@@ -142,7 +142,7 @@ export const EMPTY_TASK_DRAFT: TaskDraft = {
     clientId: "",
     ownerId: "",
     propertyId: "",
-    priority: "medium",
+    priority: "low",
 };
 
 export function newTaskDraft(now = Date.now()): TaskDraft {
@@ -317,10 +317,10 @@ export function taskGroup(task: Task, now = Date.now()): TaskGroup {
     return task.dueDate === today ? "today" : "upcoming";
 }
 
-export function taskMatchesTab(task: Task, tab: TaskTab): boolean {
+export function taskMatchesTab(task: Task, tab: TaskTab, completionFeedback = false): boolean {
     if (tab === "deleted") return !!task.deletedAt;
     if (task.deletedAt) return false;
-    return tab === "all" || !!task.completedAt;
+    return tab === "all" ? !task.completedAt || completionFeedback : !!task.completedAt;
 }
 
 export type TaskDueFilter = "" | "any" | "overdue" | "today" | "week" | "undated";
@@ -407,9 +407,18 @@ export function taskDueLabel(task: Task, now = Date.now()): string {
     return taskGroup(task, now) === "overdue" ? `Overdue · ${label}` : label;
 }
 
-export type TaskSort = "due" | "newest" | "priority" | "title";
+export type TaskSort = "manual" | "due" | "newest" | "priority" | "title";
 export function sortTasks(tasks: Task[], sort: TaskSort = "due"): Task[] {
     return [...tasks].sort((a, b) => {
+        if (sort === "manual") {
+            if (a.plannerOrder != null || b.plannerOrder != null) {
+                const order =
+                    (a.plannerOrder ?? Number.POSITIVE_INFINITY) -
+                    (b.plannerOrder ?? Number.POSITIVE_INFINITY);
+                if (order) return order;
+            }
+            return Date.parse(a.createdAt) - Date.parse(b.createdAt);
+        }
         if (sort === "title")
             return a.title.localeCompare(b.title, "en-IN", { sensitivity: "base", numeric: true });
         if (sort === "newest") return Date.parse(b.createdAt) - Date.parse(a.createdAt);

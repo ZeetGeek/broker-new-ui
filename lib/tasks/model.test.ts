@@ -265,7 +265,7 @@ test("date-led groups use India midnight and keep today's timed tasks together",
     );
     assert.equal(
         taskMatchesTab({ ...task, completedAt: new Date(now).toISOString() }, "all"),
-        true,
+        false,
     );
     assert.equal(taskMatchesTab({ ...task, dueDate: "2030-01-01" }, "completed"), false);
 });

@@ -155,6 +155,7 @@
 }
 .taskLine {
     position: relative;
+    isolation: isolate;
     display: flex;
     align-items: center;
     gap: 0.25rem;
@@ -163,17 +164,29 @@
     padding-inline: 0.5rem 0.25rem;
     border-radius: 0;
 }
-.taskLine:not(.completedLine)[data-priority="urgent"] {
-    background: color-mix(in oklab, var(--color-danger-soft) 65%, var(--color-surface));
+.taskLine::before {
+    content: "";
+    position: absolute;
+    inset: 4px 0;
+    z-index: -1;
+    border-radius: 6px;
+    background: var(--task-row-bg, transparent);
+    pointer-events: none;
 }
-.taskLine:not(.completedLine)[data-priority="high"] {
-    background: color-mix(in oklab, var(--color-urgent-soft) 65%, var(--color-surface));
+.taskLine[data-priority="urgent"] {
+    --task-row-bg: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface));
 }
-.taskLine:not(.completedLine)[data-priority="medium"] {
-    background: color-mix(in oklab, #3b6bdc 7%, var(--color-surface));
+.taskLine[data-priority="high"] {
+    --task-row-bg: color-mix(in srgb, var(--color-urgent) 16%, var(--color-surface));
 }
-.taskLine:not(.completedLine)[data-priority="low"] {
-    background: var(--color-surface-muted);
+.taskLine[data-priority="medium"] {
+    --task-row-bg: color-mix(in srgb, #3b6bdc 20%, var(--color-surface));
+}
+.taskLine[data-priority="low"] {
+    --task-row-bg: transparent;
+}
+.taskLine:is([data-priority="urgent"], [data-priority="high"], [data-priority="medium"]) {
+    --task-action-bg: rgb(255 255 255 / 25%);
 }
 .lineTitle {
     flex: 1;
@@ -248,7 +261,7 @@
 .lineAction:hover,
 .lineAction[data-popup-open] {
     color: var(--color-ink-muted);
-    background: var(--color-surface-muted);
+    background: var(--task-action-bg, var(--color-surface-muted));
 }
 .taskLine:hover .lineCheck,
 .taskLine:focus-within .lineCheck,
