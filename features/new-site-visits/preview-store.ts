@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { PropertyFilterRecord } from "@/lib/properties/list-criteria";
 import { dateAtIstOffset } from "@/lib/visits/time";
 
 import { type SiteVisit, visitSchema } from "./model";
@@ -37,7 +38,7 @@ export const PREVIEW_CLIENTS = [
         phoneDigits: "",
     },
 ];
-export type PreviewProperty = {
+export type PreviewProperty = PropertyFilterRecord & {
     id: string;
     title: string;
     configLabel: string;
@@ -56,6 +57,9 @@ export const PREVIEW_PROPERTIES: PreviewProperty[] = [
         imageUrls: ["/properties/1.jpg", "/properties/5.jpg", "/properties/6.jpg"],
         title: "Happy Elegance",
         configLabel: "3 BHK apartment",
+        category: "residential",
+        subtype: "apartment",
+        bhk: 3,
         locality: "Vesu",
         city: "Surat",
         address: "Main gate, Happy Elegance, VIP Road, Vesu",
@@ -66,6 +70,8 @@ export const PREVIEW_PROPERTIES: PreviewProperty[] = [
         imageUrls: ["/properties/2.jpg", "/properties/5.jpg", "/properties/6.jpg"],
         title: "International Business Center",
         configLabel: "Office",
+        category: "commercial",
+        subtype: "office_space",
         locality: "Piplod",
         city: "Surat",
         address: "International Business Center, Piplod, Surat",
@@ -76,6 +82,9 @@ export const PREVIEW_PROPERTIES: PreviewProperty[] = [
         imageUrls: ["/properties/3.jpg", "/properties/5.jpg", "/properties/6.jpg"],
         title: "Orchid Homes",
         configLabel: "2 BHK apartment",
+        category: "residential",
+        subtype: "apartment",
+        bhk: 2,
         locality: "Adajan",
         city: "Surat",
         address: "Orchid Homes, Adajan, Surat",
@@ -86,6 +95,9 @@ export const PREVIEW_PROPERTIES: PreviewProperty[] = [
         imageUrls: ["/properties/4.jpg", "/properties/5.jpg", "/properties/6.jpg"],
         title: "Green Residency",
         configLabel: "3 BHK apartment",
+        category: "residential",
+        subtype: "apartment",
+        bhk: 3,
         locality: "Pal",
         city: "Surat",
         address: "Green Residency, Pal, Surat",

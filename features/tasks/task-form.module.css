@@ -1,22 +1,23 @@
-.panel:global(.t-modal) {
-    --dialog-pad: 1.5rem;
-    inset: 0 0 0 auto;
-    translate: none;
+.panel {
+    inset-inline-start: auto !important;
+    inset-inline-end: 0 !important;
+    inset-block-start: 0 !important;
+    translate: none !important;
     transform: translateX(0);
     transform-origin: right center;
     display: flex;
     flex-direction: column;
     gap: 0;
-    inline-size: 100vw;
-    max-inline-size: 100vw;
-    block-size: 100dvh;
-    max-block-size: 100dvh;
-    border-radius: 0;
+    inline-size: min(46rem, 100dvw) !important;
+    max-inline-size: 100dvw !important;
+    block-size: 100dvh !important;
+    max-block-size: 100dvh !important;
+    border-radius: 0 !important;
     border: 0;
     padding: 0;
     overflow: hidden;
-    opacity: 1;
-    scale: 1;
+    opacity: 1 !important;
+    scale: 1 !important;
     transition: transform var(--panel-open-dur) var(--panel-ease);
     will-change: transform;
 }
@@ -41,26 +42,32 @@
     }
 }
 
-.panelScroll {
-    flex: 1;
-    min-block-size: 0;
+.panel,
+.compactPanel {
+    color: var(--color-ink);
+    caret-color: var(--color-brand);
+}
+.panel ::selection,
+.compactPanel ::selection {
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
 }
 
 .panelBody {
-    padding: 1.5rem;
+    padding: 1.5rem !important;
 }
 
 .panelFooter {
     flex-shrink: 0;
     border-block-start: 1px solid var(--color-border-warm);
     background: var(--color-surface);
-    padding: 1rem 1.5rem max(1rem, env(safe-area-inset-bottom));
+    padding: 1rem 1.25rem max(1rem, env(safe-area-inset-bottom)) !important;
 }
 
 .form {
     display: flex;
     flex-direction: column;
-    gap: 1.75rem;
+    gap: 1.5rem;
     color: var(--color-ink);
 }
 
@@ -79,7 +86,8 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.9375rem;
+    font-size: 1rem;
+    font-family: var(--font-display);
     line-height: 1.5;
     font-weight: 650;
 }
@@ -98,7 +106,7 @@
 }
 
 .label {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     line-height: 1.5;
     font-weight: 600;
     color: var(--color-ink);
@@ -215,10 +223,70 @@
     gap: 0.5rem;
 }
 
-@media (min-width: 640px) {
-    .panel:global(.t-modal) {
-        inline-size: 34rem;
-        max-inline-size: calc(100vw - 2rem);
+.notesInput {
+    border: 1px solid var(--color-border-warm);
+    border-radius: 12px;
+    background: var(--color-surface);
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    color: var(--color-ink);
+    line-height: 1.6;
+}
+.notesInput:hover {
+    border-color: var(--color-ink-subtle);
+}
+.notesInput:focus-visible {
+    border-color: var(--color-brand);
+}
+.entityOption {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-inline-size: 0;
+}
+.entityOption > span:last-child {
+    overflow-wrap: anywhere;
+    min-inline-size: 0;
+}
+.entityOption small {
+    display: block;
+    margin-block-start: 0.25rem;
+    color: var(--color-ink-muted);
+    font-size: 0.75rem;
+}
+.entityIcon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 40px;
+    block-size: 40px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--color-surface-muted);
+    color: var(--color-ink-muted);
+}
+.entityIcon svg {
+    inline-size: 20px;
+    block-size: 20px;
+}
+@media (max-width: 400px) {
+    .row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+@media (max-width: 640px) {
+    .panelBody {
+        padding: 1.25rem !important;
+    }
+    .panelFooter > div > button {
+        flex-grow: 1;
+        min-block-size: 44px;
+    }
+    .panel [data-slot="app-modal-header"] button,
+    .compactPanel [data-slot="app-modal-header"] button {
+        min-inline-size: 44px;
+        min-block-size: 44px;
     }
 }
 

@@ -5,6 +5,7 @@ import {
     draftTimes,
     EMPTY_DRAFT,
     getVisitActions,
+    newVisitDraft,
     notificationKind,
     repeatVisitDraft,
     type SiteVisit,
@@ -32,6 +33,26 @@ const draft = {
     endTime: "11:00",
 };
 const now = Date.parse("2030-01-01T00:00:00Z");
+
+test("new visits default to the next IST minute with a same-day end time", () => {
+    const openedAt = Date.parse("2030-01-01T04:30:25Z");
+    const next = newVisitDraft(openedAt, {
+        ...EMPTY_DRAFT,
+        clientId: "client",
+        propertyId: "property",
+    });
+    assert.equal(next.date, "2030-01-01");
+    assert.equal(next.startTime, "10:01");
+    assert.equal(next.endTime, "10:31");
+    assert.equal(validateDraft(next, [], openedAt).valid, true);
+    const late = newVisitDraft(Date.parse("2030-01-01T18:15:00Z"));
+    assert.equal(late.startTime, "23:46");
+    assert.equal(late.endTime, "23:59");
+    const midnight = newVisitDraft(Date.parse("2030-01-01T18:29:30Z"));
+    assert.equal(midnight.date, "2030-01-02");
+    assert.equal(midnight.startTime, "00:00");
+    assert.equal(midnight.endTime, "00:30");
+});
 
 test("duration shortcuts never silently roll into another day", () => {
     assert.equal(visitEndTime("10:00", 45), "10:45");

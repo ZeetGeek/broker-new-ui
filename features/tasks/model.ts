@@ -8,6 +8,12 @@ import { type TaskRepeat, taskRepeatSchema } from "./recurrence";
 
 export const TASK_TIME_ZONE = "Asia/Kolkata";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
+export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
+    urgent: "Priority 1",
+    high: "Priority 2",
+    medium: "Priority 3",
+    low: "Priority 4",
+};
 export const TASK_PRIORITY_RANK: Record<TaskPriority, number> = {
     low: 1,
     medium: 2,
@@ -60,6 +66,8 @@ export const taskSchema = z
         title: z.string().trim().min(1).max(160),
         details: z.string().max(2000),
         startDate: z.string().refine(isTaskDate).nullable().default(null),
+        startTime: z.string().refine(isTaskTime).nullable().optional(),
+        startReminderEnabledAt: z.iso.datetime().optional(),
         repeat: taskRepeatSchema.nullable().default(null),
         repeatAnchor: z.string().refine(isTaskDate).nullable().default(null),
         repeatFromId: z.string().min(1).nullable().default(null),
@@ -76,6 +84,16 @@ export const taskSchema = z
         deliveredReminderKeys: z.array(z.string().min(1)),
     })
     .refine((task) => !task.dueTime || !!task.dueDate, "A time needs a due date.")
+    .refine((task) => !task.startTime || !!task.startDate, "A start time needs a start date.")
+    .refine(
+        (task) =>
+            !task.startDate ||
+            task.startDate !== task.dueDate ||
+            !task.startTime ||
+            !task.dueTime ||
+            task.startTime <= task.dueTime,
+        "Due time must be on or after start time.",
+    )
     .refine(
         (task) => !task.startDate || !task.dueDate || task.startDate <= task.dueDate,
         "Due date must be on or after start date.",
@@ -99,6 +117,7 @@ export type TaskDraft = {
     title: string;
     details: string;
     startDate: string;
+    startTime: string;
     repeat: TaskRepeat | null;
     dueDate: string;
     dueTime: string;
@@ -113,6 +132,7 @@ export const EMPTY_TASK_DRAFT: TaskDraft = {
     title: "",
     details: "",
     startDate: "",
+    startTime: "",
     repeat: null,
     dueDate: "",
     dueTime: "",
@@ -124,7 +144,27 @@ export const EMPTY_TASK_DRAFT: TaskDraft = {
 };
 
 export function newTaskDraft(now = Date.now()): TaskDraft {
-    return { ...EMPTY_TASK_DRAFT, startDate: taskDateKey(now), reminders: [] };
+    return {
+        ...EMPTY_TASK_DRAFT,
+        startDate: taskDateKey(now),
+        startTime: inputValueInIst(new Date(now)).slice(11, 16),
+        reminders: [],
+    };
+}
+
+/** Upgrade date-only preview records once; keep every explicitly selected time. */
+export function backfillTaskStart(task: Task, now = Date.now()): Task {
+    if (task.startDate && task.startTime) return task;
+    const today = taskDateKey(now);
+    const startDate =
+        task.startDate || (task.dueDate && task.dueDate < today ? task.dueDate : today);
+    const currentTime = inputValueInIst(new Date(now)).slice(11, 16);
+    const startTime =
+        task.startTime ||
+        (startDate === task.dueDate && task.dueTime && currentTime > task.dueTime
+            ? task.dueTime
+            : currentTime);
+    return { ...task, startDate, startTime, startReminderEnabledAt: new Date(now).toISOString() };
 }
 
 export function draftFromTask(task: Task): TaskDraft {
@@ -132,6 +172,7 @@ export function draftFromTask(task: Task): TaskDraft {
         title: task.title,
         details: task.details,
         startDate: task.startDate ?? "",
+        startTime: task.startTime ?? "",
         repeat: task.repeat ? { ...task.repeat, weekdays: [...task.repeat.weekdays] } : null,
         dueDate: task.dueDate ?? "",
         dueTime: task.dueTime ?? "",
@@ -149,13 +190,25 @@ export function validateTaskDraft(draft: TaskDraft) {
     else if (draft.title.trim().length > 160)
         errors.title = "Keep the task name under 160 characters.";
     if (draft.details.length > 2000) errors.details = "Keep the details under 2,000 characters.";
-    if (draft.startDate && !isTaskDate(draft.startDate))
-        errors.startDate = "Choose a valid start date.";
+    if (!draft.startDate) errors.startDate = "Choose a start date.";
+    else if (!isTaskDate(draft.startDate)) errors.startDate = "Choose a valid start date.";
+    if (!draft.startTime) errors.startTime = "Choose a start time.";
+    else if (!isTaskTime(draft.startTime)) errors.startTime = "Choose a valid start time.";
+    if (draft.startTime && !draft.startDate)
+        errors.startDate = "Choose a date for this start time.";
     if (draft.dueDate && !isTaskDate(draft.dueDate)) errors.dueDate = "Choose a valid due date.";
     if (draft.dueTime && !isTaskTime(draft.dueTime)) errors.dueTime = "Choose a valid time.";
     if (draft.dueTime && !draft.dueDate) errors.dueDate = "Choose a date for this time.";
     if (draft.startDate && draft.dueDate && draft.startDate > draft.dueDate)
         errors.dueDate = "Due date must be on or after the start date.";
+    if (
+        draft.startDate &&
+        draft.startDate === draft.dueDate &&
+        draft.startTime &&
+        draft.dueTime &&
+        draft.startTime > draft.dueTime
+    )
+        errors.dueTime = "Due time must be on or after the start time.";
     if (draft.repeat && !taskRepeatSchema.safeParse(draft.repeat).success)
         errors.repeat =
             "Choose a whole repeat interval from 1 to 365 and at least one day for weekly repeats.";
@@ -195,26 +248,46 @@ export function taskReminderKey(
     return due && isTaskReminderOffset(minutes) ? `${due}:${minutes}` : null;
 }
 
-export type TaskReminder = { minutes: number; at: string; key: string };
+export type TaskReminder = {
+    kind: "start" | "due";
+    minutes: number;
+    at: string | null;
+    key: string;
+};
 
 /** Earliest delivery first, regardless of the order offsets were selected. */
 export function taskReminders(
-    task: Pick<Task, "dueDate" | "dueTime" | "reminders">,
+    task: Pick<Task, "dueDate" | "dueTime" | "reminders"> &
+        Partial<Pick<Task, "startDate" | "startTime">>,
 ): TaskReminder[] {
-    return [...new Set(task.reminders)]
-        .flatMap((minutes) => {
-            const at = taskReminderAt(task, minutes);
-            const key = taskReminderKey(task, minutes);
-            return at && key ? [{ minutes, at, key }] : [];
-        })
-        .sort((a, b) => a.at.localeCompare(b.at));
+    const startAt =
+        task.startDate && task.startTime && isTaskDate(task.startDate) && isTaskTime(task.startTime)
+            ? inputValueToUtc(`${task.startDate}T${task.startTime}`)
+            : null;
+    const start: TaskReminder = {
+        kind: "start",
+        minutes: 0,
+        at: startAt,
+        key: startAt ? `start:${startAt}` : "start:pending",
+    };
+    const extra: TaskReminder[] = [...new Set(task.reminders)].flatMap((minutes) => {
+        const at = taskReminderAt(task, minutes);
+        const key = taskReminderKey(task, minutes);
+        return at && key ? [{ kind: "due" as const, minutes, at, key }] : [];
+    });
+    return [start, ...extra].sort((a, b) => (a.at ?? "9999").localeCompare(b.at ?? "9999"));
 }
 
 export function taskDueReminders(task: Task, now = Date.now()): TaskReminder[] {
     if (task.completedAt) return [];
     return taskReminders(task).filter(
         (reminder) =>
-            !task.deliveredReminderKeys.includes(reminder.key) && Date.parse(reminder.at) <= now,
+            !!reminder.at &&
+            (reminder.kind !== "start" ||
+                !task.startReminderEnabledAt ||
+                reminder.at >= task.startReminderEnabledAt) &&
+            !task.deliveredReminderKeys.includes(reminder.key) &&
+            Date.parse(reminder.at) <= now,
     );
 }
 
@@ -222,11 +295,12 @@ export function taskReminderLabel(minutes: number): string {
     return reminderLabel(minutes, "At due time");
 }
 
+export function taskReminderDescription(reminder: Pick<TaskReminder, "kind" | "minutes">): string {
+    return reminder.kind === "start" ? "At task start" : taskReminderLabel(reminder.minutes);
+}
+
 export function taskRemindersSummary(task: Pick<Task, "reminders">): string {
-    if (!task.reminders.length) return "No reminders";
-    return task.reminders.length === 1
-        ? taskReminderLabel(task.reminders[0])
-        : `${task.reminders.length} reminders`;
+    return task.reminders.length ? `${task.reminders.length + 1} reminders` : "At task start";
 }
 
 /** Today stays together for the whole IST day; clock time only drives reminders. */
@@ -296,6 +370,28 @@ export function taskDateLabel(date: string, now = Date.now()): string {
 export function taskTimeLabel(time: string): string {
     if (!isTaskTime(time)) return "Any time";
     return formatInTimeZone(inputValueToUtc(`2026-01-01T${time}`), TASK_TIME_ZONE, "h:mm a");
+}
+
+/** Keep date-only tasks honest; ranges never invent a missing start time. */
+export function taskScheduleLabel(
+    task: Pick<Task, "startDate" | "startTime" | "dueDate" | "dueTime">,
+    now = Date.now(),
+): string {
+    const { startDate, startTime, dueDate, dueTime } = task;
+    if (startDate && dueDate && startDate !== dueDate) {
+        return `${taskDateLabel(startDate, now)}${startTime ? `, ${taskTimeLabel(startTime)}` : ""} – ${taskDateLabel(dueDate, now)}${dueTime ? `, ${taskTimeLabel(dueTime)}` : ""}${startTime || dueTime ? " IST" : ""}`;
+    }
+    const times = [
+        ...new Set(
+            [
+                startDate && startTime ? taskTimeLabel(startTime) : "",
+                dueDate && dueTime ? taskTimeLabel(dueTime) : "",
+            ].filter(Boolean),
+        ),
+    ];
+    const date = startDate || dueDate;
+    if (!date) return "";
+    return `${taskDateLabel(date, now)}${times.length ? `, ${times.join(" – ")} IST` : ""}`;
 }
 
 export function taskDueLabel(task: Task, now = Date.now()): string {

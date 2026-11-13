@@ -4,9 +4,35 @@ import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
-import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { Bell, CalendarClock, Link2, LockKeyhole, Repeat } from "@/components/shared/icons";
+import { AppImage } from "@/components/shared/app-image";
+import { filterChipClassName } from "@/components/shared/filter-chip";
+import {
+    ArrowDownUp,
+    Bell,
+    Building2,
+    CalendarClock,
+    ChevronDown,
+    Link2,
+    LockKeyhole,
+    Repeat,
+    UserRound,
+} from "@/components/shared/icons";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
+import {
+    Combobox,
+    ComboboxContent,
+    ComboboxEmpty,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+} from "@/components/ui/combobox";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -21,6 +47,7 @@ import {
     draftFromTask,
     newTaskDraft,
     type Task,
+    TASK_PRIORITY_LABELS,
     taskDateKey,
     type TaskDraft,
     taskReminderAt,
@@ -39,14 +66,121 @@ export function TaskSelect({
     options,
     onChange,
     disabled = false,
+    toolbar = false,
+    entity,
 }: {
     label: string;
     value: string;
     options: { value: string; label: string }[];
     onChange: (value: string) => void;
     disabled?: boolean;
+    toolbar?: boolean;
+    entity?: "client" | "owner" | "property";
 }) {
     const id = useId();
+    if (toolbar) {
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger
+                    render={
+                        <button
+                            type="button"
+                            disabled={disabled}
+                            aria-label={`${label}: ${options.find((option) => option.value === value)?.label ?? value}`}
+                            className={filterChipClassName(true)}
+                        />
+                    }
+                >
+                    <ArrowDownUp aria-hidden className="text-brand block-4 inline-4" />
+                    <span>{options.find((option) => option.value === value)?.label ?? value}</span>
+                    <ChevronDown aria-hidden className="opacity-60 block-3.5 inline-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-inline-44">
+                    {options.map((option) => (
+                        <DropdownMenuItem
+                            key={option.value}
+                            onClick={() => onChange(option.value)}
+                            className={
+                                value === option.value ? "font-semibold text-brand" : undefined
+                            }
+                        >
+                            {option.label}
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    }
+    if (entity) {
+        const labelFor = (item: string) =>
+            options.find((option) => option.value === item)?.label ?? "";
+        return (
+            <div className={styles.field}>
+                <label htmlFor={id} className={styles.label}>
+                    {label}
+                </label>
+                <Combobox
+                    items={options.map((option) => option.value)}
+                    value={value || null}
+                    disabled={disabled}
+                    itemToStringLabel={labelFor}
+                    onValueChange={(next: string | null) => onChange(next ?? "")}
+                >
+                    <ComboboxInput
+                        id={id}
+                        size="lg"
+                        className="font-normal"
+                        startIcon={entity === "property" ? Building2 : UserRound}
+                        placeholder={`Select ${entity === "owner" ? "an" : "a"} ${entity}`}
+                        disabled={disabled}
+                    />
+                    <ComboboxContent
+                        align="center"
+                        className="inline-[min(26rem,calc(100dvw-2rem))]"
+                    >
+                        <ComboboxEmpty>No matching records. Try another search.</ComboboxEmpty>
+                        <ComboboxList className="py-2 max-block-[min(20rem,var(--available-height))]">
+                            {(item: string) => {
+                                const property =
+                                    entity === "property"
+                                        ? TASK_PROPERTIES.find((p) => p.id === item)
+                                        : undefined;
+                                return (
+                                    <ComboboxItem key={item || "none"} value={item}>
+                                        <span className={styles.entityOption}>
+                                            {item && entity !== "property" ? (
+                                                <UserAvatar name={labelFor(item)} size="sm" />
+                                            ) : (
+                                                <span className={styles.entityIcon}>
+                                                    <Building2 aria-hidden />
+                                                    {property?.imageUrl && (
+                                                        <AppImage
+                                                            src={property.imageUrl}
+                                                            alt=""
+                                                            fill
+                                                            sizes="40px"
+                                                        />
+                                                    )}
+                                                </span>
+                                            )}
+                                            <span>
+                                                {labelFor(item)}
+                                                {property && (
+                                                    <small>
+                                                        {property.configLabel} · {property.city}
+                                                    </small>
+                                                )}
+                                            </span>
+                                        </span>
+                                    </ComboboxItem>
+                                );
+                            }}
+                        </ComboboxList>
+                    </ComboboxContent>
+                </Combobox>
+            </div>
+        );
+    }
     return (
         <div className={styles.field}>
             <label htmlFor={id} className={styles.label}>
@@ -58,7 +192,7 @@ export function TaskSelect({
                 disabled={disabled}
                 onValueChange={(next) => next !== null && onChange(next)}
             >
-                <SelectTrigger id={id} size="md" className="inline-full">
+                <SelectTrigger id={id} size="lg" className="inline-full">
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -102,13 +236,11 @@ export function TaskForm({
         return () => window.clearInterval(timer);
     }, []);
     const [submitted, setSubmitted] = useState(false);
-    const [discard, setDiscard] = useState(false);
     const [saveError, setSaveError] = useState("");
     const fullForm = mode === "create" || mode === "edit";
     const dirty = JSON.stringify(draft) !== JSON.stringify(initial);
     const patch = (next: Partial<TaskDraft>) => {
         setDraft((current) => ({ ...current, ...next }));
-        setDiscard(false);
         setSaveError("");
     };
     const validation = validateTaskDraft(draft);
@@ -120,11 +252,6 @@ export function TaskForm({
             return at !== null && Date.parse(at) <= atTime && !unchanged;
         });
     const pastReminder = hasNewPastReminder(now);
-    const close = () => {
-        if (busy) return;
-        if (dirty) setDiscard(true);
-        else onClose();
-    };
     const setDate = (date: string | null) =>
         patch(date ? { dueDate: date } : { dueDate: "", dueTime: "", reminders: [] });
     const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -136,6 +263,12 @@ export function TaskForm({
         if (!validation.valid || reminderHasPassed) {
             setNow(Date.now());
             if (validation.errors.title) titleRef.current?.focus();
+            else {
+                const form = event.currentTarget;
+                requestAnimationFrame(() =>
+                    form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(),
+                );
+            }
             return;
         }
         try {
@@ -161,33 +294,25 @@ export function TaskForm({
         <TaskPanel
             title={title}
             description={description}
-            onClose={close}
+            onClose={onClose}
             busy={busy}
-            footer={
-                discard ? (
-                    <div className={styles.discard} role="alert">
-                        <p>Discard your unsaved changes?</p>
-                        <div className={styles.discardActions}>
-                            <Button variant="outline" onClick={() => setDiscard(false)}>
-                                Keep editing
-                            </Button>
-                            <Button variant="destructive" onClick={onClose}>
-                                Discard changes
-                            </Button>
-                        </div>
-                    </div>
-                ) : (
-                    <AppModalFooter
-                        primaryLabel={busy ? "Saving…" : primary}
-                        primaryType="submit"
-                        primaryFormId={formId}
-                        primaryDisabled={busy}
-                        secondaryLabel="Cancel"
-                        secondaryDisabled={busy}
-                        onSecondary={close}
-                    />
-                )
-            }
+            dirty={dirty}
+            footer={(close) => (
+                <div className={styles.discardActions}>
+                    <Button variant="outline" disabled={busy} onClick={close}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="accent"
+                        type="submit"
+                        form={formId}
+                        disabled={busy}
+                        loading={busy}
+                    >
+                        {primary}
+                    </Button>
+                </div>
+            )}
         >
             <form id={formId} onSubmit={submit} className={styles.form} noValidate>
                 {!fullForm && task ? (
@@ -209,7 +334,7 @@ export function TaskForm({
                                 value={draft.title}
                                 onValueChange={(title) => patch({ title })}
                                 placeholder="e.g. Call Aarav about the Vesu shortlist"
-                                size="md"
+                                size="lg"
                                 maxLength={160}
                                 disabled={busy}
                                 required
@@ -230,7 +355,7 @@ export function TaskForm({
                                 maxLength={2000}
                                 rows={3}
                                 disabled={busy}
-                                className="border-2 border-border-warm bg-surface text-ink placeholder:text-ink-subtle"
+                                className={styles.notesInput}
                                 aria-invalid={submitted && !!validation.errors.details}
                             />
                             {submitted && validation.errors.details ? (
@@ -247,39 +372,26 @@ export function TaskForm({
                     </h2>
                     <div className={styles.field}>
                         <label htmlFor={`${formId}-start`} className={styles.label}>
-                            Start date <span className={styles.optional}>(optional)</span>
+                            Start date & time <span aria-hidden="true">*</span>
                         </label>
-                        <AppDatePicker
+                        <AppDateTimePicker
                             id={`${formId}-start`}
-                            value={draft.startDate || null}
-                            onChange={(date) => patch({ startDate: date || "" })}
-                            placeholder="No start date"
-                            size="md"
+                            aria-label="Task start date and time (IST)"
+                            value={draft.startDate ? `${draft.startDate}T${draft.startTime}` : ""}
+                            onChange={(value) => {
+                                const [startDate = "", startTime = ""] = value.split("T");
+                                patch({ startDate, startTime });
+                            }}
                             disabled={busy}
-                            allowPast
-                            invalid={submitted && !!validation.errors.startDate}
+                            error={
+                                submitted
+                                    ? validation.errors.startDate || validation.errors.startTime
+                                    : undefined
+                            }
                         />
-                        {draft.startDate ? (
-                            <Button
-                                className="self-start"
-                                variant="ghost"
-                                size="sm"
-                                type="button"
-                                disabled={busy}
-                                onClick={() => patch({ startDate: "" })}
-                            >
-                                Remove start date
-                            </Button>
-                        ) : null}
-                        {submitted && validation.errors.startDate ? (
-                            <p className={styles.error} role="alert">
-                                {validation.errors.startDate}
-                            </p>
-                        ) : (
-                            <p className={styles.hint}>
-                                When you plan to begin. New tasks start today by default.
-                            </p>
-                        )}
+                        <p className={styles.hint}>
+                            A reminder at task start is included automatically. All times are IST.
+                        </p>
                     </div>
                     <div className={styles.field}>
                         <div className={styles.field}>
@@ -370,7 +482,10 @@ export function TaskForm({
                     ) : (
                         <div className={styles.reminderHint}>
                             <Bell aria-hidden="true" />
-                            <p>Add a date and time to set one or more in-app reminders.</p>
+                            <p>
+                                Your task-start reminder is included. Add a due date and time to set
+                                extra reminders.
+                            </p>
                         </div>
                     )}
                 </section>
@@ -412,6 +527,7 @@ export function TaskForm({
                             </h2>
                             <TaskSelect
                                 label="Client"
+                                entity="client"
                                 value={draft.clientId}
                                 disabled={busy}
                                 onChange={(clientId) => patch({ clientId })}
@@ -425,6 +541,7 @@ export function TaskForm({
                             />
                             <TaskSelect
                                 label="Owner"
+                                entity="owner"
                                 value={draft.ownerId}
                                 disabled={busy}
                                 onChange={(ownerId) => patch({ ownerId })}
@@ -438,6 +555,7 @@ export function TaskForm({
                             />
                             <TaskSelect
                                 label="Property"
+                                entity="property"
                                 value={draft.propertyId}
                                 disabled={busy}
                                 onChange={(propertyId) => patch({ propertyId })}
@@ -459,10 +577,10 @@ export function TaskForm({
                                     patch({ priority: priority as TaskDraft["priority"] })
                                 }
                                 options={[
-                                    { value: "low", label: "Low" },
-                                    { value: "medium", label: "Normal" },
-                                    { value: "high", label: "High" },
-                                    { value: "urgent", label: "Urgent" },
+                                    { value: "urgent", label: TASK_PRIORITY_LABELS.urgent },
+                                    { value: "high", label: TASK_PRIORITY_LABELS.high },
+                                    { value: "medium", label: TASK_PRIORITY_LABELS.medium },
+                                    { value: "low", label: TASK_PRIORITY_LABELS.low },
                                 ]}
                             />
                         </section>

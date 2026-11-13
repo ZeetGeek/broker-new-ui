@@ -2,7 +2,6 @@
 
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
-import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
     Bell,
@@ -20,16 +19,17 @@ import {
     User,
 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogPopup } from "@/components/ui/dialog";
 
 import { nextTaskDates } from "./lifecycle";
 import {
     type Task,
+    TASK_PRIORITY_LABELS,
     taskDateLabel,
     taskDueLabel,
     taskGroup,
-    taskReminderLabel,
+    taskReminderDescription,
     taskReminders,
+    taskTimeLabel,
 } from "./model";
 import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES } from "./preview-store";
 import { taskRepeatLabel } from "./recurrence";
@@ -68,23 +68,23 @@ export function TaskDetail({
             onClose={onClose}
             busy={busy}
             footer={
-                <div className="flex flex-wrap gap-2">
-                    <Button className="flex-1" disabled={busy} onClick={onComplete}>
-                        {task.completedAt ? <RotateCcw aria-hidden /> : <Check aria-hidden />}
-                        {task.completedAt ? "Reopen task" : "Mark done"}
-                    </Button>
-                    <Button variant="outline" onClick={() => onIntent("edit")} disabled={busy}>
-                        <Pencil aria-hidden />
-                        Edit
-                    </Button>
+                <div className={styles.detailFooter}>
                     <Button
                         variant="ghost"
-                        size="icon"
-                        aria-label="Delete task"
+                        className={styles.deleteAction}
                         onClick={() => onIntent("delete")}
                         disabled={busy}
                     >
                         <Trash2 aria-hidden />
+                        Delete task
+                    </Button>
+                    <Button variant="outline" onClick={() => onIntent("edit")} disabled={busy}>
+                        <Pencil aria-hidden />
+                        Edit task
+                    </Button>
+                    <Button variant="accent" disabled={busy} onClick={onComplete}>
+                        {task.completedAt ? <RotateCcw aria-hidden /> : <Check aria-hidden />}
+                        {task.completedAt ? "Reopen task" : "Mark done"}
                     </Button>
                 </div>
             }
@@ -102,6 +102,7 @@ export function TaskDetail({
                         <dt>Start date</dt>
                         <dd>
                             {task.startDate ? taskDateLabel(task.startDate, now) : "No start date"}
+                            {task.startTime ? ` · ${taskTimeLabel(task.startTime)} IST` : ""}
                         </dd>
                     </div>
                 </div>
@@ -156,7 +157,7 @@ export function TaskDetail({
                                     {reminders.map((reminder) => (
                                         <li key={reminder.key}>
                                             <span>
-                                                {taskReminderLabel(reminder.minutes)}
+                                                {taskReminderDescription(reminder)}
                                                 {task.deliveredReminderKeys.includes(
                                                     reminder.key,
                                                 ) ? (
@@ -167,8 +168,9 @@ export function TaskDetail({
                                                 ) : null}
                                             </span>
                                             <span className="body-xs text-ink-subtle">
-                                                {formatVisitDate(reminder.at)},{" "}
-                                                {formatVisitTime(reminder.at)} IST
+                                                {reminder.at
+                                                    ? `${formatVisitDate(reminder.at)}, ${formatVisitTime(reminder.at)} IST`
+                                                    : "Set a start date and time"}
                                             </span>
                                         </li>
                                     ))}
@@ -186,11 +188,7 @@ export function TaskDetail({
                     <Clock aria-hidden />
                     <div>
                         <dt>Priority</dt>
-                        <dd>
-                            {task.priority === "medium"
-                                ? "Normal"
-                                : task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-                        </dd>
+                        <dd>{TASK_PRIORITY_LABELS[task.priority]}</dd>
                     </div>
                 </div>
             </dl>
@@ -287,35 +285,40 @@ export function TaskDeleteDialog({
     onConfirm: () => void;
 }) {
     return (
-        <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
-            <DialogPopup showCloseButton={false} className="gap-0 overflow-hidden p-0">
-                <AppModalHeader
-                    title="Delete this task?"
-                    description="The task and its reminders will be removed."
-                    closeDisabled={busy}
-                />
-                <div className="space-y-4 p-6">
-                    <p className="body font-semibold wrap-anywhere text-ink">{task.title}</p>
-                    <p className="body-sm text-ink-muted">
-                        Linked Clients and properties will stay unchanged. This can’t be undone.
-                    </p>
-                    {error && (
-                        <p role="alert" className={styles.error}>
-                            {error}
-                        </p>
-                    )}
-                </div>
-                <div className="flex justify-end gap-3 border-bs border-border-warm p-4">
+        <TaskPanel
+            compact
+            title="Delete this task?"
+            description="The task and its reminders will be removed."
+            busy={busy}
+            onClose={onClose}
+            footer={
+                <div className={styles.detailFooter}>
                     <Button variant="outline" disabled={busy} onClick={onClose}>
                         Keep task
                     </Button>
-                    <Button variant="destructive" disabled={busy} onClick={onConfirm}>
-                        <Trash2 aria-hidden />
-                        {busy ? "Deleting…" : "Delete task"}
+                    <Button
+                        variant="destructive"
+                        disabled={busy}
+                        loading={busy}
+                        onClick={onConfirm}
+                    >
+                        <Trash2 aria-hidden /> Delete task
                     </Button>
                 </div>
-            </DialogPopup>
-        </Dialog>
+            }
+        >
+            <div className="space-y-4">
+                <p className="body font-semibold wrap-anywhere text-ink">{task.title}</p>
+                <p className="body-sm text-ink-muted">
+                    Linked Clients and properties will stay unchanged. This can’t be undone.
+                </p>
+                {error && (
+                    <p role="alert" className={styles.error}>
+                        {error}
+                    </p>
+                )}
+            </div>
+        </TaskPanel>
     );
 }
 
@@ -335,7 +338,7 @@ export function TaskReminders({
     const reminders = tasks
         .filter((task) => !task.completedAt)
         .flatMap((task) => taskReminders(task).map((reminder) => ({ task, ...reminder })))
-        .sort((a, b) => a.at.localeCompare(b.at));
+        .sort((a, b) => (a.at ?? "9999").localeCompare(b.at ?? "9999"));
     const pending = reminders.filter(
         (reminder) => !reminder.task.deliveredReminderKeys.includes(reminder.key),
     );
@@ -376,7 +379,7 @@ export function TaskReminders({
                             {group.label}{" "}
                             <span className="text-ink-subtle">({group.tasks.length})</span>
                         </h2>
-                        {group.tasks.map(({ task, at, minutes, key }) => {
+                        {group.tasks.map(({ task, at, minutes, key, kind }) => {
                             return (
                                 <article key={`${task.id}-${key}`} className={styles.reminderItem}>
                                     <Bell aria-hidden />
@@ -388,12 +391,16 @@ export function TaskReminders({
                                             {task.title}
                                         </button>
                                         <p>
-                                            {formatVisitDate(at)}, {formatVisitTime(at)} IST
-                                            {Date.parse(at) <= now && group.label === "Scheduled"
+                                            {at
+                                                ? `${formatVisitDate(at)}, ${formatVisitTime(at)} IST`
+                                                : "Set a start date and time"}
+                                            {at &&
+                                            Date.parse(at) <= now &&
+                                            group.label === "Scheduled"
                                                 ? " · Due now"
                                                 : ""}
                                         </p>
-                                        <p>{taskReminderLabel(minutes)}</p>
+                                        <p>{taskReminderDescription({ kind, minutes })}</p>
                                     </div>
                                     <Button variant="ghost" size="sm" onClick={() => onEdit(task)}>
                                         Change

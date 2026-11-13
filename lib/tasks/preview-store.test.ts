@@ -16,6 +16,8 @@ test("mock task storage isolates accounts, preserves empty lists, and rejects da
     });
     try {
         const tasks = await taskPreviewStore.list("broker-a");
+        await taskPreviewStore.save("broker-a", [{ ...tasks[0], startTime: "08:00" }]);
+        assert.equal((await taskPreviewStore.list("broker-a"))[0].startTime, "08:00");
         await taskPreviewStore.save("broker-a", []);
         assert.deepEqual(await taskPreviewStore.list("broker-a"), []);
         assert.equal((await taskPreviewStore.list("broker-b")).length, tasks.length);
@@ -147,8 +149,10 @@ test("removing or rescheduling reminders prunes obsolete delivery keys while pre
     try {
         const task = {
             ...sampleTasks(Date.parse("2030-01-01T04:00:00Z"))[2],
+            startTime: "09:00",
             reminders: [0, 15, 90],
         };
+        const startKey = taskReminders(task).find((reminder) => reminder.kind === "start")!.key;
         const allKeys = taskReminders(task).map((reminder) => reminder.key);
         await taskPreviewStore.save("broker", [{ ...task, deliveredReminderKeys: allKeys }]);
         const removed = await taskPreviewStore.save("broker", [
@@ -156,16 +160,20 @@ test("removing or rescheduling reminders prunes obsolete delivery keys while pre
         ]);
         assert.deepEqual(
             new Set(removed[0].deliveredReminderKeys),
-            new Set([taskReminderKey(task, 0), taskReminderKey(task, 90)]),
+            new Set([startKey, taskReminderKey(task, 0), taskReminderKey(task, 90)]),
         );
         const rescheduled = await taskPreviewStore.save("broker", [
             { ...removed[0], dueTime: "23:00" },
         ]);
-        assert.deepEqual(rescheduled[0].deliveredReminderKeys, []);
+        assert.deepEqual(rescheduled[0].deliveredReminderKeys, [startKey]);
         const cleared = await taskPreviewStore.save("broker", [
             { ...rescheduled[0], reminders: [] },
         ]);
-        assert.deepEqual(cleared[0].deliveredReminderKeys, []);
+        assert.deepEqual(cleared[0].deliveredReminderKeys, [startKey]);
+        const changedStart = await taskPreviewStore.save("broker", [
+            { ...cleared[0], startTime: "09:05" },
+        ]);
+        assert.deepEqual(changedStart[0].deliveredReminderKeys, []);
     } finally {
         if (original) Object.defineProperty(globalThis, "sessionStorage", original);
         else Reflect.deleteProperty(globalThis, "sessionStorage");

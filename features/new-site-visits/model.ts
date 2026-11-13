@@ -106,6 +106,21 @@ export const EMPTY_DRAFT: VisitDraft = {
     notes: "",
 };
 
+/** Round up to the next minute so the default passes future-time validation. */
+export function newVisitDraft(now: number, prefill?: Partial<VisitDraft>): VisitDraft {
+    const start = inputValueInIst(new Date((Math.floor(now / 60_000) + 1) * 60_000));
+    const startTime = prefill?.startTime || start.slice(11);
+    return {
+        ...EMPTY_DRAFT,
+        ...prefill,
+        date: prefill?.date || start.slice(0, 10),
+        startTime,
+        // The form supports same-day visits; never silently wrap into tomorrow.
+        endTime:
+            prefill?.endTime || visitEndTime(startTime, 30) || (startTime < "23:59" ? "23:59" : ""),
+    };
+}
+
 /** A repeat booking links existing records, but starts with a fresh schedule and outcome. */
 export function repeatVisitDraft(visit: SiteVisit): VisitDraft {
     return {

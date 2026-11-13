@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 import { useAppSelector } from "@/store/hooks";
 
-import { taskDueLabel, taskDueReminders, taskReminderLabel } from "./model";
+import { taskDueLabel, taskDueReminders, taskReminderDescription } from "./model";
 import { useTasks } from "./preview-store";
 
 /** Mock in-app delivery only. There is no browser permission or background push. */
@@ -85,7 +85,7 @@ function AccountTaskReminders({ accountId }: { accountId: string }) {
                                         {task.title}
                                     </p>
                                     <p className="body-xs mbs-1 text-ink-subtle">
-                                        {taskReminderLabel(reminder.minutes)} · {taskDueLabel(task)}
+                                        {taskReminderDescription(reminder)} · {taskDueLabel(task)}
                                     </p>
                                     <Link
                                         className="body-sm mbs-2 inline-flex items-center font-semibold text-brand-text underline-offset-4 min-block-9 hover:underline"

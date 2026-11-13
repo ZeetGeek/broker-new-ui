@@ -5,19 +5,19 @@ import toast from "react-hot-toast";
 
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
 import {
     Bell,
-    Check,
     CheckCircle2,
     List,
-    LockKeyhole,
     Plus,
     Search,
     SlidersHorizontal,
     X,
 } from "@/components/shared/icons";
+import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Skeleton } from "@/components/shared/skeleton";
 import { StatusTabs } from "@/components/shared/status-tabs";
 import { Button } from "@/components/ui/button";
@@ -103,7 +103,15 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     const open = tasks.filter((task) => !task.completedAt);
     const overdue = open.filter((task) => taskGroup(task, now) === "overdue").length;
     const today = open.filter((task) => taskGroup(task, now) === "today").length;
-    const reminders = open.reduce((count, task) => count + task.reminders.length, 0);
+    const summaryLines = [
+        overdue > 0
+            ? `${overdue} overdue ${overdue === 1 ? "task needs" : "tasks need"} attention`
+            : "",
+        today > 0 ? `${today} ${today === 1 ? "task" : "tasks"} due today` : "",
+        open.length > 0
+            ? `${open.length} open ${open.length === 1 ? "task" : "tasks"}`
+            : "Add your next follow-up",
+    ].filter(Boolean);
     const tabs = [
         { value: "all", label: "All tasks", count: open.length, dotClassName: "bg-brand" },
         { value: "today", label: "Today", count: today, dotClassName: "bg-pending" },
@@ -206,6 +214,8 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             title: draft.title.trim(),
             details: draft.details.trim(),
             startDate: draft.startDate || null,
+            startTime: draft.startDate && draft.startTime ? draft.startTime : null,
+            startReminderEnabledAt: editing?.startReminderEnabledAt,
             repeat: draft.repeat,
             repeatAnchor: draft.repeat
                 ? sameSchedule
@@ -253,34 +263,19 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
         !selected;
     return (
         <div className={styles.page}>
-            <header className={styles.header}>
-                <div>
-                    <h1 className="h3 text-ink">
-                        Tasks.{" "}
-                        <span className="font-normal text-ink-muted">
-                            Keep the next step moving.
-                        </span>
+            <PortalSectionNav>
+                <header className={styles.header}>
+                    <h1 className="h3 text-start min-inline-0">
+                        <span className="text-ink">Tasks.</span>{" "}
+                        <RotatingHeaderSummary
+                            key={summaryLines.join("|")}
+                            lines={summaryLines}
+                            isLoading={isLoading}
+                            loadingPlaceholder="Your tasks at a glance"
+                        />
                     </h1>
-                    <p className={styles.privateLine}>
-                        <LockKeyhole aria-hidden /> Private to you <span aria-hidden>·</span> India
-                        time (IST)
-                    </p>
-                </div>
-                <div className={styles.headerActions}>
-                    <Button
-                        variant="outline"
-                        onClick={() => navigate({ view: "reminders", task: undefined })}
-                    >
-                        <Bell aria-hidden />
-                        Reminders
-                        {reminders > 0 && <span className={styles.smallCount}>{reminders}</span>}
-                    </Button>
-                    <Button onClick={create}>
-                        <Plus aria-hidden />
-                        Add task
-                    </Button>
-                </div>
-            </header>
+                </header>
+            </PortalSectionNav>
             <Tabs
                 value={tab}
                 onValueChange={(value) =>
@@ -288,30 +283,40 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                 }
                 className={styles.workspace}
             >
-                <StatusTabs tabs={tabs} value={tab} label="Task views" isLoading={isLoading} />
                 <div className={styles.toolbar}>
-                    <Input
-                        aria-label="Search tasks"
-                        placeholder="Search tasks or linked records"
-                        value={search}
-                        onValueChange={(q) => navigate({ q: q || undefined }, true)}
-                        startIcon={Search}
-                        clearable
-                    />
-                    <div className={styles.tools}>
-                        <Button
-                            variant="outline"
+                    <div className={styles.filterTabs}>
+                        <FilterChip
+                            label="Filters"
+                            icon={SlidersHorizontal}
+                            count={Number(!!due) + Number(!!linked)}
+                            isActive={!!(due || linked)}
+                            clearable={!!(due || linked)}
                             onClick={() => navigate({ view: "filters", task: undefined })}
-                        >
-                            <SlidersHorizontal aria-hidden />
-                            Filters
-                            {(due || linked) && (
-                                <span className={styles.smallCount}>
-                                    {Number(!!due) + Number(!!linked)}
-                                </span>
-                            )}
-                        </Button>
+                            onClear={() => navigate({ due: undefined, linked: undefined }, true)}
+                        />
+                        <StatusTabs
+                            tabs={tabs}
+                            value={tab}
+                            label="Task views"
+                            isLoading={isLoading}
+                        />
+                    </div>
+                    <div className={styles.tools}>
+                        <label className={styles.searchField}>
+                            <span className="sr-only">Search tasks</span>
+                            <Input
+                                size="sm"
+                                wrapperClassName="rounded-control shadow-sm inline-full"
+                                className="rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20"
+                                placeholder="Search tasks or linked records"
+                                value={search}
+                                onValueChange={(q) => navigate({ q: q || undefined }, true)}
+                                startIcon={Search}
+                                clearable
+                            />
+                        </label>
                         <TaskSelect
+                            toolbar
                             label="Sort tasks"
                             value={sort}
                             options={[
@@ -327,148 +332,147 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 navigate({ sort: value === "due" ? undefined : value }, true)
                             }
                         />
+                        <Button variant="accent" className={styles.toolbarButton} onClick={create}>
+                            <Plus aria-hidden /> Add task
+                        </Button>
                     </div>
                 </div>
-                {(due || linked) && (
-                    <div className={styles.activeFilters}>
-                        {due && (
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => navigate({ due: undefined }, true)}
-                            >
-                                {DUE_FILTERS.find((f) => f.value === due)?.label}
-                                <X aria-hidden />
-                                <span className="sr-only">Remove due date filter</span>
+                <div className={styles.board}>
+                    {(due || linked) && (
+                        <div className={styles.activeFilters}>
+                            {due && (
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => navigate({ due: undefined }, true)}
+                                >
+                                    {DUE_FILTERS.find((f) => f.value === due)?.label}
+                                    <X aria-hidden />
+                                    <span className="sr-only">Remove due date filter</span>
+                                </Button>
+                            )}
+                            {linked && (
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => navigate({ linked: undefined }, true)}
+                                >
+                                    {LINK_FILTERS.find((f) => f.value === linked)?.label}
+                                    <X aria-hidden />
+                                    <span className="sr-only">Remove linked record filter</span>
+                                </Button>
+                            )}
+                            <Button variant="ghost" size="sm" onClick={clear}>
+                                Clear filters
                             </Button>
-                        )}
-                        {linked && (
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => navigate({ linked: undefined }, true)}
-                            >
-                                {LINK_FILTERS.find((f) => f.value === linked)?.label}
-                                <X aria-hidden />
-                                <span className="sr-only">Remove linked record filter</span>
-                            </Button>
-                        )}
-                        <Button variant="ghost" size="sm" onClick={clear}>
-                            Clear filters
-                        </Button>
-                    </div>
-                )}
-                {tab === "today" && overdue > 0 && (
-                    <button
-                        className={styles.overdueNotice}
-                        onClick={() => navigate({ tab: undefined, due: "overdue" })}
-                    >
-                        <span>
-                            <ClockNotice />
-                            {overdue} overdue {overdue === 1 ? "task needs" : "tasks need"}{" "}
-                            attention
-                        </span>
-                        <span>View tasks →</span>
-                    </button>
-                )}
-                {loadError && (
-                    <div className={styles.error} role="alert">
-                        <p>
-                            Sample tasks couldn’t load. Check that storage is available in this tab,
-                            or start again with the sample tasks.
-                        </p>
-                        <Button
-                            className="mbs-3"
-                            size="sm"
-                            variant="outline"
-                            disabled={busy}
-                            onClick={() =>
-                                void reset().catch(() =>
-                                    setError(
-                                        "Allow storage in this browser, then try loading tasks again.",
-                                    ),
-                                )
-                            }
-                        >
-                            Reset sample tasks
-                        </Button>
-                    </div>
-                )}
-                {error && !view && (
-                    <p className={styles.error} role="alert">
-                        {error}
-                    </p>
-                )}
-                <TabsContent value={tab} className={styles.content}>
-                    {isLoading ? (
-                        <div className={styles.loading} aria-label="Loading tasks" role="status">
-                            {Array.from({ length: 5 }, (_, i) => (
-                                <Skeleton
-                                    key={i}
-                                    className="rounded-control block-18 inline-full"
-                                />
-                            ))}
                         </div>
-                    ) : visible.length ? (
-                        <TaskList
-                            tasks={visible}
-                            now={now}
-                            sort={sort}
-                            completed={tab === "completed"}
-                            busy={busy}
-                            onOpen={(task) => intent(task, "detail")}
-                            onComplete={complete}
-                            onIntent={intent}
-                        />
-                    ) : (
-                        <EmptyState
-                            className={styles.empty}
-                            icon={tab === "completed" ? CheckCircle2 : List}
-                            heading={
-                                filtered
-                                    ? "No tasks match these filters"
-                                    : tab === "today"
-                                      ? "A clear day ahead"
-                                      : tab === "upcoming"
-                                        ? "Nothing lined up yet"
-                                        : tab === "completed"
-                                          ? "Your finished tasks will live here"
-                                          : "Make room for your next step"
-                            }
-                            description={
-                                filtered
-                                    ? "Try another search or clear your filters to see more tasks."
-                                    : tab === "completed"
-                                      ? "Check off a task when it’s done. You can reopen it whenever plans change."
-                                      : "Add a follow-up, a document to collect, or anything you want to remember."
-                            }
-                        >
-                            <Button
-                                variant={filtered ? "outline" : "default"}
-                                onClick={filtered ? clear : create}
-                            >
-                                {filtered ? "Clear search & filters" : "Add a task"}
-                            </Button>
-                        </EmptyState>
                     )}
-                </TabsContent>
-                {!isLoading && visible.length > 0 && (
-                    <footer className={styles.listFooter}>
-                        <span>
-                            {visible.length} {tab === "completed" ? "completed" : "open"}{" "}
-                            {visible.length === 1 ? "task" : "tasks"}
-                            {filtered ? " match" : ""}
-                        </span>
-                        <span>
-                            <Check aria-hidden /> Small steps. Steady progress.
-                        </span>
-                    </footer>
-                )}
+                    {tab === "today" && overdue > 0 && (
+                        <button
+                            className={styles.overdueNotice}
+                            onClick={() => navigate({ tab: undefined, due: "overdue" })}
+                        >
+                            <span>
+                                <ClockNotice />
+                                {overdue} overdue {overdue === 1 ? "task needs" : "tasks need"}{" "}
+                                attention
+                            </span>
+                            <span>View tasks →</span>
+                        </button>
+                    )}
+                    {loadError && (
+                        <div className={styles.error} role="alert">
+                            <p>
+                                Sample tasks couldn’t load. Check that storage is available in this
+                                tab, or start again with the sample tasks.
+                            </p>
+                            <Button
+                                className="mbs-3"
+                                size="sm"
+                                variant="outline"
+                                disabled={busy}
+                                onClick={() =>
+                                    void reset().catch(() =>
+                                        setError(
+                                            "Allow storage in this browser, then try loading tasks again.",
+                                        ),
+                                    )
+                                }
+                            >
+                                Reset sample tasks
+                            </Button>
+                        </div>
+                    )}
+                    {error && !view && (
+                        <p className={styles.error} role="alert">
+                            {error}
+                        </p>
+                    )}
+                    <TabsContent value={tab} className={styles.content}>
+                        {isLoading ? (
+                            <div
+                                className={styles.loading}
+                                aria-label="Loading tasks"
+                                role="status"
+                            >
+                                {Array.from({ length: 5 }, (_, i) => (
+                                    <Skeleton
+                                        key={i}
+                                        className="rounded-control block-18 inline-full"
+                                    />
+                                ))}
+                            </div>
+                        ) : visible.length ? (
+                            <TaskList
+                                tasks={visible}
+                                now={now}
+                                sort={sort}
+                                completed={tab === "completed"}
+                                busy={busy}
+                                onOpen={(task) => intent(task, "detail")}
+                                onComplete={complete}
+                                onIntent={intent}
+                            />
+                        ) : (
+                            <EmptyState
+                                className={styles.empty}
+                                icon={tab === "completed" ? CheckCircle2 : List}
+                                heading={
+                                    filtered
+                                        ? "No tasks match these filters"
+                                        : tab === "today"
+                                          ? "A clear day ahead"
+                                          : tab === "upcoming"
+                                            ? "Nothing lined up yet"
+                                            : tab === "completed"
+                                              ? "Your finished tasks will live here"
+                                              : "Make room for your next step"
+                                }
+                                description={
+                                    filtered
+                                        ? "Try another search or clear your filters to see more tasks."
+                                        : tab === "completed"
+                                          ? "Check off a task when it’s done. You can reopen it whenever plans change."
+                                          : "Add a follow-up, a document to collect, or anything you want to remember."
+                                }
+                            >
+                                <Button
+                                    variant={filtered ? "outline" : "default"}
+                                    onClick={filtered ? clear : create}
+                                >
+                                    {filtered ? "Clear search & filters" : "Add a task"}
+                                </Button>
+                            </EmptyState>
+                        )}
+                    </TabsContent>
+                    {!isLoading && !loadError && (
+                        <button type="button" className={styles.addTaskRow} onClick={create}>
+                            <Plus aria-hidden />
+                            Add task
+                        </button>
+                    )}
+                </div>
             </Tabs>
-            <p className={styles.previewNote}>
-                Sample workspace · Changes are saved in this tab. Reminders appear while the app is
-                open.
-            </p>
             {view === "filters" && (
                 <TaskFilters
                     due={due}
@@ -593,6 +597,7 @@ function TaskFilters({
                         Reset
                     </Button>
                     <Button
+                        variant="accent"
                         onClick={() =>
                             onApply({ due: date || undefined, linked: link || undefined })
                         }

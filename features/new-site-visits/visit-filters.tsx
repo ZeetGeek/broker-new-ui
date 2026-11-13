@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
+import {
+    EMPTY_PROPERTY_CRITERIA,
+    normalizePropertyCriteria,
+    type PropertyListCriteria,
+} from "@/lib/properties/list-criteria";
 
 import { AppDateRangeFields } from "@/components/shared/app-date-range-fields";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { Dialog, DialogPopup } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { DATE_RANGES, VISIT_TABS } from "./model";
-import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
-import { VisitSelect } from "./visit-select";
+import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
+import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
 
 export type VisitFilters = {
     client: string;
@@ -29,7 +33,44 @@ export const EMPTY_FILTERS: VisitFilters = {
     range: "",
 };
 
+/** Use the same property filter sheet as Pipeline and My listings. */
 export function VisitFiltersDialog({
+    value,
+    onApply,
+    onClose,
+}: {
+    value: PropertyListCriteria;
+    onApply: (value: PropertyListCriteria) => void;
+    onClose: () => void;
+}) {
+    const appliedFilters = useMemo(
+        () => ({ ...DEFAULT_OWNER_LISTINGS_FILTERS, ...value }),
+        [value],
+    );
+    return (
+        <OwnerListingsFilterSheet
+            open
+            onOpenChange={(open) => {
+                if (!open) onClose();
+            }}
+            appliedFilters={appliedFilters}
+            discoveryFilters={value}
+            showDiscoveryFilters
+            discoveryDescription="Narrow these visits by location, budget and property type."
+            onApply={(patch, discovery) => {
+                const criteriaPatch = Object.fromEntries(
+                    Object.keys(EMPTY_PROPERTY_CRITERIA)
+                        .filter((key) => key in patch)
+                        .map((key) => [key, patch[key as keyof typeof patch]]),
+                );
+                onApply(normalizePropertyCriteria({ ...discovery, ...criteriaPatch }));
+            }}
+        />
+    );
+}
+
+/** Custom visit dates stay on the toolbar, separate from property filters. */
+export function VisitDateRangeDialog({
     value,
     onApply,
     onClose,
@@ -39,7 +80,6 @@ export function VisitFiltersDialog({
     onClose: () => void;
 }) {
     const [draft, setDraft] = useState(value);
-    const patch = (next: Partial<VisitFilters>) => setDraft((d) => ({ ...d, ...next }));
     const invalid = !!(draft.from && draft.to && draft.from > draft.to);
     return (
         <Dialog
@@ -50,61 +90,23 @@ export function VisitFiltersDialog({
         >
             <DialogPopup
                 showCloseButton={false}
-                className="flex flex-col gap-0 overflow-hidden p-0 inline-[min(40rem,calc(100vw-1rem))] max-block-[90dvh] max-inline-[min(40rem,calc(100vw-1rem))]"
+                className="flex flex-col gap-0 overflow-hidden p-0 inline-[min(40rem,calc(100vw-1rem))]"
             >
-                <AppModalHeader
-                    title="Filter visits"
-                    description="Narrow your visits by client, property or date."
-                />
-                <ScrollArea className="flex-1 min-block-0">
-                    <div className="flex flex-col gap-5 p-6">
-                        <VisitSelect
-                            label="Date range"
-                            value={draft.range || "all"}
-                            options={DATE_RANGES}
-                            onChange={(range) => patch({ range, from: "", to: "" })}
-                        />
-                        <VisitSelect
-                            label="Client"
-                            value={draft.client}
-                            options={[
-                                { value: "", label: "All clients" },
-                                ...PREVIEW_CLIENTS.map((c) => ({ value: c.id, label: c.name })),
-                            ]}
-                            onChange={(client) => patch({ client })}
-                        />
-                        <VisitSelect
-                            label="Property"
-                            value={draft.property}
-                            options={[
-                                { value: "", label: "All properties" },
-                                ...PREVIEW_PROPERTIES.map((p) => ({ value: p.id, label: p.title })),
-                            ]}
-                            onChange={(property) => patch({ property })}
-                        />
-                        {draft.range === "custom" && (
-                            <AppDateRangeFields from={draft.from} to={draft.to} onChange={patch} />
-                        )}
-                        <VisitSelect
-                            label="Status"
-                            value={draft.archive}
-                            options={[
-                                { value: "", label: "Selected visit tab" },
-                                { value: "all", label: "All statuses" },
-                                ...VISIT_TABS.map((t) => ({ value: t.value, label: t.label })),
-                                { value: "cancelled", label: "Cancelled visits" },
-                            ]}
-                            onChange={(archive) => patch({ archive })}
-                        />
-                    </div>
-                </ScrollArea>
+                <AppModalHeader title="Visit dates" />
+                <div className="p-5 sm:p-8">
+                    <AppDateRangeFields
+                        from={draft.from}
+                        to={draft.to}
+                        onChange={(range) => setDraft((current) => ({ ...current, ...range }))}
+                    />
+                </div>
                 <AppModalFooter
-                    className="border-bs border-border-warm p-6"
-                    secondaryLabel="Reset filters"
-                    onSecondary={() => setDraft({ ...EMPTY_FILTERS })}
-                    primaryLabel="Apply filters"
+                    className="justify-between border-bs border-border-warm p-5 sm:px-8"
+                    secondaryLabel="Cancel"
+                    onSecondary={onClose}
+                    primaryLabel="Show visits"
                     primaryDisabled={invalid}
-                    onPrimary={() => onApply(draft)}
+                    onPrimary={() => onApply({ ...draft, range: "custom" })}
                 />
             </DialogPopup>
         </Dialog>

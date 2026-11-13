@@ -29,7 +29,13 @@ import {
 import { useAppSelector } from "@/store/hooks";
 
 import { setTaskCompleted } from "./lifecycle";
-import { type Task, TASK_PRIORITY_RANK, taskDueLabel, taskGroup } from "./model";
+import {
+    type Task,
+    TASK_PRIORITY_LABELS,
+    TASK_PRIORITY_RANK,
+    taskDueLabel,
+    taskGroup,
+} from "./model";
 import { useTasks } from "./preview-store";
 
 import styles from "@/features/new-dashboard/task-card.module.css";
@@ -69,7 +75,7 @@ export function DashboardTasksCard() {
     const urgent = open.filter((task) => task.priority === "urgent");
     const options = [
         ["open", "To do", open.length],
-        ["urgent", "Urgent", urgent.length],
+        ["urgent", TASK_PRIORITY_LABELS.urgent, urgent.length],
         ["completed", "Done", done.length],
     ] as const;
     const visible = (filter === "completed" ? done : filter === "urgent" ? urgent : open)
@@ -305,7 +311,11 @@ export function DashboardTasksCard() {
                                                             </span>
                                                             {task.priority === "urgent" && (
                                                                 <span className="caption rounded-full bg-danger-soft px-2 py-0.5 font-semibold text-danger">
-                                                                    Urgent
+                                                                    {
+                                                                        TASK_PRIORITY_LABELS[
+                                                                            task.priority
+                                                                        ]
+                                                                    }
                                                                 </span>
                                                             )}
                                                         </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
+import { propertyCriteriaCount, type PropertyListCriteria } from "@/lib/properties/list-criteria";
+import { addVisitDays, formatVisitDate, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { AppImage } from "@/components/shared/app-image";
@@ -97,6 +98,7 @@ export function VisitList({
     now,
     search,
     filters,
+    propertyFilters,
     range,
     onTab,
     onSearch,
@@ -114,6 +116,7 @@ export function VisitList({
     now: number;
     search: string;
     filters: VisitFilters;
+    propertyFilters: PropertyListCriteria;
     range: string;
     onTab: (tab: VisitTab) => void;
     onSearch: (query: string) => void;
@@ -125,7 +128,25 @@ export function VisitList({
     onEdit: (id: string) => void;
     onAction: (id: string, action: VisitActionKind) => void;
 }) {
-    const count = Object.entries(filters).filter(([key, value]) => key !== "range" && value).length;
+    const groups = new Map<string, SiteVisit[]>();
+    for (const visit of shown) {
+        const day = istDateKey(visit.startsAt);
+        const rows = groups.get(day) ?? [];
+        rows.push(visit);
+        groups.set(day, rows);
+    }
+    const today = istDateKey(new Date(now));
+    const tomorrow = istDateKey(addVisitDays(new Date(now), 1));
+    const yesterday = istDateKey(addVisitDays(new Date(now), -1));
+    const dayLabel = (day: string, startsAt: string) =>
+        day === today
+            ? "Today"
+            : day === tomorrow
+              ? "Tomorrow"
+              : day === yesterday
+                ? "Yesterday"
+                : formatVisitDate(startsAt);
+    const count = propertyCriteriaCount(propertyFilters);
     const filtered = count > 0 || !!search || filters.range === "custom";
     const copy =
         filters.archive === "all"
@@ -287,113 +308,148 @@ export function VisitList({
                         </Button>
                     </EmptyState>
                 ) : (
-                    <div className={styles.list}>
-                        {shown.map((visit) => {
-                            const client = PREVIEW_CLIENTS.find((c) => c.id === visit.clientId);
-                            const property = PREVIEW_PROPERTIES.find(
-                                (p) => p.id === visit.propertyId,
-                            );
-                            const state = visitState(visit, now);
-                            return (
-                                <article className={styles.visitRow} key={visit.id}>
-                                    <div className={styles.rowProperty}>
-                                        <span className={styles.propertyThumbnail}>
-                                            <Building2 aria-hidden />
-                                            {property?.imageUrl && (
-                                                <AppImage
-                                                    src={property.imageUrl}
-                                                    alt={property.title}
-                                                    fill
-                                                    sizes="64px"
-                                                />
-                                            )}
-                                        </span>
-                                        <div>
-                                            <button
-                                                type="button"
-                                                className={styles.propertyLink}
-                                                aria-label={`Visit details for ${property?.title} with ${client?.name}`}
-                                                onClick={() => onOpen(visit.id)}
-                                            >
-                                                {property?.title}
-                                            </button>
-                                            <div className={styles.propertyMeta}>
-                                                <span className={styles.propertyLocation}>
-                                                    <MapPin aria-hidden />
-                                                    {property?.locality}, {property?.city}
-                                                </span>
-                                                <span aria-hidden>·</span>
-                                                <p>{property?.configLabel}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className={styles.rowTime}>
-                                        <span className={styles.detailIcon} aria-hidden>
-                                            <CalendarClock />
-                                        </span>
-                                        <div>
-                                            <small>{formatVisitDate(visit.startsAt)}</small>
-                                            <time dateTime={visit.startsAt}>
-                                                {formatVisitTime(visit.startsAt)} {"\u2013"}{" "}
-                                                {formatVisitTime(visit.endsAt)}{" "}
-                                                <span className={styles.timeZone}>IST</span>
-                                            </time>
-                                        </div>
-                                    </div>
-                                    <div className={styles.rowProfiles}>
-                                        <div className={styles.rowClient}>
-                                            <UserAvatar
-                                                name={property?.owner?.name ?? "Owner"}
-                                                imageUrl={property?.owner?.imageUrl}
-                                                size="sm"
-                                                className="shadow-sm ring-2 ring-surface"
-                                            />
-                                            <div>
-                                                <small>Owner</small>
-                                                <strong
-                                                    data-missing={!property?.owner || undefined}
-                                                >
-                                                    {property?.owner?.name ?? "Not added"}
-                                                </strong>
-                                            </div>
-                                        </div>
-                                        <div className={styles.rowClient}>
-                                            <UserAvatar
-                                                name={client?.name ?? "Client"}
-                                                size="sm"
-                                                className="shadow-sm ring-2 ring-surface"
-                                            />
-                                            <div>
-                                                <small>Client</small>
-                                                <strong>{client?.name ?? "Not added"}</strong>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className={styles.rowStatus}>
-                                        <VisitStatusBadge state={state} />
-                                    </div>
-                                    <div
-                                        className={styles.rowActions}
-                                        role="group"
-                                        aria-label={`Actions for ${property?.title} with ${client?.name}`}
+                    <div className={styles.groups}>
+                        {[...groups].map(([day, rows]) => (
+                            <section
+                                key={day}
+                                className={styles.group}
+                                aria-labelledby={`visits-${day}`}
+                            >
+                                <div className={styles.groupHeading}>
+                                    <h2 id={`visits-${day}`}>
+                                        <time dateTime={day}>
+                                            {dayLabel(day, rows[0].startsAt)}
+                                        </time>
+                                    </h2>
+                                    <span
+                                        className={styles.groupCount}
+                                        aria-label={`${rows.length} ${rows.length === 1 ? "visit" : "visits"}`}
                                     >
-                                        {getVisitActions(visit, now).map((action) => (
-                                            <VisitAction
-                                                key={action}
-                                                {...VISIT_ACTIONS[action]}
-                                                onClick={() =>
-                                                    action === "edit"
-                                                        ? onEdit(visit.id)
-                                                        : action === "view"
-                                                          ? onOpen(visit.id)
-                                                          : onAction(visit.id, action)
-                                                }
-                                            />
-                                        ))}
-                                    </div>
-                                </article>
-                            );
-                        })}
+                                        {rows.length}
+                                    </span>
+                                </div>
+                                <div className={styles.list}>
+                                    {rows.map((visit) => {
+                                        const client = PREVIEW_CLIENTS.find(
+                                            (c) => c.id === visit.clientId,
+                                        );
+                                        const property = PREVIEW_PROPERTIES.find(
+                                            (p) => p.id === visit.propertyId,
+                                        );
+                                        const state = visitState(visit, now);
+                                        return (
+                                            <article className={styles.visitRow} key={visit.id}>
+                                                <div className={styles.rowProperty}>
+                                                    <span className={styles.propertyThumbnail}>
+                                                        <Building2 aria-hidden />
+                                                        {property?.imageUrl && (
+                                                            <AppImage
+                                                                src={property.imageUrl}
+                                                                alt={property.title}
+                                                                fill
+                                                                sizes="64px"
+                                                            />
+                                                        )}
+                                                    </span>
+                                                    <div>
+                                                        <button
+                                                            type="button"
+                                                            className={styles.propertyLink}
+                                                            aria-label={`Visit details for ${property?.title} with ${client?.name}`}
+                                                            onClick={() => onOpen(visit.id)}
+                                                        >
+                                                            {property?.title}
+                                                        </button>
+                                                        <div className={styles.propertyMeta}>
+                                                            <span
+                                                                className={styles.propertyLocation}
+                                                            >
+                                                                <MapPin aria-hidden />
+                                                                {property?.locality},{" "}
+                                                                {property?.city}
+                                                            </span>
+                                                            <span aria-hidden>·</span>
+                                                            <p>{property?.configLabel}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className={styles.rowTime}>
+                                                    <span className={styles.detailIcon} aria-hidden>
+                                                        <CalendarClock />
+                                                    </span>
+                                                    <div>
+                                                        <small>
+                                                            {formatVisitDate(visit.startsAt)}
+                                                        </small>
+                                                        <time dateTime={visit.startsAt}>
+                                                            {formatVisitTime(visit.startsAt)}{" "}
+                                                            {"\u2013"}{" "}
+                                                            {formatVisitTime(visit.endsAt)}
+                                                        </time>
+                                                    </div>
+                                                </div>
+                                                <div className={styles.rowProfiles}>
+                                                    <div className={styles.rowClient}>
+                                                        <UserAvatar
+                                                            name={property?.owner?.name ?? "Owner"}
+                                                            imageUrl={property?.owner?.imageUrl}
+                                                            size="sm"
+                                                            className="shadow-sm ring-2 ring-surface"
+                                                        />
+                                                        <div>
+                                                            <small>Owner</small>
+                                                            <strong
+                                                                data-missing={
+                                                                    !property?.owner || undefined
+                                                                }
+                                                            >
+                                                                {property?.owner?.name ??
+                                                                    "Not added"}
+                                                            </strong>
+                                                        </div>
+                                                    </div>
+                                                    <div className={styles.rowClient}>
+                                                        <UserAvatar
+                                                            name={client?.name ?? "Client"}
+                                                            size="sm"
+                                                            className="shadow-sm ring-2 ring-surface"
+                                                        />
+                                                        <div>
+                                                            <small>Client</small>
+                                                            <strong>
+                                                                {client?.name ?? "Not added"}
+                                                            </strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className={styles.rowStatus}>
+                                                    <VisitStatusBadge state={state} />
+                                                </div>
+                                                <div
+                                                    className={styles.rowActions}
+                                                    role="group"
+                                                    aria-label={`Actions for ${property?.title} with ${client?.name}`}
+                                                >
+                                                    {getVisitActions(visit, now).map((action) => (
+                                                        <VisitAction
+                                                            key={action}
+                                                            {...VISIT_ACTIONS[action]}
+                                                            onClick={() =>
+                                                                action === "edit"
+                                                                    ? onEdit(visit.id)
+                                                                    : action === "view"
+                                                                      ? onOpen(visit.id)
+                                                                      : onAction(visit.id, action)
+                                                            }
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </article>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        ))}
                     </div>
                 )}
             </TabsContent>
