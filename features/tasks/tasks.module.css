@@ -1,7 +1,6 @@
 .page {
     min-inline-size: 0;
     color: var(--color-ink);
-    padding-block-end: 5rem;
     caret-color: var(--color-brand);
 }
 .page ::selection {
@@ -247,31 +246,22 @@
 .taskSchedule {
     grid-area: schedule;
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.125rem;
+    align-items: center;
+    gap: 0.75rem;
     color: var(--color-ink);
     font-size: 0.875rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
-.scheduleDates {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    line-height: 1.5;
-}
 .scheduleContent {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
     min-inline-size: 0;
     overflow-wrap: anywhere;
 }
-.scheduleContent > small {
-    font-size: 0.75rem;
+.scheduleValue {
+    display: block;
+    margin-block-start: 0.125rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    color: var(--color-ink-muted);
     line-height: 1.5;
 }
 .scheduleIcon {
@@ -287,9 +277,7 @@
     inline-size: 20px;
     block-size: 20px;
 }
-.taskSchedule .repeatLabel,
-.reminderLabel {
-    position: relative;
+.taskSchedule .repeatLabel {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -298,10 +286,8 @@
 .repeatLabel {
     color: var(--color-brand-text);
     font-size: 0.75rem;
-    margin-inline-start: 3rem;
 }
-.taskSchedule > .repeatLabel svg,
-.reminderLabel svg {
+.taskSchedule .repeatLabel svg {
     inline-size: 0.9rem;
     block-size: 0.9rem;
     flex-shrink: 0;
@@ -310,26 +296,31 @@
     color: var(--color-urgent);
 }
 .reminderLabel {
-    color: var(--color-ink-subtle);
+    position: relative;
+    display: block;
+    margin-block-start: 0.25rem;
+    color: var(--color-ink-muted);
     font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: start;
     cursor: pointer;
-    justify-content: flex-start;
     inline-size: fit-content;
-    max-inline-size: calc(100% - 3rem);
-    margin-inline-start: 3rem;
-    min-block-size: 1.5rem;
+    max-inline-size: 100%;
+    min-block-size: 0;
+    padding: 0;
     border-radius: var(--radius-control);
 }
 .reminderLabel::after {
     content: "";
     position: absolute;
-    inset-block: -0.625rem;
+    inset-block: -0.8125rem;
     inset-inline: 0;
 }
 .timeZone {
     color: var(--color-ink-muted);
     font-size: 0.6875rem;
-    font-weight: 400;
+    font-weight: 600;
 }
 .reminderLabel:hover {
     color: var(--color-brand-text);
@@ -373,9 +364,6 @@
     color: var(--color-ink-subtle);
     text-decoration: line-through;
     text-decoration-color: var(--color-border-warm);
-}
-.completedRow .taskSchedule {
-    font-size: 0.75rem;
 }
 .listFooter {
     display: flex;

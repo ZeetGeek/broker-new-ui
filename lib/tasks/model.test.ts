@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+    backfillTaskStart,
     EMPTY_TASK_DRAFT,
     isTaskDate,
     MAX_REMINDER_MINUTES,
@@ -13,6 +14,7 @@ import {
     taskMatchesLinkFilter,
     taskMatchesTab,
     taskReminderAt,
+    taskReminderDescription,
     taskReminderIsDue,
     taskReminderKey,
     taskReminderLabel,
@@ -45,8 +47,17 @@ const task: Task = {
     deliveredReminderKeys: [],
 };
 
-test("optional dates allow title-only tasks; invalid calendar and dependent fields are rejected", () => {
-    assert.equal(validateTaskDraft({ ...EMPTY_TASK_DRAFT, title: "Call Aarav" }).valid, true);
+test("start date and time are required; invalid calendar and dependent fields are rejected", () => {
+    assert.equal(validateTaskDraft({ ...EMPTY_TASK_DRAFT, title: "Call Aarav" }).valid, false);
+    assert.equal(
+        validateTaskDraft({
+            ...EMPTY_TASK_DRAFT,
+            title: "Call Aarav",
+            startDate: "2030-01-02",
+            startTime: "09:00",
+        }).valid,
+        true,
+    );
     assert.equal(validateTaskDraft({ ...EMPTY_TASK_DRAFT, title: "  " }).valid, false);
     assert.equal(isTaskDate("2030-02-30"), false);
     assert.equal(isTaskDate("2032-02-29"), true);
@@ -75,7 +86,7 @@ test("optional dates allow title-only tasks; invalid calendar and dependent fiel
     );
 });
 
-test("optional start times validate against the date and same-day deadline without breaking old records", () => {
+test("required start times validate against the date and same-day deadline without breaking old records", () => {
     const draft = {
         ...EMPTY_TASK_DRAFT,
         title: "Call",
@@ -86,6 +97,7 @@ test("optional start times validate against the date and same-day deadline witho
     };
     assert.equal(validateTaskDraft(draft).valid, true);
     assert.equal(validateTaskDraft({ ...draft, startDate: "" }).valid, false);
+    assert.equal(validateTaskDraft({ ...draft, startTime: "" }).valid, false);
     assert.equal(validateTaskDraft({ ...draft, startTime: "24:00" }).valid, false);
     assert.equal(validateTaskDraft({ ...draft, dueTime: "13:00" }).valid, false);
     assert.equal(
@@ -114,16 +126,24 @@ test("schedule labels show real time ranges, one selected time, and honest date-
         dueDate: "2030-01-02",
         dueTime: "15:00",
     };
-    assert.equal(taskScheduleLabel(scheduled, now), "2:00 PM – 3:00 PM IST");
-    assert.equal(taskScheduleLabel({ ...scheduled, startTime: null }, now), "3:00 PM IST");
+    assert.equal(taskScheduleLabel(scheduled, now), "Today, 2:00 PM – 3:00 PM IST");
+    assert.equal(taskScheduleLabel({ ...scheduled, startTime: null }, now), "Today, 3:00 PM IST");
     assert.equal(
         taskScheduleLabel({ ...scheduled, dueDate: null, dueTime: null }, now),
-        "2:00 PM IST",
+        "Today, 2:00 PM IST",
     );
     assert.equal(taskScheduleLabel({ ...scheduled, startTime: null, dueTime: null }, now), "Today");
     assert.equal(
         taskScheduleLabel({ ...scheduled, dueDate: "2030-01-03" }, now),
         "Today, 2:00 PM – Tomorrow, 3:00 PM IST",
+    );
+    assert.equal(
+        taskScheduleLabel({ ...scheduled, startTime: null, dueDate: "2030-01-03" }, now),
+        "Today – Tomorrow, 3:00 PM IST",
+    );
+    assert.equal(
+        taskScheduleLabel({ ...scheduled, startDate: null, startTime: null }, now),
+        "Today, 3:00 PM IST",
     );
     assert.equal(
         taskScheduleLabel(
@@ -276,7 +296,7 @@ test("multiple reminders deliver independently, in chronological order, with sch
     const multiple = { ...task, reminders: [0, 15, 90, 1440] };
     const reminders = taskReminders(multiple);
     assert.deepEqual(
-        reminders.map((reminder) => reminder.minutes),
+        reminders.filter((reminder) => reminder.kind === "due").map((reminder) => reminder.minutes),
         [1440, 90, 15, 0],
     );
     assert.equal(taskDueReminders(multiple, Date.parse("2030-01-02T03:00:00Z")).length, 2);
@@ -318,7 +338,14 @@ test("multiple reminders deliver independently, in chronological order, with sch
 });
 
 test("custom offsets validate whole-minute ranges and unique choices without a count cap", () => {
-    const draft = { ...EMPTY_TASK_DRAFT, title: "Call", dueDate: "2030-01-02", dueTime: "10:00" };
+    const draft = {
+        ...EMPTY_TASK_DRAFT,
+        title: "Call",
+        startDate: "2030-01-02",
+        startTime: "09:00",
+        dueDate: "2030-01-02",
+        dueTime: "10:00",
+    };
     for (const reminders of [
         [0, 17, 90, 1500],
         [MAX_REMINDER_MINUTES],
@@ -340,9 +367,57 @@ test("custom offsets validate whole-minute ranges and unique choices without a c
     assert.equal(taskReminderLabel(17), "17 minutes before");
     assert.equal(taskReminderLabel(90), "1 hour 30 minutes before");
     assert.equal(taskReminderLabel(1501), "1 day 1 hour 1 minute before");
-    assert.equal(taskRemindersSummary({ reminders: [] }), "No reminders");
-    assert.equal(taskRemindersSummary({ reminders: [90] }), "1 hour 30 minutes before");
-    assert.equal(taskRemindersSummary({ reminders: [0, 15] }), "2 reminders");
+    assert.equal(taskRemindersSummary({ reminders: [] }), "At task start");
+    assert.equal(taskRemindersSummary({ reminders: [90] }), "2 reminders");
+    assert.equal(taskRemindersSummary({ reminders: [0, 15] }), "3 reminders");
+});
+
+test("every task includes an automatic start reminder that fires once and follows rescheduling", () => {
+    const scheduled = { ...task, startDate: "2030-01-02", startTime: "09:00", reminders: [] };
+    const [start] = taskReminders(scheduled);
+    assert.equal(start.kind, "start");
+    assert.equal(taskReminderDescription(start), "At task start");
+    assert.equal(start.at, "2030-01-02T03:30:00.000Z");
+    assert.equal(taskDueReminders(scheduled, Date.parse(start.at!) - 1).length, 0);
+    assert.equal(taskDueReminders(scheduled, Date.parse(start.at!)).length, 1);
+    const delivered = { ...scheduled, deliveredReminderKeys: [start.key] };
+    assert.equal(taskDueReminders(delivered, Date.parse(start.at!)).length, 0);
+    assert.notEqual(taskReminders({ ...delivered, startTime: "09:30" })[0].key, start.key);
+    assert.equal(
+        taskDueReminders({ ...scheduled, completedAt: start.at }, Date.parse(start.at!)).length,
+        0,
+    );
+    const [pending] = taskReminders({ ...scheduled, startTime: null });
+    assert.equal(pending.kind, "start");
+    assert.equal(pending.at, null);
+    assert.equal(taskDueReminders({ ...scheduled, startTime: null }, Date.now()).length, 0);
+    assert.equal(taskReminders({ ...scheduled, reminders: [15, 0] }).length, 3);
+});
+
+test("date-only preview records get a stable India start time without replaying past start reminders", () => {
+    const at = Date.parse("2030-01-02T08:40:35Z");
+    const old = {
+        ...task,
+        startDate: "2030-01-02",
+        startTime: null,
+        dueDate: null,
+        dueTime: null,
+        reminders: [],
+    };
+    const upgraded = backfillTaskStart(old, at);
+    assert.equal(upgraded.startDate, old.startDate);
+    assert.equal(upgraded.startTime, "14:10");
+    assert.equal(taskScheduleLabel(upgraded, at), "Today, 2:10 PM IST");
+    assert.equal(backfillTaskStart(upgraded, at + 60 * 60_000), upgraded);
+    assert.deepEqual(taskDueReminders(upgraded, at), []);
+    assert.equal(upgraded.deliveredReminderKeys.length, 0);
+    const earlierDue = backfillTaskStart({ ...old, dueDate: "2030-01-02", dueTime: "12:00" }, at);
+    assert.equal(earlierDue.startTime, "12:00");
+    assert.equal(taskScheduleLabel(earlierDue, at), "Today, 12:00 PM IST");
+    const future = backfillTaskStart({ ...old, startDate: "2030-01-03" }, at);
+    const [start] = taskReminders(future);
+    assert.equal(taskDueReminders(future, Date.parse(start.at!)).length, 1);
+    assert.equal(backfillTaskStart({ ...old, startTime: "09:00" }, at).startTime, "09:00");
 });
 
 test("sorting keeps undated tasks last and completion order uses completion date", () => {

@@ -21,8 +21,10 @@ const rule = (unit: TaskRepeat["unit"], interval = 1, weekdays: number[] = []): 
 });
 
 test("new tasks start today in India; start/due and repeat validation agree", () => {
-    const draft = { ...newTaskDraft(now), title: "Collect consent" };
+    assert.equal(validateTaskDraft({ ...newTaskDraft(now), title: "Collect consent" }).valid, true);
+    const draft = { ...newTaskDraft(now), title: "Collect consent", startTime: "09:00" };
     assert.equal(draft.startDate, "2030-01-02");
+    assert.equal(newTaskDraft(now).startTime, "00:15");
     assert.equal(validateTaskDraft(draft).valid, true);
     assert.equal(validateTaskDraft({ ...draft, dueDate: "2030-01-01" }).valid, false);
     assert.equal(validateTaskDraft({ ...draft, repeat: rule("day") }).valid, true);
@@ -182,6 +184,8 @@ test("owner attachments participate in filters and survive version two migration
             ({
                 ownerId: _owner,
                 startDate: _start,
+                startTime: _startTime,
+                startReminderEnabledAt: _startReminderEnabledAt,
                 repeat: _repeat,
                 repeatAnchor: _anchor,
                 repeatFromId: _parent,
@@ -198,7 +202,8 @@ test("owner attachments participate in filters and survive version two migration
         assert.deepEqual(migrated[0].reminders, legacy[0].reminders);
         assert.equal(migrated[0].ownerId, null);
         assert.equal(migrated[0].repeat, null);
-        assert.equal(migrated[0].startDate, null);
+        assert.ok(migrated[0].startDate);
+        assert.ok(migrated[0].startTime);
         assert.equal(JSON.parse(values.get("crm.private-tasks.mock.v1.legacy")!).version, 3);
     } finally {
         if (original) Object.defineProperty(globalThis, "sessionStorage", original);

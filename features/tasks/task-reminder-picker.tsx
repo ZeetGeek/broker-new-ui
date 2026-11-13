@@ -24,7 +24,7 @@ export function TaskReminderPicker({
             presets={TASK_REMINDERS}
             subjectLabel="task"
             scheduleLabel="due date"
-            hint="In-app reminders while this app is open. All times are IST."
+            hint="At task start is included automatically. These extra reminders are before the due time. In-app reminders appear while the app is open. All times are IST."
         />
     );
 }

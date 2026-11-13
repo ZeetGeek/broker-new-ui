@@ -27,7 +27,7 @@ import {
     taskDateLabel,
     taskDueLabel,
     taskGroup,
-    taskReminderLabel,
+    taskReminderDescription,
     taskReminders,
     taskTimeLabel,
 } from "./model";
@@ -157,7 +157,7 @@ export function TaskDetail({
                                     {reminders.map((reminder) => (
                                         <li key={reminder.key}>
                                             <span>
-                                                {taskReminderLabel(reminder.minutes)}
+                                                {taskReminderDescription(reminder)}
                                                 {task.deliveredReminderKeys.includes(
                                                     reminder.key,
                                                 ) ? (
@@ -168,8 +168,9 @@ export function TaskDetail({
                                                 ) : null}
                                             </span>
                                             <span className="body-xs text-ink-subtle">
-                                                {formatVisitDate(reminder.at)},{" "}
-                                                {formatVisitTime(reminder.at)} IST
+                                                {reminder.at
+                                                    ? `${formatVisitDate(reminder.at)}, ${formatVisitTime(reminder.at)} IST`
+                                                    : "Set a start date and time"}
                                             </span>
                                         </li>
                                     ))}
@@ -337,7 +338,7 @@ export function TaskReminders({
     const reminders = tasks
         .filter((task) => !task.completedAt)
         .flatMap((task) => taskReminders(task).map((reminder) => ({ task, ...reminder })))
-        .sort((a, b) => a.at.localeCompare(b.at));
+        .sort((a, b) => (a.at ?? "9999").localeCompare(b.at ?? "9999"));
     const pending = reminders.filter(
         (reminder) => !reminder.task.deliveredReminderKeys.includes(reminder.key),
     );
@@ -378,7 +379,7 @@ export function TaskReminders({
                             {group.label}{" "}
                             <span className="text-ink-subtle">({group.tasks.length})</span>
                         </h2>
-                        {group.tasks.map(({ task, at, minutes, key }) => {
+                        {group.tasks.map(({ task, at, minutes, key, kind }) => {
                             return (
                                 <article key={`${task.id}-${key}`} className={styles.reminderItem}>
                                     <Bell aria-hidden />
@@ -390,12 +391,16 @@ export function TaskReminders({
                                             {task.title}
                                         </button>
                                         <p>
-                                            {formatVisitDate(at)}, {formatVisitTime(at)} IST
-                                            {Date.parse(at) <= now && group.label === "Scheduled"
+                                            {at
+                                                ? `${formatVisitDate(at)}, ${formatVisitTime(at)} IST`
+                                                : "Set a start date and time"}
+                                            {at &&
+                                            Date.parse(at) <= now &&
+                                            group.label === "Scheduled"
                                                 ? " · Due now"
                                                 : ""}
                                         </p>
-                                        <p>{taskReminderLabel(minutes)}</p>
+                                        <p>{taskReminderDescription({ kind, minutes })}</p>
                                     </div>
                                     <Button variant="ghost" size="sm" onClick={() => onEdit(task)}>
                                         Change

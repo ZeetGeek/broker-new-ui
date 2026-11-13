@@ -384,10 +384,7 @@ export function VisitList({
                                                         <time dateTime={visit.startsAt}>
                                                             {formatVisitTime(visit.startsAt)}{" "}
                                                             {"\u2013"}{" "}
-                                                            {formatVisitTime(visit.endsAt)}{" "}
-                                                            <span className={styles.timeZone}>
-                                                                IST
-                                                            </span>
+                                                            {formatVisitTime(visit.endsAt)}
                                                         </time>
                                                     </div>
                                                 </div>

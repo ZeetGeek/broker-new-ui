@@ -103,7 +103,6 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     const open = tasks.filter((task) => !task.completedAt);
     const overdue = open.filter((task) => taskGroup(task, now) === "overdue").length;
     const today = open.filter((task) => taskGroup(task, now) === "today").length;
-    const reminders = open.reduce((count, task) => count + task.reminders.length, 0);
     const summaryLines = [
         overdue > 0
             ? `${overdue} overdue ${overdue === 1 ? "task needs" : "tasks need"} attention`
@@ -216,6 +215,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             details: draft.details.trim(),
             startDate: draft.startDate || null,
             startTime: draft.startDate && draft.startTime ? draft.startTime : null,
+            startReminderEnabledAt: editing?.startReminderEnabledAt,
             repeat: draft.repeat,
             repeatAnchor: draft.repeat
                 ? sameSchedule
@@ -332,17 +332,6 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 navigate({ sort: value === "due" ? undefined : value }, true)
                             }
                         />
-                        <Button
-                            variant="outline"
-                            className={styles.toolbarButton}
-                            onClick={() => navigate({ view: "reminders", task: undefined })}
-                        >
-                            <Bell aria-hidden />
-                            Reminders
-                            {reminders > 0 && (
-                                <span className={styles.smallCount}>{reminders}</span>
-                            )}
-                        </Button>
                         <Button variant="accent" className={styles.toolbarButton} onClick={create}>
                             <Plus aria-hidden /> Add task
                         </Button>
@@ -471,15 +460,6 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                         </EmptyState>
                     )}
                 </TabsContent>
-                {!isLoading && visible.length > 0 && (
-                    <footer className={styles.listFooter}>
-                        <span>
-                            {visible.length} {tab === "completed" ? "completed" : "open"}{" "}
-                            {visible.length === 1 ? "task" : "tasks"}
-                            {filtered ? " match" : ""}
-                        </span>
-                    </footer>
-                )}
             </Tabs>
             {!isLoading && visible.length > 0 && (
                 <footer className={styles.pageFooter}>
@@ -488,10 +468,6 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                     <span className={styles.footerLine} aria-hidden />
                 </footer>
             )}
-            <p className={styles.previewNote}>
-                Sample workspace · Changes are saved in this tab. Reminders appear while the app is
-                open.
-            </p>
             {view === "filters" && (
                 <TaskFilters
                     due={due}

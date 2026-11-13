@@ -18,7 +18,8 @@ import {
     type Task,
     TASK_PRIORITY_LABELS,
     taskGroup,
-    taskReminderLabel,
+    type TaskReminder,
+    taskReminderDescription,
     taskReminders,
     taskScheduleLabel,
 } from "./model";
@@ -170,28 +171,32 @@ function TaskRow({
                 </div>
             </div>
             <div className={styles.taskSchedule}>
-                {!task.completedAt && task.reminders.length > 0 && (
-                    <TaskRowReminders task={task} busy={busy} onEdit={() => onIntent("reminder")} />
-                )}
-                {scheduleLabel && (
-                    <div className={styles.scheduleDates}>
-                        <span className={styles.scheduleIcon} aria-hidden>
-                            <CalendarClock />
-                        </span>
-                        <div className={styles.scheduleContent}>
-                            <span className={overdue ? styles.overdue : undefined}>
-                                {overdue && <span className="sr-only">Overdue: </span>}
-                                {scheduleLabel}
-                            </span>
-                        </div>
-                    </div>
-                )}
-                {task.repeat && !task.completedAt && (
-                    <span className={styles.repeatLabel}>
-                        <Repeat aria-hidden />
-                        {taskRepeatLabel(task.repeat)}
+                {(scheduleLabel || !task.completedAt) && (
+                    <span className={styles.scheduleIcon} aria-hidden>
+                        <CalendarClock />
                     </span>
                 )}
+                <div className={styles.scheduleContent}>
+                    {!task.completedAt && (
+                        <TaskRowReminders
+                            task={task}
+                            busy={busy}
+                            onEdit={() => onIntent("reminder")}
+                        />
+                    )}
+                    {scheduleLabel && (
+                        <span className={cn(styles.scheduleValue, overdue && styles.overdue)}>
+                            {overdue && <span className="sr-only">Overdue: </span>}
+                            {scheduleLabel.replace(/ IST$/, "")}
+                        </span>
+                    )}
+                    {task.repeat && !task.completedAt && (
+                        <span className={styles.repeatLabel}>
+                            <Repeat aria-hidden />
+                            {taskRepeatLabel(task.repeat)}
+                        </span>
+                    )}
+                </div>
             </div>
             <div className={cn(styles.taskPerson, styles.taskOwner)}>
                 <UserAvatar
@@ -283,8 +288,8 @@ function TaskRowReminders({
 }) {
     const [open, setOpen] = useState(false);
     const reminders = taskReminders(task);
-    const compactLabel = (minutes: number) =>
-        taskReminderLabel(minutes).replace(/\bminutes?\b/g, "min");
+    const compactLabel = (reminder: TaskReminder) =>
+        taskReminderDescription(reminder).replace(/\bminutes?\b/g, "min");
     if (reminders.length === 0) return null;
     if (reminders.length === 1) {
         return (
@@ -293,9 +298,9 @@ function TaskRowReminders({
                 className={styles.reminderLabel}
                 disabled={busy}
                 onClick={onEdit}
-                aria-label={`Edit reminder for ${task.title}: ${compactLabel(reminders[0].minutes)}`}
+                aria-label={`Edit reminder for ${task.title}: ${compactLabel(reminders[0])}`}
             >
-                <Bell aria-hidden /> {compactLabel(reminders[0].minutes)}
+                {compactLabel(reminders[0])}
             </button>
         );
     }
@@ -311,7 +316,7 @@ function TaskRowReminders({
                     />
                 }
             >
-                <Bell aria-hidden /> {reminders.length} reminders
+                {reminders.length} reminders
             </PopoverTrigger>
             <PopoverContent
                 align="start"
@@ -325,11 +330,15 @@ function TaskRowReminders({
                         <li key={reminder.key}>
                             <Bell aria-hidden />
                             <div>
-                                <strong>{compactLabel(reminder.minutes)}</strong>
-                                <time dateTime={reminder.at}>
-                                    {formatVisitDate(reminder.at)} · {formatVisitTime(reminder.at)}{" "}
-                                    IST
-                                </time>
+                                <strong>{compactLabel(reminder)}</strong>
+                                {reminder.at ? (
+                                    <time dateTime={reminder.at}>
+                                        {formatVisitDate(reminder.at)} ·{" "}
+                                        {formatVisitTime(reminder.at)} IST
+                                    </time>
+                                ) : (
+                                    <small>Set a start date and time</small>
+                                )}
                                 {task.deliveredReminderKeys.includes(reminder.key) && (
                                     <small>Delivered</small>
                                 )}

@@ -9,6 +9,7 @@ import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "@/features/new-site-visits/
 import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
 
 import {
+    backfillTaskStart,
     MAX_REMINDER_MINUTES,
     type Task,
     taskDateKey,
@@ -33,7 +34,7 @@ export const TASK_OWNERS = [
             ]),
     ).values(),
 ];
-export const TASK_QUERY_KEY = (accountId: string) => ["private-tasks-mock-v3", accountId] as const;
+export const TASK_QUERY_KEY = (accountId: string) => ["private-tasks-mock-v4", accountId] as const;
 const keyFor = (accountId: string) => `crm.private-tasks.mock.v1.${accountId}`;
 // Keep the existing account key so users retain their task edits through migration.
 const envelope = z.object({
@@ -144,9 +145,13 @@ export function sampleTasks(now = Date.now()): Task[] {
             completedAt: inputValueToUtc(`${day(-2)}T11:15`),
         },
     ];
-    return tasks.map((task) => {
+    return tasks.map((record) => {
+        const task = backfillTaskStart(record, now);
         const deliveredReminderKeys = taskReminders(task)
-            .filter((reminder) => task.id !== "sample-task-3" && Date.parse(reminder.at) <= now)
+            .filter(
+                (reminder) =>
+                    reminder.at && task.id !== "sample-task-3" && Date.parse(reminder.at) <= now,
+            )
             .map((reminder) => reminder.key);
         return { ...task, deliveredReminderKeys };
     });
@@ -167,7 +172,11 @@ function checkedTasks(data: unknown): Task[] {
     )
         throw new Error("Choose an existing Client, owner or property.");
     return parsed.map((task) => {
-        const configuredKeys = new Set(taskReminders(task).map((reminder) => reminder.key));
+        const configuredKeys = new Set(
+            taskReminders(task)
+                .filter((reminder) => reminder.at)
+                .map((reminder) => reminder.key),
+        );
         return {
             ...task,
             reminders: [...task.reminders].sort((a, b) => b - a),
@@ -202,8 +211,11 @@ function readSaved(accountId: string): Task[] | null {
     try {
         const decoded: unknown = JSON.parse(saved);
         if (legacyEnvelope.safeParse(decoded).success)
-            return writeTasks(accountId, migrateLegacy(decoded));
-        const tasks = checkedTasks(decoded);
+            return writeTasks(
+                accountId,
+                migrateLegacy(decoded).map((task) => backfillTaskStart(task)),
+            );
+        const tasks = checkedTasks(decoded).map((task) => backfillTaskStart(task));
         return writeTasks(accountId, tasks);
     } catch {
         throw new Error(
@@ -233,7 +245,11 @@ export const taskPreviewStore = {
         // A form opened before a reminder fired must not erase its delivery keys.
         const merged = tasks.map((task) => {
             const current = latest.find((saved) => saved.id === task.id);
-            const configuredKeys = new Set(taskReminders(task).map((reminder) => reminder.key));
+            const configuredKeys = new Set(
+                taskReminders(task)
+                    .filter((reminder) => reminder.at)
+                    .map((reminder) => reminder.key),
+            );
             return {
                 ...task,
                 deliveredReminderKeys: [

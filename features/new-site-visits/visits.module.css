@@ -1,6 +1,5 @@
 .page {
     color: var(--color-ink);
-    padding-block-end: 5rem;
     min-width: 0;
 }
 .page ::selection {

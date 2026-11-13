@@ -263,6 +263,12 @@ export function TaskForm({
         if (!validation.valid || reminderHasPassed) {
             setNow(Date.now());
             if (validation.errors.title) titleRef.current?.focus();
+            else {
+                const form = event.currentTarget;
+                requestAnimationFrame(() =>
+                    form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(),
+                );
+            }
             return;
         }
         try {
@@ -366,7 +372,7 @@ export function TaskForm({
                     </h2>
                     <div className={styles.field}>
                         <label htmlFor={`${formId}-start`} className={styles.label}>
-                            Start date & time <span className={styles.optional}>(optional)</span>
+                            Start date & time <span aria-hidden="true">*</span>
                         </label>
                         <AppDateTimePicker
                             id={`${formId}-start`}
@@ -376,8 +382,6 @@ export function TaskForm({
                                 const [startDate = "", startTime = ""] = value.split("T");
                                 patch({ startDate, startTime });
                             }}
-                            timeOptional
-                            clearable
                             disabled={busy}
                             error={
                                 submitted
@@ -385,20 +389,8 @@ export function TaskForm({
                                     : undefined
                             }
                         />
-                        {draft.startDate ? (
-                            <Button
-                                className="self-start"
-                                variant="ghost"
-                                size="sm"
-                                type="button"
-                                disabled={busy}
-                                onClick={() => patch({ startDate: "", startTime: "" })}
-                            >
-                                Remove start date
-                            </Button>
-                        ) : null}
                         <p className={styles.hint}>
-                            When you plan to begin. New tasks start today by default.
+                            A reminder at task start is included automatically. All times are IST.
                         </p>
                     </div>
                     <div className={styles.field}>
@@ -490,7 +482,10 @@ export function TaskForm({
                     ) : (
                         <div className={styles.reminderHint}>
                             <Bell aria-hidden="true" />
-                            <p>Add a date and time to set one or more in-app reminders.</p>
+                            <p>
+                                Your task-start reminder is included. Add a due date and time to set
+                                extra reminders.
+                            </p>
                         </div>
                     )}
                 </section>
