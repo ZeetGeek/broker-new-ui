@@ -8,6 +8,12 @@ import { type TaskRepeat, taskRepeatSchema } from "./recurrence";
 
 export const TASK_TIME_ZONE = "Asia/Kolkata";
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
+export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
+    urgent: "Priority 1",
+    high: "Priority 2",
+    medium: "Priority 3",
+    low: "Priority 4",
+};
 export const TASK_PRIORITY_RANK: Record<TaskPriority, number> = {
     low: 1,
     medium: 2,
@@ -60,6 +66,7 @@ export const taskSchema = z
         title: z.string().trim().min(1).max(160),
         details: z.string().max(2000),
         startDate: z.string().refine(isTaskDate).nullable().default(null),
+        startTime: z.string().refine(isTaskTime).nullable().optional(),
         repeat: taskRepeatSchema.nullable().default(null),
         repeatAnchor: z.string().refine(isTaskDate).nullable().default(null),
         repeatFromId: z.string().min(1).nullable().default(null),
@@ -76,6 +83,16 @@ export const taskSchema = z
         deliveredReminderKeys: z.array(z.string().min(1)),
     })
     .refine((task) => !task.dueTime || !!task.dueDate, "A time needs a due date.")
+    .refine((task) => !task.startTime || !!task.startDate, "A start time needs a start date.")
+    .refine(
+        (task) =>
+            !task.startDate ||
+            task.startDate !== task.dueDate ||
+            !task.startTime ||
+            !task.dueTime ||
+            task.startTime <= task.dueTime,
+        "Due time must be on or after start time.",
+    )
     .refine(
         (task) => !task.startDate || !task.dueDate || task.startDate <= task.dueDate,
         "Due date must be on or after start date.",
@@ -99,6 +116,7 @@ export type TaskDraft = {
     title: string;
     details: string;
     startDate: string;
+    startTime: string;
     repeat: TaskRepeat | null;
     dueDate: string;
     dueTime: string;
@@ -113,6 +131,7 @@ export const EMPTY_TASK_DRAFT: TaskDraft = {
     title: "",
     details: "",
     startDate: "",
+    startTime: "",
     repeat: null,
     dueDate: "",
     dueTime: "",
@@ -132,6 +151,7 @@ export function draftFromTask(task: Task): TaskDraft {
         title: task.title,
         details: task.details,
         startDate: task.startDate ?? "",
+        startTime: task.startTime ?? "",
         repeat: task.repeat ? { ...task.repeat, weekdays: [...task.repeat.weekdays] } : null,
         dueDate: task.dueDate ?? "",
         dueTime: task.dueTime ?? "",
@@ -151,11 +171,23 @@ export function validateTaskDraft(draft: TaskDraft) {
     if (draft.details.length > 2000) errors.details = "Keep the details under 2,000 characters.";
     if (draft.startDate && !isTaskDate(draft.startDate))
         errors.startDate = "Choose a valid start date.";
+    if (draft.startTime && !isTaskTime(draft.startTime))
+        errors.startTime = "Choose a valid start time.";
+    if (draft.startTime && !draft.startDate)
+        errors.startDate = "Choose a date for this start time.";
     if (draft.dueDate && !isTaskDate(draft.dueDate)) errors.dueDate = "Choose a valid due date.";
     if (draft.dueTime && !isTaskTime(draft.dueTime)) errors.dueTime = "Choose a valid time.";
     if (draft.dueTime && !draft.dueDate) errors.dueDate = "Choose a date for this time.";
     if (draft.startDate && draft.dueDate && draft.startDate > draft.dueDate)
         errors.dueDate = "Due date must be on or after the start date.";
+    if (
+        draft.startDate &&
+        draft.startDate === draft.dueDate &&
+        draft.startTime &&
+        draft.dueTime &&
+        draft.startTime > draft.dueTime
+    )
+        errors.dueTime = "Due time must be on or after the start time.";
     if (draft.repeat && !taskRepeatSchema.safeParse(draft.repeat).success)
         errors.repeat =
             "Choose a whole repeat interval from 1 to 365 and at least one day for weekly repeats.";
@@ -296,6 +328,24 @@ export function taskDateLabel(date: string, now = Date.now()): string {
 export function taskTimeLabel(time: string): string {
     if (!isTaskTime(time)) return "Any time";
     return formatInTimeZone(inputValueToUtc(`2026-01-01T${time}`), TASK_TIME_ZONE, "h:mm a");
+}
+
+/** Keep date-only tasks honest; ranges never invent a missing start time. */
+export function taskScheduleLabel(
+    task: Pick<Task, "startDate" | "startTime" | "dueDate" | "dueTime">,
+    now = Date.now(),
+): string {
+    const { startDate, startTime, dueDate, dueTime } = task;
+    if (startDate && dueDate && startDate !== dueDate) {
+        return `${taskDateLabel(startDate, now)}${startTime ? `, ${taskTimeLabel(startTime)}` : ""} – ${taskDateLabel(dueDate, now)}${dueTime ? `, ${taskTimeLabel(dueTime)}` : ""}${startTime || dueTime ? " IST" : ""}`;
+    }
+    const times = [
+        startDate && startTime ? taskTimeLabel(startTime) : "",
+        dueDate && dueTime ? taskTimeLabel(dueTime) : "",
+    ].filter(Boolean);
+    if (times.length) return `${times.join(" – ")} IST`;
+    const date = startDate || dueDate;
+    return date ? taskDateLabel(date, now) : "";
 }
 
 export function taskDueLabel(task: Task, now = Date.now()): string {

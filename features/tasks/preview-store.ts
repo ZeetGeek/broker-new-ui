@@ -58,6 +58,7 @@ export function sampleTasks(now = Date.now()): Task[] {
         title,
         details: "",
         startDate: dueDate && dueDate < day(0) ? dueDate : day(0),
+        startTime: null,
         repeat: null,
         repeatAnchor: null,
         repeatFromId: null,

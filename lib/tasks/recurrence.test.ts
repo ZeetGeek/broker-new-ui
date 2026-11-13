@@ -81,6 +81,7 @@ test("completion creates one successor with shifted dates, links and fresh remin
     const task = {
         ...sampleTasks(now)[0],
         startDate: "2030-01-01",
+        startTime: "09:00",
         dueDate: "2030-01-02",
         dueTime: "10:00",
         repeat: rule("day"),
@@ -93,6 +94,7 @@ test("completion creates one successor with shifted dates, links and fresh remin
     assert.ok(completed[0].completedAt);
     const next = completed[1];
     assert.equal(next.startDate, "2030-01-02");
+    assert.equal(next.startTime, "09:00");
     assert.equal(next.dueDate, "2030-01-03");
     assert.equal(next.dueTime, "10:00");
     assert.equal(next.repeatFromId, task.id);

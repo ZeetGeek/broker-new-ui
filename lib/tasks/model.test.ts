@@ -18,6 +18,8 @@ import {
     taskReminderLabel,
     taskReminders,
     taskRemindersSummary,
+    taskScheduleLabel,
+    taskSchema,
     validateTaskDraft,
 } from "@/features/tasks/model";
 
@@ -70,6 +72,65 @@ test("optional dates allow title-only tasks; invalid calendar and dependent fiel
             dueTime: "24:00",
         }).valid,
         false,
+    );
+});
+
+test("optional start times validate against the date and same-day deadline without breaking old records", () => {
+    const draft = {
+        ...EMPTY_TASK_DRAFT,
+        title: "Call",
+        startDate: "2030-01-02",
+        startTime: "14:00",
+        dueDate: "2030-01-02",
+        dueTime: "15:00",
+    };
+    assert.equal(validateTaskDraft(draft).valid, true);
+    assert.equal(validateTaskDraft({ ...draft, startDate: "" }).valid, false);
+    assert.equal(validateTaskDraft({ ...draft, startTime: "24:00" }).valid, false);
+    assert.equal(validateTaskDraft({ ...draft, dueTime: "13:00" }).valid, false);
+    assert.equal(
+        validateTaskDraft({ ...draft, dueDate: "2030-01-03", dueTime: "01:00" }).valid,
+        true,
+    );
+    assert.equal(taskSchema.safeParse(task).success, true);
+    assert.equal(taskSchema.safeParse({ ...task, startTime: "14:00" }).success, false);
+    assert.equal(
+        taskSchema.safeParse({
+            ...task,
+            startDate: draft.startDate,
+            startTime: "14:00",
+            dueDate: draft.dueDate,
+            dueTime: "13:00",
+        }).success,
+        false,
+    );
+});
+
+test("schedule labels show real time ranges, one selected time, and honest date-only schedules in IST", () => {
+    const scheduled = {
+        ...task,
+        startDate: "2030-01-02",
+        startTime: "14:00",
+        dueDate: "2030-01-02",
+        dueTime: "15:00",
+    };
+    assert.equal(taskScheduleLabel(scheduled, now), "2:00 PM – 3:00 PM IST");
+    assert.equal(taskScheduleLabel({ ...scheduled, startTime: null }, now), "3:00 PM IST");
+    assert.equal(
+        taskScheduleLabel({ ...scheduled, dueDate: null, dueTime: null }, now),
+        "2:00 PM IST",
+    );
+    assert.equal(taskScheduleLabel({ ...scheduled, startTime: null, dueTime: null }, now), "Today");
+    assert.equal(
+        taskScheduleLabel({ ...scheduled, dueDate: "2030-01-03" }, now),
+        "Today, 2:00 PM – Tomorrow, 3:00 PM IST",
+    );
+    assert.equal(
+        taskScheduleLabel(
+            { ...scheduled, startDate: null, startTime: null, dueDate: null, dueTime: null },
+            now,
+        ),
+        "",
     );
 });
 

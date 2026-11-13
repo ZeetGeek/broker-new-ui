@@ -16,6 +16,8 @@ test("mock task storage isolates accounts, preserves empty lists, and rejects da
     });
     try {
         const tasks = await taskPreviewStore.list("broker-a");
+        await taskPreviewStore.save("broker-a", [{ ...tasks[0], startTime: "08:00" }]);
+        assert.equal((await taskPreviewStore.list("broker-a"))[0].startTime, "08:00");
         await taskPreviewStore.save("broker-a", []);
         assert.deepEqual(await taskPreviewStore.list("broker-a"), []);
         assert.equal((await taskPreviewStore.list("broker-b")).length, tasks.length);

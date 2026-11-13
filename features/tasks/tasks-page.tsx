@@ -5,19 +5,19 @@ import toast from "react-hot-toast";
 
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
 import {
     Bell,
-    Check,
     CheckCircle2,
     List,
-    LockKeyhole,
     Plus,
     Search,
     SlidersHorizontal,
     X,
 } from "@/components/shared/icons";
+import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Skeleton } from "@/components/shared/skeleton";
 import { StatusTabs } from "@/components/shared/status-tabs";
 import { Button } from "@/components/ui/button";
@@ -104,6 +104,15 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
     const overdue = open.filter((task) => taskGroup(task, now) === "overdue").length;
     const today = open.filter((task) => taskGroup(task, now) === "today").length;
     const reminders = open.reduce((count, task) => count + task.reminders.length, 0);
+    const summaryLines = [
+        overdue > 0
+            ? `${overdue} overdue ${overdue === 1 ? "task needs" : "tasks need"} attention`
+            : "",
+        today > 0 ? `${today} ${today === 1 ? "task" : "tasks"} due today` : "",
+        open.length > 0
+            ? `${open.length} open ${open.length === 1 ? "task" : "tasks"}`
+            : "Add your next follow-up",
+    ].filter(Boolean);
     const tabs = [
         { value: "all", label: "All tasks", count: open.length, dotClassName: "bg-brand" },
         { value: "today", label: "Today", count: today, dotClassName: "bg-pending" },
@@ -206,6 +215,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
             title: draft.title.trim(),
             details: draft.details.trim(),
             startDate: draft.startDate || null,
+            startTime: draft.startDate && draft.startTime ? draft.startTime : null,
             repeat: draft.repeat,
             repeatAnchor: draft.repeat
                 ? sameSchedule
@@ -253,34 +263,19 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
         !selected;
     return (
         <div className={styles.page}>
-            <header className={styles.header}>
-                <div>
-                    <h1 className="h3 text-ink">
-                        Tasks.{" "}
-                        <span className="font-normal text-ink-muted">
-                            Keep the next step moving.
-                        </span>
+            <PortalSectionNav>
+                <header className={styles.header}>
+                    <h1 className="h3 text-start min-inline-0">
+                        <span className="text-ink">Tasks.</span>{" "}
+                        <RotatingHeaderSummary
+                            key={summaryLines.join("|")}
+                            lines={summaryLines}
+                            isLoading={isLoading}
+                            loadingPlaceholder="Your tasks at a glance"
+                        />
                     </h1>
-                    <p className={styles.privateLine}>
-                        <LockKeyhole aria-hidden /> Private to you <span aria-hidden>·</span> India
-                        time (IST)
-                    </p>
-                </div>
-                <div className={styles.headerActions}>
-                    <Button
-                        variant="outline"
-                        onClick={() => navigate({ view: "reminders", task: undefined })}
-                    >
-                        <Bell aria-hidden />
-                        Reminders
-                        {reminders > 0 && <span className={styles.smallCount}>{reminders}</span>}
-                    </Button>
-                    <Button onClick={create}>
-                        <Plus aria-hidden />
-                        Add task
-                    </Button>
-                </div>
-            </header>
+                </header>
+            </PortalSectionNav>
             <Tabs
                 value={tab}
                 onValueChange={(value) =>
@@ -288,30 +283,40 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                 }
                 className={styles.workspace}
             >
-                <StatusTabs tabs={tabs} value={tab} label="Task views" isLoading={isLoading} />
                 <div className={styles.toolbar}>
-                    <Input
-                        aria-label="Search tasks"
-                        placeholder="Search tasks or linked records"
-                        value={search}
-                        onValueChange={(q) => navigate({ q: q || undefined }, true)}
-                        startIcon={Search}
-                        clearable
-                    />
-                    <div className={styles.tools}>
-                        <Button
-                            variant="outline"
+                    <div className={styles.filterTabs}>
+                        <FilterChip
+                            label="Filters"
+                            icon={SlidersHorizontal}
+                            count={Number(!!due) + Number(!!linked)}
+                            isActive={!!(due || linked)}
+                            clearable={!!(due || linked)}
                             onClick={() => navigate({ view: "filters", task: undefined })}
-                        >
-                            <SlidersHorizontal aria-hidden />
-                            Filters
-                            {(due || linked) && (
-                                <span className={styles.smallCount}>
-                                    {Number(!!due) + Number(!!linked)}
-                                </span>
-                            )}
-                        </Button>
+                            onClear={() => navigate({ due: undefined, linked: undefined }, true)}
+                        />
+                        <StatusTabs
+                            tabs={tabs}
+                            value={tab}
+                            label="Task views"
+                            isLoading={isLoading}
+                        />
+                    </div>
+                    <div className={styles.tools}>
+                        <label className={styles.searchField}>
+                            <span className="sr-only">Search tasks</span>
+                            <Input
+                                size="sm"
+                                wrapperClassName="rounded-control shadow-sm inline-full"
+                                className="rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20"
+                                placeholder="Search tasks or linked records"
+                                value={search}
+                                onValueChange={(q) => navigate({ q: q || undefined }, true)}
+                                startIcon={Search}
+                                clearable
+                            />
+                        </label>
                         <TaskSelect
+                            toolbar
                             label="Sort tasks"
                             value={sort}
                             options={[
@@ -327,6 +332,20 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 navigate({ sort: value === "due" ? undefined : value }, true)
                             }
                         />
+                        <Button
+                            variant="outline"
+                            className={styles.toolbarButton}
+                            onClick={() => navigate({ view: "reminders", task: undefined })}
+                        >
+                            <Bell aria-hidden />
+                            Reminders
+                            {reminders > 0 && (
+                                <span className={styles.smallCount}>{reminders}</span>
+                            )}
+                        </Button>
+                        <Button variant="accent" className={styles.toolbarButton} onClick={create}>
+                            <Plus aria-hidden /> Add task
+                        </Button>
                     </div>
                 </div>
                 {(due || linked) && (
@@ -459,12 +478,16 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                             {visible.length === 1 ? "task" : "tasks"}
                             {filtered ? " match" : ""}
                         </span>
-                        <span>
-                            <Check aria-hidden /> Small steps. Steady progress.
-                        </span>
                     </footer>
                 )}
             </Tabs>
+            {!isLoading && visible.length > 0 && (
+                <footer className={styles.pageFooter}>
+                    <span className={styles.footerLine} aria-hidden />
+                    <p>Check off each task when it’s done. Your tasks are private to you.</p>
+                    <span className={styles.footerLine} aria-hidden />
+                </footer>
+            )}
             <p className={styles.previewNote}>
                 Sample workspace · Changes are saved in this tab. Reminders appear while the app is
                 open.
@@ -593,6 +616,7 @@ function TaskFilters({
                         Reset
                     </Button>
                     <Button
+                        variant="accent"
                         onClick={() =>
                             onApply({ due: date || undefined, linked: link || undefined })
                         }
