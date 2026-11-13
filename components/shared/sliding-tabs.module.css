@@ -1,0 +1,16 @@
+.tabs:global(.t-tabs-surface) :global(.t-tabs-pill) {
+    border-radius: 8px;
+}
+.tab:global(.t-tab[role="tab"]) {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+@media (pointer: coarse) {
+    .tab:global(.t-tab[role="tab"]) {
+        min-block-size: 44px;
+    }
+    .tabs:global(.t-tabs-surface.t-tabs-compact) :global(.t-tabs-pill) {
+        block-size: 44px;
+    }
+}

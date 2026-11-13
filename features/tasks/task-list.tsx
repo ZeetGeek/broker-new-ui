@@ -6,22 +6,8 @@ import { formatInTimeZone } from "date-fns-tz";
 
 import { cn } from "@/lib/utils";
 
-import {
-    Bell,
-    CalendarClock,
-    FileText,
-    MoreHorizontal,
-    Pencil,
-    RotateCcw,
-    Trash2,
-} from "@/components/shared/icons";
+import { RotateCcw } from "@/components/shared/icons";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 import {
     sortTasks,
@@ -32,6 +18,8 @@ import {
     taskDueLabel,
     type TaskSort,
 } from "./model";
+import type { TaskQuickChange } from "./quick-actions";
+import { TaskActionsMenu } from "./task-actions-menu";
 
 import styles from "./planner.module.css";
 
@@ -43,9 +31,10 @@ export type TaskRowActions = {
     onIntent: (task: Task, intent: string) => void;
     onRestore: (task: Task) => void;
     onRename: (task: Task, title: string) => Promise<boolean>;
+    onQuickChange: (task: Task, change: TaskQuickChange) => Promise<boolean>;
 };
 
-/** A paper-list line: edit its title or open the full CRM context through its note. */
+/** A paper-list line: edit its title or open the full CRM context through its menu. */
 export function TaskLine({
     task,
     archive = false,
@@ -56,19 +45,12 @@ export function TaskLine({
     onIntent,
     onRestore,
     onRename,
+    onQuickChange,
 }: TaskRowActions & { task: Task; archive?: boolean }) {
     const [editing, setEditing] = useState(false);
     const [title, setTitle] = useState(task.title);
     const saving = useRef(false);
     const cancelled = useRef(false);
-    const hasContext = !!(
-        task.details ||
-        task.clientId ||
-        task.ownerId ||
-        task.propertyId ||
-        task.repeat ||
-        task.reminders.length
-    );
     const overdue =
         !task.completedAt && !task.deletedAt && !!task.dueDate && task.dueDate < taskDateKey(now);
     const save = async () => {
@@ -125,6 +107,7 @@ export function TaskLine({
             ) : (
                 <button
                     type="button"
+                    data-task-title
                     className={styles.lineTitle}
                     title={`${task.title}\n${taskDueLabel(task, now)}`}
                     disabled={busy}
@@ -162,57 +145,15 @@ export function TaskLine({
                     <RotateCcw aria-hidden size={16} />
                 </button>
             ) : (
-                <>
-                    <button
-                        type="button"
-                        className={styles.noteAction}
-                        data-has-context={hasContext || undefined}
-                        onClick={() => onOpen(task)}
-                        aria-label={`Details for ${task.title}`}
-                        title="Task details"
-                    >
-                        <FileText aria-hidden size={14} />
-                    </button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            render={
-                                <button
-                                    type="button"
-                                    className={styles.lineAction}
-                                    disabled={busy}
-                                    aria-label={`Actions for ${task.title}`}
-                                />
-                            }
-                        >
-                            <MoreHorizontal aria-hidden size={16} />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onOpen(task)}>
-                                <FileText aria-hidden />
-                                Task details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onIntent(task, "edit")}>
-                                <Pencil aria-hidden />
-                                Edit task
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onIntent(task, "reschedule")}>
-                                <CalendarClock aria-hidden />
-                                Reschedule
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onIntent(task, "reminder")}>
-                                <Bell aria-hidden />
-                                Edit reminders
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                variant="destructive"
-                                onClick={() => onIntent(task, "delete")}
-                            >
-                                <Trash2 aria-hidden />
-                                Delete task
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </>
+                <TaskActionsMenu
+                    task={task}
+                    busy={busy}
+                    now={now}
+                    onQuickChange={onQuickChange}
+                    onOpen={onOpen}
+                    onIntent={onIntent}
+                    onComplete={onComplete}
+                />
             )}
         </div>
     );
@@ -238,7 +179,7 @@ export function TaskArchive({
             aria-label={tab === "results" ? "Matching tasks" : `${tab} tasks`}
         >
             <header className={styles.archiveHeading}>
-                <h2>
+                <h2 className="h5">
                     {tab === "deleted"
                         ? "Deleted"
                         : tab === "completed"

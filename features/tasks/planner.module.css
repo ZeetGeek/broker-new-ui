@@ -1,28 +1,42 @@
 .planner {
-    --line-height: 36px;
+    --line-height: 40px;
     container-type: inline-size;
     min-inline-size: 0;
     color: var(--color-ink);
     background: var(--color-surface);
+    border-radius: var(--radius-card);
     font-family: var(--font-sans);
     font-size: 14px;
     caret-color: var(--color-brand);
 }
 .plannerNav {
+    position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
     align-items: center;
     gap: 1rem;
-    padding: 0.35rem 1.5rem 0;
-    min-block-size: 52px;
-    border-block-end: 1px solid var(--color-border-warm);
+    padding: 0.75rem 1.25rem;
+    min-block-size: 64px;
+}
+.plannerNav::after {
+    content: "";
+    position: absolute;
+    inset-block-end: 0;
+    inset-inline: 0;
+    block-size: 1px;
+    background: var(--color-border-warm);
+    pointer-events: none;
 }
 .dateRange {
-    color: var(--color-ink-subtle);
-    font-size: 0.75rem;
-    font-weight: 500;
+    grid-column: 1;
+    grid-row: 1;
+    color: var(--color-ink-muted);
+    font-size: 0.875rem;
+    font-weight: 600;
 }
 .dateControls {
+    grid-column: 3;
+    grid-row: 1;
     display: flex;
     justify-self: end;
     align-items: center;
@@ -34,12 +48,13 @@
     place-items: center;
     min-inline-size: 36px;
     min-block-size: 36px;
-    border-radius: 4px;
+    border-radius: var(--radius-control);
     color: var(--color-ink-muted);
     cursor: pointer;
 }
 .todayButton {
     font-size: 0.75rem;
+    font-weight: 600;
     padding-inline: 0.625rem;
 }
 .navButton:hover,
@@ -72,32 +87,25 @@
     display: grid;
     grid-template-columns: repeat(var(--planner-columns), minmax(0, 1fr));
     gap: 2rem;
-    padding: 1.25rem 3rem 0.75rem;
+    padding: 1.5rem 3rem 1.25rem;
 }
 .dayColumn {
     min-inline-size: 0;
     padding: 0 0.125rem;
 }
 .dayHeading {
-    min-block-size: 72px;
-    padding: 0.5rem 0.5rem 1.25rem;
+    padding: 0.25rem 0.5rem 0.5rem;
 }
 .dayHeading time {
     display: block;
     color: var(--color-ink-subtle);
-    font-size: 10px;
-    font-weight: 650;
-    letter-spacing: 0.025em;
+    font-size: 0.75rem;
+    font-weight: 500;
     line-height: 1.5;
-    text-transform: uppercase;
+    margin-block-end: 0.375rem;
 }
 .dayHeading h2 {
     color: var(--color-ink);
-    font-family: var(--font-heading);
-    font-size: 24px;
-    font-weight: 500;
-    line-height: 1.4;
-    text-transform: uppercase;
 }
 .dayColumn[data-today] .dayHeading h2 {
     color: var(--color-brand);
@@ -116,6 +124,30 @@
     border-block-end: 1px solid
         color-mix(in srgb, var(--color-border-warm) 55%, var(--color-surface));
 }
+.sortableLine {
+    cursor: grab;
+    user-select: none;
+}
+.taskPlaceholder {
+    outline: 1px dashed var(--color-ink-subtle);
+    outline-offset: -1px;
+    border-radius: 6px;
+    background: color-mix(in oklab, var(--color-surface-muted) 70%, var(--color-surface));
+}
+.taskPlaceholder > * {
+    opacity: 0;
+    pointer-events: none;
+}
+.sortableLine:active,
+.sortableLine.dragging {
+    cursor: grabbing;
+}
+.sortableLine[aria-disabled="true"] {
+    cursor: default;
+}
+.sortableLine .lineTitle {
+    cursor: inherit;
+}
 .blankLine {
     /* Task and composer contents fill one line, plus their divider. */
     block-size: calc(var(--line-height) + 1px);
@@ -129,10 +161,19 @@
     min-inline-size: 0;
     min-block-size: var(--line-height);
     padding-inline: 0.5rem 0.25rem;
-    border-radius: 4px;
+    border-radius: 0;
 }
-.taskLine[data-priority="urgent"] {
-    background: color-mix(in srgb, var(--color-urgent-soft) 70%, var(--color-surface));
+.taskLine:not(.completedLine)[data-priority="urgent"] {
+    background: color-mix(in oklab, var(--color-danger-soft) 65%, var(--color-surface));
+}
+.taskLine:not(.completedLine)[data-priority="high"] {
+    background: color-mix(in oklab, var(--color-urgent-soft) 65%, var(--color-surface));
+}
+.taskLine:not(.completedLine)[data-priority="medium"] {
+    background: color-mix(in oklab, #3b6bdc 7%, var(--color-surface));
+}
+.taskLine:not(.completedLine)[data-priority="low"] {
+    background: var(--color-surface-muted);
 }
 .lineTitle {
     flex: 1;
@@ -145,7 +186,7 @@
     color: inherit;
     font-size: 14px;
     line-height: 1.5;
-    font-weight: 400;
+    font-weight: 500;
     cursor: text;
 }
 .completedLine .lineTitle {
@@ -156,15 +197,21 @@
 .lineCheck {
     position: absolute;
     inset-inline-start: -19px;
-    inline-size: 17px;
-    block-size: 17px;
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+    inline-size: 16px;
+    block-size: 16px;
     border-width: 1.5px;
     border-radius: 50%;
+    cursor: pointer;
     opacity: 0;
 }
+.lineCheck:disabled {
+    cursor: not-allowed;
+}
 .lineCheck [data-slot="checkbox-indicator"] {
-    inline-size: 10px;
-    block-size: 10px;
+    inline-size: 9px;
+    block-size: 9px;
 }
 .lineCheck::after {
     inset: -9px -5px;
@@ -172,7 +219,6 @@
 .lineCheck[data-checked] {
     opacity: 1;
 }
-.noteAction,
 .lineAction,
 .restoreAction {
     display: inline-grid;
@@ -181,26 +227,31 @@
     inline-size: 22px;
     block-size: 32px;
     color: var(--color-ink-subtle);
-    border-radius: 3px;
+    border-radius: 6px;
     cursor: pointer;
 }
-.noteAction,
 .lineAction {
     opacity: 0;
+    inline-size: 28px;
+    block-size: 28px;
+    border-radius: 8px;
 }
-.noteAction[data-has-context] {
-    opacity: 0.6;
+.lineAction svg {
+    inline-size: 14px;
+    block-size: 14px;
 }
-.noteAction:hover,
 .lineAction:hover,
 .restoreAction:hover {
     color: var(--color-brand-text);
     background: var(--color-brand-soft);
 }
+.lineAction:hover,
+.lineAction[data-popup-open] {
+    color: var(--color-ink-muted);
+    background: var(--color-surface-muted);
+}
 .taskLine:hover .lineCheck,
 .taskLine:focus-within .lineCheck,
-.taskLine:hover .noteAction,
-.taskLine:focus-within .noteAction,
 .taskLine:hover .lineAction,
 .taskLine:focus-within .lineAction,
 .lineAction[data-popup-open] {
@@ -209,7 +260,7 @@
 .overdueMark {
     flex-shrink: 0;
     color: var(--color-urgent);
-    font-size: 10px;
+    font-size: 0.75rem;
     line-height: 1.5;
 }
 .inlineEdit {
@@ -217,6 +268,8 @@
     min-inline-size: 0;
 }
 .inlineEdit input {
+    cursor: text;
+    user-select: text;
     inline-size: 100%;
     min-inline-size: 0;
     min-block-size: var(--line-height);
@@ -230,36 +283,27 @@
 .taskLine[data-editing] {
     box-shadow: inset 0 -1px 0 var(--color-brand);
 }
-.dragHandle {
-    position: absolute;
-    inset-inline-start: -35px;
-    inset-block-start: 0;
-    display: grid;
-    place-items: center;
-    inline-size: 16px;
-    block-size: var(--line-height);
-    color: var(--color-ink-subtle);
-    opacity: 0;
-    cursor: grab;
-    touch-action: none;
-}
-.sortableLine:hover .dragHandle,
-.sortableLine:focus-within .dragHandle {
-    opacity: 1;
-}
 .dragging {
     opacity: 0.25;
 }
 .dragPreview {
-    max-inline-size: 300px;
-    padding: 0.65rem 0.75rem;
+    display: flex;
+    align-items: center;
+    inline-size: 100%;
+    padding: 0.5rem;
     background: var(--color-surface);
-    box-shadow: 0 6px 18px -4px rgb(0 0 0 / 15%);
-    border-radius: 4px;
+    box-shadow: var(--shadow-md);
+    border-radius: 6px;
     font-family: var(--font-sans);
     font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
     overflow-wrap: anywhere;
     cursor: grabbing;
+}
+.completedPreview {
+    color: var(--color-ink-subtle);
+    text-decoration: line-through;
 }
 .dropTarget {
     background: color-mix(in srgb, var(--color-brand-soft) 30%, var(--color-surface));
@@ -296,7 +340,8 @@
 .composer button {
     display: none;
     color: var(--color-brand-text);
-    font-size: 11px;
+    font-size: 0.75rem;
+    font-weight: 600;
     cursor: pointer;
     min-block-size: var(--line-height);
 }
@@ -306,13 +351,15 @@
 .somedayBar {
     display: flex;
     align-items: center;
-    min-block-size: 44px;
+    min-block-size: 56px;
     padding-inline: 3rem;
-    border-block-end: 1px solid var(--color-surface-muted);
+    border-block-start: 1px solid var(--color-border-warm);
+    border-block-end: 1px solid var(--color-border-warm);
     gap: 0.5rem;
 }
 .listTabs {
     display: flex;
+    align-self: stretch;
     align-items: stretch;
     gap: 1.25rem;
     min-inline-size: 0;
@@ -328,7 +375,7 @@
     color: var(--color-ink-subtle);
 }
 .selectedListTab {
-    color: var(--color-ink);
+    color: var(--color-brand-text);
 }
 .selectedListTab::after {
     content: "";
@@ -343,9 +390,8 @@
     align-items: center;
     gap: 0.65rem;
     min-block-size: 44px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
+    font-size: 0.8125rem;
+    font-weight: 600;
     cursor: grab;
     touch-action: none;
     user-select: none;
@@ -360,8 +406,17 @@
     white-space: nowrap;
 }
 .listTabButton small {
-    font-size: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 1.125rem;
+    padding: 0.125rem 0.375rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--color-ink) 8%, transparent);
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
     font-variant-numeric: tabular-nums;
+    line-height: 1;
 }
 .tabMenu {
     display: grid;
@@ -448,10 +503,10 @@
     padding: 0.75rem 1rem;
     background: var(--color-surface);
     color: var(--color-ink);
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    box-shadow: 0 4px 12px -4px rgb(0 0 0 / 20%);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border-radius: var(--radius-control);
+    box-shadow: var(--shadow-lg);
     cursor: grabbing;
 }
 .customList .dayHeading h2 {
@@ -460,41 +515,15 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.newListColumn {
-    min-inline-size: 0;
-}
-.newListButton {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    min-block-size: 28px;
-    max-inline-size: 100%;
-    margin-block: 0.5rem 1.6rem;
-    padding-inline: 0.5rem;
-    background: var(--color-surface-muted);
-    color: var(--color-ink-subtle);
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    cursor: pointer;
-}
-.newListButton:hover {
-    color: var(--color-brand-text);
-    background: var(--color-brand-soft);
-}
-.newListRules {
-    pointer-events: none;
-}
 .dragListPreview {
     inline-size: 230px;
     min-block-size: 150px;
     padding: 1.25rem;
     color: var(--color-ink);
     background: var(--color-surface-muted);
-    border-radius: 4px;
-    box-shadow: 0 8px 20px -8px rgb(0 0 0 / 20%);
+    border-radius: var(--radius-inner);
+    box-shadow: var(--shadow-lg);
     font-size: 1.125rem;
-    text-transform: uppercase;
     cursor: grabbing;
 }
 .notebookEditor {
@@ -506,7 +535,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-    font-size: 12px;
+    font-size: 0.875rem;
 }
 .nameForm label {
     color: var(--color-ink-muted);
@@ -520,7 +549,7 @@
     border: 1px solid var(--color-border-warm);
     background: var(--color-surface);
     color: var(--color-ink);
-    border-radius: 4px;
+    border-radius: var(--radius-control);
     outline-color: var(--color-brand);
 }
 .nameForm button {
@@ -565,58 +594,29 @@
     transform: rotate(-90deg);
 }
 .somedayGrid {
-    background: var(--color-notebook, #f6f7f8);
+    background: color-mix(in oklab, var(--color-surface) 94%, var(--color-canvas));
+    border-end-start-radius: var(--radius-card);
+    border-end-end-radius: var(--radius-card);
     padding-block: 1.5rem 2rem;
     min-block-size: 350px;
-}
-.somedayGrid .dayHeading {
-    min-block-size: 62px;
 }
 .somedayGrid .ruledList {
     min-block-size: calc(9 * var(--line-height));
 }
 .columnPicker {
-    display: flex;
-    align-items: center;
+    grid-column: 2;
+    grid-row: 1;
     justify-self: center;
-    gap: 2px;
-    padding: 3px;
-    border: 1px solid var(--color-border-warm);
-    border-radius: 6px;
-    background: var(--color-surface-muted);
-}
-.columnPicker button {
-    min-inline-size: 56px;
-    min-block-size: 32px;
-    padding-inline: 0.625rem;
-    font-size: 12px;
-    font-weight: 500;
-    white-space: nowrap;
-    color: var(--color-ink-muted);
-    cursor: pointer;
-    border-radius: 4px;
-}
-.columnPicker button:hover {
-    color: var(--color-brand-text);
-    background: var(--color-surface);
-}
-.columnPicker button[aria-pressed="true"] {
-    color: var(--color-brand-text);
-    background: var(--color-surface);
-    font-weight: 700;
 }
 .archive {
     padding: 2.5rem 3rem;
     min-block-size: 60dvh;
     background: var(--color-surface);
+    border-radius: var(--radius-card);
     font-family: var(--font-sans);
 }
 .archiveHeading {
     margin-block-end: 1.75rem;
-}
-.archiveHeading h2 {
-    font-size: 1.125rem;
-    font-weight: 650;
 }
 .archiveHeading p {
     color: var(--color-ink-muted);
@@ -641,13 +641,13 @@
     display: block;
     padding-inline-start: 0.5rem;
     color: var(--color-ink-subtle);
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     line-height: 1.6;
     margin-block-end: 0.3rem;
 }
 .planner button:focus-visible,
 .archive button:focus-visible,
-.dragHandle:focus-visible {
+.sortableLine:focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
 }
@@ -699,15 +699,12 @@
         display: none;
     }
     .dateRange {
-        font-size: 0.6875rem;
+        font-size: 0.75rem;
     }
     .dayGrid,
     .somedayGrid {
         padding-inline: 2.75rem 1rem;
         padding-block-start: 0.75rem;
-    }
-    .dayHeading {
-        min-block-size: 70px;
     }
     .dayColumn {
         --line-height: 44px;
@@ -725,26 +722,8 @@
     .lineCheck::after {
         inset: -14px;
     }
-    .noteAction,
     .lineAction,
     .restoreAction {
-        inline-size: 44px;
-        block-size: 44px;
-        opacity: 1;
-    }
-    .noteAction {
-        display: none;
-    }
-    .sortableLine {
-        display: flex;
-    }
-    .taskLine {
-        flex: 1;
-    }
-    .dragHandle {
-        position: static;
-        order: 2;
-        flex-shrink: 0;
         inline-size: 44px;
         block-size: 44px;
         opacity: 1;
@@ -762,7 +741,7 @@
         gap: 0.5rem;
     }
     .listTabButton {
-        font-size: 11px;
+        font-size: 0.8125rem;
     }
     .tabMenu,
     .addTabButton,
@@ -783,16 +762,12 @@
         opacity: 1;
     }
     .listDragHandle,
-    .listMenu,
-    .newListButton {
+    .listMenu {
         min-inline-size: 44px;
         block-size: 44px;
     }
     .notebookEditor {
         padding-inline: 1rem;
-    }
-    .newListRules {
-        display: none;
     }
     .somedayGrid .customList + .customList {
         margin-block-start: 1rem;
@@ -809,7 +784,6 @@
         --line-height: 44px;
     }
     .archive .lineCheck,
-    .archive .noteAction,
     .archive .lineAction {
         opacity: 1;
     }
@@ -819,10 +793,6 @@
     .archive .lineCheck::after {
         inset: -14px;
     }
-    .archive .noteAction {
-        display: none;
-    }
-    .archive .noteAction,
     .archive .lineAction,
     .archive .restoreAction {
         inline-size: 44px;
@@ -831,9 +801,7 @@
 }
 @media (hover: none) {
     .lineCheck,
-    .noteAction,
-    .lineAction,
-    .dragHandle {
+    .lineAction {
         opacity: 1;
     }
     .composer input::placeholder {

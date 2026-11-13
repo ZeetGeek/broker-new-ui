@@ -92,6 +92,8 @@ const MAP = {
     FileImage: "IconPhoto",
     FileSpreadsheet: "IconFileSpreadsheet",
     FileText: "IconFileText",
+    Flag: "IconFlag",
+    FlagFilled: "IconFlagFilled",
     Flame: "IconFlame",
     Fuel: "IconGasStation",
     Gamepad2: "IconDeviceGamepad2",

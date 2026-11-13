@@ -1,12 +1,14 @@
 "use client";
 
-import { type CSSProperties, type FormEvent, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type FormEvent, useEffect, useId, useRef, useState } from "react";
 
 import {
     closestCenter,
     type CollisionDetection,
+    defaultDropAnimationSideEffects,
     DndContext,
     type DragEndEvent,
+    type DragMoveEvent,
     DragOverlay,
     KeyboardSensor,
     PointerSensor,
@@ -16,30 +18,21 @@ import {
     useSensor,
     useSensors,
 } from "@dnd-kit/core";
-import {
-    SortableContext,
-    sortableKeyboardCoordinates,
-    useSortable,
-    verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { SortableContext, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { formatInTimeZone } from "date-fns-tz";
+import { useReducedMotion } from "motion/react";
 
 import { cn } from "@/lib/utils";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
-import {
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight,
-    GripVertical,
-} from "@/components/shared/icons";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 
 import { type Task, TASK_TIME_ZONE, taskDateKey, type TaskSort } from "./model";
 import { moveNotebookList, moveNotebookTab, taskListId, type TaskNotebook } from "./notebook-model";
 import type { NotebookUpdater } from "./notebook-store";
-import { plannerDate, sortPlannerTasks } from "./planner-model";
+import { plannerColumnTasks, plannerDate, type PlannerDragPreview } from "./planner-model";
 import { shiftTaskDate } from "./recurrence";
 import { TaskLine, type TaskRowActions } from "./task-list";
 import { TaskLists } from "./task-lists";
@@ -50,6 +43,11 @@ const dateText = (day: string, format: string) =>
     formatInTimeZone(`${day}T12:00:00+05:30`, TASK_TIME_ZONE, format);
 const bucketId = (date: string | null, listId?: string) =>
     date ? `day:${date}` : `bucket:${listId}`;
+// The existing position-change tokens (--duration-fast / --ease-smooth-out), for dnd-kit's JS API.
+const dragTransition = { duration: 250, easing: "cubic-bezier(0.22, 1, 0.36, 1)" };
+// Preview order owns the gap; sortable's layout measurements animate neighbours into place.
+const previewSortingStrategy = () => null;
+const dropSideEffects = defaultDropAnimationSideEffects({ styles: { active: { opacity: "0" } } });
 
 export type TaskPlannerProps = TaskRowActions & {
     notebook: TaskNotebook;
@@ -81,16 +79,28 @@ export function TaskPlanner({
     ...actions
 }: TaskPlannerProps) {
     const today = taskDateKey(actions.now);
+    const reduceMotion = useReducedMotion();
+    const daysPanelId = useId();
     const [anchor, setAnchor] = useState(today);
     const [preferredColumns, setPreferredColumns] = useState(5);
     const [availableColumns, setAvailableColumns] = useState(1);
     const [dragged, setDragged] = useState<Task | null>(null);
+    const [dragPreview, setDragPreview] = useState<PlannerDragPreview | null>(null);
+    const latestDragPreview = useRef<PlannerDragPreview | null>(null);
+    const initialDragPreview = useRef<PlannerDragPreview | null>(null);
+    const updateDragPreview = (next: PlannerDragPreview | null) => {
+        latestDragPreview.current = next;
+        setDragPreview(next);
+    };
+    const [dragHeight, setDragHeight] = useState(40);
     const [draggedList, setDraggedList] = useState<string | null>(null);
     const [draggedTab, setDraggedTab] = useState<string | null>(null);
-    const [selectedTab, setSelectedTab] = useState(notebook.tabs[0].id);
-    const activeTab = notebook.tabs.some((tab) => tab.id === selectedTab)
-        ? selectedTab
-        : notebook.tabs[0].id;
+    const [selectedTab, setSelectedTab] = useState<string>();
+    // Start on a populated tab, including after the saved notebook finishes loading.
+    const activeTab =
+        selectedTab && notebook.tabs.some((tab) => tab.id === selectedTab)
+            ? selectedTab
+            : notebook.lists[0].tabId;
     const frame = useRef<HTMLElement>(null);
     useEffect(() => {
         const element = frame.current;
@@ -134,13 +144,50 @@ export function TaskPlanner({
             String(hit.id).startsWith("tab:"),
         );
         if (tabHit) return [tabHit];
+        if (!isList && !isTab && args.pointerCoordinates) {
+            const hits = pointerWithin({ ...args, droppableContainers: eligible });
+            // A row is more precise than the column containing it; empty space appends.
+            const row = hits.find(
+                (hit) => eligible.find((item) => item.id === hit.id)?.data.current?.kind === "task",
+            );
+            return row ? [row] : hits.slice(0, 1);
+        }
         return closestCenter({ ...args, droppableContainers: eligible });
     };
-    const dragEnd = ({ active, over }: DragEndEvent) => {
+    const previewMove = ({ active, over }: DragMoveEvent) => {
+        if (active.data.current?.kind !== "task" || !over || over.id === active.id) return;
+        const date = over.data.current?.date as string | null | undefined;
+        const listId = over.data.current?.listId as string | undefined;
+        if (date === undefined) return;
+        const rows = plannerColumnTasks(
+            tasks,
+            date,
+            listId,
+            notebook,
+            today,
+            sort,
+            latestDragPreview.current,
+        ).filter((task) => task.id !== active.id);
+        const index = rows.findIndex((task) => task.id === over.id);
+        const translated = active.rect.current.translated;
+        const after =
+            translated &&
+            translated.top + translated.height / 2 > over.rect.top + over.rect.height / 2;
+        const beforeId = index < 0 ? undefined : rows[index + (after ? 1 : 0)]?.id;
+        const next = { taskId: String(active.id), date, listId, beforeId };
+        const current = latestDragPreview.current;
+        if (current?.date !== date || current.listId !== listId || current.beforeId !== beforeId)
+            updateDragPreview(next);
+    };
+    const dragEnd = async ({ active, over }: DragEndEvent) => {
         setDragged(null);
         setDraggedList(null);
         setDraggedTab(null);
-        if (!over || active.id === over.id) return;
+        if (!over) {
+            updateDragPreview(null);
+            return;
+        }
+        if (active.data.current?.kind !== "task" && active.id === over.id) return;
         if (active.data.current?.kind === "tab") {
             const id = active.data.current.tabId as string;
             const targetId = over.data.current?.tabId as string | undefined;
@@ -168,6 +215,7 @@ export function TaskPlanner({
         }
         const id = String(active.id);
         if (over.data.current?.kind === "tab") {
+            updateDragPreview(null);
             const firstList = notebook.lists.find(
                 (list) => list.tabId === over.data.current?.tabId,
             );
@@ -177,30 +225,23 @@ export function TaskPlanner({
                 });
             return;
         }
-        const date = over.data.current?.date as string | null | undefined;
-        const targetList = over.data.current?.listId as string | undefined;
-        if (date === undefined) return;
-        let beforeId = tasks.some((task) => task.id === over.id) ? String(over.id) : undefined;
-        const source = tasks.find((task) => task.id === id);
-        if (
-            source &&
-            plannerDate(source, today) === date &&
-            (date || taskListId(source, notebook) === targetList) &&
-            beforeId
-        ) {
-            const rows = sortPlannerTasks(
-                tasks.filter(
-                    (task) =>
-                        plannerDate(task, today) === date &&
-                        (date || taskListId(task, notebook) === targetList),
-                ),
-                sort,
-            );
-            const from = rows.findIndex((task) => task.id === id);
-            const to = rows.findIndex((task) => task.id === beforeId);
-            if (from < to) beforeId = rows[to + 1]?.id;
+        const landing = latestDragPreview.current;
+        if (landing) {
+            const initial = initialDragPreview.current;
+            if (
+                initial?.date === landing.date &&
+                initial.listId === landing.listId &&
+                initial.beforeId === landing.beforeId
+            ) {
+                updateDragPreview(null);
+                return;
+            }
+            try {
+                await onMove(id, landing.date, landing.beforeId, landing.listId);
+            } finally {
+                updateDragPreview(null);
+            }
         }
-        void onMove(id, date, beforeId, targetList);
     };
     return (
         <section
@@ -213,21 +254,20 @@ export function TaskPlanner({
                 <p className={styles.dateRange} aria-live="polite">
                     {dateText(anchor, "MMMM yyyy")}
                 </p>
-                <div className={styles.columnPicker} role="group" aria-label="Visible days">
-                    {[1, 3, 5, 7]
+                <SlidingTabs
+                    value={columns}
+                    options={[1, 3, 5, 7]
                         .filter((count) => count <= availableColumns)
-                        .map((count) => (
-                            <button
-                                type="button"
-                                key={count}
-                                aria-label={count === 1 ? "Show one day" : `Show ${count} days`}
-                                aria-pressed={columns === count}
-                                onClick={() => setPreferredColumns(count)}
-                            >
-                                {count === 1 ? "1 day" : `${count} days`}
-                            </button>
-                        ))}
-                </div>
+                        .map((count) => ({
+                            value: count,
+                            label: count === 1 ? "1 day" : `${count} days`,
+                            ariaLabel: count === 1 ? "Show one day" : `Show ${count} days`,
+                        }))}
+                    onValueChange={setPreferredColumns}
+                    label="Visible days"
+                    panelId={daysPanelId}
+                    className={styles.columnPicker}
+                />
                 <div className={styles.dateControls}>
                     <button
                         type="button"
@@ -288,6 +328,8 @@ export function TaskPlanner({
                 sensors={sensors}
                 collisionDetection={collision}
                 onDragStart={({ active }) => {
+                    updateDragPreview(null);
+                    initialDragPreview.current = null;
                     if (active.data.current?.kind === "tab")
                         setDraggedTab(
                             notebook.tabs.find((tab) => tab.id === active.data.current?.tabId)
@@ -298,25 +340,63 @@ export function TaskPlanner({
                             notebook.lists.find((list) => list.id === active.data.current?.listId)
                                 ?.name ?? null,
                         );
-                    else setDragged(tasks.find((task) => task.id === active.id) ?? null);
+                    else {
+                        const task = tasks.find((task) => task.id === active.id);
+                        setDragged(task ?? null);
+                        setDragHeight(active.rect.current.initial?.height ?? 40);
+                        if (task) {
+                            const date = plannerDate(task, today);
+                            const listId = date === null ? taskListId(task, notebook) : undefined;
+                            const rows = plannerColumnTasks(
+                                tasks,
+                                date,
+                                listId,
+                                notebook,
+                                today,
+                                sort,
+                            );
+                            const index = rows.findIndex((row) => row.id === task.id);
+                            const initial = {
+                                taskId: task.id,
+                                date,
+                                listId,
+                                beforeId: rows[index + 1]?.id,
+                            };
+                            initialDragPreview.current = initial;
+                            updateDragPreview(initial);
+                        }
+                    }
                 }}
+                onDragMove={previewMove}
+                onDragOver={previewMove}
                 onDragCancel={() => {
                     setDragged(null);
                     setDraggedList(null);
                     setDraggedTab(null);
+                    updateDragPreview(null);
                 }}
                 onDragEnd={dragEnd}
             >
-                <div className={styles.dayGrid}>
+                <div
+                    id={daysPanelId}
+                    role="tabpanel"
+                    aria-label="Planner days"
+                    className={styles.dayGrid}
+                >
                     {days.map((day) => (
                         <PlannerColumn
                             key={day}
                             date={day}
                             today={today}
                             minimumLines={dayLineCount}
-                            tasks={sortPlannerTasks(
-                                tasks.filter((task) => plannerDate(task, today) === day),
+                            tasks={plannerColumnTasks(
+                                tasks,
+                                day,
+                                undefined,
+                                notebook,
+                                today,
                                 sort,
+                                dragPreview,
                             )}
                             onAdd={onAdd}
                             actions={actions}
@@ -336,9 +416,25 @@ export function TaskPlanner({
                     onSelectTab={setSelectedTab}
                     today={today}
                     actions={actions}
+                    dragPreview={dragPreview}
                 />
-                <DragOverlay>
-                    {dragged && <div className={styles.dragPreview}>{dragged.title}</div>}
+                <DragOverlay
+                    adjustScale={false}
+                    dropAnimation={
+                        reduceMotion ? null : { ...dragTransition, sideEffects: dropSideEffects }
+                    }
+                >
+                    {dragged && (
+                        <div className={styles.dragPreview} style={{ minHeight: dragHeight }}>
+                            <span
+                                className={
+                                    dragged.completedAt ? styles.completedPreview : undefined
+                                }
+                            >
+                                {dragged.title}
+                            </span>
+                        </div>
+                    )}
                     {draggedList && <div className={styles.dragListPreview}>{draggedList}</div>}
                     {draggedTab && <div className={styles.dragTabPreview}>{draggedTab}</div>}
                 </DragOverlay>
@@ -380,12 +476,11 @@ export function PlannerColumn({
         >
             <header className={styles.dayHeading}>
                 {date && <time dateTime={date}>{dateText(date, "MMM d, yyyy")}</time>}
-                <h2 title={name}>{date ? dateText(date, "EEEE") : (name ?? "Someday")}</h2>
+                <h2 className="h5" title={name}>
+                    {date ? dateText(date, "EEEE") : (name ?? "Someday")}
+                </h2>
             </header>
-            <SortableContext
-                items={tasks.map((task) => task.id)}
-                strategy={verticalListSortingStrategy}
-            >
+            <SortableContext items={tasks.map((task) => task.id)} strategy={previewSortingStrategy}>
                 <ul className={styles.ruledList}>
                     {tasks.map((task) => (
                         <SortableLine
@@ -432,26 +527,46 @@ function SortableLine({
         id: task.id,
         data: { date, listId, kind: "task" },
         disabled: actions.busy,
+        transition: dragTransition,
+        animateLayoutChanges: ({ isDragging, isSorting, wasDragging }) =>
+            !isDragging && (isSorting || wasDragging),
     });
     return (
         <li
             ref={setNodeRef}
-            className={cn(styles.sortableLine, isDragging && styles.dragging)}
-            style={{ transform: CSS.Transform.toString(transform), transition }}
+            {...attributes}
+            {...listeners}
+            role="listitem"
+            aria-roledescription="sortable task"
+            aria-label={`Move ${task.title}`}
+            onPointerDown={(event) => {
+                // Touch uses the hold delay; mouse uses the movement threshold.
+                if (event.pointerType !== "touch" && canStartTaskDrag(event.target))
+                    listeners?.onPointerDown?.(event);
+            }}
+            onTouchStart={(event) => {
+                if (canStartTaskDrag(event.target)) listeners?.onTouchStart?.(event);
+            }}
+            onKeyDown={(event) => {
+                if (event.target === event.currentTarget) listeners?.onKeyDown?.(event);
+            }}
+            className={cn(styles.sortableLine, isDragging && styles.taskPlaceholder)}
+            style={{
+                transform: isDragging ? undefined : CSS.Transform.toString(transform),
+                transition,
+            }}
         >
-            <button
-                type="button"
-                className={styles.dragHandle}
-                {...attributes}
-                {...listeners}
-                aria-label={`Move ${task.title}`}
-                title="Drag to move; use space and arrow keys with a keyboard"
-            >
-                <GripVertical aria-hidden size={14} />
-            </button>
             <TaskLine task={task} {...actions} />
         </li>
     );
+}
+
+function canStartTaskDrag(target: EventTarget) {
+    if (!(target instanceof Element)) return false;
+    const control = target.closest(
+        'button, input, textarea, select, a, [role="checkbox"], [role="menuitem"], [contenteditable="true"]',
+    );
+    return !control || control.hasAttribute("data-task-title");
 }
 
 function InlineTaskComposer({

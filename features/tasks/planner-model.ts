@@ -7,7 +7,42 @@ import {
     taskSchema,
     type TaskSort,
 } from "./model";
+import { taskListId, type TaskNotebook } from "./notebook-model";
 import { shiftTaskDate, taskDaysBetween } from "./recurrence";
+
+export type PlannerDragPreview = {
+    taskId: string;
+    date: string | null;
+    listId?: string;
+    beforeId?: string;
+};
+
+/** Project the landing position without changing a task's dates, reminders or CRM links. */
+export function plannerColumnTasks(
+    tasks: Task[],
+    date: string | null,
+    listId: string | undefined,
+    notebook: TaskNotebook,
+    today: string,
+    sort: TaskSort,
+    preview?: PlannerDragPreview | null,
+): Task[] {
+    const rows = sortPlannerTasks(
+        tasks.filter(
+            (task) =>
+                plannerDate(task, today) === date &&
+                (date !== null || taskListId(task, notebook) === listId),
+        ),
+        sort,
+    );
+    const dragged = preview && tasks.find((task) => task.id === preview.taskId);
+    if (!preview || !dragged) return rows;
+    const projected = rows.filter((task) => task.id !== preview.taskId);
+    if (preview.date !== date || (date === null && preview.listId !== listId)) return projected;
+    const before = projected.findIndex((task) => task.id === preview.beforeId);
+    projected.splice(before < 0 ? projected.length : before, 0, dragged);
+    return projected;
+}
 
 /** Carry unfinished work into today's view without rewriting its real deadline. */
 export function plannerDate(task: Task, today: string): string | null {

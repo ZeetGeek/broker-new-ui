@@ -1,0 +1,337 @@
+.menu {
+    inline-size: min(288px, calc(100vw - 24px));
+    max-block-size: min(720px, var(--available-height));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    gap: 0;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    caret-color: var(--color-brand);
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-warm) transparent;
+}
+.menu ::selection {
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
+}
+.menu button {
+    cursor: pointer;
+}
+.menu button:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+.menu button:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: -2px;
+}
+.menu svg {
+    inline-size: 16px;
+    block-size: 16px;
+    flex-shrink: 0;
+    stroke-width: 1.75;
+}
+.actions {
+    display: grid;
+    gap: 0;
+    padding-block: 2px;
+}
+.actions button,
+.customDate {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-block-size: 34px;
+    padding: 7px 12px;
+    border-radius: var(--radius-control);
+    text-align: start;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+.actions button:hover,
+.customDate:hover {
+    background: var(--color-surface-muted);
+}
+.actions svg {
+    color: var(--color-ink-muted);
+}
+.section {
+    min-inline-size: 0;
+    border: 0;
+    padding: 12px;
+    margin: 0;
+}
+.section legend {
+    float: inline-start;
+    inline-size: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    margin-block-end: 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.section legend span {
+    margin-inline-start: auto;
+    color: var(--color-ink-subtle);
+    font-size: 11px;
+    font-weight: 500;
+}
+.dateOptions {
+    display: flex;
+    gap: 8px;
+    clear: both;
+}
+.dateOptions button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    inline-size: 34px;
+    min-block-size: 34px;
+    justify-content: center;
+    padding: 6px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-ink-muted);
+}
+.dateOptions button:hover {
+    border-color: var(--color-border-warm);
+}
+.dateOptions button[aria-pressed="true"] {
+    border-color: var(--color-border-warm);
+}
+.dateOptions button svg {
+    inline-size: 21px;
+    block-size: 21px;
+}
+.dateOptions button:nth-child(1) {
+    color: var(--color-urgent);
+}
+.dateOptions button:nth-child(2) {
+    color: var(--color-brand);
+}
+.dateOptions button:nth-child(3) {
+    color: #3b6bdc;
+}
+@media (pointer: coarse) {
+    .dateOptions button {
+        min-inline-size: 44px;
+        min-block-size: 44px;
+    }
+}
+.customDate {
+    inline-size: 100%;
+    margin-block-start: 8px;
+    padding-inline: 8px;
+    font-size: 12px;
+}
+.customDate > svg:last-child,
+.summary {
+    margin-inline-start: auto;
+}
+.customDate[aria-expanded="true"] > svg:last-child {
+    transform: rotate(180deg);
+}
+.schedule {
+    display: grid;
+    gap: 6px;
+    padding-block-start: 8px;
+}
+.schedule label {
+    font-size: 12px;
+    color: var(--color-ink-muted);
+}
+.schedule form {
+    display: grid;
+    gap: 6px;
+    margin-block-start: 6px;
+}
+.schedule form > div {
+    display: flex;
+    gap: 6px;
+}
+.schedule form button {
+    padding-inline: 12px;
+    border-radius: 8px;
+    background: var(--color-brand);
+    color: var(--color-surface);
+    font-size: 12px;
+}
+.priorities {
+    display: flex;
+    clear: both;
+    gap: 8px;
+}
+.priorities button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    min-block-size: 30px;
+    inline-size: 34px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+}
+.priorities button[aria-pressed="true"],
+.priorities button:hover {
+    border-color: var(--color-border-warm);
+}
+.priorities button[data-priority="urgent"] {
+    color: var(--color-danger);
+}
+.priorities button[data-priority="high"] {
+    color: var(--color-urgent);
+}
+.priorities button[data-priority="medium"] {
+    color: #3b6bdc;
+}
+.priorities button[data-priority="low"] {
+    color: var(--color-ink-muted);
+}
+.priorities svg {
+    inline-size: 20px;
+    block-size: 20px;
+}
+.reminder {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-block-size: 32px;
+    font-size: 12px;
+    clear: both;
+    cursor: pointer;
+}
+.hint,
+.reminderHint {
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--color-ink-subtle);
+}
+.hint {
+    margin-block-start: 6px;
+}
+.reminderHint {
+    margin: -4px 8px 8px;
+}
+.actions .delete {
+    color: var(--color-danger);
+    background: var(--color-danger-soft);
+    margin-block-start: 4px;
+}
+.remindersSection {
+    padding: 4px 0;
+}
+.reminderSubmenu {
+    inline-size: min(272px, calc(100vw - 24px));
+}
+.reminderSubmenu .reminderChips {
+    padding: 6px;
+}
+.remindersHeading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px 10px;
+    font-size: 14px;
+    font-weight: 500;
+}
+.reminderChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 12px 8px;
+}
+.reminderChip:global([data-slot="dropdown-menu-checkbox-item"]) {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-block-size: 32px;
+    padding: 6px 10px;
+    border: 1px solid var(--color-border-warm);
+    border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-ink-muted);
+    font-size: 12px;
+    font-weight: 500;
+}
+.reminderChip:global([data-checked]) {
+    border-color: transparent;
+    background: var(--color-surface-muted);
+    color: var(--color-ink);
+}
+.reminderChip :global([data-slot="dropdown-menu-checkbox-item-indicator"]) {
+    display: none;
+}
+.reminderChip svg {
+    inline-size: 12px;
+    block-size: 12px;
+    color: var(--color-ink-subtle);
+}
+.reminderSetup {
+    padding: 2px 12px 8px;
+    font-size: 12px;
+    color: var(--color-brand-text);
+    text-align: start;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+@media (pointer: coarse) {
+    .reminderChip:global([data-slot="dropdown-menu-checkbox-item"]) {
+        min-block-size: 44px;
+    }
+}
+@media (pointer: coarse) {
+    .priorities button {
+        min-inline-size: 44px;
+    }
+}
+.remindersSection .customDate {
+    margin-block-start: 0;
+    padding-inline: 12px;
+    font-size: 14px;
+}
+.remindersSection .customDate > svg:last-child {
+    margin-inline-start: 0;
+}
+.summary {
+    color: var(--color-ink-subtle);
+    font-size: 12px;
+}
+.reminderOptions {
+    border: 0;
+    margin: 0;
+    padding: 4px 12px 8px;
+}
+.reminderHint {
+    margin: 0 12px 6px;
+    font-size: 12px;
+}
+.actions .delete svg {
+    color: inherit;
+}
+.actions .delete:hover {
+    background: var(--color-danger-soft);
+}
+.feedback {
+    padding: 6px 8px;
+    color: var(--color-ink-subtle);
+    font-size: 11px;
+    line-height: 1.5;
+}
+.feedback[data-error="true"] {
+    color: var(--color-danger);
+}
+@media (pointer: coarse) {
+    .actions button,
+    .customDate,
+    .reminder,
+    .priorities button {
+        min-block-size: 44px;
+    }
+}

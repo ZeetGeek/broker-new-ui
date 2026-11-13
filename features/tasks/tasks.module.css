@@ -4,8 +4,8 @@
     caret-color: var(--color-brand);
 }
 .page ::selection {
-    background: var(--color-brand);
-    color: var(--color-surface);
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
 }
 .header {
     display: flex;
@@ -73,6 +73,10 @@
 }
 .content {
     min-inline-size: 0;
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    outline: 1px solid color-mix(in oklab, var(--color-border-warm) 50%, transparent);
 }
 .overdue {
     color: var(--color-urgent);
@@ -347,6 +351,11 @@
     }
     .detailLine {
         flex-wrap: wrap;
+    }
+}
+@media (pointer: coarse) {
+    .toolbarButton {
+        min-block-size: 44px;
     }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -18,6 +18,8 @@
 
 import { forwardRef } from "react";
 
+export { IconFlag as Flag, IconFlagFilled as FlagFilled } from "@tabler/icons-react";
+
 import { Icon as IconifyIcon, type IconProps as IconifyProps } from "@iconify/react";
 import { Icon as OfflineIcon } from "@iconify/react/offline";
 import type { IconProps, TablerIcon } from "@tabler/icons-react";

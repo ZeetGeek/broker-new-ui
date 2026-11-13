@@ -42,10 +42,9 @@ import {
     type NotebookTab,
     renameNotebookItem,
     reorderNotebookTab,
-    taskListId,
 } from "./notebook-model";
 import type { NotebookUpdater } from "./notebook-store";
-import { sortPlannerTasks } from "./planner-model";
+import { plannerColumnTasks, type PlannerDragPreview } from "./planner-model";
 import type { TaskPlannerColumnProps, TaskPlannerProps } from "./task-planner";
 import { PlannerColumn } from "./task-planner";
 
@@ -66,6 +65,7 @@ export type TaskListsProps = Pick<
     onSelectTab: (id: string) => void;
     today: string;
     actions: TaskPlannerColumnProps["actions"];
+    dragPreview?: PlannerDragPreview | null;
 };
 type Editor = { kind: "new-tab" | "new-list" | "tab" | "list"; id: string; name: string };
 
@@ -82,6 +82,7 @@ export function TaskLists({
     onSelectTab,
     today,
     actions,
+    dragPreview,
 }: TaskListsProps) {
     const [open, setOpen] = useState(true);
     const [editor, setEditor] = useState<Editor | null>(null);
@@ -140,6 +141,11 @@ export function TaskLists({
                                 onRename={() =>
                                     setEditor({ kind: "tab", id: tab.id, name: tab.name })
                                 }
+                                onAddList={() => {
+                                    onSelectTab(tab.id);
+                                    setOpen(true);
+                                    setEditor({ kind: "new-list", id: "", name: "" });
+                                }}
                                 onDelete={() =>
                                     void change(
                                         (latest) => deleteNotebookTab(latest, tab.id),
@@ -261,37 +267,20 @@ export function TaskLists({
                                             listId={list.id}
                                             name={list.name}
                                             today={today}
-                                            tasks={sortPlannerTasks(
-                                                tasks.filter(
-                                                    (task) =>
-                                                        !task.dueDate &&
-                                                        taskListId(task, notebook) === list.id,
-                                                ),
+                                            tasks={plannerColumnTasks(
+                                                tasks,
+                                                null,
+                                                list.id,
+                                                notebook,
+                                                today,
                                                 sort,
+                                                dragPreview,
                                             )}
                                             onAdd={onAdd}
                                             actions={actions}
                                         />
                                     </SortableList>
                                 ))}
-                                <div className={styles.newListColumn}>
-                                    <button
-                                        type="button"
-                                        className={styles.newListButton}
-                                        disabled={busy}
-                                        onClick={() =>
-                                            setEditor({ kind: "new-list", id: "", name: "" })
-                                        }
-                                    >
-                                        <Plus aria-hidden size={12} />
-                                        New list
-                                    </button>
-                                    <div className={styles.newListRules} aria-hidden>
-                                        {Array.from({ length: 6 }, (_, i) => (
-                                            <div key={i} className={styles.blankLine} />
-                                        ))}
-                                    </div>
-                                </div>
                             </SortableContext>
                         )
                     )}
@@ -308,6 +297,7 @@ function ListTab({
     busy,
     onSelect,
     onRename,
+    onAddList,
     onDelete,
     onShift,
     isFirst,
@@ -320,6 +310,7 @@ function ListTab({
     busy: boolean;
     onSelect: () => void;
     onRename: () => void;
+    onAddList: () => void;
     onDelete: () => void;
     onShift: (direction: -1 | 1) => void;
     isFirst: boolean;
@@ -365,6 +356,10 @@ function ListTab({
                     <MoreHorizontal className="rotate-90" aria-hidden size={12} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={onAddList}>
+                        <Plus aria-hidden />
+                        Add list
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={onRename}>
                         <Pencil aria-hidden />
                         Rename tab

@@ -41,6 +41,7 @@ import { taskListId } from "./notebook-model";
 import { useTaskNotebook } from "./notebook-store";
 import { createPlannerTask, movePlannerTask, setTaskDeleted } from "./planner-model";
 import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES, useTasks } from "./preview-store";
+import { changeTaskQuickly, type TaskQuickChange } from "./quick-actions";
 import { TaskDeleteDialog, TaskDetail, TaskReminders } from "./task-detail";
 import { TaskForm, TaskSelect } from "./task-form";
 import { TaskArchive } from "./task-list";
@@ -239,6 +240,8 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                     : item,
             ),
         );
+    const quickChange = (task: Task, change: TaskQuickChange) =>
+        changeTasks((latest) => changeTaskQuickly(latest, task.id, change));
     const quickAdd = async (title: string, date: string | null, listId?: string) => {
         const task = createPlannerTask(title, date, Date.now(), crypto.randomUUID(), listId);
         return changeTasks((latest) => [...latest, task]);
@@ -367,8 +370,8 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                             <span className="sr-only">Search tasks</span>
                             <Input
                                 size="sm"
-                                wrapperClassName="rounded-control shadow-sm inline-full"
-                                className="rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20"
+                                wrapperClassName="rounded-control inline-full"
+                                className="rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20 pointer-coarse:min-block-11"
                                 placeholder="Search tasks or linked records"
                                 value={search}
                                 onValueChange={(q) => navigate({ q: q || undefined }, true)}
@@ -503,6 +506,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 onIntent={intent}
                                 onRestore={restore}
                                 onRename={rename}
+                                onQuickChange={quickChange}
                                 onAdd={quickAdd}
                                 onMove={move}
                             />
@@ -518,6 +522,7 @@ function TasksWorkspace({ accountId }: { accountId: string }) {
                                 onIntent={intent}
                                 onRestore={restore}
                                 onRename={rename}
+                                onQuickChange={quickChange}
                             />
                         ) : (
                             <EmptyState

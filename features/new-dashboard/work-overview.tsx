@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { Label, PolarAngleAxis, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
@@ -23,6 +23,7 @@ import {
     Trash2,
     X,
 } from "@/components/shared/icons";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import {
@@ -368,12 +369,8 @@ function TodayVisits() {
     const [filter, setFilter] = useState<
         "scheduled" | "needsUpdate" | "confirmed" | "completed" | "notAttended"
     >("scheduled");
-    const visitTabsRef = useRef<HTMLDivElement>(null);
-    const visitTabsPillRef = useRef<HTMLSpanElement>(null);
-    const visitTabsPainted = useRef(false);
     const scheduled = visits.length;
     const needsUpdate = visits.filter((visit) => visit.needsUpdate).length;
-    const confirmed = visits.filter((visit) => !visit.needsUpdate && !visit.outcome).length;
     const completed = visits.filter((visit) => visit.outcome === "attended").length;
     const notAttended = visits.filter((visit) => visit.outcome === "notAttended").length;
     const visitTabOptions = [
@@ -393,36 +390,6 @@ function TodayVisits() {
         filter === "scheduled"
             ? (["needsUpdate", "confirmed", "completed", "notAttended"] as const)
             : ([filter] as const);
-
-    const moveVisitTabsPill = useCallback((animate: boolean) => {
-        const bar = visitTabsRef.current;
-        const pill = visitTabsPillRef.current;
-        const activeTab = bar?.querySelector<HTMLElement>('[aria-selected="true"]');
-        if (!pill || !activeTab) return;
-
-        const previousTransition = pill.style.transition;
-        if (!animate) pill.style.transition = "none";
-        pill.style.transform = `translateX(${activeTab.offsetLeft}px)`;
-        pill.style.width = `${activeTab.offsetWidth}px`;
-        if (!animate) {
-            void pill.offsetWidth;
-            pill.style.transition = previousTransition;
-        }
-    }, []);
-
-    useLayoutEffect(() => {
-        moveVisitTabsPill(visitTabsPainted.current);
-        visitTabsPainted.current = true;
-    }, [filter, scheduled, needsUpdate, confirmed, completed, notAttended, moveVisitTabsPill]);
-
-    useLayoutEffect(() => {
-        const bar = visitTabsRef.current;
-        if (!bar) return;
-        const observer = new ResizeObserver(() => moveVisitTabsPill(false));
-        observer.observe(bar);
-        bar.querySelectorAll<HTMLElement>('[role="tab"]').forEach((tab) => observer.observe(tab));
-        return () => observer.disconnect();
-    }, [moveVisitTabsPill]);
 
     return (
         <section
@@ -450,53 +417,23 @@ function TodayVisits() {
                     </Button>
                 </div>
             </header>
-            <div
-                ref={visitTabsRef}
-                className={cn(
-                    "t-tabs t-tabs-surface t-tabs-compact",
-                    taskStyles.tabs,
-                    visitStyles.tabs,
-                )}
-                role="tablist"
-                aria-label="Filter visits"
-            >
-                <span ref={visitTabsPillRef} className="t-tabs-pill" aria-hidden="true" />
-                {visitTabOptions.map(([value, label, count], index) => (
-                    <button
-                        key={value}
-                        type="button"
-                        role="tab"
-                        aria-selected={filter === value}
-                        aria-controls="visit-list-panel"
-                        tabIndex={filter === value ? 0 : -1}
-                        onClick={() => setFilter(value)}
-                        onKeyDown={(event) => {
-                            let next = index;
-                            if (event.key === "ArrowRight") {
-                                next = (index + 1) % visitTabOptions.length;
-                            } else if (event.key === "ArrowLeft") {
-                                next =
-                                    (index - 1 + visitTabOptions.length) % visitTabOptions.length;
-                            } else if (event.key === "Home") {
-                                next = 0;
-                            } else if (event.key === "End") {
-                                next = visitTabOptions.length - 1;
-                            } else {
-                                return;
-                            }
-                            event.preventDefault();
-                            setFilter(visitTabOptions[next][0]);
-                            event.currentTarget.parentElement
-                                ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-                                [next]?.focus();
-                        }}
-                        className={cn("t-tab", taskStyles.tab, visitStyles.tab)}
-                    >
-                        {label}
-                        {count > 0 ? <span className={taskStyles.count}>{count}</span> : null}
-                    </button>
-                ))}
-            </div>
+            <SlidingTabs
+                value={filter}
+                options={visitTabOptions.map(([value, label, count]) => ({
+                    value,
+                    label: (
+                        <>
+                            {label}
+                            {count > 0 ? <span className={taskStyles.count}>{count}</span> : null}
+                        </>
+                    ),
+                }))}
+                onValueChange={setFilter}
+                label="Filter visits"
+                panelId="visit-list-panel"
+                className={cn(taskStyles.tabs, visitStyles.tabs)}
+                tabClassName={cn(taskStyles.tab, visitStyles.tab)}
+            />
             <div
                 ref={visitViewportRef}
                 onScroll={measureVisits}
