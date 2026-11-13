@@ -743,3 +743,26 @@ test("bathrooms default to one per BHK", () => {
     assert.equal(bathroomsForBhk(""), null);
     assert.equal(bathroomsForBhk("0"), null);
 });
+
+test("Quick add publishes with its own fields only", () => {
+    const values = listing();
+    // Fields that only exist in Full details.
+    values.basics.description = "";
+    Object.assign(values.details, {
+        bathrooms: null,
+        floorNumber: null,
+        totalFloors: null,
+        propertyAge: null,
+        propertyCondition: "",
+    });
+    values.furnishing.status = "";
+    values.location.nearbyPlaces = [];
+    assert.deepEqual(quickAddValidationIssues(values, "broker", "publish"), []);
+
+    values.details.bedrooms = "";
+    assert.ok(
+        quickAddValidationIssues(values, "broker", "publish").some(
+            (issue) => issue.path === "details.bedrooms",
+        ),
+    );
+});

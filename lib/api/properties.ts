@@ -741,19 +741,36 @@ export const propertiesApi = {
         });
     },
 
-    // Dedicated soft-delete endpoint: never fall back to the legacy permanent DELETE.
+    /**
+     * Soft delete: moves the listing to Deleted. 409 while a broker represents
+     * it — the API message says to end the representation first.
+     */
     moveToDeleted(id: string) {
-        return apiFetch<void>(`/properties/${id}/delete`, { method: "POST" });
+        return apiFetch<{ id: string; deleted: true; deletedAt: string }>(
+            `/properties/${id}/delete`,
+            { method: "POST" },
+        );
     },
 
+    /** Brings a listing back from Deleted as a draft. Returns the listing. */
     restore(id: string) {
-        return apiFetch<void>(`/properties/${id}/restore`, { method: "POST" });
+        return apiFetch<PropertyListing>(`/properties/${id}/restore`, { method: "POST" });
     },
 
+    /**
+     * Purges a listing that is already in Deleted (404 for a live one). 409 when
+     * it carries closed deals or leases — it then stays in Deleted.
+     */
     removePermanently(id: string) {
-        return apiFetch<void>(`/properties/${id}/permanent`, { method: "DELETE" });
+        return apiFetch<{ id: string; deleted: true }>(`/properties/${id}/permanent`, {
+            method: "DELETE",
+        });
     },
 
+    /**
+     * Legacy route, now the same soft delete as `moveToDeleted`. Prefer
+     * `moveToDeleted` in new code.
+     */
     remove(id: string) {
         return apiFetch<{ id: string; deleted: boolean }>(`/properties/${id}`, {
             method: "DELETE",

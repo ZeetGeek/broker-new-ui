@@ -61,8 +61,8 @@ export function PropertyDeleteDialog({
         >
             <p className="body text-ink-muted">
                 {permanent
-                    ? "This cannot be undone. The property and its photos will be permanently removed."
-                    : "You can restore it as a draft from Deleted. Deal outcomes are managed separately in Pipeline."}
+                    ? "This cannot be undone. The property, its photos, its visits and its client links will be permanently removed. Your clients stay."
+                    : "It comes off the market straight away: brokers can no longer find it, pending broker requests are declined and open visit times are closed. You can restore it as a draft from Deleted."}
             </p>
         </AppModal>
     );

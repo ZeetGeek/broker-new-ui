@@ -14,10 +14,14 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
         : (item.saleAmountInr ?? item.rentAmountInr ?? 0);
     const locality = formatPlaceName(item.locality);
     const city = formatPlaceName(item.city);
+    const place = [locality, city].filter(Boolean).join(", ");
+    const typeLabel = PROPERTY_TYPE_LABELS[item.propertyType] ?? "Property";
+    // Saved titles already name the place ("Shop in Baner, Pune"); never append it again.
+    const title = item.title?.trim() || (place ? `${typeLabel} in ${place}` : typeLabel);
 
     return {
         id: item.id,
-        title: `${item?.title ? item.title : PROPERTY_TYPE_LABELS[item.propertyType]} in ${locality}, ${city}`,
+        title,
         configLabel: item.configLabel,
         /** Lowercase type key — matches browse cards / residential checks. */
         propertyTypeLabel: item.propertyType,

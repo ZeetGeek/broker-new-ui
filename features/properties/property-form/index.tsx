@@ -572,10 +572,12 @@ export function PropertyForm({
             persistInFlightRef.current = false;
             return;
         }
+        // Quick add shows photos, society and owner itself, so these fixes stay in Quick add.
         if (current.media.photos.filter(isUsablePropertyPhoto).length > MAX_PROPERTY_PHOTOS) {
-            setEntryMode("full");
-            setStep("media");
-            setHighestUnlocked(FORM_STEPS.length - 1);
+            if (entryMode === "full") {
+                setStep("media");
+                setHighestUnlocked(FORM_STEPS.length - 1);
+            }
             setFormBanner(
                 `Keep up to ${MAX_PROPERTY_PHOTOS} photos before saving. No photos have been removed.`,
             );
@@ -588,8 +590,7 @@ export function PropertyForm({
             initialListing.society &&
             !current.location.projectOrSociety?.trim()
         ) {
-            setEntryMode("full");
-            setStep("basics");
+            if (entryMode === "full") setStep("basics");
             setFormBanner(
                 "Removing a saved society is not supported yet. Keep its name, or replace it with the correct name.",
             );
@@ -602,8 +603,7 @@ export function PropertyForm({
             !current.owner.contactId &&
             portal === "broker"
         ) {
-            setEntryMode("full");
-            setStep("media");
+            if (entryMode === "full") setStep("media");
             setFormBanner(
                 "Removing a saved owner is not supported yet. Keep this owner or choose a replacement.",
             );
@@ -677,25 +677,12 @@ export function PropertyForm({
                 persistInFlightRef.current = false;
                 return;
             }
-        } else if (!forceDraft) {
+        } else if (!forceDraft && entryMode === "full") {
+            // Quick add publishes with its own fields only (checked above), so a
+            // broker is never pushed into Full details to finish a quick listing.
             const required = activeSteps.map((item) => item.id);
             for (const requiredStep of required) {
                 if (!validateStep(requiredStep)) {
-                    // Quick add can fix its own fields in place. Required fields only
-                    // collected in Full details must be made reachable before returning.
-                    const firstPath = pendingFocusPathRef.current;
-                    if (
-                        entryMode === "quick" &&
-                        firstPath &&
-                        !QUICK_ADD_VALIDATION_FIELDS.some((path) => path === firstPath) &&
-                        firstPath !== "owner.contactId" &&
-                        firstPath !== "attachedBuyers"
-                    ) {
-                        setEntryMode("full");
-                        setFormBanner(
-                            "Complete the required details on this step before publishing. Your Quick add entries are kept.",
-                        );
-                    }
                     const problemIndex = FORM_STEPS.findIndex((item) => item.id === requiredStep);
                     setHighestUnlocked((value) => Math.max(value, problemIndex));
                     setStep(requiredStep);
@@ -873,11 +860,7 @@ export function PropertyForm({
 
     function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        if (entryMode === "quick") {
-            void persistProperty("draft");
-            return;
-        }
-        if (isLastStep) void persistProperty("publish");
+        if (entryMode === "quick" || isLastStep) void persistProperty("publish");
         else goNext();
     }
 
@@ -897,11 +880,7 @@ export function PropertyForm({
         // Ctrl/Cmd+Enter continues or publishes — same as the footer primary action.
         event.preventDefault();
         if (!event.ctrlKey && !event.metaKey) return;
-        if (entryMode === "quick") {
-            void persistProperty("draft");
-            return;
-        }
-        if (isLastStep) {
+        if (entryMode === "quick" || isLastStep) {
             void persistProperty("publish");
             return;
         }
@@ -948,13 +927,13 @@ export function PropertyForm({
             stepCount={activeSteps.length}
             isLastStep={isLastStep}
             isSubmitting={saving}
+            savingIntent={savingIntent}
             showStartFresh={mode === "create"}
             onStartFresh={() => void startFreshListing()}
             onBack={goBack}
             onSaveDraft={() => void persistProperty("draft")}
             onNext={() => {
-                if (entryMode === "quick") void persistProperty("draft");
-                else if (isLastStep) void persistProperty("publish");
+                if (entryMode === "quick" || isLastStep) void persistProperty("publish");
                 else goNext();
             }}
         />
@@ -1354,7 +1333,7 @@ function PropertyFormHeader({
                     </DialogTitle>
                     <DialogDescription className="sr-only">
                         Property and commission details. Full details walks through every step;
-                        Quick add saves the essentials as a draft.
+                        Quick add publishes with just the essentials.
                     </DialogDescription>
                     {savedHint}
                 </DialogHeader>
@@ -1438,6 +1417,7 @@ function PropertyFormActions({
     stepCount,
     isLastStep,
     isSubmitting,
+    savingIntent = null,
     showStartFresh,
     onStartFresh,
     onBack,
@@ -1449,6 +1429,7 @@ function PropertyFormActions({
     stepCount: number;
     isLastStep: boolean;
     isSubmitting: boolean;
+    savingIntent?: "draft" | "publish" | null;
     showStartFresh: boolean;
     onStartFresh: () => void;
     onBack: () => void;
@@ -1458,8 +1439,7 @@ function PropertyFormActions({
     const showBack = entryMode === "full" && stepIndex > 0;
     const showPrimary = true;
     const progressPct = stepCount ? Math.round(((stepIndex + 1) / stepCount) * 100) : 0;
-    const primaryLabel =
-        entryMode === "quick" ? "Save as draft" : isLastStep ? "Publish" : "Continue";
+    const primaryLabel = isLastStep ? "Publish" : "Continue";
 
     if (entryMode === "quick") {
         return (
@@ -1477,16 +1457,28 @@ function PropertyFormActions({
                 ) : (
                     <span />
                 )}
-                <Button
-                    type="button"
-                    variant="accent"
-                    loading={isSubmitting}
-                    disabled={isSubmitting}
-                    onClick={onNext}
-                    className="gap-2 min-block-11"
-                >
-                    Save as draft <Check aria-hidden />
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        loading={savingIntent === "draft"}
+                        disabled={isSubmitting}
+                        onClick={onSaveDraft}
+                        className="min-block-11"
+                    >
+                        Save as draft
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="accent"
+                        loading={savingIntent === "publish"}
+                        disabled={isSubmitting}
+                        onClick={onNext}
+                        className="gap-2 min-block-11"
+                    >
+                        Publish <Check aria-hidden />
+                    </Button>
+                </div>
             </div>
         );
     }

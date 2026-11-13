@@ -32,6 +32,13 @@ export type MyListingsGridProps = {
     /** Broker portal only. Save / remove save on the card menu. */
     onToggleSave?: (listing: MyListingItem) => void;
     isSaved?: (listing: MyListingItem) => boolean;
+    /** Deleted tab: cards become read-only with Restore / Delete permanently. */
+    deletedActions?: {
+        onRestore: (listing: MyListingItem) => void;
+        onDeletePermanently: (listing: MyListingItem) => void;
+        restoringId?: string | null;
+        disabled?: boolean;
+    };
 };
 
 const GRID_BREAKPOINTS = [
@@ -40,6 +47,9 @@ const GRID_BREAKPOINTS = [
     { minWidth: 1024, columns: 4 },
     { minWidth: 1280, columns: 5 },
 ];
+
+const IMAGE_SIZES =
+    "(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw";
 
 export function MyListingsGrid({
     items,
@@ -52,6 +62,7 @@ export function MyListingsGrid({
     brokerSummaryState,
     onToggleSave,
     isSaved,
+    deletedActions,
 }: MyListingsGridProps) {
     const router = useRouter();
     const detailHref = portal === "owner" ? ownerPropertyDetailHref : brokerPropertyDetailHref;
@@ -68,6 +79,26 @@ export function MyListingsGrid({
             gridClassName={MY_LISTINGS_GRID_CLASS}
             renderItem={(item, index) => {
                 const listing = toOwnedPropertyCardListing(item);
+
+                if (deletedActions) {
+                    return (
+                        <PropertyCard
+                            variant="owned"
+                            listing={listing}
+                            audience={portal}
+                            detailsHref={detailHref(item.id)}
+                            deleted={{
+                                onRestore: () => deletedActions.onRestore(item),
+                                onDeletePermanently: () => deletedActions.onDeletePermanently(item),
+                                isRestoring: deletedActions.restoringId === item.id,
+                                disabled:
+                                    deletedActions.disabled || deletedActions.restoringId != null,
+                            }}
+                            priority={index === 0}
+                            imageSizes={IMAGE_SIZES}
+                        />
+                    );
+                }
 
                 return (
                     <PropertyCard
@@ -94,7 +125,7 @@ export function MyListingsGrid({
                         isSaved={isSaved?.(item) ?? false}
                         onToggleSave={onToggleSave ? () => onToggleSave(item) : undefined}
                         priority={index === 0}
-                        imageSizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        imageSizes={IMAGE_SIZES}
                     />
                 );
             }}

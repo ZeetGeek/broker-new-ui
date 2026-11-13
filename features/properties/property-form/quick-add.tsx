@@ -109,8 +109,8 @@ export function QuickAdd({
                     Quick add
                 </h1>
                 <p className="text-sm/6 text-ink-muted max-inline-3xl">
-                    Capture the essentials now. Save as a draft, then finish the rest in Full
-                    details when you have time.
+                    Fill in the essentials and publish. You can add more details later from Full
+                    details.
                 </p>
             </header>
 
