@@ -194,7 +194,6 @@ export function StepLocation() {
                             startIcon={Globe2}
                             loading={countriesLoading}
                             emptyText="No countries match"
-                            limit={50}
                             disabled={Boolean(market)}
                             hint={
                                 market
@@ -219,7 +218,6 @@ export function StepLocation() {
                             loading={statesLoading}
                             disabled={!selectedCountry}
                             emptyText={statesLoading ? "Loading states…" : "No states match"}
-                            limit={100}
                             onValueChange={() => {
                                 setValue("location.city", "", { shouldDirty: true });
                                 setValue("location.locality", "", { shouldDirty: true });
@@ -234,7 +232,6 @@ export function StepLocation() {
                             loading={citiesLoading}
                             disabled={!selectedState}
                             emptyText={citiesLoading ? "Loading cities…" : "No cities match"}
-                            limit={100}
                             onValueChange={() => {
                                 // Localities are per city.
                                 setValue("location.locality", "", { shouldDirty: true });

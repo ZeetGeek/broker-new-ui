@@ -130,7 +130,6 @@ export function QuickAdd({
                             startIcon={Globe2}
                             loading={countriesLoading}
                             emptyText="No countries match"
-                            limit={50}
                             disabled={Boolean(market)}
                             hint={
                                 market
@@ -154,7 +153,6 @@ export function QuickAdd({
                             loading={statesLoading}
                             disabled={!selectedCountry}
                             emptyText={statesLoading ? "Loading states…" : "No states match"}
-                            limit={100}
                             onValueChange={() => {
                                 // Cities and localities are per state.
                                 setValue("location.city", "", { shouldDirty: true });
@@ -170,7 +168,6 @@ export function QuickAdd({
                             loading={citiesLoading}
                             disabled={!selectedState}
                             emptyText={citiesLoading ? "Loading cities…" : "No cities match"}
-                            limit={100}
                             onValueChange={() => {
                                 // Localities are per city.
                                 setValue("location.locality", "", { shouldDirty: true });

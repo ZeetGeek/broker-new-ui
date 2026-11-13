@@ -90,7 +90,6 @@ export function CountryPicker({
             loading={isLoading}
             disabled={disabled}
             emptyText="No countries match"
-            limit={50}
             errorText={errorText}
             helperText="You will see listings and prices from this country."
         />

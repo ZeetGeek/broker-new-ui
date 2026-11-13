@@ -324,7 +324,7 @@ export function SelectField({
     disabled?: boolean;
     /** Message when nothing matches — e.g. "Pick a state first". */
     emptyText?: string;
-    /** Caps rendered matches. Needed for long lists such as a state's cities. */
+    /** Caps rendered matches. Never set it on country / state / city lists — it hides real places past the cap. */
     limit?: number;
 }) {
     const {

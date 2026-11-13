@@ -52,7 +52,7 @@ export function OptionCombobox({
     emptyText?: string;
     errorText?: string;
     helperText?: string;
-    /** Caps rendered matches. Needed for long lists such as a state's cities. */
+    /** Caps rendered matches. Never set it on country / state / city lists — it hides real places past the cap. */
     limit?: number;
     size?: ComboboxInputProps["size"];
     /** Font treatment shared by the input and portalled options. */

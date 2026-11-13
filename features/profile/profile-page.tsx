@@ -635,7 +635,6 @@ export function ProfilePage() {
                                                     startIcon={Globe2}
                                                     loading={countriesLoading}
                                                     emptyText="No countries match"
-                                                    limit={50}
                                                     disabled
                                                     helperText={COUNTRY_LOCKED_HELPER}
                                                     errorText={fieldState.error?.message}
@@ -685,7 +684,6 @@ export function ProfilePage() {
                                                             ? "Loading states…"
                                                             : "No states match"
                                                     }
-                                                    limit={100}
                                                     errorText={fieldState.error?.message}
                                                     onBlur={field.onBlur}
                                                     onValueChange={(next) => {
@@ -729,7 +727,6 @@ export function ProfilePage() {
                                                             ? "Loading cities…"
                                                             : "No cities match"
                                                     }
-                                                    limit={100}
                                                     errorText={fieldState.error?.message}
                                                     onBlur={field.onBlur}
                                                     onValueChange={(next) => {
