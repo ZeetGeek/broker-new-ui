@@ -157,7 +157,7 @@
 }
 .taskLine {
     --task-action-size: 28px;
-    --task-action-gutter: 32px;
+    --task-action-gutter: 24px;
     position: relative;
     isolation: isolate;
     display: flex;
@@ -210,11 +210,11 @@
 }
 .lineCheck {
     position: absolute;
-    inset-inline-start: -19px;
+    inset-inline-start: -23px;
     inset-block-start: 50%;
     transform: translateY(-50%);
-    inline-size: 16px;
-    block-size: 16px;
+    inline-size: 20px;
+    block-size: 20px;
     border-width: 1.5px;
     border-radius: 50%;
     cursor: pointer;
@@ -224,8 +224,8 @@
     cursor: not-allowed;
 }
 .lineCheck [data-slot="checkbox-indicator"] {
-    inline-size: 9px;
-    block-size: 9px;
+    inline-size: 11px;
+    block-size: 11px;
 }
 .lineCheck::after {
     inset: -9px -5px;
@@ -264,7 +264,7 @@
     transform: translate(-50%, -50%);
     inline-size: 20px;
     block-size: 20px;
-    border: 1px solid color-mix(in srgb, var(--color-ink-subtle) 40%, var(--color-surface));
+    border: 1px solid transparent;
     border-radius: 50%;
     pointer-events: none;
 }
@@ -282,8 +282,9 @@
     background: transparent;
 }
 .lineAction:hover::before,
+.lineAction:focus-visible::before,
 .lineAction[data-popup-open]::before {
-    border-color: var(--color-ink-subtle);
+    border-color: color-mix(in srgb, var(--color-ink-subtle) 40%, var(--color-surface));
 }
 .taskLine:hover .lineCheck,
 .taskLine:focus-within .lineCheck,
