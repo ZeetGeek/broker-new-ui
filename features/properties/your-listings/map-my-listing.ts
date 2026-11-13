@@ -363,7 +363,9 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         })(),
         ownerOrigin: listing.exclusiveOwnerId || listing.exclusiveOwner?.id ? "custom" : null,
         ownerId: listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null,
-        isBookmarked: Boolean(listing.isBookmarked),
+        // Left undefined when the API omits it (the caller's own listing); only
+        // browse responses carry bookmark state, and that gates the Save button.
+        isBookmarked: listing.isBookmarked == null ? undefined : listing.isBookmarked,
         visibility:
             listing.visibility === "private"
                 ? "private"

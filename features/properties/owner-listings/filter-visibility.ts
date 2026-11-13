@@ -1,3 +1,4 @@
+import { PLOT_SUBTYPES } from "@/lib/properties/list-criteria";
 import { DEFAULT_PROPERTY_DRAFT } from "@/lib/schemas/property";
 import { derive } from "@/lib/visibility/derive";
 import { FIELD_RULES } from "@/lib/visibility/rules";
@@ -197,13 +198,6 @@ export function stripHiddenOwnerListingsFilters(
 
     return next;
 }
-
-const PLOT_SUBTYPES = [
-    "residential_plot",
-    "commercial_plot",
-    "industrial_plot",
-    "na_plot",
-] as const;
 
 export function browseApiTypeFilters(
     category: OwnerListingCategory | "",

@@ -1,8 +1,7 @@
 import { daysSince } from "@/lib/api/pipeline";
 import { formatPrice, formatRent } from "@/lib/format/price";
-import { matchesPropertyCriteria } from "@/lib/properties/list-criteria";
 
-import type { DealItem, DealsFilters, DealStage } from "@/features/pipeline/types";
+import type { DealItem, DealStage } from "@/features/pipeline/types";
 import { isLiveStage, SLOW_AFTER_DAYS, STALLED_AFTER_DAYS } from "@/features/pipeline/types";
 
 export type AttentionTone = "healthy" | "slow" | "quiet";
@@ -54,24 +53,6 @@ export function otherBuyersOnProperty(deal: DealItem, all: DealItem[]): OtherBuy
         if (!isLiveStage(item.status)) return [];
         return [{ dealId: item.id, name: item.buyer.name, stage: item.status }];
     });
-}
-
-export function matchesClientFilters(
-    deal: DealItem,
-    filters: Pick<DealsFilters, "dealType" | "locality" | "ownerName" | "propertyFilters">,
-): boolean {
-    return matchesPropertyCriteria(
-        {
-            ...deal.property,
-            commissionAmount: deal.property.commissionAmountInr,
-            ...deal.property.filterFacts,
-        },
-        {
-            ...filters.propertyFilters,
-            type: filters.dealType,
-            where: filters.propertyFilters?.where ?? filters.locality,
-        },
-    );
 }
 
 export function uniqueLocalities(deals: DealItem[]): string[] {

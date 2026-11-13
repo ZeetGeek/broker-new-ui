@@ -6,16 +6,17 @@ import toast from "react-hot-toast";
 import { pipelineApi } from "@/lib/api/pipeline";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { PREF_KEYS } from "@/lib/prefs/keys";
-import { EMPTY_PROPERTY_CRITERIA, propertyCriteriaCount } from "@/lib/properties/list-criteria";
+import { EMPTY_PROPERTY_CRITERIA } from "@/lib/properties/list-criteria";
 import { pipelineStageFromQuery } from "@/lib/properties/pipeline-stage-query";
 import { StageOperationGate } from "@/lib/properties/stage-operation-gate";
+import { cn } from "@/lib/utils";
+import { useDebouncedValue } from "@/hooks/use-locations";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 
-import { matchesClientFilters } from "@/features/pipeline/deal-attention";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
 import { DealDetailModal } from "@/features/pipeline/deal-detail-modal";
 import { DealNoteModal } from "@/features/pipeline/deal-note-modal";
@@ -47,6 +48,7 @@ import {
     type DealStatus,
     type DealsView,
     DEFAULT_DEALS_FILTERS,
+    hasActiveDealsFilters,
     isLiveStage,
 } from "@/features/pipeline/types";
 import { useStageSwipe } from "@/features/pipeline/use-stage-swipe";
@@ -169,8 +171,27 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         [setPrefs, urlStage, filters.stage, searchParams, router, pathname],
     );
 
+    // The box updates as the broker types; the request waits until they pause.
+    const searchTerm = useDebouncedValue(filters.q.trim());
+
     const [deals, setDeals] = useState<DealItem[] | null>(null);
     const [summary, setSummary] = useState<DealsSummary | null>(null);
+    /**
+     * Whether the deals on screen were loaded with a search or filter. Empty
+     * states follow this, not the controls — otherwise clearing filters shows
+     * "No deals yet" for an instant while the unfiltered list is loading.
+     */
+    const [loadedWithFilters, setLoadedWithFilters] = useState(false);
+    const requestKey = JSON.stringify([
+        searchTerm,
+        filters.stage,
+        filters.sort,
+        filters.dealType,
+        filters.locality,
+        filters.propertyFilters ?? null,
+    ]);
+    /** `requestKey` of the deals on screen. Differs while a filter change loads. */
+    const [loadedKey, setLoadedKey] = useState<string | null>(null);
     const [isFetching, setIsFetching] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [busyId, setBusyId] = useState<string | null>(null);
@@ -204,23 +225,24 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             setIsFetching(true);
             setError(null);
             const requestRevision = stageGate.revision;
+            const request: DealsFilters = {
+                q: searchTerm,
+                stage: filters.stage,
+                sort: filters.sort,
+                dealType: filters.dealType,
+                locality: filters.locality,
+                ownerName: "",
+                propertyFilters: filters.propertyFilters,
+            };
 
             void pipelineApi
-                .list(
-                    {
-                        q: filters.q,
-                        stage: filters.stage,
-                        sort: filters.sort,
-                        dealType: "",
-                        locality: "",
-                        ownerName: "",
-                    },
-                    controller.signal,
-                )
+                .list(request, controller.signal)
                 .then((next) => {
                     if (cancelled || stageGate.revision !== requestRevision) return;
                     setDeals(next.items);
                     setSummary(next.summary);
+                    setLoadedWithFilters(hasActiveDealsFilters(request));
+                    setLoadedKey(requestKey);
                 })
                 .catch(() => {
                     if (!cancelled && stageGate.revision === requestRevision) {
@@ -237,7 +259,17 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             controller.abort();
             window.clearTimeout(timer);
         };
-    }, [filters.q, filters.sort, filters.stage, revision, stageGate]);
+    }, [
+        searchTerm,
+        filters.sort,
+        filters.stage,
+        filters.dealType,
+        filters.locality,
+        filters.propertyFilters,
+        requestKey,
+        revision,
+        stageGate,
+    ]);
 
     const requestMove = useCallback(
         (dealId: string, status: DealStatus, successMessage: string) => {
@@ -550,10 +582,8 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         }
     }, [setFilters, setPrefs, searchParams, router, pathname]);
 
-    const filteredDeals = useMemo(() => {
-        const all = deals ?? [];
-        return all.filter((deal) => matchesClientFilters(deal, filters));
-    }, [deals, filters]);
+    // The API already applied the filter sheet.
+    const filteredDeals = useMemo(() => deals ?? [], [deals]);
 
     const liveDeals = useMemo(() => {
         const live = filteredDeals.filter((deal) => isLiveStage(deal.status));
@@ -594,12 +624,10 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     const swipe = useStageSwipe(mobileStage, setMobileStage);
 
     const isFirstLoad = deals === null;
-    const hasSearch =
-        filters.q.trim().length > 0 ||
-        filters.stage !== "" ||
-        filters.dealType !== "" ||
-        filters.locality !== "" ||
-        propertyCriteriaCount(filters.propertyFilters) > 0;
+    // Describes the deals on screen, so a pending clear never flashes first-run copy.
+    const hasSearch = loadedWithFilters;
+    // A filter change is loading. Stage moves refetch too, but must not dim the board.
+    const isStale = !isFirstLoad && loadedKey !== requestKey;
     const isFirstRun =
         !hasSearch &&
         summary != null &&
@@ -684,7 +712,13 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 </p>
             ) : null}
 
-            <TabsContent key={view} value={view} aria-busy={isFetching}>
+            <TabsContent
+                key={view}
+                value={view}
+                aria-busy={isFetching}
+                // Keep the last result visible and dim it while the next one loads.
+                className={cn("transition-opacity duration-160", isStale && "opacity-60")}
+            >
                 {isFetching && !isFirstLoad ? (
                     <span role="status" className="sr-only">
                         Updating your deals

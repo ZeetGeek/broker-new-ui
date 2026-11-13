@@ -1,5 +1,9 @@
 import { apiFetch } from "@/lib/api/client";
-import type { PropertyFilterRecord } from "@/lib/properties/list-criteria";
+import { appendDealListingQuery, dealListingApiQuery } from "@/lib/properties/deal-listing-query";
+import {
+    normalizePropertyCriteria,
+    type PropertyFilterRecord,
+} from "@/lib/properties/list-criteria";
 
 import {
     DEAL_STAGE_ORDER,
@@ -408,16 +412,35 @@ function buildSummary(all: DealItem[]): DealsSummary {
     };
 }
 
-async function fetchAllLeads(search?: string, signal?: AbortSignal): Promise<ApiLead[]> {
+/** Filter sheet → query params. The API narrows leads by the property on each one. */
+function leadFilterParams(filters: DealsFilters): URLSearchParams {
+    const params = new URLSearchParams();
+    const criteria = normalizePropertyCriteria({
+        ...filters.propertyFilters,
+        type: filters.dealType || filters.propertyFilters?.type || "",
+        where: filters.propertyFilters?.where || filters.locality,
+    });
+    if (criteria.where) params.set("where", criteria.where);
+    appendDealListingQuery(
+        params,
+        dealListingApiQuery({ type: criteria.type, propertyFilters: criteria }),
+    );
+    return params;
+}
+
+async function fetchAllLeads(
+    search?: string,
+    filterParams?: URLSearchParams,
+    signal?: AbortSignal,
+): Promise<ApiLead[]> {
     const items: ApiLead[] = [];
     let page = 1;
     let totalPages = 1;
 
     while (page <= totalPages) {
-        const qs = new URLSearchParams({
-            page: String(page),
-            limit: "100",
-        });
+        const qs = new URLSearchParams(filterParams);
+        qs.set("page", String(page));
+        qs.set("limit", "100");
         if (search?.trim()) qs.set("search", search.trim());
         const response = await apiFetch<LeadsListResponse>(`/clients/leads?${qs}`, { signal });
         items.push(...(response.items ?? []));
@@ -436,7 +459,11 @@ export type SetStageOptions = {
 
 export const pipelineApi = {
     async list(filters: DealsFilters, signal?: AbortSignal): Promise<DealsResult> {
-        const leads = await fetchAllLeads(filters.q || undefined, signal);
+        const leads = await fetchAllLeads(
+            filters.q || undefined,
+            leadFilterParams(filters),
+            signal,
+        );
         const all = leads.map(mapLeadToDeal).filter((deal): deal is DealItem => deal != null);
 
         let items = filters.q.trim() ? all.filter((deal) => matchesQuery(deal, filters.q)) : all;

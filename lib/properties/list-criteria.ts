@@ -72,6 +72,18 @@ const ARRAY_KEYS = [
     "suitableFor",
 ] as const;
 
+/**
+ * "Plot" in the no-category type list is a group, not one type: it covers
+ * every plot kind. Only valid while no category is chosen.
+ */
+export const PLOT_TYPE_GROUP = "plot";
+export const PLOT_SUBTYPES = [
+    "residential_plot",
+    "commercial_plot",
+    "industrial_plot",
+    "na_plot",
+] as const;
+
 const typeAliases: Record<string, string> = {
     flat: "apartment",
     office: "office_space",
@@ -135,8 +147,13 @@ export function normalizePropertyCriteria(
             [next[min], next[max]] = [next[max], next[min]];
     }
     next.where = typeof next.where === "string" ? next.where.trim() : "";
-    next.propertyType =
-        typeof next.propertyType === "string" ? normalizePropertySubtype(next.propertyType) : "";
+    const rawType = typeof next.propertyType === "string" ? next.propertyType.trim() : "";
+    if (rawType.toLowerCase() === PLOT_TYPE_GROUP) {
+        // With a category chosen, the category's own plot types are listed instead.
+        next.propertyType = next.category ? "" : PLOT_TYPE_GROUP;
+        return next;
+    }
+    next.propertyType = normalizePropertySubtype(rawType);
     const allowed: readonly string[] = next.category
         ? PROPERTY_TYPES[next.category]
         : Object.values(PROPERTY_TYPES).flat();
@@ -327,7 +344,13 @@ export function matchesPropertyCriteria(
             : !(PROPERTY_TYPES[v.category] as readonly string[]).includes(subtype))
     )
         return false;
-    if (v.propertyType && subtype !== v.propertyType) return false;
+    if (
+        v.propertyType &&
+        (v.propertyType === PLOT_TYPE_GROUP
+            ? !(PLOT_SUBTYPES as readonly string[]).includes(subtype)
+            : subtype !== v.propertyType)
+    )
+        return false;
     const transaction =
         item.transactionType || (item.isRent === undefined ? "" : item.isRent ? "rent" : "sale");
     if (v.type && transaction !== "both" && transaction !== v.type) return false;

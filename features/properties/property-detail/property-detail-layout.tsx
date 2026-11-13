@@ -117,6 +117,9 @@ export function PropertyDetailLayout({
     const [saving, setSaving] = useState(false);
     // A draft has no public page yet, so there is nothing to share or save.
     const isDraft = item.status === "draft";
+    // Only browse (owner listing) responses carry bookmark state. The caller's
+    // own property has none and cannot be saved, so Save is not shown there.
+    const canBookmark = typeof item.isBookmarked === "boolean";
     const headerFacts = buildPropertyFacts(item);
     const headerLocation = item.locality || item.city;
     const summaryLines = [
@@ -200,7 +203,7 @@ export function PropertyDetailLayout({
                             listingKind: isRent ? "rent" : "sale",
                         }}
                     />
-                    {isDraft ? (
+                    {!canBookmark ? null : isDraft ? (
                         <Tooltip>
                             <TooltipTrigger render={<span className="inline-flex" tabIndex={0} />}>
                                 <Button

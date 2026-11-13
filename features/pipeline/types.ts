@@ -1,3 +1,5 @@
+import { propertyCriteriaCount } from "@/lib/properties/list-criteria";
+
 /**
  * The four funnel stages a deal moves through. These are the stages the
  * `--color-stage-1` … `--color-stage-4` tokens are named for in
@@ -227,6 +229,19 @@ export const DEAL_STAGE_ORDER: DealStage[] = ["new", "contacted", "visit", "nego
 export function nextStage(stage: DealStage): DealStage | null {
     const index = DEAL_STAGE_ORDER.indexOf(stage);
     return DEAL_STAGE_ORDER[index + 1] ?? null;
+}
+
+/** True when search, stage, or the filter sheet narrows the deals. */
+export function hasActiveDealsFilters(
+    filters: Pick<DealsFilters, "q" | "stage" | "dealType" | "locality" | "propertyFilters">,
+): boolean {
+    return (
+        filters.q.trim().length > 0 ||
+        filters.stage !== "" ||
+        filters.dealType !== "" ||
+        filters.locality !== "" ||
+        propertyCriteriaCount(filters.propertyFilters) > 0
+    );
 }
 
 export function isLiveStage(status: DealStatus): status is DealStage {

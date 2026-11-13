@@ -122,6 +122,10 @@ export type MyListingItem = {
     interestedBuyerIds?: string[];
     /** Buyers linked to this listing (for the avatar stack on the card). */
     attachedClients?: Array<{ id: string; name: string; avatarUrl?: string }>;
+    /**
+     * Set only on browse (owner listing) responses. Undefined on the caller's
+     * own listing, which cannot be bookmarked — the detail page hides Save then.
+     */
     isBookmarked?: boolean;
 };
 

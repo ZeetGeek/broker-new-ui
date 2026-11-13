@@ -624,7 +624,11 @@ export const propertiesApi = {
             if (!listing) {
                 return Promise.reject(new ApiError("Listing not found", 404));
             }
-            return Promise.resolve(listing);
+            // Same as the real browse response: the caller's bookmark state is included.
+            return Promise.resolve({
+                ...listing,
+                isBookmarked: readMockBookmarkIds().includes(listing.id),
+            });
         }
         return apiFetch<
             PropertyListing & {

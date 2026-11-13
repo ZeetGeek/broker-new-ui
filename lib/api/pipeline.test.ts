@@ -3,8 +3,9 @@ import test from "node:test";
 
 import { api } from "@/lib/api/client";
 import { pipelineApi } from "@/lib/api/pipeline";
+import { EMPTY_PROPERTY_CRITERIA } from "@/lib/properties/list-criteria";
 
-import { DEFAULT_DEALS_FILTERS } from "@/features/pipeline/types";
+import { DEFAULT_DEALS_FILTERS, hasActiveDealsFilters } from "@/features/pipeline/types";
 
 test("pipeline uses API records without inventing contact dates, locations or closed amounts", async (t) => {
     const previous = api.defaults.adapter;
@@ -120,4 +121,62 @@ test("lost reasons are read only from saved API values and omitted when absent",
         assert.equal(items.find((item) => item.id === id)?.lostReason, undefined);
     }
     assert.equal((await pipelineApi.get("known")).lostReason, "price");
+});
+
+test("pipeline sends the filter sheet to the leads API as query params", async (t) => {
+    const previous = api.defaults.adapter;
+    t.after(() => {
+        api.defaults.adapter = previous;
+    });
+    const urls: string[] = [];
+    api.defaults.adapter = async (config) => {
+        urls.push(config.url ?? "");
+        return {
+            data: { items: [], totalPages: 1 },
+            status: 200,
+            statusText: "OK",
+            headers: {},
+            config,
+        };
+    };
+    await pipelineApi.list({
+        ...DEFAULT_DEALS_FILTERS,
+        dealType: "sale",
+        propertyFilters: {
+            ...EMPTY_PROPERTY_CRITERIA,
+            where: "Andheri",
+            min: "5000000",
+            bhk: ["2", "3"],
+            furnishing: "semi",
+        },
+    });
+    const params = new URL(urls[0], "http://x").searchParams;
+    assert.equal(params.get("transactionType"), "sale");
+    assert.equal(params.get("where"), "Andheri");
+    assert.equal(params.get("minPrice"), "5000000");
+    assert.deepEqual(params.getAll("bhk"), ["2", "3"]);
+    assert.equal(params.get("furnishingStatus"), "semi");
+    assert.equal(params.get("page"), "1");
+});
+
+test("pipeline filter state: whitespace search and empty sheet are not filters", () => {
+    assert.equal(hasActiveDealsFilters(DEFAULT_DEALS_FILTERS), false);
+    assert.equal(hasActiveDealsFilters({ ...DEFAULT_DEALS_FILTERS, q: "   " }), false);
+    assert.equal(
+        hasActiveDealsFilters({
+            ...DEFAULT_DEALS_FILTERS,
+            propertyFilters: { ...EMPTY_PROPERTY_CRITERIA },
+        }),
+        false,
+    );
+    assert.equal(hasActiveDealsFilters({ ...DEFAULT_DEALS_FILTERS, q: "ravi" }), true);
+    assert.equal(hasActiveDealsFilters({ ...DEFAULT_DEALS_FILTERS, stage: "visit" }), true);
+    assert.equal(hasActiveDealsFilters({ ...DEFAULT_DEALS_FILTERS, dealType: "rent" }), true);
+    assert.equal(
+        hasActiveDealsFilters({
+            ...DEFAULT_DEALS_FILTERS,
+            propertyFilters: { ...EMPTY_PROPERTY_CRITERIA, category: "land" },
+        }),
+        true,
+    );
 });

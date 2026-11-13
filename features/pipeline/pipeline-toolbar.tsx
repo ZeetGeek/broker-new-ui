@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 
 import {
     EMPTY_PROPERTY_CRITERIA,
@@ -36,26 +36,13 @@ function sortLabel(sort: DealSort): string {
     return SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Newest first";
 }
 
+/** Updates as the broker types. The pipeline page debounces the request itself. */
 function PipelineQueryInput({ value, onChange }: { value: string; onChange: (q: string) => void }) {
-    const [draft, setDraft] = useState(value);
-    const [prevValue, setPrevValue] = useState(value);
-
-    if (value !== prevValue) {
-        setPrevValue(value);
-        setDraft(value);
-    }
-
-    useEffect(() => {
-        if (draft === value) return;
-        const timer = window.setTimeout(() => onChange(draft), 300);
-        return () => window.clearTimeout(timer);
-    }, [draft, onChange, value]);
-
     return (
         <Input
             size="sm"
-            value={draft}
-            onValueChange={setDraft}
+            value={value}
+            onValueChange={onChange}
             placeholder="Search client, owner or area"
             aria-label="Search your deals"
             startIcon={Search}
