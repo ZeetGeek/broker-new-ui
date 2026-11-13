@@ -1,7 +1,6 @@
 "use client";
 
 import { type CSSProperties, type FormEvent, useEffect, useRef, useState } from "react";
-import { Oswald } from "next/font/google";
 
 import {
     closestCenter,
@@ -47,7 +46,6 @@ import { TaskLists } from "./task-lists";
 
 import styles from "./planner.module.css";
 
-const dayFont = Oswald({ subsets: ["latin"], weight: ["400", "500"], display: "swap" });
 const dateText = (day: string, format: string) =>
     formatInTimeZone(`${day}T12:00:00+05:30`, TASK_TIME_ZONE, format);
 const bucketId = (date: string | null, listId?: string) =>
@@ -338,7 +336,6 @@ export function TaskPlanner({
                     onSelectTab={setSelectedTab}
                     today={today}
                     actions={actions}
-                    headingClassName={dayFont.className}
                 />
                 <DragOverlay>
                     {dragged && <div className={styles.dragPreview}>{dragged.title}</div>}
@@ -358,7 +355,6 @@ export type TaskPlannerColumnProps = {
     actions: TaskRowActions;
     listId?: string;
     name?: string;
-    headingClassName?: string;
     minimumLines?: number;
 };
 export function PlannerColumn({
@@ -369,7 +365,6 @@ export function PlannerColumn({
     actions,
     listId,
     name,
-    headingClassName,
     minimumLines = date ? 10 : 9,
 }: TaskPlannerColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
@@ -385,9 +380,7 @@ export function PlannerColumn({
         >
             <header className={styles.dayHeading}>
                 {date && <time dateTime={date}>{dateText(date, "MMM d, yyyy")}</time>}
-                <h2 className={headingClassName ?? dayFont.className} title={name}>
-                    {date ? dateText(date, "EEEE") : (name ?? "Someday")}
-                </h2>
+                <h2 title={name}>{date ? dateText(date, "EEEE") : (name ?? "Someday")}</h2>
             </header>
             <SortableContext
                 items={tasks.map((task) => task.id)}

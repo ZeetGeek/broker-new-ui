@@ -20,11 +20,15 @@ search, sort and Add task controls. There is no sidebar. Views are All tasks
 
 Below the toolbar, use the TeuxDeux day planner as the visual reference:
 https://teuxdeux.com/home. Flat white paper, ruled task lines, small uppercase
-dates, condensed weekday headings, five date columns by default, quiet hover
+dates, weekday headings, five date columns by default, quiet hover
 controls, inline task entry and editing, compact date navigation, and an
 undated Someday area beneath. Keep the app's green accent and existing header
 identity. Three and seven columns are optional desktop views; phones show a
 single day with date navigation and visible touch controls.
+
+Use the shared theme fonts throughout: DM Sans (`--font-sans`) for task text
+and controls, and Bricolage Grotesque (`--font-heading`) for headings. Do not
+load a separate planner font or override body text with Arial.
 
 ## Behavior and constraints
 

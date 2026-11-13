@@ -66,7 +66,6 @@ export type TaskListsProps = Pick<
     onSelectTab: (id: string) => void;
     today: string;
     actions: TaskPlannerColumnProps["actions"];
-    headingClassName: string;
 };
 type Editor = { kind: "new-tab" | "new-list" | "tab" | "list"; id: string; name: string };
 
@@ -83,7 +82,6 @@ export function TaskLists({
     onSelectTab,
     today,
     actions,
-    headingClassName,
 }: TaskListsProps) {
     const [open, setOpen] = useState(true);
     const [editor, setEditor] = useState<Editor | null>(null);
@@ -262,7 +260,6 @@ export function TaskLists({
                                             date={null}
                                             listId={list.id}
                                             name={list.name}
-                                            headingClassName={headingClassName}
                                             today={today}
                                             tasks={sortPlannerTasks(
                                                 tasks.filter(
