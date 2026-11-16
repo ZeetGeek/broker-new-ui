@@ -13,10 +13,12 @@ import {
     ArrowRight,
     BadgeCheck,
     CalendarCheck,
+    CallIcon,
     CircleX,
     ExternalLink,
     HandCoins,
     Plus,
+    StickyNote,
     Wallet,
 } from "@/components/shared/icons";
 import { PhoneNumber } from "@/components/shared/phone-number";
@@ -29,6 +31,11 @@ import { Button } from "@/components/ui/button";
 
 import { PipelineDetailSkeleton } from "@/features/pipeline/pipeline-skeleton";
 import {
+    describeStageHistory,
+    type StageHistoryRow,
+    stageTitle,
+} from "@/features/pipeline/stage-history";
+import {
     DEAL_OUTCOME_META,
     DEAL_STAGE_META,
     lostReasonLabel,
@@ -37,24 +44,6 @@ import type { DealDetail, DealHistoryEntry, DealStatus } from "@/features/pipeli
 import { isLiveStage, nextStage } from "@/features/pipeline/types";
 
 import styles from "./deal-detail-modal.module.css";
-
-const API_STAGE_LABEL: Record<string, string> = {
-    new: "New",
-    contacted: "Contacted",
-    site_visit: "Site visit",
-    visit: "Site visit",
-    negotiation: "Negotiation",
-    offer_made: "Offer made",
-    closed_won: "Closed won",
-    closed: "Closed",
-    closed_lost: "Closed lost",
-    lost: "Lost",
-    offer_rejected: "Offer rejected",
-};
-
-function stageLabel(status: string): string {
-    return API_STAGE_LABEL[status] ?? status.replace(/_/g, " ");
-}
 
 function formatMoney(amountInr: number | null, isRent: boolean): string {
     if (amountInr == null || amountInr <= 0) return "Not added";
@@ -68,7 +57,10 @@ function formatWhen(iso: string | null): string {
     return `${formatDateIn(date)} at ${formatTimeIn(date)}`;
 }
 
-function historyIcon(status: string): AppIcon {
+function historyIcon(row: StageHistoryRow): AppIcon {
+    if (row.kind === "call") return CallIcon;
+    if (row.kind === "note") return StickyNote;
+    const { status } = row;
     if (status === "new") return Plus;
     if (status === "closed_won" || status === "closed") return BadgeCheck;
     if (status === "closed_lost" || status === "lost" || status === "offer_rejected")
@@ -78,17 +70,17 @@ function historyIcon(status: string): AppIcon {
     return ArrowRight;
 }
 
-function HistoryList({ history }: { history: DealHistoryEntry[] }) {
+function HistoryList({ history, isRent }: { history: DealHistoryEntry[]; isRent: boolean }) {
     const [expanded, setExpanded] = useState(false);
     if (!history.length)
         return <p className="body-sm text-ink-muted">Stage updates will appear here.</p>;
-    const all = [...history].reverse();
+    const all = describeStageHistory(history, { isRent });
     const ordered = expanded ? all : all.slice(0, 3);
     return (
         <>
             <ol className={styles.timeline} aria-label="Deal stage history, newest first">
                 {ordered.map((entry, index) => {
-                    const Icon = historyIcon(entry.status);
+                    const Icon = historyIcon(entry);
                     const date = entry.at ? new Date(entry.at) : null;
                     const validDate = date && Number.isFinite(date.getTime()) ? date : null;
                     return (
@@ -102,9 +94,7 @@ function HistoryList({ history }: { history: DealHistoryEntry[] }) {
                             </span>
                             <div className={styles.timelineContent}>
                                 <div className={styles.timelineTitleRow}>
-                                    <h3 className={styles.timelineTitle}>
-                                        {stageLabel(entry.status)}
-                                    </h3>
+                                    <h3 className={styles.timelineTitle}>{entry.title}</h3>
                                     {index === 0 ? (
                                         <Badge variant="brand" className="px-2 py-0.5 text-[10px]">
                                             Latest
@@ -123,9 +113,9 @@ function HistoryList({ history }: { history: DealHistoryEntry[] }) {
                                 {entry.note ? (
                                     <p className={styles.timelineNote}>{entry.note}</p>
                                 ) : null}
-                                {entry.by ? (
+                                {entry.actor ? (
                                     <p className={styles.timelineActor}>
-                                        Updated by <span>{entry.by}</span>
+                                        By <span>{entry.actor}</span>
                                     </p>
                                 ) : null}
                             </div>
@@ -232,7 +222,7 @@ export function DealDetailModal({
 
     const statusLabel = deal
         ? detail?.apiStage
-            ? stageLabel(detail.apiStage)
+            ? stageTitle(detail.apiStage)
             : isLiveStage(deal.status)
               ? DEAL_STAGE_META[deal.status].label
               : DEAL_OUTCOME_META[deal.status].label
@@ -477,7 +467,11 @@ export function DealDetailModal({
 
                         <div className={styles.history}>
                             <h2 className={styles.sectionTitle}>Stage history</h2>
-                            <HistoryList key={deal.id} history={deal.history} />
+                            <HistoryList
+                                key={deal.id}
+                                history={deal.history}
+                                isRent={deal.property.isRent}
+                            />
                         </div>
                     </div>
                 </div>

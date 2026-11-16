@@ -278,7 +278,10 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         [],
     );
 
+    /** Latest detail request. An older, slower response must not replace a newer deal. */
+    const viewRequest = useRef(0);
     const openLeadView = useCallback((dealId: string) => {
+        const request = ++viewRequest.current;
         setViewDealId(dealId);
         setViewDetail(null);
         setViewError(null);
@@ -287,14 +290,17 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         void pipelineApi
             .get(dealId)
             .then((detail) => {
-                setViewDetail(detail);
+                if (request === viewRequest.current) setViewDetail(detail);
             })
             .catch((loadError) => {
+                if (request !== viewRequest.current) return;
                 setViewError(
                     loadError instanceof Error ? loadError.message : "Could not load lead details.",
                 );
             })
-            .finally(() => setIsLoadingView(false));
+            .finally(() => {
+                if (request === viewRequest.current) setIsLoadingView(false);
+            });
     }, []);
 
     useEffect(() => {

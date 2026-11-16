@@ -191,10 +191,46 @@ export function fromApiStage(stage: string | null | undefined): DealStatus {
     }
 }
 
-function stageEnteredAt(lead: ApiLead): string {
+/** History note the API stores when the broker taps "Log call". */
+export const CALL_LOGGED_NOTE = "Call logged";
+
+/** API stages a lead can sit in. Any other history status is an event on the current stage. */
+const API_STAGES = new Set([
+    "new",
+    "contacted",
+    "site_visit",
+    "negotiation",
+    "offer_made",
+    "closed_won",
+    "closed_lost",
+]);
+
+/**
+ * When the lead entered its current stage, and the last call logged since.
+ * Same-stage entries (a logged call, a saved note) and an owner rejecting an
+ * offer do not move the lead, so they must not restart the clock.
+ */
+function stageTimes(lead: ApiLead): { enteredAt: string; lastCallAt: string | null } {
     const history = Array.isArray(lead.stageHistory) ? lead.stageHistory : [];
-    const last = [...history].reverse().find((entry) => entry.at);
-    return last?.at ?? lead.updatedAt ?? lead.createdAt ?? "";
+    let stage: string | null = null;
+    let enteredAt: string | null = null;
+    let lastCallAt: string | null = null;
+
+    for (const entry of history) {
+        const status = entry.status?.trim() ?? "";
+        if (API_STAGES.has(status) && status !== stage) {
+            stage = status;
+            enteredAt = entry.at ?? enteredAt;
+            lastCallAt = null;
+        } else if (entry.note?.trim() === CALL_LOGGED_NOTE && entry.at) {
+            lastCallAt = entry.at;
+        }
+    }
+
+    return {
+        enteredAt: enteredAt ?? lead.updatedAt ?? lead.createdAt ?? "",
+        lastCallAt,
+    };
 }
 
 function mapHistory(lead: ApiLead): DealHistoryEntry[] {
@@ -242,6 +278,7 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
     const ownerName =
         lead.owner?.fullName?.trim() || lead.exclusiveOwner?.fullName?.trim() || OWNER_PLACEHOLDER;
     const status = fromApiStage(lead.stage);
+    const times = stageTimes(lead);
     // Later note edits must not change the displayed completion/loss date.
     const resolved =
         status === "closed" || status === "lost"
@@ -310,8 +347,8 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             representationId:
                 ownerOrigin === "platform" ? (lead.owner?.representationId ?? null) : null,
         },
-        stageEnteredAt: stageEnteredAt(lead),
-        lastContactedAt: null,
+        stageEnteredAt: times.enteredAt,
+        lastContactedAt: times.lastCallAt,
         nextVisitAt: lead.nextVisitAt ?? null,
         note: lead.notes?.trim() || "",
         resolvedAt: resolved,
@@ -545,7 +582,7 @@ export const pipelineApi = {
             method: "PATCH",
             body: JSON.stringify({
                 status: lead.stage,
-                note: note?.trim() || "Call logged",
+                note: note?.trim() || CALL_LOGGED_NOTE,
             }),
         });
     },
