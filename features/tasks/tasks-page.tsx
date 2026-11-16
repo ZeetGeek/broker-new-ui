@@ -42,6 +42,7 @@ import { useTaskNotebook } from "./notebook-store";
 import { createPlannerTask, movePlannerTask, setTaskDeleted } from "./planner-model";
 import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES, useTasks } from "./preview-store";
 import { changeTaskQuickly, type TaskQuickChange } from "./quick-actions";
+import { encodeTaskDraftTitle } from "./quick-add-draft";
 import { TaskDeleteDialog, TaskDetail, TaskReminders } from "./task-detail";
 import { TaskForm, TaskSelect } from "./task-form";
 import { TaskArchive } from "./task-list";
@@ -334,9 +335,19 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             editing.startDate === (draft.startDate || null) &&
             editing.dueDate === (draft.dueDate || null) &&
             JSON.stringify(editing.repeat) === JSON.stringify(draft.repeat);
+        const catalogs = {
+            clients: TASK_CLIENTS,
+            owners: TASK_OWNERS,
+            properties: TASK_PROPERTIES,
+        };
+        // Create / edit modal: put field values as end-of-title chips (same as quick-add).
+        const title =
+            view === "create" || view === "edit"
+                ? encodeTaskDraftTitle(draft, catalogs, Date.now())
+                : draft.title.trim();
         const next: Task = {
             id: editing?.id ?? crypto.randomUUID(),
-            title: draft.title.trim(),
+            title,
             details: draft.details.trim(),
             startDate: draft.startDate || null,
             startTime: draft.startDate && draft.startTime ? draft.startTime : null,

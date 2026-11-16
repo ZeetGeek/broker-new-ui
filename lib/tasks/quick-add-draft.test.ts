@@ -3,8 +3,10 @@ import test from "node:test";
 
 import { createPlannerTask } from "@/features/tasks/planner-model";
 import {
+    bareTaskDraftTitle,
     changeQuickAddText,
     diffText,
+    encodeTaskDraftTitle,
     insertQuickAddEntity,
     newQuickAddDraft,
     type QuickAddDraft,
@@ -17,6 +19,7 @@ import {
     findQuickAddMention,
     parseQuickAdd,
 } from "@/features/tasks/quick-add-parse";
+import type { TaskDraft } from "@/features/tasks/model";
 
 const now = Date.parse("2030-11-16T09:00:00+05:30");
 const catalogs = {
@@ -308,6 +311,24 @@ test("pasting # / @ labels re-links catalog chips in place", () => {
     );
 });
 
+test("edit opens linked contacts as chips when the title has none", () => {
+    const task = createPlannerTask("Follow up call", "2030-11-16", now, "linked", undefined, {
+        clientId: "client-aarav",
+        propertyId: "prop-happy",
+        ownerId: "owner-rakesh",
+    });
+    const draft = quickAddDraftFromTask(task, now, catalogs);
+    assert.equal(draft.text, "Follow up call #Happy Elegance @Aarav Shah @Rakesh Shah");
+    assert.deepEqual(
+        draft.entities.map((entity) => [entity.kind, entity.refId]),
+        [
+            ["property", "prop-happy"],
+            ["client", "client-aarav"],
+            ["owner", "owner-rakesh"],
+        ],
+    );
+});
+
 test("older stripped titles keep details on base without appending chips at the end", () => {
     const task = createPlannerTask(
         "Call about monday visit",
@@ -332,4 +353,47 @@ test("older stripped titles keep details on base without appending chips at the 
     assert.equal(values.priority, "high");
     assert.deepEqual(values.repeat, task.repeat);
     assert.equal(values.clientId, "client-missing");
+});
+
+test("modal save encodes fields as end-of-title chips like quick-add", () => {
+    const draft: TaskDraft = {
+        title: "I've a visit",
+        details: "",
+        startDate: "2030-11-16",
+        startTime: "12:00",
+        repeat: null,
+        dueDate: "2030-11-16",
+        dueTime: "18:00",
+        reminders: [15],
+        clientId: "client-aarav",
+        ownerId: "",
+        propertyId: "prop-happy",
+        priority: "high",
+    };
+    const title = encodeTaskDraftTitle(draft, catalogs, now);
+    assert.equal(title, "I've a visit today 12pm #Happy Elegance @Aarav Shah due 6pm p2 !15m");
+    const entities = entitiesFromCatalogText(title, catalogs);
+    const parsed = parseQuickAdd(title, { now, baseDate: draft.startDate, entities });
+    assert.equal(parsed.startDate, "2030-11-16");
+    assert.equal(parsed.startTime, "12:00");
+    assert.equal(parsed.dueDate, "2030-11-16");
+    assert.equal(parsed.dueTime, "18:00");
+    assert.equal(parsed.priority, "high");
+    assert.deepEqual(parsed.reminders, [15]);
+    assert.equal(parsed.propertyId, "prop-happy");
+    assert.equal(parsed.clientId, "client-aarav");
+    assert.equal(
+        bareTaskDraftTitle(
+            title,
+            {
+                propertyId: draft.propertyId,
+                clientId: draft.clientId,
+                ownerId: draft.ownerId || null,
+            },
+            catalogs,
+            now,
+            draft.startDate,
+        ),
+        "I've a visit",
+    );
 });

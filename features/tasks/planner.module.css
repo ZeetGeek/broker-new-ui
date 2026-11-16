@@ -263,35 +263,6 @@
 .listTaskDate svg {
     flex-shrink: 0;
 }
-.lineMeta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.125rem 0.625rem;
-    margin-block-start: 0.125rem;
-    color: var(--color-ink-muted);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    line-height: 1.4;
-    white-space: normal;
-}
-.lineMeta > span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    min-inline-size: 0;
-    max-inline-size: 100%;
-}
-.lineMeta > span > span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.lineMeta svg {
-    flex-shrink: 0;
-    inline-size: 12px;
-    block-size: 12px;
-}
 .lineCheck {
     position: absolute;
     inset-inline-start: -22px;

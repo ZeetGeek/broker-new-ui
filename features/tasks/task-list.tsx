@@ -4,16 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-import {
-    AlertCircle,
-    Calendar,
-    Clock,
-    Hash,
-    MoreHorizontal,
-    Repeat,
-    RotateCcw,
-    UserRound,
-} from "@/components/shared/icons";
+import { AlertCircle, Calendar, MoreHorizontal, RotateCcw } from "@/components/shared/icons";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     DropdownMenu,
@@ -30,17 +21,10 @@ import {
     taskDueLabel,
     taskGroup,
     type TaskSort,
-    taskTimeLabel,
 } from "./model";
 import type { TaskQuickChange } from "./quick-actions";
 import { QuickAddComposer } from "./quick-add-composer";
-import {
-    entitiesFromTaskTitle,
-    parseQuickAdd,
-    type QuickAddCatalogs,
-    taskRowTitle,
-} from "./quick-add-parse";
-import { taskRepeatLabel } from "./recurrence";
+import { type QuickAddCatalogs, taskRowTitle } from "./quick-add-parse";
 import { TaskActionsMenu } from "./task-actions-menu";
 import { TaskHistoryPlanner } from "./task-history-planner";
 
@@ -58,41 +42,6 @@ export type TaskRowActions = {
     onRename: (task: Task, change: TaskQuickChange) => Promise<boolean>;
     onQuickChange: (task: Task, change: TaskQuickChange) => Promise<boolean>;
 };
-
-/**
- * Small extras under the plain row title. Date / priority stay off the title
- * (day column + row colour). Time stays in the sentence when typed; repeat and
- * legacy links that are not in the title still need a hint here.
- */
-function lineMeta(task: Task, catalogs: QuickAddCatalogs, now: number) {
-    const links = {
-        propertyId: task.propertyId,
-        clientId: task.clientId,
-        ownerId: task.ownerId,
-    };
-    const entities = entitiesFromTaskTitle(task.title, links, catalogs);
-    const parse = parseQuickAdd(task.title, {
-        now,
-        baseDate: task.dueDate,
-        entities,
-    });
-    const shown = taskRowTitle(task.title, links, catalogs, now, task.dueDate).toLowerCase();
-    const fresh = (label: string | undefined) =>
-        label && !shown.includes(label.toLowerCase()) ? label : null;
-    return {
-        time:
-            task.dueDate && task.dueTime && !parse.atoms.some((atom) => atom.kind === "time")
-                ? taskTimeLabel(task.dueTime)
-                : null,
-        // Repeat words are stripped from the row title; keep a quiet icon.
-        repeat: task.repeat ? taskRepeatLabel(task.repeat) : null,
-        property: fresh(catalogs.properties.find((item) => item.id === task.propertyId)?.title),
-        contacts: [
-            fresh(catalogs.clients.find((item) => item.id === task.clientId)?.name),
-            fresh(catalogs.owners.find((item) => item.id === task.ownerId)?.name),
-        ].filter((name): name is string => !!name),
-    };
-}
 
 /** A paper-list line: edit its title or open the full CRM context through its menu. */
 export function TaskLine({
@@ -124,7 +73,7 @@ export function TaskLine({
             <QuickAddComposer
                 key={task.id}
                 task={task}
-                date={task.dueDate}
+                date={task.startDate}
                 busy={busy}
                 now={now}
                 catalogs={catalogs}
@@ -136,7 +85,6 @@ export function TaskLine({
             />
         );
     }
-    const meta = lineMeta(task, catalogs, now);
     const rowTitle = taskRowTitle(
         task.title,
         {
@@ -146,7 +94,7 @@ export function TaskLine({
         },
         catalogs,
         now,
-        task.dueDate,
+        task.startDate,
     );
 
     return (
@@ -168,45 +116,22 @@ export function TaskLine({
                 type="button"
                 data-task-title
                 className={styles.lineTitle}
-                title={`${rowTitle}\n${taskDueLabel(task, now)}`}
+                title={`${rowTitle}\n${taskDueLabel(task, now)}\nDouble-click to edit`}
                 disabled={busy}
                 onClick={() => {
                     if (archive || task.deletedAt) {
                         onOpen(task);
                         return;
                     }
+                    // Phones: one tap edits. Desktop: double-click edits (chips in place).
+                    if (window.matchMedia("(pointer: coarse)").matches) setEditing(true);
+                }}
+                onDoubleClick={() => {
+                    if (archive || task.deletedAt || busy) return;
                     setEditing(true);
                 }}
             >
                 {rowTitle}
-                {(meta.time || meta.repeat || meta.property || meta.contacts.length > 0) && (
-                    <small className={styles.lineMeta}>
-                        {meta.time && (
-                            <span>
-                                <Clock aria-hidden />
-                                <span>{meta.time}</span>
-                            </span>
-                        )}
-                        {meta.repeat && (
-                            <span title={meta.repeat}>
-                                <Repeat aria-hidden />
-                                <span className="sr-only">{meta.repeat}</span>
-                            </span>
-                        )}
-                        {meta.property && (
-                            <span>
-                                <Hash aria-hidden />
-                                <span>{meta.property}</span>
-                            </span>
-                        )}
-                        {meta.contacts.map((name, index) => (
-                            <span key={`${index}-${name}`}>
-                                <UserRound aria-hidden />
-                                <span>{name}</span>
-                            </span>
-                        ))}
-                    </small>
-                )}
                 {date && (
                     <small className={styles.listTaskDate}>
                         <Calendar aria-hidden size={12} />

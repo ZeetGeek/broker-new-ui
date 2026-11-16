@@ -238,6 +238,39 @@
 .notesInput:focus-visible {
     border-color: var(--color-brand);
 }
+.contactChips {
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-weight: 400;
+    min-block-size: 3rem;
+}
+.contactChips:hover {
+    border-color: color-mix(in srgb, var(--color-ring) 50%, transparent);
+}
+.contactChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding-inline: 0.35rem 0.55rem;
+    block-size: auto;
+    min-block-size: 1.75rem;
+    background: color-mix(in srgb, var(--color-brand-soft) 70%, var(--color-surface));
+    color: var(--color-brand-ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+.contactChip small {
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+}
+.contactInput {
+    block-size: 2rem;
+    min-inline-size: 8rem;
+    font-size: 0.9375rem;
+    font-weight: 400;
+}
 .entityOption {
     display: flex;
     align-items: center;

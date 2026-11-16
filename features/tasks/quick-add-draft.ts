@@ -1,10 +1,18 @@
 import { MAX_TASK_REMINDERS } from "@/lib/reminders";
 
-import { type Task, type TaskPriority, taskDueAt, taskReminderAt } from "./model";
+import {
+    type Task,
+    type TaskDraft,
+    type TaskPriority,
+    taskDateKey,
+    taskDueAt,
+    taskReminderAt,
+} from "./model";
 import {
     entitiesFromCatalogText,
     entitiesFromTaskTitle,
     parseQuickAdd,
+    QUICK_ADD_PRIORITY_TOKENS,
     type QuickAddAtom,
     type QuickAddCatalogs,
     type QuickAddEntity,
@@ -14,7 +22,23 @@ import {
     type QuickAddParse,
     type QuickAddRange,
 } from "./quick-add-parse";
-import type { TaskRepeat } from "./recurrence";
+import { shiftTaskDate, type TaskRepeat, WEEKDAYS } from "./recurrence";
+
+const TITLE_MAX = 160;
+const MONTH_SHORT = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+] as const;
 
 /** The column's date, plus details of the task being edited that aren't written out as words. Typed words win. */
 export type QuickAddBase = {
@@ -111,6 +135,202 @@ export function newQuickAddDraft(date: string | null): QuickAddDraft {
 }
 
 /**
+ * Tasks created from the full form often store links without `#` / `@` in the
+ * title. Append missing chip tokens so double-click edit shows them in place.
+ */
+function withLinkedChips(
+    title: string,
+    links: {
+        propertyId: string | null;
+        clientId: string | null;
+        ownerId: string | null | undefined;
+    },
+    catalogs: QuickAddCatalogs,
+): { text: string; entities: QuickAddEntity[] } {
+    let text = title;
+    let entities = entitiesFromTaskTitle(text, links, catalogs);
+    const append = (
+        kind: QuickAddEntityKind,
+        refId: string | null | undefined,
+        label: string | undefined,
+    ) => {
+        if (!refId || !label || entities.some((entity) => entity.kind === kind)) return;
+        const token = `${kind === "property" ? "#" : "@"}${label}`;
+        const spacer = text && !/\s$/.test(text) ? " " : "";
+        const start = text.length + spacer.length;
+        text = `${text}${spacer}${token}`;
+        entities = [...entities, { kind, refId, label, start, end: start + token.length }];
+    };
+    append(
+        "property",
+        links.propertyId,
+        catalogs.properties.find((item) => item.id === links.propertyId)?.title,
+    );
+    append(
+        "client",
+        links.clientId,
+        catalogs.clients.find((item) => item.id === links.clientId)?.name,
+    );
+    append("owner", links.ownerId, catalogs.owners.find((item) => item.id === links.ownerId)?.name);
+    return { text, entities };
+}
+
+function draftLinks(draft: Pick<TaskDraft, "propertyId" | "clientId" | "ownerId">) {
+    return {
+        propertyId: draft.propertyId || null,
+        clientId: draft.clientId || null,
+        ownerId: draft.ownerId || null,
+    };
+}
+
+function chipDatePhrase(date: string, now: number): string {
+    const today = taskDateKey(now);
+    if (date === today) return "today";
+    if (date === shiftTaskDate(today, 1)) return "tomorrow";
+    if (date === shiftTaskDate(today, 2)) return "day after tomorrow";
+    const [year, month, day] = date.split("-").map(Number);
+    const monthLabel = MONTH_SHORT[(month ?? 1) - 1] ?? "Jan";
+    const dayLabel = String(day ?? 1);
+    return year === Number(today.slice(0, 4))
+        ? `${dayLabel} ${monthLabel}`
+        : `${dayLabel} ${monthLabel} ${year}`;
+}
+
+/** Parser-friendly 12-hour time (`12pm`, `12:30pm`). */
+function chipTimePhrase(time: string): string {
+    const [hourText = "0", minuteText = "00"] = time.split(":");
+    let hour = Number(hourText);
+    const minutes = Number(minuteText);
+    if (!Number.isFinite(hour) || !Number.isFinite(minutes)) return time;
+    const meridiem = hour >= 12 ? "pm" : "am";
+    hour = hour % 12 || 12;
+    return minutes === 0
+        ? `${hour}${meridiem}`
+        : `${hour}:${String(minutes).padStart(2, "0")}${meridiem}`;
+}
+
+function chipRepeatPhrase(repeat: TaskRepeat): string | null {
+    if (repeat.unit === "week") {
+        if (
+            repeat.interval === 1 &&
+            repeat.weekdays.length === 5 &&
+            [1, 2, 3, 4, 5].every((day) => repeat.weekdays.includes(day))
+        ) {
+            return "every weekday";
+        }
+        if (
+            repeat.interval === 1 &&
+            repeat.weekdays.length === 2 &&
+            repeat.weekdays.includes(0) &&
+            repeat.weekdays.includes(6)
+        ) {
+            return "every weekend";
+        }
+        if (repeat.interval === 1 && repeat.weekdays.length > 0) {
+            const names = WEEKDAYS.filter((day) => repeat.weekdays.includes(day.value)).map((day) =>
+                day.label.toLowerCase(),
+            );
+            return names.length ? `every ${names.join(", ")}` : "weekly";
+        }
+        if (repeat.interval === 2 && repeat.weekdays.length === 0) return "every other week";
+        if (repeat.interval === 1) return "weekly";
+        return `every ${repeat.interval} weeks`;
+    }
+    if (repeat.interval === 1) {
+        return ({ day: "daily", month: "monthly", year: "yearly" } as const)[repeat.unit];
+    }
+    if (repeat.interval === 2) return `every other ${repeat.unit}`;
+    return `every ${repeat.interval} ${repeat.unit}s`;
+}
+
+function chipReminderPhrase(minutes: number): string {
+    if (minutes === 0) return "!at time";
+    if (minutes % 1440 === 0) return `!${minutes / 1440}d`;
+    if (minutes % 60 === 0) return `!${minutes / 60}h`;
+    return `!${minutes}m`;
+}
+
+function joinTitleChips(bare: string, chips: string[]): string {
+    let title = bare.trim();
+    for (const chip of chips) {
+        const next = title ? `${title} ${chip}` : chip;
+        if (next.length > TITLE_MAX) break;
+        title = next;
+    }
+    return title.slice(0, TITLE_MAX).trim();
+}
+
+/**
+ * Task name only — strips schedule / due / priority / reminder / repeat / # / @
+ * chips so the Add-task modal can show a clean name field.
+ */
+export function bareTaskDraftTitle(
+    title: string,
+    links: {
+        propertyId: string | null;
+        clientId: string | null;
+        ownerId: string | null;
+    },
+    catalogs: QuickAddCatalogs,
+    now: number,
+    baseDate: string | null = null,
+): string {
+    const entities = entitiesFromTaskTitle(title, links, catalogs);
+    return parseQuickAdd(title, { now, baseDate, entities }).title;
+}
+
+/**
+ * Encode modal fields as end-of-title chips (same language as quick-add), so
+ * create / edit from the form and typed quick-add look the same in the list
+ * and when double-click editing.
+ */
+export function encodeTaskDraftTitle(
+    draft: TaskDraft,
+    catalogs: QuickAddCatalogs,
+    now: number,
+): string {
+    const links = draftLinks(draft);
+    const bare =
+        bareTaskDraftTitle(draft.title, links, catalogs, now, draft.startDate || null) ||
+        draft.title.trim();
+    const chips: string[] = [];
+
+    if (draft.startDate) chips.push(chipDatePhrase(draft.startDate, now));
+    if (draft.startTime) chips.push(chipTimePhrase(draft.startTime));
+
+    const property = catalogs.properties.find((item) => item.id === draft.propertyId)?.title;
+    if (draft.propertyId && property) chips.push(`#${property}`);
+    const client = catalogs.clients.find((item) => item.id === draft.clientId)?.name;
+    if (draft.clientId && client) chips.push(`@${client}`);
+    const owner = catalogs.owners.find((item) => item.id === draft.ownerId)?.name;
+    if (draft.ownerId && owner) chips.push(`@${owner}`);
+
+    if (draft.dueDate || draft.dueTime) {
+        chips.push("due");
+        // Same-day due with a time → `due 6pm`. Otherwise keep a date word.
+        if (draft.dueDate && (draft.dueDate !== draft.startDate || !draft.dueTime)) {
+            chips.push(chipDatePhrase(draft.dueDate, now));
+        }
+        if (draft.dueTime) chips.push(chipTimePhrase(draft.dueTime));
+    }
+
+    if (draft.priority !== "low") {
+        chips.push(QUICK_ADD_PRIORITY_TOKENS[draft.priority].toLowerCase());
+    }
+
+    if (draft.repeat) {
+        const phrase = chipRepeatPhrase(draft.repeat);
+        if (phrase) chips.push(phrase);
+    }
+
+    for (const minutes of [...draft.reminders].sort((a, b) => b - a)) {
+        chips.push(chipReminderPhrase(minutes));
+    }
+
+    return joinTitleChips(bare, chips);
+}
+
+/**
  * Open a saved task for edit with chips still in the places they were typed.
  * Details already written in the title are owned by those words (deleting the
  * word clears the detail). Anything missing from the title — older stripped
@@ -121,18 +341,15 @@ export function quickAddDraftFromTask(
     now: number,
     catalogs?: QuickAddCatalogs,
 ): QuickAddDraft {
-    const entities = catalogs
-        ? entitiesFromTaskTitle(
-              task.title,
-              {
-                  propertyId: task.propertyId,
-                  clientId: task.clientId,
-                  ownerId: task.ownerId,
-              },
-              catalogs,
-          )
-        : [];
-    const parse = parseQuickAdd(task.title, {
+    const links = {
+        propertyId: task.propertyId,
+        clientId: task.clientId,
+        ownerId: task.ownerId,
+    };
+    const { text, entities } = catalogs
+        ? withLinkedChips(task.title, links, catalogs)
+        : { text: task.title, entities: [] as QuickAddEntity[] };
+    const parse = parseQuickAdd(text, {
         now,
         baseDate: task.startDate,
         entities,
@@ -148,7 +365,7 @@ export function quickAddDraftFromTask(
         parse.atoms.some((atom) => atom.kind === "due") ||
         parse.atoms.some((atom) => atom.kind === "due-date" || atom.kind === "due-time");
     return {
-        text: task.title,
+        text,
         entities,
         dismissed: [],
         closedMention: null,

@@ -21,11 +21,17 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
     Combobox,
+    ComboboxChip,
+    ComboboxChips,
+    ComboboxChipsInput,
     ComboboxContent,
     ComboboxEmpty,
     ComboboxInput,
     ComboboxItem,
     ComboboxList,
+    ComboboxTrigger,
+    ComboboxValue,
+    useComboboxAnchor,
 } from "@/components/ui/combobox";
 import {
     DropdownMenu,
@@ -54,11 +60,18 @@ import {
     validateTaskDraft,
 } from "./model";
 import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES } from "./preview-store";
+import { bareTaskDraftTitle } from "./quick-add-draft";
 import { type TaskRepeat, taskRepeatLabel, taskWeekday, WEEKDAYS } from "./recurrence";
 import { TaskPanel } from "./task-panel";
 import { TaskReminderPicker } from "./task-reminder-picker";
 
 import styles from "./task-form.module.css";
+
+const FORM_CATALOGS = {
+    clients: TASK_CLIENTS,
+    owners: TASK_OWNERS,
+    properties: TASK_PROPERTIES,
+};
 
 export function TaskSelect({
     label,
@@ -207,6 +220,139 @@ export function TaskSelect({
     );
 }
 
+type ContactOption = {
+    key: string;
+    kind: "client" | "owner";
+    id: string;
+    label: string;
+};
+
+const CONTACT_OPTIONS: ContactOption[] = [
+    ...TASK_CLIENTS.map((client) => ({
+        key: `client:${client.id}`,
+        kind: "client" as const,
+        id: client.id,
+        label: client.name,
+    })),
+    ...TASK_OWNERS.map((owner) => ({
+        key: `owner:${owner.id}`,
+        kind: "owner" as const,
+        id: owner.id,
+        label: owner.name,
+    })),
+];
+
+/** One Contacts picker for Client and owner — chips show who is linked. */
+function TaskContactsField({
+    clientId,
+    ownerId,
+    disabled,
+    onChange,
+}: {
+    clientId: string;
+    ownerId: string;
+    disabled?: boolean;
+    onChange: (next: { clientId: string; ownerId: string }) => void;
+}) {
+    const id = useId();
+    const anchor = useComboboxAnchor();
+    const [search, setSearch] = useState("");
+    const selected = [
+        clientId ? `client:${clientId}` : null,
+        ownerId ? `owner:${ownerId}` : null,
+    ].filter((value): value is string => !!value);
+    const labelFor = (key: string) =>
+        CONTACT_OPTIONS.find((option) => option.key === key)?.label ?? key;
+    const detailFor = (key: string) =>
+        CONTACT_OPTIONS.find((option) => option.key === key)?.kind === "owner" ? "Owner" : "Client";
+    const update = (values: string[]) => {
+        if (disabled) return;
+        let nextClient = "";
+        let nextOwner = "";
+        for (const key of values) {
+            const option = CONTACT_OPTIONS.find((item) => item.key === key);
+            if (!option) continue;
+            if (option.kind === "client") nextClient = option.id;
+            else nextOwner = option.id;
+        }
+        onChange({ clientId: nextClient, ownerId: nextOwner });
+        setSearch("");
+    };
+    return (
+        <div className={styles.field}>
+            <label htmlFor={id} className={styles.label}>
+                Contacts
+            </label>
+            <Combobox
+                multiple
+                items={CONTACT_OPTIONS.map((option) => option.key)}
+                value={selected}
+                disabled={disabled}
+                inputValue={search}
+                onInputValueChange={setSearch}
+                itemToStringLabel={labelFor}
+                onValueChange={(values) => update(values ?? [])}
+            >
+                <ComboboxChips ref={anchor} className={styles.contactChips}>
+                    <ComboboxValue>
+                        {(values: string[]) => (
+                            <>
+                                {values.map((key) => (
+                                    <ComboboxChip key={key} className={styles.contactChip}>
+                                        <UserAvatar
+                                            name={labelFor(key)}
+                                            size="2xs"
+                                            framed={false}
+                                        />
+                                        <span>{labelFor(key)}</span>
+                                        <small>{detailFor(key)}</small>
+                                    </ComboboxChip>
+                                ))}
+                                <ComboboxChipsInput
+                                    id={id}
+                                    disabled={disabled}
+                                    placeholder={
+                                        values.length
+                                            ? "Add another contact…"
+                                            : "Select a Client or owner"
+                                    }
+                                    className={styles.contactInput}
+                                />
+                            </>
+                        )}
+                    </ComboboxValue>
+                    <ComboboxTrigger
+                        aria-label="Choose contacts"
+                        disabled={disabled}
+                        className="ms-auto"
+                    />
+                </ComboboxChips>
+                <ComboboxContent
+                    anchor={anchor}
+                    align="center"
+                    className="inline-[min(26rem,calc(100dvw-2rem))]"
+                >
+                    <ComboboxEmpty>No matching contacts. Try another search.</ComboboxEmpty>
+                    <ComboboxList className="py-2 max-block-[min(20rem,var(--available-height))]">
+                        {(key: string) => (
+                            <ComboboxItem key={key} value={key}>
+                                <span className={styles.entityOption}>
+                                    <UserAvatar name={labelFor(key)} size="sm" />
+                                    <span>
+                                        {labelFor(key)}
+                                        <small>{detailFor(key)}</small>
+                                    </span>
+                                </span>
+                            </ComboboxItem>
+                        )}
+                    </ComboboxList>
+                </ComboboxContent>
+            </Combobox>
+            <p className={styles.hint}>Link a Client, an owner, or both.</p>
+        </div>
+    );
+}
+
 export function TaskForm({
     task,
     mode,
@@ -226,9 +372,27 @@ export function TaskForm({
 }) {
     const formId = useId();
     const titleRef = useRef<HTMLInputElement>(null);
-    const [initial] = useState(() =>
-        task ? draftFromTask(task) : { ...newTaskDraft(), ...prefill },
-    );
+    const [initial] = useState(() => {
+        const base = task ? draftFromTask(task) : { ...newTaskDraft(), ...prefill };
+        // Edit modal shows a clean name; chips are re-encoded from fields on save.
+        if (task && mode === "edit") {
+            return {
+                ...base,
+                title: bareTaskDraftTitle(
+                    base.title,
+                    {
+                        propertyId: base.propertyId || null,
+                        clientId: base.clientId || null,
+                        ownerId: base.ownerId || null,
+                    },
+                    FORM_CATALOGS,
+                    Date.now(),
+                    base.startDate || null,
+                ),
+            };
+        }
+        return base;
+    });
     const [draft, setDraft] = useState<TaskDraft>(initial);
     const [now, setNow] = useState(() => Date.now());
     useEffect(() => {
@@ -252,8 +416,19 @@ export function TaskForm({
             return at !== null && Date.parse(at) <= atTime && !unchanged;
         });
     const pastReminder = hasNewPastReminder(now);
+    const dueOrderError =
+        validation.errors.dueDate || validation.errors.dueTime
+            ? validation.errors.dueDate || validation.errors.dueTime
+            : undefined;
+    const showDueError = submitted || !!draft.dueDate;
     const setDate = (date: string | null) =>
         patch(date ? { dueDate: date } : { dueDate: "", dueTime: "", reminders: [] });
+    const dueMin =
+        draft.startDate && draft.startTime
+            ? `${draft.startDate}T${draft.startTime}`
+            : draft.startDate
+              ? `${draft.startDate}T00:00`
+              : undefined;
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (busy) return;
@@ -410,14 +585,11 @@ export function TaskForm({
                                         ...(!dueTime ? { reminders: [] } : {}),
                                     });
                                 }}
+                                min={dueMin}
                                 timeOptional
                                 clearable
                                 disabled={busy}
-                                error={
-                                    submitted
-                                        ? validation.errors.dueDate || validation.errors.dueTime
-                                        : undefined
-                                }
+                                error={showDueError ? dueOrderError : undefined}
                             />
                         </div>
                     </div>
@@ -525,33 +697,11 @@ export function TaskForm({
                                 <Link2 aria-hidden="true" /> Link existing records
                                 <span className={styles.optional}>(optional)</span>
                             </h2>
-                            <TaskSelect
-                                label="Client"
-                                entity="client"
-                                value={draft.clientId}
+                            <TaskContactsField
+                                clientId={draft.clientId}
+                                ownerId={draft.ownerId}
                                 disabled={busy}
-                                onChange={(clientId) => patch({ clientId })}
-                                options={[
-                                    { value: "", label: "No linked client" },
-                                    ...TASK_CLIENTS.map((client) => ({
-                                        value: client.id,
-                                        label: client.name,
-                                    })),
-                                ]}
-                            />
-                            <TaskSelect
-                                label="Owner"
-                                entity="owner"
-                                value={draft.ownerId}
-                                disabled={busy}
-                                onChange={(ownerId) => patch({ ownerId })}
-                                options={[
-                                    { value: "", label: "No linked owner" },
-                                    ...TASK_OWNERS.map((owner) => ({
-                                        value: owner.id,
-                                        label: owner.name,
-                                    })),
-                                ]}
+                                onChange={(next) => patch(next)}
                             />
                             <TaskSelect
                                 label="Property"
@@ -588,8 +738,7 @@ export function TaskForm({
                 ) : null}
                 <p className={styles.hint}>
                     <LockKeyhole aria-hidden="true" />
-                    Only you can see this task. Linked Client, owner and property records stay
-                    unchanged.
+                    Only you can see this task. Linked contacts and property records stay unchanged.
                 </p>
                 {error || saveError ? (
                     <p className={styles.error} role="alert">
