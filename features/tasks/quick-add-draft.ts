@@ -21,6 +21,8 @@ import {
     type QuickAddOption,
     type QuickAddParse,
     type QuickAddRange,
+    quotedQuickAddRanges,
+    stripQuickAddQuotes,
 } from "./quick-add-parse";
 import { shiftTaskDate, type TaskRepeat, WEEKDAYS } from "./recurrence";
 
@@ -261,8 +263,38 @@ function joinTitleChips(bare: string, chips: string[]): string {
 }
 
 /**
- * Task name only — strips schedule / due / priority / reminder / repeat / # / @
- * chips so the Add-task modal can show a clean name field.
+ * Wrap shortcut-looking spans in quotes so they stay literal task words
+ * (`"tomorrow"`, `"due 20m"`) instead of becoming schedule chips.
+ */
+function quoteShortcutSpans(
+    title: string,
+    catalogs: QuickAddCatalogs,
+    now: number,
+    baseDate: string | null,
+): string {
+    const entities = entitiesFromCatalogText(title, catalogs);
+    const parse = parseQuickAdd(title, { now, baseDate, entities });
+    const quoted = quotedQuickAddRanges(title);
+    const covered = (start: number, end: number) =>
+        quoted.some((range) => start >= range.start && end <= range.end);
+    const spans = [
+        ...parse.atoms.map((atom) => ({ start: atom.start, end: atom.end })),
+        ...entities.map((entity) => ({ start: entity.start, end: entity.end })),
+    ]
+        .filter((span) => !covered(span.start, span.end))
+        .sort((a, b) => b.start - a.start);
+    let next = title;
+    for (const span of spans) {
+        const slice = next.slice(span.start, span.end);
+        if (!slice || slice.startsWith('"')) continue;
+        next = `${next.slice(0, span.start)}"${slice}"${next.slice(span.end)}`;
+    }
+    return next;
+}
+
+/**
+ * Task name only — strips real field chips, keeps literal shortcut words
+ * (unwraps quotes) so the Add-task modal shows a clean name.
  */
 export function bareTaskDraftTitle(
     title: string,
@@ -276,25 +308,28 @@ export function bareTaskDraftTitle(
     baseDate: string | null = null,
 ): string {
     const entities = entitiesFromTaskTitle(title, links, catalogs);
-    return parseQuickAdd(title, { now, baseDate, entities }).title;
+    return stripQuickAddQuotes(parseQuickAdd(title, { now, baseDate, entities }).title);
 }
 
 /**
- * Encode modal fields as end-of-title chips (same language as quick-add), so
- * create / edit from the form and typed quick-add look the same in the list
- * and when double-click editing.
+ * Encode modal fields as end-of-title chips (same language as quick-add).
+ * Shortcut words already in the name are quoted first so "tomorrow" / "10am"
+ * stay part of the sentence and are not eaten by the field chips we append.
  */
 export function encodeTaskDraftTitle(
     draft: TaskDraft,
     catalogs: QuickAddCatalogs,
     now: number,
 ): string {
-    const links = draftLinks(draft);
-    const bare =
-        bareTaskDraftTitle(draft.title, links, catalogs, now, draft.startDate || null) ||
-        draft.title.trim();
+    // Quote shortcut words in the name first so bare-strip cannot eat them, then
+    // append field chips after. Edit modal always opens on a bare name.
+    const protectedName = quoteShortcutSpans(
+        draft.title.trim(),
+        catalogs,
+        now,
+        draft.startDate || null,
+    );
     const chips: string[] = [];
-
     if (draft.startDate) chips.push(chipDatePhrase(draft.startDate, now));
     if (draft.startTime) chips.push(chipTimePhrase(draft.startTime));
 
@@ -327,9 +362,8 @@ export function encodeTaskDraftTitle(
         chips.push(chipReminderPhrase(minutes));
     }
 
-    return joinTitleChips(bare, chips);
+    return joinTitleChips(protectedName, chips);
 }
-
 /**
  * Open a saved task for edit with chips still in the places they were typed.
  * Details already written in the title are owned by those words (deleting the

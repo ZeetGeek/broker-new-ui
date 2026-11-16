@@ -397,3 +397,46 @@ test("modal save encodes fields as end-of-title chips like quick-add", () => {
         "I've a visit",
     );
 });
+
+test("modal keeps shortcut words in the name as plain text, not field chips", () => {
+    const draft: TaskDraft = {
+        title: "i'll meet this guy tomorrow 10am",
+        details: "",
+        startDate: "2030-11-16",
+        startTime: "00:37",
+        repeat: null,
+        dueDate: "",
+        dueTime: "",
+        reminders: [],
+        clientId: "",
+        ownerId: "",
+        propertyId: "",
+        priority: "low",
+    };
+    const title = encodeTaskDraftTitle(draft, catalogs, now);
+    assert.equal(title, `i'll meet this guy "tomorrow" "10am" today 12:37am`);
+    const parsed = parseQuickAdd(title, { now, baseDate: draft.startDate });
+    assert.equal(parsed.startDate, "2030-11-16");
+    assert.equal(parsed.startTime, "00:37");
+    assert.equal(
+        bareTaskDraftTitle(
+            title,
+            { propertyId: null, clientId: null, ownerId: null },
+            catalogs,
+            now,
+            draft.startDate,
+        ),
+        "i'll meet this guy tomorrow 10am",
+    );
+});
+
+test("quoted shortcut words stay plain text in quick-add", () => {
+    const text = `Call about "tomorrow" and "due 20m" today 5pm`;
+    const parsed = parseQuickAdd(text, { now, baseDate: "2030-11-16" });
+    assert.equal(parsed.startDate, "2030-11-16");
+    assert.equal(parsed.startTime, "17:00");
+    assert.equal(parsed.dueDate, null);
+    assert.match(parsed.title, /tomorrow/);
+    assert.match(parsed.title, /due 20m/);
+    assert.ok(!parsed.atoms.some((atom) => text.slice(atom.start, atom.end) === "tomorrow"));
+});

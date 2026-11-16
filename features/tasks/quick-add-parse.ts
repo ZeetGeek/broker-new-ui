@@ -435,6 +435,31 @@ function mask(text: string, ranges: readonly QuickAddRange[]): string {
     return units.join("");
 }
 
+/**
+ * `"tomorrow"` / `"due 20m"` stays plain words — quotes mask the span from
+ * shortcut parsing (same idea as dismissing a chip).
+ */
+export function quotedQuickAddRanges(text: string): QuickAddRange[] {
+    const ranges: QuickAddRange[] = [];
+    for (let index = 0; index < text.length; index++) {
+        if (text[index] !== '"') continue;
+        const end = text.indexOf('"', index + 1);
+        if (end < 0) break;
+        ranges.push({ start: index, end: end + 1 });
+        index = end;
+    }
+    return ranges;
+}
+
+/** Drop quote marks used to keep shortcut words literal. */
+export function stripQuickAddQuotes(text: string): string {
+    return text
+        .replace(/"/g, "")
+        .replace(/\s+/g, " ")
+        .replace(/\s+([,.;:!?])/g, "$1")
+        .trim();
+}
+
 const isTrigger = (char: string | undefined) => char === "#" || char === "@";
 const isSpace = (char: string | undefined) => char !== undefined && /\s/.test(char);
 
@@ -554,10 +579,11 @@ export function parseQuickAdd(text: string, options: QuickAddParseOptions): Quic
     const { now, baseDate = null, mention = null } = options;
     const entities = [...(options.entities ?? [])].sort((a, b) => a.start - b.start);
     const dismissed = options.dismissed ?? [];
+    const quoted = quotedQuickAddRanges(text);
     const today = taskDateKey(now);
     const ctx: Ctx = { now, today };
 
-    let masked = mask(text, [...entities, ...dismissed, ...(mention ? [mention] : [])]);
+    let masked = mask(text, [...entities, ...dismissed, ...quoted, ...(mention ? [mention] : [])]);
     const dueMarker = findDueMarker(masked);
     const take = <T>(matchers: Matcher<T>[]) => {
         const hits = scan(masked, matchers, ctx);
@@ -810,11 +836,13 @@ export function taskRowTitle(
     for (const edit of edits) {
         next = next.slice(0, edit.start) + edit.insert + next.slice(edit.end);
     }
-    return next
-        .replace(/\s+/g, " ")
-        .replace(/\s+([,.;:!?])/g, "$1")
-        .replace(/^[\s,;:·–—-]+|[\s,;:·–—-]+$/g, "")
-        .trim();
+    return stripQuickAddQuotes(
+        next
+            .replace(/\s+/g, " ")
+            .replace(/\s+([,.;:!?])/g, "$1")
+            .replace(/^[\s,;:·–—-]+|[\s,;:·–—-]+$/g, "")
+            .trim(),
+    );
 }
 
 const OPTION_LIMIT = 8;

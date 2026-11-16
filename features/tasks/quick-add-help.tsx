@@ -47,6 +47,11 @@ const SHORTCUTS = [
         examples: ["every day", "every Monday", "every week"],
     },
     {
+        label: "Keep as plain text",
+        examples: ['"tomorrow"', '"due 20m"', "click chip", "Backspace"],
+        tip: "Wrap the word in quotes, click the green chip, or press Backspace once at the end of it — then it stays as normal words, not a shortcut.",
+    },
+    {
         label: "Undo",
         examples: ["Ctrl+Z", "Ctrl+Shift+Z"],
         tip: "Ctrl+Shift+Z (or Ctrl+Y) redoes.",
