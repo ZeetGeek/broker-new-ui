@@ -186,6 +186,12 @@ test("pipeline search finds deals by client, owner and area", async (t) => {
             property: { id: "p3", ...sale, address: "Wakad", city: "Pune" },
             client: { id: "c3", name: "Anil Rao" },
         },
+        {
+            id: "noida",
+            stage: "visit",
+            property: { id: "p4", ...sale, address: "Sector-62", city: "Noida" },
+            client: { id: "c4", name: "Kavya Singh", phone: "9000011111" },
+        },
     ];
     // Mirrors the real API: its `search` matches names only, never the area.
     api.defaults.adapter = async (config) => {
@@ -220,6 +226,14 @@ test("pipeline search finds deals by client, owner and area", async (t) => {
     assert.deepEqual(await search("ravi andheri"), ["andheri"], "client and area together");
     assert.deepEqual(await search("ravi baner"), [], "every word must match");
     assert.deepEqual(await search("owner"), [], "the 'Owner' placeholder is not searchable");
+    assert.deepEqual(
+        await search("Andheri West, Mumbai"),
+        ["andheri"],
+        "area as the card shows it",
+    );
+    assert.deepEqual(await search("62"), ["noida"], "a number in the area");
+    assert.deepEqual(await search("sector 62"), ["noida"], "area typed without the dash");
+    assert.deepEqual(await search("sector-62 noida"), ["noida"], "area typed with the dash");
 
     const { summary } = await pipelineApi.list({ ...DEFAULT_DEALS_FILTERS, q: "pune" });
     assert.equal(summary.counts.new, 1, "stage counts follow the search");

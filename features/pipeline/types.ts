@@ -168,6 +168,7 @@ export type DealsFilters = {
     dealType: DealTypeFilter;
     locality: string;
     ownerName: string;
+    areaSqft?: number;
 };
 
 export type DealSort = "recent" | "stalled" | "price_desc" | "price_asc" | "visit_soon";

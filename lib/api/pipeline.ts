@@ -353,25 +353,40 @@ function mapLeadToDetail(lead: ApiLead): DealDetail | null {
  * in Andheri. A phone typed with spaces ("98765 43210") matches on digits.
  */
 function matchesQuery(deal: DealItem, q: string): boolean {
-    const needle = q.trim().toLowerCase();
-    if (!needle) return true;
+    const words = searchWords(q);
+    if (words.length === 0) return true;
 
-    if (/^[\d\s+-]+$/.test(needle)) {
-        const digits = digitsOnly(needle);
+    // A whole phone number, however it was typed ("+91 98765-43210").
+    const phone = deal.buyer.phoneDigits;
+    if (phone && /^[\d\s()+-]+$/.test(q.trim())) {
+        const digits = digitsOnly(q);
         const local = digits.length > 10 ? digits.slice(-10) : digits;
-        return local.length >= 3 && deal.buyer.phoneDigits.includes(local);
+        if (local.length >= 3 && phone.includes(local)) return true;
     }
 
-    const text = [
-        deal.buyer.name,
-        deal.property.title,
-        deal.property.locality,
-        deal.property.city,
-        deal.owner.name === OWNER_PLACEHOLDER ? "" : deal.owner.name,
-    ]
-        .join(" ")
-        .toLowerCase();
-    return needle.split(/\s+/).every((word) => text.includes(word));
+    const areaSqft = deal.property.areaSqft?.toString() ?? "";
+    if (words.some((word) => areaSqft.includes(word))) return true;
+
+    // Punctuation is ignored on both sides, so "Andheri West, Mumbai",
+    // "sector 62" and "Sector-62" all find a deal in Sector-62.
+    const text = ` ${searchWords(
+        [
+            deal.buyer.name,
+            deal.property.title,
+            deal.property.locality,
+            deal.property.city,
+            deal.owner.name === OWNER_PLACEHOLDER ? "" : deal.owner.name,
+        ].join(" "),
+    ).join(" ")} ${phone}`;
+    return words.every((word) => text.includes(word));
+}
+
+/** Lowercase words with punctuation dropped. */
+function searchWords(value: string): string[] {
+    return value
+        .toLowerCase()
+        .split(/[^\p{L}\p{N}]+/u)
+        .filter(Boolean);
 }
 
 function sortDeals(items: DealItem[], sort: DealsFilters["sort"]): DealItem[] {
@@ -479,6 +494,7 @@ export type SetStageOptions = {
 export const pipelineApi = {
     async list(filters: DealsFilters, signal?: AbortSignal): Promise<DealsResult> {
         const leads = await fetchAllLeads(leadFilterParams(filters), signal);
+        console.log("Fetching pipeline with filters:", filters);
         // Stage counts follow the search, as they did when the API filtered it.
         const all = leads
             .map(mapLeadToDeal)
