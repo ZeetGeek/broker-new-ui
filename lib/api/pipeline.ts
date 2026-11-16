@@ -116,6 +116,9 @@ const BHK_CONFIG_TO_NUMBER: Record<string, number> = {
 
 const DAY_MS = 86_400_000;
 
+/** Shown when a lead has no owner name. Never matched by search. */
+const OWNER_PLACEHOLDER = "Owner";
+
 export function daysSince(iso: string | null): number | null {
     if (!iso) return null;
     return Math.floor((Date.now() - new Date(iso).getTime()) / DAY_MS);
@@ -237,7 +240,7 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             ? "exclusive"
             : "platform";
     const ownerName =
-        lead.owner?.fullName?.trim() || lead.exclusiveOwner?.fullName?.trim() || "Owner";
+        lead.owner?.fullName?.trim() || lead.exclusiveOwner?.fullName?.trim() || OWNER_PLACEHOLDER;
     const status = fromApiStage(lead.stage);
     // Later note edits must not change the displayed completion/loss date.
     const resolved =
@@ -344,18 +347,31 @@ function mapLeadToDetail(lead: ApiLead): DealDetail | null {
     };
 }
 
+/**
+ * Search box: client, owner and area (plus property title and client phone).
+ * Every word must match some field, so "ravi andheri" narrows to Ravi's deal
+ * in Andheri. A phone typed with spaces ("98765 43210") matches on digits.
+ */
 function matchesQuery(deal: DealItem, q: string): boolean {
     const needle = q.trim().toLowerCase();
     if (!needle) return true;
 
-    return [
+    if (/^[\d\s+-]+$/.test(needle)) {
+        const digits = digitsOnly(needle);
+        const local = digits.length > 10 ? digits.slice(-10) : digits;
+        return local.length >= 3 && deal.buyer.phoneDigits.includes(local);
+    }
+
+    const text = [
         deal.buyer.name,
-        deal.buyer.phoneDigits,
         deal.property.title,
         deal.property.locality,
         deal.property.city,
-        deal.owner.name,
-    ].some((field) => field.toLowerCase().includes(needle));
+        deal.owner.name === OWNER_PLACEHOLDER ? "" : deal.owner.name,
+    ]
+        .join(" ")
+        .toLowerCase();
+    return needle.split(/\s+/).every((word) => text.includes(word));
 }
 
 function sortDeals(items: DealItem[], sort: DealsFilters["sort"]): DealItem[] {
@@ -428,8 +444,12 @@ function leadFilterParams(filters: DealsFilters): URLSearchParams {
     return params;
 }
 
+/**
+ * Every lead matching the filter sheet. The search box is applied afterwards
+ * by `matchesQuery`: the API's `search` skips area and phone, so sending it
+ * would drop those matches before the client ever sees them.
+ */
 async function fetchAllLeads(
-    search?: string,
     filterParams?: URLSearchParams,
     signal?: AbortSignal,
 ): Promise<ApiLead[]> {
@@ -441,7 +461,6 @@ async function fetchAllLeads(
         const qs = new URLSearchParams(filterParams);
         qs.set("page", String(page));
         qs.set("limit", "100");
-        if (search?.trim()) qs.set("search", search.trim());
         const response = await apiFetch<LeadsListResponse>(`/clients/leads?${qs}`, { signal });
         items.push(...(response.items ?? []));
         totalPages = Math.max(1, response.totalPages ?? 1);
@@ -459,17 +478,13 @@ export type SetStageOptions = {
 
 export const pipelineApi = {
     async list(filters: DealsFilters, signal?: AbortSignal): Promise<DealsResult> {
-        const leads = await fetchAllLeads(
-            filters.q || undefined,
-            leadFilterParams(filters),
-            signal,
-        );
-        const all = leads.map(mapLeadToDeal).filter((deal): deal is DealItem => deal != null);
+        const leads = await fetchAllLeads(leadFilterParams(filters), signal);
+        // Stage counts follow the search, as they did when the API filtered it.
+        const all = leads
+            .map(mapLeadToDeal)
+            .filter((deal): deal is DealItem => deal != null && matchesQuery(deal, filters.q));
 
-        let items = filters.q.trim() ? all.filter((deal) => matchesQuery(deal, filters.q)) : all;
-        if (filters.stage) {
-            items = items.filter((deal) => deal.status === filters.stage);
-        }
+        const items = filters.stage ? all.filter((deal) => deal.status === filters.stage) : all;
 
         return { items: sortDeals(items, filters.sort), summary: buildSummary(all) };
     },

@@ -159,6 +159,73 @@ test("pipeline sends the filter sheet to the leads API as query params", async (
     assert.equal(params.get("page"), "1");
 });
 
+test("pipeline search finds deals by client, owner and area", async (t) => {
+    const previous = api.defaults.adapter;
+    t.after(() => {
+        api.defaults.adapter = previous;
+    });
+    const sale = { salePrice: "5000000", transactionType: "sale" };
+    const leads = [
+        {
+            id: "andheri",
+            stage: "new",
+            property: { id: "p1", ...sale, address: "Andheri West", city: "Mumbai" },
+            client: { id: "c1", name: "Ravi Kumar", phone: "+91 98765 43210" },
+            owner: { id: "o1", fullName: "Sunita Sharma" },
+        },
+        {
+            id: "baner",
+            stage: "contacted",
+            property: { id: "p2", ...sale, address: "Baner", city: "Pune" },
+            client: { id: "c2", name: "Meera Iyer", phone: "9123456789" },
+            exclusiveOwner: { id: "o2", fullName: "Arjun Mehta" },
+        },
+        {
+            id: "no-owner",
+            stage: "new",
+            property: { id: "p3", ...sale, address: "Wakad", city: "Pune" },
+            client: { id: "c3", name: "Anil Rao" },
+        },
+    ];
+    // Mirrors the real API: its `search` matches names only, never the area.
+    api.defaults.adapter = async (config) => {
+        const search = new URL(config.url ?? "", "http://x").searchParams
+            .get("search")
+            ?.toLowerCase();
+        const items = search
+            ? leads.filter((lead) =>
+                  [lead.client.name, lead.owner?.fullName, lead.exclusiveOwner?.fullName].some(
+                      (name) => name?.toLowerCase().includes(search),
+                  ),
+              )
+            : leads;
+        return {
+            data: { items, totalPages: 1 },
+            status: 200,
+            statusText: "OK",
+            headers: {},
+            config,
+        };
+    };
+    const search = async (q: string) =>
+        (await pipelineApi.list({ ...DEFAULT_DEALS_FILTERS, q })).items.map((d) => d.id).sort();
+
+    assert.deepEqual(await search("ravi"), ["andheri"], "client name");
+    assert.deepEqual(await search("SHARMA"), ["andheri"], "platform owner name");
+    assert.deepEqual(await search("mehta"), ["baner"], "exclusive owner name");
+    assert.deepEqual(await search("andheri"), ["andheri"], "area");
+    assert.deepEqual(await search("pune"), ["baner", "no-owner"], "city");
+    assert.deepEqual(await search("  baner "), ["baner"], "surrounding spaces");
+    assert.deepEqual(await search("98765 43210"), ["andheri"], "phone typed with a space");
+    assert.deepEqual(await search("ravi andheri"), ["andheri"], "client and area together");
+    assert.deepEqual(await search("ravi baner"), [], "every word must match");
+    assert.deepEqual(await search("owner"), [], "the 'Owner' placeholder is not searchable");
+
+    const { summary } = await pipelineApi.list({ ...DEFAULT_DEALS_FILTERS, q: "pune" });
+    assert.equal(summary.counts.new, 1, "stage counts follow the search");
+    assert.equal(summary.counts.contacted, 1);
+});
+
 test("pipeline filter state: whitespace search and empty sheet are not filters", () => {
     assert.equal(hasActiveDealsFilters(DEFAULT_DEALS_FILTERS), false);
     assert.equal(hasActiveDealsFilters({ ...DEFAULT_DEALS_FILTERS, q: "   " }), false);
