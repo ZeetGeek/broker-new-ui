@@ -10,14 +10,18 @@ import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
 
 import {
     backfillTaskStart,
+    EMPTY_TASK_DRAFT,
     MAX_REMINDER_MINUTES,
     type Task,
+    type TaskDraft,
+    type TaskPriority,
     taskDateKey,
     taskReminderAt,
     taskReminderKey,
     taskReminders,
     taskSchema,
 } from "./model";
+import { encodeTaskDraftTitle } from "./quick-add-draft";
 
 export const TASK_CLIENTS = PREVIEW_CLIENTS;
 export const TASK_PROPERTIES = PREVIEW_PROPERTIES;
@@ -34,11 +38,11 @@ export const TASK_OWNERS = [
             ]),
     ).values(),
 ];
-export const TASK_QUERY_KEY = (accountId: string) => ["private-tasks-mock-v7", accountId] as const;
-// Seed the requested populated preview once; subsequent edits and empty lists persist.
-const keyFor = (accountId: string) => `crm.private-tasks.mock.v3.${accountId}`;
+export const TASK_QUERY_KEY = (accountId: string) => ["private-tasks-mock-v8", accountId] as const;
+/** Bumped so the planner reseeds with quick-add chip titles. */
+const keyFor = (accountId: string) => `crm.private-tasks.mock.v4.${accountId}`;
 const envelope = z.object({
-    version: z.union([z.literal(2), z.literal(3)]),
+    version: z.union([z.literal(2), z.literal(3), z.literal(4)]),
     tasks: z.array(taskSchema),
 });
 const legacyEnvelope = z.object({
@@ -47,106 +51,181 @@ const legacyEnvelope = z.object({
 });
 const legacyOffset = z.number().int().min(0).max(MAX_REMINDER_MINUTES).nullable();
 
+const TASK_CATALOGS = {
+    clients: TASK_CLIENTS,
+    owners: TASK_OWNERS,
+    properties: TASK_PROPERTIES,
+};
+
+const PREVIEW_DETAILS =
+    "Preview task with quick-add chip syntax. Open it or double-click the row to see the chips.";
+
+function chipTitle(draft: TaskDraft, now: number): string {
+    return encodeTaskDraftTitle(draft, TASK_CATALOGS, now);
+}
+
+function draftOf(
+    name: string,
+    fields: Partial<TaskDraft> & Pick<TaskDraft, "startDate" | "startTime">,
+): TaskDraft {
+    return { ...EMPTY_TASK_DRAFT, title: name, ...fields };
+}
+
 export function sampleTasks(now = Date.now()): Task[] {
     const day = (offset: number) => taskDateKey(now + offset * 86_400_000);
-    const base = (
+    const upcoming = inputValueInIst(new Date(now + 15 * 60_000));
+    const upcomingDate = upcoming.slice(0, 10);
+    const upcomingTime = upcoming.slice(11, 16);
+    const make = (
         index: number,
-        title: string,
-        dueDate: string | null,
-        dueTime: string | null,
-    ): Task => ({
-        id: `sample-task-${index}`,
-        title,
-        details: "",
-        startDate: dueDate && dueDate < day(0) ? dueDate : day(0),
-        startTime: null,
-        repeat: null,
-        repeatAnchor: null,
-        repeatFromId: null,
-        dueDate,
-        dueTime,
-        reminders: dueTime ? [15] : [],
-        clientId: null,
-        ownerId: null,
-        propertyId: null,
-        completedAt: null,
-        createdAt: new Date(now - 3 * 86_400_000 + index * 60_000).toISOString(),
-        updatedAt: new Date(now - 86_400_000).toISOString(),
-        priority: "medium",
-        deliveredReminderKeys: [],
-    });
-    const upcomingTime = inputValueInIst(new Date(now + 15 * 60_000));
+        name: string,
+        fields: Partial<TaskDraft> & Pick<TaskDraft, "startDate" | "startTime">,
+        extras: Partial<Task> = {},
+    ): Task => {
+        const draft = draftOf(name, fields);
+        const startDate = draft.startDate || null;
+        const startTime = draft.startTime || null;
+        const dueDate = draft.dueDate || null;
+        const dueTime = dueDate && draft.dueTime ? draft.dueTime : null;
+        return {
+            id: `sample-task-${index}`,
+            title: chipTitle(draft, now),
+            details: draft.details,
+            startDate,
+            startTime,
+            startReminderEnabledAt: new Date(now).toISOString(),
+            repeat: draft.repeat,
+            repeatAnchor: draft.repeat ? dueDate || startDate : null,
+            repeatFromId: null,
+            dueDate,
+            dueTime,
+            reminders: dueDate && dueTime ? [...draft.reminders] : [],
+            clientId: draft.clientId || null,
+            ownerId: draft.ownerId || null,
+            propertyId: draft.propertyId || null,
+            completedAt: null,
+            createdAt: new Date(now - 3 * 86_400_000 + index * 60_000).toISOString(),
+            updatedAt: new Date(now - 86_400_000).toISOString(),
+            priority: draft.priority,
+            deliveredReminderKeys: [],
+            ...extras,
+        };
+    };
     const tasks: Task[] = [
-        {
-            ...base(1, "Call Aarav about Vesu options", day(-1), "17:00"),
+        make(1, "Call about Vesu options", {
+            startDate: day(-1),
+            startTime: "17:00",
+            dueDate: day(-1),
+            dueTime: "17:00",
+            reminders: [15],
             clientId: TASK_CLIENTS[0].id,
             propertyId: TASK_PROPERTIES[0].id,
             priority: "high",
             details:
                 "Ask about preferred floors and confirm the budget before sharing a shortlist.",
-        },
-        {
-            ...base(2, "Collect signed owner consent", day(-2), null),
+        }),
+        make(2, "Collect signed owner consent", {
+            startDate: day(-2),
+            startTime: "10:00",
             propertyId: TASK_PROPERTIES[2].id,
+            ownerId: TASK_OWNERS[0]?.id ?? "",
             priority: "urgent",
-            ownerId: TASK_OWNERS[0]?.id ?? null,
-        },
-        {
-            ...base(
-                3,
-                "Confirm the visit with Priya",
-                upcomingTime.slice(0, 10),
-                upcomingTime.slice(11, 16),
-            ),
+        }),
+        make(3, "Confirm the visit", {
+            startDate: upcomingDate,
+            startTime: upcomingTime,
+            dueDate: upcomingDate,
+            dueTime: upcomingTime,
+            reminders: [15, 0],
             clientId: TASK_CLIENTS[2].id,
             propertyId: TASK_PROPERTIES[2].id,
-            details: "Confirm the meeting point at the main gate and check parking access.",
-            reminders: [15, 0],
             priority: "high",
-        },
-        {
-            ...base(4, "Send Vesu shortlist to Aarav", day(0), "12:00"),
-            clientId: TASK_CLIENTS[0].id,
+            details: "Confirm the meeting point at the main gate and check parking access.",
+        }),
+        make(4, "Send the Vesu shortlist", {
+            startDate: day(0),
+            startTime: "12:00",
+            dueDate: day(0),
+            dueTime: "12:00",
             reminders: [60, 0],
-        },
-        {
-            ...base(5, "Review the Adajan listing details", day(0), null),
+            clientId: TASK_CLIENTS[0].id,
+            propertyId: TASK_PROPERTIES[0].id,
+            priority: "medium",
+        }),
+        make(5, "Review the listing details", {
+            startDate: day(0),
+            startTime: "09:00",
             propertyId: TASK_PROPERTIES[2].id,
             priority: "low",
-        },
-        {
-            ...base(6, "Follow up with Nisha", day(1), "11:00"),
-            clientId: TASK_CLIENTS[3].id,
+        }),
+        make(6, "Follow up on the visit notes", {
+            startDate: day(1),
+            startTime: "11:00",
+            dueDate: day(1),
+            dueTime: "11:00",
             reminders: [1440, 60],
-        },
-        {
-            ...base(7, "Prepare Pal property photos", day(2), null),
+            clientId: TASK_CLIENTS[3].id,
+            priority: "medium",
+        }),
+        make(7, "Prepare property photos", {
+            startDate: day(2),
+            startTime: "09:00",
             propertyId: TASK_PROPERTIES[3].id,
             priority: "low",
-        },
+            repeat: { unit: "week", interval: 1, weekdays: [1], until: null },
+        }),
         {
-            ...base(8, "Organise this week’s paperwork", null, null),
-            details: "Keep owner consent forms and visit notes together.",
+            ...make(8, "Organise this week’s paperwork", {
+                startDate: day(0),
+                startTime: "08:00",
+                details: "Keep owner consent forms and visit notes together.",
+                priority: "low",
+            }),
+            title: "Organise this week’s paperwork",
+            startDate: null,
+            startTime: null,
+            listId: "someday",
         },
-        {
-            ...base(9, "Share the Pal brochure with Nisha", day(0), "08:00"),
-            clientId: TASK_CLIENTS[3].id,
-            propertyId: TASK_PROPERTIES[3].id,
-            completedAt: new Date(now - 30 * 60_000).toISOString(),
-        },
-        {
-            ...base(10, "Check Vesu owner documents", day(-1), null),
-            propertyId: TASK_PROPERTIES[0].id,
-            completedAt: inputValueToUtc(`${day(-1)}T16:20`),
-        },
-        {
-            ...base(11, "Call Mehul for requirements", day(-2), null),
-            clientId: TASK_CLIENTS[1].id,
-            completedAt: inputValueToUtc(`${day(-2)}T11:15`),
-        },
+        make(
+            9,
+            "Share the brochure",
+            {
+                startDate: day(0),
+                startTime: "08:00",
+                dueDate: day(0),
+                dueTime: "08:00",
+                clientId: TASK_CLIENTS[3].id,
+                propertyId: TASK_PROPERTIES[3].id,
+                priority: "medium",
+            },
+            { completedAt: new Date(now - 30 * 60_000).toISOString() },
+        ),
+        make(
+            10,
+            "Check owner documents",
+            {
+                startDate: day(-1),
+                startTime: "16:20",
+                propertyId: TASK_PROPERTIES[0].id,
+                ownerId: TASK_OWNERS[0]?.id ?? "",
+                priority: "medium",
+            },
+            { completedAt: inputValueToUtc(`${day(-1)}T16:20`) },
+        ),
+        make(
+            11,
+            "Call for requirements",
+            {
+                startDate: day(-2),
+                startTime: "11:15",
+                clientId: TASK_CLIENTS[1].id,
+                priority: "medium",
+            },
+            { completedAt: inputValueToUtc(`${day(-2)}T11:15`) },
+        ),
     ];
     return tasks.map((record) => {
-        const task = backfillTaskStart(record, now);
+        const task = record.listId === "someday" ? record : backfillTaskStart(record, now);
         const deliveredReminderKeys = taskReminders(task)
             .filter(
                 (reminder) =>
@@ -160,30 +239,30 @@ export function sampleTasks(now = Date.now()): Task[] {
 /** Rich design-preview data across every task view; never sent to the API. */
 export function placeholderTasks(now = Date.now()): Task[] {
     const actions = [
-        "Confirm the meeting point for",
-        "Review owner documents for",
-        "Prepare the property shortlist for",
-        "Check parking and access at",
-        "Share the floor plan for",
-        "Follow up on availability at",
-        "Collect the latest listing photos for",
-        "Confirm the next steps for",
-        "Check the revised asking price for",
-        "Arrange a second viewing at",
-        "Request the maintenance details for",
-        "Confirm key collection for",
-        "Review the possession timeline for",
-        "Prepare the visit notes for",
-        "Check the available floor plans for",
-        "Collect the updated brochure for",
-        "Review the rental terms for",
-        "Verify the carpet area of",
-        "Check the preferred viewing time for",
-        "Prepare a location comparison for",
-        "Confirm the owner’s availability for",
-        "Review the latest Client feedback for",
-        "Check lift access and visitor parking at",
-        "Prepare the document checklist for",
+        "Confirm the meeting point",
+        "Review owner documents",
+        "Prepare the property shortlist",
+        "Check parking and access",
+        "Share the floor plan",
+        "Follow up on availability",
+        "Collect the latest listing photos",
+        "Confirm the next steps",
+        "Check the revised asking price",
+        "Arrange a second viewing",
+        "Request the maintenance details",
+        "Confirm key collection",
+        "Review the possession timeline",
+        "Prepare the visit notes",
+        "Check the available floor plans",
+        "Collect the updated brochure",
+        "Review the rental terms",
+        "Verify the carpet area",
+        "Check the preferred viewing time",
+        "Prepare a location comparison",
+        "Confirm the owner’s availability",
+        "Review the latest Client feedback",
+        "Check lift access and visitor parking",
+        "Prepare the document checklist",
     ];
     const personal = [
         "Organise this week’s paperwork",
@@ -200,7 +279,7 @@ export function placeholderTasks(now = Date.now()): Task[] {
         "Plan follow-ups for next month",
     ];
     const base = sampleTasks(now)[0];
-    const priorities = ["low", "urgent", "high", "medium"] as const;
+    const priorities: TaskPriority[] = ["low", "urgent", "high", "medium"];
     // Repeatable shuffle keeps fixtures stable without repeating each day's content.
     let seed = 38127;
     const random = () => {
@@ -226,24 +305,36 @@ export function placeholderTasks(now = Date.now()): Task[] {
         const offset = dayOffsets[index] ?? -(index % 5);
         const date = taskDateKey(now + offset * 86_400_000);
         const { action, property, client } = combinations[index];
+        const priority = priorities[Math.floor(random() * priorities.length)];
+        const withDue = !unscheduled && index % 3 === 0;
+        const ownerId = !unscheduled && index % 4 === 0 ? (TASK_OWNERS[0]?.id ?? "") : "";
+        const draft = draftOf(unscheduled ? personal[index - 48] : action, {
+            startDate: date,
+            startTime: "09:00",
+            dueDate: withDue ? date : "",
+            dueTime: withDue ? "16:30" : "",
+            reminders: withDue ? [15] : [],
+            clientId: unscheduled ? "" : client.id,
+            propertyId: unscheduled ? "" : property.id,
+            ownerId,
+            priority,
+            details: PREVIEW_DETAILS,
+        });
         const task: Task = {
             ...base,
             id: `placeholder-task-${index + 1}`,
-            title: unscheduled
-                ? personal[index - 48]
-                : `${action} ${property.title} · ${client.name}`.slice(0, 160),
-            details:
-                "Varied sample task for exploring the planner. Check the property details, record the outcome, and agree on the next follow-up.",
+            title: unscheduled ? personal[index - 48] : chipTitle(draft, now),
+            details: PREVIEW_DETAILS,
             startDate: date,
             startTime: "09:00",
             startReminderEnabledAt: new Date(now).toISOString(),
             dueDate: unscheduled ? null : date,
-            dueTime: !unscheduled && index % 3 === 0 ? "16:30" : null,
-            reminders: [],
-            priority: priorities[Math.floor(random() * priorities.length)],
+            dueTime: withDue ? "16:30" : null,
+            reminders: withDue ? [15] : [],
+            priority,
             clientId: unscheduled ? null : client.id,
             propertyId: unscheduled ? null : property.id,
-            ownerId: !unscheduled && index % 4 === 0 ? (TASK_OWNERS[0]?.id ?? null) : null,
+            ownerId: ownerId || null,
             completedAt: completed ? new Date(now - (index - 59) * 3_600_000).toISOString() : null,
             deletedAt: deleted ? new Date(now - (index - 71) * 3_600_000).toISOString() : null,
             listId: unscheduled ? "someday" : null,
@@ -321,7 +412,8 @@ function readSaved(accountId: string): Task[] | null {
         const hasOldSamples = savedTasks.some(
             (task) =>
                 task.id.startsWith("placeholder-task-") &&
-                task.details.startsWith("Sample task for exploring the planner."),
+                (task.details.startsWith("Sample task for exploring the planner.") ||
+                    task.details.startsWith("Varied sample task for exploring the planner.")),
         );
         const refreshedSamples = new Map(
             hasOldSamples ? placeholderTasks().map((task) => [task.id, task] as const) : [],
@@ -329,7 +421,11 @@ function readSaved(accountId: string): Task[] | null {
         const tasks = savedTasks.map((task) => {
             const refreshed = refreshedSamples.get(task.id);
             // Refresh only the previous generated fixtures; retain user tasks and saved states.
-            if (refreshed && task.details.startsWith("Sample task for exploring the planner.")) {
+            if (
+                refreshed &&
+                (task.details.startsWith("Sample task for exploring the planner.") ||
+                    task.details.startsWith("Varied sample task for exploring the planner."))
+            ) {
                 return backfillTaskStart({
                     ...task,
                     title: refreshed.title,
@@ -342,6 +438,7 @@ function readSaved(accountId: string): Task[] | null {
                     clientId: refreshed.clientId,
                     propertyId: refreshed.propertyId,
                     ownerId: refreshed.ownerId,
+                    reminders: refreshed.reminders,
                     deliveredReminderKeys: refreshed.deliveredReminderKeys,
                 });
             }
@@ -354,8 +451,8 @@ function readSaved(accountId: string): Task[] | null {
 }
 
 function writeTasks(accountId: string, tasks: Task[]): Task[] {
-    const checked = checkedTasks({ version: 3, tasks });
-    sessionStorage.setItem(keyFor(accountId), JSON.stringify({ version: 3, tasks: checked }));
+    const checked = checkedTasks({ version: 4, tasks });
+    sessionStorage.setItem(keyFor(accountId), JSON.stringify({ version: 4, tasks: checked }));
     return checked;
 }
 

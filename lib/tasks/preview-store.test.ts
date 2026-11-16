@@ -93,7 +93,7 @@ test("mock task storage isolates accounts, preserves empty lists, and rejects da
         await assert.rejects(
             taskPreviewStore.save("broker-a", [{ ...tasks[0], clientId: "missing" }]),
         );
-        values.set("crm.private-tasks.mock.v3.broker-a", "broken json");
+        values.set("crm.private-tasks.mock.v4.broker-a", "broken json");
         await assert.rejects(taskPreviewStore.list("broker-a"));
         assert.deepEqual(await taskPreviewStore.reset("broker-a"), []);
     } finally {
@@ -176,7 +176,7 @@ test("version one scalar tasks migrate without losing records or valid delivery 
         // A delivery for a previous schedule must not suppress the current reminder.
         legacy[3] = { ...legacy[3], reminderDeliveredFor: "2029-01-01T00:00:00.000Z" };
         values.set(
-            "crm.private-tasks.mock.v3.broker",
+            "crm.private-tasks.mock.v4.broker",
             JSON.stringify({ version: 1, tasks: legacy }),
         );
         const migrated = await taskPreviewStore.list("broker");
@@ -193,8 +193,8 @@ test("version one scalar tasks migrate without losing records or valid delivery 
         assert.deepEqual(migrated[2].deliveredReminderKeys, []);
         assert.deepEqual(migrated[3].reminders, [legacy[3].reminderMinutes]);
         assert.deepEqual(migrated[3].deliveredReminderKeys, []);
-        const stored = JSON.parse(values.get("crm.private-tasks.mock.v3.broker")!);
-        assert.equal(stored.version, 3);
+        const stored = JSON.parse(values.get("crm.private-tasks.mock.v4.broker")!);
+        assert.equal(stored.version, 4);
         assert.equal("reminderMinutes" in stored.tasks[0], false);
         assert.equal("reminderDeliveredFor" in stored.tasks[0], false);
         assert.deepEqual(await taskPreviewStore.list("broker"), migrated);
