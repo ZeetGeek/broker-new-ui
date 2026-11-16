@@ -29,6 +29,7 @@ import {
     resolveQuickAddValues,
     syncQuickAddEntities,
 } from "./quick-add-draft";
+import { QuickAddHelp } from "./quick-add-help";
 import {
     findQuickAddMention,
     parseQuickAdd,
@@ -82,8 +83,10 @@ const sameNumbers = (a: readonly number[], b: readonly number[]) =>
 function taskChange(task: Task, values: QuickAddValues): TaskQuickChange {
     const change: TaskQuickChange = {};
     if (values.title !== task.title) change.title = values.title;
-    if (values.date !== task.dueDate) change.dueDate = values.date;
-    if (values.time !== (task.dueDate ? task.dueTime : null)) change.dueTime = values.time;
+    if (values.startDate !== task.startDate) change.startDate = values.startDate;
+    if (values.startTime !== (task.startTime ?? null)) change.startTime = values.startTime;
+    if (values.dueDate !== task.dueDate) change.dueDate = values.dueDate;
+    if (values.dueTime !== task.dueTime) change.dueTime = values.dueTime;
     if (JSON.stringify(values.repeat) !== JSON.stringify(task.repeat ?? null))
         change.repeat = values.repeat;
     const priority = values.priority ?? "low";
@@ -98,13 +101,25 @@ function taskChange(task: Task, values: QuickAddValues): TaskQuickChange {
     return change;
 }
 
-function mirrorText(text: string, marks: readonly Mark[]): ReactNode[] {
+function mirrorText(
+    text: string,
+    marks: readonly Mark[],
+    invalidRanges: readonly QuickAddRange[] = [],
+): ReactNode[] {
     const nodes: ReactNode[] = [];
     let cursor = 0;
     marks.forEach((mark, index) => {
         if (mark.start > cursor) nodes.push(text.slice(cursor, mark.start));
+        const invalid = invalidRanges.some(
+            (range) => range.start === mark.start && range.end === mark.end,
+        );
         nodes.push(
-            <mark key={index} className={styles.mark} data-kind={mark.kind}>
+            <mark
+                key={index}
+                className={styles.mark}
+                data-kind={mark.kind}
+                data-invalid={invalid || undefined}
+            >
                 {text.slice(mark.start, mark.end)}
             </mark>,
         );
@@ -148,6 +163,7 @@ export function QuickAddComposer({
         past: [],
         future: [],
     });
+    const helpOpenRef = useRef(false);
 
     const [draft, setDraft] = useState(() =>
         task ? quickAddDraftFromTask(task, now, catalogs) : newQuickAddDraft(date),
@@ -171,12 +187,12 @@ export function QuickAddComposer({
     const activeOption = options.length ? Math.min(optionIndex, options.length - 1) : -1;
     const parse = parseQuickAdd(draft.text, {
         now,
-        baseDate: draft.base.date,
+        baseDate: draft.base.startDate,
         entities: draft.entities,
         dismissed: draft.dismissed,
         mention,
     });
-    const values = resolveQuickAddValues(draft, parse);
+    const values = resolveQuickAddValues(draft, parse, now);
     // Saved title keeps chips in place; emptiness still ignores pure detail words.
     const bareTitle = parse.title;
     const tooLong = values.title.length > TITLE_LIMIT;
@@ -184,6 +200,11 @@ export function QuickAddComposer({
         ...parse.highlights,
         ...(mention ? [{ start: mention.start, end: mention.end, kind: "mention" as const }] : []),
     ].sort((a, b) => a.start - b.start);
+    const invalidChipRanges = [
+        ...values.scheduleIssues,
+        ...values.dueIssues,
+        ...values.reminderIssues,
+    ];
 
     useLayoutEffect(() => {
         const target = pendingCaretRef.current;
@@ -259,10 +280,12 @@ export function QuickAddComposer({
                 else setHint("Couldn’t save this change. Try again.");
                 return;
             }
-            const added = await onAdd?.(saved.title, saved.date, listId, {
+            const added = await onAdd?.(saved.title, saved.startDate, listId, {
                 priority: saved.priority ?? "low",
                 priorityAt: null,
-                dueTime: saved.time,
+                startTime: saved.startTime,
+                dueDate: saved.dueDate,
+                dueTime: saved.dueTime,
                 repeat: saved.repeat,
                 reminders: saved.reminders,
                 clientId: saved.clientId,
@@ -460,7 +483,7 @@ export function QuickAddComposer({
     const onBlur = () => {
         window.clearTimeout(blurTimerRef.current);
         blurTimerRef.current = window.setTimeout(() => {
-            if (formRef.current?.contains(document.activeElement)) return;
+            if (helpOpenRef.current || formRef.current?.contains(document.activeElement)) return;
             leave();
         }, 0);
     };
@@ -486,14 +509,10 @@ export function QuickAddComposer({
                 <div className={styles.field}>
                     <div className={styles.mirror} aria-hidden>
                         {draft.text ? (
-                            mirrorText(draft.text, marks)
+                            mirrorText(draft.text, marks, invalidChipRanges)
                         ) : (
                             <span className={styles.placeholder}>
-                                <span data-idle>
-                                    {editing
-                                        ? "Task name"
-                                        : "Add a task — try “tomorrow 5pm”, p1, #property, @Client, !30m"}
-                                </span>
+                                <span data-idle>{editing ? "Task name" : "What’s next?"}</span>
                             </span>
                         )}
                     </div>
@@ -505,6 +524,7 @@ export function QuickAddComposer({
                         maxLength={TEXT_LIMIT}
                         autoComplete="off"
                         autoCapitalize="sentences"
+                        spellCheck={false}
                         enterKeyHint={editing ? "done" : "enter"}
                         aria-label={
                             editing
@@ -580,24 +600,31 @@ export function QuickAddComposer({
                     )}
                 </div>
                 <p className={styles.meta} hidden={!active}>
+                    <QuickAddHelp
+                        fieldRef={fieldRef}
+                        onOpenChange={(open) => {
+                            helpOpenRef.current = open;
+                        }}
+                    />
                     {values.title.length >= COUNTER_FROM && (
                         <span data-over={tooLong || undefined}>
                             {values.title.length}/{TITLE_LIMIT}
                         </span>
                     )}
-                    <span role="status">
-                        {hint ||
-                            (values.remindersNeedTime
-                                ? "Reminders need a time — add one, like 5pm."
-                                : "")}
+                    <span
+                        role="status"
+                        data-error={
+                            values.dueError || values.scheduleError || values.reminderError
+                                ? ""
+                                : undefined
+                        }
+                    >
+                        {hint || values.dueError || values.scheduleError || values.reminderError}
                     </span>
                 </p>
                 <p id={helpId} className="sr-only">
-                    Type the task name in plain words. Words like tomorrow, 5pm, every Monday, p1
-                    and !30m set the date, time, repeat, priority and reminder. Type # to link a
-                    property or @ to link a Client or owner. Copy and paste keeps those chips when
-                    the names match your records. Ctrl+Z undoes a change; Ctrl+Shift+Z or Ctrl+Y
-                    redoes it. Backspace right after a highlighted phrase keeps it as plain words.
+                    Type the task name in plain words. Open Shortcuts for date, time, priority,
+                    property, Client, reminder and repeat tips. Ctrl+Z undoes a change.
                 </p>
             </div>
             <button

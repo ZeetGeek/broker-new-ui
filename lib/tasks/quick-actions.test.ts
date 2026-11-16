@@ -7,11 +7,12 @@ import { changeTaskQuickly } from "@/features/tasks/quick-actions";
 
 const now = Date.parse("2030-01-10T09:00:00Z");
 const task: Task = {
-    ...createPlannerTask("Call client", "2030-01-08", now, "quick-task"),
-    startDate: "2030-01-07",
+    ...createPlannerTask("Call client", "2030-01-07", now, "quick-task", undefined, {
+        dueDate: "2030-01-08",
+        dueTime: "11:00",
+        reminders: [15],
+    }),
     startTime: "09:00",
-    dueTime: "11:00",
-    reminders: [15],
     clientId: "client-a",
     propertyId: "property-a",
     repeat: { unit: "day", interval: 1, weekdays: [], until: null },
@@ -79,9 +80,10 @@ test("an earlier due time pulls the same-day start time back instead of failing"
     assert.equal(next.dueTime, "09:30");
     assert.equal(next.startTime, "09:30");
 });
-test("new planner tasks keep a typed repeat and reminders only when timed", () => {
+test("new planner tasks keep a typed repeat and reminders only when due is timed", () => {
     const repeat = { unit: "month" as const, interval: 1, weekdays: [], until: null };
     const timed = createPlannerTask("Rent", "2030-01-31", now, "rent", undefined, {
+        dueDate: "2030-01-31",
         dueTime: "10:00",
         repeat,
         reminders: [30, 30],
@@ -93,4 +95,5 @@ test("new planner tasks keep a typed repeat and reminders only when timed", () =
         reminders: [30],
     });
     assert.deepEqual(untimed.reminders, []);
+    assert.equal(untimed.dueDate, null);
 });

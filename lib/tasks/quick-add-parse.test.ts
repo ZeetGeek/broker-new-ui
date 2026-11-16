@@ -46,8 +46,9 @@ const catalogs = {
 test("date, time and priority become fields and leave the title", () => {
     const result = parse("Call Aarav tomorrow 5pm p1");
     assert.equal(result.title, "Call Aarav");
-    assert.equal(result.date, "2030-11-17");
-    assert.equal(result.time, "17:00");
+    assert.equal(result.startDate, "2030-11-17");
+    assert.equal(result.startTime, "17:00");
+    assert.equal(result.dueDate, null);
     assert.equal(result.priority, "urgent");
     assert.deepEqual(
         result.highlights.map(({ kind, start, end }) => [kind, start, end]),
@@ -56,6 +57,16 @@ test("date, time and priority become fields and leave the title", () => {
             ["priority", 24, 26],
         ],
     );
+});
+
+test("an explicit due clause sets the optional end schedule", () => {
+    const result = parse("Site visit today 5pm due tomorrow 6pm");
+    assert.equal(result.title, "Site visit");
+    assert.equal(result.startDate, "2030-11-16");
+    assert.equal(result.startTime, "17:00");
+    assert.equal(result.dueDate, "2030-11-17");
+    assert.equal(result.dueTime, "18:00");
+    assert.ok(result.highlights.some((highlight) => highlight.kind === "due"));
 });
 
 test("relative dates resolve on the India calendar", () => {

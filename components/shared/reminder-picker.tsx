@@ -42,6 +42,7 @@ export function ReminderPicker({
     now,
     onChange,
     disabled = false,
+    maxReminders,
 }: {
     reminders: number[];
     getReminderAt: (minutes: number) => string | null;
@@ -53,6 +54,7 @@ export function ReminderPicker({
     now: number;
     onChange: (reminders: number[]) => void;
     disabled?: boolean;
+    maxReminders?: number;
 }) {
     const id = useId();
     const [open, setOpen] = useState(false);
@@ -61,6 +63,7 @@ export function ReminderPicker({
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
     const sorted = [...reminders].sort((a, b) => b - a);
+    const atLimit = maxReminders !== undefined && reminders.length >= maxReminders;
     const remove = (minutes: number) => {
         if (disabled) return;
         onChange(reminders.filter((value) => value !== minutes));
@@ -76,6 +79,10 @@ export function ReminderPicker({
         }
         if (reminders.includes(minutes)) {
             setError("That reminder is already added. Choose another time.");
+            return;
+        }
+        if (atLimit) {
+            setError(`You can add up to ${maxReminders} reminders.`);
             return;
         }
         const at = getReminderAt(minutes);
@@ -100,7 +107,11 @@ export function ReminderPicker({
         <div className={styles.picker}>
             <div className={styles.heading}>
                 <span className={styles.label}>Reminders</span>
-                {reminders.length > 0 ? (
+                {maxReminders !== undefined ? (
+                    <span className={styles.count} aria-live="polite">
+                        {reminders.length} / {maxReminders}
+                    </span>
+                ) : reminders.length > 0 ? (
                     <span className={styles.count}>{reminders.length}</span>
                 ) : null}
             </div>

@@ -1,4 +1,6 @@
-import type { Task, TaskPriority } from "./model";
+import { MAX_TASK_REMINDERS } from "@/lib/reminders";
+
+import { type Task, type TaskPriority, taskDueAt, taskReminderAt } from "./model";
 import {
     entitiesFromCatalogText,
     entitiesFromTaskTitle,
@@ -16,8 +18,10 @@ import type { TaskRepeat } from "./recurrence";
 
 /** The column's date, plus details of the task being edited that aren't written out as words. Typed words win. */
 export type QuickAddBase = {
-    date: string | null;
-    time: string | null;
+    startDate: string | null;
+    startTime: string | null;
+    dueDate: string | null;
+    dueTime: string | null;
     repeat: TaskRepeat | null;
     priority: TaskPriority | null;
     reminders: number[];
@@ -37,26 +41,51 @@ export type QuickAddDraft = {
 
 export type QuickAddEditResult = { draft: QuickAddDraft; caret: number };
 
+export type QuickAddReminderIssueReason = "need-time" | "too-many" | "already-passed" | "duplicate";
+
+export type QuickAddReminderIssue = QuickAddRange & {
+    minutes: number;
+    reason: QuickAddReminderIssueReason;
+};
+
 export type QuickAddValues = {
     title: string;
+    startDate: string | null;
+    startTime: string | null;
+    dueDate: string | null;
+    dueTime: string | null;
+    /** Alias of startDate — planner column / onAdd still pass this as the day. */
     date: string | null;
     time: string | null;
     repeat: TaskRepeat | null;
     priority: TaskPriority | null;
-    /** Reminders that will be saved — only when there is a due time. */
+    /** Reminders that will be saved — need a due time, unique, future, within the limit. */
     reminders: number[];
     propertyId: string | null;
     clientId: string | null;
     ownerId: string | null;
-    /** Reminders were asked for, but there is no time to remind before. */
-    remindersNeedTime: boolean;
+    /** Typed reminder chips that will not save, with why. */
+    reminderIssues: QuickAddReminderIssue[];
+    /** One short status line for the first reminder problem, if any. */
+    reminderError: string;
+    /** Start date+time is already in the past — warn; save still creates an overdue task. */
+    schedulePassed: boolean;
+    /** Highlight ranges for a past start time (merged schedule chips). */
+    scheduleIssues: QuickAddRange[];
+    /** Status line when the start time has already passed. */
+    scheduleError: string;
+    /** Due clause problems (missing start, or due before start). */
+    dueIssues: QuickAddRange[];
+    dueError: string;
 };
 
 type TextEdit = { start: number; end: number; inserted: string };
 
 const EMPTY_BASE: QuickAddBase = {
-    date: null,
-    time: null,
+    startDate: null,
+    startTime: null,
+    dueDate: null,
+    dueTime: null,
     repeat: null,
     priority: null,
     reminders: [],
@@ -77,7 +106,7 @@ export function newQuickAddDraft(date: string | null): QuickAddDraft {
         entities: [],
         dismissed: [],
         closedMention: null,
-        base: { ...EMPTY_BASE, date },
+        base: { ...EMPTY_BASE, startDate: date },
     };
 }
 
@@ -105,7 +134,7 @@ export function quickAddDraftFromTask(
         : [];
     const parse = parseQuickAdd(task.title, {
         now,
-        baseDate: task.dueDate,
+        baseDate: task.startDate,
         entities,
     });
     let reminders = [...task.reminders];
@@ -113,20 +142,23 @@ export function quickAddDraftFromTask(
         if (atom.kind === "reminder" && atom.minutes !== undefined)
             reminders = reminders.filter((value) => value !== atom.minutes);
     }
+    const typedStartDate = parse.atoms.some((atom) => atom.kind === "date");
+    const typedStartTime = parse.atoms.some((atom) => atom.kind === "time");
+    const typedDue =
+        parse.atoms.some((atom) => atom.kind === "due") ||
+        parse.atoms.some((atom) => atom.kind === "due-date" || atom.kind === "due-time");
     return {
         text: task.title,
         entities,
         dismissed: [],
         closedMention: null,
         base: {
-            // Date stays on base so a word like “tomorrow” does not drift when
+            // Start stays on base so a word like “tomorrow” does not drift when
             // the task is opened on a later day; typed date words still win while editing.
-            date: task.dueDate,
-            time: parse.atoms.some((atom) => atom.kind === "time")
-                ? null
-                : task.dueDate
-                  ? task.dueTime
-                  : null,
+            startDate: typedStartDate ? null : task.startDate,
+            startTime: typedStartTime ? null : (task.startTime ?? null),
+            dueDate: typedDue ? null : task.dueDate,
+            dueTime: typedDue ? null : task.dueTime,
             repeat: parse.atoms.some((atom) => atom.kind === "repeat")
                 ? null
                 : (task.repeat ?? null),
@@ -336,24 +368,170 @@ export function syncQuickAddEntities(
     return { ...draft, entities, base };
 }
 
-/** What the task will be saved with: typed words first, then the column date / existing values. */
-export function resolveQuickAddValues(draft: QuickAddDraft, parse: QuickAddParse): QuickAddValues {
+const REMINDER_ERROR: Record<QuickAddReminderIssueReason, string> = {
+    "need-time": "Reminders need a due time — add due 5pm (or similar).",
+    "too-many": `You can add up to ${MAX_TASK_REMINDERS} reminders.`,
+    "already-passed":
+        "That reminder time has already passed. Choose a shorter lead time or a later due time.",
+    duplicate: "That reminder is already added.",
+};
+
+const REMINDER_ERROR_PRIORITY: QuickAddReminderIssueReason[] = [
+    "need-time",
+    "too-many",
+    "already-passed",
+    "duplicate",
+];
+
+function reminderIssueMessage(issues: readonly QuickAddReminderIssue[]): string {
+    for (const reason of REMINDER_ERROR_PRIORITY) {
+        if (issues.some((issue) => issue.reason === reason)) return REMINDER_ERROR[reason];
+    }
+    return "";
+}
+
+function reminderHasPassed(date: string, time: string, minutes: number, now: number): boolean {
+    const at = taskReminderAt({ dueDate: date, dueTime: time }, minutes);
+    return !at || Date.parse(at) <= now;
+}
+
+function scheduleInstant(date: string, time: string | null): number | null {
+    if (!time) return null;
+    const at = taskDueAt({ dueDate: date, dueTime: time });
+    return at ? Date.parse(at) : null;
+}
+
+function dueIsBeforeStart(
+    startDate: string,
+    startTime: string | null,
+    dueDate: string,
+    dueTime: string | null,
+): boolean {
+    if (dueDate < startDate) return true;
+    if (dueDate > startDate) return false;
+    if (startTime && dueTime) return dueTime < startTime;
+    return false;
+}
+
+function dueClauseRanges(parse: QuickAddParse): QuickAddRange[] {
+    return parse.highlights
+        .filter((highlight) => highlight.kind === "due")
+        .map(({ start, end }) => ({ start, end }));
+}
+
+/**
+ * What the task will be saved with: typed words first, then the column date / existing values.
+ * Plain date/time → start. Explicit `due …` → optional end. Reminders need a due time.
+ */
+export function resolveQuickAddValues(
+    draft: QuickAddDraft,
+    parse: QuickAddParse,
+    now: number,
+): QuickAddValues {
     const { base } = draft;
-    const date = parse.date ?? base.date;
-    const time = date ? (parse.time ?? base.time) : null;
-    const asked = [...new Set([...parse.reminders, ...base.reminders])].sort((a, b) => b - a);
+    const askedDue =
+        parse.atoms.some((atom) => atom.kind === "due") ||
+        parse.dueDate !== null ||
+        parse.dueTime !== null ||
+        base.dueDate !== null ||
+        base.dueTime !== null;
+
+    const startDate = parse.startDate ?? base.startDate;
+    const startTime = startDate ? (parse.startTime ?? base.startTime) : null;
+
+    const typedDue = parse.atoms.some(
+        (atom) => atom.kind === "due" || atom.kind === "due-date" || atom.kind === "due-time",
+    );
+    let dueDate = typedDue ? parse.dueDate : (parse.dueDate ?? base.dueDate);
+    let dueTime = dueDate ? (typedDue ? parse.dueTime : (parse.dueTime ?? base.dueTime)) : null;
+
+    const dueIssues: QuickAddRange[] = [];
+    let dueError = "";
+    if (askedDue || typedDue) {
+        if (!startDate || !startTime) {
+            dueIssues.push(...dueClauseRanges(parse));
+            dueError = "Add a start date and time before the due date.";
+            dueDate = null;
+            dueTime = null;
+        } else if (dueDate && dueIsBeforeStart(startDate, startTime, dueDate, dueTime)) {
+            dueIssues.push(...dueClauseRanges(parse));
+            dueError = "Due must be on or after the start date and time.";
+            dueDate = null;
+            dueTime = null;
+        } else if (typedDue && !dueDate) {
+            dueIssues.push(...dueClauseRanges(parse));
+            dueError = "Add a due date after due, like due tomorrow 6pm.";
+            dueTime = null;
+        }
+    }
+
+    const reminderAtoms = parse.atoms.filter(
+        (atom): atom is QuickAddAtom & { minutes: number } =>
+            atom.kind === "reminder" && atom.minutes !== undefined,
+    );
+    const typedMinutes = new Set(reminderAtoms.map((atom) => atom.minutes));
+    const baseOnly = base.reminders.filter((minutes) => !typedMinutes.has(minutes));
+    const accepted: number[] = [];
+    const issues: QuickAddReminderIssue[] = [];
+
+    if (dueDate && dueTime) {
+        for (const minutes of baseOnly) {
+            // Keep existing offsets even if they already fired — same rule as the task form.
+            if (accepted.length < MAX_TASK_REMINDERS) accepted.push(minutes);
+        }
+    }
+
+    for (const atom of reminderAtoms) {
+        const { minutes, start, end } = atom;
+        if (!dueDate || !dueTime) {
+            issues.push({ start, end, minutes, reason: "need-time" });
+            continue;
+        }
+        if (accepted.includes(minutes)) {
+            issues.push({ start, end, minutes, reason: "duplicate" });
+            continue;
+        }
+        if (reminderHasPassed(dueDate, dueTime, minutes, now)) {
+            issues.push({ start, end, minutes, reason: "already-passed" });
+            continue;
+        }
+        if (accepted.length >= MAX_TASK_REMINDERS) {
+            issues.push({ start, end, minutes, reason: "too-many" });
+            continue;
+        }
+        accepted.push(minutes);
+    }
+
+    const startAt = startDate ? scheduleInstant(startDate, startTime) : null;
+    const schedulePassed = startAt !== null && startAt <= now;
+    const scheduleIssues = schedulePassed
+        ? parse.highlights
+              .filter((highlight) => highlight.kind === "schedule")
+              .map(({ start, end }) => ({ start, end }))
+        : [];
+
     return {
         // Keep chips in the places they were typed; fields are stored beside this text.
         title: draft.text.trim(),
-        date,
-        time,
+        startDate,
+        startTime,
+        dueDate,
+        dueTime,
+        date: startDate,
+        time: startTime,
         // An undated task can still repeat from its start date; typed repeats always bring a date.
         repeat: parse.repeat ?? base.repeat,
         priority: parse.priority ?? base.priority,
-        reminders: time ? asked : [],
+        reminders: [...accepted].sort((a, b) => b - a),
         propertyId: parse.propertyId ?? base.propertyId,
         clientId: parse.clientId ?? base.clientId,
         ownerId: parse.ownerId ?? base.ownerId,
-        remindersNeedTime: asked.length > 0 && !time,
+        reminderIssues: issues,
+        reminderError: reminderIssueMessage(issues),
+        schedulePassed,
+        scheduleIssues,
+        scheduleError: schedulePassed ? "That time has already passed. Pick a later time." : "",
+        dueIssues,
+        dueError,
     };
 }

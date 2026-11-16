@@ -3,6 +3,8 @@ import { shiftTaskDate, taskDaysBetween, type TaskRepeat } from "./recurrence";
 
 export type TaskQuickChange = {
     title?: string;
+    startDate?: string | null;
+    startTime?: string | null;
     dueDate?: string | null;
     dueTime?: string | null;
     priority?: TaskPriority;
@@ -31,8 +33,12 @@ export function changeTaskQuickly(
     return tasks.map((task) => {
         if (task.id !== id) return task;
         const updated = { ...task, ...defined, updatedAt: new Date(now).toISOString() };
-        const dateChanged = change.dueDate !== undefined && change.dueDate !== task.dueDate;
-        if (dateChanged) {
+        const dueChanged = change.dueDate !== undefined && change.dueDate !== task.dueDate;
+        const startChanged =
+            (change.startDate !== undefined && change.startDate !== task.startDate) ||
+            (change.startTime !== undefined && change.startTime !== task.startTime);
+        // Menu reschedule only sends dueDate — keep the start↔due gap when shifting the deadline.
+        if (dueChanged && change.startDate === undefined) {
             const date = change.dueDate ?? null;
             updated.startDate = date
                 ? task.dueDate && task.startDate
@@ -43,11 +49,14 @@ export function changeTaskQuickly(
                 : task.startDate;
             updated.startReminderEnabledAt = new Date(now).toISOString();
         }
+        if (startChanged || dueChanged)
+            updated.startReminderEnabledAt = new Date(now).toISOString();
         // An unchanged series keeps its anchor so month-end repeats stay on the 31st.
         const repeatChanged =
             change.repeat !== undefined && !sameRepeat(change.repeat, task.repeat);
-        if (dateChanged || repeatChanged)
+        if (dueChanged || startChanged || repeatChanged)
             updated.repeatAnchor = updated.repeat ? updated.dueDate || updated.startDate : null;
+        if (!updated.startDate) updated.startTime = null;
         if (!updated.dueDate) updated.dueTime = null;
         if (!updated.dueTime) updated.reminders = [];
         if (
@@ -58,7 +67,10 @@ export function changeTaskQuickly(
         )
             updated.startTime = updated.dueTime;
         const scheduleChanged =
-            updated.dueDate !== original.dueDate || updated.dueTime !== original.dueTime;
+            updated.startDate !== original.startDate ||
+            updated.startTime !== original.startTime ||
+            updated.dueDate !== original.dueDate ||
+            updated.dueTime !== original.dueTime;
         if (scheduleChanged) updated.deliveredReminderKeys = [];
         const parsed = taskSchema.safeParse(updated);
         if (!parsed.success) throw new Error(parsed.error.issues[0].message);

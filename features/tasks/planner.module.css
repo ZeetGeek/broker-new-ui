@@ -582,9 +582,13 @@
 .customList > .dayColumn {
     flex: 1;
 }
-.customList > .dayColumn > .dayHeading,
-.newListColumn > .dayHeading {
+.customList > .dayColumn > .dayHeading {
     padding-block-start: 0.75rem;
+    padding-inline-start: 0.5rem;
+}
+.newListColumn > .dayHeading {
+    /* Sit a bit lower than the top edge so it lines up with list titles. */
+    padding-block: 1.35rem 0.75rem;
     padding-inline-start: 0.5rem;
 }
 .listHeadingRow {
@@ -787,7 +791,7 @@
     > :global(.t-tabs-pill) {
     inset-block-end: 0 !important;
 }
-.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > button {
+.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"] {
     align-self: stretch;
     min-inline-size: 44px;
     min-block-size: 44px;
@@ -798,11 +802,11 @@
     font-weight: 600;
     color: var(--color-ink-muted);
 }
-.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > button:hover,
-.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > button[aria-selected="true"] {
+.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"]:hover,
+.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"][aria-selected="true"] {
     color: var(--color-brand-text);
 }
-.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > button:focus-visible {
+.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"]:focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: -2px;
     box-shadow: none;
@@ -1021,9 +1025,11 @@
     .customList:first-child::before {
         inset-inline-start: -2.75rem;
     }
-    .customList > .dayColumn > .dayHeading,
-    .newListColumn > .dayHeading {
+    .customList > .dayColumn > .dayHeading {
         padding-block-start: 0.25rem;
+    }
+    .newListColumn > .dayHeading {
+        padding-block: 0.85rem 0.5rem;
     }
     .listDragHandle {
         inset-block-start: 0;

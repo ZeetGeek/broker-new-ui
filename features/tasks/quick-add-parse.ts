@@ -12,9 +12,11 @@ export type QuickAddEntity = QuickAddRange & {
     refId: string;
     label: string;
 };
-export type QuickAddAtomKind = "date" | "time" | "repeat" | "priority" | "reminder";
+export type QuickAddAtomKind =
+    "date" | "time" | "due" | "due-date" | "due-time" | "repeat" | "priority" | "reminder";
 export type QuickAddAtom = QuickAddRange & { kind: QuickAddAtomKind; minutes?: number };
-export type QuickAddHighlightKind = "schedule" | "priority" | "reminder" | QuickAddEntityKind;
+export type QuickAddHighlightKind =
+    "schedule" | "due" | "priority" | "reminder" | QuickAddEntityKind;
 export type QuickAddHighlight = QuickAddRange & { kind: QuickAddHighlightKind };
 export type QuickAddMention = QuickAddRange & { kind: "property" | "contact"; query: string };
 
@@ -28,6 +30,16 @@ export type QuickAddParse = {
      * has a real task name. The saved title keeps the typed words in place.
      */
     title: string;
+    /** Start schedule — from plain `today` / `5pm` / `next Monday` words. */
+    startDate: string | null;
+    startTime: string | null;
+    /** Optional end schedule — only from an explicit `due …` clause. */
+    dueDate: string | null;
+    dueTime: string | null;
+    /**
+     * Alias of `startDate` / `startTime` for older call sites.
+     * Prefer the start* names in new code.
+     */
     date: string | null;
     time: string | null;
     repeat: TaskRepeat | null;
@@ -471,6 +483,12 @@ function cleanTitle(text: string, removed: readonly QuickAddRange[]): string {
         .trim();
 }
 
+function highlightKind(kind: QuickAddAtomKind): QuickAddHighlightKind {
+    if (kind === "priority" || kind === "reminder") return kind;
+    if (kind === "due" || kind === "due-date" || kind === "due-time") return "due";
+    return "schedule";
+}
+
 /** Merge picked date / time / repeat phrases separated only by spaces into one highlight. */
 function groupHighlights(
     text: string,
@@ -481,10 +499,7 @@ function groupHighlights(
         ...atoms.map((atom) => ({
             start: atom.start,
             end: atom.end,
-            kind:
-                atom.kind === "priority" || atom.kind === "reminder"
-                    ? atom.kind
-                    : ("schedule" as const),
+            kind: highlightKind(atom.kind),
         })),
         ...entities.map((entity) => ({ start: entity.start, end: entity.end, kind: entity.kind })),
     ].sort((a, b) => a.start - b.start);
@@ -492,8 +507,9 @@ function groupHighlights(
     for (const item of visual) {
         const previous = merged[merged.length - 1];
         if (
-            previous?.kind === "schedule" &&
-            item.kind === "schedule" &&
+            previous &&
+            previous.kind === item.kind &&
+            (item.kind === "schedule" || item.kind === "due") &&
             !text.slice(previous.end, item.start).trim()
         ) {
             previous.end = item.end;
@@ -502,6 +518,28 @@ function groupHighlights(
         merged.push({ ...item });
     }
     return merged;
+}
+
+/** First standalone `due` — everything after it is the optional end schedule. */
+function findDueMarker(masked: string): QuickAddRange | null {
+    const matcher = pattern(`${L}due${R}`);
+    matcher.lastIndex = 0;
+    const match = matcher.exec(masked);
+    if (!match) return null;
+    return { start: match.index, end: match.index + match[0].length };
+}
+
+function resolveScheduleDate(
+    date: string | null,
+    time: string | null,
+    now: number,
+    baseDate: string | null,
+    today: string,
+): string | null {
+    if (date) return date;
+    if (!time) return null;
+    const currentTime = inputValueInIst(new Date(now)).slice(11, 16);
+    return baseDate ?? (time > currentTime ? today : shiftTaskDate(today, 1));
 }
 
 function firstWeekdayFrom(from: string, weekdays: number[]): string {
@@ -520,16 +558,37 @@ export function parseQuickAdd(text: string, options: QuickAddParseOptions): Quic
     const ctx: Ctx = { now, today };
 
     let masked = mask(text, [...entities, ...dismissed, ...(mention ? [mention] : [])]);
+    const dueMarker = findDueMarker(masked);
     const take = <T>(matchers: Matcher<T>[]) => {
         const hits = scan(masked, matchers, ctx);
         masked = mask(masked, hits);
         return hits;
     };
     const repeats = take(REPEAT_MATCHERS);
-    const dates = take(DATE_MATCHERS);
-    const times = take(TIME_MATCHERS);
     const priorities = take(PRIORITY_MATCHERS);
     const reminders = take(REMINDER_MATCHERS);
+
+    // Plain dates/times are start; after an explicit `due` they become the end schedule.
+    let startDates: Hit<string>[] = [];
+    let startTimes: Hit<string>[] = [];
+    let dueDates: Hit<string>[] = [];
+    let dueTimes: Hit<string>[] = [];
+    if (dueMarker) {
+        const startMasked = mask(masked, [{ start: dueMarker.start, end: text.length }]);
+        startDates = scan(startMasked, DATE_MATCHERS, ctx);
+        startTimes = scan(mask(startMasked, startDates), TIME_MATCHERS, ctx);
+        const dueMasked = mask(masked, [
+            { start: 0, end: dueMarker.end },
+            ...startDates,
+            ...startTimes,
+        ]);
+        dueDates = scan(dueMasked, DATE_MATCHERS, ctx);
+        dueTimes = scan(mask(dueMasked, dueDates), TIME_MATCHERS, ctx);
+        masked = mask(masked, [dueMarker, ...startDates, ...startTimes, ...dueDates, ...dueTimes]);
+    } else {
+        startDates = take(DATE_MATCHERS);
+        startTimes = take(TIME_MATCHERS);
+    }
 
     const atoms: QuickAddAtom[] = [];
     const pick = <T>(hits: Hit<T>[], kind: QuickAddAtomKind) => {
@@ -538,8 +597,11 @@ export function parseQuickAdd(text: string, options: QuickAddParseOptions): Quic
         return hit?.value ?? null;
     };
     let repeat = pick(repeats, "repeat");
-    let date = pick(dates, "date");
-    const time = pick(times, "time");
+    let startDate = pick(startDates, "date");
+    const startTime = pick(startTimes, "time");
+    let dueDate = pick(dueDates, "due-date");
+    const dueTime = pick(dueTimes, "due-time");
+    if (dueMarker) atoms.push({ start: dueMarker.start, end: dueMarker.end, kind: "due" });
     const priority = pick(priorities, "priority");
     const reminderValues: number[] = [];
     for (const hit of reminders) {
@@ -550,16 +612,15 @@ export function parseQuickAdd(text: string, options: QuickAddParseOptions): Quic
 
     const from = baseDate ?? today;
     if (repeat) {
-        const anchor = date ?? from;
+        const anchor = startDate ?? from;
         if (repeat.unit === "week" && repeat.weekdays.length === 0)
             repeat = { ...repeat, weekdays: [taskWeekday(anchor)] };
-        if (!date) date = repeat.unit === "week" ? firstWeekdayFrom(from, repeat.weekdays) : from;
+        if (!startDate)
+            startDate = repeat.unit === "week" ? firstWeekdayFrom(from, repeat.weekdays) : from;
         if (!taskRepeatSchema.safeParse(repeat).success) repeat = null;
     }
-    if (!date && time) {
-        const currentTime = inputValueInIst(new Date(now)).slice(11, 16);
-        date = baseDate ?? (time > currentTime ? today : shiftTaskDate(today, 1));
-    }
+    startDate = resolveScheduleDate(startDate, startTime, now, baseDate, today);
+    dueDate = resolveScheduleDate(dueDate, dueTime, now, startDate ?? baseDate, today);
 
     const firstEntity = (kind: QuickAddEntityKind) =>
         entities.find((entity) => entity.kind === kind)?.refId ?? null;
@@ -567,8 +628,12 @@ export function parseQuickAdd(text: string, options: QuickAddParseOptions): Quic
         atoms,
         highlights: groupHighlights(text, atoms, entities),
         title: cleanTitle(text, [...atoms, ...entities]),
-        date,
-        time,
+        startDate,
+        startTime,
+        dueDate,
+        dueTime,
+        date: startDate,
+        time: startTime,
         repeat,
         priority,
         reminders: reminderValues.sort((a, b) => b - a),

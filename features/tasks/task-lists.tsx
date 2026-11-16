@@ -157,7 +157,7 @@ export function TaskLists({
             variant="link"
             size="sm"
             className="
-              h-auto min-h-0 gap-1 p-0 text-xs font-bold tracking-wide text-brand uppercase
+              block-auto min-block-0 gap-1 p-0 text-xs font-bold tracking-wide text-brand uppercase
               hover:text-brand-text
             "
             disabled={busy}
@@ -346,8 +346,9 @@ export function TaskLists({
                                     const list = visibleLists[slot];
                                     const index = listPage * listStride + slot;
                                     if (!list) {
+                                        // Multi-column: put “New list” in the next empty column,
+                                        // not under the first list — only when there is a free slot.
                                         const isNewListSlot =
-                                            listCount > 1 &&
                                             listColumns > 1 &&
                                             slot === visibleLists.length &&
                                             visibleLists.length < listColumns;
@@ -396,7 +397,11 @@ export function TaskLists({
                                     const showColumnListNav = showListPageNav && isLeadListColumn;
                                     const showNewListInHeader =
                                         listColumns === 1 && isLeadListColumn;
-                                    const showNewListAtBottom = listCount === 1 && listColumns > 1;
+                                    // Only when every column on this page already has a list.
+                                    const showNewListAtBottom =
+                                        listColumns > 1 &&
+                                        visibleLists.length >= listColumns &&
+                                        isLeadListColumn;
                                     return (
                                         <SortableList
                                             key={list.id}

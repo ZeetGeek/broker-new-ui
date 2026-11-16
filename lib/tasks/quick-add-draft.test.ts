@@ -27,7 +27,7 @@ const catalogs = {
 const parse = (draft: QuickAddDraft) =>
     parseQuickAdd(draft.text, {
         now,
-        baseDate: draft.base.date,
+        baseDate: draft.base.startDate,
         entities: draft.entities,
         dismissed: draft.dismissed,
     });
@@ -149,16 +149,83 @@ test("Backspace at the end of a phrase turns it back into words first", () => {
     assert.equal(backspace(typed, true).draft.text, "Call tomorro");
 });
 
-test("typed reminders wait for a time before they are saved", () => {
+test("typed reminders wait for a due time before they are saved", () => {
     const typed = type(newQuickAddDraft("2030-11-16"), "Call !30m").draft;
-    const values = resolveQuickAddValues(typed, parse(typed));
+    const values = resolveQuickAddValues(typed, parse(typed), now);
     assert.deepEqual(values.reminders, []);
-    assert.equal(values.remindersNeedTime, true);
+    assert.equal(values.reminderError, "Reminders need a due time — add due 5pm (or similar).");
+    assert.equal(values.reminderIssues[0]?.reason, "need-time");
 
-    const timed = type(typed, "Call !30m 5pm").draft;
-    const next = resolveQuickAddValues(timed, parse(timed));
+    const timed = type(typed, "Call today 5pm due 6pm !30m").draft;
+    const next = resolveQuickAddValues(timed, parse(timed), now);
     assert.deepEqual(next.reminders, [30]);
-    assert.equal(next.remindersNeedTime, false);
+    assert.equal(next.startTime, "17:00");
+    assert.equal(next.dueTime, "18:00");
+    assert.equal(next.reminderError, "");
+    assert.deepEqual(next.reminderIssues, []);
+});
+
+test("a due time that has already passed is flagged on the schedule chip", () => {
+    const futureDraft = type(newQuickAddDraft("2030-11-16"), "Call today 5pm").draft;
+    const future = resolveQuickAddValues(futureDraft, parse(futureDraft), now);
+    assert.equal(future.schedulePassed, false);
+    assert.equal(future.scheduleError, "");
+
+    const pastDraft = type(newQuickAddDraft("2030-11-16"), "Call today 8am").draft;
+    const past = resolveQuickAddValues(pastDraft, parse(pastDraft), now);
+    assert.equal(past.schedulePassed, true);
+    assert.equal(past.time, "08:00");
+    assert.ok(past.scheduleIssues.length > 0);
+    assert.equal(past.scheduleError, "That time has already passed. Pick a later time.");
+});
+
+test("reminder chips reject past offsets, duplicates, and more than five", () => {
+    const past = type(newQuickAddDraft("2030-11-16"), "Call today 5pm due 11pm !1d").draft;
+    const pastValues = resolveQuickAddValues(past, parse(past), now);
+    assert.deepEqual(pastValues.reminders, []);
+    assert.equal(pastValues.reminderIssues[0]?.reason, "already-passed");
+    assert.match(pastValues.reminderError, /already passed/i);
+
+    const dup = type(newQuickAddDraft("2030-11-16"), "Call today 5pm due 6pm !30m !30m").draft;
+    const dupValues = resolveQuickAddValues(dup, parse(dup), now);
+    assert.deepEqual(dupValues.reminders, [30]);
+    assert.equal(dupValues.reminderIssues[0]?.reason, "duplicate");
+
+    const many = type(
+        newQuickAddDraft("2030-11-16"),
+        "Call today 5pm due 11pm !30m !40m !1h !2h !3h !4h !5h",
+    ).draft;
+    const manyValues = resolveQuickAddValues(many, parse(many), now);
+    assert.deepEqual(manyValues.reminders, [180, 120, 60, 40, 30]);
+    assert.ok(manyValues.reminderIssues.every((issue) => issue.reason === "too-many"));
+    assert.equal(manyValues.reminderIssues.length, 2);
+    assert.equal(manyValues.reminderError, "You can add up to 5 reminders.");
+});
+
+test("due is optional, needs start date+time, and cannot be earlier than start", () => {
+    const startOnly = type(newQuickAddDraft("2030-11-16"), "Call tomorrow 5pm").draft;
+    const started = resolveQuickAddValues(startOnly, parse(startOnly), now);
+    assert.equal(started.startDate, "2030-11-17");
+    assert.equal(started.startTime, "17:00");
+    assert.equal(started.dueDate, null);
+    assert.equal(started.dueError, "");
+
+    const ranged = type(startOnly, "Call tomorrow 5pm due friday 6pm").draft;
+    const withDue = resolveQuickAddValues(ranged, parse(ranged), now);
+    assert.equal(withDue.startDate, "2030-11-17");
+    assert.equal(withDue.dueDate, "2030-11-22");
+    assert.equal(withDue.dueTime, "18:00");
+    assert.equal(withDue.dueError, "");
+
+    const early = type(newQuickAddDraft("2030-11-16"), "Call tomorrow 5pm due today 4pm").draft;
+    const invalid = resolveQuickAddValues(early, parse(early), now);
+    assert.equal(invalid.dueDate, null);
+    assert.equal(invalid.dueError, "Due must be on or after the start date and time.");
+
+    const dueOnly = type(newQuickAddDraft("2030-11-16"), "Call due tomorrow 6pm").draft;
+    const blocked = resolveQuickAddValues(dueOnly, parse(dueOnly), now);
+    assert.equal(blocked.dueDate, null);
+    assert.equal(blocked.dueError, "Add a start date and time before the due date.");
 });
 
 test("saved titles keep chips in place; edit opens them there, not at the end", () => {
@@ -171,7 +238,7 @@ test("saved titles keep chips in place; edit opens them there, not at the end", 
         draft = pick(draft, "prop-happy", "Happy Elegance").draft;
         return type(draft, `${draft.text}property tomorrow at 11am p1`).draft;
     })();
-    const saved = resolveQuickAddValues(typed, parse(typed));
+    const saved = resolveQuickAddValues(typed, parse(typed), now);
     assert.equal(saved.title, title);
     assert.equal(saved.date, "2030-11-17");
     assert.equal(saved.time, "11:00");
@@ -179,8 +246,10 @@ test("saved titles keep chips in place; edit opens them there, not at the end", 
     assert.equal(saved.propertyId, "prop-happy");
     assert.equal(saved.clientId, "client-aarav");
 
-    const task = createPlannerTask(saved.title, saved.date, now, "task-a", undefined, {
-        dueTime: saved.time ?? undefined,
+    const task = createPlannerTask(saved.title, saved.startDate, now, "task-a", undefined, {
+        startTime: saved.startTime,
+        dueDate: saved.dueDate,
+        dueTime: saved.dueTime,
         priority: saved.priority ?? "low",
         propertyId: saved.propertyId ?? undefined,
         clientId: saved.clientId ?? undefined,
@@ -199,7 +268,7 @@ test("saved titles keep chips in place; edit opens them there, not at the end", 
     );
 
     const lessened = cut(cut(draft, "p1"), "@Aarav Shah");
-    const values = resolveQuickAddValues(lessened, parse(lessened));
+    const values = resolveQuickAddValues(lessened, parse(lessened), now);
     assert.equal(values.priority, null);
     assert.equal(values.clientId, null);
     assert.equal(values.propertyId, "prop-happy");
@@ -228,7 +297,7 @@ test("pasting # / @ labels re-links catalog chips in place", () => {
             ["property", "prop-happy", "#Happy Elegance"],
         ],
     );
-    const values = resolveQuickAddValues(draft, parse(draft));
+    const values = resolveQuickAddValues(draft, parse(draft), now);
     assert.equal(values.clientId, "client-aarav");
     assert.equal(values.propertyId, "prop-happy");
     assert.equal(values.priority, "urgent");
@@ -247,7 +316,7 @@ test("older stripped titles keep details on base without appending chips at the 
         "task-b",
         undefined,
         {
-            dueTime: "11:00",
+            startTime: "11:00",
             priority: "high",
             repeat: { unit: "week", interval: 1, weekdays: [1], until: "2030-12-31" },
             clientId: "client-missing",
@@ -255,10 +324,11 @@ test("older stripped titles keep details on base without appending chips at the 
     );
     const draft = quickAddDraftFromTask(task, now, catalogs);
     assert.equal(draft.text, "Call about monday visit");
-    const values = resolveQuickAddValues(draft, parse(draft));
+    const values = resolveQuickAddValues(draft, parse(draft), now);
     assert.equal(values.title, "Call about monday visit");
-    assert.equal(values.date, "2030-11-18");
-    assert.equal(values.time, "11:00");
+    assert.equal(values.startDate, "2030-11-18");
+    assert.equal(values.startTime, "11:00");
+    assert.equal(values.dueDate, null);
     assert.equal(values.priority, "high");
     assert.deepEqual(values.repeat, task.repeat);
     assert.equal(values.clientId, "client-missing");

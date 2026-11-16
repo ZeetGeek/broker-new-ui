@@ -65,9 +65,9 @@ export function SlidingTabs<Value extends string | number>({
         >
             <span ref={pill} className="t-tabs-pill" aria-hidden />
             {options.map((option, index) => (
-                <button
+                // Div, not button: tab labels may include nested controls (e.g. manage menus).
+                <div
                     key={option.value}
-                    type="button"
                     role="tab"
                     aria-label={option.ariaLabel}
                     aria-selected={value === option.value}
@@ -84,6 +84,17 @@ export function SlidingTabs<Value extends string | number>({
                         onValueChange(option.value);
                     }}
                     onKeyDown={(event) => {
+                        if (
+                            event.target instanceof Element &&
+                            event.target.closest("[data-sliding-tab-action]")
+                        ) {
+                            return;
+                        }
+                        if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            onValueChange(option.value);
+                            return;
+                        }
                         let next: number;
                         if (event.key === "ArrowRight") next = (index + 1) % options.length;
                         else if (event.key === "ArrowLeft")
@@ -93,13 +104,11 @@ export function SlidingTabs<Value extends string | number>({
                         else return;
                         event.preventDefault();
                         onValueChange(options[next].value);
-                        bar.current
-                            ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-                            [next]?.focus();
+                        bar.current?.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
                     }}
                 >
                     {option.label}
-                </button>
+                </div>
             ))}
         </div>
     );

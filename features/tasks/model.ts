@@ -1,7 +1,12 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
 
-import { isReminderOffset, MAX_REMINDER_MINUTES, reminderLabel } from "@/lib/reminders";
+import {
+    isReminderOffset,
+    MAX_REMINDER_MINUTES,
+    MAX_TASK_REMINDERS,
+    reminderLabel,
+} from "@/lib/reminders";
 import { inputValueInIst, inputValueToUtc, istDateKey } from "@/lib/visits/time";
 
 import { type TaskRepeat, taskRepeatSchema } from "./recurrence";
@@ -30,7 +35,7 @@ export const TASK_TABS = [
 export type TaskTab = (typeof TASK_TABS)[number]["value"];
 export type TaskGroup = "overdue" | "today" | "upcoming" | "undated" | "completed";
 
-export { MAX_REMINDER_MINUTES };
+export { MAX_REMINDER_MINUTES, MAX_TASK_REMINDERS };
 export const TASK_REMINDERS: { value: number; label: string }[] = [
     { value: 0, label: "At due time" },
     { value: 15, label: "15 minutes before" },
@@ -44,6 +49,7 @@ export function isTaskReminderOffset(minutes: number): boolean {
 
 const remindersSchema = z
     .array(z.number().int().min(0).max(MAX_REMINDER_MINUTES))
+    .max(MAX_TASK_REMINDERS)
     .refine((values) => new Set(values).size === values.length, "Choose each reminder only once.");
 
 export function isTaskDate(value: string): boolean {
@@ -221,7 +227,9 @@ export function validateTaskDraft(draft: TaskDraft) {
         errors.startDate = "Add a start date or due date to repeat this task.";
     if (draft.repeat?.until && draft.repeat.until < (draft.dueDate || draft.startDate))
         errors.repeat = "Repeat end date must be on or after this task’s date.";
-    if (!remindersSchema.safeParse(draft.reminders).success)
+    if (draft.reminders.length > MAX_TASK_REMINDERS)
+        errors.reminders = `You can add up to ${MAX_TASK_REMINDERS} reminders.`;
+    else if (!remindersSchema.safeParse(draft.reminders).success)
         errors.reminders =
             "Use different reminders between 0 minutes and 365 days before the task.";
     if (draft.reminders.length > 0 && (!draft.dueDate || !draft.dueTime))

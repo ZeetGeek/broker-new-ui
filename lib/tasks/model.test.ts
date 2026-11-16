@@ -392,7 +392,7 @@ test("multiple reminders deliver independently, in chronological order, with sch
     );
 });
 
-test("custom offsets validate whole-minute ranges and unique choices without a count cap", () => {
+test("custom offsets validate whole-minute ranges, uniqueness, and a five-reminder cap", () => {
     const draft = {
         ...EMPTY_TASK_DRAFT,
         title: "Call",
@@ -401,11 +401,7 @@ test("custom offsets validate whole-minute ranges and unique choices without a c
         dueDate: "2030-01-02",
         dueTime: "10:00",
     };
-    for (const reminders of [
-        [0, 17, 90, 1500],
-        [MAX_REMINDER_MINUTES],
-        Array.from({ length: 40 }, (_, index) => index),
-    ])
+    for (const reminders of [[0, 17, 90, 1500], [MAX_REMINDER_MINUTES], [0, 15, 30, 60, 90]])
         assert.equal(validateTaskDraft({ ...draft, reminders }).valid, true);
     for (const reminders of [
         [-1],
@@ -414,6 +410,7 @@ test("custom offsets validate whole-minute ranges and unique choices without a c
         [Number.POSITIVE_INFINITY],
         [MAX_REMINDER_MINUTES + 1],
         [15, 15],
+        [0, 15, 30, 60, 90, 120],
     ])
         assert.equal(validateTaskDraft({ ...draft, reminders }).valid, false);
     assert.equal(taskReminderAt(task, -1), null);

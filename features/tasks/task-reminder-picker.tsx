@@ -2,7 +2,7 @@
 
 import { ReminderPicker } from "@/components/shared/reminder-picker";
 
-import { TASK_REMINDERS, taskReminderAt, taskReminderLabel } from "./model";
+import { MAX_TASK_REMINDERS, TASK_REMINDERS, taskReminderAt, taskReminderLabel } from "./model";
 
 export function TaskReminderPicker({
     dueDate,
@@ -19,6 +19,7 @@ export function TaskReminderPicker({
     return (
         <ReminderPicker
             {...props}
+            maxReminders={MAX_TASK_REMINDERS}
             getReminderAt={(minutes) => taskReminderAt({ dueDate, dueTime }, minutes)}
             getReminderLabel={taskReminderLabel}
             presets={TASK_REMINDERS}

@@ -18,8 +18,8 @@ export default function RootLayout({
     return (
         <html
             lang="en"
-            suppressHydrationWarning
-            className={cn("font-sans antialiased", fontVariables)}
+            className={cn("light font-sans antialiased", fontVariables)}
+            style={{ colorScheme: "light" }}
         >
             <body>
                 <StoreProvider>
