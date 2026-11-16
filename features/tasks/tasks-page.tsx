@@ -35,17 +35,11 @@ import {
     taskMatchesDueFilter,
     taskMatchesLinkFilter,
     taskMatchesTab,
-    taskSchema,
     type TaskSort,
 } from "./model";
 import { taskListId } from "./notebook-model";
 import { useTaskNotebook } from "./notebook-store";
-import {
-    createPlannerTask,
-    movePlannerTask,
-    type PlannerTaskExtras,
-    setTaskDeleted,
-} from "./planner-model";
+import { createPlannerTask, movePlannerTask, setTaskDeleted } from "./planner-model";
 import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES, useTasks } from "./preview-store";
 import { changeTaskQuickly, type TaskQuickChange } from "./quick-actions";
 import { TaskDeleteDialog, TaskDetail, TaskReminders } from "./task-detail";
@@ -288,44 +282,15 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             if (view) close();
         }
     };
-    const rename = (task: Task, title: string, extras?: PlannerTaskExtras) => {
+    const rename = (task: Task, change: TaskQuickChange) => {
         // Only an explicit empty-title submission reaches here; blur cancels an empty edit.
-        if (!title.trim()) {
+        if (change.title !== undefined && !change.title.trim()) {
             return changeTasks(
                 (latest) => setTaskDeleted(latest, task.id, true),
                 "Task moved to Deleted",
             );
         }
-        return changeTasks((latest) =>
-            latest.map((item) => {
-                if (item.id !== task.id || item.deletedAt) return item;
-                const dueDate = extras?.dueDate !== undefined ? extras.dueDate : item.dueDate;
-                const dueTime = extras?.dueTime !== undefined ? extras.dueTime : item.dueTime;
-                const startDate = dueDate || item.startDate;
-                let startTime = item.startTime ?? null;
-                if (dueTime && startDate === dueDate && startTime && startTime > dueTime) {
-                    startTime = dueTime;
-                }
-                const next = {
-                    ...item,
-                    title,
-                    dueDate,
-                    dueTime: dueDate ? dueTime : null,
-                    startDate,
-                    startTime,
-                    priority: extras?.priority ?? item.priority,
-                    priorityAt:
-                        extras?.priorityAt !== undefined ? extras.priorityAt : item.priorityAt,
-                    clientId: extras?.clientId !== undefined ? extras.clientId : item.clientId,
-                    ownerId: extras?.ownerId !== undefined ? extras.ownerId : item.ownerId,
-                    propertyId:
-                        extras?.propertyId !== undefined ? extras.propertyId : item.propertyId,
-                    reminders: dueDate && dueTime ? item.reminders : [],
-                    updatedAt: new Date().toISOString(),
-                };
-                return taskSchema.parse(next);
-            }),
-        );
+        return changeTasks((latest) => changeTaskQuickly(latest, task.id, change));
     };
     const quickChange = (task: Task, change: TaskQuickChange) =>
         changeTasks((latest) => changeTaskQuickly(latest, task.id, change));

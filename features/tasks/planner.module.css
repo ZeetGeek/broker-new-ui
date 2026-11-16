@@ -244,6 +244,9 @@
     font-weight: 600;
     cursor: text;
 }
+.lineTitle mark {
+    animation: none;
+}
 .completedLine .lineTitle {
     color: var(--color-ink-subtle);
     text-decoration: line-through;
@@ -262,6 +265,35 @@
 }
 .listTaskDate svg {
     flex-shrink: 0;
+}
+.lineMeta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.125rem 0.625rem;
+    margin-block-start: 0.125rem;
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: normal;
+}
+.lineMeta > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+}
+.lineMeta > span > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.lineMeta svg {
+    flex-shrink: 0;
+    inline-size: 12px;
+    block-size: 12px;
 }
 .lineCheck {
     position: absolute;
@@ -369,48 +401,6 @@
     outline: 2px solid var(--color-brand);
     outline-offset: 3px;
 }
-.inlineEdit {
-    flex: 1;
-    min-inline-size: 0;
-}
-.taskTitleField {
-    flex: 1;
-    min-inline-size: 0;
-}
-.titleLimit {
-    display: none;
-    padding-block-end: 0.5rem;
-    color: var(--color-ink-muted);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    line-height: 1.5;
-    font-variant-numeric: tabular-nums;
-}
-.taskTitleField:focus-within .titleLimit {
-    display: block;
-}
-.inlineEdit textarea {
-    display: block;
-    resize: none;
-    overflow: hidden;
-    overflow-wrap: anywhere;
-    cursor: text;
-    user-select: text;
-    inline-size: 100%;
-    min-inline-size: 0;
-    min-block-size: var(--line-height);
-    border: 0;
-    padding: 0.5rem 0;
-    background: transparent;
-    font: inherit;
-    font-weight: 600;
-    line-height: 1.5;
-    color: inherit;
-    outline: none;
-}
-.taskLine[data-editing] {
-    box-shadow: inset 0 -1px 0 var(--color-brand);
-}
 .dragging {
     opacity: 0.25;
 }
@@ -436,366 +426,9 @@
 .dropTarget {
     background: color-mix(in srgb, var(--color-brand-soft) 30%, var(--color-surface));
 }
-.composer {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.25rem;
-    min-block-size: var(--line-height);
-    padding-inline: 0.5rem;
-}
-.smartComposer {
-    position: relative;
-    flex: 1;
-    min-inline-size: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-.smartInput {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    min-inline-size: 0;
-    /* Height follows content — don’t inflate on hover. */
-    min-block-size: 0;
-    padding-block: 0.15rem 0.2rem;
-    cursor: text;
-}
-/*
- * Empty add row = one ruled line by default (same as blank rows).
- * Hover / focus this box only → unlock height and show the placeholder tips.
- */
-.composerLine:not(:hover):not(:focus-within):has(.smartInput[data-empty]) {
-    block-size: var(--line-height);
-    min-block-size: var(--line-height);
-    max-block-size: var(--line-height);
-    overflow: hidden;
-}
-.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] {
-    block-size: var(--line-height);
-    min-block-size: var(--line-height);
-    max-block-size: var(--line-height);
-    padding-block: 0;
-    overflow: hidden;
-}
-.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartInputLine {
-    min-block-size: var(--line-height);
-    max-block-size: var(--line-height);
-}
-.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartTextInput {
-    min-block-size: var(--line-height);
-    max-block-size: var(--line-height);
-    block-size: var(--line-height);
-}
-.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartPlaceholder,
-.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartCount {
-    display: none;
-}
-.composerLine:hover:has(.smartInput[data-empty]),
-.composerLine:focus-within:has(.smartInput[data-empty]) {
-    block-size: auto;
-    max-block-size: none;
-}
-.composerLine:hover .smartInput[data-empty],
-.composerLine:focus-within .smartInput[data-empty] {
-    block-size: auto;
-    min-block-size: 0;
-    max-block-size: none;
-    padding-block: 0.2rem 0.25rem;
-}
-.smartInputLine {
-    position: relative;
-    display: flex;
-    flex-flow: row wrap;
-    align-items: baseline;
-    align-content: flex-start;
-    column-gap: 0.15rem;
-    row-gap: 0;
-    min-inline-size: 0;
-    min-block-size: 1.35em;
-    line-height: 1.35;
-    font-weight: 600;
-}
-.smartInput[data-empty] .smartInputLine {
-    display: block;
-    /* Room for the 2-line empty hint. */
-    min-block-size: calc(1.35em * 2);
-}
-.smartInput[data-needs-title] .smartInputLine {
-    align-items: baseline;
-}
-.smartTextPart {
-    flex: 0 0 auto;
-    color: var(--color-ink);
-    font: inherit;
-    font-weight: 600;
-    line-height: 1.35;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    cursor: text;
-}
-.smartPlaceholder {
-    position: absolute;
-    inset-block-start: 0;
-    inset-inline: 0;
-    z-index: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 0;
-    pointer-events: none;
-    color: color-mix(in srgb, var(--color-ink-subtle) 75%, var(--color-surface));
-    font: inherit;
-    font-weight: 600;
-    line-height: 1.5;
-    opacity: 0;
-}
-.smartPlaceholder > span {
-    display: block;
-    block-size: 1.5em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.composerLine:hover .smartPlaceholder,
-.composer:focus-within .smartPlaceholder,
-.composer[data-editing] .smartPlaceholder {
-    opacity: 1;
-}
-.smartTextInput {
-    position: relative;
-    z-index: 1;
-    flex: 0 0 auto;
-    box-sizing: content-box;
-    min-inline-size: 0.5ch;
-    max-inline-size: 100%;
-    block-size: 1.35em;
-    min-block-size: 1.35em;
-    max-block-size: 1.35em;
-    margin: 0;
-    border: 0;
-    padding: 0;
-    outline: none;
-    resize: none;
-    overflow: hidden;
-    white-space: nowrap;
-    background: transparent;
-    color: var(--color-ink);
-    font: inherit;
-    font-weight: 600;
-    line-height: 1.35;
-    caret-color: var(--color-ink);
-}
-.smartTextInput[data-trailing-active] {
-    flex: 0 0 auto;
-    min-inline-size: 0.35em;
-    max-inline-size: 100%;
-}
-.smartInput[data-empty] .smartTextInput {
-    display: block;
-    min-inline-size: 0.75rem;
-    inline-size: 100%;
-    block-size: auto;
-    max-block-size: none;
-    /* Match the 2-line empty hint so hover doesn’t leave a tall blank. */
-    min-block-size: calc(1.35em * 2);
-}
-.smartInput[data-needs-title] .smartTextInput {
-    flex: 1 1 auto;
-    min-inline-size: 8rem;
-}
-.smartInput[data-needs-title] .smartTextInput::placeholder {
-    color: color-mix(in srgb, var(--color-ink-subtle) 75%, var(--color-surface));
-    opacity: 0;
-    font-weight: 600;
-}
-.composer:focus-within .smartInput[data-needs-title] .smartTextInput::placeholder {
-    opacity: 1;
-}
-.smartCount {
-    display: none;
-    margin-block-start: 0.05rem;
-    padding-block-end: 0;
-    color: var(--color-ink-muted);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    line-height: 1.2;
-    font-variant-numeric: tabular-nums;
-    text-align: start;
-}
-.composer:focus-within .smartCount {
-    display: block;
-}
-.smartChip {
-    display: inline-flex;
-    flex: 0 0 auto;
-    align-self: baseline;
-    align-items: center;
-    box-sizing: border-box;
-    min-inline-size: 0;
-    max-inline-size: 100%;
-    min-block-size: 1.35em;
-    margin: 0;
-    padding-block: 0;
-    padding-inline: 0.35rem;
-    border: 0;
-    border-radius: 6px;
-    background: var(--color-surface-muted);
-    color: var(--color-ink);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    line-height: 1.35;
-    white-space: nowrap;
-    vertical-align: middle;
-}
-/* Smart chips: Tailwind 500 @ 20% — not brand green */
-.smartChip[data-kind="client"] {
-    background: rgb(99 102 241 / 0.2); /* indigo-500/20 */
-    color: #3730a3; /* indigo-800 */
-}
-.smartChip[data-kind="owner"] {
-    background: rgb(217 70 239 / 0.2); /* fuchsia-500/20 */
-    color: #86198f; /* fuchsia-800 */
-}
-.smartChip[data-kind="property"] {
-    background: rgb(168 85 247 / 0.2); /* purple-500/20 */
-    color: #6b21a8; /* purple-800 */
-}
-.smartChip[data-kind="date"] {
-    background: rgb(14 165 233 / 0.2); /* sky-500/20 */
-    color: #075985; /* sky-800 */
-}
-.smartChip[data-kind="time"] {
-    background: rgb(20 184 166 / 0.2); /* teal-500/20 */
-    color: #115e59; /* teal-800 */
-}
-.smartChip[data-priority="urgent"] {
-    background: rgb(244 63 94 / 0.2); /* rose-500/20 */
-    color: #9f1239; /* rose-800 */
-}
-.smartChip[data-priority="high"] {
-    background: rgb(245 158 11 / 0.2); /* amber-500/20 */
-    color: #92400e; /* amber-800 */
-}
-.smartChip[data-priority="medium"] {
-    background: rgb(139 92 246 / 0.2); /* violet-500/20 */
-    color: #5b21b6; /* violet-800 */
-}
-.smartChip[data-priority="low"] {
-    background: rgb(100 116 139 / 0.2); /* slate-500/20 */
-    color: #334155; /* slate-700 */
-}
-.smartChipLabel {
-    min-inline-size: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.smartMenu {
-    position: absolute;
-    inset-block-start: calc(100% + 2px);
-    inset-inline-start: 0;
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-    min-inline-size: min(100%, 16rem);
-    max-inline-size: min(22rem, 100%);
-    max-block-size: 12rem;
-    overflow: auto;
-    padding: 0.35rem;
-    border: 1px solid var(--color-border-warm);
-    border-radius: 10px;
-    background: var(--color-surface);
-    box-shadow: var(--shadow-md);
-}
-.smartMenuEmpty {
-    margin: 0;
-    padding: 0.5rem 0.65rem;
-    color: var(--color-ink-muted);
-    font-size: 0.75rem;
-}
-.smartMenuItem {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    min-block-size: 44px;
-    padding: 0.45rem 0.55rem;
-    border-radius: 8px;
-    text-align: start;
-    color: var(--color-ink);
-    cursor: pointer;
-}
-.smartMenuItem span {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    min-inline-size: 0;
-}
-.smartMenuItem strong {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-}
-.smartMenuItem small {
-    color: var(--color-ink-muted);
-    font-size: 0.6875rem;
-}
-.smartMenuItem[data-active],
-.smartMenuItem:hover {
-    background: color-mix(in srgb, var(--color-brand-soft) 45%, var(--color-surface));
-}
-.smartTextInput::placeholder {
-    color: color-mix(in srgb, var(--color-ink-subtle) 75%, var(--color-surface));
-    opacity: 0;
-    font-weight: 600;
-}
-.composerLine:hover .smartTextInput::placeholder,
-.composer:focus-within .smartTextInput::placeholder {
-    opacity: 1;
-}
 .composerLine:hover,
 .composerLine:focus-within {
     border-block-end-color: var(--color-brand);
-}
-.composerLine:hover .composer,
-.composer:focus-within,
-.composer[data-editing] {
-    box-shadow: inset 0 -1px 0 var(--color-brand);
-}
-.composer > .addButton {
-    display: none;
-    flex-shrink: 0;
-    align-self: flex-start;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    inline-size: 26px;
-    block-size: 26px;
-    margin-block-start: 0.15rem;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: var(--color-brand);
-    color: var(--color-surface);
-    cursor: pointer;
-}
-.composer > .addButton:hover {
-    background: var(--color-brand-deep);
-}
-.composer > .addButton:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-}
-.composer:focus-within > .addButton:not(:disabled),
-.composer[data-editing] > .addButton:not(:disabled) {
-    display: inline-flex;
-}
-.composer[data-editing] .smartCount {
-    display: block;
-}
-.composer[data-editing] .smartInput {
-    overflow: hidden;
 }
 .somedayBar {
     display: flex;
@@ -1359,9 +992,6 @@
     .lineTitle {
         font-size: 12px;
     }
-    .composer textarea::placeholder {
-        opacity: 1;
-    }
     .somedayBar {
         padding-inline: 1.25rem;
     }
@@ -1447,9 +1077,6 @@
     .lineCheck,
     .lineAction,
     .restoreAction {
-        opacity: 1;
-    }
-    .composer textarea::placeholder {
         opacity: 1;
     }
     .customList .listHeadingRow .listMenu {

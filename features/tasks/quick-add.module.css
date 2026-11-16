@@ -1,0 +1,287 @@
+/*
+ * Quick add: a transparent native textarea over a mirror that paints the same
+ * text with highlights. Both layers must share every metric that affects
+ * wrapping (font, padding, white-space, overflow-wrap) or the caret drifts.
+ */
+.root {
+    --qa-line: var(--line-height, 40px);
+    --qa-pad: calc((var(--qa-line) - 1.5em) / 2);
+    container-type: inline-size;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.25rem;
+    min-inline-size: 0;
+    min-block-size: var(--qa-line);
+    padding-inline: 0.5rem;
+    font-size: 12px;
+    cursor: auto;
+}
+.root[data-editing] {
+    box-shadow: inset 0 -1px 0 var(--color-brand);
+}
+.body {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-inline-size: 0;
+}
+.field {
+    position: relative;
+    min-block-size: var(--qa-line);
+}
+.mirror,
+.input {
+    box-sizing: border-box;
+    margin: 0;
+    border: 0;
+    padding-block: var(--qa-pad);
+    padding-inline: 0;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: normal;
+    text-align: start;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+.mirror {
+    min-block-size: var(--qa-line);
+    color: var(--color-ink);
+    pointer-events: none;
+}
+.input {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    resize: none;
+    overflow: hidden;
+    outline: none;
+    background: transparent;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    caret-color: var(--color-brand);
+    cursor: text;
+    user-select: text;
+    -webkit-user-select: text;
+    appearance: none;
+}
+.input::selection {
+    background: color-mix(in srgb, var(--color-brand) 24%, transparent);
+}
+/* Marks can't take padding (it would shift glyphs off the textarea's), so shadows
+   grow the tint: 2px up and down, only 1px sideways so neighbours keep a gap. */
+.mark {
+    --qa-mark: var(--color-brand-soft);
+    border-radius: 4px;
+    background: var(--qa-mark);
+    box-shadow:
+        0 -2px 0 var(--qa-mark),
+        0 2px 0 var(--qa-mark),
+        -1px 0 0 var(--qa-mark),
+        1px 0 0 var(--qa-mark);
+    color: var(--color-brand-text);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    animation: qa-mark-in var(--duration-quick, 150ms) var(--ease-smooth-out, ease-out);
+}
+.mark[data-kind="property"],
+.mark[data-kind="client"],
+.mark[data-kind="owner"] {
+    --qa-mark: var(--color-brand-soft-hover);
+    color: var(--color-brand-ink);
+}
+.mark[data-kind="mention"] {
+    background: transparent;
+    box-shadow: none;
+    color: var(--color-brand-text);
+    text-decoration: underline dotted var(--color-brand);
+    text-underline-offset: 3px;
+    animation: none;
+}
+@keyframes qa-mark-in {
+    from {
+        background-color: transparent;
+        box-shadow: none;
+    }
+}
+
+/* Empty field: one teaching line — no tip cycling, no attribute chip row. */
+.placeholder {
+    display: block;
+    overflow: hidden;
+    color: var(--color-ink-subtle);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.placeholder > span {
+    display: block;
+}
+.root[data-editing] .placeholder {
+    color: color-mix(in srgb, var(--color-ink-subtle) 70%, var(--color-surface));
+}
+
+/* # / @ search results, anchored under the text. */
+.options {
+    position: absolute;
+    inset-block-start: calc(100% + 2px);
+    inset-inline-start: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    inline-size: max-content;
+    min-inline-size: min(100cqi, 15rem);
+    max-inline-size: min(22rem, calc(100vw - 2rem));
+    max-block-size: 15rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.375rem;
+    border: 1px solid var(--color-border-warm);
+    border-radius: var(--radius-inner);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-md);
+    animation: qa-pop-in var(--duration-quick, 150ms) var(--ease-smooth-out, ease-out);
+}
+.option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    inline-size: 100%;
+    min-block-size: 40px;
+    padding: 0.5rem 0.625rem;
+    border-radius: 8px;
+    color: var(--color-ink);
+    text-align: start;
+    cursor: pointer;
+}
+.option[data-active] {
+    background: var(--color-surface-muted);
+}
+.option svg {
+    flex-shrink: 0;
+    inline-size: 14px;
+    block-size: 14px;
+    margin-block-start: 2px;
+    color: var(--color-ink-subtle);
+}
+.option > span {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-inline-size: 0;
+}
+.option strong {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+.option small {
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1.35;
+}
+.optionsEmpty {
+    margin: 0;
+    padding: 0.5rem 0.625rem;
+    color: var(--color-ink-muted);
+    font-size: 0.75rem;
+}
+
+/* Counter near the limit and hints; collapses to nothing when both are empty. */
+.meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.125rem 0.75rem;
+    margin: 0;
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+}
+.meta[hidden] {
+    display: none;
+}
+.meta [data-over] {
+    color: var(--color-pending);
+}
+.meta > * {
+    padding-block-end: 0.375rem;
+}
+.meta [role="status"]:empty {
+    display: none;
+}
+
+.submit {
+    display: none;
+    flex-shrink: 0;
+    place-items: center;
+    inline-size: 26px;
+    block-size: 26px;
+    margin-block-start: calc((var(--qa-line) - 26px) / 2);
+    border-radius: 50%;
+    background: var(--color-brand);
+    color: var(--color-surface);
+    cursor: pointer;
+    transition:
+        background-color var(--duration-quick, 150ms) var(--ease-smooth-out, ease-out),
+        opacity var(--duration-quick, 150ms) var(--ease-smooth-out, ease-out),
+        transform var(--duration-quick, 150ms) var(--ease-smooth-out, ease-out);
+}
+.submit svg {
+    inline-size: 16px;
+    block-size: 16px;
+    stroke-width: 2.5;
+}
+.root[data-active] .submit {
+    display: inline-grid;
+    animation: qa-pop-in var(--duration-quick, 150ms) var(--ease-smooth-out, ease-out);
+}
+.submit:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 1px;
+}
+.submit:hover:not(:disabled) {
+    background: var(--color-brand-deep);
+}
+.submit:active:not(:disabled) {
+    transform: scale(0.94);
+}
+.submit:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+@keyframes qa-pop-in {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
+}
+
+@media (pointer: coarse) {
+    .option {
+        min-block-size: 44px;
+    }
+    .submit {
+        inline-size: 32px;
+        block-size: 32px;
+        margin-block-start: calc((var(--qa-line) - 32px) / 2);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mark,
+    .options,
+    .root[data-active] .submit {
+        animation: none;
+    }
+    .submit {
+        transition: none;
+    }
+}

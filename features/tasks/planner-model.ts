@@ -9,18 +9,20 @@ import {
     taskSchema,
     type TaskSort,
 } from "./model";
+import { taskListId, type TaskNotebook } from "./notebook-model";
+import { shiftTaskDate, taskDaysBetween, type TaskRepeat } from "./recurrence";
 
 export type PlannerTaskExtras = {
     priority?: TaskPriority;
     priorityAt?: number | null;
     dueDate?: string | null;
     dueTime?: string | null;
+    repeat?: TaskRepeat | null;
+    reminders?: number[];
     clientId?: string | null;
     ownerId?: string | null;
     propertyId?: string | null;
 };
-import { taskListId, type TaskNotebook } from "./notebook-model";
-import { shiftTaskDate, taskDaysBetween } from "./recurrence";
 
 export type PlannerDragPreview = {
     taskId: string;
@@ -125,6 +127,7 @@ export function createPlannerTask(
         dueTime && startDate === dueDate && draft.startTime && draft.startTime > dueTime
             ? dueTime
             : draft.startTime;
+    const repeat = extras.repeat ?? null;
     return taskSchema.parse({
         id,
         title,
@@ -132,9 +135,11 @@ export function createPlannerTask(
         startDate,
         startTime,
         startReminderEnabledAt: at,
+        repeat,
+        repeatAnchor: repeat ? dueDate || startDate : null,
         dueDate,
         dueTime,
-        reminders: [],
+        reminders: dueDate && dueTime ? [...new Set(extras.reminders ?? [])] : [],
         clientId: extras.clientId ?? null,
         ownerId: extras.ownerId ?? null,
         propertyId: extras.propertyId ?? null,

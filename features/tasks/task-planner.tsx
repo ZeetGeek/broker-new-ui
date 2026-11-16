@@ -34,14 +34,14 @@ import { moveNotebookList, moveNotebookTab, taskListId, type TaskNotebook } from
 import type { NotebookUpdater } from "./notebook-store";
 import {
     countPopulatedPlannerDays,
-    type PlannerTaskExtras,
     plannerColumnTasks,
     plannerDate,
     type PlannerDragPreview,
+    type PlannerTaskExtras,
 } from "./planner-model";
+import { QuickAddComposer } from "./quick-add-composer";
+import type { QuickAddCatalogs } from "./quick-add-parse";
 import { shiftTaskDate } from "./recurrence";
-import type { SmartAddCatalogs } from "./smart-add";
-import { SmartTaskComposer } from "./smart-composer";
 import { TaskLine, type TaskRowActions } from "./task-list";
 import { TaskLists } from "./task-lists";
 import { usePlannerColumns } from "./use-planner-columns";
@@ -66,7 +66,7 @@ export type TaskPlannerProps = TaskRowActions & {
     onNotebookChange: (updater: NotebookUpdater) => Promise<boolean>;
     tasks: Task[];
     sort: TaskSort;
-    catalogs: SmartAddCatalogs;
+    catalogs: QuickAddCatalogs;
     onAdd: (
         title: string,
         date: string | null,
@@ -443,7 +443,7 @@ export type TaskPlannerColumnProps = {
     date: string | null;
     today: string;
     tasks: Task[];
-    catalogs: SmartAddCatalogs;
+    catalogs: QuickAddCatalogs;
     onAdd: TaskPlannerProps["onAdd"];
     actions: TaskRowActions;
     listId?: string;
@@ -505,7 +505,8 @@ export function PlannerColumn({
                         />
                     ))}
                     <li className={styles.composerLine}>
-                        <SmartTaskComposer
+                        <QuickAddComposer
+                            key={date ?? listId ?? "someday"}
                             date={date}
                             listId={listId}
                             listName={name}
@@ -580,7 +581,7 @@ function SortableLine({
 function canStartTaskDrag(target: EventTarget) {
     if (!(target instanceof Element)) return false;
     const control = target.closest(
-        'button, input, textarea, select, a, [role="checkbox"], [role="menuitem"], [contenteditable="true"]',
+        'button, input, textarea, select, a, [role="checkbox"], [role="menuitem"], [contenteditable="true"], [data-quick-add]',
     );
     return !control || control.hasAttribute("data-task-title");
 }
