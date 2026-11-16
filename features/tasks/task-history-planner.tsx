@@ -4,6 +4,8 @@ import { type CSSProperties, type ReactNode, useId, useState } from "react";
 
 import { formatInTimeZone } from "date-fns-tz";
 
+import { cn } from "@/lib/utils";
+
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
@@ -30,11 +32,11 @@ export function TaskHistoryPlanner({
     now: number;
     renderTask: (task: Task) => ReactNode;
 }) {
-    const { frame, columns, availableColumns, setPreferredColumns } = usePlannerColumns();
     const panelId = useId();
     const pickerId = useId();
     const [anchor, setAnchor] = useState<string>();
-    const days = groupTaskHistory(tasks, tab, sort);
+    const days = groupTaskHistory(tasks, tab, sort, now);
+    const { frame, columns, pickerOptions, setPreferredColumns } = usePlannerColumns(days.length);
     const index = anchor ? days.findIndex((day) => day.date >= anchor) : 0;
     const start = index < 0 ? Math.max(0, days.length - columns) : index;
     const visible = days.slice(start, start + columns);
@@ -54,6 +56,20 @@ export function TaskHistoryPlanner({
         if (target) setAnchor(target.date);
     };
 
+    if (!days.length) {
+        return (
+            <section
+                ref={frame}
+                className={styles.planner}
+                aria-label={`${label} tasks by ${dateKind} date`}
+            >
+                <p className={styles.plannerEmpty} role="status">
+                    {`No ${label.toLowerCase()} tasks to show by date.`}
+                </p>
+            </section>
+        );
+    }
+
     return (
         <section
             ref={frame}
@@ -69,20 +85,20 @@ export function TaskHistoryPlanner({
                             : `${dateText(first, "MMM yyyy")} – ${dateText(last, "MMM yyyy")}`
                         : label}
                 </p>
-                <SlidingTabs
-                    value={columns}
-                    options={[1, 3, 5, 7]
-                        .filter((count) => count <= availableColumns)
-                        .map((count) => ({
+                {pickerOptions.length > 0 && (
+                    <SlidingTabs
+                        value={columns}
+                        options={pickerOptions.map((count) => ({
                             value: count,
                             label: count === 1 ? "1 day" : `${count} days`,
                             ariaLabel: count === 1 ? "Show one day" : `Show ${count} days`,
                         }))}
-                    onValueChange={setPreferredColumns}
-                    label="Visible days"
-                    panelId={panelId}
-                    className={styles.columnPicker}
-                />
+                        onValueChange={setPreferredColumns}
+                        label="Visible days"
+                        panelId={panelId}
+                        className={cn(styles.plannerUnderlineTabs, styles.columnPicker)}
+                    />
+                )}
                 <div className={styles.dateControls}>
                     <button
                         type="button"

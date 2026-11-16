@@ -33,6 +33,7 @@ import { type Task, TASK_TIME_ZONE, taskDateKey, type TaskSort } from "./model";
 import { moveNotebookList, moveNotebookTab, taskListId, type TaskNotebook } from "./notebook-model";
 import type { NotebookUpdater } from "./notebook-store";
 import {
+    countPopulatedPlannerDays,
     type PlannerTaskExtras,
     plannerColumnTasks,
     plannerDate,
@@ -98,7 +99,9 @@ export function TaskPlanner({
     const reduceMotion = useReducedMotion();
     const daysPanelId = useId();
     const [anchor, setAnchor] = useState(today);
-    const { frame, columns, availableColumns, setPreferredColumns } = usePlannerColumns();
+    const populatedDayCount = countPopulatedPlannerDays(tasks, today);
+    const { frame, columns, pickerOptions, setPreferredColumns } =
+        usePlannerColumns(populatedDayCount);
     const [dragged, setDragged] = useState<Task | null>(null);
     const [dragPreview, setDragPreview] = useState<PlannerDragPreview | null>(null);
     const latestDragPreview = useRef<PlannerDragPreview | null>(null);
@@ -244,30 +247,25 @@ export function TaskPlanner({
         }
     };
     return (
-        <section
-            ref={frame}
-            className={styles.planner}
-            aria-label="Task planner"
-            style={{ "--planner-columns": columns } as CSSProperties}
-        >
+        <section ref={frame} className={styles.planner} aria-label="Task planner">
             <nav className={styles.plannerNav} aria-label="Planner dates">
                 <p className={styles.dateRange} aria-live="polite">
                     {dateText(anchor, "MMMM yyyy")}
                 </p>
-                <SlidingTabs
-                    value={columns}
-                    options={[1, 3, 5, 7]
-                        .filter((count) => count <= availableColumns)
-                        .map((count) => ({
+                {pickerOptions.length > 0 && (
+                    <SlidingTabs
+                        value={columns}
+                        options={pickerOptions.map((count) => ({
                             value: count,
                             label: count === 1 ? "1 day" : `${count} days`,
                             ariaLabel: count === 1 ? "Show one day" : `Show ${count} days`,
                         }))}
-                    onValueChange={setPreferredColumns}
-                    label="Visible days"
-                    panelId={daysPanelId}
-                    className={styles.columnPicker}
-                />
+                        onValueChange={setPreferredColumns}
+                        label="Visible days"
+                        panelId={daysPanelId}
+                        className={cn(styles.plannerUnderlineTabs, styles.columnPicker)}
+                    />
+                )}
                 <div className={styles.dateControls}>
                     <button
                         type="button"
@@ -377,6 +375,7 @@ export function TaskPlanner({
                     role="tabpanel"
                     aria-label="Planner days"
                     className={styles.dayGrid}
+                    style={{ "--planner-columns": columns } as CSSProperties}
                 >
                     {days.map((day) => (
                         <PlannerColumn
@@ -414,6 +413,7 @@ export function TaskPlanner({
                     today={today}
                     actions={rowActions}
                     dragPreview={dragPreview}
+                    listColumns={columns}
                 />
                 <DragOverlay
                     adjustScale={false}

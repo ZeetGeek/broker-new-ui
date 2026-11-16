@@ -1,22 +1,20 @@
 "use client";
 
-import { type FormEvent, useId, useState } from "react";
+import { type CSSProperties, type FormEvent, useEffect, useId, useState } from "react";
 
-import {
-    horizontalListSortingStrategy,
-    rectSortingStrategy,
-    SortableContext,
-    useSortable,
-} from "@dnd-kit/sortable";
+import { rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import {
     ArrowLeft,
     ArrowRight,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     Equal,
     MoreHorizontal,
     Pencil,
@@ -69,6 +67,7 @@ export type TaskListsProps = Pick<
     today: string;
     actions: TaskPlannerColumnProps["actions"];
     dragPreview?: PlannerDragPreview | null;
+    listColumns: number;
 };
 type Editor = { kind: "new-tab" | "new-list" | "tab" | "list"; id: string; name: string };
 
@@ -87,11 +86,31 @@ export function TaskLists({
     today,
     actions,
     dragPreview,
+    listColumns,
 }: TaskListsProps) {
     const [open, setOpen] = useState(true);
     const [editor, setEditor] = useState<Editor | null>(null);
     const [notice, setNotice] = useState("");
     const lists = notebook.lists.filter((list) => list.tabId === activeTab);
+    const activeNotebookTab = notebook.tabs.find((tab) => tab.id === activeTab);
+    const activeTabIndex = notebook.tabs.findIndex((tab) => tab.id === activeTab);
+    const [listPage, setListPage] = useState(0);
+    useEffect(() => {
+        setListPage(0);
+    }, [activeTab]);
+    useEffect(() => {
+        setListPage(0);
+    }, [listColumns]);
+    const listCount = lists.length;
+    const listStride = Math.max(1, listColumns);
+    const pageCount = Math.max(1, Math.ceil(listCount / listStride));
+    const maxPage = pageCount - 1;
+    useEffect(() => {
+        setListPage((page) => Math.min(page, maxPage));
+    }, [listCount, maxPage]);
+    const canPrevList = listPage > 0;
+    const canNextList = listPage < maxPage;
+    const visibleLists = lists.slice(listPage * listStride, listPage * listStride + listStride);
     const busy = notebookBusy || actions.busy || notebookLoading || !!notebookError;
     const change = async (updater: NotebookUpdater, message?: string) => {
         const saved = await onNotebookChange(updater);
@@ -123,74 +142,167 @@ export function TaskLists({
     return (
         <>
             <div className={styles.somedayBar}>
-                <div className={styles.listTabs} role="tablist" aria-label="Custom list tabs">
-                    <SortableContext
-                        items={notebook.tabs.map((tab) => `tab:${tab.id}`)}
-                        strategy={horizontalListSortingStrategy}
+                <div className={styles.somedayBarStart}>
+                    {activeNotebookTab ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        className={styles.tabMenu}
+                                        disabled={busy}
+                                        aria-label={`Manage tab ${activeNotebookTab.name}`}
+                                    />
+                                }
+                            >
+                                <MoreHorizontal className="rotate-90" aria-hidden size={12} />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setEditor({
+                                            kind: "new-list",
+                                            id: "",
+                                            name: "",
+                                        });
+                                        setOpen(true);
+                                    }}
+                                >
+                                    <Plus aria-hidden />
+                                    Add list
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() =>
+                                        setEditor({
+                                            kind: "tab",
+                                            id: activeNotebookTab.id,
+                                            name: activeNotebookTab.name,
+                                        })
+                                    }
+                                >
+                                    <Pencil aria-hidden />
+                                    Rename tab
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    disabled={activeTabIndex === 0}
+                                    onClick={() =>
+                                        void change((latest) =>
+                                            reorderNotebookTab(latest, activeNotebookTab.id, -1),
+                                        )
+                                    }
+                                >
+                                    <ArrowLeft aria-hidden />
+                                    Move tab left
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    disabled={activeTabIndex === notebook.tabs.length - 1}
+                                    onClick={() =>
+                                        void change((latest) =>
+                                            reorderNotebookTab(latest, activeNotebookTab.id, 1),
+                                        )
+                                    }
+                                >
+                                    <ArrowRight aria-hidden />
+                                    Move tab right
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    variant="destructive"
+                                    disabled={notebook.tabs.length === 1}
+                                    onClick={() =>
+                                        void change(
+                                            (latest) =>
+                                                deleteNotebookTab(latest, activeNotebookTab.id),
+                                            `Tab deleted. Its lists are now in ${notebook.tabs.find((item) => item.id !== activeNotebookTab.id)?.name}.`,
+                                        )
+                                    }
+                                >
+                                    <Trash2 aria-hidden />
+                                    Delete tab
+                                    {notebook.tabs.length === 1 ? " (last tab)" : ""}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : null}
+                    <SlidingTabs
+                        value={activeTab}
+                        options={notebook.tabs.map((tab) => {
+                            const count = notebook.lists.filter(
+                                (list) => list.tabId === tab.id,
+                            ).length;
+                            return {
+                                value: tab.id,
+                                label: (
+                                    <span className={styles.slidingTabLabel}>
+                                        <span>{tab.name}</span>
+                                        <span
+                                            className={styles.slidingTabCount}
+                                            aria-label={`${count} ${count === 1 ? "list" : "lists"}`}
+                                        >
+                                            {count}
+                                        </span>
+                                    </span>
+                                ),
+                                ariaLabel: `${tab.name}, ${count} ${count === 1 ? "list" : "lists"}`,
+                            };
+                        })}
+                        onValueChange={(id) => {
+                            onSelectTab(id);
+                            setOpen(true);
+                            setEditor(null);
+                        }}
+                        label="Custom list tabs"
+                        panelId="task-someday"
+                        className={cn(styles.plannerUnderlineTabs, styles.notebookTabPicker)}
+                    />
+                    <button
+                        type="button"
+                        className={styles.addTabButton}
+                        aria-label="Create tab"
+                        title="Create tab"
+                        disabled={busy}
+                        onClick={() => {
+                            setEditor({ kind: "new-tab", id: "", name: "" });
+                            setOpen(true);
+                        }}
                     >
-                        {notebook.tabs.map((tab, index) => (
-                            <ListTab
-                                key={tab.id}
-                                tab={tab}
-                                selected={activeTab === tab.id}
-                                count={
-                                    notebook.lists.filter((list) => list.tabId === tab.id).length
-                                }
-                                busy={busy}
-                                onSelect={() => {
-                                    onSelectTab(tab.id);
-                                    setOpen(true);
-                                    setEditor(null);
-                                }}
-                                onRename={() =>
-                                    setEditor({ kind: "tab", id: tab.id, name: tab.name })
-                                }
-                                onAddList={() => {
-                                    onSelectTab(tab.id);
-                                    setOpen(true);
-                                    setEditor({ kind: "new-list", id: "", name: "" });
-                                }}
-                                onDelete={() =>
-                                    void change(
-                                        (latest) => deleteNotebookTab(latest, tab.id),
-                                        `Tab deleted. Its lists are now in ${notebook.tabs.find((item) => item.id !== tab.id)?.name}.`,
-                                    )
-                                }
-                                onShift={(direction) =>
-                                    void change((latest) =>
-                                        reorderNotebookTab(latest, tab.id, direction),
-                                    )
-                                }
-                                isFirst={index === 0}
-                                isLast={index === notebook.tabs.length - 1}
-                                onlyTab={notebook.tabs.length === 1}
-                            />
-                        ))}
-                    </SortableContext>
+                        <Plus aria-hidden size={14} />
+                    </button>
                 </div>
-                <button
-                    type="button"
-                    className={styles.addTabButton}
-                    aria-label="Create tab"
-                    title="Create tab"
-                    disabled={busy}
-                    onClick={() => {
-                        setEditor({ kind: "new-tab", id: "", name: "" });
-                        setOpen(true);
-                    }}
-                >
-                    <Plus aria-hidden size={14} />
-                </button>
-                <button
-                    type="button"
-                    className={styles.collapseLists}
-                    aria-label={open ? "Collapse lists" : "Expand lists"}
-                    aria-expanded={open}
-                    aria-controls="task-someday"
-                    onClick={() => setOpen(!open)}
-                >
-                    <ChevronDown aria-hidden size={14} data-collapsed={!open || undefined} />
-                </button>
+                <div className={styles.somedayBarEnd}>
+                    {listCount > listStride && (
+                        <div className={styles.listTabNav} aria-label="Browse lists in this tab">
+                            <button
+                                type="button"
+                                className={styles.navButton}
+                                aria-label="Previous lists"
+                                disabled={!canPrevList}
+                                onClick={() => setListPage((page) => Math.max(0, page - 1))}
+                            >
+                                <ChevronLeft aria-hidden size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                className={styles.navButton}
+                                aria-label="Next lists"
+                                disabled={!canNextList}
+                                onClick={() => setListPage((page) => Math.min(maxPage, page + 1))}
+                            >
+                                <ChevronRight aria-hidden size={16} />
+                            </button>
+                        </div>
+                    )}
+                    <button
+                        type="button"
+                        className={styles.collapseLists}
+                        aria-label={open ? "Collapse lists" : "Expand lists"}
+                        aria-expanded={open}
+                        aria-controls="task-someday"
+                        onClick={() => setOpen(!open)}
+                    >
+                        <ChevronDown aria-hidden size={14} data-collapsed={!open || undefined} />
+                    </button>
+                </div>
             </div>
             {editor && (
                 <NameEditor
@@ -220,17 +332,21 @@ export function TaskLists({
             )}
             <span className="sr-only" role="status">
                 {notice}
+                {open && listCount > 0
+                    ? `Showing lists ${listPage * listStride + 1}–${Math.min(listCount, listPage * listStride + listStride)} of ${listCount}`
+                    : ""}
             </span>
             {open && (
                 <section
                     id="task-someday"
                     role="tabpanel"
-                    aria-labelledby={`notebook-tab-${activeTab}`}
+                    aria-label={`${activeNotebookTab?.name ?? "My lists"} lists`}
                     className={styles.somedayGrid}
+                    style={{ "--planner-list-columns": listColumns } as CSSProperties}
                 >
                     {notebookLoading ? (
                         <p className={styles.notebookLoading} role="status">
-                            Loading your listsâ€¦
+                            Loading your lists…
                         </p>
                     ) : (
                         !notebookError && (
@@ -238,215 +354,88 @@ export function TaskLists({
                                 items={lists.map((list) => `list:${list.id}`)}
                                 strategy={rectSortingStrategy}
                             >
-                                {lists.map((list, index) => (
-                                    <SortableList
-                                        key={list.id}
-                                        list={list}
-                                        tabs={notebook.tabs}
-                                        busy={busy}
-                                        onlyList={notebook.lists.length === 1}
-                                        isFirst={index === 0}
-                                        isLast={index === lists.length - 1}
-                                        onRename={() =>
-                                            setEditor({
-                                                kind: "list",
-                                                id: list.id,
-                                                name: list.name,
-                                            })
-                                        }
-                                        onDelete={() =>
-                                            void change(
-                                                (latest) => deleteNotebookList(latest, list.id),
-                                                "List deleted. Its tasks are safe in your default list.",
-                                            )
-                                        }
-                                        onMoveTab={(tabId) =>
-                                            void change(
-                                                (latest) =>
-                                                    moveNotebookList(latest, list.id, tabId),
-                                                `List moved to ${notebook.tabs.find((tab) => tab.id === tabId)?.name}.`,
-                                            )
-                                        }
-                                        onShift={(direction) => reorderList(list, direction)}
-                                    >
-                                        <PlannerColumn
-                                            date={null}
-                                            listId={list.id}
-                                            name={list.name}
-                                            today={today}
-                                            tasks={plannerColumnTasks(
-                                                tasks,
-                                                null,
-                                                list.id,
-                                                notebook,
-                                                today,
-                                                sort,
-                                                dragPreview,
-                                            )}
-                                            catalogs={catalogs}
-                                            onAdd={onAdd}
-                                            actions={actions}
-                                        />
-                                    </SortableList>
-                                ))}
-                                <div className={styles.newListColumn}>
-                                    <div className={styles.dayHeading}>
-                                        <button
-                                            type="button"
-                                            className={styles.newListButton}
-                                            disabled={busy}
-                                            onClick={() =>
-                                                setEditor({ kind: "new-list", id: "", name: "" })
+                                {Array.from({ length: listColumns }, (_, slot) => {
+                                    const list = visibleLists[slot];
+                                    const index = listPage * listStride + slot;
+                                    if (!list) {
+                                        return (
+                                            <div
+                                                key={`empty-list-${slot}`}
+                                                className={styles.emptyListColumn}
+                                                aria-hidden
+                                            >
+                                                <header className={styles.dayHeading}>
+                                                    <h2 className="h5">&nbsp;</h2>
+                                                </header>
+                                                <ul className={styles.ruledList}>
+                                                    {Array.from({ length: 9 }, (_, line) => (
+                                                        <li
+                                                            key={line}
+                                                            className={styles.blankLine}
+                                                        />
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <SortableList
+                                            key={list.id}
+                                            list={list}
+                                            tabs={notebook.tabs}
+                                            busy={busy}
+                                            onlyList={notebook.lists.length === 1}
+                                            isFirst={index === 0}
+                                            isLast={index === listCount - 1}
+                                            onRename={() =>
+                                                setEditor({
+                                                    kind: "list",
+                                                    id: list.id,
+                                                    name: list.name,
+                                                })
                                             }
+                                            onDelete={() =>
+                                                void change(
+                                                    (latest) => deleteNotebookList(latest, list.id),
+                                                    "List deleted. Its tasks are safe in your default list.",
+                                                )
+                                            }
+                                            onMoveTab={(tabId) =>
+                                                void change(
+                                                    (latest) =>
+                                                        moveNotebookList(latest, list.id, tabId),
+                                                    `List moved to ${notebook.tabs.find((tab) => tab.id === tabId)?.name}.`,
+                                                )
+                                            }
+                                            onShift={(direction) => reorderList(list, direction)}
                                         >
-                                            <Plus aria-hidden size={14} />
-                                            New list
-                                        </button>
-                                    </div>
-                                    <ul className={styles.ruledList} aria-hidden="true">
-                                        {Array.from({ length: 9 }, (_, index) => (
-                                            <li key={index} className={styles.blankLine} />
-                                        ))}
-                                    </ul>
-                                </div>
+                                            <PlannerColumn
+                                                date={null}
+                                                listId={list.id}
+                                                name={list.name}
+                                                today={today}
+                                                tasks={plannerColumnTasks(
+                                                    tasks,
+                                                    null,
+                                                    list.id,
+                                                    notebook,
+                                                    today,
+                                                    sort,
+                                                    dragPreview,
+                                                )}
+                                                catalogs={catalogs}
+                                                onAdd={onAdd}
+                                                actions={actions}
+                                            />
+                                        </SortableList>
+                                    );
+                                })}
                             </SortableContext>
                         )
                     )}
                 </section>
             )}
         </>
-    );
-}
-
-function ListTab({
-    tab,
-    count,
-    selected,
-    busy,
-    onSelect,
-    onRename,
-    onAddList,
-    onDelete,
-    onShift,
-    isFirst,
-    isLast,
-    onlyTab,
-}: {
-    tab: NotebookTab;
-    count: number;
-    selected: boolean;
-    busy: boolean;
-    onSelect: () => void;
-    onRename: () => void;
-    onAddList: () => void;
-    onDelete: () => void;
-    onShift: (direction: -1 | 1) => void;
-    isFirst: boolean;
-    isLast: boolean;
-    onlyTab: boolean;
-}) {
-    const {
-        setNodeRef,
-        setActivatorNodeRef,
-        attributes,
-        listeners,
-        transform,
-        transition,
-        isDragging,
-        isOver,
-    } = useSortable({
-        id: `tab:${tab.id}`,
-        data: { kind: "tab", tabId: tab.id },
-        disabled: { draggable: busy || onlyTab, droppable: busy },
-    });
-    return (
-        <div
-            ref={setNodeRef}
-            style={{ transform: CSS.Transform.toString(transform), transition }}
-            className={cn(
-                styles.listTab,
-                selected && styles.selectedListTab,
-                isOver && styles.tabDropTarget,
-                isDragging && styles.dragging,
-            )}
-        >
-            <DropdownMenu>
-                <DropdownMenuTrigger
-                    render={
-                        <button
-                            type="button"
-                            className={styles.tabMenu}
-                            disabled={busy}
-                            aria-label={`Manage tab ${tab.name}`}
-                        />
-                    }
-                >
-                    <MoreHorizontal className="rotate-90" aria-hidden size={12} />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={onAddList}>
-                        <Plus aria-hidden />
-                        Add list
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={onRename}>
-                        <Pencil aria-hidden />
-                        Rename tab
-                    </DropdownMenuItem>
-                    <DropdownMenuItem disabled={isFirst} onClick={() => onShift(-1)}>
-                        <ArrowLeft aria-hidden />
-                        Move tab left
-                    </DropdownMenuItem>
-                    <DropdownMenuItem disabled={isLast} onClick={() => onShift(1)}>
-                        <ArrowRight aria-hidden />
-                        Move tab right
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" disabled={onlyTab} onClick={onDelete}>
-                        <Trash2 aria-hidden />
-                        Delete tab{onlyTab ? " (last tab)" : ""}
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-            <button
-                ref={setActivatorNodeRef}
-                {...attributes}
-                {...listeners}
-                type="button"
-                role="tab"
-                aria-pressed={undefined}
-                id={`notebook-tab-${tab.id}`}
-                aria-selected={selected}
-                aria-controls="task-someday"
-                className={styles.listTabButton}
-                disabled={busy}
-                title={onlyTab ? tab.name : `Drag ${tab.name} left or right to reorder`}
-                onClick={onSelect}
-                onKeyDown={(event) => {
-                    listeners?.onKeyDown?.(event);
-                    if (isDragging) return;
-                    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-                    event.preventDefault();
-                    const items = Array.from(
-                        event.currentTarget
-                            .closest('[role="tablist"]')!
-                            .querySelectorAll<HTMLButtonElement>('[role="tab"]'),
-                    );
-                    const index = items.indexOf(event.currentTarget);
-                    const next =
-                        event.key === "Home"
-                            ? 0
-                            : event.key === "End"
-                              ? items.length - 1
-                              : (index + (event.key === "ArrowRight" ? 1 : -1) + items.length) %
-                                items.length;
-                    items[next].focus();
-                    items[next].click();
-                }}
-            >
-                <span title={tab.name}>{tab.name}</span>
-                <small aria-label={`${count} ${count === 1 ? "list" : "lists"}`}>{count}</small>
-            </button>
-        </div>
     );
 }
 

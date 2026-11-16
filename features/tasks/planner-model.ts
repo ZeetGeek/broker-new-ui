@@ -61,6 +61,15 @@ export function plannerDate(task: Task, _today: string): string | null {
     return task.dueDate;
 }
 
+export function countPopulatedPlannerDays(tasks: Task[], today: string): number {
+    const dates = new Set<string>();
+    for (const task of tasks) {
+        const date = plannerDate(task, today);
+        if (date) dates.add(date);
+    }
+    return dates.size;
+}
+
 export function sortPlannerTasks(tasks: Task[], sort: TaskSort): Task[] {
     return sortTasks(tasks, sort);
 }
