@@ -626,7 +626,7 @@ export function entitiesFromTaskTitle(
     return entities.sort((a, b) => a.start - b.start);
 }
 
-/** Highlights for a saved task title — same chips the composer showed while typing. */
+/** Highlights for a saved task title — used when editing still needs chip ranges. */
 export function highlightsForTaskTitle(
     text: string,
     links: {
@@ -640,6 +640,46 @@ export function highlightsForTaskTitle(
 ): QuickAddHighlight[] {
     const entities = entitiesFromTaskTitle(text, links, catalogs);
     return parseQuickAdd(text, { now, baseDate, entities }).highlights;
+}
+
+/**
+ * Saved-row title: plain sentence. Drops date / priority / reminder / repeat words
+ * (the day column and row colour already say those), strips # / @ from links, keeps
+ * times in place. The composer still shows the full chipped text when editing.
+ */
+export function taskRowTitle(
+    text: string,
+    links: {
+        propertyId: string | null;
+        clientId: string | null;
+        ownerId: string | null | undefined;
+    },
+    catalogs: QuickAddCatalogs,
+    now: number,
+    baseDate: string | null,
+): string {
+    const entities = entitiesFromTaskTitle(text, links, catalogs);
+    const parse = parseQuickAdd(text, { now, baseDate, entities });
+    const edits: { start: number; end: number; insert: string }[] = [
+        ...parse.atoms
+            .filter((atom) => atom.kind !== "time")
+            .map((atom) => ({ start: atom.start, end: atom.end, insert: "" })),
+        ...entities.map((entity) => ({
+            start: entity.start,
+            end: entity.end,
+            insert: entity.label,
+        })),
+    ].sort((a, b) => b.start - a.start);
+
+    let next = text;
+    for (const edit of edits) {
+        next = next.slice(0, edit.start) + edit.insert + next.slice(edit.end);
+    }
+    return next
+        .replace(/\s+/g, " ")
+        .replace(/\s+([,.;:!?])/g, "$1")
+        .replace(/^[\s,;:·–—-]+|[\s,;:·–—-]+$/g, "")
+        .trim();
 }
 
 const OPTION_LIMIT = 8;

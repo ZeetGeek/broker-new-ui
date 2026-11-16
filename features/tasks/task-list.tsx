@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -36,17 +36,15 @@ import type { TaskQuickChange } from "./quick-actions";
 import { QuickAddComposer } from "./quick-add-composer";
 import {
     entitiesFromTaskTitle,
-    highlightsForTaskTitle,
     parseQuickAdd,
     type QuickAddCatalogs,
-    type QuickAddHighlight,
+    taskRowTitle,
 } from "./quick-add-parse";
 import { taskRepeatLabel } from "./recurrence";
 import { TaskActionsMenu } from "./task-actions-menu";
 import { TaskHistoryPlanner } from "./task-history-planner";
 
 import styles from "./planner.module.css";
-import qa from "./quick-add.module.css";
 
 export type TaskRowActions = {
     busy: boolean;
@@ -61,62 +59,39 @@ export type TaskRowActions = {
     onQuickChange: (task: Task, change: TaskQuickChange) => Promise<boolean>;
 };
 
-/** Only details that are not already chips inside the title (legacy stripped titles). */
+/**
+ * Small extras under the plain row title. Date / priority stay off the title
+ * (day column + row colour). Time stays in the sentence when typed; repeat and
+ * legacy links that are not in the title still need a hint here.
+ */
 function lineMeta(task: Task, catalogs: QuickAddCatalogs, now: number) {
-    const entities = entitiesFromTaskTitle(
-        task.title,
-        {
-            propertyId: task.propertyId,
-            clientId: task.clientId,
-            ownerId: task.ownerId,
-        },
-        catalogs,
-    );
+    const links = {
+        propertyId: task.propertyId,
+        clientId: task.clientId,
+        ownerId: task.ownerId,
+    };
+    const entities = entitiesFromTaskTitle(task.title, links, catalogs);
     const parse = parseQuickAdd(task.title, {
         now,
         baseDate: task.dueDate,
         entities,
     });
-    const title = task.title.toLowerCase();
+    const shown = taskRowTitle(task.title, links, catalogs, now, task.dueDate).toLowerCase();
     const fresh = (label: string | undefined) =>
-        label && !title.includes(label.toLowerCase()) ? label : null;
+        label && !shown.includes(label.toLowerCase()) ? label : null;
     return {
         time:
             task.dueDate && task.dueTime && !parse.atoms.some((atom) => atom.kind === "time")
                 ? taskTimeLabel(task.dueTime)
                 : null,
-        repeat:
-            task.repeat && !parse.atoms.some((atom) => atom.kind === "repeat")
-                ? taskRepeatLabel(task.repeat)
-                : null,
-        property: parse.propertyId
-            ? null
-            : fresh(catalogs.properties.find((item) => item.id === task.propertyId)?.title),
+        // Repeat words are stripped from the row title; keep a quiet icon.
+        repeat: task.repeat ? taskRepeatLabel(task.repeat) : null,
+        property: fresh(catalogs.properties.find((item) => item.id === task.propertyId)?.title),
         contacts: [
-            parse.clientId
-                ? null
-                : fresh(catalogs.clients.find((item) => item.id === task.clientId)?.name),
-            parse.ownerId
-                ? null
-                : fresh(catalogs.owners.find((item) => item.id === task.ownerId)?.name),
+            fresh(catalogs.clients.find((item) => item.id === task.clientId)?.name),
+            fresh(catalogs.owners.find((item) => item.id === task.ownerId)?.name),
         ].filter((name): name is string => !!name),
     };
-}
-
-function titleWithChips(text: string, highlights: readonly QuickAddHighlight[]): ReactNode[] {
-    const nodes: ReactNode[] = [];
-    let cursor = 0;
-    highlights.forEach((mark, index) => {
-        if (mark.start > cursor) nodes.push(text.slice(cursor, mark.start));
-        nodes.push(
-            <mark key={index} className={qa.mark} data-kind={mark.kind}>
-                {text.slice(mark.start, mark.end)}
-            </mark>,
-        );
-        cursor = mark.end;
-    });
-    nodes.push(text.slice(cursor));
-    return nodes;
 }
 
 /** A paper-list line: edit its title or open the full CRM context through its menu. */
@@ -162,7 +137,7 @@ export function TaskLine({
         );
     }
     const meta = lineMeta(task, catalogs, now);
-    const highlights = highlightsForTaskTitle(
+    const rowTitle = taskRowTitle(
         task.title,
         {
             propertyId: task.propertyId,
@@ -184,7 +159,7 @@ export function TaskLine({
                     className={styles.lineCheck}
                     checked={!!task.completedAt}
                     disabled={busy}
-                    aria-label={`${task.completedAt ? "Reopen" : "Complete"} ${task.title}`}
+                    aria-label={`${task.completedAt ? "Reopen" : "Complete"} ${rowTitle}`}
                     onCheckedChange={() => onComplete(task)}
                 />
             )}
@@ -193,7 +168,7 @@ export function TaskLine({
                 type="button"
                 data-task-title
                 className={styles.lineTitle}
-                title={`${task.title}\n${taskDueLabel(task, now)}`}
+                title={`${rowTitle}\n${taskDueLabel(task, now)}`}
                 disabled={busy}
                 onClick={() => {
                     if (archive || task.deletedAt) {
@@ -203,7 +178,7 @@ export function TaskLine({
                     setEditing(true);
                 }}
             >
-                {highlights.length ? titleWithChips(task.title, highlights) : task.title}
+                {rowTitle}
                 {(meta.time || meta.repeat || meta.property || meta.contacts.length > 0) && (
                     <small className={styles.lineMeta}>
                         {meta.time && (
@@ -259,7 +234,7 @@ export function TaskLine({
                                 type="button"
                                 className={styles.lineAction}
                                 disabled={busy}
-                                aria-label={`Actions for ${task.title}`}
+                                aria-label={`Actions for ${rowTitle}`}
                                 title="Task actions"
                             />
                         }

@@ -7,6 +7,7 @@ import {
     quickAddContactOptions,
     type QuickAddEntity,
     quickAddPropertyOptions,
+    taskRowTitle,
 } from "@/features/tasks/quick-add-parse";
 
 // Saturday 16 Nov 2030, 9:00 am IST.
@@ -212,4 +213,18 @@ test("record search covers property details and both Clients and Owners", () => 
         ],
     );
     assert.equal(quickAddContactOptions(catalogs, "").length, 4);
+});
+
+test("saved row titles are plain: no chips, no #/@, no date or priority words", () => {
+    const text =
+        "I've to show this @Aarav Shah client this #Happy Elegance property today at 11am and this is very urgent p1";
+    const links = {
+        propertyId: "prop-happy",
+        clientId: "client-aarav",
+        ownerId: null as string | null,
+    };
+    assert.equal(
+        taskRowTitle(text, links, catalogs, now, "2030-11-16"),
+        "I've to show this Aarav Shah client this Happy Elegance property at 11am and this is very urgent",
+    );
 });
