@@ -74,7 +74,15 @@ export function SlidingTabs<Value extends string | number>({
                     aria-controls={panelId}
                     tabIndex={value === option.value ? 0 : -1}
                     className={cn("t-tab", styles.tab, tabClassName)}
-                    onClick={() => onValueChange(option.value)}
+                    onClick={(event) => {
+                        if (
+                            event.target instanceof Element &&
+                            event.target.closest("[data-sliding-tab-action]")
+                        ) {
+                            return;
+                        }
+                        onValueChange(option.value);
+                    }}
                     onKeyDown={(event) => {
                         let next: number;
                         if (event.key === "ArrowRight") next = (index + 1) % options.length;

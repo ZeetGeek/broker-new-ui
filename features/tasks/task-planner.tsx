@@ -450,6 +450,7 @@ export type TaskPlannerColumnProps = {
     name?: string;
     minimumLines?: number;
     headingActions?: ReactNode;
+    listFooter?: ReactNode;
 };
 export function PlannerColumn({
     date,
@@ -462,6 +463,7 @@ export function PlannerColumn({
     name,
     minimumLines = date ? 10 : 9,
     headingActions,
+    listFooter,
 }: TaskPlannerColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: bucketId(date, listId),
@@ -521,6 +523,7 @@ export function PlannerColumn({
                     )}
                 </ul>
             </SortableContext>
+            {listFooter ? <div className={styles.listColumnFooter}>{listFooter}</div> : null}
         </section>
     );
 }

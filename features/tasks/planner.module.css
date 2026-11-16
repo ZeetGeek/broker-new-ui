@@ -908,24 +908,7 @@
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    gap: 0.125rem;
-}
-.listTabNav .navButton {
-    display: inline-grid;
-    place-items: center;
-    min-inline-size: 36px;
-    min-block-size: 44px;
-    border-radius: var(--radius-control);
-    color: var(--color-ink-muted);
-    cursor: pointer;
-}
-.listTabNav .navButton:hover {
-    color: var(--color-brand-text);
-    background: var(--color-surface-muted);
-}
-.listTabNav .navButton:disabled {
-    cursor: default;
-    opacity: 0.45;
+    gap: 0;
 }
 .collapseLists {
     margin-inline-start: 0;
@@ -972,6 +955,7 @@
 .customList > .dayColumn > .dayHeading,
 .newListColumn > .dayHeading {
     padding-block-start: 0.75rem;
+    padding-inline-start: 0.5rem;
 }
 .listHeadingRow {
     display: flex;
@@ -990,23 +974,9 @@
     min-inline-size: 0;
     padding-inline: 0.125rem;
 }
-.newListButton {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-block-size: 32px;
-    padding-inline: 0;
-    border-radius: 0;
-    background: transparent;
-    color: var(--color-ink-muted);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    text-underline-offset: 4px;
-    cursor: pointer;
-}
-.newListButton:hover:not(:disabled) {
-    color: var(--color-brand-text);
-    text-decoration: underline;
+.listColumnFooter {
+    margin-block-start: auto;
+    padding: 0.75rem 0.5rem 0;
 }
 .customList .listHeadingRow .listMenu {
     flex-shrink: 0;
@@ -1127,6 +1097,21 @@
     padding-block: 0.875rem 2rem;
     min-block-size: 350px;
 }
+.listHeadingTools {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.15rem;
+}
+.listHeadingNewList {
+    flex-shrink: 0;
+    margin-inline-end: 0.15rem;
+}
+.customList .listHeadingToolsWithNav .listMenu,
+.customList .listHeadingToolsWithNav .listTabNav {
+    opacity: 1;
+    pointer-events: auto;
+}
 .somedayGrid .ruledList {
     min-block-size: calc(9 * var(--line-height));
 }
@@ -1206,7 +1191,27 @@
 .slidingTabLabel {
     display: inline-flex;
     align-items: center;
-    gap: 0.65rem;
+    gap: 0.35rem;
+}
+.slidingTabName {
+    max-inline-size: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.notebookTabMenu {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 20px;
+    block-size: 20px;
+    border-radius: var(--radius-control);
+    color: var(--color-ink-subtle);
+    cursor: pointer;
+}
+.notebookTabMenu:hover {
+    color: var(--color-brand-text);
+    background: color-mix(in oklab, var(--color-ink) 6%, transparent);
 }
 .slidingTabCount {
     display: inline-flex;
@@ -1454,11 +1459,6 @@
     .listDragHandle {
         opacity: 1;
         pointer-events: auto;
-    }
-}
-@media (pointer: coarse) {
-    .newListButton {
-        min-block-size: 44px;
     }
 }
 @media (prefers-reduced-motion: reduce) {
