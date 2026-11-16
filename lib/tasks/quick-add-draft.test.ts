@@ -10,8 +10,13 @@ import {
     type QuickAddDraft,
     quickAddDraftFromTask,
     resolveQuickAddValues,
+    syncQuickAddEntities,
 } from "@/features/tasks/quick-add-draft";
-import { findQuickAddMention, parseQuickAdd } from "@/features/tasks/quick-add-parse";
+import {
+    entitiesFromCatalogText,
+    findQuickAddMention,
+    parseQuickAdd,
+} from "@/features/tasks/quick-add-parse";
 
 const now = Date.parse("2030-11-16T09:00:00+05:30");
 const catalogs = {
@@ -199,6 +204,39 @@ test("saved titles keep chips in place; edit opens them there, not at the end", 
     assert.equal(values.clientId, null);
     assert.equal(values.propertyId, "prop-happy");
     assert.match(values.title, /#Happy Elegance/);
+});
+
+test("pasting # / @ labels re-links catalog chips in place", () => {
+    const pasted = "today at 11:30pm meeting with @Aarav Shah about #Happy Elegance p1";
+    const draft = syncQuickAddEntities(
+        changeQuickAddText(newQuickAddDraft("2030-11-16"), pasted, {
+            caret: pasted.length,
+            previous: { start: 0, end: 0 },
+            atoms: [],
+            composing: false,
+        }).draft,
+        catalogs,
+    );
+    assert.deepEqual(
+        draft.entities.map((entity) => [
+            entity.kind,
+            entity.refId,
+            draft.text.slice(entity.start, entity.end),
+        ]),
+        [
+            ["client", "client-aarav", "@Aarav Shah"],
+            ["property", "prop-happy", "#Happy Elegance"],
+        ],
+    );
+    const values = resolveQuickAddValues(draft, parse(draft));
+    assert.equal(values.clientId, "client-aarav");
+    assert.equal(values.propertyId, "prop-happy");
+    assert.equal(values.priority, "urgent");
+    assert.equal(values.time, "23:30");
+    assert.deepEqual(
+        entitiesFromCatalogText("Call @Aarav Shah later", catalogs).map((entity) => entity.refId),
+        ["client-aarav"],
+    );
 });
 
 test("older stripped titles keep details on base without appending chips at the end", () => {

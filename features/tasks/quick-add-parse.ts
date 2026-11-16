@@ -578,6 +578,76 @@ export function parseQuickAdd(text: string, options: QuickAddParseOptions): Quic
     };
 }
 
+/** True when `#Label` / `@Name` sits on its own, not mid-word. */
+function isEntityTokenBoundary(text: string, start: number, end: number) {
+    const beforeOk = start === 0 || /\s/.test(text[start - 1] ?? "");
+    const afterOk = end >= text.length || /[\s,.;:!?)\]}]/.test(text[end] ?? "");
+    return beforeOk && afterOk;
+}
+
+/**
+ * Rebuild property / Client / owner chips from `#` / `@` labels in the text.
+ * Used after paste so copied chips become real linked tokens again.
+ */
+export function entitiesFromCatalogText(
+    text: string,
+    catalogs: QuickAddCatalogs,
+): QuickAddEntity[] {
+    const candidates = [
+        ...catalogs.properties.map((property) => ({
+            kind: "property" as const,
+            refId: property.id,
+            label: property.title,
+            token: `#${property.title}`,
+        })),
+        ...catalogs.clients.map((client) => ({
+            kind: "client" as const,
+            refId: client.id,
+            label: client.name,
+            token: `@${client.name}`,
+        })),
+        ...catalogs.owners.map((owner) => ({
+            kind: "owner" as const,
+            refId: owner.id,
+            label: owner.name,
+            token: `@${owner.name}`,
+        })),
+    ].sort((a, b) => b.token.length - a.token.length || a.token.localeCompare(b.token));
+
+    const matches: QuickAddEntity[] = [];
+    for (const candidate of candidates) {
+        let from = 0;
+        while (from < text.length) {
+            const start = text.indexOf(candidate.token, from);
+            if (start < 0) break;
+            const end = start + candidate.token.length;
+            if (isEntityTokenBoundary(text, start, end)) {
+                matches.push({
+                    kind: candidate.kind,
+                    refId: candidate.refId,
+                    label: candidate.label,
+                    start,
+                    end,
+                });
+            }
+            from = start + 1;
+        }
+    }
+
+    matches.sort((a, b) => a.start - b.start || b.end - b.start - (a.end - a.start));
+    const usedKinds = new Set<QuickAddEntityKind>();
+    const taken: QuickAddRange[] = [];
+    const entities: QuickAddEntity[] = [];
+    for (const match of matches) {
+        if (usedKinds.has(match.kind)) continue;
+        if (taken.some((range) => match.start < range.end && match.end > range.start)) continue;
+        usedKinds.add(match.kind);
+        taken.push(match);
+        entities.push(match);
+    }
+    return entities;
+}
+
 /**
  * Find `#Property` / `@Person` tokens already in a saved title so edit and the
  * task row can highlight them in the same place the user typed them.

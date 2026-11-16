@@ -27,6 +27,7 @@ import {
     quickAddDraftFromTask,
     type QuickAddValues,
     resolveQuickAddValues,
+    syncQuickAddEntities,
 } from "./quick-add-draft";
 import {
     findQuickAddMention,
@@ -46,6 +47,9 @@ const TITLE_LIMIT = 160;
 const TEXT_LIMIT = 320;
 /** The counter stays out of the way until the name is this close to the limit. */
 const COUNTER_FROM = TITLE_LIMIT - 20;
+const UNDO_LIMIT = 50;
+
+type DraftSnapshot = { draft: QuickAddDraft; caret: number };
 
 export type QuickAddComposerProps = {
     /** Day this composer adds to; null for Someday lists. */
@@ -140,6 +144,10 @@ export function QuickAddComposer({
     const blurTimerRef = useRef<number | undefined>(undefined);
     const queuedRef = useRef<Submission | null>(null);
     const savingRef = useRef(false);
+    const historyRef = useRef<{ past: DraftSnapshot[]; future: DraftSnapshot[] }>({
+        past: [],
+        future: [],
+    });
 
     const [draft, setDraft] = useState(() =>
         task ? quickAddDraftFromTask(task, now, catalogs) : newQuickAddDraft(date),
@@ -199,10 +207,43 @@ export function QuickAddComposer({
     useEffect(() => () => window.clearTimeout(blurTimerRef.current), []);
 
     const resetDraft = () => {
+        historyRef.current = { past: [], future: [] };
         setDraft(newQuickAddDraft(date));
         setCaret(0);
         selectionRef.current = { start: 0, end: 0 };
         pendingCaretRef.current = 0;
+    };
+
+    const remember = (snapshot: DraftSnapshot) => {
+        const { past } = historyRef.current;
+        past.push(snapshot);
+        if (past.length > UNDO_LIMIT) past.shift();
+        historyRef.current.future = [];
+    };
+
+    const restore = (snapshot: DraftSnapshot) => {
+        setDraft(snapshot.draft);
+        setCaret(snapshot.caret);
+        setOptionIndex(0);
+        setHint("");
+        selectionRef.current = { start: snapshot.caret, end: snapshot.caret };
+        pendingCaretRef.current = snapshot.caret;
+    };
+
+    const undo = () => {
+        const { past, future } = historyRef.current;
+        const previous = past.pop();
+        if (!previous) return;
+        future.push({ draft, caret });
+        restore(previous);
+    };
+
+    const redo = () => {
+        const { past, future } = historyRef.current;
+        const next = future.pop();
+        if (!next) return;
+        past.push({ draft, caret });
+        restore(next);
     };
 
     const commit = async ({ draft: sent, values: saved, restoreFocus }: Submission) => {
@@ -283,6 +324,7 @@ export function QuickAddComposer({
     };
 
     const pick = (open: QuickAddMention, option: QuickAddOption) => {
+        remember({ draft, caret });
         const result = insertQuickAddEntity(draft, open, option);
         setDraft(result.draft);
         setCaret(result.caret);
@@ -307,18 +349,21 @@ export function QuickAddComposer({
             }
         }
         const next = raw.replace(/\r\n?|\n/g, " ");
+        remember({ draft, caret });
         const result = changeQuickAddText(draft, next, {
             caret: caretAfter,
             previous: selectionRef.current,
             atoms: parse.atoms,
             composing: composingRef.current,
         });
-        setDraft(result.draft);
+        // Paste (and any free-form edit) re-links `#` / `@` tokens from the catalogs.
+        const synced = syncQuickAddEntities(result.draft, catalogs);
+        setDraft(synced);
         setCaret(result.caret);
         setOptionIndex(0);
         setHint("");
         selectionRef.current = { start: result.caret, end: result.caret };
-        if (result.draft.text !== raw || result.caret !== caretAfter)
+        if (synced.text !== raw || result.caret !== caretAfter)
             pendingCaretRef.current = result.caret;
     };
 
@@ -349,11 +394,26 @@ export function QuickAddComposer({
         const { selectionStart: start, selectionEnd: end } = event.currentTarget;
         if (start !== end) return;
         const atom = parse.atoms.find((item) => start > item.start && start < item.end);
-        if (atom) setDraft((current) => dismissQuickAddRange(current, atom));
+        if (atom) {
+            remember({ draft, caret });
+            setDraft((current) => dismissQuickAddRange(current, atom));
+        }
     };
 
     const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
         if (event.nativeEvent.isComposing || composingRef.current) return;
+        const mod = event.ctrlKey || event.metaKey;
+        if (mod && event.key.toLowerCase() === "z" && !event.altKey) {
+            event.preventDefault();
+            if (event.shiftKey) redo();
+            else undo();
+            return;
+        }
+        if (mod && event.key.toLowerCase() === "y" && !event.altKey) {
+            event.preventDefault();
+            redo();
+            return;
+        }
         if (mention) {
             if ((event.key === "ArrowDown" || event.key === "ArrowUp") && options.length) {
                 event.preventDefault();
@@ -535,9 +595,9 @@ export function QuickAddComposer({
                 <p id={helpId} className="sr-only">
                     Type the task name in plain words. Words like tomorrow, 5pm, every Monday, p1
                     and !30m set the date, time, repeat, priority and reminder. Type # to link a
-                    property or @ to link a Client or owner. Recognised words highlight as you type
-                    and are saved as task details, not as part of the title. Backspace right after a
-                    highlighted phrase keeps it as plain words.
+                    property or @ to link a Client or owner. Copy and paste keeps those chips when
+                    the names match your records. Ctrl+Z undoes a change; Ctrl+Shift+Z or Ctrl+Y
+                    redoes it. Backspace right after a highlighted phrase keeps it as plain words.
                 </p>
             </div>
             <button

@@ -1,5 +1,6 @@
 import type { Task, TaskPriority } from "./model";
 import {
+    entitiesFromCatalogText,
     entitiesFromTaskTitle,
     parseQuickAdd,
     type QuickAddAtom,
@@ -305,6 +306,34 @@ export function insertQuickAddEntity(
 
 export function dismissQuickAddRange(draft: QuickAddDraft, range: QuickAddRange): QuickAddDraft {
     return { ...draft, dismissed: [...draft.dismissed, { start: range.start, end: range.end }] };
+}
+
+/**
+ * After paste or any free-form edit, re-attach `#` / `@` chips that match the
+ * catalogs so copied tokens behave like picked ones again.
+ */
+export function syncQuickAddEntities(
+    draft: QuickAddDraft,
+    catalogs: QuickAddCatalogs,
+): QuickAddDraft {
+    const entities = entitiesFromCatalogText(draft.text, catalogs);
+    if (
+        entities.length === draft.entities.length &&
+        entities.every(
+            (entity, index) =>
+                entity.kind === draft.entities[index]?.kind &&
+                entity.refId === draft.entities[index]?.refId &&
+                entity.start === draft.entities[index]?.start &&
+                entity.end === draft.entities[index]?.end,
+        )
+    ) {
+        return draft;
+    }
+    let base = draft.base;
+    for (const entity of entities) {
+        base = { ...base, [LINK_FIELD[entity.kind]]: null };
+    }
+    return { ...draft, entities, base };
 }
 
 /** What the task will be saved with: typed words first, then the column date / existing values. */
