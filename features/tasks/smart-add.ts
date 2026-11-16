@@ -291,10 +291,12 @@ export type SmartInlinePart =
 export function splitSmartInlineParts(
     input: string,
     now = Date.now(),
+    options: { includeDates?: boolean } = {},
 ): {
     parts: SmartInlinePart[];
     mention: SmartMention | null;
 } {
+    const includeDates = options.includeDates ?? true;
     const mentionMatch = MENTION_PATTERN.exec(input);
     const mention: SmartMention | null = mentionMatch
         ? {
@@ -306,16 +308,18 @@ export function splitSmartInlineParts(
     const searchable = mention ? input.slice(0, mention.start) : input;
     const rest = mention ? input.slice(mention.start) : "";
     const hits: { start: number; end: number; part: SmartInlinePart }[] = [];
-    for (const match of searchable.matchAll(datePattern())) {
-        const token = match[0];
-        const start = match.index ?? 0;
-        const value = resolveDateToken(token, now);
-        if (!value) continue;
-        hits.push({
-            start,
-            end: start + token.length,
-            part: { type: "date", value, label: smartDateChipLabel(value, now) },
-        });
+    if (includeDates) {
+        for (const match of searchable.matchAll(datePattern())) {
+            const token = match[0];
+            const start = match.index ?? 0;
+            const value = resolveDateToken(token, now);
+            if (!value) continue;
+            hits.push({
+                start,
+                end: start + token.length,
+                part: { type: "date", value, label: smartDateChipLabel(value, now) },
+            });
+        }
     }
     for (const match of searchable.matchAll(timePattern())) {
         const token = match[0];

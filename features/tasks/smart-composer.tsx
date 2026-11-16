@@ -12,17 +12,19 @@ import {
 
 import { formatInTimeZone } from "date-fns-tz";
 
-import { Hash, UserRound } from "@/components/shared/icons";
+import { Hash, Plus, UserRound } from "@/components/shared/icons";
 
-import { TASK_TIME_ZONE, type TaskPriority } from "./model";
+import { TASK_TIME_ZONE, type Task, type TaskPriority } from "./model";
 import type { PlannerTaskExtras } from "./planner-model";
 import {
     filterSmartContacts,
     filterSmartProperties,
     parseTrailingMention,
+    SMART_PRIORITY_CHIP,
     type SmartAddCatalogs,
     type SmartContactOption,
     type SmartPropertyOption,
+    smartTimeChipLabel,
     splitSmartInlineParts,
 } from "./smart-add";
 
@@ -43,8 +45,8 @@ type Segment = TextSegment | ChipSegment;
 
 const newId = () => crypto.randomUUID();
 const emptySegments = (): Segment[] => [{ id: newId(), type: "text", value: "" }];
-const TOKEN_BOUNDARY =
-    /(?:today|tomorrow|day\s*after\s*tomorrow|dayaftertomorrow|next\s+week|next\s+\w+|\b(?:sun|mon|tues|wednes|thurs|fri|satur)day\b|\d{1,2}\/\d{1,2}\/\d{4}|(?:1[0-2]|0?[1-9])(?::[0-5]\d)?\s*(?:am|pm)|p[1-4])\s+/i;
+/* Date words stay as plain text — the planner column already owns the day. */
+const TOKEN_BOUNDARY = /(?:(?:1[0-2]|0?[1-9])(?::[0-5]\d)?\s*(?:am|pm)|p[1-4])\s+/i;
 
 /**
  * Collapse empty/whitespace gaps around chips. Empty inputs still take flex
@@ -126,17 +128,32 @@ function partsToSegments(parts: ReturnType<typeof splitSmartInlineParts>["parts"
     return normalizeSegments(segments);
 }
 
-function serializeTitle(segments: Segment[]) {
+function typedTitle(segments: Segment[]) {
     return segments
-        .map((segment) => {
-            if (segment.type === "text") return segment.value;
-            if (segment.kind === "date" || segment.kind === "time" || segment.kind === "priority")
-                return "";
-            return segment.label;
-        })
+        .filter((segment): segment is TextSegment => segment.type === "text")
+        .map((segment) => segment.value)
         .join("")
         .replace(/\s+/g, " ")
         .trim();
+}
+
+/** Match planner preview titles: "Call Happy Elegance · Aarav Shah · 9:00 AM". */
+function serializeTitle(segments: Segment[]) {
+    const text = typedTitle(segments);
+    let property: string | undefined;
+    let contact: string | undefined;
+    let time: string | undefined;
+    for (const segment of segments) {
+        if (segment.type !== "chip") continue;
+        if (segment.kind === "property") property = segment.label;
+        if (segment.kind === "client" || segment.kind === "owner") contact = segment.label;
+        if (segment.kind === "time") time = segment.label;
+    }
+
+    const extras = [property, contact, time].filter((part): part is string => !!part);
+    if (!text) return extras.join(" · ");
+    if (!extras.length) return text;
+    return `${text} · ${extras.join(" · ")}`;
 }
 
 function extrasFromSegments(segments: Segment[]) {
@@ -158,6 +175,91 @@ function extrasFromSegments(segments: Segment[]) {
     return { dueDate, dueTime, priority, clientId, ownerId, propertyId };
 }
 
+function normalizeLabel(value: string) {
+    return value.replace(/\s+/g, " ").trim();
+}
+
+function stripTrailingLabel(title: string, label: string) {
+    const normalizedLabel = normalizeLabel(label);
+    if (!normalizedLabel) return title;
+    if (normalizeLabel(title) === normalizedLabel) return "";
+    const parts = title.split(" · ");
+    if (parts.length < 2) return title;
+    if (normalizeLabel(parts.at(-1) ?? "") !== normalizedLabel) return title;
+    return parts.slice(0, -1).join(" · ").trimEnd();
+}
+
+/** Rebuild chips from a saved task so inline edit matches smart-add. */
+function segmentsFromTask(task: Task, catalogs: SmartAddCatalogs, now: number): Segment[] {
+    const original = task.title;
+    let text = original;
+    if (task.dueTime) text = stripTrailingLabel(text, smartTimeChipLabel(task.dueTime));
+    const client = task.clientId
+        ? catalogs.clients.find((item) => item.id === task.clientId)
+        : undefined;
+    const owner = task.ownerId
+        ? catalogs.owners.find((item) => item.id === task.ownerId)
+        : undefined;
+    const property = task.propertyId
+        ? catalogs.properties.find((item) => item.id === task.propertyId)
+        : undefined;
+    if (client) text = stripTrailingLabel(text, client.name);
+    if (owner) text = stripTrailingLabel(text, owner.name);
+    if (property) text = stripTrailingLabel(text, property.title);
+
+    const chips: Segment[] = [];
+    if (property) {
+        chips.push({
+            id: newId(),
+            type: "chip",
+            kind: "property",
+            label: property.title,
+            value: property.id,
+        });
+    }
+    if (client) {
+        chips.push({
+            id: newId(),
+            type: "chip",
+            kind: "client",
+            label: client.name,
+            value: client.id,
+        });
+    } else if (owner) {
+        chips.push({
+            id: newId(),
+            type: "chip",
+            kind: "owner",
+            label: owner.name,
+            value: owner.id,
+        });
+    }
+    if (task.dueTime) {
+        chips.push({
+            id: newId(),
+            type: "chip",
+            kind: "time",
+            label: smartTimeChipLabel(task.dueTime),
+            value: task.dueTime,
+        });
+    }
+    if (task.priority !== "low") {
+        chips.push({
+            id: newId(),
+            type: "chip",
+            kind: "priority",
+            label: SMART_PRIORITY_CHIP[task.priority],
+            value: task.priority,
+        });
+    }
+    // If stripping failed, keep the original title so edit never opens blank.
+    if (!text.trim() && chips.length === 0 && original.trim()) text = original;
+    return normalizeSegments([
+        ...(text ? [{ id: newId(), type: "text" as const, value: text }] : []),
+        ...chips,
+    ]);
+}
+
 export function SmartTaskComposer({
     date,
     listId,
@@ -165,7 +267,10 @@ export function SmartTaskComposer({
     busy,
     now,
     catalogs,
+    task,
     onAdd,
+    onSave,
+    onCancel,
 }: {
     date: string | null;
     listId?: string;
@@ -173,15 +278,30 @@ export function SmartTaskComposer({
     busy: boolean;
     now: number;
     catalogs: SmartAddCatalogs;
-    onAdd: (
+    /** When set, composer edits this task instead of creating one. */
+    task?: Task;
+    onAdd?: (
         title: string,
         date: string | null,
         listId?: string,
         extras?: PlannerTaskExtras,
     ) => Promise<boolean>;
+    onSave?: (title: string, extras?: PlannerTaskExtras) => Promise<boolean>;
+    onCancel?: () => void;
 }) {
-    const [segments, setSegments] = useState<Segment[]>(emptySegments);
-    const [activeId, setActiveId] = useState<string | null>(null);
+    const editing = !!task;
+    const initialSegmentsRef = useRef<Segment[] | null>(null);
+    const initialSegments = () => {
+        initialSegmentsRef.current ??= task
+            ? segmentsFromTask(task, catalogs, now)
+            : emptySegments();
+        return initialSegmentsRef.current;
+    };
+    const [segments, setSegments] = useState<Segment[]>(initialSegments);
+    const [activeId, setActiveId] = useState<string | null>(() => {
+        const next = initialSegments();
+        return next.filter((segment) => segment.type === "text").at(-1)?.id ?? null;
+    });
     const [highlight, setHighlight] = useState(0);
     const pending = useRef(false);
     const inputRefs = useRef(new Map<string, HTMLInputElement>());
@@ -202,13 +322,14 @@ export function SmartTaskComposer({
     const options = mention?.kind === "property" ? propertyOptions : contactOptions;
     const activeIndex = options.length ? Math.min(highlight, options.length - 1) : 0;
     const title = serializeTitle(segments);
+    const typed = typedTitle(segments);
     const hasChips = segments.some((segment) => segment.type === "chip");
-    const empty = !title && !hasChips && !segments.some((segment) => segment.value.trim());
-    const needsTitle = !title && hasChips;
+    const empty = !typed && !hasChips;
+    const needsTitle = !typed && hasChips;
     // Open @/# menus should not block Add — incomplete mentions are stripped on submit.
-    const titleForSubmit =
+    const typedForSubmit =
         mention && activeSegment
-            ? serializeTitle(
+            ? typedTitle(
                   segments.map((segment) =>
                       segment.id === activeSegment.id && segment.type === "text"
                           ? {
@@ -218,13 +339,24 @@ export function SmartTaskComposer({
                           : segment,
                   ),
               )
-            : title;
-    const canSubmit = titleForSubmit.length > 0;
+            : typed;
+    const canSubmit = typedForSubmit.length > 0;
 
     useEffect(() => {
         if (!activeId) return;
         inputRefs.current.get(activeId)?.focus();
     }, [activeId]);
+
+    useEffect(() => {
+        if (!task) return;
+        const next = segmentsFromTask(task, catalogs, now);
+        setSegments(next);
+        const focusId = next.filter((segment) => segment.type === "text").at(-1)?.id ?? null;
+        setActiveId(focusId);
+        setHighlight(0);
+        // Re-seed only when opening a different task for edit.
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- catalogs/now changes shouldn't reset mid-edit
+    }, [task?.id]);
 
     const focusSegment = (id: string, cursor: "start" | "end" = "end") => {
         setActiveId(id);
@@ -238,7 +370,7 @@ export function SmartTaskComposer({
     };
 
     const replaceTextWithParts = (segmentId: string, value: string, focusTrailing = true) => {
-        const { parts } = splitSmartInlineParts(value, now);
+        const { parts } = splitSmartInlineParts(value, now, { includeDates: false });
         const built = partsToSegments(parts);
         setSegments((current) => {
             const index = current.findIndex((segment) => segment.id === segmentId);
@@ -420,12 +552,30 @@ export function SmartTaskComposer({
             ready.flatMap((segment) => {
                 if (segment.type !== "text") return [segment];
                 if (!segment.value.trim()) return segment.value ? [segment] : [];
-                return partsToSegments(splitSmartInlineParts(segment.value, now).parts);
+                return partsToSegments(
+                    splitSmartInlineParts(segment.value, now, { includeDates: false }).parts,
+                );
             }),
         );
         const clean = serializeTitle(flushed);
-        if (!clean || clean.length > 160) {
-            if (!clean && flushed.some((segment) => segment.type === "chip")) {
+        if (clean.length > 160) return;
+        if (!typedTitle(flushed)) {
+            if (editing) {
+                // Match prior inline edit: empty submit deletes; empty blur cancels via onCancel.
+                pending.current = true;
+                try {
+                    const saved = await onSave?.("", {
+                        clientId: null,
+                        ownerId: null,
+                        propertyId: null,
+                    });
+                    if (saved) onCancel?.();
+                } finally {
+                    pending.current = false;
+                }
+                return;
+            }
+            if (flushed.some((segment) => segment.type === "chip")) {
                 const focusId = flushed.filter((segment) => segment.type === "text").at(-1)?.id;
                 if (focusId) focusSegment(focusId, "end");
             }
@@ -434,14 +584,25 @@ export function SmartTaskComposer({
         const payload = extrasFromSegments(flushed);
         pending.current = true;
         try {
-            const saved = await onAdd(clean, payload.dueDate ?? date, listId, {
-                priority: payload.priority,
-                dueTime: payload.dueTime,
-                clientId: payload.clientId,
-                ownerId: payload.ownerId,
-                propertyId: payload.propertyId,
-            });
-            if (saved) reset();
+            if (editing) {
+                const saved = await onSave?.(clean, {
+                    priority: payload.priority ?? "low",
+                    dueTime: payload.dueTime ?? null,
+                    clientId: payload.clientId,
+                    ownerId: payload.ownerId,
+                    propertyId: payload.propertyId,
+                });
+                if (saved) onCancel?.();
+            } else {
+                const saved = await onAdd?.(clean, date, listId, {
+                    priority: payload.priority,
+                    dueTime: payload.dueTime,
+                    clientId: payload.clientId,
+                    ownerId: payload.ownerId,
+                    propertyId: payload.propertyId,
+                });
+                if (saved) reset();
+            }
         } finally {
             pending.current = false;
         }
@@ -462,6 +623,10 @@ export function SmartTaskComposer({
             }
             if (event.key === "Escape") {
                 event.preventDefault();
+                if (editing && !segment.value.slice(mention.start).trim()) {
+                    onCancel?.();
+                    return;
+                }
                 updateText(segment.id, segment.value.slice(0, mention.start).trimEnd());
                 return;
             }
@@ -480,6 +645,11 @@ export function SmartTaskComposer({
                 }
                 return;
             }
+        }
+        if (event.key === "Escape" && editing) {
+            event.preventDefault();
+            onCancel?.();
+            return;
         }
         if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
@@ -542,11 +712,22 @@ export function SmartTaskComposer({
     };
 
     return (
-        <form className={styles.composer} onSubmit={submit}>
+        <form
+            className={styles.composer}
+            data-editing={editing || undefined}
+            onSubmit={submit}
+            onBlur={(event) => {
+                if (!editing || busy || pending.current) return;
+                if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+                // Same as the old title field: blur saves when there is a typed name.
+                if (typedForSubmit) event.currentTarget.requestSubmit();
+                else onCancel?.();
+            }}
+        >
             <div className={styles.smartComposer}>
                 <div
                     className={styles.smartInput}
-                    data-empty={empty || undefined}
+                    data-empty={!editing && empty ? true : undefined}
                     data-needs-title={needsTitle || undefined}
                     onClick={() => {
                         const last = segments.filter((segment) => segment.type === "text").at(-1);
@@ -554,9 +735,9 @@ export function SmartTaskComposer({
                     }}
                 >
                     <span className={styles.smartInputLine}>
-                        {empty && (
+                        {empty && !editing && (
                             <span className={styles.smartPlaceholder} aria-hidden="true">
-                                <span>Task name — try today, 9am, p1</span>
+                                <span>Task name — try 9am, p1</span>
                                 <span>#property or @client</span>
                             </span>
                         )}
@@ -572,9 +753,11 @@ export function SmartTaskComposer({
                                     value={segment.value}
                                     disabled={busy}
                                     aria-label={
-                                        date
-                                            ? `Add a task for ${dateText(date, "EEEE, d MMMM")}`
-                                            : `Add a task to ${listName ?? "Someday"}`
+                                        editing
+                                            ? "Edit task title"
+                                            : date
+                                              ? `Add a task for ${dateText(date, "EEEE, d MMMM")}`
+                                              : `Add a task to ${listName ?? "Someday"}`
                                     }
                                     aria-autocomplete="list"
                                     aria-controls={mention ? listIdAttr : undefined}
@@ -687,10 +870,11 @@ export function SmartTaskComposer({
             </div>
             <button
                 type="submit"
+                className={styles.addButton}
                 disabled={busy || !canSubmit || title.length > 160}
-                aria-label="Add task"
+                aria-label={editing ? "Save task" : "Add task"}
             >
-                Add
+                <Plus aria-hidden size={16} strokeWidth={2.5} />
             </button>
         </form>
     );

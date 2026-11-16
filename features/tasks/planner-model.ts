@@ -12,6 +12,7 @@ import {
 
 export type PlannerTaskExtras = {
     priority?: TaskPriority;
+    dueDate?: string | null;
     dueTime?: string | null;
     clientId?: string | null;
     ownerId?: string | null;

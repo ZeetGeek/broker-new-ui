@@ -93,6 +93,7 @@ export function TaskPlanner({
     onNotebookChange,
     ...actions
 }: TaskPlannerProps) {
+    const rowActions = { ...actions, catalogs };
     const today = taskDateKey(actions.now);
     const reduceMotion = useReducedMotion();
     const daysPanelId = useId();
@@ -394,7 +395,7 @@ export function TaskPlanner({
                             )}
                             catalogs={catalogs}
                             onAdd={onAdd}
-                            actions={actions}
+                            actions={rowActions}
                         />
                     ))}
                 </div>
@@ -411,7 +412,7 @@ export function TaskPlanner({
                     activeTab={activeTab}
                     onSelectTab={setSelectedTab}
                     today={today}
-                    actions={actions}
+                    actions={rowActions}
                     dragPreview={dragPreview}
                 />
                 <DragOverlay

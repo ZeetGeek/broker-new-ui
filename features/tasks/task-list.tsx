@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -22,21 +22,24 @@ import {
     taskGroup,
     type TaskSort,
 } from "./model";
+import type { PlannerTaskExtras } from "./planner-model";
 import type { TaskQuickChange } from "./quick-actions";
+import type { SmartAddCatalogs } from "./smart-add";
+import { SmartTaskComposer } from "./smart-composer";
 import { TaskActionsMenu } from "./task-actions-menu";
 import { TaskHistoryPlanner } from "./task-history-planner";
-import { TaskTitleInput } from "./task-title-input";
 
 import styles from "./planner.module.css";
 
 export type TaskRowActions = {
     busy: boolean;
     now: number;
+    catalogs: SmartAddCatalogs;
     onOpen: (task: Task) => void;
     onComplete: (task: Task) => void;
     onIntent: (task: Task, intent: string) => void;
     onRestore: (task: Task) => void;
-    onRename: (task: Task, title: string) => Promise<boolean>;
+    onRename: (task: Task, title: string, extras?: PlannerTaskExtras) => Promise<boolean>;
     onQuickChange: (task: Task, change: TaskQuickChange) => Promise<boolean>;
 };
 
@@ -47,6 +50,7 @@ export function TaskLine({
     showDate = false,
     busy,
     now,
+    catalogs,
     onOpen,
     onComplete,
     onIntent,
@@ -55,27 +59,27 @@ export function TaskLine({
     onQuickChange,
 }: TaskRowActions & { task: Task; archive?: boolean; showDate?: boolean }) {
     const [editing, setEditing] = useState(false);
-    const [title, setTitle] = useState(task.title);
-    const saving = useRef(false);
-    const cancelled = useRef(false);
     const overdue = !task.deletedAt && taskGroup(task, now) === "overdue";
     const date = showDate ? task.dueDate || task.startDate : null;
-    const save = async (submit = false) => {
-        if (cancelled.current || saving.current) return;
-        if ((!title.trim() && !submit) || title.trim() === task.title) {
-            setEditing(false);
-            return;
-        }
-        saving.current = true;
-        const saved = await onRename(task, title.trim());
-        saving.current = false;
-        if (saved) setEditing(false);
-    };
+    if (editing) {
+        return (
+            <SmartTaskComposer
+                key={task.id}
+                task={task}
+                date={task.dueDate}
+                busy={busy}
+                now={now}
+                catalogs={catalogs}
+                onSave={(title, extras) => onRename(task, title, extras)}
+                onCancel={() => setEditing(false)}
+            />
+        );
+    }
+
     return (
         <div
             className={cn(styles.taskLine, task.completedAt && styles.completedLine)}
             data-priority={task.priority}
-            data-editing={editing || undefined}
         >
             {!task.deletedAt && (
                 <Checkbox
@@ -86,60 +90,31 @@ export function TaskLine({
                     onCheckedChange={() => onComplete(task)}
                 />
             )}
-            {editing ? (
-                <form
-                    className={styles.inlineEdit}
-                    onSubmit={(event) => {
-                        event.preventDefault();
-                        void save(true);
-                    }}
-                >
-                    <TaskTitleInput
-                        autoFocus
-                        aria-label="Edit task title"
-                        value={title}
-                        maxLength={160}
-                        disabled={busy}
-                        onChange={(event) => setTitle(event.target.value)}
-                        onBlur={() => void save()}
-                        onKeyDown={(event) => {
-                            if (event.key === "Escape") {
-                                cancelled.current = true;
-                                setTitle(task.title);
-                                setEditing(false);
-                            }
-                        }}
-                    />
-                </form>
-            ) : (
-                <button
-                    type="button"
-                    data-task-title
-                    className={styles.lineTitle}
-                    title={`${task.title}\n${taskDueLabel(task, now)}`}
-                    disabled={busy}
-                    onClick={() => {
-                        if (archive || task.deletedAt) {
-                            onOpen(task);
-                            return;
-                        }
-                        cancelled.current = false;
-                        setTitle(task.title);
-                        setEditing(true);
-                    }}
-                >
-                    {task.title}
-                    {date && (
-                        <small className={styles.listTaskDate}>
-                            <Calendar aria-hidden size={12} />
-                            <span>
-                                {task.dueDate ? "Due" : "Starts"}{" "}
-                                <time dateTime={date}>{taskDateLabel(date, now)}</time>
-                            </span>
-                        </small>
-                    )}
-                </button>
-            )}
+            <button
+                type="button"
+                data-task-title
+                className={styles.lineTitle}
+                title={`${task.title}\n${taskDueLabel(task, now)}`}
+                disabled={busy}
+                onClick={() => {
+                    if (archive || task.deletedAt) {
+                        onOpen(task);
+                        return;
+                    }
+                    setEditing(true);
+                }}
+            >
+                {task.title}
+                {date && (
+                    <small className={styles.listTaskDate}>
+                        <Calendar aria-hidden size={12} />
+                        <span>
+                            {task.dueDate ? "Due" : "Starts"}{" "}
+                            <time dateTime={date}>{taskDateLabel(date, now)}</time>
+                        </span>
+                    </small>
+                )}
+            </button>
             {overdue && (
                 <Tooltip>
                     <TooltipTrigger render={<span className={styles.overdueMark} tabIndex={0} />}>

@@ -445,21 +445,24 @@
     padding-block: 0.9rem 0.65rem;
     cursor: text;
 }
-/* Collapse only when empty — keep height if a draft (text/chips) is in progress. */
-.dayColumn:not(:hover) .composerLine:not(:focus-within) .smartInput[data-empty] {
+/*
+ * Collapse the add row unless that row is hovered/focused.
+ * (Whole-column hover was also expanding it under an in-progress edit.)
+ */
+.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] {
     min-block-size: var(--line-height);
     padding-block: 0;
     overflow: hidden;
 }
-.dayColumn:not(:hover) .composerLine:not(:focus-within) .smartInput[data-empty] .smartInputLine {
+.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartInputLine {
     min-block-size: var(--line-height);
 }
-.dayColumn:not(:hover) .composerLine:not(:focus-within) .smartInput[data-empty] .smartTextInput {
+.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartTextInput {
     min-block-size: var(--line-height);
     block-size: var(--line-height);
 }
-.dayColumn:not(:hover) .composerLine:not(:focus-within) .smartInput[data-empty] .smartPlaceholder,
-.dayColumn:not(:hover) .composerLine:not(:focus-within) .smartInput[data-empty] .smartCount {
+.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartPlaceholder,
+.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartCount {
     display: none;
 }
 .smartInputLine {
@@ -503,8 +506,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.dayColumn:hover .smartPlaceholder,
-.composer:focus-within .smartPlaceholder {
+.composerLine:hover .smartPlaceholder,
+.composer:focus-within .smartPlaceholder,
+.composer[data-editing] .smartPlaceholder {
     opacity: 1;
 }
 .smartTextInput {
@@ -702,26 +706,48 @@
 .composer:focus-within textarea::placeholder {
     opacity: 1;
 }
-.dayColumn:hover .composerLine,
+.composerLine:hover,
 .composerLine:focus-within {
     border-block-end-color: var(--color-brand);
 }
-.dayColumn:hover .composer,
-.composer:focus-within {
+.composerLine:hover .composer,
+.composer:focus-within,
+.composer[data-editing] {
     box-shadow: inset 0 -1px 0 var(--color-brand);
 }
-.composer > button {
+.composer > .addButton {
     display: none;
+    flex-shrink: 0;
     align-self: flex-start;
-    margin-block-start: 0.9rem;
-    color: var(--color-brand-text);
-    font-size: 0.75rem;
-    font-weight: 600;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    inline-size: 26px;
+    block-size: 26px;
+    margin-block-start: 0.85rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-brand);
+    color: var(--color-surface);
     cursor: pointer;
-    min-block-size: var(--line-height);
 }
-.composer:focus-within > button:not(:disabled) {
+.composer > .addButton:hover {
+    background: var(--color-brand-deep);
+}
+.composer > .addButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+.composer:focus-within > .addButton:not(:disabled),
+.composer[data-editing] > .addButton:not(:disabled) {
+    display: inline-flex;
+}
+.composer[data-editing] .smartCount {
     display: block;
+}
+.composer[data-editing] .smartInput {
+    overflow: hidden;
 }
 .somedayBar {
     display: flex;
