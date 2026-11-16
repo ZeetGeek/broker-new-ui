@@ -364,9 +364,6 @@ function matchesQuery(deal: DealItem, q: string): boolean {
         if (local.length >= 3 && phone.includes(local)) return true;
     }
 
-    const areaSqft = deal.property.areaSqft?.toString() ?? "";
-    if (words.some((word) => areaSqft.includes(word))) return true;
-
     // Punctuation is ignored on both sides, so "Andheri West, Mumbai",
     // "sector 62" and "Sector-62" all find a deal in Sector-62.
     const text = ` ${searchWords(
