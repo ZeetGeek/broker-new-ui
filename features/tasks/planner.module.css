@@ -433,16 +433,16 @@
     min-inline-size: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0;
 }
 .smartInput {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0;
     min-inline-size: 0;
     /* Height follows content — don’t inflate on hover. */
     min-block-size: 0;
-    padding-block: 0.35rem 0.4rem;
+    padding-block: 0.15rem 0.2rem;
     cursor: text;
 }
 /*
@@ -485,25 +485,38 @@
     block-size: auto;
     min-block-size: 0;
     max-block-size: none;
-    padding-block: 0.25rem 0.35rem;
+    padding-block: 0.2rem 0.25rem;
 }
 .smartInputLine {
     position: relative;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.2rem;
+    flex-flow: row wrap;
+    align-items: baseline;
+    align-content: flex-start;
+    column-gap: 0.15rem;
+    row-gap: 0;
     min-inline-size: 0;
-    min-block-size: 1.5em;
+    min-block-size: 1.35em;
+    line-height: 1.35;
+    font-weight: 600;
 }
 .smartInput[data-empty] .smartInputLine {
+    display: block;
     /* Room for the 2-line empty hint. */
-    min-block-size: calc(1.5em * 2);
-    align-items: flex-start;
+    min-block-size: calc(1.35em * 2);
 }
 .smartInput[data-needs-title] .smartInputLine {
-    /* Keep chips + “Type a task name” on one row after clearing the title. */
-    flex-wrap: nowrap;
+    align-items: baseline;
+}
+.smartTextPart {
+    flex: 0 0 auto;
+    color: var(--color-ink);
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    cursor: text;
 }
 .smartPlaceholder {
     position: absolute;
@@ -536,35 +549,40 @@
 .smartTextInput {
     position: relative;
     z-index: 1;
-    flex: 1 1 8rem;
-    align-self: flex-start;
-    min-inline-size: 1px;
-    max-inline-size: 100%;
-    /* Same first-line box as the placeholder so typed text doesn’t sit lower. */
+    flex: 0 0 auto;
     box-sizing: content-box;
-    min-block-size: 1.5em;
+    min-inline-size: 0.5ch;
+    max-inline-size: 100%;
+    block-size: 1.35em;
+    min-block-size: 1.35em;
+    max-block-size: 1.35em;
     margin: 0;
     border: 0;
     padding: 0;
     outline: none;
     resize: none;
     overflow: hidden;
-    overflow-wrap: anywhere;
-    white-space: pre-wrap;
+    white-space: nowrap;
     background: transparent;
     color: var(--color-ink);
     font: inherit;
     font-weight: 600;
-    line-height: 1.5;
-    field-sizing: content;
+    line-height: 1.35;
     caret-color: var(--color-ink);
 }
+.smartTextInput[data-trailing-active] {
+    flex: 0 0 auto;
+    min-inline-size: 0.35em;
+    max-inline-size: 100%;
+}
 .smartInput[data-empty] .smartTextInput {
-    flex: 1 1 100%;
+    display: block;
     min-inline-size: 0.75rem;
     inline-size: 100%;
+    block-size: auto;
+    max-block-size: none;
     /* Match the 2-line empty hint so hover doesn’t leave a tall blank. */
-    min-block-size: calc(1.5em * 2);
+    min-block-size: calc(1.35em * 2);
 }
 .smartInput[data-needs-title] .smartTextInput {
     flex: 1 1 auto;
@@ -580,7 +598,7 @@
 }
 .smartCount {
     display: none;
-    margin-block-start: 0.15rem;
+    margin-block-start: 0.05rem;
     padding-block-end: 0;
     color: var(--color-ink-muted);
     font-size: 0.6875rem;
@@ -594,20 +612,23 @@
 }
 .smartChip {
     display: inline-flex;
-    flex: 0 1 auto;
+    flex: 0 0 auto;
+    align-self: baseline;
     align-items: center;
     box-sizing: border-box;
     min-inline-size: 0;
     max-inline-size: 100%;
-    min-block-size: 24px;
-    padding-inline: 0.45rem;
+    min-block-size: 1.35em;
+    margin: 0;
+    padding-block: 0;
+    padding-inline: 0.35rem;
     border: 0;
-    border-radius: 7px;
+    border-radius: 6px;
     background: var(--color-surface-muted);
     color: var(--color-ink);
     font-size: 0.6875rem;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.35;
     white-space: nowrap;
     vertical-align: middle;
 }
@@ -708,29 +729,13 @@
 .smartMenuItem:hover {
     background: color-mix(in srgb, var(--color-brand-soft) 45%, var(--color-surface));
 }
-.composer textarea {
-    display: block;
-    resize: none;
-    overflow: hidden;
-    overflow-wrap: anywhere;
-    inline-size: 100%;
-    min-inline-size: 0;
-    min-block-size: var(--line-height);
-    border: 0;
-    padding: 0.5rem 0;
-    outline: none;
-    background: transparent;
-    color: var(--color-ink);
-    font: inherit;
-    font-weight: 600;
-    line-height: 1.5;
-}
-.composer textarea::placeholder {
+.smartTextInput::placeholder {
     color: color-mix(in srgb, var(--color-ink-subtle) 75%, var(--color-surface));
     opacity: 0;
+    font-weight: 600;
 }
-.dayColumn:hover .composer textarea::placeholder,
-.composer:focus-within textarea::placeholder {
+.composerLine:hover .smartTextInput::placeholder,
+.composer:focus-within .smartTextInput::placeholder {
     opacity: 1;
 }
 .composerLine:hover,
@@ -751,7 +756,7 @@
     box-sizing: border-box;
     inline-size: 26px;
     block-size: 26px;
-    margin-block-start: 0.85rem;
+    margin-block-start: 0.15rem;
     padding: 0;
     border: 0;
     border-radius: 50%;

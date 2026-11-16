@@ -23,6 +23,7 @@ export const TASK_PRIORITY_RANK: Record<TaskPriority, number> = {
 
 export const TASK_TABS = [
     { value: "all", label: "To do" },
+    { value: "overdue", label: "Overdue" },
     { value: "completed", label: "Completed" },
     { value: "deleted", label: "Deleted" },
 ] as const;
@@ -338,10 +339,17 @@ export function taskGroup(task: Task, now = Date.now()): TaskGroup {
     return date === today ? "today" : "upcoming";
 }
 
-export function taskMatchesTab(task: Task, tab: TaskTab, completionFeedback = false): boolean {
+export function taskMatchesTab(
+    task: Task,
+    tab: TaskTab,
+    completionFeedback = false,
+    now = Date.now(),
+): boolean {
     if (tab === "deleted") return !!task.deletedAt;
     if (task.deletedAt) return false;
-    return tab === "all" ? !task.completedAt || completionFeedback : !!task.completedAt;
+    if (tab === "overdue") return !task.completedAt && taskIsOverdue(task, now);
+    if (tab === "completed") return !!task.completedAt;
+    return tab === "all" ? !task.completedAt || completionFeedback : false;
 }
 
 export type TaskDueFilter = "" | "any" | "overdue" | "today" | "week" | "undated";

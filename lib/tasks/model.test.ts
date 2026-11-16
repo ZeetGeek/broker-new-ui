@@ -197,6 +197,20 @@ test("next seven days spans India calendar dates inclusively, without including 
     );
 });
 
+test("overdue tab includes only open tasks that are overdue", () => {
+    const overdueOpen = { ...task, dueDate: "2030-01-01" };
+    const upcoming = { ...task, dueDate: "2030-02-01" };
+    const completedOverdue = {
+        ...overdueOpen,
+        completedAt: new Date(now).toISOString(),
+    };
+    assert.equal(taskMatchesTab(overdueOpen, "overdue", false, now), true);
+    assert.equal(taskMatchesTab(upcoming, "overdue", false, now), false);
+    assert.equal(taskMatchesTab(completedOverdue, "overdue", false, now), false);
+    assert.equal(taskMatchesTab(overdueOpen, "all", false, now), true);
+    assert.equal(taskMatchesTab(overdueOpen, "completed", false, now), false);
+});
+
 test("due filters apply to original due dates on completed tasks and intersect the current tab", () => {
     const completed = { ...task, completedAt: new Date(now).toISOString() };
     assert.equal(taskMatchesTab(completed, "completed"), true);

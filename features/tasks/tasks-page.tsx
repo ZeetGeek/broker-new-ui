@@ -127,7 +127,8 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         });
     };
     const rawTab = params.get("tab");
-    const tab = rawTab === "completed" || rawTab === "deleted" ? rawTab : "all";
+    const tab =
+        rawTab === "completed" || rawTab === "deleted" || rawTab === "overdue" ? rawTab : "all";
     const view = params.get("view");
     const selected = tasks.find((task) => task.id === params.get("task"));
     const search = params.get("q") ?? "";
@@ -155,12 +156,19 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             ? `${open.length} open ${open.length === 1 ? "task" : "tasks"}`
             : "Add your next follow-up",
     ].filter(Boolean);
+    const overdueCount = open.filter((task) => taskGroup(task, now) === "overdue").length;
     const tabs = [
         {
             value: "all",
             label: "To do",
             count: open.length,
             dotClassName: "bg-sky-400",
+        },
+        {
+            value: "overdue",
+            label: "Overdue",
+            count: overdueCount,
+            dotClassName: "bg-urgent",
         },
         {
             value: "completed",
@@ -176,7 +184,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         },
     ];
     const visible = tasks.filter((task) => {
-        if (!taskMatchesTab(task, tab, !!completionFeedback[task.id])) return false;
+        if (!taskMatchesTab(task, tab, !!completionFeedback[task.id], now)) return false;
         if (!taskMatchesDueFilter(task, due as TaskDueFilter, now)) return false;
         if (!taskMatchesLinkFilter(task, linked as TaskLinkFilter)) return false;
         const client = TASK_CLIENTS.find((c) => c.id === task.clientId);
@@ -640,14 +648,18 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                         ? "No tasks match these filters"
                                         : tab === "deleted"
                                           ? "No deleted tasks"
-                                          : "Your finished tasks will live here"
+                                          : tab === "overdue"
+                                            ? "No overdue tasks"
+                                            : "Your finished tasks will live here"
                                 }
                                 description={
                                     filtered
                                         ? "Try another search or clear your filters to see more tasks."
                                         : tab === "deleted"
                                           ? "Tasks you delete will appear here. You can restore them whenever you need."
-                                          : "Check off a task when it's done. You can reopen it whenever plans change."
+                                          : tab === "overdue"
+                                            ? "You're caught up. Overdue follow-ups will show up here when a due date has passed."
+                                            : "Check off a task when it's done. You can reopen it whenever plans change."
                                 }
                             >
                                 <Button

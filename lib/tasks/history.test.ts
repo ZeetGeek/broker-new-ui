@@ -105,6 +105,29 @@ test("deleted tasks use deletion dates even when previously completed; reopened/
     );
 });
 
+test("overdue columns follow the task schedule date in chronological order", () => {
+    const now = Date.parse("2030-11-20T12:00:00Z");
+    const records = [
+        task("later", { dueDate: "2030-11-18", startDate: "2030-11-18" }),
+        task("earlier", { dueDate: "2030-11-10", startDate: "2030-11-10" }),
+        task("middle", { dueDate: "2030-11-15", startDate: "2030-11-15" }),
+        task("undated-list", {
+            dueDate: null,
+            startDate: "2030-11-12",
+            listId: "calls",
+        }),
+    ];
+    const days = groupTaskHistory(records, "overdue", "due", now);
+    assert.deepEqual(
+        days.map((day) => day.date),
+        ["2030-11-10", "2030-11-12", "2030-11-15", "2030-11-18"],
+    );
+    assert.deepEqual(
+        days.flatMap((day) => day.tasks.map((row) => row.id)),
+        ["earlier", "undated-list", "middle", "later"],
+    );
+});
+
 test("explicit sorting changes tasks within a day while preserving chronological day columns", () => {
     const records = [
         task("later", { title: "Alpha", completedAt: "2030-11-17T08:00:00Z" }),

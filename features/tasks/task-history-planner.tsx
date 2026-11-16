@@ -40,7 +40,8 @@ export function TaskHistoryPlanner({
     const visible = days.slice(start, start + columns);
     const first = visible[0]?.date;
     const last = visible.at(-1)?.date;
-    const label = tab === "completed" ? "Completed" : "Deleted";
+    const label = tab === "completed" ? "Completed" : tab === "deleted" ? "Deleted" : "Overdue";
+    const dateKind = tab === "completed" ? "completion" : tab === "deleted" ? "deletion" : "due";
     const lineCount = Math.max(10, ...visible.map((day) => day.tasks.length + 1));
     const previous = start > 0;
     const next = start + columns < days.length;
@@ -57,7 +58,7 @@ export function TaskHistoryPlanner({
         <section
             ref={frame}
             className={styles.planner}
-            aria-label={`${label} tasks by ${tab === "completed" ? "completion" : "deletion"} date`}
+            aria-label={`${label} tasks by ${dateKind} date`}
             style={{ "--planner-columns": columns } as CSSProperties}
         >
             <nav className={styles.plannerNav} aria-label={`${label} task dates`}>

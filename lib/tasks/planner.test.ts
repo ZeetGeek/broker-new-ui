@@ -189,6 +189,9 @@ test("To do excludes completed tasks except during brief completion feedback", (
     const [reopened] = setTaskCompleted([completed], task.id, false, now + 2);
     assert.equal(taskMatchesTab(reopened, "all"), true);
     assert.equal(taskMatchesTab(reopened, "completed"), false);
+    const overdue = { ...task, dueDate: "2030-01-01" };
+    assert.equal(taskMatchesTab(overdue, "overdue", false, now), true);
+    assert.equal(taskMatchesTab(completed, "overdue", false, now), false);
 });
 
 test("deleting and restoring preserve CRM context, schedule, priority and completed state", () => {

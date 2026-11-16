@@ -5,6 +5,7 @@ import {
     type KeyboardEvent,
     useEffect,
     useId,
+    useLayoutEffect,
     useMemo,
     useRef,
     useState,
@@ -29,20 +30,26 @@ import {
     splitSmartInlineParts,
 } from "./smart-add";
 
+import {
+    emptyComposerStacks,
+    pushComposerPast,
+    redoComposerState,
+    type ComposerSnapshot,
+    undoComposerState,
+} from "./composer-undo";
+import {
+    normalizeSegments,
+    type ChipSegment,
+    type Segment,
+    type TextSegment,
+} from "./composer-segments";
+
 import styles from "./planner.module.css";
+
+const TYPING_HISTORY_MS = 400;
 
 const dateText = (day: string, format: string) =>
     formatInTimeZone(`${day}T12:00:00+05:30`, TASK_TIME_ZONE, format);
-
-type TextSegment = { id: string; type: "text"; value: string };
-type ChipSegment = {
-    id: string;
-    type: "chip";
-    kind: "date" | "time" | "priority" | "property" | "client" | "owner";
-    label: string;
-    value: string;
-};
-type Segment = TextSegment | ChipSegment;
 
 const newId = () => crypto.randomUUID();
 const emptySegments = (): Segment[] => [{ id: newId(), type: "text", value: "" }];
@@ -78,50 +85,6 @@ function clampToTitleLimit(
     }
     if (best === current && nextValue.length > current.length) return null;
     return best;
-}
-
-/**
- * Collapse empty/whitespace gaps around chips. Empty inputs still take flex
- * min-width + line gap, which looked like "unwanted space" beside chips.
- */
-function normalizeSegments(segments: Segment[]): Segment[] {
-    const trailingEmptyId = [...segments]
-        .reverse()
-        .find((segment) => segment.type === "text" && segment.value === "")?.id;
-
-    const prepared = segments.map((segment, index) => {
-        if (segment.type !== "text") return segment;
-        let value = segment.value;
-        const prev = segments[index - 1];
-        const next = segments[index + 1];
-        if (prev?.type === "chip") value = value.replace(/^\s+/, "");
-        if (next?.type === "chip") value = value.replace(/\s+$/, "");
-        return { ...segment, value };
-    });
-
-    const merged: Segment[] = [];
-    for (const segment of prepared) {
-        if (segment.type === "text") {
-            if (!segment.value) continue;
-            const previous = merged.at(-1);
-            if (previous?.type === "text") {
-                previous.value += segment.value;
-                continue;
-            }
-            merged.push({ ...segment });
-            continue;
-        }
-        merged.push(segment);
-    }
-
-    if (merged.at(-1)?.type !== "text") {
-        merged.push({
-            id: trailingEmptyId ?? newId(),
-            type: "text",
-            value: "",
-        });
-    }
-    return merged.length ? merged : emptySegments();
 }
 
 function mergeTextSegments(segments: Segment[]): Segment[] {
@@ -358,7 +321,56 @@ export function SmartTaskComposer({
     const [highlight, setHighlight] = useState(0);
     const pending = useRef(false);
     const inputRefs = useRef(new Map<string, HTMLTextAreaElement>());
+    const undoStacks = useRef(emptyComposerStacks<Segment>());
+    const typingHistoryOpen = useRef(false);
+    const typingHistoryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const segmentsRef = useRef(segments);
+    segmentsRef.current = segments;
+    const activeIdRef = useRef(activeId);
+    activeIdRef.current = activeId;
     const listIdAttr = useId();
+
+    const currentSnapshot = (): ComposerSnapshot<Segment> => ({
+        segments: segmentsRef.current,
+        activeId: activeIdRef.current,
+    });
+
+    const clearTypingHistoryTimer = () => {
+        if (typingHistoryTimer.current) {
+            clearTimeout(typingHistoryTimer.current);
+            typingHistoryTimer.current = null;
+        }
+    };
+
+    const resetUndoHistory = () => {
+        undoStacks.current = emptyComposerStacks();
+        typingHistoryOpen.current = false;
+        clearTypingHistoryTimer();
+    };
+
+    const recordImmediateHistory = () => {
+        typingHistoryOpen.current = false;
+        clearTypingHistoryTimer();
+        undoStacks.current = pushComposerPast(undoStacks.current, currentSnapshot());
+    };
+
+    const recordTypingHistory = () => {
+        if (!typingHistoryOpen.current) {
+            undoStacks.current = pushComposerPast(undoStacks.current, currentSnapshot());
+            typingHistoryOpen.current = true;
+        }
+        clearTypingHistoryTimer();
+        typingHistoryTimer.current = setTimeout(() => {
+            typingHistoryOpen.current = false;
+            typingHistoryTimer.current = null;
+        }, TYPING_HISTORY_MS);
+    };
+
+    const applyComposerSnapshot = (snapshot: ComposerSnapshot<Segment>) => {
+        setSegments(snapshot.segments);
+        setActiveId(snapshot.activeId);
+        setHighlight(0);
+    };
     const activeSegment =
         segments.find((segment) => segment.id === activeId && segment.type === "text") ??
         segments.filter((segment) => segment.type === "text").at(-1);
@@ -394,6 +406,29 @@ export function SmartTaskComposer({
               )
             : typed;
     const canSubmit = typedForSubmit.length > 0;
+    const trailingTextId = useMemo(
+        () => segments.filter((segment) => segment.type === "text").at(-1)?.id ?? null,
+        [segments],
+    );
+    const textFieldLabel = editing
+        ? "Edit task title"
+        : date
+          ? `Add a task for ${dateText(date, "EEEE, d MMMM")}`
+          : `Add a task to ${listName ?? "Someday"}`;
+
+    useLayoutEffect(() => {
+        if (empty || !activeId) return;
+        const field = inputRefs.current.get(activeId);
+        if (!field) return;
+        const trailingEmpty = field.dataset.trailingActive === "true" && !field.value;
+        if (trailingEmpty) {
+            field.style.width = "";
+            return;
+        }
+        field.style.width = "0";
+        const width = Math.max(field.scrollWidth, needsTitle ? 128 : 12);
+        field.style.width = `${width}px`;
+    }, [segments, activeId, empty, needsTitle]);
 
     useEffect(() => {
         if (!activeId) return;
@@ -403,6 +438,7 @@ export function SmartTaskComposer({
     useEffect(() => {
         if (!task) return;
         const next = segmentsFromTask(task, catalogs, now);
+        resetUndoHistory();
         setSegments(next);
         const focusId = next.filter((segment) => segment.type === "text").at(-1)?.id ?? null;
         setActiveId(focusId);
@@ -423,6 +459,7 @@ export function SmartTaskComposer({
     };
 
     const replaceTextWithParts = (segmentId: string, value: string, focusTrailing = true) => {
+        recordImmediateHistory();
         const { parts } = splitSmartInlineParts(value, now);
         const built = partsToSegments(parts);
         setSegments((current) => {
@@ -465,6 +502,7 @@ export function SmartTaskComposer({
             replaceTextWithParts(segmentId, value);
             return;
         }
+        recordTypingHistory();
         setSegments((current) => {
             const mapped = current.map((segment) =>
                 segment.id === segmentId && segment.type === "text"
@@ -495,7 +533,10 @@ export function SmartTaskComposer({
         segmentId: string,
         mentionStart: number,
     ) => {
+        recordImmediateHistory();
+        const chipId = newId();
         const afterId = newId();
+        let focusId = afterId;
         setSegments((current) => {
             const index = current.findIndex((segment) => segment.id === segmentId);
             const segment = current[index];
@@ -506,18 +547,21 @@ export function SmartTaskComposer({
                     .slice(0, index)
                     .filter((item) => item.type !== "chip" || item.kind !== chip.kind),
                 ...(before ? [{ id: newId(), type: "text" as const, value: before }] : []),
-                { id: newId(), type: "chip", ...chip },
+                { id: chipId, type: "chip", ...chip },
                 { id: afterId, type: "text", value: "" },
                 ...current
                     .slice(index + 1)
                     .filter((item) => item.type !== "chip" || item.kind !== chip.kind),
             ]);
             if (serializeTitle(next).length > TITLE_MAX) return current;
-            const focusId = next.filter((item) => item.type === "text").at(-1)?.id ?? afterId;
+            const chipIndex = next.findIndex((item) => item.id === chipId);
+            const follow = chipIndex >= 0 ? next[chipIndex + 1] : undefined;
+            if (follow?.type === "text") focusId = follow.id;
             setActiveId(focusId);
             return next;
         });
         setHighlight(0);
+        requestAnimationFrame(() => focusSegment(focusId, "start"));
     };
 
     const applyProperty = (option: SmartPropertyOption) => {
@@ -539,6 +583,7 @@ export function SmartTaskComposer({
     };
 
     const removeChip = (chipId: string) => {
+        recordImmediateHistory();
         setSegments((current) => {
             const index = current.findIndex((segment) => segment.id === chipId);
             if (index < 0) return current;
@@ -591,6 +636,7 @@ export function SmartTaskComposer({
     };
 
     const reset = () => {
+        resetUndoHistory();
         const next = emptySegments();
         setSegments(next);
         setActiveId(next[0].id);
@@ -683,6 +729,22 @@ export function SmartTaskComposer({
     };
 
     const onTextKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>, segment: TextSegment) => {
+        if ((event.metaKey || event.ctrlKey) && event.code === "KeyZ") {
+            event.preventDefault();
+            const current = currentSnapshot();
+            if (event.shiftKey) {
+                const { stacks, snapshot } = redoComposerState(undoStacks.current, current);
+                if (!snapshot) return;
+                undoStacks.current = stacks;
+                applyComposerSnapshot(snapshot);
+            } else {
+                const { stacks, snapshot } = undoComposerState(undoStacks.current, current);
+                if (!snapshot) return;
+                undoStacks.current = stacks;
+                applyComposerSnapshot(snapshot);
+            }
+            return;
+        }
         if (mention) {
             if (event.key === "ArrowDown") {
                 event.preventDefault();
@@ -752,6 +814,7 @@ export function SmartTaskComposer({
                 }
                 if (previous?.type === "text" && segment.value === "") {
                     event.preventDefault();
+                    recordImmediateHistory();
                     setSegments((current) =>
                         normalizeSegments(current.filter((item) => item.id !== segment.id)),
                     );
@@ -819,8 +882,9 @@ export function SmartTaskComposer({
                     data-empty={empty || undefined}
                     data-needs-title={needsTitle || undefined}
                     onClick={(event) => {
-                        // Clicks inside a text run keep the browser's caret placement.
-                        if (event.target instanceof HTMLTextAreaElement) return;
+                        const target = event.target as HTMLElement;
+                        if (target instanceof HTMLTextAreaElement) return;
+                        if (target.closest(`.${styles.smartTextPart}`)) return;
                         const last = segments.filter((segment) => segment.type === "text").at(-1);
                         if (last) focusSegment(last.id, "end");
                     }}
@@ -832,54 +896,77 @@ export function SmartTaskComposer({
                                 <span>#property or @client</span>
                             </span>
                         )}
-                        {segments.map((segment) =>
-                            segment.type === "text" ? (
-                                <textarea
-                                    key={segment.id}
-                                    rows={1}
-                                    ref={(node) => {
-                                        if (node) inputRefs.current.set(segment.id, node);
-                                        else inputRefs.current.delete(segment.id);
-                                    }}
-                                    className={styles.smartTextInput}
-                                    value={segment.value}
-                                    disabled={busy}
-                                    aria-label={
-                                        editing
-                                            ? "Edit task title"
-                                            : date
-                                              ? `Add a task for ${dateText(date, "EEEE, d MMMM")}`
-                                              : `Add a task to ${listName ?? "Someday"}`
-                                    }
-                                    aria-autocomplete="list"
-                                    aria-controls={mention ? listIdAttr : undefined}
-                                    aria-expanded={mention ? true : undefined}
-                                    aria-activedescendant={
-                                        mention && options[activeIndex]
-                                            ? `${listIdAttr}-${activeIndex}`
-                                            : undefined
-                                    }
-                                    placeholder={
-                                        needsTitle &&
-                                        segment.id ===
-                                            segments.filter((item) => item.type === "text").at(-1)
-                                                ?.id
-                                            ? "Type a task name"
-                                            : undefined
-                                    }
-                                    cols={Math.max(
-                                        1,
-                                        segment.value.length || (needsTitle ? 16 : 1),
-                                    )}
-                                    onFocus={() => setActiveId(segment.id)}
-                                    onChange={(event) => updateText(segment.id, event.target.value)}
-                                    onKeyDown={(event) => onTextKeyDown(event, segment)}
-                                    onBlur={() => {
-                                        if (segment.value && !parseTrailingMention(segment.value))
-                                            replaceTextWithParts(segment.id, segment.value, false);
-                                    }}
-                                />
-                            ) : (
+                        {segments.map((segment) => {
+                            if (segment.type === "text") {
+                                const isActive = empty || segment.id === activeId;
+                                if (!isActive) {
+                                    if (!segment.value) return null;
+                                    return (
+                                        <span
+                                            key={segment.id}
+                                            className={styles.smartTextPart}
+                                            onPointerDown={(event) => {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                focusSegment(segment.id, "end");
+                                            }}
+                                        >
+                                            {segment.value}
+                                        </span>
+                                    );
+                                }
+                                const trailingActive =
+                                    segment.id === trailingTextId &&
+                                    !segment.value &&
+                                    !empty &&
+                                    segment.id === activeId;
+                                return (
+                                    <textarea
+                                        key={segment.id}
+                                        rows={1}
+                                        ref={(node) => {
+                                            if (node) inputRefs.current.set(segment.id, node);
+                                            else inputRefs.current.delete(segment.id);
+                                        }}
+                                        className={styles.smartTextInput}
+                                        data-trailing-active={trailingActive || undefined}
+                                        data-has-value={segment.value ? true : undefined}
+                                        value={segment.value}
+                                        disabled={busy}
+                                        aria-label={textFieldLabel}
+                                        aria-autocomplete="list"
+                                        aria-controls={mention ? listIdAttr : undefined}
+                                        aria-expanded={mention ? true : undefined}
+                                        aria-activedescendant={
+                                            mention && options[activeIndex]
+                                                ? `${listIdAttr}-${activeIndex}`
+                                                : undefined
+                                        }
+                                        placeholder={
+                                            needsTitle && segment.id === trailingTextId
+                                                ? "Type a task name"
+                                                : undefined
+                                        }
+                                        onFocus={() => setActiveId(segment.id)}
+                                        onChange={(event) =>
+                                            updateText(segment.id, event.target.value)
+                                        }
+                                        onKeyDown={(event) => onTextKeyDown(event, segment)}
+                                        onBlur={() => {
+                                            if (
+                                                segment.value &&
+                                                !parseTrailingMention(segment.value)
+                                            )
+                                                replaceTextWithParts(
+                                                    segment.id,
+                                                    segment.value,
+                                                    false,
+                                                );
+                                        }}
+                                    />
+                                );
+                            }
+                            return (
                                 <span
                                     key={segment.id}
                                     className={styles.smartChip}
@@ -891,8 +978,8 @@ export function SmartTaskComposer({
                                 >
                                     <span className={styles.smartChipLabel}>{segment.label}</span>
                                 </span>
-                            ),
-                        )}
+                            );
+                        })}
                     </span>
                     <small className={styles.smartCount}>
                         {title.length}/{TITLE_MAX}

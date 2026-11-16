@@ -166,7 +166,11 @@ export function TaskArchive({
     tab,
     sort,
     ...actions
-}: TaskRowActions & { tasks: Task[]; tab: "completed" | "deleted" | "results"; sort: TaskSort }) {
+}: TaskRowActions & {
+    tasks: Task[];
+    tab: "completed" | "deleted" | "overdue" | "results";
+    sort: TaskSort;
+}) {
     if (tab !== "results") {
         return (
             <TaskHistoryPlanner
