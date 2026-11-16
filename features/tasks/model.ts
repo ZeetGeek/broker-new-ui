@@ -83,6 +83,8 @@ export const taskSchema = z
         createdAt: z.iso.datetime(),
         updatedAt: z.iso.datetime(),
         priority: z.enum(["low", "medium", "high", "urgent"]),
+        /** Title offset where the typed P1–P4 chip sat; the label itself is not in the title. */
+        priorityAt: z.number().int().min(0).nullable().optional(),
         deliveredReminderKeys: z.array(z.string().min(1)),
     })
     .refine((task) => !task.dueTime || !!task.dueDate, "A time needs a due date.")

@@ -83,6 +83,11 @@ const DATE_SOURCE = String.raw`\b(?:day\s*after\s*tomorrow|dayaftertomorrow|tomo
 const TIME_SOURCE = String.raw`\b(?:1[0-2]|0?[1-9])(?::[0-5]\d)?\s*(?:am|pm)\b`;
 const PRIORITY_SOURCE = String.raw`\bp[1-4]\b`;
 const MENTION_PATTERN = /(^|\s)([#@])(\S*)$/;
+/** A completed date / time / priority token followed by whitespace — convert to a chip live. */
+export const SMART_TOKEN_BOUNDARY = new RegExp(
+    `(?:${DATE_SOURCE}|${TIME_SOURCE}|${PRIORITY_SOURCE})\\s+`,
+    "i",
+);
 const datePattern = () => new RegExp(DATE_SOURCE, "gi");
 const timePattern = () => new RegExp(TIME_SOURCE, "gi");
 const priorityPattern = () => new RegExp(PRIORITY_SOURCE, "gi");

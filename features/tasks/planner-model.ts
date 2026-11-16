@@ -12,6 +12,7 @@ import {
 
 export type PlannerTaskExtras = {
     priority?: TaskPriority;
+    priorityAt?: number | null;
     dueDate?: string | null;
     dueTime?: string | null;
     clientId?: string | null;
@@ -129,6 +130,7 @@ export function createPlannerTask(
         ownerId: extras.ownerId ?? null,
         propertyId: extras.propertyId ?? null,
         priority: extras.priority ?? draft.priority,
+        priorityAt: extras.priorityAt ?? null,
         completedAt: null,
         deletedAt: null,
         listId,

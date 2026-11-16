@@ -21,6 +21,7 @@ import {
     filterSmartProperties,
     parseTrailingMention,
     SMART_PRIORITY_CHIP,
+    SMART_TOKEN_BOUNDARY,
     type SmartAddCatalogs,
     type SmartContactOption,
     type SmartPropertyOption,
@@ -45,9 +46,6 @@ type Segment = TextSegment | ChipSegment;
 
 const newId = () => crypto.randomUUID();
 const emptySegments = (): Segment[] => [{ id: newId(), type: "text", value: "" }];
-/* Date words stay as plain text — the planner column already owns the day. */
-const TOKEN_BOUNDARY = /(?:(?:1[0-2]|0?[1-9])(?::[0-5]\d)?\s*(?:am|pm)|p[1-4])\s+/i;
-
 /**
  * Collapse empty/whitespace gaps around chips. Empty inputs still take flex
  * min-width + line gap, which looked like "unwanted space" beside chips.
@@ -137,23 +135,21 @@ function typedTitle(segments: Segment[]) {
         .trim();
 }
 
-/** Match planner preview titles: "Call Happy Elegance · Aarav Shah · 9:00 AM". */
-function serializeTitle(segments: Segment[]) {
-    const text = typedTitle(segments);
-    let property: string | undefined;
-    let contact: string | undefined;
-    let time: string | undefined;
-    for (const segment of segments) {
-        if (segment.type !== "chip") continue;
-        if (segment.kind === "property") property = segment.label;
-        if (segment.kind === "client" || segment.kind === "owner") contact = segment.label;
-        if (segment.kind === "time") time = segment.label;
-    }
+function displayPart(segment: Segment) {
+    if (segment.type === "text") return segment.value;
+    // Priority shows as the row colour; its spot is kept in `priorityAt` instead.
+    if (segment.kind === "date" || segment.kind === "priority") return "";
+    return segment.label;
+}
 
-    const extras = [property, contact, time].filter((part): part is string => !!part);
-    if (!text) return extras.join(" · ");
-    if (!extras.length) return text;
-    return `${text} · ${extras.join(" · ")}`;
+/** Preserve the same order the user typed: "P1 Hello Aarav Shah task". */
+function serializeTitle(segments: Segment[]) {
+    return segments
+        .map(displayPart)
+        .map((part) => part.replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .join(" ")
+        .trim();
 }
 
 function extrasFromSegments(segments: Segment[]) {
@@ -175,25 +171,8 @@ function extrasFromSegments(segments: Segment[]) {
     return { dueDate, dueTime, priority, clientId, ownerId, propertyId };
 }
 
-function normalizeLabel(value: string) {
-    return value.replace(/\s+/g, " ").trim();
-}
-
-function stripTrailingLabel(title: string, label: string) {
-    const normalizedLabel = normalizeLabel(label);
-    if (!normalizedLabel) return title;
-    if (normalizeLabel(title) === normalizedLabel) return "";
-    const parts = title.split(" · ");
-    if (parts.length < 2) return title;
-    if (normalizeLabel(parts.at(-1) ?? "") !== normalizedLabel) return title;
-    return parts.slice(0, -1).join(" · ").trimEnd();
-}
-
 /** Rebuild chips from a saved task so inline edit matches smart-add. */
-function segmentsFromTask(task: Task, catalogs: SmartAddCatalogs, now: number): Segment[] {
-    const original = task.title;
-    let text = original;
-    if (task.dueTime) text = stripTrailingLabel(text, smartTimeChipLabel(task.dueTime));
+function segmentsFromTask(task: Task, catalogs: SmartAddCatalogs, _now: number): Segment[] {
     const client = task.clientId
         ? catalogs.clients.find((item) => item.id === task.clientId)
         : undefined;
@@ -203,11 +182,8 @@ function segmentsFromTask(task: Task, catalogs: SmartAddCatalogs, now: number): 
     const property = task.propertyId
         ? catalogs.properties.find((item) => item.id === task.propertyId)
         : undefined;
-    if (client) text = stripTrailingLabel(text, client.name);
-    if (owner) text = stripTrailingLabel(text, owner.name);
-    if (property) text = stripTrailingLabel(text, property.title);
 
-    const chips: Segment[] = [];
+    const chips: ChipSegment[] = [];
     if (property) {
         chips.push({
             id: newId(),
@@ -243,21 +219,64 @@ function segmentsFromTask(task: Task, catalogs: SmartAddCatalogs, now: number): 
             value: task.dueTime,
         });
     }
-    if (task.priority !== "low") {
+    const priorityLabel = SMART_PRIORITY_CHIP[task.priority];
+    const hasPriorityAt = typeof task.priorityAt === "number";
+    if (task.priority !== "low" || hasPriorityAt || task.title.includes(priorityLabel)) {
         chips.push({
             id: newId(),
             type: "chip",
             kind: "priority",
-            label: SMART_PRIORITY_CHIP[task.priority],
+            label: priorityLabel,
             value: task.priority,
         });
     }
-    // If stripping failed, keep the original title so edit never opens blank.
-    if (!text.trim() && chips.length === 0 && original.trim()) text = original;
-    return normalizeSegments([
-        ...(text ? [{ id: newId(), type: "text" as const, value: text }] : []),
-        ...chips,
-    ]);
+    /* Priority is not in the title; it sits at a stored offset with zero width. */
+    const chipSpan = (chip: ChipSegment, from: number) => {
+        if (chip.kind === "priority" && hasPriorityAt) {
+            const at = Math.min(task.priorityAt ?? 0, task.title.length);
+            return at >= from ? { index: at, length: 0 } : null;
+        }
+        const index = task.title.indexOf(chip.label, from);
+        return index < 0 ? null : { index, length: chip.label.length };
+    };
+
+    const remaining = [...chips];
+    const segments: Segment[] = [];
+    let cursor = 0;
+    while (cursor < task.title.length) {
+        let next: { index: number; length: number; chip: ChipSegment } | undefined;
+        for (const chip of remaining) {
+            const span = chipSpan(chip, cursor);
+            if (!span) continue;
+            if (
+                !next ||
+                span.index < next.index ||
+                (span.index === next.index && span.length > next.length)
+            ) {
+                next = { ...span, chip };
+            }
+        }
+        if (!next) break;
+        if (next.index > cursor) {
+            segments.push({
+                id: newId(),
+                type: "text",
+                value: task.title.slice(cursor, next.index),
+            });
+        }
+        segments.push(next.chip);
+        remaining.splice(remaining.indexOf(next.chip), 1);
+        cursor = next.index + next.length;
+    }
+    if (cursor < task.title.length) {
+        segments.push({ id: newId(), type: "text", value: task.title.slice(cursor) });
+    }
+    if (!segments.length && task.title.trim()) {
+        segments.push({ id: newId(), type: "text", value: task.title });
+    }
+    // Older records may have metadata not present in the title; append only those missing chips.
+    segments.push(...remaining);
+    return normalizeSegments(segments);
 }
 
 export function SmartTaskComposer({
@@ -370,7 +389,7 @@ export function SmartTaskComposer({
     };
 
     const replaceTextWithParts = (segmentId: string, value: string, focusTrailing = true) => {
-        const { parts } = splitSmartInlineParts(value, now, { includeDates: false });
+        const { parts } = splitSmartInlineParts(value, now);
         const built = partsToSegments(parts);
         setSegments((current) => {
             const index = current.findIndex((segment) => segment.id === segmentId);
@@ -406,7 +425,7 @@ export function SmartTaskComposer({
     };
 
     const updateText = (segmentId: string, value: string) => {
-        if (TOKEN_BOUNDARY.test(value) && !parseTrailingMention(value)) {
+        if (SMART_TOKEN_BOUNDARY.test(value) && !parseTrailingMention(value)) {
             replaceTextWithParts(segmentId, value);
             return;
         }
@@ -489,32 +508,40 @@ export function SmartTaskComposer({
             const before = current[index - 1];
             const after = current[index + 1];
             let left = current.slice(0, index);
-            let right = current.slice(index + 1);
-            if (
+            const right = current.slice(index + 1);
+            const joins =
                 before?.type === "text" &&
                 after?.type === "text" &&
-                before.value &&
-                after.value &&
-                !/\s$/.test(before.value) &&
-                !/^\s/.test(after.value)
-            ) {
-                left = [...left.slice(0, -1), { ...before, value: `${before.value} ` }];
+                !!before.value &&
+                !!after.value;
+            let joinAt = 0;
+            if (joins && before?.type === "text") {
+                const spaced =
+                    /\s$/.test(before.value) || (after?.type === "text" && /^\s/.test(after.value))
+                        ? before.value
+                        : `${before.value} `;
+                left = [...left.slice(0, -1), { ...before, value: spaced }];
+                joinAt = spaced.length;
             }
             const next = normalizeSegments([...left, ...right]);
             const focusId =
-                (caret === "start"
-                    ? next.slice(Math.max(0, index - 1)).find((segment) => segment.type === "text")
-                    : [...next.slice(0, Math.min(index, next.length))]
-                          .reverse()
-                          .find((segment) => segment.type === "text")
-                )?.id ?? next.find((segment) => segment.type === "text")?.id;
+                joins && before
+                    ? before.id
+                    : ((caret === "start"
+                          ? next
+                                .slice(Math.max(0, index - 1))
+                                .find((segment) => segment.type === "text")
+                          : [...next.slice(0, Math.min(index, next.length))]
+                                .reverse()
+                                .find((segment) => segment.type === "text")
+                      )?.id ?? next.find((segment) => segment.type === "text")?.id);
             if (focusId) {
                 setActiveId(focusId);
                 requestAnimationFrame(() => {
                     const field = inputRefs.current.get(focusId);
                     if (!field) return;
                     field.focus();
-                    const pos = caret === "start" ? 0 : field.value.length;
+                    const pos = joins ? joinAt : caret === "start" ? 0 : field.value.length;
                     field.setSelectionRange(pos, pos);
                 });
             }
@@ -552,12 +579,15 @@ export function SmartTaskComposer({
             ready.flatMap((segment) => {
                 if (segment.type !== "text") return [segment];
                 if (!segment.value.trim()) return segment.value ? [segment] : [];
-                return partsToSegments(
-                    splitSmartInlineParts(segment.value, now, { includeDates: false }).parts,
-                );
+                return partsToSegments(splitSmartInlineParts(segment.value, now).parts);
             }),
         );
         const clean = serializeTitle(flushed);
+        const priorityIndex = flushed.findIndex(
+            (segment) => segment.type === "chip" && segment.kind === "priority",
+        );
+        const priorityAt =
+            priorityIndex < 0 ? null : serializeTitle(flushed.slice(0, priorityIndex)).length;
         if (clean.length > 160) return;
         if (!typedTitle(flushed)) {
             if (editing) {
@@ -587,6 +617,8 @@ export function SmartTaskComposer({
             if (editing) {
                 const saved = await onSave?.(clean, {
                     priority: payload.priority ?? "low",
+                    priorityAt: payload.priority ? priorityAt : null,
+                    dueDate: payload.dueDate,
                     dueTime: payload.dueTime ?? null,
                     clientId: payload.clientId,
                     ownerId: payload.ownerId,
@@ -594,8 +626,9 @@ export function SmartTaskComposer({
                 });
                 if (saved) onCancel?.();
             } else {
-                const saved = await onAdd?.(clean, date, listId, {
+                const saved = await onAdd?.(clean, payload.dueDate ?? date, listId, {
                     priority: payload.priority,
+                    priorityAt: payload.priority ? priorityAt : null,
                     dueTime: payload.dueTime,
                     clientId: payload.clientId,
                     ownerId: payload.ownerId,
@@ -727,15 +760,17 @@ export function SmartTaskComposer({
             <div className={styles.smartComposer}>
                 <div
                     className={styles.smartInput}
-                    data-empty={!editing && empty ? true : undefined}
+                    data-empty={empty || undefined}
                     data-needs-title={needsTitle || undefined}
-                    onClick={() => {
+                    onClick={(event) => {
+                        // Clicks inside a text run keep the browser's caret placement.
+                        if (event.target instanceof HTMLInputElement) return;
                         const last = segments.filter((segment) => segment.type === "text").at(-1);
                         if (last) focusSegment(last.id, "end");
                     }}
                 >
                     <span className={styles.smartInputLine}>
-                        {empty && !editing && (
+                        {empty && (
                             <span className={styles.smartPlaceholder} aria-hidden="true">
                                 <span>Task name — try 9am, p1</span>
                                 <span>#property or @client</span>

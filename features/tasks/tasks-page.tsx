@@ -306,6 +306,8 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                     startDate,
                     startTime,
                     priority: extras?.priority ?? item.priority,
+                    priorityAt:
+                        extras?.priorityAt !== undefined ? extras.priorityAt : item.priorityAt,
                     clientId: extras?.clientId !== undefined ? extras.clientId : item.clientId,
                     ownerId: extras?.ownerId !== undefined ? extras.ownerId : item.ownerId,
                     propertyId:
