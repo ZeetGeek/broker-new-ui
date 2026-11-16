@@ -1,6 +1,14 @@
 "use client";
 
-import { type CSSProperties, type FormEvent, useEffect, useId, useState } from "react";
+import {
+    cloneElement,
+    type CSSProperties,
+    type FormEvent,
+    isValidElement,
+    useEffect,
+    useId,
+    useState,
+} from "react";
 
 import { rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -224,6 +232,19 @@ export function TaskLists({
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : null}
+                    <button
+                        type="button"
+                        className={styles.addTabButton}
+                        aria-label="Create tab"
+                        title="Create tab"
+                        disabled={busy}
+                        onClick={() => {
+                            setEditor({ kind: "new-tab", id: "", name: "" });
+                            setOpen(true);
+                        }}
+                    >
+                        <Plus aria-hidden size={14} />
+                    </button>
                     <SlidingTabs
                         value={activeTab}
                         options={notebook.tabs.map((tab) => {
@@ -255,19 +276,6 @@ export function TaskLists({
                         panelId="task-someday"
                         className={cn(styles.plannerUnderlineTabs, styles.notebookTabPicker)}
                     />
-                    <button
-                        type="button"
-                        className={styles.addTabButton}
-                        aria-label="Create tab"
-                        title="Create tab"
-                        disabled={busy}
-                        onClick={() => {
-                            setEditor({ kind: "new-tab", id: "", name: "" });
-                            setOpen(true);
-                        }}
-                    >
-                        <Plus aria-hidden size={14} />
-                    </button>
                 </div>
                 <div className={styles.somedayBarEnd}>
                     {listCount > listStride && (
@@ -469,6 +477,51 @@ function SortableList({
         data: { kind: "list", listId: list.id, tabId: list.tabId },
         disabled: busy,
     });
+    const headingActions = (
+        <DropdownMenu>
+            <DropdownMenuTrigger
+                render={
+                    <button
+                        type="button"
+                        className={styles.listMenu}
+                        disabled={busy}
+                        aria-label={`Manage list ${list.name}`}
+                    />
+                }
+            >
+                <MoreHorizontal className="rotate-90" aria-hidden size={14} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onRename}>
+                    <Pencil aria-hidden />
+                    Rename list
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={isFirst} onClick={() => onShift(-1)}>
+                    <ArrowLeft aria-hidden />
+                    Move list left
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={isLast} onClick={() => onShift(1)}>
+                    <ArrowRight aria-hidden />
+                    Move list right
+                </DropdownMenuItem>
+                {tabs
+                    .filter((tab) => tab.id !== list.tabId)
+                    .map((tab) => (
+                        <DropdownMenuItem key={tab.id} onClick={() => onMoveTab(tab.id)}>
+                            Move to {tab.name}
+                        </DropdownMenuItem>
+                    ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive" disabled={onlyList} onClick={onDelete}>
+                    <Trash2 aria-hidden />
+                    Delete list{onlyList ? " (last list)" : ""}
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+    const column = isValidElement(children)
+        ? cloneElement(children, { headingActions } as Partial<TaskPlannerColumnProps>)
+        : children;
     return (
         <div
             ref={setNodeRef}
@@ -484,53 +537,7 @@ function SortableList({
             >
                 <Equal aria-hidden size={16} strokeWidth={2.5} />
             </button>
-            <div className={styles.customListControls}>
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <button
-                                type="button"
-                                className={styles.listMenu}
-                                disabled={busy}
-                                aria-label={`Manage list ${list.name}`}
-                            />
-                        }
-                    >
-                        <MoreHorizontal className="rotate-90" aria-hidden size={14} />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                        <DropdownMenuItem onClick={onRename}>
-                            <Pencil aria-hidden />
-                            Rename list
-                        </DropdownMenuItem>
-                        <DropdownMenuItem disabled={isFirst} onClick={() => onShift(-1)}>
-                            <ArrowLeft aria-hidden />
-                            Move list left
-                        </DropdownMenuItem>
-                        <DropdownMenuItem disabled={isLast} onClick={() => onShift(1)}>
-                            <ArrowRight aria-hidden />
-                            Move list right
-                        </DropdownMenuItem>
-                        {tabs
-                            .filter((tab) => tab.id !== list.tabId)
-                            .map((tab) => (
-                                <DropdownMenuItem key={tab.id} onClick={() => onMoveTab(tab.id)}>
-                                    Move to {tab.name}
-                                </DropdownMenuItem>
-                            ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                            variant="destructive"
-                            disabled={onlyList}
-                            onClick={onDelete}
-                        >
-                            <Trash2 aria-hidden />
-                            Delete list{onlyList ? " (last list)" : ""}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-            {children}
+            {column}
         </div>
     );
 }

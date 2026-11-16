@@ -973,6 +973,17 @@
 .newListColumn > .dayHeading {
     padding-block-start: 0.75rem;
 }
+.listHeadingRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-inline-size: 0;
+}
+.listHeadingRow > .h5 {
+    flex: 1;
+    min-inline-size: 0;
+}
 .newListColumn {
     display: flex;
     flex-direction: column;
@@ -997,17 +1008,16 @@
     color: var(--color-brand-text);
     text-decoration: underline;
 }
-.customListControls {
-    display: flex;
-    position: absolute;
-    inset-block-start: 1.35rem;
-    inset-inline-start: -14px;
-    z-index: 1;
+.customList .listHeadingRow .listMenu {
+    flex-shrink: 0;
     opacity: 0;
+    pointer-events: none;
 }
-.customList:hover > .customListControls,
-.customList:focus-within > .customListControls {
+.customList:hover .listHeadingRow .listMenu,
+.customList:focus-within .listHeadingRow .listMenu,
+.customList.dragging .listHeadingRow .listMenu {
     opacity: 1;
+    pointer-events: auto;
 }
 .listDragHandle,
 .listMenu {
@@ -1057,7 +1067,8 @@
     box-shadow: var(--shadow-lg);
     cursor: grabbing;
 }
-.customList .dayHeading h2 {
+.customList .dayHeading h2,
+.listHeadingRow > .h5 {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1363,11 +1374,13 @@
     .listTabButton > span {
         max-inline-size: 120px;
     }
-    .customListControls {
-        position: static;
-        justify-content: flex-end;
+    .customList .listHeadingRow .listMenu {
         opacity: 1;
+        pointer-events: auto;
+        min-inline-size: 44px;
+        inline-size: 44px;
         block-size: 44px;
+        min-block-size: 44px;
     }
     .customList::before {
         inset-block-start: -0.75rem;
@@ -1434,8 +1447,9 @@
     .composer textarea::placeholder {
         opacity: 1;
     }
-    .customListControls {
+    .customList .listHeadingRow .listMenu {
         opacity: 1;
+        pointer-events: auto;
     }
     .listDragHandle {
         opacity: 1;

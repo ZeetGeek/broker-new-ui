@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, useId, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useId, useRef, useState } from "react";
 
 import {
     closestCenter,
@@ -449,6 +449,7 @@ export type TaskPlannerColumnProps = {
     listId?: string;
     name?: string;
     minimumLines?: number;
+    headingActions?: ReactNode;
 };
 export function PlannerColumn({
     date,
@@ -460,6 +461,7 @@ export function PlannerColumn({
     listId,
     name,
     minimumLines = date ? 10 : 9,
+    headingActions,
 }: TaskPlannerColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: bucketId(date, listId),
@@ -473,10 +475,21 @@ export function PlannerColumn({
             aria-label={date ? dateText(date, "EEEE, d MMMM yyyy") : (name ?? "Someday")}
         >
             <header className={styles.dayHeading}>
-                {date && <time dateTime={date}>{dateText(date, "MMM d, yyyy")}</time>}
-                <h2 className="h5" title={name}>
-                    {date ? dateText(date, "EEEE") : (name ?? "Someday")}
-                </h2>
+                {date ? (
+                    <>
+                        <time dateTime={date}>{dateText(date, "MMM d, yyyy")}</time>
+                        <h2 className="h5" title={name}>
+                            {dateText(date, "EEEE")}
+                        </h2>
+                    </>
+                ) : (
+                    <div className={styles.listHeadingRow}>
+                        <h2 className="h5" title={name}>
+                            {name ?? "Someday"}
+                        </h2>
+                        {headingActions}
+                    </div>
+                )}
             </header>
             <SortableContext items={tasks.map((task) => task.id)} strategy={previewSortingStrategy}>
                 <ul className={styles.ruledList}>
