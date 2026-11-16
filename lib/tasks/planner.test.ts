@@ -330,6 +330,18 @@ test("Someday moves clear due-time reminders, and a newly added task has a valid
     assert.equal(someday.repeat, null);
 });
 
+test("quick-add allows a due time earlier than now and clamps start time to match", () => {
+    // now is 00:15 IST on `today`; 11:00 would normally be after midnight, so use a later clock.
+    const afternoon = Date.parse(`${today}T12:30:00+05:30`);
+    const created = createPlannerTask("Past time visit", today, afternoon, "past-time", undefined, {
+        dueTime: "11:00",
+    });
+    assert.equal(created.dueDate, today);
+    assert.equal(created.dueTime, "11:00");
+    assert.equal(created.startTime, "11:00");
+    assert.ok(taskSchema.safeParse(created).success);
+});
+
 test("invalid repeat moves are rejected without mutating the original task", () => {
     const repeating = {
         ...task,

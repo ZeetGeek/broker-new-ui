@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type FormEvent, useEffect, useId, useRef, useState } from "react";
+import { type CSSProperties, useId, useRef, useState } from "react";
 
 import {
     closestCenter,
@@ -32,11 +32,18 @@ import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { type Task, TASK_TIME_ZONE, taskDateKey, type TaskSort } from "./model";
 import { moveNotebookList, moveNotebookTab, taskListId, type TaskNotebook } from "./notebook-model";
 import type { NotebookUpdater } from "./notebook-store";
-import { plannerColumnTasks, plannerDate, type PlannerDragPreview } from "./planner-model";
+import {
+    type PlannerTaskExtras,
+    plannerColumnTasks,
+    plannerDate,
+    type PlannerDragPreview,
+} from "./planner-model";
 import { shiftTaskDate } from "./recurrence";
+import type { SmartAddCatalogs } from "./smart-add";
+import { SmartTaskComposer } from "./smart-composer";
 import { TaskLine, type TaskRowActions } from "./task-list";
 import { TaskLists } from "./task-lists";
-import { TaskTitleInput } from "./task-title-input";
+import { usePlannerColumns } from "./use-planner-columns";
 
 import styles from "./planner.module.css";
 
@@ -58,7 +65,13 @@ export type TaskPlannerProps = TaskRowActions & {
     onNotebookChange: (updater: NotebookUpdater) => Promise<boolean>;
     tasks: Task[];
     sort: TaskSort;
-    onAdd: (title: string, date: string | null, listId?: string) => Promise<boolean>;
+    catalogs: SmartAddCatalogs;
+    onAdd: (
+        title: string,
+        date: string | null,
+        listId?: string,
+        extras?: PlannerTaskExtras,
+    ) => Promise<boolean>;
     onMove: (
         id: string,
         date: string | null,
@@ -70,6 +83,7 @@ export type TaskPlannerProps = TaskRowActions & {
 export function TaskPlanner({
     tasks,
     sort,
+    catalogs,
     onAdd,
     onMove,
     notebook,
@@ -83,8 +97,7 @@ export function TaskPlanner({
     const reduceMotion = useReducedMotion();
     const daysPanelId = useId();
     const [anchor, setAnchor] = useState(today);
-    const [preferredColumns, setPreferredColumns] = useState(5);
-    const [availableColumns, setAvailableColumns] = useState(1);
+    const { frame, columns, availableColumns, setPreferredColumns } = usePlannerColumns();
     const [dragged, setDragged] = useState<Task | null>(null);
     const [dragPreview, setDragPreview] = useState<PlannerDragPreview | null>(null);
     const latestDragPreview = useRef<PlannerDragPreview | null>(null);
@@ -94,7 +107,6 @@ export function TaskPlanner({
         setDragPreview(next);
     };
     const [dragHeight, setDragHeight] = useState(40);
-    const [draggedList, setDraggedList] = useState<string | null>(null);
     const [draggedTab, setDraggedTab] = useState<string | null>(null);
     const [selectedTab, setSelectedTab] = useState<string>();
     // Start on a populated tab, including after the saved notebook finishes loading.
@@ -102,19 +114,6 @@ export function TaskPlanner({
         selectedTab && notebook.tabs.some((tab) => tab.id === selectedTab)
             ? selectedTab
             : notebook.lists[0].tabId;
-    const frame = useRef<HTMLElement>(null);
-    useEffect(() => {
-        const element = frame.current;
-        if (!element) return;
-        const observer = new ResizeObserver(([entry]) =>
-            setAvailableColumns(
-                entry.contentRect.width < 600 ? 1 : entry.contentRect.width < 1000 ? 3 : 7,
-            ),
-        );
-        observer.observe(element);
-        return () => observer.disconnect();
-    }, []);
-    const columns = Math.min(preferredColumns, availableColumns);
     const days = Array.from({ length: columns }, (_, index) => shiftTaskDate(anchor, index)).filter(
         (date): date is string => !!date,
     );
@@ -182,7 +181,6 @@ export function TaskPlanner({
     };
     const dragEnd = async ({ active, over }: DragEndEvent) => {
         setDragged(null);
-        setDraggedList(null);
         setDraggedTab(null);
         if (!over) {
             updateDragPreview(null);
@@ -336,12 +334,8 @@ export function TaskPlanner({
                             notebook.tabs.find((tab) => tab.id === active.data.current?.tabId)
                                 ?.name ?? null,
                         );
-                    else if (active.data.current?.kind === "list")
-                        setDraggedList(
-                            notebook.lists.find((list) => list.id === active.data.current?.listId)
-                                ?.name ?? null,
-                        );
-                    else {
+                    // Lists move as the original full column, without a separate overlay.
+                    else if (active.data.current?.kind === "task") {
                         const task = tasks.find((task) => task.id === active.id);
                         setDragged(task ?? null);
                         setDragHeight(active.rect.current.initial?.height ?? 40);
@@ -372,7 +366,6 @@ export function TaskPlanner({
                 onDragOver={previewMove}
                 onDragCancel={() => {
                     setDragged(null);
-                    setDraggedList(null);
                     setDraggedTab(null);
                     updateDragPreview(null);
                 }}
@@ -399,6 +392,7 @@ export function TaskPlanner({
                                 sort,
                                 dragPreview,
                             )}
+                            catalogs={catalogs}
                             onAdd={onAdd}
                             actions={actions}
                         />
@@ -412,6 +406,7 @@ export function TaskPlanner({
                     onNotebookChange={onNotebookChange}
                     tasks={tasks}
                     sort={sort}
+                    catalogs={catalogs}
                     onAdd={onAdd}
                     activeTab={activeTab}
                     onSelectTab={setSelectedTab}
@@ -436,7 +431,6 @@ export function TaskPlanner({
                             </span>
                         </div>
                     )}
-                    {draggedList && <div className={styles.dragListPreview}>{draggedList}</div>}
                     {draggedTab && <div className={styles.dragTabPreview}>{draggedTab}</div>}
                 </DragOverlay>
             </DndContext>
@@ -448,6 +442,7 @@ export type TaskPlannerColumnProps = {
     date: string | null;
     today: string;
     tasks: Task[];
+    catalogs: SmartAddCatalogs;
     onAdd: TaskPlannerProps["onAdd"];
     actions: TaskRowActions;
     listId?: string;
@@ -458,6 +453,7 @@ export function PlannerColumn({
     date,
     today,
     tasks,
+    catalogs,
     onAdd,
     actions,
     listId,
@@ -493,11 +489,13 @@ export function PlannerColumn({
                         />
                     ))}
                     <li className={styles.composerLine}>
-                        <InlineTaskComposer
+                        <SmartTaskComposer
                             date={date}
                             listId={listId}
                             listName={name}
                             busy={actions.busy}
+                            now={actions.now}
+                            catalogs={catalogs}
                             onAdd={onAdd}
                         />
                     </li>
@@ -557,7 +555,7 @@ function SortableLine({
                 transition,
             }}
         >
-            <TaskLine task={task} {...actions} />
+            <TaskLine task={task} showDate={date === null} {...actions} />
         </li>
     );
 }
@@ -568,54 +566,4 @@ function canStartTaskDrag(target: EventTarget) {
         'button, input, textarea, select, a, [role="checkbox"], [role="menuitem"], [contenteditable="true"]',
     );
     return !control || control.hasAttribute("data-task-title");
-}
-
-function InlineTaskComposer({
-    date,
-    busy,
-    onAdd,
-    listId,
-    listName,
-}: {
-    date: string | null;
-    busy: boolean;
-    onAdd: TaskPlannerProps["onAdd"];
-    listId?: string;
-    listName?: string;
-}) {
-    const [title, setTitle] = useState("");
-    const pending = useRef(false);
-    const submit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (busy || pending.current || !title.trim()) return;
-        const field = event.currentTarget.querySelector("textarea");
-        pending.current = true;
-        try {
-            if (await onAdd(title.trim(), date, listId)) {
-                setTitle("");
-                field?.focus();
-            }
-        } finally {
-            pending.current = false;
-        }
-    };
-    return (
-        <form className={styles.composer} onSubmit={submit}>
-            <TaskTitleInput
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                maxLength={160}
-                aria-label={
-                    date
-                        ? `Add a task for ${dateText(date, "EEEE, d MMMM")}`
-                        : `Add a task to ${listName ?? "Someday"}`
-                }
-                placeholder="Type in your task"
-                aria-disabled={busy}
-            />
-            <button type="submit" disabled={busy || !title.trim()} aria-label="Add task">
-                Add
-            </button>
-        </form>
-    );
 }

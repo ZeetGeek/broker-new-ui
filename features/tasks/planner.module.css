@@ -92,6 +92,8 @@
     padding: 1.5rem var(--planner-inline-padding) 1.25rem;
 }
 .dayColumn {
+    display: flex;
+    flex-direction: column;
     min-inline-size: 0;
     padding: 0 0.125rem;
 }
@@ -113,15 +115,32 @@
     color: var(--color-brand);
 }
 .ruledList {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
     list-style: none;
     padding: 0;
     margin: 0;
     min-block-size: calc(10 * var(--line-height));
 }
+.ruledList::after {
+    /* Continue the paper rules through space left by taller neighbouring columns. */
+    content: "";
+    flex: 1;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0 var(--line-height),
+        color-mix(in srgb, var(--color-border-warm) 55%, var(--color-surface)) var(--line-height)
+            calc(var(--line-height) + 1px)
+    );
+    pointer-events: none;
+}
 .sortableLine,
+.historyLine,
 .blankLine,
 .composerLine {
     position: relative;
+    flex-shrink: 0;
     min-block-size: var(--line-height);
     border-block-end: 1px solid
         color-mix(in srgb, var(--color-border-warm) 55%, var(--color-surface));
@@ -129,6 +148,12 @@
 .sortableLine {
     cursor: grab;
     user-select: none;
+}
+.historyLine {
+    list-style: none;
+}
+.historyLine .lineTitle {
+    cursor: pointer;
 }
 .taskPlaceholder {
     outline: 1px dashed var(--color-ink-subtle);
@@ -208,13 +233,27 @@
     text-decoration: line-through;
     text-decoration-thickness: 1px;
 }
+.listTaskDate {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-block-start: 0.25rem;
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: normal;
+}
+.listTaskDate svg {
+    flex-shrink: 0;
+}
 .lineCheck {
     position: absolute;
-    inset-inline-start: -23px;
+    inset-inline-start: -22px;
     inset-block-start: 50%;
     transform: translateY(-50%);
-    inline-size: 20px;
-    block-size: 20px;
+    inline-size: 18px;
+    block-size: 18px;
     border-width: 1.5px;
     border-radius: 50%;
     cursor: pointer;
@@ -224,14 +263,19 @@
     cursor: not-allowed;
 }
 .lineCheck [data-slot="checkbox-indicator"] {
-    inline-size: 11px;
-    block-size: 11px;
+    inline-size: 10px;
+    block-size: 10px;
 }
 .lineCheck::after {
-    inset: -9px -5px;
+    inset: -10px -6px;
 }
 .lineCheck[data-checked] {
     opacity: 1;
+}
+@media (hover: hover) {
+    .historyLine .lineCheck[data-checked] {
+        opacity: 0;
+    }
 }
 .lineAction,
 .restoreAction {
@@ -248,7 +292,8 @@
     border-radius: 6px;
     cursor: pointer;
 }
-.lineAction {
+.lineAction,
+.restoreAction {
     opacity: 0;
     inline-size: 20px;
     block-size: 20px;
@@ -256,7 +301,8 @@
     border-radius: 50%;
     background: transparent;
 }
-.lineAction::before {
+.lineAction::before,
+.restoreAction::before {
     content: "";
     position: absolute;
     inset-inline-start: 50%;
@@ -268,21 +314,21 @@
     border-radius: 50%;
     pointer-events: none;
 }
-.lineAction svg {
+.lineAction svg,
+.restoreAction svg {
     inline-size: 14px;
     block-size: 14px;
 }
-.restoreAction:hover {
-    color: var(--color-brand-text);
-    background: var(--color-brand-soft);
-}
 .lineAction:hover,
+.restoreAction:hover,
 .lineAction[data-popup-open] {
     color: var(--color-ink-muted);
     background: transparent;
 }
 .lineAction:hover::before,
 .lineAction:focus-visible::before,
+.restoreAction:hover::before,
+.restoreAction:focus-visible::before,
 .lineAction[data-popup-open]::before {
     border-color: color-mix(in srgb, var(--color-ink-subtle) 40%, var(--color-surface));
 }
@@ -290,14 +336,22 @@
 .taskLine:focus-within .lineCheck,
 .taskLine:hover .lineAction,
 .taskLine:focus-within .lineAction,
+.taskLine:hover .restoreAction,
+.taskLine:focus-within .restoreAction,
 .lineAction[data-popup-open] {
     opacity: 1;
 }
 .overdueMark {
+    display: inline-flex;
+    align-items: center;
     flex-shrink: 0;
     color: var(--color-urgent);
-    font-size: 0.75rem;
-    line-height: 1.5;
+    border-radius: 50%;
+    cursor: help;
+}
+.overdueMark:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
 }
 .inlineEdit {
     flex: 1;
@@ -368,10 +422,260 @@
 }
 .composer {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.25rem;
     min-block-size: var(--line-height);
     padding-inline: 0.5rem;
+}
+.smartComposer {
+    position: relative;
+    flex: 1;
+    min-inline-size: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.smartInput {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-inline-size: 0;
+    /* Same height empty or typing so the row doesn’t jump when Add appears. */
+    min-block-size: 5.75rem;
+    padding-block: 0.9rem 0.65rem;
+    cursor: text;
+}
+/* Collapse only when empty — keep height if a draft (text/chips) is in progress. */
+.dayColumn:not(:hover) .composerLine:not(:focus-within) .smartInput[data-empty] {
+    min-block-size: var(--line-height);
+    padding-block: 0;
+    overflow: hidden;
+}
+.dayColumn:not(:hover) .composerLine:not(:focus-within) .smartInput[data-empty] .smartInputLine {
+    min-block-size: var(--line-height);
+}
+.dayColumn:not(:hover) .composerLine:not(:focus-within) .smartInput[data-empty] .smartTextInput {
+    min-block-size: var(--line-height);
+    block-size: var(--line-height);
+}
+.dayColumn:not(:hover) .composerLine:not(:focus-within) .smartInput[data-empty] .smartPlaceholder,
+.dayColumn:not(:hover) .composerLine:not(:focus-within) .smartInput[data-empty] .smartCount {
+    display: none;
+}
+.smartInputLine {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem;
+    min-inline-size: 0;
+    min-block-size: 1.5em;
+}
+.smartInput[data-empty] .smartInputLine {
+    /* Room for the 2-line empty hint. */
+    min-block-size: calc(1.5em * 2);
+    align-items: flex-start;
+}
+.smartInput[data-needs-title] .smartInputLine {
+    /* Keep chips + “Type a task name” on one row after clearing the title. */
+    flex-wrap: nowrap;
+}
+.smartPlaceholder {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0;
+    pointer-events: none;
+    color: color-mix(in srgb, var(--color-ink-subtle) 75%, var(--color-surface));
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.5;
+    opacity: 0;
+}
+.smartPlaceholder > span {
+    display: block;
+    block-size: 1.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.dayColumn:hover .smartPlaceholder,
+.composer:focus-within .smartPlaceholder {
+    opacity: 1;
+}
+.smartTextInput {
+    position: relative;
+    z-index: 1;
+    flex: 0 1 auto;
+    align-self: flex-start;
+    min-inline-size: 1px;
+    max-inline-size: 100%;
+    /* Same first-line box as the placeholder so typed text doesn’t sit lower. */
+    box-sizing: content-box;
+    min-block-size: 1.5em;
+    block-size: 1.5em;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    outline: none;
+    background: transparent;
+    color: var(--color-ink);
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.5;
+    field-sizing: content;
+    caret-color: var(--color-ink);
+}
+.smartInput[data-empty] .smartTextInput {
+    flex: 1 1 100%;
+    min-inline-size: 0.75rem;
+    inline-size: 100%;
+}
+.smartInput[data-needs-title] .smartTextInput {
+    flex: 1 1 auto;
+    min-inline-size: 8rem;
+}
+.smartInput[data-needs-title] .smartTextInput::placeholder {
+    color: color-mix(in srgb, var(--color-ink-subtle) 75%, var(--color-surface));
+    opacity: 0;
+    font-weight: 600;
+}
+.composer:focus-within .smartInput[data-needs-title] .smartTextInput::placeholder {
+    opacity: 1;
+}
+.smartCount {
+    display: none;
+    margin-block-start: auto;
+    padding-block-end: 0;
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    text-align: start;
+}
+.composer:focus-within .smartCount {
+    display: block;
+}
+.smartChip {
+    display: inline-flex;
+    flex: 0 1 auto;
+    align-items: center;
+    box-sizing: border-box;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    min-block-size: 24px;
+    padding-inline: 0.45rem;
+    border: 0;
+    border-radius: 7px;
+    background: var(--color-surface-muted);
+    color: var(--color-ink);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+/* Smart chips: Tailwind 500 @ 20% — not brand green */
+.smartChip[data-kind="client"] {
+    background: rgb(99 102 241 / 0.2); /* indigo-500/20 */
+    color: #3730a3; /* indigo-800 */
+}
+.smartChip[data-kind="owner"] {
+    background: rgb(217 70 239 / 0.2); /* fuchsia-500/20 */
+    color: #86198f; /* fuchsia-800 */
+}
+.smartChip[data-kind="property"] {
+    background: rgb(168 85 247 / 0.2); /* purple-500/20 */
+    color: #6b21a8; /* purple-800 */
+}
+.smartChip[data-kind="date"] {
+    background: rgb(14 165 233 / 0.2); /* sky-500/20 */
+    color: #075985; /* sky-800 */
+}
+.smartChip[data-kind="time"] {
+    background: rgb(20 184 166 / 0.2); /* teal-500/20 */
+    color: #115e59; /* teal-800 */
+}
+.smartChip[data-priority="urgent"] {
+    background: rgb(244 63 94 / 0.2); /* rose-500/20 */
+    color: #9f1239; /* rose-800 */
+}
+.smartChip[data-priority="high"] {
+    background: rgb(245 158 11 / 0.2); /* amber-500/20 */
+    color: #92400e; /* amber-800 */
+}
+.smartChip[data-priority="medium"] {
+    background: rgb(139 92 246 / 0.2); /* violet-500/20 */
+    color: #5b21b6; /* violet-800 */
+}
+.smartChip[data-priority="low"] {
+    background: rgb(100 116 139 / 0.2); /* slate-500/20 */
+    color: #334155; /* slate-700 */
+}
+.smartChipLabel {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.smartMenu {
+    position: absolute;
+    inset-block-start: calc(100% + 2px);
+    inset-inline-start: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-inline-size: min(100%, 16rem);
+    max-inline-size: min(22rem, 100%);
+    max-block-size: 12rem;
+    overflow: auto;
+    padding: 0.35rem;
+    border: 1px solid var(--color-border-warm);
+    border-radius: 10px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-md);
+}
+.smartMenuEmpty {
+    margin: 0;
+    padding: 0.5rem 0.65rem;
+    color: var(--color-ink-muted);
+    font-size: 0.75rem;
+}
+.smartMenuItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    min-block-size: 44px;
+    padding: 0.45rem 0.55rem;
+    border-radius: 8px;
+    text-align: start;
+    color: var(--color-ink);
+    cursor: pointer;
+}
+.smartMenuItem span {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-inline-size: 0;
+}
+.smartMenuItem strong {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+.smartMenuItem small {
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
+}
+.smartMenuItem[data-active],
+.smartMenuItem:hover {
+    background: color-mix(in srgb, var(--color-brand-soft) 45%, var(--color-surface));
 }
 .composer textarea {
     display: block;
@@ -398,18 +702,25 @@
 .composer:focus-within textarea::placeholder {
     opacity: 1;
 }
+.dayColumn:hover .composerLine,
+.composerLine:focus-within {
+    border-block-end-color: var(--color-brand);
+}
+.dayColumn:hover .composer,
 .composer:focus-within {
     box-shadow: inset 0 -1px 0 var(--color-brand);
 }
-.composer button {
+.composer > button {
     display: none;
+    align-self: flex-start;
+    margin-block-start: 0.9rem;
     color: var(--color-brand-text);
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
     min-block-size: var(--line-height);
 }
-.composer:focus-within button:not(:disabled) {
+.composer:focus-within > button:not(:disabled) {
     display: block;
 }
 .somedayBar {
@@ -516,13 +827,64 @@
     background: var(--color-brand-soft);
 }
 .customList {
+    display: flex;
+    flex-direction: column;
     position: relative;
+    isolation: isolate;
     min-inline-size: 0;
+}
+.customList::before {
+    content: "";
+    position: absolute;
+    inset-block: -1.5rem -2rem;
+    inset-inline: -1.625rem;
+    z-index: -1;
+    pointer-events: none;
+}
+.customList:first-child::before {
+    inset-inline-start: calc(-1 * var(--planner-inline-padding));
+}
+.customList:has(> .dayColumn > .dayHeading:hover)::before,
+.customList:has(> .listDragHandle:hover)::before,
+.customList:has(> .listDragHandle:focus-visible)::before,
+.customList.dragging::before {
+    background: color-mix(in srgb, var(--color-ink) 4%, var(--color-surface));
+}
+.customList > .dayColumn {
+    flex: 1;
+}
+.customList > .dayColumn > .dayHeading,
+.newListColumn > .dayHeading {
+    padding-block-start: 1.5rem;
+}
+.newListColumn {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    padding-inline: 0.125rem;
+}
+.newListButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 32px;
+    padding-inline: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-underline-offset: 4px;
+    cursor: pointer;
+}
+.newListButton:hover:not(:disabled) {
+    color: var(--color-brand-text);
+    text-decoration: underline;
 }
 .customListControls {
     display: flex;
     position: absolute;
-    inset-block-start: 0.6rem;
+    inset-block-start: 1.85rem;
     inset-inline-start: -14px;
     z-index: 1;
     opacity: 0;
@@ -549,19 +911,25 @@
     inline-size: 44px;
     block-size: 44px;
     opacity: 0;
+    pointer-events: none;
     color: var(--color-ink);
     cursor: grab;
     touch-action: none;
 }
-.customList:hover > .listDragHandle,
-.customList:focus-within > .listDragHandle {
+.customList:has(> .dayColumn > .dayHeading:hover) > .listDragHandle,
+.customList > .listDragHandle:hover,
+.customList > .listDragHandle:focus-visible,
+.customList.dragging > .listDragHandle {
     opacity: 1;
+    pointer-events: auto;
 }
 .listDragHandle:active {
     cursor: grabbing;
 }
-.customList:hover {
-    background: color-mix(in srgb, var(--color-ink) 2%, transparent);
+.customList.dragging {
+    z-index: 3;
+    opacity: 0.65;
+    cursor: grabbing;
 }
 .dragTabPreview {
     padding: 0.75rem 1rem;
@@ -579,55 +947,23 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.dragListPreview {
-    inline-size: 230px;
-    min-block-size: 150px;
-    padding: 1.25rem;
-    color: var(--color-ink);
-    background: var(--color-surface-muted);
-    border-radius: var(--radius-inner);
-    box-shadow: var(--shadow-lg);
-    font-size: 1.125rem;
-    cursor: grabbing;
-}
-.notebookEditor {
-    padding: 0.75rem var(--planner-inline-padding);
-    background: var(--color-surface-muted);
-}
 .nameForm {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    display: grid;
     gap: 0.5rem;
     font-size: 0.875rem;
 }
-.nameForm label {
+.nameLabel {
     color: var(--color-ink-muted);
+    font-weight: 600;
 }
-.nameForm input {
-    flex: 1;
-    max-inline-size: 280px;
-    min-inline-size: 100px;
-    min-block-size: 44px;
-    padding-inline: 0.65rem;
-    border: 1px solid var(--color-border-warm);
-    background: var(--color-surface);
-    color: var(--color-ink);
-    border-radius: var(--radius-control);
-    outline-color: var(--color-brand);
+.nameActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
 }
-.nameForm button {
-    display: grid;
-    place-items: center;
-    min-inline-size: 44px;
-    min-block-size: 44px;
-    padding-inline: 0.5rem;
-    color: var(--color-brand-text);
-    cursor: pointer;
-}
-.nameForm p {
-    flex-basis: 100%;
+.nameError {
     color: var(--color-danger);
+    font-size: 0.8125rem;
 }
 .notebookError,
 .notebookLoading {
@@ -827,11 +1163,11 @@
         display: none;
     }
     .lineCheck {
-        inset-inline-start: -24px;
+        inset-inline-start: -23px;
         opacity: 1;
     }
     .lineCheck::after {
-        inset: -14px;
+        inset: -15px;
     }
     .lineAction,
     .restoreAction {
@@ -868,20 +1204,32 @@
         opacity: 1;
         block-size: 44px;
     }
+    .customList::before {
+        inset-block-start: -0.75rem;
+        inset-inline: -2.75rem -3.5rem;
+    }
+    .customList:first-child::before {
+        inset-inline-start: -2.75rem;
+    }
+    .customList > .dayColumn > .dayHeading,
+    .newListColumn > .dayHeading {
+        padding-block-start: 0.25rem;
+    }
     .listDragHandle {
         inset-block-start: 0;
         opacity: 1;
+        pointer-events: auto;
     }
     .listDragHandle,
     .listMenu {
         min-inline-size: 44px;
         block-size: 44px;
     }
-    .notebookEditor {
-        padding-inline: 1rem;
-    }
     .somedayGrid .customList + .customList {
         margin-block-start: 1rem;
+    }
+    .newListColumn > .ruledList {
+        display: none;
     }
     .columnPicker {
         display: none;
@@ -901,10 +1249,10 @@
         opacity: 1;
     }
     .archive .lineCheck {
-        inset-inline-start: -24px;
+        inset-inline-start: -23px;
     }
     .archive .lineCheck::after {
-        inset: -14px;
+        inset: -15px;
     }
     .archive .lineAction,
     .archive .restoreAction {
@@ -914,7 +1262,8 @@
 }
 @media (hover: none) {
     .lineCheck,
-    .lineAction {
+    .lineAction,
+    .restoreAction {
         opacity: 1;
     }
     .composer textarea::placeholder {
@@ -925,6 +1274,12 @@
     }
     .listDragHandle {
         opacity: 1;
+        pointer-events: auto;
+    }
+}
+@media (pointer: coarse) {
+    .newListButton {
+        min-block-size: 44px;
     }
 }
 @media (prefers-reduced-motion: reduce) {

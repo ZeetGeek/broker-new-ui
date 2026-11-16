@@ -5,6 +5,7 @@ primary_target: "features/tasks/tasks-page.tsx"
 related_targets:
   - "features/tasks/task-planner.tsx"
   - "features/tasks/task-list.tsx"
+  - "features/tasks/task-history-planner.tsx"
   - "features/tasks/planner.module.css"
 ---
 
@@ -19,6 +20,13 @@ search, sort and Add task controls. There is no sidebar. Views are To do
 (unfinished tasks), Completed, and Deleted. Newly completed tasks show their
 checkmark and strikethrough in To do for two seconds, then disappear from that
 view. Save completion immediately; keep the brief feedback local to the UI.
+
+Completed and Deleted use the same ruled date-column layout as To do. Group by
+the completion or deletion timestamp's India calendar date, respectively, rather
+than the scheduled due date. Show populated dates in chronological order and
+skip empty dates, including during date navigation. Keep reopening and restoring
+available; history dates cannot be changed by dragging tasks. Explicit sorts
+apply within each date column. Search and filters retain these history columns.
 
 Below the toolbar, use the TeuxDeux day planner as the visual reference:
 https://teuxdeux.com/home. Flat white paper, ruled task lines, small uppercase
@@ -49,6 +57,11 @@ automatically move into Today. Dragging between days explicitly changes the
 schedule; reordering within a day preserves deadlines. Deletion is recoverable
 and stops reminders. Restore keeps linked data and completion state and skips
 missed reminders. Deleted tasks are excluded from dashboard counts.
+
+Someday and custom-list tasks also show the shared overdue warning icon. When
+there is no due date, use the start date as the overdue threshold after that
+India calendar day ends. An explicit due date always takes priority. Keep
+these tasks in their saved lists; the warning does not change their schedule.
 
 The existing browser-local mock adapter remains the persistence layer. No API
 or backend support is implied. Existing saved tasks retain compatibility.

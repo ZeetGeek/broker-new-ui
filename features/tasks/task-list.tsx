@@ -2,24 +2,29 @@
 
 import { useRef, useState } from "react";
 
-import { formatInTimeZone } from "date-fns-tz";
-
 import { cn } from "@/lib/utils";
 
-import { RotateCcw } from "@/components/shared/icons";
+import { AlertCircle, Calendar, MoreHorizontal, RotateCcw } from "@/components/shared/icons";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import {
     sortTasks,
     type Task,
-    TASK_TIME_ZONE,
-    taskDateKey,
     taskDateLabel,
     taskDueLabel,
+    taskGroup,
     type TaskSort,
 } from "./model";
 import type { TaskQuickChange } from "./quick-actions";
 import { TaskActionsMenu } from "./task-actions-menu";
+import { TaskHistoryPlanner } from "./task-history-planner";
 import { TaskTitleInput } from "./task-title-input";
 
 import styles from "./planner.module.css";
@@ -39,6 +44,7 @@ export type TaskRowActions = {
 export function TaskLine({
     task,
     archive = false,
+    showDate = false,
     busy,
     now,
     onOpen,
@@ -47,13 +53,13 @@ export function TaskLine({
     onRestore,
     onRename,
     onQuickChange,
-}: TaskRowActions & { task: Task; archive?: boolean }) {
+}: TaskRowActions & { task: Task; archive?: boolean; showDate?: boolean }) {
     const [editing, setEditing] = useState(false);
     const [title, setTitle] = useState(task.title);
     const saving = useRef(false);
     const cancelled = useRef(false);
-    const overdue =
-        !task.completedAt && !task.deletedAt && !!task.dueDate && task.dueDate < taskDateKey(now);
+    const overdue = !task.deletedAt && taskGroup(task, now) === "overdue";
+    const date = showDate ? task.dueDate || task.startDate : null;
     const save = async (submit = false) => {
         if (cancelled.current || saving.current) return;
         if ((!title.trim() && !submit) || title.trim() === task.title) {
@@ -123,28 +129,48 @@ export function TaskLine({
                     }}
                 >
                     {task.title}
+                    {date && (
+                        <small className={styles.listTaskDate}>
+                            <Calendar aria-hidden size={12} />
+                            <span>
+                                {task.dueDate ? "Due" : "Starts"}{" "}
+                                <time dateTime={date}>{taskDateLabel(date, now)}</time>
+                            </span>
+                        </small>
+                    )}
                 </button>
             )}
             {overdue && (
-                <span
-                    className={styles.overdueMark}
-                    title={`Overdue · ${taskDateLabel(task.dueDate!, now)}`}
-                >
-                    <span className="sr-only">Overdue · </span>
-                    {formatInTimeZone(`${task.dueDate}T12:00:00+05:30`, TASK_TIME_ZONE, "d MMM")}
-                </span>
+                <Tooltip>
+                    <TooltipTrigger render={<span className={styles.overdueMark} tabIndex={0} />}>
+                        <AlertCircle aria-hidden size={16} />
+                        <span className="sr-only">Overdue</span>
+                    </TooltipTrigger>
+                    <TooltipContent>Overdue — complete or reschedule this task</TooltipContent>
+                </Tooltip>
             )}
             {task.deletedAt ? (
-                <button
-                    type="button"
-                    className={styles.restoreAction}
-                    disabled={busy}
-                    onClick={() => onRestore(task)}
-                    aria-label={`Restore ${task.title}`}
-                    title="Restore task"
-                >
-                    <RotateCcw aria-hidden size={16} />
-                </button>
+                <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger
+                        render={
+                            <button
+                                type="button"
+                                className={styles.lineAction}
+                                disabled={busy}
+                                aria-label={`Actions for ${task.title}`}
+                                title="Task actions"
+                            />
+                        }
+                    >
+                        <MoreHorizontal aria-hidden size={14} />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem disabled={busy} onClick={() => onRestore(task)}>
+                            <RotateCcw aria-hidden />
+                            Restore task
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             ) : (
                 <TaskActionsMenu
                     task={task}
@@ -166,33 +192,25 @@ export function TaskArchive({
     sort,
     ...actions
 }: TaskRowActions & { tasks: Task[]; tab: "completed" | "deleted" | "results"; sort: TaskSort }) {
-    const sorted =
-        tab === "results" || sort !== "due"
-            ? sortTasks(tasks, sort)
-            : [...tasks].sort((a, b) =>
-                  (b.deletedAt || b.completedAt || b.createdAt).localeCompare(
-                      a.deletedAt || a.completedAt || a.createdAt,
-                  ),
-              );
+    if (tab !== "results") {
+        return (
+            <TaskHistoryPlanner
+                key={tab}
+                tasks={tasks}
+                tab={tab}
+                sort={sort}
+                now={actions.now}
+                renderTask={(task) => <TaskLine task={task} archive {...actions} />}
+            />
+        );
+    }
+    const sorted = sortTasks(tasks, sort);
     return (
-        <section
-            className={styles.archive}
-            aria-label={tab === "results" ? "Matching tasks" : `${tab} tasks`}
-        >
+        <section className={styles.archive} aria-label="Matching tasks">
             <header className={styles.archiveHeading}>
-                <h2 className="h5">
-                    {tab === "deleted"
-                        ? "Deleted"
-                        : tab === "completed"
-                          ? "Completed"
-                          : "Matching tasks"}
-                </h2>
+                <h2 className="h5">Matching tasks</h2>
                 <p>
-                    {tab === "deleted"
-                        ? "Your deleted tasks stay here. Restore one whenever you need it."
-                        : tab === "completed"
-                          ? "Everything you’ve checked off. You can reopen a task at any time."
-                          : `${tasks.length} ${tasks.length === 1 ? "task matches" : "tasks match"} your search and filters, across all dates.`}
+                    {`${tasks.length} ${tasks.length === 1 ? "task matches" : "tasks match"} your search and filters, across all dates.`}
                 </p>
             </header>
             <ul className={styles.archiveList}>
@@ -200,11 +218,7 @@ export function TaskArchive({
                     <li key={task.id}>
                         <TaskLine task={task} archive {...actions} />
                         <small className={styles.archiveDate}>
-                            {tab === "deleted"
-                                ? `Deleted ${formatInTimeZone(task.deletedAt!, TASK_TIME_ZONE, "d MMM yyyy, h:mm a")}`
-                                : tab === "completed"
-                                  ? `Completed ${formatInTimeZone(task.completedAt!, TASK_TIME_ZONE, "d MMM yyyy, h:mm a")}`
-                                  : taskDueLabel(task, actions.now)}
+                            {taskDueLabel(task, actions.now)}
                         </small>
                     </li>
                 ))}

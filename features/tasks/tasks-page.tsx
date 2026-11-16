@@ -292,8 +292,20 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
     };
     const quickChange = (task: Task, change: TaskQuickChange) =>
         changeTasks((latest) => changeTaskQuickly(latest, task.id, change));
-    const quickAdd = async (title: string, date: string | null, listId?: string) => {
-        const task = createPlannerTask(title, date, Date.now(), crypto.randomUUID(), listId);
+    const quickAdd = async (
+        title: string,
+        date: string | null,
+        listId?: string,
+        extras?: Parameters<typeof createPlannerTask>[5],
+    ) => {
+        const task = createPlannerTask(
+            title,
+            date,
+            Date.now(),
+            crypto.randomUUID(),
+            listId,
+            extras,
+        );
         return changeTasks((latest) => [...latest, task]);
     };
     const move = async (id: string, date: string | null, beforeId?: string, listId?: string) => {
@@ -556,6 +568,11 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                 tasks={visible}
                                 now={now}
                                 sort={sort}
+                                catalogs={{
+                                    clients: TASK_CLIENTS,
+                                    owners: TASK_OWNERS,
+                                    properties: TASK_PROPERTIES,
+                                }}
                                 busy={busy}
                                 onOpen={(task) => intent(task, "detail")}
                                 onComplete={complete}

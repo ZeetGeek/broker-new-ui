@@ -305,16 +305,35 @@ export function taskRemindersSummary(task: Pick<Task, "reminders">): string {
     return task.reminders.length ? `${task.reminders.length + 1} reminders` : "At task start";
 }
 
-/** Today stays together for the whole IST day; clock time only drives reminders. */
+/**
+ * Past due dates are overdue. Same-day tasks with an explicit due time become
+ * overdue once that IST clock time has passed (e.g. 11am when it is 12:20).
+ * Date-only today tasks stay in Today until the calendar day rolls over.
+ */
+export function taskIsOverdue(
+    task: Pick<Task, "dueDate"> & Partial<Pick<Task, "startDate" | "dueTime">>,
+    now = Date.now(),
+): boolean {
+    const today = istDateKey(new Date(now));
+    const date = task.dueDate || task.startDate;
+    if (!date) return false;
+    if (date < today) return true;
+    if (date > today) return false;
+    if (task.dueDate && task.dueTime && isTaskTime(task.dueTime)) {
+        const currentTime = inputValueInIst(new Date(now)).slice(11, 16);
+        return task.dueTime < currentTime;
+    }
+    return false;
+}
+
+/** Use the due date, or planned start for undated list tasks. */
 export function taskGroup(task: Task, now = Date.now()): TaskGroup {
     if (task.completedAt) return "completed";
     const today = istDateKey(new Date(now));
-    if (!task.dueDate) {
-        if (task.startDate && task.startDate > today) return "upcoming";
-        return task.startDate === today ? "today" : "undated";
-    }
-    if (task.dueDate < today) return "overdue";
-    return task.dueDate === today ? "today" : "upcoming";
+    const date = task.dueDate || task.startDate;
+    if (!date) return "undated";
+    if (taskIsOverdue(task, now)) return "overdue";
+    return date === today ? "today" : "upcoming";
 }
 
 export function taskMatchesTab(task: Task, tab: TaskTab, completionFeedback = false): boolean {
@@ -326,17 +345,17 @@ export function taskMatchesTab(task: Task, tab: TaskTab, completionFeedback = fa
 export type TaskDueFilter = "" | "any" | "overdue" | "today" | "week" | "undated";
 export type TaskLinkFilter = "" | "any" | "client" | "owner" | "property" | "personal";
 
-/** Filter the original due date in every tab, including completed tasks. */
+/** Filter original dates in every tab; overdue falls back to the start for tasks without a deadline. */
 export function taskMatchesDueFilter(
-    task: Pick<Task, "dueDate">,
+    task: Pick<Task, "dueDate"> & Partial<Pick<Task, "startDate" | "dueTime">>,
     due: TaskDueFilter,
     now = Date.now(),
 ): boolean {
     if (!due || due === "any") return true;
     if (due === "undated") return !task.dueDate;
-    if (!task.dueDate) return false;
     const today = taskDateKey(now);
-    if (due === "overdue") return task.dueDate < today;
+    if (due === "overdue") return taskIsOverdue(task, now);
+    if (!task.dueDate) return false;
     if (due === "today") return task.dueDate === today;
     return task.dueDate >= today && task.dueDate <= taskDateKey(now + 6 * 86_400_000);
 }
@@ -400,8 +419,11 @@ export function taskScheduleLabel(
 export function taskDueLabel(task: Task, now = Date.now()): string {
     if (task.completedAt)
         return `Completed ${formatInTimeZone(task.completedAt, TASK_TIME_ZONE, "d MMM, h:mm a")}`;
-    if (!task.dueDate)
-        return task.startDate ? `Starts ${taskDateLabel(task.startDate, now)}` : "No due date";
+    if (!task.dueDate) {
+        if (!task.startDate) return "No due date";
+        const day = taskDateLabel(task.startDate, now);
+        return taskGroup(task, now) === "overdue" ? `Overdue · Started ${day}` : `Starts ${day}`;
+    }
     const day = taskDateLabel(task.dueDate, now);
     const label = task.dueTime ? `${day}, ${taskTimeLabel(task.dueTime)}` : `${day} · Any time`;
     return taskGroup(task, now) === "overdue" ? `Overdue · ${label}` : label;

@@ -1,12 +1,22 @@
 import {
+    isTaskTime,
     newTaskDraft,
     sortTasks,
     type Task,
     taskDateKey,
+    type TaskPriority,
     taskReminders,
     taskSchema,
     type TaskSort,
 } from "./model";
+
+export type PlannerTaskExtras = {
+    priority?: TaskPriority;
+    dueTime?: string | null;
+    clientId?: string | null;
+    ownerId?: string | null;
+    propertyId?: string | null;
+};
 import { taskListId, type TaskNotebook } from "./notebook-model";
 import { shiftTaskDate, taskDaysBetween } from "./recurrence";
 
@@ -91,23 +101,33 @@ export function createPlannerTask(
     now = Date.now(),
     id = crypto.randomUUID(),
     listId?: string,
+    extras: PlannerTaskExtras = {},
 ): Task {
     const draft = newTaskDraft(now);
     const at = new Date(now).toISOString();
+    const dueTime = extras.dueTime && isTaskTime(extras.dueTime) ? extras.dueTime : null;
+    // A time always needs a date — fall back to today when adding from Someday.
+    const dueDate = date ?? (dueTime ? taskDateKey(now) : null);
+    const startDate = dueDate || draft.startDate;
+    // Past due times are allowed (they go overdue); keep start ≤ due on the same day.
+    const startTime =
+        dueTime && startDate === dueDate && draft.startTime && draft.startTime > dueTime
+            ? dueTime
+            : draft.startTime;
     return taskSchema.parse({
         id,
         title,
         details: "",
-        startDate: date || draft.startDate,
-        startTime: draft.startTime,
+        startDate,
+        startTime,
         startReminderEnabledAt: at,
-        dueDate: date,
-        dueTime: null,
+        dueDate,
+        dueTime,
         reminders: [],
-        clientId: null,
-        ownerId: null,
-        propertyId: null,
-        priority: draft.priority,
+        clientId: extras.clientId ?? null,
+        ownerId: extras.ownerId ?? null,
+        propertyId: extras.propertyId ?? null,
+        priority: extras.priority ?? draft.priority,
         completedAt: null,
         deletedAt: null,
         listId,

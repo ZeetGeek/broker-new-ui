@@ -44,7 +44,7 @@ test("new tasks start today in India; start/due and repeat validation agree", ()
     };
     assert.equal(taskGroup(task, now), "upcoming");
     assert.equal(taskGroup({ ...task, startDate: "2030-01-02" }, now), "today");
-    assert.equal(taskGroup({ ...task, startDate: "2030-01-01" }, now), "undated");
+    assert.equal(taskGroup({ ...task, startDate: "2030-01-01" }, now), "overdue");
 });
 
 test("calendar repeats retain anchor through short months and leap years", () => {

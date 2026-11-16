@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useId, useState } from "react";
 
 import {
     horizontalListSortingStrategy,
@@ -12,6 +12,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import { cn } from "@/lib/utils";
 
+import { AppModal } from "@/components/shared/app-modal";
 import {
     ArrowLeft,
     ArrowRight,
@@ -21,8 +22,8 @@ import {
     Pencil,
     Plus,
     Trash2,
-    X,
 } from "@/components/shared/icons";
+import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,6 +31,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 
 import {
     addNotebookList,
@@ -59,6 +61,7 @@ export type TaskListsProps = Pick<
     | "onNotebookChange"
     | "tasks"
     | "sort"
+    | "catalogs"
     | "onAdd"
 > & {
     activeTab: string;
@@ -77,6 +80,7 @@ export function TaskLists({
     onNotebookChange,
     tasks,
     sort,
+    catalogs,
     onAdd,
     activeTab,
     onSelectTab,
@@ -189,22 +193,25 @@ export function TaskLists({
                 </button>
             </div>
             {editor && (
-                <div className={styles.notebookEditor}>
-                    <NameEditor
-                        key={`${editor.kind}-${editor.id}`}
-                        label={
-                            editor.kind === "new-tab"
-                                ? "New tab name"
-                                : editor.kind === "new-list"
-                                  ? "New list name"
-                                  : `Rename ${editor.kind}`
-                        }
-                        initial={editor.name}
-                        busy={busy}
-                        onSave={saveName}
-                        onCancel={() => setEditor(null)}
-                    />
-                </div>
+                <NameEditor
+                    key={`${editor.kind}-${editor.id}`}
+                    title={
+                        editor.kind === "new-tab"
+                            ? "Create tab"
+                            : editor.kind === "new-list"
+                              ? "Create list"
+                              : `Rename ${editor.kind}`
+                    }
+                    label={
+                        editor.kind === "new-tab" || editor.kind === "tab"
+                            ? "Tab name"
+                            : "List name"
+                    }
+                    initial={editor.name}
+                    busy={busy}
+                    onSave={saveName}
+                    onCancel={() => setEditor(null)}
+                />
             )}
             {notebookError && (
                 <p className={styles.notebookError} role="alert">
@@ -276,11 +283,32 @@ export function TaskLists({
                                                 sort,
                                                 dragPreview,
                                             )}
+                                            catalogs={catalogs}
                                             onAdd={onAdd}
                                             actions={actions}
                                         />
                                     </SortableList>
                                 ))}
+                                <div className={styles.newListColumn}>
+                                    <div className={styles.dayHeading}>
+                                        <button
+                                            type="button"
+                                            className={styles.newListButton}
+                                            disabled={busy}
+                                            onClick={() =>
+                                                setEditor({ kind: "new-list", id: "", name: "" })
+                                            }
+                                        >
+                                            <Plus aria-hidden size={14} />
+                                            New list
+                                        </button>
+                                    </div>
+                                    <ul className={styles.ruledList} aria-hidden="true">
+                                        {Array.from({ length: 9 }, (_, index) => (
+                                            <li key={index} className={styles.blankLine} />
+                                        ))}
+                                    </ul>
+                                </div>
                             </SortableContext>
                         )
                     )}
@@ -519,12 +547,14 @@ function SortableList({
 }
 
 function NameEditor({
+    title,
     label,
     initial,
     busy,
     onSave,
     onCancel,
 }: {
+    title: string;
     label: string;
     initial: string;
     busy: boolean;
@@ -533,46 +563,75 @@ function NameEditor({
 }) {
     const [name, setName] = useState(initial);
     const [error, setError] = useState("");
-    const submit = (event: FormEvent) => {
+    const [saving, setSaving] = useState(false);
+    const formId = useId();
+    const inputId = useId();
+    const errorId = useId();
+    const pending = busy || saving;
+    const submit = async (event: FormEvent) => {
         event.preventDefault();
-        if (busy) return;
+        if (pending) return;
         const result = notebookName.safeParse(name);
         if (!result.success) {
             setError(result.error.issues[0].message);
             return;
         }
-        void onSave(result.data);
+        setError("");
+        setSaving(true);
+        try {
+            if (!(await onSave(result.data))) {
+                setError("The name couldn't be saved. Please try again.");
+            }
+        } catch {
+            setError("The name couldn't be saved. Please try again.");
+        } finally {
+            setSaving(false);
+        }
     };
     return (
-        <form className={styles.nameForm} onSubmit={submit}>
-            <label htmlFor="notebook-item-name">{label}</label>
-            <input
-                id="notebook-item-name"
-                autoFocus
-                value={name}
-                maxLength={80}
-                onChange={(event) => {
-                    setName(event.target.value);
-                    setError("");
-                }}
-                onKeyDown={(event) => {
-                    if (event.key === "Escape") onCancel();
-                }}
-                disabled={busy}
-                aria-invalid={!!error}
-                aria-describedby={error ? "notebook-name-error" : undefined}
-            />
-            <button type="submit" disabled={busy}>
-                {initial ? "Save" : "Create"}
-            </button>
-            <button type="button" onClick={onCancel} disabled={busy} aria-label="Cancel name entry">
-                <X aria-hidden size={16} />
-            </button>
-            {error && (
-                <p id="notebook-name-error" role="alert">
-                    {error}
-                </p>
-            )}
-        </form>
+        <AppModal
+            open
+            title={title}
+            size="sm"
+            padding="md"
+            onOpenChange={(open) => {
+                if (!open && !pending) onCancel();
+            }}
+            footer={
+                <div className={styles.nameActions}>
+                    <Button variant="outline" onClick={onCancel} disabled={pending}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" form={formId} variant="accent" loading={pending}>
+                        {initial ? "Save changes" : title}
+                    </Button>
+                </div>
+            }
+        >
+            <form id={formId} className={styles.nameForm} onSubmit={submit}>
+                <label className={styles.nameLabel} htmlFor={inputId}>
+                    {label}
+                </label>
+                <Input
+                    id={inputId}
+                    autoFocus
+                    value={name}
+                    maxLength={80}
+                    placeholder={label === "Tab name" ? "e.g. Work" : "e.g. Follow-ups"}
+                    onValueChange={(value) => {
+                        setName(value);
+                        setError("");
+                    }}
+                    disabled={pending}
+                    aria-invalid={!!error}
+                    aria-describedby={error ? errorId : undefined}
+                />
+                {error && (
+                    <p className={styles.nameError} id={errorId} role="alert">
+                        {error}
+                    </p>
+                )}
+            </form>
+        </AppModal>
     );
 }
