@@ -46,6 +46,40 @@ type Segment = TextSegment | ChipSegment;
 
 const newId = () => crypto.randomUUID();
 const emptySegments = (): Segment[] => [{ id: newId(), type: "text", value: "" }];
+const TITLE_MAX = 160;
+
+/** Keep the saved title at or under TITLE_MAX while typing / pasting. */
+function clampToTitleLimit(
+    segments: Segment[],
+    segmentId: string,
+    nextValue: string,
+): string | null {
+    const withValue = (value: string) =>
+        segments.map((segment) =>
+            segment.id === segmentId && segment.type === "text" ? { ...segment, value } : segment,
+        );
+    if (serializeTitle(withValue(nextValue)).length <= TITLE_MAX) return nextValue;
+
+    const current =
+        segments.find((segment) => segment.id === segmentId && segment.type === "text")?.value ??
+        "";
+    let lo = 0;
+    let hi = nextValue.length;
+    let best = "";
+    while (lo <= hi) {
+        const mid = Math.floor((lo + hi) / 2);
+        const candidate = nextValue.slice(0, mid);
+        if (serializeTitle(withValue(candidate)).length <= TITLE_MAX) {
+            best = candidate;
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    if (best === current && nextValue.length > current.length) return null;
+    return best;
+}
+
 /**
  * Collapse empty/whitespace gaps around chips. Empty inputs still take flex
  * min-width + line gap, which looked like "unwanted space" beside chips.
@@ -323,7 +357,7 @@ export function SmartTaskComposer({
     });
     const [highlight, setHighlight] = useState(0);
     const pending = useRef(false);
-    const inputRefs = useRef(new Map<string, HTMLInputElement>());
+    const inputRefs = useRef(new Map<string, HTMLTextAreaElement>());
     const listIdAttr = useId();
     const activeSegment =
         segments.find((segment) => segment.id === activeId && segment.type === "text") ??
@@ -424,7 +458,9 @@ export function SmartTaskComposer({
         setHighlight(0);
     };
 
-    const updateText = (segmentId: string, value: string) => {
+    const updateText = (segmentId: string, rawValue: string) => {
+        const value = clampToTitleLimit(segments, segmentId, rawValue.replace(/[\r\n]+/g, " "));
+        if (value === null) return;
         if (SMART_TOKEN_BOUNDARY.test(value) && !parseTrailingMention(value)) {
             replaceTextWithParts(segmentId, value);
             return;
@@ -476,6 +512,7 @@ export function SmartTaskComposer({
                     .slice(index + 1)
                     .filter((item) => item.type !== "chip" || item.kind !== chip.kind),
             ]);
+            if (serializeTitle(next).length > TITLE_MAX) return current;
             const focusId = next.filter((item) => item.type === "text").at(-1)?.id ?? afterId;
             setActiveId(focusId);
             return next;
@@ -501,7 +538,7 @@ export function SmartTaskComposer({
         );
     };
 
-    const removeChip = (chipId: string, caret: "start" | "end" = "end") => {
+    const removeChip = (chipId: string) => {
         setSegments((current) => {
             const index = current.findIndex((segment) => segment.id === chipId);
             if (index < 0) return current;
@@ -524,24 +561,28 @@ export function SmartTaskComposer({
                 joinAt = spaced.length;
             }
             const next = normalizeSegments([...left, ...right]);
-            const focusId =
-                joins && before
-                    ? before.id
-                    : ((caret === "start"
-                          ? next
-                                .slice(Math.max(0, index - 1))
-                                .find((segment) => segment.type === "text")
-                          : [...next.slice(0, Math.min(index, next.length))]
-                                .reverse()
-                                .find((segment) => segment.type === "text")
-                      )?.id ?? next.find((segment) => segment.type === "text")?.id);
-            if (focusId) {
-                setActiveId(focusId);
+            const survives = (segment: Segment | undefined) =>
+                segment?.type === "text" && next.some((item) => item.id === segment.id);
+            // Caret lands where the chip was: the join point, else the start of the
+            // text right after it, else the end of the text right before it.
+            let focus: { id: string; at: "start" | "end" | number } | undefined;
+            if (joins && before) focus = { id: before.id, at: joinAt };
+            else if (survives(after) && after) focus = { id: after.id, at: "start" };
+            else if (survives(before) && before) focus = { id: before.id, at: "end" };
+            else {
+                const fallback =
+                    next.slice(Math.max(0, index - 1)).find((segment) => segment.type === "text") ??
+                    next.filter((segment) => segment.type === "text").at(-1);
+                if (fallback) focus = { id: fallback.id, at: "start" };
+            }
+            if (focus) {
+                const { id, at } = focus;
+                setActiveId(id);
                 requestAnimationFrame(() => {
-                    const field = inputRefs.current.get(focusId);
+                    const field = inputRefs.current.get(id);
                     if (!field) return;
                     field.focus();
-                    const pos = joins ? joinAt : caret === "start" ? 0 : field.value.length;
+                    const pos = at === "start" ? 0 : at === "end" ? field.value.length : at;
                     field.setSelectionRange(pos, pos);
                 });
             }
@@ -588,7 +629,7 @@ export function SmartTaskComposer({
         );
         const priorityAt =
             priorityIndex < 0 ? null : serializeTitle(flushed.slice(0, priorityIndex)).length;
-        if (clean.length > 160) return;
+        if (clean.length > TITLE_MAX) return;
         if (!typedTitle(flushed)) {
             if (editing) {
                 // Match prior inline edit: empty submit deletes; empty blur cancels via onCancel.
@@ -641,7 +682,7 @@ export function SmartTaskComposer({
         }
     };
 
-    const onTextKeyDown = (event: KeyboardEvent<HTMLInputElement>, segment: TextSegment) => {
+    const onTextKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>, segment: TextSegment) => {
         if (mention) {
             if (event.key === "ArrowDown") {
                 event.preventDefault();
@@ -684,7 +725,7 @@ export function SmartTaskComposer({
             onCancel?.();
             return;
         }
-        if (event.key === "Enter" && !event.shiftKey) {
+        if (event.key === "Enter") {
             event.preventDefault();
             event.currentTarget.form?.requestSubmit();
             return;
@@ -706,7 +747,7 @@ export function SmartTaskComposer({
                 const previous = left >= 0 ? segments[left] : null;
                 if (previous?.type === "chip") {
                     event.preventDefault();
-                    removeChip(previous.id, segment.value ? "start" : "end");
+                    removeChip(previous.id);
                     return;
                 }
                 if (previous?.type === "text" && segment.value === "") {
@@ -715,6 +756,21 @@ export function SmartTaskComposer({
                         normalizeSegments(current.filter((item) => item.id !== segment.id)),
                     );
                     focusSegment(previous.id, "end");
+                    return;
+                }
+            }
+        }
+        if (event.key === "Delete") {
+            const start = event.currentTarget.selectionStart ?? 0;
+            const end = event.currentTarget.selectionEnd ?? 0;
+            if (start === segment.value.length && end === start) {
+                const index = segments.findIndex((item) => item.id === segment.id);
+                const following = segments
+                    .slice(index + 1)
+                    .find((item) => item.type === "chip" || item.value);
+                if (following?.type === "chip") {
+                    event.preventDefault();
+                    removeChip(following.id);
                     return;
                 }
             }
@@ -764,7 +820,7 @@ export function SmartTaskComposer({
                     data-needs-title={needsTitle || undefined}
                     onClick={(event) => {
                         // Clicks inside a text run keep the browser's caret placement.
-                        if (event.target instanceof HTMLInputElement) return;
+                        if (event.target instanceof HTMLTextAreaElement) return;
                         const last = segments.filter((segment) => segment.type === "text").at(-1);
                         if (last) focusSegment(last.id, "end");
                     }}
@@ -778,8 +834,9 @@ export function SmartTaskComposer({
                         )}
                         {segments.map((segment) =>
                             segment.type === "text" ? (
-                                <input
+                                <textarea
                                     key={segment.id}
+                                    rows={1}
                                     ref={(node) => {
                                         if (node) inputRefs.current.set(segment.id, node);
                                         else inputRefs.current.delete(segment.id);
@@ -810,7 +867,7 @@ export function SmartTaskComposer({
                                             ? "Type a task name"
                                             : undefined
                                     }
-                                    size={Math.max(
+                                    cols={Math.max(
                                         1,
                                         segment.value.length || (needsTitle ? 16 : 1),
                                     )}
@@ -838,8 +895,8 @@ export function SmartTaskComposer({
                         )}
                     </span>
                     <small className={styles.smartCount}>
-                        {title.length}/160
-                        {title.length >= 160 ? " · Limit reached" : " characters"}
+                        {title.length}/{TITLE_MAX}
+                        {title.length >= TITLE_MAX ? " · Limit reached" : " characters"}
                     </small>
                 </div>
                 {mention && (
@@ -906,7 +963,7 @@ export function SmartTaskComposer({
             <button
                 type="submit"
                 className={styles.addButton}
-                disabled={busy || !canSubmit || title.length > 160}
+                disabled={busy || !canSubmit || title.length > TITLE_MAX}
                 aria-label={editing ? "Save task" : "Add task"}
             >
                 <Plus aria-hidden size={16} strokeWidth={2.5} />

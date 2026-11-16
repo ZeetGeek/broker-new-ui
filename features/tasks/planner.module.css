@@ -438,32 +438,54 @@
 .smartInput {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.2rem;
     min-inline-size: 0;
-    /* Same height empty or typing so the row doesn’t jump when Add appears. */
-    min-block-size: 5.75rem;
-    padding-block: 0.9rem 0.65rem;
+    /* Height follows content — don’t inflate on hover. */
+    min-block-size: 0;
+    padding-block: 0.35rem 0.4rem;
     cursor: text;
 }
 /*
- * Collapse the add row unless that row is hovered/focused.
- * (Whole-column hover was also expanding it under an in-progress edit.)
+ * Empty add row = one ruled line by default (same as blank rows).
+ * Hover / focus this box only → unlock height and show the placeholder tips.
  */
-.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] {
+.composerLine:not(:hover):not(:focus-within):has(.smartInput[data-empty]) {
+    block-size: var(--line-height);
     min-block-size: var(--line-height);
+    max-block-size: var(--line-height);
+    overflow: hidden;
+}
+.composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] {
+    block-size: var(--line-height);
+    min-block-size: var(--line-height);
+    max-block-size: var(--line-height);
     padding-block: 0;
     overflow: hidden;
 }
 .composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartInputLine {
     min-block-size: var(--line-height);
+    max-block-size: var(--line-height);
 }
 .composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartTextInput {
     min-block-size: var(--line-height);
+    max-block-size: var(--line-height);
     block-size: var(--line-height);
 }
 .composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartPlaceholder,
 .composerLine:not(:hover):not(:focus-within) .smartInput[data-empty] .smartCount {
     display: none;
+}
+.composerLine:hover:has(.smartInput[data-empty]),
+.composerLine:focus-within:has(.smartInput[data-empty]) {
+    block-size: auto;
+    max-block-size: none;
+}
+.composerLine:hover .smartInput[data-empty],
+.composerLine:focus-within .smartInput[data-empty] {
+    block-size: auto;
+    min-block-size: 0;
+    max-block-size: none;
+    padding-block: 0.25rem 0.35rem;
 }
 .smartInputLine {
     position: relative;
@@ -514,18 +536,21 @@
 .smartTextInput {
     position: relative;
     z-index: 1;
-    flex: 0 1 auto;
+    flex: 1 1 8rem;
     align-self: flex-start;
     min-inline-size: 1px;
     max-inline-size: 100%;
     /* Same first-line box as the placeholder so typed text doesn’t sit lower. */
     box-sizing: content-box;
     min-block-size: 1.5em;
-    block-size: 1.5em;
     margin: 0;
     border: 0;
     padding: 0;
     outline: none;
+    resize: none;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
     background: transparent;
     color: var(--color-ink);
     font: inherit;
@@ -538,6 +563,8 @@
     flex: 1 1 100%;
     min-inline-size: 0.75rem;
     inline-size: 100%;
+    /* Match the 2-line empty hint so hover doesn’t leave a tall blank. */
+    min-block-size: calc(1.5em * 2);
 }
 .smartInput[data-needs-title] .smartTextInput {
     flex: 1 1 auto;
@@ -553,7 +580,7 @@
 }
 .smartCount {
     display: none;
-    margin-block-start: auto;
+    margin-block-start: 0.15rem;
     padding-block-end: 0;
     color: var(--color-ink-muted);
     font-size: 0.6875rem;
