@@ -1,19 +1,35 @@
 "use client";
 
 import { type CSSProperties, type Ref, useId, useState } from "react";
+import dynamic from "next/dynamic";
 
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
+import { timeOnlyToDate } from "@/lib/datetime/time-only";
+import { formatTimeIn } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 import { VISITS_TIME_ZONE } from "@/lib/visits/constants";
 
-import { TimePicker, TimePickerColumns, TimePickerPanel } from "@/components/reui/time-picker";
 import { CalendarClock } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-/** Compact field opening the calendar and time columns together. OK commits the choice. */
+const MaterialTimePanel = dynamic(() => import("./material-time-panel"), {
+    ssr: false,
+    loading: () => (
+        <div role="status" className="p-6 text-sm text-ink-muted inline-80 min-block-96">
+            Loading clock…
+        </div>
+    ),
+});
+
+function formatTimeLabel(time: string): string {
+    const parsed = timeOnlyToDate(time);
+    return parsed ? formatTimeIn(parsed) : time;
+}
+
+/** Compact field opening the calendar and material clock together. OK commits the choice. */
 export function AppDateTimePicker({
     id,
     value,
@@ -66,7 +82,7 @@ export function AppDateTimePicker({
         : undefined;
     const summary =
         savedDay && !Number.isNaN(savedDay.getTime())
-            ? `${formatInTimeZone(savedDay, VISITS_TIME_ZONE, "dd/MM/yyyy")}${savedTime ? ` at ${savedTime}` : ""}`
+            ? `${formatInTimeZone(savedDay, VISITS_TIME_ZONE, "dd/MM/yyyy")}${savedTime ? ` at ${formatTimeLabel(savedTime)}` : ""}`
             : "";
     const selected = date ? fromZonedTime(`${date}T12:00:00`, VISITS_TIME_ZONE) : undefined;
     const validDate = selected && !Number.isNaN(selected.getTime()) ? selected : undefined;
@@ -87,6 +103,18 @@ export function AppDateTimePicker({
     const canConfirm =
         (!draft && clearable) ||
         !!(validDate && (time || timeOptional) && (!min || draft >= min) && (!max || draft <= max));
+
+    const setTime = (nextTime: string) => {
+        const today = formatInTimeZone(new Date(), VISITS_TIME_ZONE, "yyyy-MM-dd");
+        const day =
+            date ||
+            (minDate && today < minDate ? minDate : maxDate && today > maxDate ? maxDate : today);
+        if (!nextTime) {
+            setDraft(day ? `${day}T` : "");
+            return;
+        }
+        setDraft(`${day}T${nextTime}`);
+    };
 
     return (
         <div className={cn("min-inline-0", className)}>
@@ -124,9 +152,9 @@ export function AppDateTimePicker({
                     align="start"
                     role="dialog"
                     aria-label={label}
-                    className="@container gap-0 overflow-y-auto p-0 inline-[min(34rem,calc(100vw-1.5rem))] max-block-[min(80dvh,var(--available-height))]"
+                    className="@container gap-0 overflow-y-auto p-0 inline-[min(40rem,calc(100vw-1.5rem))] max-block-[min(80dvh,var(--available-height))]"
                 >
-                    <div className="flex flex-col items-center gap-4 p-3 @[32rem]:flex-row @[32rem]:items-start">
+                    <div className="flex flex-col items-center gap-4 p-3 @[36rem]:flex-row @[36rem]:items-start">
                         <Calendar
                             key={date || "empty"}
                             mode="single"
@@ -161,42 +189,24 @@ export function AppDateTimePicker({
                                 } as CSSProperties
                             }
                         />
-                        <div className="flex justify-center self-stretch border-bs border-border-warm pbs-3 @[32rem]:border-s @[32rem]:border-bs-0 @[32rem]:ps-3 @[32rem]:pbs-0">
-                            <TimePicker
-                                aria-label={`${label}: time`}
-                                value={time || null}
-                                onValueChange={(next) => {
-                                    if (next) {
-                                        const today = formatInTimeZone(
-                                            new Date(),
-                                            VISITS_TIME_ZONE,
-                                            "yyyy-MM-dd",
-                                        );
-                                        const day =
-                                            date ||
-                                            (minDate && today < minDate
-                                                ? minDate
-                                                : maxDate && today > maxDate
-                                                  ? maxDate
-                                                  : today);
-                                        setDraft(`${day}T${next}`);
-                                    }
-                                }}
-                                minuteStep={minuteStep}
-                                disabled={disabled}
-                                min={date === minDate ? min?.slice(11, 16) : undefined}
-                                max={date === maxDate ? max?.slice(11, 16) : undefined}
-                            >
-                                <TimePickerPanel className="[--time-picker-rows:5] @[32rem]:[--time-picker-rows:7]">
-                                    <TimePickerColumns />
-                                </TimePickerPanel>
-                            </TimePicker>
+                        <div className="flex justify-center self-stretch border-bs border-border-warm pbs-3 @[36rem]:border-s @[36rem]:border-bs-0 @[36rem]:ps-3 @[36rem]:pbs-0">
+                            {open ? (
+                                <MaterialTimePanel
+                                    value={time || null}
+                                    onChange={setTime}
+                                    timeZone={VISITS_TIME_ZONE}
+                                    disabled={disabled}
+                                    min={date === minDate ? min?.slice(11, 16) : undefined}
+                                    max={date === maxDate ? max?.slice(11, 16) : undefined}
+                                    minuteStep={minuteStep}
+                                />
+                            ) : null}
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 border-bs border-border-warm px-3 py-2">
                         <p role="status" className="body-sm flex-1 text-ink-muted min-inline-0">
                             {validDate
-                                ? `${formatInTimeZone(validDate, VISITS_TIME_ZONE, "EEE, d MMM yyyy")}${time ? ` at ${time}` : timeOptional ? " · No time set" : " · Choose a time"}`
+                                ? `${formatInTimeZone(validDate, VISITS_TIME_ZONE, "EEE, d MMM yyyy")}${time ? ` at ${formatTimeLabel(time)}` : timeOptional ? " · No time set" : " · Choose a time"}`
                                 : "Choose a date and time"}
                         </p>
                         {timeOptional && time && (

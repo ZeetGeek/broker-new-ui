@@ -5,8 +5,6 @@ import { type ReactNode, useState } from "react";
 import { AppModal } from "@/components/shared/app-modal";
 import { Button } from "@/components/ui/button";
 
-import styles from "./task-form.module.css";
-
 /** A focused working surface: docked on desktop, full screen on a phone. */
 export function TaskPanel({
     title,
@@ -43,9 +41,30 @@ export function TaskPanel({
                 description={description}
                 size={compact ? "md" : "lg"}
                 padding="md"
-                className={compact ? styles.compactPanel : styles.panel}
-                bodyClassName={styles.panelBody}
-                footerClassName={styles.panelFooter}
+                className={
+                    compact
+                        ? undefined
+                        : `
+                          contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0!
+                          rounded-none! block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
+                          sm:inline-[min(46rem,100vw)]! sm:max-inline-184!
+                        `
+                }
+                headerClassName={
+                    compact
+                        ? undefined
+                        : `
+                          !space-y-0 !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-b
+                          border-border-warm
+                        `
+                }
+                footerClassName={
+                    compact
+                        ? undefined
+                        : `
+                          !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
+                        `
+                }
                 footer={typeof footer === "function" ? footer(close) : footer}
             >
                 {children}
@@ -55,12 +74,11 @@ export function TaskPanel({
                     open
                     onOpenChange={setDiscardOpen}
                     title="Discard unsaved changes?"
-                    description="Your changes will be lost if you close this form."
+                    description="What you typed will be lost if you leave now."
                     size="sm"
-                    className={styles.compactPanel}
                     footer={
-                        <div className={styles.discardActions}>
-                            <Button variant="outline" onClick={() => setDiscardOpen(false)}>
+                        <div className="flex flex-wrap items-center justify-end gap-2 inline-full">
+                            <Button variant="ghost" onClick={() => setDiscardOpen(false)}>
                                 Keep editing
                             </Button>
                             <Button variant="destructive" onClick={onClose}>
@@ -69,9 +87,8 @@ export function TaskPanel({
                         </div>
                     }
                 >
-                    <p className={styles.hint}>
-                        Stay here to finish your task, or discard the changes and return to your
-                        list.
+                    <p className="body text-ink-muted">
+                        You can stay on this form and keep editing, or discard and close it.
                     </p>
                 </AppModal>
             )}

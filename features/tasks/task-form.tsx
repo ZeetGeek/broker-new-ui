@@ -2,22 +2,21 @@
 
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 
+import { cn } from "@/lib/utils";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
-import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppImage } from "@/components/shared/app-image";
+import { AppTimePicker } from "@/components/shared/app-time-picker";
 import { CharacterCount } from "@/components/shared/character-count";
 import { filterChipClassName } from "@/components/shared/filter-chip";
 import {
     ArrowDownUp,
     Bell,
     Building2,
-    CalendarClock,
     ChevronDown,
-    Link2,
     LockKeyhole,
-    Repeat,
+    Pencil,
     UserRound,
 } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -51,6 +50,13 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+
+import { FormField } from "@/features/contacts/contact-form-ui";
+import {
+    FORM_SECTIONS_CLASS,
+    FORM_STACK_CLASS,
+    WizardSection,
+} from "@/features/properties/property-form/form-fields";
 
 import {
     draftFromTask,
@@ -131,10 +137,7 @@ export function TaskSelect({
         const labelFor = (item: string) =>
             options.find((option) => option.value === item)?.label ?? "";
         return (
-            <div className={styles.field}>
-                <label htmlFor={id} className={styles.label}>
-                    {label}
-                </label>
+            <FormField label={label} htmlFor={id}>
                 <Combobox
                     items={options.map((option) => option.value)}
                     value={value || null}
@@ -194,14 +197,11 @@ export function TaskSelect({
                         </ComboboxList>
                     </ComboboxContent>
                 </Combobox>
-            </div>
+            </FormField>
         );
     }
     return (
-        <div className={styles.field}>
-            <label htmlFor={id} className={styles.label}>
-                {label}
-            </label>
+        <FormField label={label} htmlFor={id}>
             <Select
                 items={options}
                 value={value}
@@ -219,7 +219,7 @@ export function TaskSelect({
                     ))}
                 </SelectContent>
             </Select>
-        </div>
+        </FormField>
     );
 }
 
@@ -282,10 +282,7 @@ function TaskContactsField({
         setSearch("");
     };
     return (
-        <div className={styles.field}>
-            <label htmlFor={id} className={styles.label}>
-                Contacts
-            </label>
+        <FormField label="Contacts" htmlFor={id} hint="Link a Client, an owner, or both.">
             <Combobox
                 multiple
                 items={CONTACT_OPTIONS.map((option) => option.key)}
@@ -351,8 +348,7 @@ function TaskContactsField({
                     </ComboboxList>
                 </ComboboxContent>
             </Combobox>
-            <p className={styles.hint}>Link a Client, an owner, or both.</p>
-        </div>
+        </FormField>
     );
 }
 
@@ -374,6 +370,8 @@ export function TaskForm({
     prefill?: Partial<TaskDraft>;
 }) {
     const formId = useId();
+    const detailsCountId = `${formId}-details-count`;
+    const detailsErrorId = `${formId}-details-error`;
     const titleRef = useRef<HTMLInputElement>(null);
     const [initial] = useState(() => {
         const base = task ? draftFromTask(task) : { ...newTaskDraft(), ...prefill };
@@ -419,19 +417,9 @@ export function TaskForm({
             return at !== null && Date.parse(at) <= atTime && !unchanged;
         });
     const pastReminder = hasNewPastReminder(now);
-    const dueOrderError =
-        validation.errors.dueDate || validation.errors.dueTime
-            ? validation.errors.dueDate || validation.errors.dueTime
-            : undefined;
     const showDueError = submitted || !!draft.dueDate;
     const setDate = (date: string | null) =>
         patch(date ? { dueDate: date } : { dueDate: "", dueTime: "", reminders: [] });
-    const dueMin =
-        draft.startDate && draft.startTime
-            ? `${draft.startDate}T${draft.startTime}`
-            : draft.startDate
-              ? `${draft.startDate}T00:00`
-              : undefined;
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (busy) return;
@@ -461,12 +449,12 @@ export function TaskForm({
         reschedule: "Reschedule task",
         reminder: "Task reminders",
     }[mode];
-    const description = {
-        create: "Start with the next small step. Add a date or a reminder when you need one.",
-        edit: "Keep the details useful and your next step clear.",
-        reschedule: "Choose a new date and time. All times are in India time (IST).",
-        reminder: "Add one or more reminders, including your own custom times.",
-    }[mode];
+    const description =
+        mode === "reschedule"
+            ? "Choose a new date and time. All times are in India time (IST)."
+            : mode === "reminder"
+              ? "Add one or more reminders, including your own custom times."
+              : "";
     const primary = mode === "create" ? "Create task" : "Save changes";
     return (
         <TaskPanel
@@ -475,11 +463,8 @@ export function TaskForm({
             onClose={onClose}
             busy={busy}
             dirty={dirty}
-            footer={(close) => (
-                <div className={styles.discardActions}>
-                    <Button variant="outline" disabled={busy} onClick={close}>
-                        Cancel
-                    </Button>
+            footer={
+                <div className="flex flex-wrap items-center justify-end gap-2 inline-full">
                     <Button
                         variant="accent"
                         type="submit"
@@ -490,270 +475,368 @@ export function TaskForm({
                         {primary}
                     </Button>
                 </div>
-            )}
+            }
         >
-            <form id={formId} onSubmit={submit} className={styles.form} noValidate>
-                {!fullForm && task ? (
-                    <div className={styles.summary}>
-                        <strong>{task.title}</strong>
-                        {task.details ? <p className={styles.hint}>{task.details}</p> : null}
-                    </div>
-                ) : null}
-                {fullForm ? (
-                    <section className={styles.section} aria-label="Task details">
-                        <div className={styles.field}>
-                            <label htmlFor={`${formId}-title`} className={styles.label}>
-                                Task name <span aria-hidden="true">*</span>
-                            </label>
-                            <Input
-                                ref={titleRef}
-                                id={`${formId}-title`}
-                                name="title"
-                                value={draft.title}
-                                onValueChange={(title) => patch({ title })}
-                                placeholder="e.g. Call Aarav about the Vesu shortlist"
-                                size="lg"
-                                maxLength={160}
-                                disabled={busy}
-                                required
-                                autoComplete="off"
-                                errorText={submitted ? validation.errors.title : undefined}
-                            />
-                        </div>
-                        <div className={styles.field}>
-                            <label htmlFor={`${formId}-details`} className={styles.label}>
-                                Details <span className={styles.optional}>(optional)</span>
-                            </label>
-                            <Textarea
-                                id={`${formId}-details`}
-                                name="details"
-                                value={draft.details}
-                                onChange={(event) => patch({ details: event.target.value })}
-                                placeholder="Anything you’ll want to remember when you pick this up."
-                                maxLength={MAX_CHARS.taskDetails}
-                                rows={3}
-                                disabled={busy}
-                                className={styles.notesInput}
-                                aria-invalid={submitted && !!validation.errors.details}
-                                aria-describedby={`${formId}-details-count`}
-                            />
-                            <CharacterCount
-                                id={`${formId}-details-count`}
-                                value={draft.details}
-                                maxChars={MAX_CHARS.taskDetails}
-                            />
-                            {submitted && validation.errors.details ? (
-                                <p role="alert" className={styles.error}>
-                                    {validation.errors.details}
-                                </p>
+            <form id={formId} onSubmit={submit} className="inline-full" noValidate>
+                <div className={FORM_SECTIONS_CLASS}>
+                    {!fullForm && task ? (
+                        <div className="flex flex-col gap-1.5">
+                            <p className="font-display text-xl font-semibold tracking-[-0.02em] text-ink">
+                                {task.title}
+                            </p>
+                            {task.details ? (
+                                <p className="text-sm/6 text-ink-muted">{task.details}</p>
                             ) : null}
                         </div>
-                    </section>
-                ) : null}
-                <section className={styles.section} aria-labelledby={`${formId}-schedule`}>
-                    <h2 className={styles.sectionHeading} id={`${formId}-schedule`}>
-                        <CalendarClock aria-hidden="true" /> Schedule
-                    </h2>
-                    <div className={styles.field}>
-                        <label htmlFor={`${formId}-start`} className={styles.label}>
-                            Start date & time <span aria-hidden="true">*</span>
-                        </label>
-                        <AppDateTimePicker
-                            id={`${formId}-start`}
-                            aria-label="Task start date and time (IST)"
-                            value={draft.startDate ? `${draft.startDate}T${draft.startTime}` : ""}
-                            onChange={(value) => {
-                                const [startDate = "", startTime = ""] = value.split("T");
-                                patch({ startDate, startTime });
-                            }}
-                            disabled={busy}
-                            error={
-                                submitted
-                                    ? validation.errors.startDate || validation.errors.startTime
-                                    : undefined
-                            }
-                        />
-                        <p className={styles.hint}>
-                            A reminder at task start is included automatically. All times are IST.
-                        </p>
-                    </div>
-                    <div className={styles.field}>
-                        <div className={styles.field}>
-                            <label htmlFor={`${formId}-date`} className={styles.label}>
-                                Due date & time <span className={styles.optional}>(optional)</span>
-                            </label>
-                            <AppDateTimePicker
-                                id={`${formId}-date`}
-                                aria-label="Task due date and time (IST)"
-                                value={draft.dueDate ? `${draft.dueDate}T${draft.dueTime}` : ""}
-                                onChange={(value) => {
-                                    const [dueDate = "", dueTime = ""] = value.split("T");
-                                    patch({
-                                        dueDate,
-                                        dueTime,
-                                        ...(!dueTime ? { reminders: [] } : {}),
-                                    });
-                                }}
-                                min={dueMin}
-                                timeOptional
-                                clearable
-                                disabled={busy}
-                                error={showDueError ? dueOrderError : undefined}
-                            />
+                    ) : null}
+
+                    {fullForm ? (
+                        <WizardSection
+                            title="Task details"
+                            description="Start with the next small step. Add schedule and links when you need them."
+                        >
+                            <div className={FORM_STACK_CLASS}>
+                                <FormField label="Task name" htmlFor={`${formId}-title`} required>
+                                    <Input
+                                        ref={titleRef}
+                                        id={`${formId}-title`}
+                                        name="title"
+                                        startIcon={Pencil}
+                                        size="lg"
+                                        value={draft.title}
+                                        onValueChange={(next) => patch({ title: next })}
+                                        placeholder="e.g. Call Aarav about the Vesu shortlist"
+                                        maxLength={160}
+                                        disabled={busy}
+                                        autoComplete="off"
+                                        required
+                                        errorText={submitted ? validation.errors.title : undefined}
+                                    />
+                                </FormField>
+                                <FormField
+                                    label="Details"
+                                    htmlFor={`${formId}-details`}
+                                    hint={
+                                        <CharacterCount
+                                            id={detailsCountId}
+                                            value={draft.details}
+                                            maxChars={MAX_CHARS.taskDetails}
+                                        />
+                                    }
+                                >
+                                    <Textarea
+                                        id={`${formId}-details`}
+                                        name="details"
+                                        value={draft.details}
+                                        onChange={(event) => patch({ details: event.target.value })}
+                                        maxLength={MAX_CHARS.taskDetails}
+                                        rows={4}
+                                        disabled={busy}
+                                        placeholder="Anything you’ll want to remember when you pick this up."
+                                        aria-invalid={
+                                            submitted && !!validation.errors.details
+                                                ? true
+                                                : undefined
+                                        }
+                                        aria-describedby={
+                                            submitted && validation.errors.details
+                                                ? `${detailsCountId} ${detailsErrorId}`
+                                                : detailsCountId
+                                        }
+                                        className={cn(
+                                            `
+                                              field-sizing-fixed resize-y rounded-control border-2
+                                              border-border-warm bg-surface px-4 py-3 text-base
+                                              text-ink shadow-none
+                                              hover:border-ink-subtle
+                                              focus-visible:border-ring focus-visible:ring-3
+                                              focus-visible:ring-ring/30
+                                              aria-invalid:border-danger-mid
+                                            `,
+                                        )}
+                                    />
+                                    {submitted && validation.errors.details ? (
+                                        <p
+                                            id={detailsErrorId}
+                                            role="alert"
+                                            className="text-sm text-danger"
+                                        >
+                                            {validation.errors.details}
+                                        </p>
+                                    ) : null}
+                                </FormField>
+                            </div>
+                        </WizardSection>
+                    ) : null}
+
+                    <WizardSection
+                        title="Schedule"
+                        description="Set when this starts. Add a due date if it needs one."
+                    >
+                        <div className={FORM_STACK_CLASS}>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <FormField
+                                    label="Start date"
+                                    htmlFor={`${formId}-start-date`}
+                                    required
+                                    error={submitted ? validation.errors.startDate : undefined}
+                                >
+                                    <AppDatePicker
+                                        id={`${formId}-start-date`}
+                                        value={draft.startDate || null}
+                                        onChange={(startDate) =>
+                                            patch({ startDate: startDate ?? "" })
+                                        }
+                                        disabled={busy}
+                                        allowPast
+                                        invalid={submitted && !!validation.errors.startDate}
+                                    />
+                                </FormField>
+                                <FormField
+                                    label="Start time (IST)"
+                                    htmlFor={`${formId}-start-time`}
+                                    required
+                                    hint="A reminder at task start is included automatically."
+                                >
+                                    <AppTimePicker
+                                        id={`${formId}-start-time`}
+                                        aria-label="Task start time (IST)"
+                                        value={draft.startTime}
+                                        onChange={(startTime) => patch({ startTime })}
+                                        disabled={busy}
+                                        required
+                                        error={submitted ? validation.errors.startTime : undefined}
+                                    />
+                                </FormField>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <FormField
+                                    label="Due date"
+                                    htmlFor={`${formId}-due-date`}
+                                    error={showDueError ? validation.errors.dueDate : undefined}
+                                >
+                                    <AppDatePicker
+                                        id={`${formId}-due-date`}
+                                        value={draft.dueDate || null}
+                                        onChange={(dueDate) =>
+                                            patch(
+                                                dueDate
+                                                    ? { dueDate }
+                                                    : {
+                                                          dueDate: "",
+                                                          dueTime: "",
+                                                          reminders: [],
+                                                      },
+                                            )
+                                        }
+                                        disabled={busy}
+                                        allowPast
+                                        min={draft.startDate || undefined}
+                                        invalid={showDueError && !!validation.errors.dueDate}
+                                    />
+                                </FormField>
+                                <FormField
+                                    label="Due time (IST)"
+                                    htmlFor={`${formId}-due-time`}
+                                    hint={
+                                        draft.dueDate
+                                            ? "Leave blank to do it any time that day."
+                                            : "Choose a due date first."
+                                    }
+                                >
+                                    <AppTimePicker
+                                        id={`${formId}-due-time`}
+                                        aria-label="Task due time (IST)"
+                                        value={draft.dueTime}
+                                        onChange={(dueTime) =>
+                                            patch({
+                                                dueTime,
+                                                ...(!dueTime ? { reminders: [] } : {}),
+                                            })
+                                        }
+                                        disabled={busy || !draft.dueDate}
+                                        min={
+                                            draft.dueDate &&
+                                            draft.startDate &&
+                                            draft.dueDate === draft.startDate &&
+                                            draft.startTime
+                                                ? draft.startTime
+                                                : undefined
+                                        }
+                                        error={showDueError ? validation.errors.dueTime : undefined}
+                                    />
+                                </FormField>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => setDate(taskDateKey())}
+                                >
+                                    Today
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => setDate(taskDateKey(Date.now() + 86_400_000))}
+                                >
+                                    Tomorrow
+                                </Button>
+                                {draft.dueDate ? (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        type="button"
+                                        disabled={busy}
+                                        onClick={() => setDate(null)}
+                                    >
+                                        Remove date
+                                    </Button>
+                                ) : null}
+                            </div>
+
+                            {draft.dueDate && draft.dueTime ? (
+                                <>
+                                    <TaskReminderPicker
+                                        reminders={draft.reminders}
+                                        dueDate={draft.dueDate}
+                                        dueTime={draft.dueTime}
+                                        now={now}
+                                        onChange={(reminders) => patch({ reminders })}
+                                        disabled={busy}
+                                    />
+                                    {pastReminder ? (
+                                        <p
+                                            className="text-sm text-danger"
+                                            role={submitted ? "alert" : undefined}
+                                        >
+                                            A reminder time has already passed. Remove it or choose
+                                            a later due date and time.
+                                        </p>
+                                    ) : null}
+                                    {submitted && validation.errors.reminders ? (
+                                        <p className="text-sm text-danger" role="alert">
+                                            {validation.errors.reminders}
+                                        </p>
+                                    ) : null}
+                                </>
+                            ) : (
+                                <p className="flex items-start gap-2 text-sm/6 text-ink-muted">
+                                    <Bell
+                                        aria-hidden
+                                        className="mbs-0.5 shrink-0 text-brand block-4 inline-4"
+                                    />
+                                    Your task-start reminder is included. Add a due date and time to
+                                    set extra reminders.
+                                </p>
+                            )}
                         </div>
-                    </div>
-                    <div className={styles.shortcuts}>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            type="button"
-                            disabled={busy}
-                            onClick={() => setDate(taskDateKey())}
+                    </WizardSection>
+
+                    {mode !== "reminder" ? (
+                        <WizardSection
+                            title="Repeat"
+                            description="Completing this task can create the next occurrence with the same links and reminders."
                         >
-                            Today
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            type="button"
-                            disabled={busy}
-                            onClick={() => setDate(taskDateKey(Date.now() + 86_400_000))}
-                        >
-                            Tomorrow
-                        </Button>
-                        {draft.dueDate ? (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                type="button"
-                                disabled={busy}
-                                onClick={() => setDate(null)}
+                            <div className={FORM_STACK_CLASS}>
+                                <TaskRepeatFields
+                                    value={draft.repeat}
+                                    anchor={draft.dueDate || draft.startDate || taskDateKey(now)}
+                                    onChange={(repeat) => patch({ repeat })}
+                                    disabled={busy}
+                                    error={submitted ? validation.errors.repeat : undefined}
+                                />
+                                {task?.completedAt ? (
+                                    <p className="text-sm/6 text-ink-muted">
+                                        Already-created occurrences keep their schedule. Edit the
+                                        next open task to change its future repeats.
+                                    </p>
+                                ) : task?.repeatFromId ? (
+                                    <p className="text-sm/6 text-ink-muted">
+                                        Changes apply to this occurrence and future tasks created
+                                        from it.
+                                    </p>
+                                ) : null}
+                            </div>
+                        </WizardSection>
+                    ) : null}
+
+                    {fullForm ? (
+                        <>
+                            <WizardSection
+                                title="Links"
+                                description="Optionally connect this task to a Client, owner, or property."
                             >
-                                Remove date
-                            </Button>
-                        ) : null}
-                    </div>
-                    {draft.dueDate ? (
-                        <p className={styles.hint}>
-                            India time (IST). Leave the time blank to do it any time that day.
+                                <div className={FORM_STACK_CLASS}>
+                                    <TaskContactsField
+                                        clientId={draft.clientId}
+                                        ownerId={draft.ownerId}
+                                        disabled={busy}
+                                        onChange={(next) => patch(next)}
+                                    />
+                                    <TaskSelect
+                                        label="Property"
+                                        entity="property"
+                                        value={draft.propertyId}
+                                        disabled={busy}
+                                        onChange={(propertyId) => patch({ propertyId })}
+                                        options={[
+                                            { value: "", label: "No linked property" },
+                                            ...TASK_PROPERTIES.map((property) => ({
+                                                value: property.id,
+                                                label: `${property.title} · ${property.locality}`,
+                                            })),
+                                        ]}
+                                    />
+                                </div>
+                            </WizardSection>
+
+                            <WizardSection
+                                title="Priority"
+                                description="Use this when you need to scan for what matters first."
+                            >
+                                <TaskSelect
+                                    label="Priority"
+                                    value={draft.priority}
+                                    disabled={busy}
+                                    onChange={(priority) =>
+                                        patch({ priority: priority as TaskDraft["priority"] })
+                                    }
+                                    options={[
+                                        { value: "urgent", label: TASK_PRIORITY_LABELS.urgent },
+                                        { value: "high", label: TASK_PRIORITY_LABELS.high },
+                                        { value: "medium", label: TASK_PRIORITY_LABELS.medium },
+                                        { value: "low", label: TASK_PRIORITY_LABELS.low },
+                                    ]}
+                                />
+                            </WizardSection>
+                        </>
+                    ) : null}
+
+                    <p className="flex items-start gap-2 text-sm/6 text-ink-muted">
+                        <LockKeyhole aria-hidden className="mbs-0.5 shrink-0 block-4 inline-4" />
+                        Only you can see this task. Linked contacts and property records stay
+                        unchanged.
+                    </p>
+
+                    {error || saveError ? (
+                        <p
+                            role="alert"
+                            className="
+                              body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold
+                              text-danger
+                            "
+                        >
+                            {error || saveError}
                         </p>
                     ) : null}
-                    {draft.dueDate && draft.dueTime ? (
-                        <>
-                            <TaskReminderPicker
-                                reminders={draft.reminders}
-                                dueDate={draft.dueDate}
-                                dueTime={draft.dueTime}
-                                now={now}
-                                onChange={(reminders) => patch({ reminders })}
-                                disabled={busy}
-                            />
-                            {pastReminder ? (
-                                <p className={styles.error} role={submitted ? "alert" : undefined}>
-                                    A reminder time has already passed. Remove it or choose a later
-                                    due date and time.
-                                </p>
-                            ) : null}
-                            {submitted && validation.errors.reminders ? (
-                                <p className={styles.error} role="alert">
-                                    {validation.errors.reminders}
-                                </p>
-                            ) : null}
-                        </>
-                    ) : (
-                        <div className={styles.reminderHint}>
-                            <Bell aria-hidden="true" />
-                            <p>
-                                Your task-start reminder is included. Add a due date and time to set
-                                extra reminders.
-                            </p>
-                        </div>
-                    )}
-                </section>
-                {mode !== "reminder" && (
-                    <section className={styles.section} aria-label="Repeat task">
-                        <h2 className={styles.sectionHeading}>
-                            <Repeat aria-hidden />
-                            Repeat task
-                        </h2>
-                        <TaskRepeatFields
-                            value={draft.repeat}
-                            anchor={draft.dueDate || draft.startDate || taskDateKey(now)}
-                            onChange={(repeat) => patch({ repeat })}
-                            disabled={busy}
-                            error={submitted ? validation.errors.repeat : undefined}
-                        />
-                        <p className={styles.hint}>
-                            Completing this task creates the next occurrence, keeping its links and
-                            reminders. Missed dates are skipped.
-                        </p>
-                        {task?.completedAt ? (
-                            <p className={styles.hint}>
-                                Already-created occurrences keep their schedule. Edit the next open
-                                task to change its future repeats.
-                            </p>
-                        ) : task?.repeatFromId ? (
-                            <p className={styles.hint}>
-                                Changes apply to this occurrence and future tasks created from it.
-                            </p>
-                        ) : null}
-                    </section>
-                )}
-                {fullForm ? (
-                    <>
-                        <section className={styles.section} aria-labelledby={`${formId}-links`}>
-                            <h2 className={styles.sectionHeading} id={`${formId}-links`}>
-                                <Link2 aria-hidden="true" /> Link existing records
-                                <span className={styles.optional}>(optional)</span>
-                            </h2>
-                            <TaskContactsField
-                                clientId={draft.clientId}
-                                ownerId={draft.ownerId}
-                                disabled={busy}
-                                onChange={(next) => patch(next)}
-                            />
-                            <TaskSelect
-                                label="Property"
-                                entity="property"
-                                value={draft.propertyId}
-                                disabled={busy}
-                                onChange={(propertyId) => patch({ propertyId })}
-                                options={[
-                                    { value: "", label: "No linked property" },
-                                    ...TASK_PROPERTIES.map((property) => ({
-                                        value: property.id,
-                                        label: `${property.title} · ${property.locality}`,
-                                    })),
-                                ]}
-                            />
-                        </section>
-                        <section className={styles.section} aria-label="Task priority">
-                            <TaskSelect
-                                label="Priority"
-                                value={draft.priority}
-                                disabled={busy}
-                                onChange={(priority) =>
-                                    patch({ priority: priority as TaskDraft["priority"] })
-                                }
-                                options={[
-                                    { value: "urgent", label: TASK_PRIORITY_LABELS.urgent },
-                                    { value: "high", label: TASK_PRIORITY_LABELS.high },
-                                    { value: "medium", label: TASK_PRIORITY_LABELS.medium },
-                                    { value: "low", label: TASK_PRIORITY_LABELS.low },
-                                ]}
-                            />
-                        </section>
-                    </>
-                ) : null}
-                <p className={styles.hint}>
-                    <LockKeyhole aria-hidden="true" />
-                    Only you can see this task. Linked contacts and property records stay unchanged.
-                </p>
-                {error || saveError ? (
-                    <p className={styles.error} role="alert">
-                        {error || saveError}
-                    </p>
-                ) : null}
+                </div>
             </form>
         </TaskPanel>
     );
@@ -828,11 +911,8 @@ function TaskRepeatFields({
             />
             {custom && value && (
                 <>
-                    <div className={styles.row}>
-                        <div className={styles.field}>
-                            <label className={styles.label} htmlFor={`${dateId}-interval`}>
-                                Repeat every
-                            </label>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FormField label="Repeat every" htmlFor={`${dateId}-interval`}>
                             <Input
                                 id={`${dateId}-interval`}
                                 type="number"
@@ -840,7 +920,7 @@ function TaskRepeatFields({
                                 min={1}
                                 max={365}
                                 step={1}
-                                size="md"
+                                size="lg"
                                 value={value.interval || ""}
                                 disabled={disabled}
                                 onValueChange={(interval) =>
@@ -850,7 +930,7 @@ function TaskRepeatFields({
                                     })
                                 }
                             />
-                        </div>
+                        </FormField>
                         <TaskSelect
                             label="Repeat unit"
                             value={value.unit}
@@ -876,9 +956,11 @@ function TaskRepeatFields({
                         />
                     </div>
                     {value.unit === "week" && (
-                        <fieldset className={styles.weekdayField}>
-                            <legend className={styles.label}>Repeat on</legend>
-                            <div className={styles.weekdays}>
+                        <fieldset className="m-0 border-0 p-0 min-inline-0">
+                            <legend className="mbe-2 text-sm font-semibold text-ink">
+                                Repeat on
+                            </legend>
+                            <div className="flex flex-wrap gap-2">
                                 {WEEKDAYS.map((day) => (
                                     <Button
                                         key={day.value}
@@ -925,21 +1007,18 @@ function TaskRepeatFields({
                         ]}
                     />
                     {value.until && (
-                        <div className={styles.field}>
-                            <label className={styles.label} htmlFor={`${dateId}-end`}>
-                                Last repeat date
-                            </label>
+                        <FormField label="Last repeat date" htmlFor={`${dateId}-end`}>
                             <AppDatePicker
                                 id={`${dateId}-end`}
                                 value={value.until}
                                 onChange={(until) => onChange({ ...value, until })}
                                 disabled={disabled}
                                 allowPast
-                                size="md"
+                                size="lg"
                             />
-                        </div>
+                        </FormField>
                     )}
-                    <p className={styles.hint}>
+                    <p className="text-sm/6 text-ink-muted">
                         {taskRepeatLabel(value)}
                         {value.unit === "month" || value.unit === "year"
                             ? ". Shorter months use their last day."
@@ -948,7 +1027,7 @@ function TaskRepeatFields({
                 </>
             )}
             {error && (
-                <p className={styles.error} role="alert">
+                <p className="text-sm text-danger" role="alert">
                     {error}
                 </p>
             )}

@@ -233,6 +233,20 @@ function stageTimes(lead: ApiLead): { enteredAt: string; lastCallAt: string | nu
     };
 }
 
+/** The last live stage recorded before the lead was marked lost. */
+function lostFromStage(lead: ApiLead): DealStage | null {
+    const history = Array.isArray(lead.stageHistory) ? lead.stageHistory : [];
+    let last: DealStage | null = null;
+    for (const entry of history) {
+        const status = entry.status?.trim() ?? "";
+        if (!API_STAGES.has(status)) continue;
+        const ui = fromApiStage(status);
+        if (ui === "lost") return last;
+        if (isLiveStage(ui)) last = ui as DealStage;
+    }
+    return last;
+}
+
 function mapHistory(lead: ApiLead): DealHistoryEntry[] {
     const history = Array.isArray(lead.stageHistory) ? lead.stageHistory : [];
     return history.map((entry) => ({
@@ -355,6 +369,7 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
         closedAmountInr:
             status === "closed" && lead.closedAmount != null ? toNumber(lead.closedAmount) : null,
         lostReason: status === "lost" ? lead.lostReason?.trim() || undefined : undefined,
+        lostFromStage: status === "lost" ? lostFromStage(lead) : undefined,
         offerAmountInr: lead.offerAmount != null ? toNumber(lead.offerAmount) : null,
         offerStatus:
             lead.offerStatus === "pending" ||
