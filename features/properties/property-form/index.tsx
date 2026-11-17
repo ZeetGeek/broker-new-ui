@@ -31,6 +31,7 @@ import { isUsablePropertyPhoto, MAX_PROPERTY_PHOTOS } from "@/lib/properties/for
 import {
     propertyDraftValidationIssues,
     propertyPublishAttachmentIssues,
+    publishAttachmentBanner,
     QUICK_ADD_VALIDATION_FIELDS,
     quickAddValidationIssues,
 } from "@/lib/properties/form-validation";
@@ -612,7 +613,24 @@ export function PropertyForm({
         }
         if (!forceDraft && portal === "broker") {
             methods.clearErrors(["owner.contactId", "attachedBuyers"]);
-            const issues = propertyPublishAttachmentIssues(current, portal);
+            // Clients already linked to a saved listing live on the server, not in the form.
+            let existingClientCount = 0;
+            const hasNewClient = current.attachedBuyers.some((buyer) => buyer.id.trim());
+            if (mode === "edit" && propertyId && !hasNewClient) {
+                try {
+                    const { attachedIds } = await clientsApi.listForProperty(propertyId);
+                    existingClientCount = attachedIds.length;
+                } catch {
+                    setFormBanner(
+                        "Couldn't check the clients attached to this property. Please try again.",
+                    );
+                    persistInFlightRef.current = false;
+                    return;
+                }
+            }
+            const issues = propertyPublishAttachmentIssues(current, portal, {
+                existingClientCount,
+            });
             if (issues.length) {
                 if (entryMode === "full") {
                     setStep("media");
@@ -620,7 +638,7 @@ export function PropertyForm({
                 }
                 for (const issue of issues)
                     methods.setError(issue.path, { type: "publish", message: issue.message });
-                setFormBanner("Attach an owner before publishing.");
+                setFormBanner(publishAttachmentBanner(issues));
                 pendingFocusPathRef.current = issues[0]!.path;
                 requestAnimationFrame(() => {
                     if (focusFieldByPath(issues[0]!.path)) pendingFocusPathRef.current = null;

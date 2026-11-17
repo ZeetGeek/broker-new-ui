@@ -12,16 +12,38 @@ import {
 } from "@/lib/visibility/rules";
 
 /**
- * Broker publishing requires a real owner selection; search text and display
- * names do not count. Attaching contacts is optional.
+ * Broker publishing requires a real owner selection and at least one client;
+ * search text and display names do not count. `existingClientCount` covers
+ * clients already linked to a saved listing (they are not in form values).
  */
 export function propertyPublishAttachmentIssues(
     values: PropertyDraftValues,
     portal: "broker" | "owner",
-): { path: "owner.contactId"; message: string }[] {
+    { existingClientCount = 0 }: { existingClientCount?: number } = {},
+): { path: "owner.contactId" | "attachedBuyers"; message: string }[] {
     if (portal !== "broker") return [];
-    if (values.owner.contactId?.trim()) return [];
-    return [{ path: "owner.contactId", message: "Attach an owner before publishing." }];
+    const issues: { path: "owner.contactId" | "attachedBuyers"; message: string }[] = [];
+    if (!values.owner.contactId?.trim())
+        issues.push({ path: "owner.contactId", message: "Attach an owner before publishing." });
+    const hasClient =
+        existingClientCount > 0 || (values.attachedBuyers ?? []).some((buyer) => buyer.id.trim());
+    if (!hasClient)
+        issues.push({
+            path: "attachedBuyers",
+            message: "Attach at least one client before publishing.",
+        });
+    return issues;
+}
+
+/** Banner copy for the publish attachment issues above. */
+export function publishAttachmentBanner(
+    issues: { path: "owner.contactId" | "attachedBuyers" }[],
+): string {
+    const owner = issues.some((issue) => issue.path === "owner.contactId");
+    const clients = issues.some((issue) => issue.path === "attachedBuyers");
+    if (owner && clients) return "Attach an owner and at least one client before publishing.";
+    if (clients) return "Attach at least one client before publishing.";
+    return "Attach an owner before publishing.";
 }
 
 /** Drafts can be incomplete, but values already entered must satisfy their constraints. */
