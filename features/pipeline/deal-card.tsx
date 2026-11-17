@@ -339,7 +339,8 @@ function DealCardMenu({
                                 Mark as sold
                             </DropdownMenuItem>
                         </>
-                    ) : (
+                    ) : deal.property.isSold ? null : (
+                        // A sold property stays closed: its deals can't come back.
                         <DropdownMenuItem
                             className={DEAL_MENU_ITEM_CLASS}
                             onClick={(event) =>
