@@ -40,7 +40,7 @@ import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { DealPartiesPanel } from "@/features/pipeline/deal-parties-panel";
 import { NegotiationStageBlock } from "@/features/pipeline/stage-blocks/negotiation-stage-block";
 import { VisitStageBlock } from "@/features/pipeline/stage-blocks/visit-stage-block";
-import { DEAL_STAGE_META, lostReasonLabel } from "@/features/pipeline/stage-meta";
+import { DEAL_STAGE_META, isRevisingOffer, lostReasonLabel } from "@/features/pipeline/stage-meta";
 import {
     DEAL_STAGE_ORDER,
     type DealItem,
@@ -295,9 +295,7 @@ function DealCardMenu({
                                 aria-hidden
                                 className={DEAL_MENU_ICON_CLASS}
                             />
-                            {deal.offerStatus === "rejected" || deal.offerStatus === "pending"
-                                ? "Revise offer"
-                                : "Make offer"}
+                            {isRevisingOffer(deal.offerStatus) ? "Revise offer" : "Make offer"}
                         </DropdownMenuItem>
                     ) : null}
                 </DropdownMenuGroup>
@@ -659,42 +657,46 @@ export function DealCard({
                 />
 
                 <OverlayCardActions className="flex-col gap-2">
-                    {canCall ? (
+                    {/* The owner's phone does not depend on the client's: a
+                        client with no number must not hide "Call owner". */}
+                    {canCall || ownerPhone ? (
                         <div className="flex gap-2">
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <Button
-                                            size="md"
-                                            variant="outline"
-                                            nativeButton={false}
-                                            className="flex-1 min-inline-0"
-                                            render={
-                                                <a
-                                                    href={formatWhatsAppUrl(
-                                                        deal.buyer.phoneDigits,
-                                                        whatsappMessage(deal),
-                                                    )}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    aria-label={`WhatsApp client ${deal.buyer.name} at ${formatPhoneIn(deal.buyer.phoneDigits)}`}
-                                                    onClick={stopCard}
-                                                />
-                                            }
+                            {canCall ? (
+                                <Tooltip>
+                                    <TooltipTrigger
+                                        render={
+                                            <Button
+                                                size="md"
+                                                variant="outline"
+                                                nativeButton={false}
+                                                className="flex-1 min-inline-0"
+                                                render={
+                                                    <a
+                                                        href={formatWhatsAppUrl(
+                                                            deal.buyer.phoneDigits,
+                                                            whatsappMessage(deal),
+                                                        )}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        aria-label={`WhatsApp client ${deal.buyer.name} at ${formatPhoneIn(deal.buyer.phoneDigits)}`}
+                                                        onClick={stopCard}
+                                                    />
+                                                }
+                                            />
+                                        }
+                                    >
+                                        <WhatsAppIcon
+                                            aria-hidden
+                                            strokeWidth={1.75}
+                                            className="shrink-0 block-4.5 inline-4.5"
                                         />
-                                    }
-                                >
-                                    <WhatsAppIcon
-                                        aria-hidden
-                                        strokeWidth={1.75}
-                                        className="shrink-0 block-4.5 inline-4.5"
-                                    />
-                                    WhatsApp
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                    {formatPhoneIn(deal.buyer.phoneDigits)}
-                                </TooltipContent>
-                            </Tooltip>
+                                        WhatsApp
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        {formatPhoneIn(deal.buyer.phoneDigits)}
+                                    </TooltipContent>
+                                </Tooltip>
+                            ) : null}
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
@@ -721,7 +723,7 @@ export function DealCard({
                                         className="shrink-0 block-4.5 inline-4.5"
                                         strokeWidth={1.75}
                                     />
-                                    Call Owner
+                                    Call owner
                                 </TooltipTrigger>
                                 <TooltipContent side="top">
                                     {ownerPhone

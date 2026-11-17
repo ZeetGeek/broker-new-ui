@@ -13,12 +13,15 @@ export function DealNoteModal({
     open,
     deal,
     isSaving,
+    submitError,
     onConfirm,
     onCancel,
 }: {
     open: boolean;
     deal: DealItem | null;
     isSaving: boolean;
+    /** Save failure from the parent. Shown inline; the typed note stays. */
+    submitError?: string | null;
     onConfirm: (note: string) => void;
     onCancel: () => void;
 }) {
@@ -53,15 +56,23 @@ export function DealNoteModal({
                 />
             }
         >
-            <Textarea
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
-                rows={4}
-                maxLength={500}
-                placeholder="What did they say?"
-                className="rounded-inner"
-                disabled={isSaving}
-            />
+            <div className="flex flex-col gap-2">
+                <Textarea
+                    aria-label="Note"
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    rows={4}
+                    maxLength={500}
+                    placeholder="What did they say?"
+                    className="rounded-inner"
+                    disabled={isSaving}
+                />
+                {submitError ? (
+                    <p role="alert" className="body-sm text-danger">
+                        {submitError}
+                    </p>
+                ) : null}
+            </div>
         </AppModal>
     );
 }

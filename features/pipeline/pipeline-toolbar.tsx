@@ -14,7 +14,8 @@ import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "@/component
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuItem,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -144,15 +145,18 @@ export function PipelineToolbar({
                             </TooltipContent>
                         </Tooltip>
                         <DropdownMenuContent align="end">
-                            {SORT_OPTIONS.map((option) => (
-                                <DropdownMenuItem
-                                    key={option.value}
-                                    onClick={() => onPatch({ sort: option.value })}
-                                    className={cn(filters.sort === option.value && "font-semibold")}
-                                >
-                                    {option.label}
-                                </DropdownMenuItem>
-                            ))}
+                            {/* Radio items expose the current sort to screen readers
+                                (aria-checked) and show a tick, not just bold text. */}
+                            <DropdownMenuRadioGroup
+                                value={filters.sort}
+                                onValueChange={(value) => onPatch({ sort: value as DealSort })}
+                            >
+                                {SORT_OPTIONS.map((option) => (
+                                    <DropdownMenuRadioItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </DropdownMenuRadioItem>
+                                ))}
+                            </DropdownMenuRadioGroup>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>

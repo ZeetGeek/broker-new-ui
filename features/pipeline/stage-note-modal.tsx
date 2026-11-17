@@ -7,7 +7,7 @@ import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { StickyNote } from "@/components/shared/icons";
 import { Textarea } from "@/components/ui/textarea";
 
-import { DEAL_OUTCOME_META, DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
+import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import type { DealItem, DealStatus } from "@/features/pipeline/types";
 import { isLiveStage } from "@/features/pipeline/types";
 
@@ -22,18 +22,18 @@ function moveTitle(status: DealStatus): string {
     if (isLiveStage(status)) {
         return `Move to ${DEAL_STAGE_META[status].label.toLowerCase()}`;
     }
-    return status === "closed" ? DEAL_OUTCOME_META.closed.label : DEAL_OUTCOME_META.lost.label;
+    return status === "closed" ? "Mark as sold" : "Mark as lost";
 }
 
 function moveDescription(deal: DealItem | null, status: DealStatus): string {
-    const who = deal ? `${deal.buyer.name} on ${deal.property.title}` : "This lead";
+    const who = deal ? `${deal.buyer.name} on ${deal.property.title}` : "This client";
     if (isLiveStage(status)) {
         return `${who}. Add a note if you want — optional.`;
     }
     if (status === "closed") {
-        return `${who}. Mark as sold. A note is optional.`;
+        return `${who}. A note is optional.`;
     }
-    return `${who}. Mark as lost. A note is optional.`;
+    return `${who}. A note is optional.`;
 }
 
 /**
@@ -45,6 +45,7 @@ export function StageNoteModal({
     deal,
     request,
     isSaving,
+    submitError,
     onConfirm,
     onCancel,
 }: {
@@ -52,6 +53,8 @@ export function StageNoteModal({
     deal: DealItem | null;
     request: StageMoveRequest | null;
     isSaving: boolean;
+    /** Save failure from the parent. Shown inline; the typed note stays. */
+    submitError?: string | null;
     onConfirm: (note: string) => void;
     onCancel: () => void;
 }) {
@@ -104,6 +107,11 @@ export function StageNoteModal({
                     disabled={isSaving}
                 />
                 <p className="body-xs tabular text-ink-subtle">{note.length} of 500</p>
+                {submitError ? (
+                    <p role="alert" className="body-sm text-danger">
+                        {submitError}
+                    </p>
+                ) : null}
             </div>
         </AppModal>
     );

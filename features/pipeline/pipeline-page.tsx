@@ -135,7 +135,9 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             () =>
                 setPrefs((previous) => ({
                     ...previous,
-                    filters: { ...DEFAULT_DEALS_FILTERS, stage: urlStage },
+                    // Only the stage comes from the link; the broker's saved
+                    // search and filters stay as they were.
+                    filters: { ...previous.filters, stage: urlStage },
                     view: "board",
                     mobileStage: urlStage,
                 })),
@@ -190,11 +192,31 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         filters.locality,
         filters.propertyFilters ?? null,
     ]);
+    // A new search or filter starts every column at its first batch again.
+    const [limitsKey, setLimitsKey] = useState(requestKey);
+    if (limitsKey !== requestKey) {
+        setLimitsKey(requestKey);
+        setStageLimits({
+            new: PIPELINE_BATCH_SIZE,
+            contacted: PIPELINE_BATCH_SIZE,
+            visit: PIPELINE_BATCH_SIZE,
+            negotiation: PIPELINE_BATCH_SIZE,
+        });
+    }
     /** `requestKey` of the deals on screen. Differs while a filter change loads. */
     const [loadedKey, setLoadedKey] = useState<string | null>(null);
     const [isFetching, setIsFetching] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [busyId, setBusyId] = useState<string | null>(null);
+    /**
+     * Failure of an action taken on the board itself (drag, call log, undo).
+     * Inline and persistent — errors never go in a toast (docs/MESSAGES.md).
+     */
+    const [actionError, setActionError] = useState<string | null>(null);
+    /** Save failures inside the modals, shown there so typed input survives. */
+    const [moveError, setMoveError] = useState<string | null>(null);
+    const [offerError, setOfferError] = useState<string | null>(null);
+    const [noteError, setNoteError] = useState<string | null>(null);
     const [revision, setRevision] = useState(0);
 
     const [moveRequest, setMoveRequest] = useState<StageMoveRequest | null>(null);
@@ -273,6 +295,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
 
     const requestMove = useCallback(
         (dealId: string, status: DealStatus, successMessage: string) => {
+            setMoveError(null);
             setMoveRequest({ dealId, status, successMessage });
         },
         [],
@@ -295,7 +318,9 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             .catch((loadError) => {
                 if (request !== viewRequest.current) return;
                 setViewError(
-                    loadError instanceof Error ? loadError.message : "Could not load lead details.",
+                    loadError instanceof Error
+                        ? loadError.message
+                        : "Could not load this deal. Check your connection and try again.",
                 );
             })
             .finally(() => {
@@ -336,6 +361,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             setBusyId(dealId);
 
             const previous = current.status;
+            setActionError(null);
             applyLocalStage(dealId, status);
 
             void pipelineApi
@@ -355,8 +381,9 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                             return;
                                         }
                                         if (stageGate.begin(dealId, version) == null) {
-                                            toast.error(
-                                                "This deal changed or is still saving. Check its current stage.",
+                                            toast.dismiss(t.id);
+                                            setActionError(
+                                                "Could not undo: this deal changed or is still saving. Check its current stage.",
                                             );
                                             return;
                                         }
@@ -370,8 +397,8 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                             })
                                             .catch(() => {
                                                 if (mounted.current)
-                                                    toast.error(
-                                                        "Could not undo. Reloading the saved stage.",
+                                                    setActionError(
+                                                        "Could not undo the move. The board now shows the saved stage.",
                                                     );
                                             })
                                             .finally(() => {
@@ -397,10 +424,10 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         (items) =>
                             items?.map((item) => (item.id === dealId ? current : item)) ?? null,
                     );
-                    toast.error(
+                    setActionError(
                         moveError instanceof Error
                             ? moveError.message
-                            : "Could not save that. Try again.",
+                            : "Could not move that deal. It is back where it was. Try again.",
                     );
                 })
                 .finally(() => {
@@ -422,17 +449,17 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             setIsSavingMove(true);
             setBusyId(moveRequest.dealId);
             try {
+                setMoveError(null);
                 await pipelineApi.setStage(moveRequest.dealId, moveRequest.status, {
                     note,
                 });
                 setMoveRequest(null);
-                setRevision((prev) => prev + 1);
                 toast.success(moveRequest.successMessage);
-            } catch (moveError) {
-                toast.error(
-                    moveError instanceof Error
-                        ? moveError.message
-                        : "Could not save that. Try again.",
+            } catch (saveError) {
+                setMoveError(
+                    saveError instanceof Error
+                        ? saveError.message
+                        : "Could not save that. Your note is still here. Try again.",
                 );
             } finally {
                 stageGate.end();
@@ -452,15 +479,15 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             setIsSavingOffer(true);
             setBusyId(offerDealId);
             try {
+                setOfferError(null);
                 await pipelineApi.makeOffer(offerDealId, offerAmount, notes);
                 setOfferDealId(null);
-                setRevision((prev) => prev + 1);
                 toast.success("Offer saved");
-            } catch (offerError) {
-                toast.error(
-                    offerError instanceof Error
-                        ? offerError.message
-                        : "Could not submit offer. Try again.",
+            } catch (saveError) {
+                setOfferError(
+                    saveError instanceof Error
+                        ? saveError.message
+                        : "Could not submit the offer. Your amount is still here. Try again.",
                 );
             } finally {
                 stageGate.end();
@@ -482,15 +509,15 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             setIsSavingNote(true);
             setBusyId(noteDealId);
             try {
+                setNoteError(null);
                 await pipelineApi.setNote(noteDealId, current.status, note);
                 setNoteDealId(null);
-                setRevision((prev) => prev + 1);
                 toast.success("Note saved");
-            } catch (noteError) {
-                toast.error(
-                    noteError instanceof Error
-                        ? noteError.message
-                        : "Could not save that. Try again.",
+            } catch (saveError) {
+                setNoteError(
+                    saveError instanceof Error
+                        ? saveError.message
+                        : "Could not save the note. Your text is still here. Try again.",
                 );
             } finally {
                 stageGate.end();
@@ -517,17 +544,17 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             onLogContact: (dealId, currentStatus) => {
                 if (stageGate.begin(dealId) == null) return;
                 setBusyId(dealId);
+                setActionError(null);
                 void pipelineApi
                     .logContact(dealId, currentStatus)
                     .then(() => {
-                        setRevision((prev) => prev + 1);
                         toast.success("Call logged");
                     })
                     .catch((logError) => {
-                        toast.error(
+                        setActionError(
                             logError instanceof Error
                                 ? logError.message
-                                : "Could not save that. Try again.",
+                                : "Could not log that call. Try again.",
                         );
                     })
                     .finally(() => {
@@ -546,6 +573,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 requestMove(dealId, stage, "Back on the board");
             },
             onMakeOffer: (dealId) => {
+                setOfferError(null);
                 setOfferDealId(dealId);
             },
             onPin: (dealId) => {
@@ -557,6 +585,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 }));
             },
             onNote: (dealId) => {
+                setNoteError(null);
                 setNoteDealId(dealId);
             },
         }),
@@ -713,9 +742,28 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             )}
 
             {error ? (
-                <p role="alert" className="body-sm text-urgent">
+                <p role="alert" className="body-sm text-danger">
                     {error}
                 </p>
+            ) : null}
+
+            {actionError ? (
+                <div
+                    role="alert"
+                    className="
+                      body-sm flex items-start justify-between gap-3 rounded-card border
+                      border-danger/30 bg-danger-soft px-4 py-3 text-danger
+                    "
+                >
+                    <span>{actionError}</span>
+                    <button
+                        type="button"
+                        onClick={() => setActionError(null)}
+                        className="shrink-0 font-medium underline"
+                    >
+                        Dismiss
+                    </button>
+                </div>
             ) : null}
 
             <TabsContent
@@ -813,7 +861,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                             size="md"
                                             className="shadow-md hover:shadow-lg"
                                             onClick={() => loadMoreStage(mobileStage)}
-                                            aria-label={`Load more ${DEAL_STAGE_META[mobileStage].label.toLowerCase()} deals`}
+                                            aria-label={`Load more deals in ${DEAL_STAGE_META[mobileStage].label}`}
                                         >
                                             Load more deals
                                             <span className="body-xs rounded-full bg-ink/5 px-1.5 font-semibold text-ink-muted tabular-nums min-inline-5">
@@ -830,7 +878,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                   py-10 text-center text-ink-muted
                                 "
                                 >
-                                    No deals here yet.
+                                    {DEAL_STAGE_META[mobileStage].emptyHint}
                                 </p>
                             )}
                         </div>
@@ -843,6 +891,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 deal={moveDeal}
                 request={moveRequest}
                 isSaving={isSavingMove}
+                submitError={moveError}
                 onConfirm={(note) => {
                     void handleConfirmMove(note);
                 }}
@@ -855,6 +904,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 open={offerDealId != null}
                 deal={offerDeal}
                 isSaving={isSavingOffer}
+                submitError={offerError}
                 onConfirm={(offerAmount, notes) => {
                     void handleConfirmOffer(offerAmount, notes);
                 }}
@@ -867,6 +917,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 open={noteDealId != null}
                 deal={noteDeal}
                 isSaving={isSavingNote}
+                submitError={noteError}
                 onConfirm={(note) => {
                     void handleConfirmNote(note);
                 }}
@@ -890,7 +941,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         viewDetail.id,
                         status,
                         status === "closed"
-                            ? "Deal marked as closed"
+                            ? "Marked as sold"
                             : `Moved to ${DEAL_STAGE_META[status as DealStage].label.toLowerCase()}`,
                     );
                     setViewDealId(null);

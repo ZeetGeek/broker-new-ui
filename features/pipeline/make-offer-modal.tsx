@@ -11,7 +11,13 @@ import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { isRevisingOffer } from "@/features/pipeline/stage-meta";
 import type { DealItem } from "@/features/pipeline/types";
+
+/** ₹9,999 crore. Anything longer is a typo, and past 2^53 Number loses digits. */
+const MAX_OFFER_DIGITS = 11;
+/** An offer this many times the list price is almost always an extra zero. */
+const MAX_OFFER_TO_LIST_RATIO = 10;
 
 function digitsOnly(value: string): string {
     return value.replace(/\D/g, "");
@@ -43,12 +49,15 @@ export function MakeOfferModal({
     open,
     deal,
     isSaving,
+    submitError,
     onConfirm,
     onCancel,
 }: {
     open: boolean;
     deal: DealItem | null;
     isSaving: boolean;
+    /** Save failure from the parent. Shown inline; the typed amount stays. */
+    submitError?: string | null;
     onConfirm: (offerAmount: number, notes: string) => void;
     onCancel: () => void;
 }) {
@@ -69,13 +78,18 @@ export function MakeOfferModal({
         }
     }
 
-    const isRevise = deal?.offerStatus === "rejected";
+    const isRevise = isRevisingOffer(deal?.offerStatus ?? null);
     const hint = deal ? amountHint(amount, deal.property.isRent) : null;
 
     const submit = () => {
         const offerAmount = Number(digitsOnly(amount));
         if (!Number.isInteger(offerAmount) || offerAmount < 1) {
             setError("Enter a valid offer amount in whole rupees.");
+            return;
+        }
+        const listPrice = deal?.property.amountInr ?? 0;
+        if (listPrice > 0 && offerAmount > listPrice * MAX_OFFER_TO_LIST_RATIO) {
+            setError("That is more than 10 times the list price. Check the number of zeros.");
             return;
         }
         setError(null);
@@ -107,7 +121,15 @@ export function MakeOfferModal({
                 />
             }
         >
-            <div className="flex flex-col gap-4">
+            {/* A form so Enter / the Android "Go" key submits the amount. */}
+            <form
+                className="flex flex-col gap-4"
+                noValidate
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!isSaving) submit();
+                }}
+            >
                 <p className="body-sm text-ink-muted">
                     List price{" "}
                     <PriceWithCommission
@@ -129,9 +151,11 @@ export function MakeOfferModal({
                     <Input
                         id="offer-amount"
                         inputMode="numeric"
+                        enterKeyHint="go"
+                        maxLength={MAX_OFFER_DIGITS}
                         value={amount}
                         onChange={(event) => {
-                            setAmount(digitsOnly(event.target.value));
+                            setAmount(digitsOnly(event.target.value).slice(0, MAX_OFFER_DIGITS));
                             if (error) setError(null);
                         }}
                         placeholder={deal.property.isRent ? "25000" : "7500000"}
@@ -157,7 +181,13 @@ export function MakeOfferModal({
                         disabled={isSaving}
                     />
                 </div>
-            </div>
+
+                {submitError ? (
+                    <p role="alert" className="body-sm text-danger">
+                        {submitError}
+                    </p>
+                ) : null}
+            </form>
         </AppModal>
     );
 }

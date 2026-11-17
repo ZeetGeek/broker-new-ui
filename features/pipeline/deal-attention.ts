@@ -4,7 +4,8 @@ import { formatPrice, formatRent } from "@/lib/format/price";
 import type { DealItem, DealStage } from "@/features/pipeline/types";
 import { isLiveStage, SLOW_AFTER_DAYS, STALLED_AFTER_DAYS } from "@/features/pipeline/types";
 
-export type AttentionTone = "healthy" | "slow" | "quiet";
+/** `unknown` when the deal has no usable date — never guessed as fresh. */
+export type AttentionTone = "healthy" | "slow" | "quiet" | "unknown";
 
 export type OtherBuyer = {
     dealId: string;
@@ -12,17 +13,24 @@ export type OtherBuyer = {
     stage: DealStage;
 };
 
-export function daysWithoutMovement(deal: DealItem): number {
-    return daysSince(deal.lastContactedAt ?? deal.stageEnteredAt) ?? 0;
+/** Whole days, or null when the date is missing, unparseable or in the future (clock skew). */
+function knownDays(iso: string | null): number | null {
+    const days = daysSince(iso || null);
+    return days == null || !Number.isFinite(days) || days < 0 ? null : days;
 }
 
-export function daysInStage(deal: DealItem): number {
-    return daysSince(deal.stageEnteredAt) ?? 0;
+export function daysWithoutMovement(deal: DealItem): number | null {
+    return knownDays(deal.lastContactedAt ?? deal.stageEnteredAt);
+}
+
+export function daysInStage(deal: DealItem): number | null {
+    return knownDays(deal.stageEnteredAt);
 }
 
 export function dealAttention(deal: DealItem): AttentionTone {
     if (!isLiveStage(deal.status)) return "healthy";
     const days = daysWithoutMovement(deal);
+    if (days == null) return "unknown";
     if (days >= STALLED_AFTER_DAYS) return "quiet";
     if (days >= SLOW_AFTER_DAYS) return "slow";
     return "healthy";

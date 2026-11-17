@@ -50,13 +50,11 @@ export function DraggableDealCard({
                 transform: CSS.Translate.toString(transform),
                 transition,
             }}
-            className={cn(
-                "touch-none",
-                // The original stays in the column as a dimmed placeholder
-                // holding its own height, so nothing below it jumps while the
-                // DragOverlay copy follows the pointer.
-                isDragging && "relative z-10 opacity-40",
-            )}
+            // No `touch-none` here: only the handle needs it (it sets its own),
+            // so a swipe that starts on the card face still scrolls the board.
+            // The dimmed placeholder comes from DealCard's `isDragging` style —
+            // dimming here as well would stack the two opacities.
+            className={cn(isDragging && "relative z-10")}
         >
             <DealCard
                 deal={deal}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useId } from "react";
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -46,6 +46,7 @@ export function PipelineColumn({
 }) {
     const { setNodeRef, isOver } = useDroppable({ id: stage });
     const meta = DEAL_STAGE_META[stage];
+    const labelId = useId();
     const highlighted = isDropTarget || isOver;
     const totals = columnValue(deals);
     // Keep pins ahead of the manually ordered normal cards before limiting.
@@ -58,6 +59,7 @@ export function PipelineColumn({
     return (
         <section
             ref={setNodeRef}
+            aria-labelledby={labelId}
             className={cn(
                 `
                   flex snap-start flex-col gap-3 rounded-card border p-3 transition-colors
@@ -79,7 +81,9 @@ export function PipelineColumn({
                         {/* The stage hue lives on the label now. A filled pill
                             beside a heading-sized number read as two competing
                             marks. */}
-                        <p className={cn("eyebrow truncate", meta.labelClass)}>{meta.label}</p>
+                        <p id={labelId} className={cn("eyebrow truncate", meta.labelClass)}>
+                            {meta.label}
+                        </p>
                         <div className="mbs-1 flex items-baseline justify-between gap-2">
                             <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 min-inline-0">
                                 {totals.sale || totals.rent ? (
@@ -95,9 +99,12 @@ export function PipelineColumn({
                                     <span className="h6 tabular text-ink-subtle">—</span>
                                 )}
                             </div>
-                            <span className="body-sm shrink-0 text-ink-muted tabular-nums">
-                                {deals.length} {deals.length === 1 ? "deal" : "deals"}
-                            </span>
+                            {/* No bare "0 deals" — the empty slot below says it. */}
+                            {deals.length > 0 ? (
+                                <span className="body-sm shrink-0 text-ink-muted tabular-nums">
+                                    {deals.length} {deals.length === 1 ? "deal" : "deals"}
+                                </span>
+                            ) : null}
                         </div>
                     </div>
                 </div>
@@ -144,7 +151,7 @@ export function PipelineColumn({
                         highlighted && "border-brand text-brand-text",
                     )}
                 >
-                    {highlighted ? "Drop here" : "No deals here yet."}
+                    {highlighted ? "Drop here" : meta.emptyHint}
                 </p>
             )}
             {remaining > 0 ? (
@@ -153,7 +160,8 @@ export function PipelineColumn({
                     size="md"
                     className="shadow-md inline-full hover:shadow-lg"
                     onClick={onLoadMore}
-                    aria-label={`Load more ${meta.label.toLowerCase()} deals`}
+                    // Starts with the visible text so voice control can target it.
+                    aria-label={`Load more deals in ${meta.label}`}
                 >
                     Load more deals
                     <span className="body-xs rounded-full bg-ink/5 px-1.5 font-semibold text-ink-muted tabular-nums min-inline-5">

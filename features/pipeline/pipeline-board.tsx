@@ -1,17 +1,25 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useMemo } from "react";
 
 import {
+    type Announcements,
     closestCorners,
     defaultDropAnimationSideEffects,
     DndContext,
     DragOverlay,
 } from "@dnd-kit/core";
+import { useReducedMotion } from "motion/react";
 
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
 import { PipelineColumn } from "@/features/pipeline/pipeline-column";
-import { DEAL_STAGE_ORDER, type DealItem, type DealStage } from "@/features/pipeline/types";
+import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
+import {
+    DEAL_STAGE_ORDER,
+    type DealItem,
+    type DealStage,
+    isLiveStage,
+} from "@/features/pipeline/types";
 import { applyStageOrder, usePipelineDnd } from "@/features/pipeline/use-pipeline-dnd";
 
 /**
@@ -30,30 +38,20 @@ const DROP_ANIMATION = {
 /** Same drop, no travel. docs/MOTION.md §5: degrade to instant, never broken. */
 const DROP_ANIMATION_REDUCED = { ...DROP_ANIMATION, duration: 0 };
 
-const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
-
-/**
- * dnd-kit drives its drop animation as a Web Animation from JS, so the CSS
- * `prefers-reduced-motion` blocks in globals.css never reach it — the setting
- * has to be read in JS and handed to the overlay.
- *
- * `useSyncExternalStore` rather than an effect: matchMedia is exactly the
- * external mutable source it exists for, and it keeps the value correct on the
- * first paint instead of after one.
- */
-function subscribeReducedMotion(onChange: () => void): () => void {
-    const query = window.matchMedia(REDUCED_MOTION_QUERY);
-    query.addEventListener("change", onChange);
-    return () => query.removeEventListener("change", onChange);
+/** Screen-reader copy for a deal: client and property, never the raw id. */
+function dealLabel(deals: DealItem[], id: string | number): string {
+    const deal = deals.find((item) => item.id === String(id));
+    return deal ? `${deal.buyer.name}, ${deal.property.title}` : "deal";
 }
 
-function getReducedMotion(): boolean {
-    return window.matchMedia(REDUCED_MOTION_QUERY).matches;
-}
-
-/** The server cannot know the preference; the client corrects it on hydration. */
-function getReducedMotionServer(): boolean {
-    return false;
+/** Where a pointer sits: a column, or the column of the card under it. */
+function stageLabel(deals: DealItem[], id: string | number | undefined): string | null {
+    if (id == null) return null;
+    if ((DEAL_STAGE_ORDER as readonly string[]).includes(String(id))) {
+        return DEAL_STAGE_META[id as DealStage].label;
+    }
+    const deal = deals.find((item) => item.id === String(id));
+    return deal && isLiveStage(deal.status) ? DEAL_STAGE_META[deal.status].label : null;
 }
 
 export function PipelineBoard({
@@ -77,13 +75,33 @@ export function PipelineBoard({
 }) {
     const dnd = usePipelineDnd({
         deals: allLiveDeals,
+        pinnedDealIds,
         onDrop: onDropDeal,
     });
 
-    const reduceMotion = useSyncExternalStore(
-        subscribeReducedMotion,
-        getReducedMotion,
-        getReducedMotionServer,
+    // dnd-kit animates the drop from JS, so CSS media queries never reach it.
+    // Motion's hook follows the root <MotionConfig reducedMotion="user">.
+    const reduceMotion = useReducedMotion() ?? false;
+
+    const announcements = useMemo<Announcements>(
+        () => ({
+            onDragStart: ({ active }) => `Picked up ${dealLabel(allLiveDeals, active.id)}.`,
+            onDragOver: ({ active, over }) => {
+                const stage = stageLabel(allLiveDeals, over?.id);
+                return stage
+                    ? `${dealLabel(allLiveDeals, active.id)} is over ${stage}.`
+                    : `${dealLabel(allLiveDeals, active.id)} is not over a stage.`;
+            },
+            onDragEnd: ({ active, over }) => {
+                const stage = stageLabel(allLiveDeals, over?.id);
+                return stage
+                    ? `Dropped ${dealLabel(allLiveDeals, active.id)} in ${stage}.`
+                    : `${dealLabel(allLiveDeals, active.id)} was dropped. It stays where it was.`;
+            },
+            onDragCancel: ({ active }) =>
+                `Moving ${dealLabel(allLiveDeals, active.id)} was cancelled. It stays where it was.`,
+        }),
+        [allLiveDeals],
     );
 
     return (
@@ -94,6 +112,7 @@ export function PipelineBoard({
             onDragOver={dnd.handleDragOver}
             onDragEnd={dnd.handleDragEnd}
             onDragCancel={dnd.handleDragCancel}
+            accessibility={{ announcements }}
         >
             <div
                 className="
@@ -127,7 +146,6 @@ export function PipelineBoard({
                             deal={dnd.activeDeal}
                             handlers={handlers}
                             isPinned={pinnedDealIds.includes(dnd.activeDeal.id)}
-                            isDragging
                         />
                     </div>
                 ) : null}
