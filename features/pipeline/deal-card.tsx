@@ -377,8 +377,10 @@ function DealCardMenu({
 }
 
 function StageMiddle({ deal, onMakeOffer }: { deal: DealItem; onMakeOffer?: () => void }) {
-    if (deal.status === "visit") return <VisitStageBlock deal={deal} />;
-    if (deal.status === "negotiation")
+    // Only when there is something to show. An empty "No visit booked yet" /
+    // "No offer yet" box on every card is noise; Make offer stays in the menu.
+    if (deal.status === "visit" && deal.nextVisitAt) return <VisitStageBlock deal={deal} />;
+    if (deal.status === "negotiation" && deal.offerAmountInr != null)
         return <NegotiationStageBlock deal={deal} onMakeOffer={onMakeOffer} />;
     return null;
 }

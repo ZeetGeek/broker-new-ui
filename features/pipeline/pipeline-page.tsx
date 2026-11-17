@@ -36,7 +36,11 @@ import {
 } from "@/features/pipeline/pipeline-skeleton";
 import { PipelineToolbar } from "@/features/pipeline/pipeline-toolbar";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
-import { type StageMoveRequest, StageNoteModal } from "@/features/pipeline/stage-note-modal";
+import {
+    type StageMoveDetails,
+    type StageMoveRequest,
+    StageNoteModal,
+} from "@/features/pipeline/stage-note-modal";
 import { StageTabs } from "@/features/pipeline/stage-tabs";
 import {
     DEAL_STAGE_ORDER,
@@ -442,7 +446,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     );
 
     const handleConfirmMove = useCallback(
-        async (note: string) => {
+        async (note: string, details: StageMoveDetails = {}) => {
             if (!moveRequest) return;
             if (stageGate.begin(moveRequest.dealId) == null) return;
 
@@ -452,6 +456,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 setMoveError(null);
                 await pipelineApi.setStage(moveRequest.dealId, moveRequest.status, {
                     note,
+                    closedAmountInr: details.closedAmountInr,
                 });
                 setMoveRequest(null);
                 toast.success(moveRequest.successMessage);
@@ -892,8 +897,8 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 request={moveRequest}
                 isSaving={isSavingMove}
                 submitError={moveError}
-                onConfirm={(note) => {
-                    void handleConfirmMove(note);
+                onConfirm={(note, details) => {
+                    void handleConfirmMove(note, details);
                 }}
                 onCancel={() => {
                     if (!isSavingMove) setMoveRequest(null);
