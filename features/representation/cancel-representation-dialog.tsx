@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { CharacterCount } from "@/components/shared/character-count";
 import { TriangleAlert } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-const REASON_MAX = 500;
+const REASON_MAX = MAX_CHARS.endRepresentationReason;
 
 export type CancelRepresentationSide = "broker" | "owner";
 
@@ -38,6 +40,7 @@ export function CancelRepresentationDialog({
     counterpartName: string;
     onCancelled?: () => void;
 }) {
+    const reasonId = useId();
     const [reason, setReason] = useState("");
     const [busy, setBusy] = useState(false);
     const isBroker = side === "broker";
@@ -132,11 +135,13 @@ export function CancelRepresentationDialog({
                     </div>
                 </div>
 
-                <label className="flex flex-col gap-2">
-                    <span className="text-sm font-semibold text-ink">
+                <div className="flex flex-col gap-2">
+                    <label htmlFor={reasonId} className="text-sm font-semibold text-ink">
                         Reason <span className="font-normal text-ink-muted">(optional)</span>
-                    </span>
+                    </label>
                     <Textarea
+                        id={reasonId}
+                        aria-describedby={`${reasonId}-count`}
                         value={reason}
                         onChange={(event) => setReason(event.target.value.slice(0, REASON_MAX))}
                         maxLength={REASON_MAX}
@@ -147,11 +152,13 @@ export function CancelRepresentationDialog({
                         }
                         className="border-2 border-border-warm bg-surface"
                     />
-                    <span className="body-xs text-ink-muted">
-                        Shared with {isBroker ? "the owner" : "the broker"} and saved on the lost
-                        deals. {reason.length}/{REASON_MAX}
-                    </span>
-                </label>
+                    <CharacterCount
+                        id={`${reasonId}-count`}
+                        value={reason}
+                        maxChars={REASON_MAX}
+                        hint={`Shared with ${isBroker ? "the owner" : "the broker"} and saved on the lost deals.`}
+                    />
+                </div>
             </div>
         </AppModal>
     );

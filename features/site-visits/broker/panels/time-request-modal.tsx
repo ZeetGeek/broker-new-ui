@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formatInTimeZone } from "date-fns-tz";
 
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { VISITS_TIME_ZONE } from "@/lib/visits/constants";
 import {
     dateAtIstOffset,
@@ -19,6 +20,7 @@ import { useCreateTimeRequest } from "@/hooks/use-time-requests";
 
 import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppModal } from "@/components/shared/app-modal";
+import { CharacterCount } from "@/components/shared/character-count";
 import { Clock3, Plus, Trash2 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
@@ -360,7 +362,8 @@ export function TimeRequestModal({
                         Message <span className="font-normal text-ink-muted">· optional</span>
                         <textarea
                             {...form.register("message")}
-                            maxLength={240}
+                            maxLength={MAX_CHARS.visitTimeRequestMessage}
+                            aria-describedby="time-request-message-count"
                             rows={3}
                             className="
                               body-sm mbs-2 resize-none rounded-control border border-border-warm
@@ -369,6 +372,12 @@ export function TimeRequestModal({
                             placeholder="Why this time works better"
                         />
                     </label>
+                    <CharacterCount
+                        id="time-request-message-count"
+                        value={message}
+                        maxChars={MAX_CHARS.visitTimeRequestMessage}
+                        className="mbs-1"
+                    />
                     <div className="mbs-2 flex flex-wrap gap-2">
                         {PRESETS.map((preset) => (
                             <button
@@ -386,9 +395,6 @@ export function TimeRequestModal({
                             </button>
                         ))}
                     </div>
-                    <p className="body-xs tabular mbs-1 text-end text-ink-subtle">
-                        {message.length}/240
-                    </p>
                 </div>
             </form>
         </AppModal>

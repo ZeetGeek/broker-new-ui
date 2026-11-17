@@ -13,6 +13,7 @@ import {
 import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
 
+import { CharacterCount } from "@/components/shared/character-count";
 import {
     Bath,
     BedDouble,
@@ -182,25 +183,15 @@ export function StepDetails() {
                         minLength={MIN_PROPERTY_DESCRIPTION_LENGTH}
                         maxLength={MAX_PROPERTY_DESCRIPTION_LENGTH}
                         hint={
-                            <div className="flex flex-wrap items-start justify-between gap-2">
-                                <span>
-                                    Write 50–3,000 characters. This is shown on the listing.
-                                    {descriptionRemaining > 0 && description.length > 0
+                            <CharacterCount
+                                value={description}
+                                maxChars={MAX_PROPERTY_DESCRIPTION_LENGTH}
+                                hint={`Write 50–3,000 characters. This is shown on the listing.${
+                                    descriptionRemaining > 0 && description.length > 0
                                         ? ` Add ${descriptionRemaining} more to reach the minimum.`
-                                        : ""}
-                                </span>
-                                <span
-                                    className={
-                                        description.length > MAX_PROPERTY_DESCRIPTION_LENGTH
-                                            ? "tabular text-danger"
-                                            : "tabular"
-                                    }
-                                >
-                                    {description.length.toLocaleString("en-IN")} /{" "}
-                                    {MAX_PROPERTY_DESCRIPTION_LENGTH.toLocaleString("en-IN")}{" "}
-                                    characters
-                                </span>
-                            </div>
+                                        : ""
+                                }`}
+                            />
                         }
                         rows={5}
                     />

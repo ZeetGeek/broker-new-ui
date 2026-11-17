@@ -1,10 +1,13 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
 import { appendDealListingQuery, dealListingApiQuery } from "@/lib/properties/deal-listing-query";
 import {
+    matchesPropertyCriteria,
     normalizePropertyCriteria,
     type PropertyFilterRecord,
 } from "@/lib/properties/list-criteria";
 
+import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
 import {
     DEAL_STAGE_ORDER,
     type DealDetail,
@@ -233,6 +236,20 @@ function stageTimes(lead: ApiLead): { enteredAt: string; lastCallAt: string | nu
     };
 }
 
+/** The last live stage recorded before the lead was marked lost. */
+function lostFromStage(lead: ApiLead): DealStage | null {
+    const history = Array.isArray(lead.stageHistory) ? lead.stageHistory : [];
+    let last: DealStage | null = null;
+    for (const entry of history) {
+        const status = entry.status?.trim() ?? "";
+        if (!API_STAGES.has(status)) continue;
+        const ui = fromApiStage(status);
+        if (ui === "lost") return last;
+        if (isLiveStage(ui)) last = ui as DealStage;
+    }
+    return last;
+}
+
 function mapHistory(lead: ApiLead): DealHistoryEntry[] {
     const history = Array.isArray(lead.stageHistory) ? lead.stageHistory : [];
     return history.map((entry) => ({
@@ -355,6 +372,7 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
         closedAmountInr:
             status === "closed" && lead.closedAmount != null ? toNumber(lead.closedAmount) : null,
         lostReason: status === "lost" ? lead.lostReason?.trim() || undefined : undefined,
+        lostFromStage: status === "lost" ? lostFromStage(lead) : undefined,
         offerAmountInr: lead.offerAmount != null ? toNumber(lead.offerAmount) : null,
         offerStatus:
             lead.offerStatus === "pending" ||
@@ -525,10 +543,117 @@ export type SetStageOptions = {
     closedAmountInr?: number;
 };
 
+/* ------------------------------------------------------------------------ */
+/* Mock mode (NEXT_PUBLIC_USE_MOCK_DATA=true)                                */
+/* In-memory copy of MOCK_DEALS so board actions stick until a reload.       */
+/* ------------------------------------------------------------------------ */
+
+type MockStore = { deals: DealItem[]; history: Map<string, DealHistoryEntry[]> };
+
+let mockStore: MockStore | null = null;
+
+function getMockStore(): MockStore {
+    if (!mockStore) {
+        const deals = structuredClone(MOCK_DEALS).map((deal) => ({
+            ...deal,
+            property: {
+                ...deal.property,
+                filterFacts: deal.property.filterFacts ?? {
+                    locality: deal.property.locality,
+                    city: deal.property.city,
+                    propertyTypeLabel: deal.property.propertyTypeLabel,
+                    areaSqft: deal.property.areaSqft,
+                    bhk: deal.property.bhk,
+                    amountInr: deal.property.amountInr,
+                    isRent: deal.property.isRent,
+                    transactionType: deal.property.isRent ? "rent" : "sale",
+                    commissionPercent: deal.property.commissionPercent ?? null,
+                    commissionAmount: deal.property.commissionAmountInr ?? null,
+                },
+            },
+        }));
+        const history = new Map<string, DealHistoryEntry[]>(
+            deals.map((deal) => [
+                deal.id,
+                [
+                    {
+                        status: toApiStage(deal.status),
+                        at: deal.resolvedAt ?? deal.stageEnteredAt,
+                        note: deal.note || null,
+                        by: null,
+                    },
+                ],
+            ]),
+        );
+        mockStore = { deals, history };
+    }
+    return mockStore;
+}
+
+function mockFind(dealId: string): DealItem {
+    const deal = getMockStore().deals.find((item) => item.id === dealId);
+    if (!deal) throw new Error("Deal not found.");
+    return deal;
+}
+
+function mockPushHistory(dealId: string, entry: Omit<DealHistoryEntry, "at" | "by">) {
+    const store = getMockStore();
+    const list = store.history.get(dealId) ?? [];
+    list.push({ ...entry, at: new Date().toISOString(), by: null });
+    store.history.set(dealId, list);
+}
+
+function mockList(filters: DealsFilters): DealsResult {
+    const criteria = normalizePropertyCriteria({
+        ...filters.propertyFilters,
+        type: filters.dealType || filters.propertyFilters?.type || "",
+        where: filters.propertyFilters?.where || filters.locality,
+    });
+    const all = getMockStore()
+        .deals.filter(
+            (deal) =>
+                matchesQuery(deal, filters.q) &&
+                (!filters.dealType || (filters.dealType === "rent") === deal.property.isRent) &&
+                matchesPropertyCriteria(deal.property.filterFacts ?? {}, criteria),
+        )
+        .map((deal) => structuredClone(deal));
+    const items = filters.stage ? all.filter((deal) => deal.status === filters.stage) : all;
+    return { items: sortDeals(items, filters.sort), summary: buildSummary(all) };
+}
+
+function mockDetail(dealId: string): DealDetail {
+    const deal = structuredClone(mockFind(dealId));
+    return {
+        ...deal,
+        apiStage: toApiStage(deal.status),
+        listPriceInr: deal.property.amountInr || null,
+        createdAt: deal.createdAt ?? deal.stageEnteredAt,
+        updatedAt: new Date().toISOString(),
+        buyerEmail: null,
+        history: structuredClone(getMockStore().history.get(dealId) ?? []),
+    };
+}
+
+function mockSetStage(dealId: string, status: DealStatus, options: SetStageOptions = {}) {
+    const deal = mockFind(dealId);
+    const now = new Date().toISOString();
+    if (status === "lost" && isLiveStage(deal.status)) deal.lostFromStage = deal.status;
+    deal.status = status;
+    deal.stageEnteredAt = now;
+    deal.lastContactedAt = null;
+    deal.resolvedAt = status === "closed" || status === "lost" ? now : null;
+    deal.closedAmountInr =
+        status === "closed" ? (options.closedAmountInr ?? deal.property.amountInr) : null;
+    deal.lostReason = status === "lost" ? options.lostReason : undefined;
+    if (status !== "lost") deal.lostFromStage = undefined;
+    if (options.note?.trim()) deal.note = options.note.trim();
+    mockPushHistory(dealId, { status: toApiStage(status), note: options.note?.trim() || null });
+}
+
 export const pipelineApi = {
     async list(filters: DealsFilters, signal?: AbortSignal): Promise<DealsResult> {
+        if (isMockMode()) return mockList(filters);
         const leads = await fetchAllLeads(leadFilterParams(filters), signal);
-        console.log("Fetching pipeline with filters:", filters);
         // Stage counts follow the search, as they did when the API filtered it.
         const all = leads
             .map(mapLeadToDeal)
@@ -540,6 +665,7 @@ export const pipelineApi = {
     },
 
     async get(dealId: string): Promise<DealDetail> {
+        if (isMockMode()) return mockDetail(dealId);
         const lead = await apiFetch<ApiLead>(`/clients/leads/${dealId}`);
         const detail = mapLeadToDetail(lead);
         if (!detail) {
@@ -553,6 +679,12 @@ export const pipelineApi = {
         status: DealItem["status"],
         options: SetStageOptions = {},
     ): Promise<void> {
+        if (isMockMode()) return mockSetStage(dealId, status, options);
+        // `options.closedAmountInr` (final price from "Mark as sold") and
+        // `options.lostReason` (reason from "Mark as lost") are deliberately
+        // NOT sent yet: UpdateLeadStatusDto only accepts `status` and `note`,
+        // and the API rejects unknown fields with a 400 (forbidNonWhitelisted).
+        // Send them as `closedAmount` / `lostReason` once the backend adds them.
         await apiFetch(`/clients/leads/${dealId}/status`, {
             method: "PATCH",
             body: JSON.stringify({
@@ -564,6 +696,14 @@ export const pipelineApi = {
 
     /** Submit or revise an offer — moves the lead to offer_made (negotiation column). */
     async makeOffer(dealId: string, offerAmount: number, notes?: string): Promise<void> {
+        if (isMockMode()) {
+            const deal = mockFind(dealId);
+            if (deal.status !== "negotiation") mockSetStage(dealId, "negotiation", { note: notes });
+            deal.offerAmountInr = offerAmount;
+            deal.offerStatus = "pending";
+            mockPushHistory(dealId, { status: "offer_made", note: notes?.trim() || null });
+            return;
+        }
         await apiFetch(`/clients/leads/${dealId}/offer`, {
             method: "POST",
             body: JSON.stringify({
@@ -575,6 +715,15 @@ export const pipelineApi = {
 
     /** Same-stage update used to log a call without moving the card. */
     async logContact(dealId: string, _currentStatus: DealStatus, note?: string): Promise<void> {
+        if (isMockMode()) {
+            const deal = mockFind(dealId);
+            deal.lastContactedAt = new Date().toISOString();
+            mockPushHistory(dealId, {
+                status: toApiStage(deal.status),
+                note: note?.trim() || CALL_LOGGED_NOTE,
+            });
+            return;
+        }
         const lead = await apiFetch<ApiLead>(`/clients/leads/${dealId}`);
         if (!lead.stage?.trim())
             throw new Error("Could not verify the current lead stage. Refresh and try again.");
@@ -592,6 +741,12 @@ export const pipelineApi = {
     },
 
     async setNote(dealId: string, _currentStatus: DealStatus, note: string): Promise<void> {
+        if (isMockMode()) {
+            const deal = mockFind(dealId);
+            deal.note = note.trim();
+            mockPushHistory(dealId, { status: toApiStage(deal.status), note: note.trim() });
+            return;
+        }
         const lead = await apiFetch<ApiLead>(`/clients/leads/${dealId}`);
         if (!lead.stage?.trim())
             throw new Error("Could not verify the current lead stage. Refresh and try again.");

@@ -39,9 +39,12 @@ function isStageId(value: unknown): value is DealStage {
  */
 export function usePipelineDnd({
     deals,
+    pinnedDealIds,
     onDrop,
 }: {
     deals: DealItem[];
+    /** Columns render pins first, so indices must be read in that same order. */
+    pinnedDealIds: string[];
     onDrop: (dealId: string, stage: DealStage) => void;
 }) {
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -108,9 +111,13 @@ export function usePipelineDnd({
 
             setStageOrder((prev) => {
                 const inStage = deals.filter((deal) => deal.status === target);
-                const ids = orderStageIds(
-                    inStage.map((deal) => deal.id),
-                    prev[target],
+                // Same order the column renders: manual order, then pins first.
+                const ids = pinFirst(
+                    orderStageIds(
+                        inStage.map((deal) => deal.id),
+                        prev[target],
+                    ),
+                    pinnedDealIds,
                 );
                 const from = ids.indexOf(dealId);
                 const to = ids.indexOf(String(overId));
@@ -118,7 +125,7 @@ export function usePipelineDnd({
                 return { ...prev, [target]: arrayMove(ids, from, to) };
             });
         },
-        [deals, onDrop, resolveStage],
+        [deals, onDrop, pinnedDealIds, resolveStage],
     );
 
     function handleDragCancel() {
@@ -153,6 +160,12 @@ function orderStageIds(currentIds: string[], manual: string[] | undefined): stri
     const ranked = manual.filter((id) => present.has(id));
     const rest = currentIds.filter((id) => !ranked.includes(id));
     return [...rest, ...ranked];
+}
+
+/** Stable pin-first ordering — matches `PipelineColumn`. */
+function pinFirst(ids: string[], pinnedDealIds: string[]): string[] {
+    const pinned = new Set(pinnedDealIds);
+    return [...ids.filter((id) => pinned.has(id)), ...ids.filter((id) => !pinned.has(id))];
 }
 
 /** Orders one stage's deals by the session's manual order, when it has one. */

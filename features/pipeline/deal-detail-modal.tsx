@@ -39,6 +39,7 @@ import {
     DEAL_OUTCOME_META,
     DEAL_STAGE_META,
     lostReasonLabel,
+    OFFER_STATUS_LABEL,
 } from "@/features/pipeline/stage-meta";
 import type { DealDetail, DealHistoryEntry, DealStatus } from "@/features/pipeline/types";
 import { isLiveStage, nextStage } from "@/features/pipeline/types";
@@ -96,7 +97,7 @@ function HistoryList({ history, isRent }: { history: DealHistoryEntry[]; isRent:
                                 <div className={styles.timelineTitleRow}>
                                     <h3 className={styles.timelineTitle}>{entry.title}</h3>
                                     {index === 0 ? (
-                                        <Badge variant="brand" className="px-2 py-0.5 text-[10px]">
+                                        <Badge variant="brand" className="body-xs px-2 py-0.5">
                                             Latest
                                         </Badge>
                                     ) : null}
@@ -216,7 +217,7 @@ export function DealDetailModal({
               ? "Move to site visit"
               : target === "negotiation"
                 ? "Start negotiating"
-                : "Mark as closed";
+                : "Mark as sold";
     const ActionIcon = target && isLiveStage(target) ? DEAL_STAGE_META[target].icon : BadgeCheck;
     const title = deal ? deal.buyer.name : "Deal details";
 
@@ -428,11 +429,8 @@ export function DealDetailModal({
                                                     )}
                                                 </span>
                                                 {deal.offerStatus ? (
-                                                    <Badge
-                                                        variant="neutral"
-                                                        className="ms-2 capitalize"
-                                                    >
-                                                        {deal.offerStatus}
+                                                    <Badge variant="neutral" className="ms-2">
+                                                        {OFFER_STATUS_LABEL[deal.offerStatus]}
                                                     </Badge>
                                                 ) : null}
                                             </DetailField>

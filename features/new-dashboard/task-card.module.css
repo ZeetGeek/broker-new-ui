@@ -119,6 +119,7 @@
     block-size: 680px;
     min-block-size: 0;
     overflow: hidden;
+    /* Match CARD p-4 / sm:p-5 — do not override card padding here. */
     --footer-inset: 1rem;
 }
 .fixedCard > :not(.scrollViewport) {
@@ -131,6 +132,7 @@
     overflow-y: auto;
     overscroll-behavior-y: contain;
     padding-inline: 4px;
+    padding-block-end: 1rem;
     margin-inline: -4px;
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -178,4 +180,54 @@
 
 .row:first-child {
     padding-block-start: 0;
+}
+
+/* Embed the shared planner paper list inside the dashboard card. */
+.paper {
+    --line-height: 40px;
+    /* Shared with planner .rowGutters so date/nav match the colored bars. */
+    --dashboard-row-gutter: 1.375rem;
+    background: transparent;
+    border-radius: 0;
+}
+.dayColumnFlush {
+    padding-inline: 0;
+}
+.paper .paperList {
+    min-block-size: 0;
+}
+.paper .paperList::after {
+    content: none;
+    display: none;
+    flex: none;
+    background: none;
+}
+.dayNav {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+/* Higher specificity than planner .dayHeading so the shared gutter wins. */
+.paper .dayNav {
+    padding: 0.25rem var(--dashboard-row-gutter) 0.5rem;
+}
+.dayNavLabel {
+    min-inline-size: 0;
+}
+.paper :global([data-today]) .dayNavLabel :global(h3) {
+    color: var(--color-brand);
+}
+.dayNavButtons {
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+    flex-shrink: 0;
+    padding-block-end: 0.125rem;
+}
+@media (pointer: coarse) {
+    .dayNavButtons :global(button) {
+        min-inline-size: 44px;
+        min-block-size: 44px;
+    }
 }

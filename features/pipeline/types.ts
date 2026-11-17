@@ -109,6 +109,11 @@ export type DealItem = {
     note: string;
     /** Set only when `status` is "lost". */
     lostReason?: string;
+    /**
+     * Last live stage the deal sat in before it was lost, read from the
+     * stage history. Null when lost straight from an unknown stage.
+     */
+    lostFromStage?: DealStage | null;
     /** ISO instant the deal was closed or lost. Null while live. */
     resolvedAt: string | null;
     /** What the deal actually closed at, in INR. Null unless closed. */

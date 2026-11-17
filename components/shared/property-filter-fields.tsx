@@ -25,6 +25,7 @@ import {
     Trees,
 } from "@/components/shared/icons";
 import { EditableRangeValuePill } from "@/components/shared/range-value-pill";
+import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -565,19 +566,34 @@ export function PropertyFilterFields({
         <fieldset className="flex flex-col gap-2">
             <legend className="mbe-2 text-sm font-medium text-ink">{label}</legend>
             <div className="grid grid-cols-2 gap-3">
-                {([min, max] as const).map((key, index) => (
-                    <Input
-                        size="md"
-                        key={key}
-                        aria-label={`${index === 0 ? "Minimum" : "Maximum"} ${label.toLowerCase()}`}
-                        inputMode="numeric"
-                        type="number"
-                        min={0}
-                        placeholder={`${index === 0 ? "Min" : "Max"} ${unit}`}
-                        value={v[key]}
-                        onValueChange={(next) => onChange({ ...v, [key]: next })}
-                    />
-                ))}
+                {([min, max] as const).map((key, index) =>
+                    key === "min" || key === "max" ? (
+                        // Money: the smart price field (29k, 1.5M, 25L…).
+                        <SmartPriceInput
+                            key={key}
+                            size="md"
+                            kind={v.type === "rent" ? "rent" : "sale"}
+                            aria-label={`${index === 0 ? "Minimum" : "Maximum"} ${label.toLowerCase()}`}
+                            placeholder={index === 0 ? "Min" : "Max"}
+                            value={Number(v[key]) > 0 ? Number(v[key]) : null}
+                            onValueChange={(next) =>
+                                onChange({ ...v, [key]: next != null ? String(next) : "" })
+                            }
+                        />
+                    ) : (
+                        <Input
+                            size="md"
+                            key={key}
+                            aria-label={`${index === 0 ? "Minimum" : "Maximum"} ${label.toLowerCase()}`}
+                            inputMode="numeric"
+                            type="number"
+                            min={0}
+                            placeholder={`${index === 0 ? "Min" : "Max"} ${unit}`}
+                            value={v[key]}
+                            onValueChange={(next) => onChange({ ...v, [key]: next })}
+                        />
+                    ),
+                )}
             </div>
         </fieldset>
     );

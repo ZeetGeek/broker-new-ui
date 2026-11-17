@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 
+import { MAX_CHARS } from "@/lib/validation/text-limits";
+
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { CharacterCount } from "@/components/shared/character-count";
 import { StickyNote } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +66,7 @@ function CompoundDemo() {
 
 function AppModalDemo({ size }: { size?: "sm" | "md" | "lg" }) {
     const [open, setOpen] = useState(false);
+    const [note, setNote] = useState("");
 
     return (
         <>
@@ -85,13 +89,18 @@ function AppModalDemo({ size }: { size?: "sm" | "md" | "lg" }) {
                     />
                 }
             >
-                <Textarea
-                    rows={4}
-                    maxLength={500}
-                    defaultValue=""
-                    placeholder="What did they say?"
-                    className="rounded-inner"
-                />
+                <div className="flex flex-col gap-2">
+                    <Textarea
+                        aria-label="Note"
+                        rows={4}
+                        maxLength={MAX_CHARS.dealNote}
+                        value={note}
+                        onChange={(event) => setNote(event.target.value)}
+                        placeholder="What did they say?"
+                        className="rounded-inner"
+                    />
+                    <CharacterCount value={note} maxChars={MAX_CHARS.dealNote} />
+                </div>
             </AppModal>
         </>
     );

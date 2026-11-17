@@ -77,7 +77,10 @@ export function describeStageHistory(
             };
         }
 
-        if (entry.status in STAGE_TITLE && entry.status !== "offer_rejected") {
+        if (
+            Object.prototype.hasOwnProperty.call(STAGE_TITLE, entry.status) &&
+            entry.status !== "offer_rejected"
+        ) {
             currentStage = entry.status;
         }
         return {

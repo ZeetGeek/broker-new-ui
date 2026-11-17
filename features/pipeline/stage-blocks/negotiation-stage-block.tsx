@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
 import type { DealItem } from "@/features/pipeline/types";
 
 function offerGap(askInr: number, offerInr: number): string {
@@ -32,7 +33,7 @@ export function NegotiationStageBlock({
             ? "Waiting for owner's response"
             : null;
 
-    const compactStatus = accepted ? "Accepted" : rejected ? "Declined" : "Awaiting owner";
+    const compactStatus = OFFER_STATUS_LABEL[deal.offerStatus ?? "pending"];
 
     return (
         <div

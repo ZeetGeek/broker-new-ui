@@ -20,6 +20,7 @@ import { useVisitActions } from "@/hooks/use-visit-actions";
 import { useVisitSummary } from "@/hooks/use-visit-summary";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type { BrokerVisitsTab, SummaryFilter } from "@/features/site-visits/broker/model";
@@ -103,6 +104,7 @@ export function BrokerSiteVisitsPage() {
     const buyers = buyersQuery.data ?? [];
     const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
     const [actionError, setActionError] = useState<string>();
+    const [cancellingVisitId, setCancellingVisitId] = useState<string | null>(null);
     const [now, setNow] = useState(() => new Date());
     const [slotFiltersOpen, setSlotFiltersOpen] = useState(false);
     const [visitFiltersOpen, setVisitFiltersOpen] = useState(false);
@@ -295,6 +297,29 @@ export function BrokerSiteVisitsPage() {
         return mergedItems;
     }, [inventoryVisits, now, selectedLead?.propertyId, slotFilters, slotItems]);
     const selectedVisit = allVisits.find((visit) => visit.id === visitId);
+    const cancellingVisit = cancellingVisitId
+        ? allVisits.find((visit) => visit.id === cancellingVisitId)
+        : undefined;
+
+    const confirmCancelVisit = () => {
+        if (!cancellingVisitId || visitActions.cancel.isPending) return;
+        const id = cancellingVisitId;
+        setActionError(undefined);
+        void visitActions.cancel
+            .mutateAsync(id)
+            .then(() => {
+                toast.success("Visit cancelled");
+                if (visitId === id) updateUrl({ visit: undefined });
+            })
+            .catch((error) =>
+                setActionError(
+                    error instanceof Error
+                        ? error.message
+                        : "Could not cancel this visit. Check your connection and try again.",
+                ),
+            )
+            .finally(() => setCancellingVisitId(null));
+    };
     const outcomeVisit = USE_MOCK_VISITS
         ? allVisits.find((visit) => visit.id === outcomeId)
         : undefined;
@@ -348,22 +373,12 @@ export function BrokerSiteVisitsPage() {
     const handleVisitAction = useCallback(
         (action: "outcome" | "reschedule" | "withdraw", id: string) => {
             if (action === "withdraw") {
-                setActionError(undefined);
-                void visitActions.cancel
-                    .mutateAsync(id)
-                    .then(() => toast.success("Request withdrawn"))
-                    .catch((error) =>
-                        setActionError(
-                            error instanceof Error
-                                ? error.message
-                                : "Could not withdraw this visit. Check your connection and try again.",
-                        ),
-                    );
+                setCancellingVisitId(id);
                 return;
             }
             updateUrl({ [action]: id });
         },
-        [updateUrl, visitActions.cancel],
+        [updateUrl],
     );
 
     const counts = useMemo(
@@ -718,24 +733,29 @@ export function BrokerSiteVisitsPage() {
                 onReschedule={() =>
                     selectedVisit && updateUrl({ visit: undefined, reschedule: selectedVisit.id })
                 }
-                onCancel={() =>
-                    selectedVisit &&
-                    void visitActions.cancel
-                        .mutateAsync(selectedVisit.id)
-                        .then(() => {
-                            setActionError(undefined);
-                            toast.success("Visit cancelled");
-                            updateUrl({ visit: undefined });
-                        })
-                        .catch((error) =>
-                            setActionError(
-                                error instanceof Error
-                                    ? error.message
-                                    : "Could not cancel this visit. Check your connection and try again.",
-                            ),
-                        )
-                }
+                onCancel={() => selectedVisit && setCancellingVisitId(selectedVisit.id)}
             />
+
+            <ConfirmDialog
+                open={cancellingVisit != null}
+                onOpenChange={(open) => {
+                    if (!open) setCancellingVisitId(null);
+                }}
+                title="Cancel this visit?"
+                description={
+                    cancellingVisit
+                        ? `${cancellingVisit.property.title} with ${cancellingVisit.buyers[0]?.name ?? "your client"}.`
+                        : undefined
+                }
+                confirmLabel="Cancel visit"
+                cancelLabel="Keep visit"
+                busy={visitActions.cancel.isPending}
+                onConfirm={confirmCancelVisit}
+            >
+                <p className="body text-ink-muted">
+                    You can book a new time later if your client still wants to see it.
+                </p>
+            </ConfirmDialog>
 
             <OutcomeModal
                 open={Boolean(outcomeVisit)}

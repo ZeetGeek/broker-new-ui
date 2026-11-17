@@ -8,13 +8,21 @@ import {
     Sparkles,
 } from "@/components/shared/icons";
 
-import type { DealLostReason, DealOutcome, DealStage, DealStatus } from "@/features/pipeline/types";
+import type {
+    DealItem,
+    DealLostReason,
+    DealOutcome,
+    DealStage,
+    DealStatus,
+} from "@/features/pipeline/types";
 
 export type StageMeta = {
     /** Plain language, sentence case. Never the internal key. */
     label: string;
     /** One line saying what this stage means and what comes next. */
     hint: string;
+    /** Empty column / tab copy: how a deal arrives here. No full stop. */
+    emptyHint: string;
     icon: AppIcon;
     /**
      * The stage token that fills the column dot and progress bar. One
@@ -52,6 +60,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
     new: {
         label: "New",
         hint: "You have matched this client to this property but not spoken to them about it yet.",
+        emptyHint: "Deals start here when you attach a client to a property",
         icon: Sparkles,
         dotClass: "bg-stage-1",
         advanceLabel: "Move to new",
@@ -64,6 +73,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
     contacted: {
         label: "Contacted",
         hint: "You have spoken to the client about this property. Next step is booking a visit.",
+        emptyHint: "Deals move here after you speak to the client",
         icon: PhoneCall,
         dotClass: "bg-stage-2",
         advanceLabel: "Mark contacted",
@@ -76,6 +86,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
     visit: {
         label: "Site visit",
         hint: "A visit is booked or done. Next step is an offer from the client.",
+        emptyHint: "Deals move here once a site visit is booked",
         icon: CalendarCheck,
         dotClass: "bg-stage-3",
         advanceLabel: "Book a visit",
@@ -88,6 +99,7 @@ export const DEAL_STAGE_META: Record<DealStage, StageMeta> = {
     negotiation: {
         label: "Negotiation",
         hint: "The client has made an offer and you are agreeing a price with the owner.",
+        emptyHint: "Deals move here when the client makes an offer",
         icon: Handshake,
         dotClass: "bg-stage-4",
         advanceLabel: "Start negotiating",
@@ -134,11 +146,30 @@ export const DEAL_LOST_REASON_LABEL: Record<DealLostReason, string> = {
 
 /** Known API codes use plain-language labels; saved free text stays as supplied. */
 export function lostReasonLabel(reason: string): string {
-    return Object.hasOwn(DEAL_LOST_REASON_LABEL, reason)
+    // hasOwnProperty, not Object.hasOwn: the latter is missing on Android
+    // WebView before Chrome 93, which our users still run.
+    return Object.prototype.hasOwnProperty.call(DEAL_LOST_REASON_LABEL, reason)
         ? DEAL_LOST_REASON_LABEL[reason as DealLostReason]
         : reason;
 }
 
 export function isOutcome(status: DealStatus): status is DealOutcome {
     return status === "closed" || status === "lost";
+}
+
+type OfferStatus = NonNullable<DealItem["offerStatus"]>;
+
+/** Offer status in plain words — never the raw API value. */
+export const OFFER_STATUS_LABEL: Record<OfferStatus, string> = {
+    pending: "Awaiting owner",
+    accepted: "Accepted",
+    rejected: "Declined",
+};
+
+/**
+ * An offer already exists that a new amount would replace. The card menu and
+ * the offer modal both read this, so they never disagree on the wording.
+ */
+export function isRevisingOffer(status: DealItem["offerStatus"]): boolean {
+    return status === "pending" || status === "rejected";
 }

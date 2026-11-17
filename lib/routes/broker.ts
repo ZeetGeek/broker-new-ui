@@ -4,6 +4,7 @@ export const BROKER_OWNER_LISTINGS_HREF = "/broker/owner-listings";
 export const BROKER_YOUR_LISTINGS_HREF = "/broker/your-listings";
 export const BROKER_MY_DEALS_HREF = "/broker/my-deals";
 export const BROKER_PIPELINE_HREF = "/broker/pipeline";
+export const BROKER_EARNINGS_HREF = "/broker/earnings";
 export const BROKER_CONTACTS_HREF = "/broker/contacts";
 export const BROKER_PROPERTIES_NEW_HREF = "/broker/properties/new";
 export const BROKER_ADD_BUYER_HREF = "/broker/contacts?add=buyer";

@@ -5,7 +5,7 @@ import { type SyntheticEvent, useState } from "react";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
-import { HoldToConfirmMenuItem } from "@/components/shared/hold-to-confirm-menu-item";
+import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import {
     CallIcon,
     Eye,
@@ -171,10 +171,10 @@ export function ContactCardActions({
                     ) : null}
                     {onDelete ? <DropdownMenuSeparator className="my-1" /> : null}
                     {onDelete ? (
-                        <HoldToConfirmMenuItem
-                            label="Hold to delete"
+                        <DangerMenuItem
+                            label="Delete"
                             icon="trash"
-                            onComplete={() => {
+                            onSelect={() => {
                                 setMenuOpen(false);
                                 onDelete();
                             }}

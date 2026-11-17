@@ -4,16 +4,16 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { tinykeys } from "tinykeys";
 
-import { formatMoneyInput, parseMoney } from "@/lib/format/money";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
-import { useMarketCurrency } from "@/hooks/use-market";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { CharacterCount } from "@/components/shared/character-count";
 import type { AppIcon } from "@/components/shared/icons";
 import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
-import { currencyIcon } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
+import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -506,50 +506,32 @@ export function ToggleRow({
     );
 }
 
-/** Same money control as Add property Expected price / Society maintenance. */
+/** Contact budget box: the shared smart price field, digits in and out. */
 function ContactCurrencyInput({
     id,
     valueDigits,
     onChangeDigits,
     error,
+    kind,
     placeholder = "Optional",
 }: {
     id: string;
     valueDigits: string;
     onChangeDigits: (digits: string) => void;
     error?: string;
+    kind: "sale" | "rent";
     placeholder?: string;
 }) {
-    const CurrencyIcon = currencyIcon(useMarketCurrency().code);
-    const numericValue =
-        valueDigits && Number.isFinite(Number(valueDigits)) && Number(valueDigits) > 0
-            ? Number(valueDigits)
-            : null;
-    const [display, setDisplay] = useState(() => formatMoneyInput(numericValue));
-    const [focused, setFocused] = useState(false);
-
+    const amount = valueDigits && Number(valueDigits) > 0 ? Number(valueDigits) : null;
     return (
-        <Input
+        <SmartPriceInput
             id={id}
-            inputMode="text"
             size="lg"
-            value={focused ? display : formatMoneyInput(numericValue)}
+            kind={kind}
+            value={amount}
+            onValueChange={(next) => onChangeDigits(next != null ? String(next) : "")}
             placeholder={placeholder}
-            startIcon={CurrencyIcon}
             errorText={error}
-            onFocus={() => {
-                setDisplay(formatMoneyInput(numericValue));
-                setFocused(true);
-            }}
-            onValueChange={(next) => {
-                setDisplay(next);
-                const parsed = parseMoney(next);
-                onChangeDigits(parsed != null && parsed > 0 ? String(parsed) : "");
-            }}
-            onBlur={() => {
-                setFocused(false);
-                setDisplay(formatMoneyInput(numericValue));
-            }}
         />
     );
 }
@@ -590,6 +572,7 @@ export function BudgetRangeField({
                 <FormField label={`${title} min`}>
                     <ContactCurrencyInput
                         id={`${idPrefix}-min`}
+                        kind={isRent ? "rent" : "sale"}
                         valueDigits={minInr}
                         onChangeDigits={onMinChange}
                         error={minError}
@@ -598,6 +581,7 @@ export function BudgetRangeField({
                 <FormField label={`${title} max`}>
                     <ContactCurrencyInput
                         id={`${idPrefix}-max`}
+                        kind={isRent ? "rent" : "sale"}
                         valueDigits={maxInr}
                         onChangeDigits={onMaxChange}
                         error={maxError}
@@ -773,17 +757,24 @@ export function NotesField({
     error?: string;
 }) {
     const messageId = "contact-notes-message";
+    const countId = "contact-notes-count";
     return (
-        <FormField label="Notes" htmlFor="contact-notes" hint={`${value.length} of 300`}>
+        <FormField
+            label="Notes"
+            htmlFor="contact-notes"
+            hint={<CharacterCount id={countId} value={value} maxChars={MAX_CHARS.contactNote} />}
+        >
             <Textarea
                 id="contact-notes"
                 value={value}
-                onChange={(event) => onChange(event.target.value.slice(0, 300))}
-                maxLength={300}
+                // maxLength stops new text past the limit. No slice here: an
+                // older, longer note must not be cut short on the first keystroke.
+                onChange={(event) => onChange(event.target.value)}
+                maxLength={MAX_CHARS.contactNote}
                 rows={4}
                 placeholder="Add useful context for the next conversation."
                 aria-invalid={Boolean(error) || undefined}
-                aria-describedby={error ? messageId : undefined}
+                aria-describedby={error ? `${countId} ${messageId}` : countId}
                 className={cn(
                     `
                       field-sizing-fixed resize-y rounded-control border-2 border-border-warm

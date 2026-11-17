@@ -2,27 +2,26 @@
 
 import { useState } from "react";
 
-import { formatPrice, formatRent } from "@/lib/format/price";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { CharacterCount } from "@/components/shared/character-count";
 import { Handshake } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
-import { Input } from "@/components/ui/input";
+import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { isRevisingOffer } from "@/features/pipeline/stage-meta";
 import type { DealItem } from "@/features/pipeline/types";
+
+/** 11 digits. Anything longer is a typo. */
+const MAX_OFFER = 99_999_999_999;
+/** An offer this many times the list price is almost always an extra zero. */
+const MAX_OFFER_TO_LIST_RATIO = 10;
 
 function digitsOnly(value: string): string {
     return value.replace(/\D/g, "");
-}
-
-function amountHint(raw: string, isRent: boolean): string | null {
-    const digits = digitsOnly(raw);
-    if (!digits) return null;
-    const n = Number(digits);
-    if (!Number.isFinite(n) || n < 1) return null;
-    return isRent ? formatRent(n) : formatPrice(n);
 }
 
 function seedAmount(deal: DealItem): string {
@@ -43,12 +42,15 @@ export function MakeOfferModal({
     open,
     deal,
     isSaving,
+    submitError,
     onConfirm,
     onCancel,
 }: {
     open: boolean;
     deal: DealItem | null;
     isSaving: boolean;
+    /** Save failure from the parent. Shown inline; the typed amount stays. */
+    submitError?: string | null;
     onConfirm: (offerAmount: number, notes: string) => void;
     onCancel: () => void;
 }) {
@@ -69,13 +71,17 @@ export function MakeOfferModal({
         }
     }
 
-    const isRevise = deal?.offerStatus === "rejected";
-    const hint = deal ? amountHint(amount, deal.property.isRent) : null;
+    const isRevise = isRevisingOffer(deal?.offerStatus ?? null);
 
     const submit = () => {
         const offerAmount = Number(digitsOnly(amount));
         if (!Number.isInteger(offerAmount) || offerAmount < 1) {
-            setError("Enter a valid offer amount in whole rupees.");
+            setError("Enter the offer amount, e.g. 75L or 7,500,000.");
+            return;
+        }
+        const listPrice = deal?.property.amountInr ?? 0;
+        if (listPrice > 0 && offerAmount > listPrice * MAX_OFFER_TO_LIST_RATIO) {
+            setError("That is more than 10 times the list price. Check the number of zeros.");
             return;
         }
         setError(null);
@@ -107,7 +113,15 @@ export function MakeOfferModal({
                 />
             }
         >
-            <div className="flex flex-col gap-4">
+            {/* A form so Enter / the Android "Go" key submits the amount. */}
+            <form
+                className="flex flex-col gap-4"
+                noValidate
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!isSaving) submit();
+                }}
+            >
                 <p className="body-sm text-ink-muted">
                     List price{" "}
                     <PriceWithCommission
@@ -124,22 +138,26 @@ export function MakeOfferModal({
 
                 <div className="flex flex-col gap-2">
                     <label htmlFor="offer-amount" className="body-sm font-medium text-ink">
-                        Offer amount (INR)
+                        Offer amount
                     </label>
-                    <Input
+                    <SmartPriceInput
                         id="offer-amount"
-                        inputMode="numeric"
-                        value={amount}
-                        onChange={(event) => {
-                            setAmount(digitsOnly(event.target.value));
+                        size="default"
+                        kind={deal.property.isRent ? "rent" : "sale"}
+                        value={amount ? Number(amount) : null}
+                        onValueChange={(next) => {
+                            setAmount(next != null ? String(next) : "");
                             if (error) setError(null);
                         }}
-                        placeholder={deal.property.isRent ? "25000" : "7500000"}
-                        autoComplete="off"
+                        reference={
+                            deal.property.amountInr > 0
+                                ? { amount: deal.property.amountInr, label: "list price" }
+                                : undefined
+                        }
+                        max={MAX_OFFER}
                         disabled={isSaving}
                         errorText={error ?? undefined}
                     />
-                    <p className="body-xs tabular text-ink-subtle">{hint ?? "Whole rupees only"}</p>
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -151,13 +169,25 @@ export function MakeOfferModal({
                         value={notes}
                         onChange={(event) => setNotes(event.target.value)}
                         rows={3}
-                        maxLength={500}
+                        maxLength={MAX_CHARS.offerNote}
                         placeholder="e.g. Cash buyer, ready to close in 30 days"
                         className="rounded-inner"
                         disabled={isSaving}
+                        aria-describedby="offer-notes-count"
+                    />
+                    <CharacterCount
+                        id="offer-notes-count"
+                        value={notes}
+                        maxChars={MAX_CHARS.offerNote}
                     />
                 </div>
-            </div>
+
+                {submitError ? (
+                    <p role="alert" className="body-sm text-danger">
+                        {submitError}
+                    </p>
+                ) : null}
+            </form>
         </AppModal>
     );
 }

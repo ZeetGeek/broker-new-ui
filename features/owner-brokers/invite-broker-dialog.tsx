@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -13,9 +13,11 @@ import {
     OWNER_PROPERTIES_NEW_HREF,
     ownerRequestsHref,
 } from "@/lib/routes/owner";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { CharacterCount } from "@/components/shared/character-count";
 import { Button } from "@/components/ui/button";
 import {
     Select,
@@ -43,6 +45,7 @@ export function InviteBrokerDialog({
 }) {
     const router = useRouter();
     const [propertyId, setPropertyId] = useState<string | null>(null);
+    const messageId = useId();
     const [message, setMessage] = useState("");
     const [properties, setProperties] = useState<{ id: string; label: string }[]>([]);
     const [propertiesLoading, setPropertiesLoading] = useState(false);
@@ -196,16 +199,26 @@ export function InviteBrokerDialog({
                     </div>
                 )}
 
-                <label className="flex flex-col gap-1.5">
-                    <span className="body-sm font-semibold text-ink">Message (optional)</span>
+                <div className="flex flex-col gap-1.5">
+                    <label htmlFor={messageId} className="body-sm font-semibold text-ink">
+                        Message (optional)
+                    </label>
                     <Textarea
+                        id={messageId}
                         value={message}
                         onChange={(event) => setMessage(event.target.value)}
                         placeholder="Why you’d like them to represent this listing"
                         rows={3}
                         disabled={submitting}
+                        maxLength={MAX_CHARS.brokerInviteNote}
+                        aria-describedby={`${messageId}-count`}
                     />
-                </label>
+                    <CharacterCount
+                        id={`${messageId}-count`}
+                        value={message}
+                        maxChars={MAX_CHARS.brokerInviteNote}
+                    />
+                </div>
 
                 {formError ? (
                     <p className="body-sm text-danger" role="alert">

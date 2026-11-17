@@ -1,5 +1,6 @@
 import {
     BROKER_CONTACTS_HREF,
+    BROKER_EARNINGS_HREF,
     BROKER_MY_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_PIPELINE_HREF,
@@ -84,4 +85,5 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
     { label: "Clients", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
     { label: "Visits", href: "/broker/visits", shortcutId: "visits" },
     { label: "Tasks", href: "/broker/tasks" },
+    { label: "Earnings", href: BROKER_EARNINGS_HREF },
 ];

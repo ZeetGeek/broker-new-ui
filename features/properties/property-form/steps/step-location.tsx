@@ -10,6 +10,7 @@ import { useMarket } from "@/hooks/use-market";
 
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
+import { CharacterCount } from "@/components/shared/character-count";
 import {
     Building2,
     Check,
@@ -286,22 +287,11 @@ export function StepLocation() {
                             label="Full address"
                             placeholder="Fills from the fields above — tap Edit to customize"
                             hint={
-                                <div className="flex flex-wrap items-start justify-between gap-2">
-                                    <span>
-                                        Auto-built as one line. Edit to customize, Reset to restore
-                                        the generated address.
-                                    </span>
-                                    <span
-                                        className={
-                                            fullAddress.length > MAX_PROPERTY_ADDRESS_LENGTH
-                                                ? "tabular text-danger"
-                                                : "tabular"
-                                        }
-                                    >
-                                        {fullAddress.length} / {MAX_PROPERTY_ADDRESS_LENGTH}{" "}
-                                        characters
-                                    </span>
-                                </div>
+                                <CharacterCount
+                                    value={fullAddress}
+                                    maxChars={MAX_PROPERTY_ADDRESS_LENGTH}
+                                    hint="Auto-built as one line. Edit to customize, Reset to restore the generated address."
+                                />
                             }
                             visibility="private"
                             className="md:col-span-2"

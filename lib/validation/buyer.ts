@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { parseClientMobile } from "@/lib/validation/client-phone";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 /**
  * Strips formatting from a typed mobile number. Input arrives with spaces,
@@ -107,7 +108,12 @@ export function createBuyerFormSchema(
             /** Empty string means "any" — kept for API; not shown on the create form. */
             bhk: z.string(),
             source: buyerSourceSchema,
-            note: z.string().max(300, "Note is too long"),
+            note: z
+                .string()
+                .max(
+                    MAX_CHARS.contactNote,
+                    `Keep the note under ${MAX_CHARS.contactNote} characters`,
+                ),
         })
         .superRefine((values, ctx) => {
             if (

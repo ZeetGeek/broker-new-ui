@@ -45,7 +45,7 @@ export type GlobalShortcutRoutes = {
 export type UseGlobalShortcutsOptions = {
     routes: GlobalShortcutRoutes;
     onShortcutsOpen: () => void;
-    /** Focuses the hold-to-logout control rather than logging out directly. */
+    /** Opens the account menu so the user picks Log out (which then confirms). */
     onLogoutFocus?: () => void;
 };
 

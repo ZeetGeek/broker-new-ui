@@ -7,6 +7,7 @@ import {
     MAX_TASK_REMINDERS,
     reminderLabel,
 } from "@/lib/reminders";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { inputValueInIst, inputValueToUtc, istDateKey } from "@/lib/visits/time";
 
 import { type TaskRepeat, taskRepeatSchema } from "./recurrence";
@@ -200,7 +201,8 @@ export function validateTaskDraft(draft: TaskDraft) {
     if (!draft.title.trim()) errors.title = "Give your task a name.";
     else if (draft.title.trim().length > 160)
         errors.title = "Keep the task name under 160 characters.";
-    if (draft.details.length > 2000) errors.details = "Keep the details under 2,000 characters.";
+    if (draft.details.length > MAX_CHARS.taskDetails)
+        errors.details = `Keep the details under ${MAX_CHARS.taskDetails.toLocaleString("en-IN")} characters.`;
     if (!draft.startDate) errors.startDate = "Choose a start date.";
     else if (!isTaskDate(draft.startDate)) errors.startDate = "Choose a valid start date.";
     if (!draft.startTime) errors.startTime = "Choose a start time.";

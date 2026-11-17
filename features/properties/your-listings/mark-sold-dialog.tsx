@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { CharacterCount } from "@/components/shared/character-count";
 import { Info } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-const REASON_MAX = 500;
+const REASON_MAX = MAX_CHARS.markSoldReason;
 
 /**
  * Confirm "Mark as sold". Open deals close immediately, so the dialog says so
@@ -33,6 +35,7 @@ export function MarkSoldDialog({
     portal?: "owner" | "broker";
     onSold?: () => void;
 }) {
+    const reasonId = useId();
     const [reason, setReason] = useState("");
     const [busy, setBusy] = useState(false);
     const isOwner = portal === "owner";
@@ -114,11 +117,13 @@ export function MarkSoldDialog({
                     </div>
                 </div>
 
-                <label className="flex flex-col gap-2">
-                    <span className="text-sm font-semibold text-ink">
+                <div className="flex flex-col gap-2">
+                    <label htmlFor={reasonId} className="text-sm font-semibold text-ink">
                         Reason <span className="font-normal text-ink-muted">(optional)</span>
-                    </span>
+                    </label>
                     <Textarea
+                        id={reasonId}
+                        aria-describedby={`${reasonId}-count`}
                         value={reason}
                         onChange={(event) => setReason(event.target.value.slice(0, REASON_MAX))}
                         maxLength={REASON_MAX}
@@ -127,13 +132,17 @@ export function MarkSoldDialog({
                         placeholder="e.g. Sold to a client I found myself"
                         className="border-2 border-border-warm bg-surface"
                     />
-                    <span className="body-xs text-ink-muted">
-                        {isOwner
-                            ? "Shared with your brokers and saved on those contacts."
-                            : "Saved on those contacts."}{" "}
-                        {reason.length}/{REASON_MAX}
-                    </span>
-                </label>
+                    <CharacterCount
+                        id={`${reasonId}-count`}
+                        value={reason}
+                        maxChars={REASON_MAX}
+                        hint={
+                            isOwner
+                                ? "Shared with your brokers and saved on those contacts."
+                                : "Saved on those contacts."
+                        }
+                    />
+                </div>
             </div>
         </AppModal>
     );

@@ -12,7 +12,7 @@ import { useMarketCurrency } from "@/hooks/use-market";
 
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
-import { BedDouble, Ruler, Users, Utensils } from "@/components/shared/icons";
+import { BedDouble, Users, Utensils } from "@/components/shared/icons";
 
 import { HOUSEKEEPING_OPTIONS, PG_BED_TYPE_OPTIONS, PG_GENDER_OPTIONS } from "@/constants/property";
 import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
@@ -23,7 +23,6 @@ import {
     FORM_GRID_CLASS,
     FORM_SECTIONS_CLASS,
     FORM_STACK_CLASS,
-    NumberField,
     SelectField,
     TimeField,
     ToggleField,
@@ -267,13 +266,11 @@ export function StepPricing() {
                             placeholder="e.g. 85 L or 8500000"
                             onValueChange={handleExpectedPriceChange}
                         />
-                        <NumberField
+                        <CurrencyField
                             name="sale.pricePerSqft"
                             label="Price per sq ft"
-                            min={0}
-                            step={1}
-                            placeholder="e.g. 5500"
-                            startIcon={Ruler}
+                            allowZero
+                            placeholder="e.g. 5500 or 5.5k"
                             hint={
                                 areaSqft > 0
                                     ? `Based on ${areaSqft.toLocaleString("en-IN")} sq ft — edit either side to sync`

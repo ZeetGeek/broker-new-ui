@@ -25,6 +25,7 @@ import {
 } from "@/lib/validation/profile";
 import { useLocationOptions } from "@/hooks/use-locations";
 
+import { CharacterCount } from "@/components/shared/character-count";
 import {
     type AppIcon,
     Award,
@@ -126,7 +127,6 @@ function BioField({
     name,
     placeholder,
     errorMessage,
-    charCount,
 }: {
     value: string;
     onChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
@@ -134,7 +134,6 @@ function BioField({
     name: string;
     placeholder: string;
     errorMessage?: string;
-    charCount: string;
 }) {
     return (
         <div className="flex flex-col gap-2 min-inline-0">
@@ -155,18 +154,20 @@ function BioField({
                     onChange={onChange}
                     onBlur={onBlur}
                     rows={4}
+                    maxLength={BIO_MAX}
                     placeholder={placeholder}
                     aria-invalid={Boolean(errorMessage) || undefined}
                     aria-describedby="profile-bio-help"
                     className={cn(PROFILE_TEXTAREA_CLASS, "ps-11")}
                 />
             </div>
-            <p
-                id="profile-bio-help"
-                className={errorMessage ? "body-xs text-danger" : "body-xs tabular text-ink-subtle"}
-            >
-                {errorMessage ?? charCount}
-            </p>
+            {errorMessage ? (
+                <p id="profile-bio-help" className="body-xs text-danger">
+                    {errorMessage}
+                </p>
+            ) : (
+                <CharacterCount id="profile-bio-help" value={value} maxChars={BIO_MAX} />
+            )}
         </div>
     );
 }
@@ -323,7 +324,6 @@ export function ProfilePage() {
         return () => window.removeEventListener("beforeunload", onBeforeUnload);
     }, [isDirty]);
 
-    const bio = useWatch({ control, name: "bio" });
     const countryName = useWatch({ control, name: "country" });
     const stateName = useWatch({ control, name: "state" });
     const cityName = useWatch({ control, name: "city" });
@@ -921,7 +921,6 @@ export function ProfilePage() {
                                         onBlur={field.onBlur}
                                         placeholder="What kind of properties you look for, and why."
                                         errorMessage={fieldState.error?.message}
-                                        charCount={`${(bio ?? "").length} of ${BIO_MAX} characters`}
                                     />
                                 )}
                             />
@@ -1056,7 +1055,6 @@ export function ProfilePage() {
                                         onBlur={field.onBlur}
                                         placeholder="Two lines on what you know that other brokers do not."
                                         errorMessage={fieldState.error?.message}
-                                        charCount={`${(bio ?? "").length} of ${BIO_MAX} characters`}
                                     />
                                 )}
                             />
