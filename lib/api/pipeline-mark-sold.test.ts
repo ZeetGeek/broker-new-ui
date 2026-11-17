@@ -6,6 +6,7 @@ import { pipelineApi } from "@/lib/api/pipeline";
 
 import { USE_MOCK_DATA } from "@/config";
 import {
+    findDealForMove,
     markSoldBlockedReason,
     otherLiveClientCount,
     saleConfirmMode,
@@ -81,4 +82,14 @@ test("otherLiveClientCount counts only other live deals on the same property", (
         deal("d6", "contacted", "p2"),
     ];
     assert.equal(otherLiveClientCount(deals, target), 2);
+});
+
+test("findDealForMove falls back to the open deal when it is not on the loaded board", () => {
+    const onBoard = deal("d1", "negotiation", "p1");
+    const opened = deal("d9", "negotiation", "p9");
+    assert.equal(findDealForMove([onBoard], opened, "d1"), onBoard);
+    assert.equal(findDealForMove([onBoard], opened, "d9"), opened);
+    assert.equal(findDealForMove(null, opened, "d9"), opened);
+    assert.equal(findDealForMove([onBoard], opened, "d5"), null);
+    assert.equal(findDealForMove([onBoard], null, "d5"), null);
 });

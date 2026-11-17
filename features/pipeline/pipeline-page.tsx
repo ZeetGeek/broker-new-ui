@@ -37,6 +37,7 @@ import {
 } from "@/features/pipeline/pipeline-skeleton";
 import { PipelineToolbar } from "@/features/pipeline/pipeline-toolbar";
 import {
+    findDealForMove,
     markSoldBlockedReason,
     otherLiveClientCount,
     type SaleConfirmMode,
@@ -314,18 +315,19 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
 
     const requestMove = useCallback(
         (dealId: string, status: DealStatus, successMessage: string) => {
-            if (status === "closed") {
-                const deal = (deals ?? []).find((item) => item.id === dealId);
-                const blocked = deal ? markSoldBlockedReason(deal, saleModeFor(deal)) : null;
+            // Snapshot the deal: the detail modal closes right after this call.
+            const deal = findDealForMove(deals, viewDetail, dealId) ?? undefined;
+            if (status === "closed" && deal) {
+                const blocked = markSoldBlockedReason(deal, saleModeFor(deal));
                 if (blocked) {
                     setActionError(blocked);
                     return;
                 }
             }
             setMoveError(null);
-            setMoveRequest({ dealId, status, successMessage });
+            setMoveRequest({ dealId, status, successMessage, deal });
         },
-        [deals],
+        [deals, viewDetail],
     );
 
     /** Latest detail request. An older, slower response must not replace a newer deal. */
@@ -473,7 +475,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             if (!moveRequest) return;
             if (stageGate.begin(moveRequest.dealId) == null) return;
 
-            const deal = (deals ?? []).find((item) => item.id === moveRequest.dealId);
+            const deal = findDealForMove(deals, moveRequest.deal ?? null, moveRequest.dealId);
             const sendToOwner =
                 moveRequest.status === "closed" &&
                 deal != null &&
@@ -688,7 +690,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
 
     const moveDeal =
         moveRequest != null
-            ? ((deals ?? []).find((deal) => deal.id === moveRequest.dealId) ?? null)
+            ? findDealForMove(deals, moveRequest.deal ?? null, moveRequest.dealId)
             : null;
 
     const offerDeal =

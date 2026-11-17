@@ -28,6 +28,11 @@ export type StageMoveRequest = {
     status: DealStatus;
     /** Short line for the toast after save. */
     successMessage: string;
+    /**
+     * The deal as it was when the move was asked for. Kept because a deal
+     * opened from a link may not be on the loaded board.
+     */
+    deal?: DealItem;
 };
 
 /**

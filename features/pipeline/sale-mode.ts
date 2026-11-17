@@ -39,3 +39,16 @@ export function otherLiveClientCount(deals: readonly DealItem[], deal: DealItem)
             isLiveStage(other.status),
     ).length;
 }
+
+/**
+ * The deal a stage move is about. It may not be on the loaded board (opened
+ * from a link, or outside the current filter), so fall back to the deal the
+ * broker has open.
+ */
+export function findDealForMove(
+    deals: readonly DealItem[] | null,
+    fallback: DealItem | null,
+    dealId: string,
+): DealItem | null {
+    return deals?.find((deal) => deal.id === dealId) ?? (fallback?.id === dealId ? fallback : null);
+}
