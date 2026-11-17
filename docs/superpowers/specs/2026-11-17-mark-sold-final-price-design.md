@@ -154,6 +154,13 @@ supports it, otherwise rely on the error.
   currently allows `closed_won`/`closed_lost` → live stage. Backend refuses
   that move when the property is `sold` (400: "This property is sold. Its
   deals can't be reopened."). Frontend hides/blocks Reopen on those deals.
+  **Exception (decided with the user, 2026-11-17):** on a broker's own
+  listing the sold deal itself can go "Back on the board" (to Contacted, same
+  client) when a sale falls through. The property becomes `available`, the
+  won `deal` row is deleted so "deals won" doesn't double count, and the
+  broker can mark it sold again at a new price. Needs manage rights. Deals
+  the sale closed as lost stay lost (the broker reopens them one by one).
+  Owner listings stay locked.
 - **Who may close an exclusive listing.** `closed_won` that triggers the
   section 2 cleanup requires the same manage rights as
   `PropertyService.markSold` (`requireManage`). Without them: 403 "Only the

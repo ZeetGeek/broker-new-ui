@@ -646,6 +646,12 @@ function mockDetail(dealId: string): DealDetail {
 function mockSetStage(dealId: string, status: DealStatus, options: SetStageOptions = {}) {
     const deal = mockFind(dealId);
     const now = new Date().toISOString();
+    // Mock parity: putting the sold deal back on the board makes the property available.
+    if (deal.status === "closed" && isLiveStage(status) && deal.property.isSold) {
+        for (const other of getMockStore().deals) {
+            if (other.property.id === deal.property.id) other.property.isSold = false;
+        }
+    }
     if (status === "lost" && isLiveStage(deal.status)) deal.lostFromStage = deal.status;
     deal.status = status;
     deal.stageEnteredAt = now;

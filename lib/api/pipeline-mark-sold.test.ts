@@ -6,6 +6,7 @@ import { pipelineApi } from "@/lib/api/pipeline";
 
 import { USE_MOCK_DATA } from "@/config";
 import {
+    canPutBackOnBoard,
     findDealForMove,
     markSoldBlockedReason,
     otherLiveClientCount,
@@ -92,4 +93,16 @@ test("findDealForMove falls back to the open deal when it is not on the loaded b
     assert.equal(findDealForMove(null, opened, "d9"), opened);
     assert.equal(findDealForMove([onBoard], opened, "d5"), null);
     assert.equal(findDealForMove([onBoard], null, "d5"), null);
+});
+
+test("canPutBackOnBoard: on a sold property only the sold deal of a broker listing", () => {
+    const soldOwn = { ...deal("d1", "closed", "p1", { isSold: true }) };
+    soldOwn.property = { ...soldOwn.property, isBrokerListing: true };
+    const soldOwner = deal("d2", "closed", "p2", { isSold: true });
+    const lostOnSold = { ...deal("d3", "lost", "p1", { isSold: true }) };
+    lostOnSold.property = { ...lostOnSold.property, isBrokerListing: true };
+    assert.equal(canPutBackOnBoard(soldOwn), true);
+    assert.equal(canPutBackOnBoard(soldOwner), false);
+    assert.equal(canPutBackOnBoard(lostOnSold), false);
+    assert.equal(canPutBackOnBoard(deal("d4", "lost", "p4")), true);
 });

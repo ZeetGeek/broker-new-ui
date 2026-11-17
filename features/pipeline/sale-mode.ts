@@ -52,3 +52,13 @@ export function findDealForMove(
 ): DealItem | null {
     return deals?.find((deal) => deal.id === dealId) ?? (fallback?.id === dealId ? fallback : null);
 }
+
+/**
+ * Whether a closed deal can go back on the board. On a sold property only
+ * the sold deal of the broker's own listing can (the sale fell through);
+ * the API then makes the property available again.
+ */
+export function canPutBackOnBoard(deal: Pick<DealItem, "status" | "property">): boolean {
+    if (!deal.property.isSold) return true;
+    return deal.status === "closed" && Boolean(deal.property.isBrokerListing);
+}
