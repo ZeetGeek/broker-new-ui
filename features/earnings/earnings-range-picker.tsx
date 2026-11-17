@@ -39,12 +39,15 @@ export function EarningsRangePicker({
     const [open, setOpen] = useState(false);
     const range = resolveEarningsWindow(value);
     const [draft, setDraft] = useState<DateRange | undefined>(undefined);
+    // One month on phones keeps the popover inside the screen; two on wider screens.
+    const [monthsShown, setMonthsShown] = useState(2);
     const today = startOfDay(new Date());
 
     function handleOpenChange(next: boolean) {
         setOpen(next);
         if (next) {
             setDraft(range.from ? { from: range.from, to: range.to } : undefined);
+            setMonthsShown(window.matchMedia("(min-width: 640px)").matches ? 2 : 1);
         }
     }
 
@@ -109,14 +112,14 @@ export function EarningsRangePicker({
                     <ul
                         aria-label="Quick periods"
                         className="
-                          flex gap-1 overflow-x-auto border-be border-border-warm p-2
-                          md:flex-col md:overflow-visible md:border-e md:border-be-0 md:min-inline-48
+                          grid grid-cols-2 gap-1 border-be border-border-warm p-2
+                          md:flex md:flex-col md:border-e md:border-be-0 md:min-inline-48
                         "
                     >
                         {EARNINGS_PRESETS.map((preset) => {
                             const active = value.preset === preset.value;
                             return (
-                                <li key={preset.value} className="shrink-0">
+                                <li key={preset.value} className="min-inline-0">
                                     <button
                                         type="button"
                                         aria-pressed={active}
@@ -152,14 +155,17 @@ export function EarningsRangePicker({
                             mode="range"
                             selected={draft}
                             onSelect={setDraft}
-                            numberOfMonths={2}
+                            numberOfMonths={monthsShown}
                             defaultMonth={
                                 draft?.from ??
-                                new Date(today.getFullYear(), today.getMonth() - 1, 1)
+                                new Date(
+                                    today.getFullYear(),
+                                    today.getMonth() - (monthsShown - 1),
+                                    1,
+                                )
                             }
                             disabled={{ after: today }}
                             endMonth={today}
-                            className="[&_.rdp-months]:flex-col sm:[&_.rdp-months]:flex-row"
                         />
                         <div
                             className="

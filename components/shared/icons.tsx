@@ -311,6 +311,7 @@ import {
     IconTrash,
     IconTrees,
     IconTrendingDown,
+    IconTrendingUp,
     IconTruck,
     IconTypography,
     IconUpload,
@@ -542,6 +543,7 @@ export const TrainFront = IconTrain;
 export const Trash2 = IconTrash;
 export const Trees = IconTrees;
 export const TrendingDown = IconTrendingDown;
+export const TrendingUp = IconTrendingUp;
 export const TriangleAlert = IconAlertTriangle;
 export const Truck = IconTruck;
 export const Type = IconTypography;

@@ -27,6 +27,7 @@ import {
 } from "date-fns";
 
 import { isStalled } from "@/lib/api/pipeline";
+import { plural } from "@/lib/format/plural";
 
 import {
     DEAL_STAGE_ORDER,
@@ -139,6 +140,80 @@ export function previousWindow(window: EarningsWindow): EarningsWindow | null {
     return { from: startOfDay(subDays(window.from, days)), to };
 }
 
+/** What the selected period is compared against, and how to say it in a sentence. */
+export type EarningsComparison = {
+    window: EarningsWindow;
+    /** Noun phrase that follows "vs" or "on": "September", "the 6 months before". */
+    phrase: string;
+};
+
+const MONTH_PRESETS: Partial<Record<EarningsPreset, number>> = {
+    last_3_months: 3,
+    last_6_months: 6,
+    last_9_months: 9,
+    last_12_months: 12,
+};
+
+/**
+ * Calendar-aware comparison. Month presets compare against whole months, and
+ * year-to-date presets against the same stretch a year earlier, so a festive
+ * month is never measured against half of another one. Null for "all time".
+ */
+export function comparisonFor(
+    selection: EarningsSelection,
+    window: EarningsWindow,
+    now = new Date(),
+): EarningsComparison | null {
+    if (!window.from) return null;
+    const months = MONTH_PRESETS[selection.preset];
+    if (months) {
+        return {
+            window: {
+                from: startOfMonth(subMonths(window.from, months)),
+                to: endOfDay(subMonths(window.to, months)),
+            },
+            phrase: `the ${months} months before`,
+        };
+    }
+    switch (selection.preset) {
+        case "this_month":
+            return {
+                window: { from: startOfMonth(subMonths(now, 1)), to: endOfDay(subMonths(now, 1)) },
+                phrase: "the same days last month",
+            };
+        case "last_month": {
+            const prev = subMonths(window.from, 1);
+            return {
+                window: { from: startOfMonth(prev), to: endOfMonth(prev) },
+                phrase: format(prev, "MMMM"),
+            };
+        }
+        case "this_year":
+        case "this_fy":
+            return {
+                window: { from: subYears(window.from, 1), to: endOfDay(subYears(now, 1)) },
+                phrase:
+                    selection.preset === "this_year"
+                        ? "the same time last year"
+                        : "the same time last financial year",
+            };
+        case "last_fy":
+            return {
+                window: { from: subYears(window.from, 1), to: endOfDay(subDays(window.from, 1)) },
+                phrase: "the financial year before",
+            };
+        default: {
+            const prev = previousWindow(window);
+            if (!prev?.from) return null;
+            const days = windowDays({ from: prev.from, to: prev.to });
+            return {
+                window: prev,
+                phrase: days === 1 ? "the day before" : `the ${days} days before`,
+            };
+        }
+    }
+}
+
 function inWindow(iso: string | null | undefined, window: EarningsWindow): boolean {
     if (!iso) return false;
     const at = new Date(iso);
@@ -199,11 +274,13 @@ export function bucketUnitFor(window: { from: Date; to: Date }): BucketUnit {
     return differenceInCalendarDays(window.to, window.from) <= 62 ? "week" : "month";
 }
 
+/** Most bars a chart draws. Older history is trimmed, never the latest months. */
+const MAX_BUCKETS = 36;
+
 function buildBuckets(from: Date, to: Date, unit: BucketUnit, now: Date): EarningsBucket[] {
     const buckets: EarningsBucket[] = [];
     let cursor = unit === "week" ? startOfWeek(from, { weekStartsOn: 1 }) : startOfMonth(from);
-    // Hard cap so a stray decade-old deal cannot draw 500 bars.
-    while (!isAfter(cursor, to) && buckets.length < 120) {
+    while (!isAfter(cursor, to)) {
         const next = unit === "week" ? addWeeks(cursor, 1) : addMonths(cursor, 1);
         const isToDate = !isBefore(now, cursor) && isBefore(now, next);
         buckets.push({
@@ -250,6 +327,8 @@ export type LostReasonRow = { key: DealLostReason | "other"; label: string; coun
 
 export type EarningsReport = {
     window: EarningsWindow;
+    /** What the period is compared against. Null for "all time". */
+    comparison: EarningsComparison | null;
     /** Window actually drawn on charts (all time → first deal → today). */
     chartWindow: { from: Date; to: Date };
     bucketUnit: BucketUnit;
@@ -294,6 +373,8 @@ export type EarningsReport = {
         stalledCount: number;
         /** Commission on every live deal that has one set. */
         potentialInr: number;
+        /** Live deals whose owner set a commission. */
+        valuedCount: number;
         /** Commission on deals in negotiation or with an accepted offer. */
         likelyInr: number;
         likelyCount: number;
@@ -332,7 +413,8 @@ export function buildEarningsReport(
     now = new Date(),
 ): EarningsReport {
     const window = resolveEarningsWindow(selection, now);
-    const prev = previousWindow(window);
+    const comparison = comparisonFor(selection, window, now);
+    const prev = comparison?.window ?? null;
 
     const closedAll = deals.filter((d) => d.status === "closed" && d.resolvedAt);
     const lostAll = deals.filter((d) => d.status === "lost" && d.resolvedAt);
@@ -349,13 +431,16 @@ export function buildEarningsReport(
         .map((d) => new Date(d.resolvedAt as string))
         .filter((d) => !Number.isNaN(d.getTime()))
         .sort((a, b) => a.getTime() - b.getTime())[0];
-    const chartFrom =
+    let chartFrom =
         window.from ??
         (firstResolved && isBefore(firstResolved, subMonths(now, 5))
             ? startOfMonth(firstResolved)
             : startOfMonth(subMonths(now, 5)));
+    const bucketUnit = bucketUnitFor({ from: chartFrom, to: window.to });
+    // Long histories keep the latest months; a stray old deal must not squeeze the chart.
+    const oldestBar = startOfMonth(subMonths(window.to, MAX_BUCKETS - 1));
+    if (bucketUnit === "month" && isBefore(chartFrom, oldestBar)) chartFrom = oldestBar;
     const chartWindow = { from: chartFrom, to: window.to };
-    const bucketUnit = bucketUnitFor(chartWindow);
     const buckets = buildBuckets(chartFrom, window.to, bucketUnit, now);
 
     for (const deal of closed) {
@@ -443,6 +528,7 @@ export function buildEarningsReport(
 
     return {
         window,
+        comparison,
         chartWindow,
         bucketUnit,
         earnedInr: money.total,
@@ -482,6 +568,7 @@ export function buildEarningsReport(
             stageCounts,
             stalledCount: liveDeals.filter(isStalled).length,
             potentialInr: valuedLive.reduce((sum, v) => sum + (v.commissionInr ?? 0), 0),
+            valuedCount: valuedLive.filter((v) => v.commissionInr != null).length,
             likelyInr: likely.reduce((sum, v) => sum + (v.commissionInr ?? 0), 0),
             likelyCount: likely.length,
             acceptedOfferCount: liveDeals.filter((d) => d.offerStatus === "accepted").length,
@@ -497,6 +584,26 @@ export function buildEarningsReport(
 export function percentChange(current: number, previous: number | null): number | null {
     if (previous == null || previous === 0) return null;
     return Math.round(((current - previous) / previous) * 100);
+}
+
+/**
+ * Second clause of the two-tone page headline: what the period means, in one
+ * sentence. "Up 18% on the 6 months before." / "9 sold, 4 lost."
+ */
+export function earningsHeadline(report: EarningsReport): string {
+    const change = percentChange(report.earnedInr, report.previousEarnedInr);
+    if (report.comparison && change != null && report.earnedInr > 0) {
+        if (change === 0) return `Same as ${report.comparison.phrase}.`;
+        return `${change > 0 ? "Up" : "Down"} ${Math.abs(change)}% on ${report.comparison.phrase}.`;
+    }
+    if (report.closedCount === 0) {
+        return report.lostCount > 0
+            ? `Nothing sold yet, ${report.lostCount} lost.`
+            : "Nothing sold in this period yet.";
+    }
+    return report.lostCount > 0
+        ? `${report.closedCount} sold, ${report.lostCount} lost.`
+        : `${plural(report.closedCount, "deal")} sold.`;
 }
 
 /** "1 Jun – 17 Nov 2026" */

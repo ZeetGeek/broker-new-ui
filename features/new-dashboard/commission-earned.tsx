@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
 
@@ -10,6 +11,7 @@ import {
     formatCommissionMonth,
     formatCommissionPeriod,
 } from "@/lib/format/commission";
+import { BROKER_EARNINGS_HREF } from "@/lib/routes/broker";
 
 import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
@@ -127,7 +129,6 @@ export function CommissionEarned() {
 
             <div className={styles.detail}>
                 <header className={styles.chartHeader}>
-                    <h3 className="h6">Earnings by month</h3>
                     <div className={styles.rangeControl}>
                         <Select
                             items={PERIOD_OPTIONS}
@@ -156,6 +157,14 @@ export function CommissionEarned() {
                             </SelectContent>
                         </Select>
                     </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        nativeButton={false}
+                        render={<Link href={BROKER_EARNINGS_HREF} />}
+                    >
+                        Open earnings
+                    </Button>
                 </header>
                 <div className={styles.chartViewport}>
                     <ChartContainer

@@ -49,6 +49,11 @@ export function formatDateShort(date: Date): string {
     return formatInUserTz(date, "d MMM");
 }
 
+/** Calendar-tile parts `{ month: "Aug", day: "24" }` in the user's timezone. */
+export function formatDateTile(date: Date): { month: string; day: string } {
+    return { month: formatInUserTz(date, "MMM"), day: formatInUserTz(date, "d") };
+}
+
 /** Dashboard date line as `Mon, 24 Aug` in the user's timezone. */
 export function formatWeekdayDate(date: Date): string {
     return formatInUserTz(date, "EEE, d MMM");

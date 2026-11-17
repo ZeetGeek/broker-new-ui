@@ -3,7 +3,9 @@ import test from "node:test";
 
 import {
     buildEarningsReport,
+    comparisonFor,
     dealCommissionInr,
+    earningsHeadline,
     previousWindow,
     resolveEarningsWindow,
 } from "@/features/earnings/earnings-math";
@@ -107,4 +109,45 @@ test("report counts only deals resolved inside the window", () => {
         report.buckets.reduce((s, b) => s + b.totalInr, 0),
         report.earnedInr,
     );
+});
+
+test("comparisons line up with calendar months and the same stretch last year", () => {
+    const at = (preset: Parameters<typeof resolveEarningsWindow>[0]["preset"]) => {
+        const selection = { preset };
+        return comparisonFor(selection, resolveEarningsWindow(selection, NOW), NOW);
+    };
+
+    const lastMonth = at("last_month");
+    assert.equal(lastMonth?.phrase, "September");
+    assert.equal(lastMonth?.window.from?.getMonth(), 8);
+    assert.equal(lastMonth?.window.to.getDate(), 30);
+
+    const m6 = at("last_6_months"); // 1 Jun – 17 Nov 2026
+    assert.equal(m6?.phrase, "the 6 months before");
+    assert.equal(m6?.window.from?.getFullYear(), 2025);
+    assert.equal(m6?.window.from?.getMonth(), 11); // 1 Dec 2025
+    assert.equal(m6?.window.to.getMonth(), 4); // 17 May 2026
+
+    const fy = at("this_fy"); // 1 Apr – 17 Nov 2026
+    assert.equal(fy?.window.from?.getFullYear(), 2025);
+    assert.equal(fy?.window.from?.getMonth(), 3);
+    assert.equal(fy?.window.to.getFullYear(), 2025);
+    assert.equal(fy?.window.to.getMonth(), 10);
+
+    assert.equal(at("all_time"), null);
+});
+
+test("headline says what the period means", () => {
+    const deals = [deal({}), deal({ resolvedAt: new Date(2026, 9, 5).toISOString() })];
+    const report = buildEarningsReport(deals, { preset: "last_month" }, (k) => k, NOW);
+    // Last month is October: 1 deal; nothing in September.
+    assert.equal(earningsHeadline(report), "1 deal sold.");
+
+    const twoMonths = buildEarningsReport(
+        [...deals, deal({ resolvedAt: new Date(2026, 8, 5).toISOString() })],
+        { preset: "last_month" },
+        (k) => k,
+        NOW,
+    );
+    assert.equal(earningsHeadline(twoMonths), "Same as September.");
 });
