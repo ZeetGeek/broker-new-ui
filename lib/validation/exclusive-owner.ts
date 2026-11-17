@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { MAX_CHARS } from "@/lib/validation/text-limits";
+
 export const exclusiveOwnerTypeSchema = z.enum(["individual", "builder", "company"]);
 export const exclusiveOwnerSourceSchema = z.enum([
     "referral",
@@ -42,7 +44,12 @@ export const exclusiveOwnerFormSchema = z.object({
     fullAddress: z.string().trim().optional().or(z.literal("")),
     reraNumber: z.string().trim().optional().or(z.literal("")),
     source: exclusiveOwnerSourceSchema.or(z.literal("")).optional(),
-    notes: z.string().trim().optional().or(z.literal("")),
+    notes: z
+        .string()
+        .trim()
+        .max(MAX_CHARS.contactNote, `Keep the notes under ${MAX_CHARS.contactNote} characters`)
+        .optional()
+        .or(z.literal("")),
 });
 
 export type ExclusiveOwnerFormValues = z.infer<typeof exclusiveOwnerFormSchema>;

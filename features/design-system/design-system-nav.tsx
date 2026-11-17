@@ -27,6 +27,7 @@ const THEME_LINKS = [
     { href: "/design-system/logo", label: "Logo" },
     { href: "/design-system/components/button", label: "Button" },
     { href: "/design-system/components/input", label: "Input" },
+    { href: "/design-system/components/price-input", label: "Price input" },
     { href: "/design-system/components/select", label: "Select" },
     { href: "/design-system/components/combobox", label: "Combobox" },
     { href: "/design-system/components/switch", label: "Switch" },

@@ -15,6 +15,7 @@ import {
     Inbox,
     Lock,
     Pencil,
+    Trash2,
     WhatsAppIcon,
 } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -23,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import { AttachExclusiveOwnerModal } from "../your-listings/attach-exclusive-owner-modal";
 import type { MyListingItem } from "../your-listings/types";
 
-import { HoldToDeleteProperty } from "./hold-to-delete-property";
 import { listedAgoLabel } from "./property-detail-facts";
 import { PropertyPriceBlock } from "./property-price-block";
 
@@ -34,7 +34,7 @@ export type PropertyActionRailProps = {
     portal: "owner" | "broker";
     busy: boolean;
     onTogglePublish: () => void;
-    onRequestDelete: () => Promise<void>;
+    onRequestDelete: () => void;
     editHref: string;
     /** Broker inventory: lead analytics for this listing. */
     analyticsHref?: string;
@@ -277,10 +277,17 @@ export function PropertyActionRail({
                     </div>
                 ) : null}
                 <div className={styles.deleteArea}>
-                    <HoldToDeleteProperty disabled={busy} onComplete={onRequestDelete} />
-                    <p id="property-delete-hint" className={styles.deleteHint}>
-                        This cannot be undone. Release early to cancel.
-                    </p>
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        size="lg"
+                        className="inline-full"
+                        disabled={busy}
+                        onClick={onRequestDelete}
+                    >
+                        <Trash2 size={18} strokeWidth={1.75} aria-hidden />
+                        Delete property
+                    </Button>
                 </div>
             </section>
         </>

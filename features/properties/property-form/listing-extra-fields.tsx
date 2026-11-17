@@ -14,6 +14,7 @@ import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { Sofa, Sparkles } from "@/components/shared/icons";
+import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -276,23 +277,18 @@ export function ListingExtraFields() {
                                 name="maintenanceInr"
                                 control={control}
                                 render={({ field }) => (
-                                    <Input
+                                    <SmartPriceInput
                                         id="maintenanceInr"
-                                        aria-invalid={errors.maintenanceInr != null}
-                                        type="number"
-                                        inputMode="numeric"
-                                        className={FORM_CONTROL_CLASS}
+                                        size="lg"
+                                        kind="rent"
                                         placeholder="Optional · e.g. 3500"
-                                        value={field.value ?? ""}
-                                        onChange={(event) => {
-                                            const raw = event.target.value;
-                                            field.onChange(raw === "" ? null : Number(raw));
-                                        }}
+                                        value={typeof field.value === "number" ? field.value : null}
+                                        onValueChange={(next) => field.onChange(next)}
                                         onBlur={field.onBlur}
+                                        errorText={errors.maintenanceInr?.message}
                                     />
                                 )}
                             />
-                            <FieldError>{errors.maintenanceInr?.message}</FieldError>
                         </Field>
 
                         <Field>

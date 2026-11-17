@@ -9,9 +9,11 @@ import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/pho
 import { formatListingPrice } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { CharacterCount } from "@/components/shared/character-count";
 import {
     type AppIcon,
     Building2,
@@ -633,7 +635,9 @@ function BuyerPanel({
                 </div>
                 <textarea
                     aria-label="Client notes"
+                    aria-describedby="client-notes-count"
                     value={notes}
+                    maxLength={MAX_CHARS.contactNote}
                     onChange={(event) => setNotes(event.target.value)}
                     onBlur={() => void save({ notes })}
                     placeholder="Add useful context for the next conversation."
@@ -643,6 +647,12 @@ function BuyerPanel({
                       hover:border-ink-subtle
                       focus:border-ring focus:ring-3 focus:ring-ring/30
                     "
+                />
+                <CharacterCount
+                    id="client-notes-count"
+                    value={notes}
+                    maxChars={MAX_CHARS.contactNote}
+                    className="mbs-2"
                 />
             </section>
         </>
@@ -798,7 +808,9 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                 </div>
                 <textarea
                     aria-label="Owner notes"
+                    aria-describedby={isPlatform ? undefined : "owner-notes-count"}
                     value={notes}
+                    maxLength={MAX_CHARS.contactNote}
                     readOnly={isPlatform}
                     onChange={(event) => {
                         if (!isPlatform) setNotes(event.target.value);
@@ -819,6 +831,14 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                       focus:border-ring focus:ring-3 focus:ring-ring/30
                     "
                 />
+                {isPlatform ? null : (
+                    <CharacterCount
+                        id="owner-notes-count"
+                        value={notes}
+                        maxChars={MAX_CHARS.contactNote}
+                        className="mbs-2"
+                    />
+                )}
             </section>
         </>
     );

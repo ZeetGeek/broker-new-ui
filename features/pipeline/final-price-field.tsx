@@ -1,22 +1,20 @@
 "use client";
 
-import type { ReactNode } from "react";
-
 import { formatPrice, formatRent } from "@/lib/format/price";
-import { cn } from "@/lib/utils";
 
-import { CurrencyInput } from "@/components/shared/currency-input";
 import { Price } from "@/components/shared/price";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { SmartPriceInput } from "@/components/shared/smart-price-input";
+import { RadioGroup } from "@/components/ui/radio-group";
 
+import { ChoiceCard } from "@/features/pipeline/choice-card";
 import { OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
 import type { DealItem } from "@/features/pipeline/types";
 
 export type FinalPriceChoice = "listed" | "offer" | "custom";
 
-/** ₹9,999 crore. Anything longer is a typo, and past 2^53 Number loses digits. */
-const MAX_PRICE_DIGITS = 11;
+/** 11 digits. Anything longer is a typo. */
+const MAX_PRICE = 99_999_999_999;
 /** A final price this many times the list price is almost always an extra zero. */
 const MAX_PRICE_TO_LIST_RATIO = 10;
 
@@ -83,74 +81,12 @@ export function resolveFinalPrice(
 }
 
 /** "₹2 L below the listed price (9%)", or null when equal / unknown. */
-function differenceLine(amount: number, listed: number, isRent: boolean): string | null {
+export function differenceLine(amount: number, listed: number, isRent: boolean): string | null {
     if (listed <= 0 || amount <= 0 || amount === listed) return null;
     const diff = Math.abs(amount - listed);
     const percent = Math.round((diff / listed) * 100);
     const direction = amount < listed ? "below" : "above";
     return `${money(diff, isRent)} ${direction} the listed price${percent > 0 ? ` (${percent}%)` : ""}`;
-}
-
-/** Live read-back under the typed amount, in lakh/crore words. */
-function customHint(amount: number, listed: number, isRent: boolean): string {
-    if (amount <= 0) return "Whole rupees, e.g. 1800000 for ₹18 L";
-    if (listed > 0 && amount === listed)
-        return `${money(amount, isRent)}, same as the listed price`;
-    const diff = differenceLine(amount, listed, isRent);
-    return diff ? `${money(amount, isRent)} · ${diff}` : money(amount, isRent);
-}
-
-/**
- * One choice. The radio and its words are the label; anything passed as
- * `children` (the amount box) sits inside the same card but outside the
- * label, so tapping into the box never re-fires the radio.
- */
-function ChoiceCard({
-    value,
-    selected,
-    disabled,
-    title,
-    detail,
-    children,
-}: {
-    value: FinalPriceChoice;
-    selected: boolean;
-    disabled: boolean;
-    title: string;
-    detail?: ReactNode;
-    children?: ReactNode;
-}) {
-    return (
-        <div
-            className={cn(
-                "rounded-card border transition-[background-color,border-color] duration-160",
-                selected
-                    ? "border-brand bg-brand-soft/40"
-                    : "border-border-warm bg-surface hover:border-ink/20",
-                disabled && "opacity-60",
-            )}
-        >
-            <label
-                className={cn(
-                    "flex items-start gap-3 px-4 py-3.5 min-block-12",
-                    disabled ? "cursor-not-allowed" : "cursor-pointer",
-                )}
-            >
-                <RadioGroupItem
-                    value={value}
-                    disabled={disabled}
-                    // The shared radio rests as a grey dot that reads as
-                    // disabled; an outlined ring reads as "pick me".
-                    className="mbs-0.5 shrink-0 border-ink/30 bg-surface data-checked:border-transparent"
-                />
-                <span className="flex flex-1 flex-col gap-0.5 min-inline-0">
-                    <span className="body-sm font-semibold text-ink">{title}</span>
-                    {detail ? <span className="body-xs text-ink-muted">{detail}</span> : null}
-                </span>
-            </label>
-            {children ? <div className="px-4 pbe-4">{children}</div> : null}
-        </div>
-    );
 }
 
 /**
@@ -256,28 +192,26 @@ export function FinalPriceField({
                     {choice === "custom" ? (
                         <div className="flex flex-col gap-1.5">
                             <label htmlFor="final-price" className="sr-only">
-                                {legend} in rupees
+                                {legend}
                             </label>
-                            <CurrencyInput
+                            <SmartPriceInput
                                 id="final-price"
-                                valueDigits={digitsOnly(customAmount)}
-                                onChangeDigits={onCustomAmountChange}
-                                placeholder={isRent ? "18000" : "1800000"}
+                                size="default"
+                                kind={isRent ? "rent" : "sale"}
+                                value={customValue > 0 ? customValue : null}
+                                onValueChange={(next) =>
+                                    onCustomAmountChange(next != null ? String(next) : "")
+                                }
+                                reference={
+                                    listed > 0
+                                        ? { amount: listed, label: "listed price" }
+                                        : undefined
+                                }
+                                max={MAX_PRICE}
                                 disabled={disabled}
                                 errorText={error ?? undefined}
-                                maxDigits={MAX_PRICE_DIGITS}
-                                aria-describedby="final-price-hint"
                                 autoFocus
                             />
-                            {error ? null : (
-                                <p
-                                    id="final-price-hint"
-                                    aria-live="polite"
-                                    className="body-xs tabular text-ink-muted"
-                                >
-                                    {customHint(customValue, listed, isRent)}
-                                </p>
-                            )}
                         </div>
                     ) : null}
                 </ChoiceCard>

@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 
+import { MAX_CHARS } from "@/lib/validation/text-limits";
+
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { BadgeCheck, StickyNote } from "@/components/shared/icons";
+import { CharacterCount } from "@/components/shared/character-count";
+import { BadgeCheck, LostIcon, StickyNote } from "@/components/shared/icons";
 import { Textarea } from "@/components/ui/textarea";
 
 import {
@@ -14,12 +17,10 @@ import {
     resolveFinalPrice,
     seedCustomFinalPrice,
 } from "@/features/pipeline/final-price-field";
+import { LostReasonField, validateLostReason } from "@/features/pipeline/lost-reason-field";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
-import type { DealItem, DealStatus } from "@/features/pipeline/types";
+import type { DealItem, DealLostReason, DealStatus } from "@/features/pipeline/types";
 import { isLiveStage } from "@/features/pipeline/types";
-
-const NOTE_MAX_LENGTH = 500;
-const NOTE_COUNTER_FROM = 400;
 
 export type StageMoveRequest = {
     dealId: string;
@@ -28,9 +29,13 @@ export type StageMoveRequest = {
     successMessage: string;
 };
 
-/** Extra details some moves collect. Marking sold asks for the final price. */
+/**
+ * Extra details some moves collect. Marking sold asks for the final price;
+ * marking lost asks why.
+ */
 export type StageMoveDetails = {
     closedAmountInr?: number;
+    lostReason?: DealLostReason;
 };
 
 function moveTitle(status: DealStatus): string {
@@ -42,16 +47,22 @@ function moveTitle(status: DealStatus): string {
 
 /**
  * Which deal this is, nothing more. The fields below carry their own labels
- * ("Final price", "Note (optional)"), so repeating them here is noise.
+ * ("Final price", "Why was it lost?", "Note (optional)").
  */
 function moveDescription(deal: DealItem | null): string {
     return deal ? `${deal.buyer.name} on ${deal.property.title}` : "This client";
 }
 
+function notePlaceholder(status: DealStatus): string {
+    if (status === "closed") return "e.g. Registry on 12 March, token paid";
+    if (status === "lost") return "e.g. Owner would not go below ₹22 L";
+    return "e.g. Client liked the balcony, wants a second visit";
+}
+
 /**
  * Asked whenever a deal moves stage (advance, drag, sold, lost, reopen).
- * Note is optional — Confirm with an empty field still moves the deal.
- * Marking sold also asks for the final price (listed, offer, or typed).
+ * The note is always optional. Marking sold also asks for the final price
+ * (listed, offer, or typed); marking lost asks for one quick reason.
  */
 export function StageNoteModal({
     open,
@@ -75,8 +86,10 @@ export function StageNoteModal({
     const [priceChoice, setPriceChoice] = useState<FinalPriceChoice>("listed");
     const [customPrice, setCustomPrice] = useState("");
     const [priceError, setPriceError] = useState<string | null>(null);
+    const [lostReason, setLostReason] = useState<DealLostReason | null>(null);
+    const [lostError, setLostError] = useState<string | null>(null);
 
-    // Reset the draft when a new move opens — derived on the open edge so we
+    // Reset the draft when a new move opens, derived on the open edge so we
     // do not setState inside an effect (cascading render lint).
     const draftKey = open && request ? `${request.dealId}:${request.status}` : null;
     const [activeKey, setActiveKey] = useState<string | null>(null);
@@ -85,6 +98,9 @@ export function StageNoteModal({
         if (draftKey) {
             setNote("");
             setPriceError(null);
+            // No reason preselected: a default would quietly bias the data.
+            setLostReason(null);
+            setLostError(null);
             if (deal) {
                 setPriceChoice(defaultFinalPriceChoice(deal));
                 setCustomPrice(seedCustomFinalPrice(deal));
@@ -95,20 +111,40 @@ export function StageNoteModal({
     if (!request) return null;
 
     const asksFinalPrice = request.status === "closed" && deal != null;
+    const asksLostReason = request.status === "lost" && deal != null;
 
     const confirm = () => {
-        if (!asksFinalPrice) {
-            onConfirm(note, {});
+        if (asksFinalPrice) {
+            const result = resolveFinalPrice(deal, priceChoice, customPrice);
+            if (result.error != null) {
+                setPriceError(result.error);
+                return;
+            }
+            setPriceError(null);
+            onConfirm(note, { closedAmountInr: result.amountInr });
             return;
         }
-        const result = resolveFinalPrice(deal, priceChoice, customPrice);
-        if (result.error != null) {
-            setPriceError(result.error);
+        if (asksLostReason) {
+            const error = validateLostReason(lostReason);
+            if (error != null || lostReason == null) {
+                setLostError(error);
+                return;
+            }
+            setLostError(null);
+            onConfirm(note, { lostReason });
             return;
         }
-        setPriceError(null);
-        onConfirm(note, { closedAmountInr: result.amountInr });
+        onConfirm(note, {});
     };
+
+    const primaryLabel = isSaving
+        ? "Saving…"
+        : asksFinalPrice
+          ? "Mark as sold"
+          : asksLostReason
+            ? "Mark as lost"
+            : "Confirm";
+    const PrimaryIcon = asksFinalPrice ? BadgeCheck : asksLostReason ? LostIcon : StickyNote;
 
     return (
         <AppModal
@@ -121,16 +157,8 @@ export function StageNoteModal({
             description={moveDescription(deal)}
             footer={
                 <AppModalFooter
-                    primaryLabel={
-                        isSaving ? "Saving…" : asksFinalPrice ? "Mark as sold" : "Confirm"
-                    }
-                    primaryIcon={
-                        asksFinalPrice ? (
-                            <BadgeCheck aria-hidden strokeWidth={1.75} />
-                        ) : (
-                            <StickyNote aria-hidden strokeWidth={1.75} />
-                        )
-                    }
+                    primaryLabel={primaryLabel}
+                    primaryIcon={<PrimaryIcon aria-hidden strokeWidth={1.75} />}
                     onPrimary={confirm}
                     primaryDisabled={isSaving}
                     secondaryLabel="Cancel"
@@ -158,6 +186,19 @@ export function StageNoteModal({
                     />
                 ) : null}
 
+                {asksLostReason ? (
+                    <LostReasonField
+                        deal={deal}
+                        reason={lostReason}
+                        onReasonChange={(next) => {
+                            setLostReason(next);
+                            setLostError(null);
+                        }}
+                        error={lostError}
+                        disabled={isSaving}
+                    />
+                ) : null}
+
                 <div className="flex flex-col gap-2">
                     <label htmlFor="stage-note" className="body-sm font-medium text-ink">
                         Note <span className="font-normal text-ink-subtle">(optional)</span>
@@ -166,22 +207,18 @@ export function StageNoteModal({
                         id="stage-note"
                         value={note}
                         onChange={(event) => setNote(event.target.value)}
-                        rows={asksFinalPrice ? 3 : 4}
-                        maxLength={NOTE_MAX_LENGTH}
-                        placeholder={
-                            asksFinalPrice
-                                ? "e.g. Registry on 12 March, token paid"
-                                : "e.g. Client liked the balcony, wants a second visit"
-                        }
+                        rows={asksFinalPrice || asksLostReason ? 3 : 4}
+                        maxLength={MAX_CHARS.pipelineStageNote}
+                        placeholder={notePlaceholder(request.status)}
                         className="rounded-inner"
                         disabled={isSaving}
+                        aria-describedby="stage-note-count"
                     />
-                    {/* Counter only once the limit is in sight; "0 of 500" is noise. */}
-                    {note.length >= NOTE_COUNTER_FROM ? (
-                        <p className="body-xs tabular text-ink-muted" aria-live="polite">
-                            {note.length} of {NOTE_MAX_LENGTH}
-                        </p>
-                    ) : null}
+                    <CharacterCount
+                        id="stage-note-count"
+                        value={note}
+                        maxChars={MAX_CHARS.pipelineStageNote}
+                    />
                     {submitError ? (
                         <p role="alert" className="body-sm text-danger">
                             {submitError}

@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { PropertyActionRail } from "@/features/properties/property-detail/property-action-rail";
+import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyDetailLayout } from "@/features/properties/property-detail/property-detail-layout";
 import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
 import type { MyListingItem, MyListingStatus } from "@/features/properties/your-listings/types";
@@ -47,6 +48,7 @@ function OwnedPropertyDetail({
     const router = useRouter();
     const [item, setItem] = useState(listing);
     const [busy, setBusy] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const brokersQuery = useQuery({
         queryKey: ["owner-property-representations"],
         queryFn: () => representativeApi.ownerList(),
@@ -88,6 +90,7 @@ function OwnedPropertyDetail({
         setBusy(true);
         try {
             await myListingsApi.remove(item.id);
+            setIsDeleteOpen(false);
             toast.success("Moved to Deleted");
             router.push(listHref);
         } catch (error) {
@@ -121,7 +124,7 @@ function OwnedPropertyDetail({
                         portal={portal}
                         busy={busy}
                         onTogglePublish={() => void togglePublish()}
-                        onRequestDelete={handleDelete}
+                        onRequestDelete={() => setIsDeleteOpen(true)}
                         editHref={editHref}
                         analyticsHref={
                             portal === "broker" ? brokerPropertyAnalyticsHref(item.id) : undefined
@@ -167,6 +170,15 @@ function OwnedPropertyDetail({
                         </Button>
                     )
                 }
+            />
+            <PropertyDeleteDialog
+                open={isDeleteOpen}
+                onOpenChange={(open) => {
+                    if (!open && !busy) setIsDeleteOpen(false);
+                }}
+                title={item.title}
+                busy={busy}
+                onConfirm={() => void handleDelete()}
             />
         </>
     );

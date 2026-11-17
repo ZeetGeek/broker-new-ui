@@ -553,11 +553,11 @@ export const pipelineApi = {
         status: DealItem["status"],
         options: SetStageOptions = {},
     ): Promise<void> {
-        // `options.closedAmountInr` (final price from "Mark as sold") is
-        // deliberately NOT sent yet: UpdateLeadStatusDto only accepts `status`
-        // and `note`, and the API rejects unknown fields with a 400
-        // (forbidNonWhitelisted). Send it as `closedAmount` once the backend
-        // adds the field.
+        // `options.closedAmountInr` (final price from "Mark as sold") and
+        // `options.lostReason` (reason from "Mark as lost") are deliberately
+        // NOT sent yet: UpdateLeadStatusDto only accepts `status` and `note`,
+        // and the API rejects unknown fields with a 400 (forbidNonWhitelisted).
+        // Send them as `closedAmount` / `lostReason` once the backend adds them.
         await apiFetch(`/clients/leads/${dealId}/status`, {
             method: "PATCH",
             body: JSON.stringify({

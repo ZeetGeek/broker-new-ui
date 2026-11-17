@@ -12,7 +12,7 @@ import { durationMinutes, formatVisitDate, formatVisitTime } from "@/lib/visits/
 
 import { AppImage } from "@/components/shared/app-image";
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
-import { HoldToConfirmMenuItem } from "@/components/shared/hold-to-confirm-menu-item";
+import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import {
     Building2,
     CalendarDays,
@@ -104,10 +104,10 @@ export const VisitCard = memo(function VisitCard({
                             }
                         />
                         <DropdownMenuContent align="end" className="min-inline-56">
-                            <HoldToConfirmMenuItem
+                            <DangerMenuItem
                                 icon="trash"
                                 label="Cancel visit"
-                                onComplete={() => onAction("withdraw", visit.id)}
+                                onSelect={() => onAction("withdraw", visit.id)}
                             />
                         </DropdownMenuContent>
                     </DropdownMenu>

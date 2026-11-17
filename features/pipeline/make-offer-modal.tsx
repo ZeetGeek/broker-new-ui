@@ -2,33 +2,26 @@
 
 import { useState } from "react";
 
-import { formatPrice, formatRent } from "@/lib/format/price";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { CharacterCount } from "@/components/shared/character-count";
 import { Handshake } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
-import { Input } from "@/components/ui/input";
+import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Textarea } from "@/components/ui/textarea";
 
 import { isRevisingOffer } from "@/features/pipeline/stage-meta";
 import type { DealItem } from "@/features/pipeline/types";
 
-/** ₹9,999 crore. Anything longer is a typo, and past 2^53 Number loses digits. */
-const MAX_OFFER_DIGITS = 11;
+/** 11 digits. Anything longer is a typo. */
+const MAX_OFFER = 99_999_999_999;
 /** An offer this many times the list price is almost always an extra zero. */
 const MAX_OFFER_TO_LIST_RATIO = 10;
 
 function digitsOnly(value: string): string {
     return value.replace(/\D/g, "");
-}
-
-function amountHint(raw: string, isRent: boolean): string | null {
-    const digits = digitsOnly(raw);
-    if (!digits) return null;
-    const n = Number(digits);
-    if (!Number.isFinite(n) || n < 1) return null;
-    return isRent ? formatRent(n) : formatPrice(n);
 }
 
 function seedAmount(deal: DealItem): string {
@@ -79,12 +72,11 @@ export function MakeOfferModal({
     }
 
     const isRevise = isRevisingOffer(deal?.offerStatus ?? null);
-    const hint = deal ? amountHint(amount, deal.property.isRent) : null;
 
     const submit = () => {
         const offerAmount = Number(digitsOnly(amount));
         if (!Number.isInteger(offerAmount) || offerAmount < 1) {
-            setError("Enter a valid offer amount in whole rupees.");
+            setError("Enter the offer amount, e.g. 75L or 7,500,000.");
             return;
         }
         const listPrice = deal?.property.amountInr ?? 0;
@@ -146,24 +138,26 @@ export function MakeOfferModal({
 
                 <div className="flex flex-col gap-2">
                     <label htmlFor="offer-amount" className="body-sm font-medium text-ink">
-                        Offer amount (INR)
+                        Offer amount
                     </label>
-                    <Input
+                    <SmartPriceInput
                         id="offer-amount"
-                        inputMode="numeric"
-                        enterKeyHint="go"
-                        maxLength={MAX_OFFER_DIGITS}
-                        value={amount}
-                        onChange={(event) => {
-                            setAmount(digitsOnly(event.target.value).slice(0, MAX_OFFER_DIGITS));
+                        size="default"
+                        kind={deal.property.isRent ? "rent" : "sale"}
+                        value={amount ? Number(amount) : null}
+                        onValueChange={(next) => {
+                            setAmount(next != null ? String(next) : "");
                             if (error) setError(null);
                         }}
-                        placeholder={deal.property.isRent ? "25000" : "7500000"}
-                        autoComplete="off"
+                        reference={
+                            deal.property.amountInr > 0
+                                ? { amount: deal.property.amountInr, label: "list price" }
+                                : undefined
+                        }
+                        max={MAX_OFFER}
                         disabled={isSaving}
                         errorText={error ?? undefined}
                     />
-                    <p className="body-xs tabular text-ink-subtle">{hint ?? "Whole rupees only"}</p>
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -175,10 +169,16 @@ export function MakeOfferModal({
                         value={notes}
                         onChange={(event) => setNotes(event.target.value)}
                         rows={3}
-                        maxLength={500}
+                        maxLength={MAX_CHARS.offerNote}
                         placeholder="e.g. Cash buyer, ready to close in 30 days"
                         className="rounded-inner"
                         disabled={isSaving}
+                        aria-describedby="offer-notes-count"
+                    />
+                    <CharacterCount
+                        id="offer-notes-count"
+                        value={notes}
+                        maxChars={MAX_CHARS.offerNote}
                     />
                 </div>
 

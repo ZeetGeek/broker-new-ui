@@ -457,6 +457,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 await pipelineApi.setStage(moveRequest.dealId, moveRequest.status, {
                     note,
                     closedAmountInr: details.closedAmountInr,
+                    lostReason: details.lostReason,
                 });
                 setMoveRequest(null);
                 toast.success(moveRequest.successMessage);

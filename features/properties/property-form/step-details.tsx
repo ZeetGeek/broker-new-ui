@@ -20,6 +20,7 @@ import { useMarketCurrency } from "@/hooks/use-market";
 
 import { Building2, MapPin } from "@/components/shared/icons";
 import { MarketCurrencyIcon } from "@/components/shared/market-currency-icon";
+import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
@@ -359,23 +360,20 @@ export function StepDetails({
                                     name="saleAmountInr"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
+                                        <SmartPriceInput
                                             id="saleAmountInr"
-                                            aria-invalid={errors.saleAmountInr != null}
-                                            type="number"
-                                            inputMode="numeric"
-                                            className={FORM_CONTROL_CLASS}
+                                            size="lg"
+                                            kind="sale"
                                             placeholder="e.g. 8500000"
-                                            value={field.value ?? ""}
-                                            onChange={(event) => {
-                                                const raw = event.target.value;
-                                                field.onChange(raw === "" ? null : Number(raw));
-                                            }}
+                                            value={
+                                                typeof field.value === "number" ? field.value : null
+                                            }
+                                            onValueChange={(next) => field.onChange(next)}
                                             onBlur={field.onBlur}
+                                            errorText={errors.saleAmountInr?.message}
                                         />
                                     )}
                                 />
-                                <FieldError>{errors.saleAmountInr?.message}</FieldError>
                             </Field>
                         ) : null}
 
@@ -388,23 +386,20 @@ export function StepDetails({
                                     name="rentAmountInr"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
+                                        <SmartPriceInput
                                             id="rentAmountInr"
-                                            aria-invalid={errors.rentAmountInr != null}
-                                            type="number"
-                                            inputMode="numeric"
-                                            className={FORM_CONTROL_CLASS}
+                                            size="lg"
+                                            kind="rent"
                                             placeholder="e.g. 25000"
-                                            value={field.value ?? ""}
-                                            onChange={(event) => {
-                                                const raw = event.target.value;
-                                                field.onChange(raw === "" ? null : Number(raw));
-                                            }}
+                                            value={
+                                                typeof field.value === "number" ? field.value : null
+                                            }
+                                            onValueChange={(next) => field.onChange(next)}
                                             onBlur={field.onBlur}
+                                            errorText={errors.rentAmountInr?.message}
                                         />
                                     )}
                                 />
-                                <FieldError>{errors.rentAmountInr?.message}</FieldError>
                             </Field>
                         ) : null}
                     </div>

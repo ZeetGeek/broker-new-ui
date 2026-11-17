@@ -3,8 +3,10 @@
 import { useId, useState } from "react";
 import Link from "next/link";
 
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
+import { CharacterCount } from "@/components/shared/character-count";
 import { CalendarDays, CalendarPlus, Clock, MapPin, Plus } from "@/components/shared/icons";
 import { PropertyPhotoGallery } from "@/components/shared/property-photo-gallery";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -46,6 +48,11 @@ export function AttendanceConfirmation({
     const formId = useId();
     const originalNote = visit.status === "scheduled" ? "" : visit.attendanceNote;
     const [note, setNote] = useState(originalNote);
+    // A note after a visit gets room; a reason it didn't happen is one line.
+    const noteMaxChars =
+        intent === "completed" ? MAX_CHARS.visitCompletedNote : MAX_CHARS.visitMissedReason;
+    // Only reachable when an older, longer note is carried into a shorter field.
+    const isNoteTooLong = note.length > noteMaxChars;
     const client = PREVIEW_CLIENTS.find((item) => item.id === visit.clientId);
     const property = PREVIEW_PROPERTIES.find((item) => item.id === visit.propertyId);
     const copy = {
@@ -103,7 +110,7 @@ export function AttendanceConfirmation({
                 id={formId}
                 onSubmit={(event) => {
                     event.preventDefault();
-                    if (!busy) void onConfirm(note);
+                    if (!busy && !isNoteTooLong) void onConfirm(note);
                 }}
                 className={styles.visitFields}
             >
@@ -117,12 +124,17 @@ export function AttendanceConfirmation({
                         {formatVisitTime(visit.endsAt)} IST
                     </span>
                 </div>
-                <label className={styles.field}>
-                    {intent === "completed" ? "Visit note (optional)" : "Reason (optional)"}
+                <div className={styles.field}>
+                    <label htmlFor={`${formId}-note`}>
+                        {intent === "completed" ? "Visit note (optional)" : "Reason (optional)"}
+                    </label>
                     <Textarea
+                        id={`${formId}-note`}
                         className={styles.notesInput}
                         rows={3}
-                        maxLength={2000}
+                        maxLength={noteMaxChars}
+                        aria-describedby={`${formId}-note-count`}
+                        aria-invalid={isNoteTooLong || undefined}
                         value={note}
                         disabled={busy}
                         placeholder={
@@ -132,7 +144,17 @@ export function AttendanceConfirmation({
                         }
                         onChange={(event) => setNote(event.target.value)}
                     />
-                </label>
+                    <CharacterCount
+                        id={`${formId}-note-count`}
+                        value={note}
+                        maxChars={noteMaxChars}
+                    />
+                    {isNoteTooLong && (
+                        <p role="alert" className={styles.fieldError}>
+                            Shorten this to {noteMaxChars} characters to save.
+                        </p>
+                    )}
+                </div>
                 {intent === "completed" && (
                     <p className={styles.muted}>
                         This records attendance. The client’s pipeline stage stays the same.

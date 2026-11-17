@@ -5,13 +5,14 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { getActiveCurrency } from "@/lib/format/currency";
-import { formatMoneyInput, moneyWordHint, parseMoney } from "@/lib/format/money";
 import { cn } from "@/lib/utils";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { dateAtIstOffset, inputValueInIst } from "@/lib/visits/time";
 
 import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppModal } from "@/components/shared/app-modal";
+import { CharacterCount } from "@/components/shared/character-count";
+import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -78,6 +79,7 @@ export default function OutcomeModal({
     const nextStep = useWatch({ control: form.control, name: "nextStep" });
     const objections = useWatch({ control: form.control, name: "objections" });
     const offerAmount = useWatch({ control: form.control, name: "offerAmount" });
+    const feedback = useWatch({ control: form.control, name: "feedback" });
     useEffect(() => {
         if (open)
             form.reset({
@@ -251,44 +253,41 @@ export default function OutcomeModal({
                 ) : null}
                 {interest === "hot" ? (
                     <label className="block">
-                        <span className="body-sm font-bold text-ink">
+                        <span className="body-sm mbe-2 block font-bold text-ink">
                             Offer amount{" "}
                             <span className="font-normal text-ink-muted">· optional</span>
                         </span>
-                        <input
-                            inputMode="numeric"
-                            value={formatMoneyInput(offerAmount)}
-                            onChange={(event) =>
-                                form.setValue(
-                                    "offerAmount",
-                                    parseMoney(event.target.value) ?? undefined,
-                                )
+                        <SmartPriceInput
+                            size="md"
+                            value={offerAmount ?? null}
+                            onValueChange={(next) =>
+                                form.setValue("offerAmount", next ?? undefined)
                             }
-                            className="
-                              body-sm tabular mbs-2 rounded-control border border-border-warm
-                              bg-surface px-3 text-ink inline-full min-block-11
-                            "
-                            placeholder={`${getActiveCurrency().symbol}0`}
                         />
-                        {offerAmount ? (
-                            <span className="body-xs mbs-1 block text-brand-text">
-                                {moneyWordHint(offerAmount)}
-                            </span>
-                        ) : null}
                     </label>
                 ) : null}
-                <label className="block">
-                    <span className="body-sm font-bold text-ink">Feedback</span>
-                    <textarea
-                        {...form.register("feedback")}
-                        rows={2}
-                        className="
-                          body-sm mbs-2 resize-none rounded-control border border-border-warm
-                          bg-surface px-3 py-2.5 text-ink inline-full
-                        "
-                        placeholder="What the client said while it is fresh"
+                <div>
+                    <label className="block">
+                        <span className="body-sm font-bold text-ink">Feedback</span>
+                        <textarea
+                            {...form.register("feedback")}
+                            rows={2}
+                            maxLength={MAX_CHARS.visitFeedback}
+                            aria-describedby="visit-feedback-count"
+                            className="
+                              body-sm mbs-2 resize-none rounded-control border border-border-warm
+                              bg-surface px-3 py-2.5 text-ink inline-full
+                            "
+                            placeholder="What the client said while it is fresh"
+                        />
+                    </label>
+                    <CharacterCount
+                        id="visit-feedback-count"
+                        value={feedback}
+                        maxChars={MAX_CHARS.visitFeedback}
+                        className="mbs-1"
                     />
-                </label>
+                </div>
                 <fieldset>
                     <legend className="body-sm mbe-2 font-bold text-ink">Next step</legend>
                     <div className="grid gap-2 sm:grid-cols-2">

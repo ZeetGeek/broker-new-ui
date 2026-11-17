@@ -8,7 +8,7 @@ import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
-import { HoldToConfirmMenuItem } from "@/components/shared/hold-to-confirm-menu-item";
+import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import {
     Building2,
     CallIcon,
@@ -359,10 +359,10 @@ function DealCardMenu({
                     <>
                         <DropdownMenuSeparator className={DEAL_MENU_SEPARATOR_CLASS} />
                         <DropdownMenuGroup aria-label="Mark deal as lost">
-                            <HoldToConfirmMenuItem
-                                label="Hold to mark as lost"
+                            <DangerMenuItem
+                                label="Mark as lost"
                                 icon="lost"
-                                onComplete={() => {
+                                onSelect={() => {
                                     onMenuAction?.();
                                     setOpen(false);
                                     handlers.onLose(deal.id);

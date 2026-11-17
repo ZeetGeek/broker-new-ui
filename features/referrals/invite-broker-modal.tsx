@@ -16,6 +16,7 @@ import {
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { CharacterCount } from "@/components/shared/character-count";
 import { MessageSquare, Phone, Send, UserRound } from "@/components/shared/icons";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -176,13 +177,21 @@ export function InviteBrokerModal({
                                 {...field}
                                 id="referral-note"
                                 rows={3}
+                                maxLength={REFERRAL_NOTE_MAX}
                                 placeholder="Optional — leave blank and we write it for you."
                                 aria-describedby="referral-note-count"
                             />
-                            <p id="referral-note-count" className="body-xs tabular text-ink-subtle">
-                                {fieldState.error?.message ??
-                                    `${(note ?? "").length} of ${REFERRAL_NOTE_MAX} characters`}
-                            </p>
+                            {fieldState.error?.message ? (
+                                <p id="referral-note-count" className="body-xs text-danger">
+                                    {fieldState.error.message}
+                                </p>
+                            ) : (
+                                <CharacterCount
+                                    id="referral-note-count"
+                                    value={note}
+                                    maxChars={REFERRAL_NOTE_MAX}
+                                />
+                            )}
                         </div>
                     )}
                 />

@@ -8,10 +8,12 @@ import { type BrokerProfile, representativeApi } from "@/lib/api/representative"
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
 import { ownerRequestsHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { CharacterCount } from "@/components/shared/character-count";
 import { Search } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -316,16 +318,26 @@ export function InvitePropertyBrokerModal({
                         </p>
                     ) : null}
                 </div>
-                <label className="flex flex-col gap-1.5">
-                    <span className="body-sm font-semibold text-ink">Note (optional)</span>
+                <div className="flex flex-col gap-1.5">
+                    <label htmlFor={`${id}-note`} className="body-sm font-semibold text-ink">
+                        Note (optional)
+                    </label>
                     <Textarea
+                        id={`${id}-note`}
                         value={message}
                         onChange={(event) => setMessage(event.target.value)}
                         disabled={submitting}
                         placeholder="Add a note about this property"
                         rows={2}
+                        maxLength={MAX_CHARS.brokerInviteNote}
+                        aria-describedby={`${id}-note-count`}
                     />
-                </label>
+                    <CharacterCount
+                        id={`${id}-note-count`}
+                        value={message}
+                        maxChars={MAX_CHARS.brokerInviteNote}
+                    />
+                </div>
                 {error ? (
                     <p className="body-sm text-danger" role="alert">
                         {error}

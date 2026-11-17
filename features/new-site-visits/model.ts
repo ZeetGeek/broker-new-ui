@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { isReminderOffset, MAX_REMINDER_MINUTES, reminderLabel } from "@/lib/reminders";
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { addVisitDays, inputValueInIst, inputValueToUtc, istDateKey } from "@/lib/visits/time";
 
 export const MAX_VISIT_REMINDERS = 6;
@@ -192,6 +193,8 @@ export function validateDraft(
     if (!draft.date) errors.date = "Choose a visit date.";
     if (!draft.startTime) errors.startTime = "Choose a start time.";
     if (!draft.endTime) errors.endTime = "Choose an end time.";
+    if (draft.notes.length > MAX_CHARS.visitNote)
+        errors.notes = `Keep the notes under ${MAX_CHARS.visitNote} characters.`;
     const times = draftTimes(draft);
     if (!remindersSchema.safeParse(draft.reminders).success)
         errors.reminders =

@@ -2,9 +2,12 @@
 
 import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 
+import { MAX_CHARS } from "@/lib/validation/text-limits";
+
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppImage } from "@/components/shared/app-image";
+import { CharacterCount } from "@/components/shared/character-count";
 import { filterChipClassName } from "@/components/shared/filter-chip";
 import {
     ArrowDownUp,
@@ -527,11 +530,17 @@ export function TaskForm({
                                 value={draft.details}
                                 onChange={(event) => patch({ details: event.target.value })}
                                 placeholder="Anything you’ll want to remember when you pick this up."
-                                maxLength={2000}
+                                maxLength={MAX_CHARS.taskDetails}
                                 rows={3}
                                 disabled={busy}
                                 className={styles.notesInput}
                                 aria-invalid={submitted && !!validation.errors.details}
+                                aria-describedby={`${formId}-details-count`}
+                            />
+                            <CharacterCount
+                                id={`${formId}-details-count`}
+                                value={draft.details}
+                                maxChars={MAX_CHARS.taskDetails}
                             />
                             {submitted && validation.errors.details ? (
                                 <p role="alert" className={styles.error}>

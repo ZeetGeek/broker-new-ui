@@ -16,7 +16,7 @@ import {
 } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
 
-import { HoldToDeleteListing } from "@/components/shared/hold-to-delete-listing";
+import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import { PropertyMenuIcon } from "@/components/shared/icons";
 import { OVERLAY_ICON_BUTTON_CLASS } from "@/components/shared/overlay-card";
 import shareBrands from "@/components/shared/thesvg-color-share.json";
@@ -639,8 +639,10 @@ export function PropertyCardMenu({
                     ) : null}
 
                     {onDelete ? (
-                        <HoldToDeleteListing
-                            onComplete={() => {
+                        <DangerMenuItem
+                            label="Delete listing"
+                            icon="trash"
+                            onSelect={() => {
                                 setOpen(false);
                                 onDelete();
                             }}

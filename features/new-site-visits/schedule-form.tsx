@@ -2,9 +2,11 @@
 
 import { type FormEvent, Fragment, useId, useState } from "react";
 
+import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
 import { AppTimePicker } from "@/components/shared/app-time-picker";
+import { CharacterCount } from "@/components/shared/character-count";
 import { Bell, Clock } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -294,17 +296,30 @@ export function ScheduleForm({
                                     {errors.reminders}
                                 </p>
                             )}
-                            <label className={styles.field}>
-                                Notes (optional)
+                            <div className={styles.field}>
+                                <label htmlFor={`${formId}-notes`}>Notes (optional)</label>
                                 <Textarea
+                                    id={`${formId}-notes`}
                                     className={styles.notesInput}
                                     value={draft.notes}
                                     onChange={(event) => patch({ notes: event.target.value })}
-                                    maxLength={2000}
+                                    maxLength={MAX_CHARS.visitNote}
                                     rows={5}
                                     placeholder="Meeting point or anything to remember"
+                                    aria-invalid={(submitted && Boolean(errors.notes)) || undefined}
+                                    aria-describedby={`${formId}-notes-count`}
                                 />
-                            </label>
+                                <CharacterCount
+                                    id={`${formId}-notes-count`}
+                                    value={draft.notes}
+                                    maxChars={MAX_CHARS.visitNote}
+                                />
+                                {submitted && errors.notes && (
+                                    <p role="alert" className={styles.fieldError}>
+                                        {errors.notes}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </fieldset>

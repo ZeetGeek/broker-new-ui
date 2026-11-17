@@ -1011,64 +1011,6 @@
 .deleteArea {
     margin-block-start: 8px;
 }
-.holdDelete {
-    position: relative;
-    display: block;
-    inline-size: 100%;
-    block-size: var(--size-control-lg);
-    overflow: hidden;
-    border: 0;
-    border-radius: var(--radius-control);
-    padding: 0 16px;
-    background: var(--color-danger-soft);
-    color: var(--color-danger);
-    text-align: start;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    user-select: none;
-    touch-action: pan-y;
-}
-.holdDelete:focus-visible {
-    outline: 2px solid var(--color-danger);
-    outline-offset: 3px;
-}
-.holdDelete:disabled {
-    cursor: wait;
-    opacity: 0.6;
-}
-.holdDeleteFill {
-    position: absolute;
-    inset: 0;
-    background: var(--color-danger);
-    opacity: 0.15;
-    transform: scaleX(0);
-    transform-origin: left;
-}
-.holdDeleteContent {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    text-align: center;
-}
-.holdDeleteContent svg {
-    flex-shrink: 0;
-}
-.deleteHint {
-    margin-block-start: 10px;
-    color: var(--color-ink-muted);
-    font-size: 12px;
-    line-height: 1.6;
-    text-align: center;
-}
-@media (prefers-reduced-motion: reduce) {
-    .holdDeleteFill {
-        transform: none !important;
-        visibility: hidden;
-    }
-}
 .mobileBar {
     display: none;
 }

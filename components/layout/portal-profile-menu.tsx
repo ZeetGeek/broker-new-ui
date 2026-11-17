@@ -8,7 +8,8 @@ import { useRouter } from "@/lib/navigation";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
-import { HoldToLogout } from "@/components/layout/hold-to-logout";
+import { LogoutMenuItem } from "@/components/layout/logout-menu-item";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -147,6 +148,7 @@ function DesktopProfileDropdown({
     onOpenChange,
 }: Omit<PortalProfileMenuProps, "profileHref">) {
     const { handleLogout, isLoggingOut } = useLogoutHandler();
+    const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
     const trigger = (
         <div className="flex items-center justify-center">
@@ -219,10 +221,24 @@ function DesktopProfileDropdown({
                     <PortalProfileMenuSeparator />
 
                     <DropdownMenuGroup>
-                        <HoldToLogout disabled={isLoggingOut} onComplete={handleLogout} />
+                        <LogoutMenuItem
+                            disabled={isLoggingOut}
+                            onSelect={() => setIsLogoutConfirmOpen(true)}
+                        />
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
             </DropdownMenu>
+            <ConfirmDialog
+                open={isLogoutConfirmOpen}
+                onOpenChange={setIsLogoutConfirmOpen}
+                title="Log out?"
+                confirmLabel="Log out"
+                cancelLabel="Stay signed in"
+                busy={isLoggingOut}
+                onConfirm={() => void handleLogout()}
+            >
+                <p className="body text-ink-muted">You can sign back in any time.</p>
+            </ConfirmDialog>
         </div>
     );
 }
