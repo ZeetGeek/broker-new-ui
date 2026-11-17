@@ -12,7 +12,7 @@ import type { DealItem } from "@/features/pipeline/types";
 const NOW = new Date(2026, 10, 17, 12); // 17 Nov 2026
 
 function deal(
-    overrides: Partial<DealItem> & { property?: Partial<DealItem["property"]> },
+    overrides: Omit<Partial<DealItem>, "property"> & { property?: Partial<DealItem["property"]> },
 ): DealItem {
     const { property, ...rest } = overrides;
     return {

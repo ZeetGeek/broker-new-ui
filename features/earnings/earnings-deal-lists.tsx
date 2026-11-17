@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { formatCommission } from "@/lib/format/commission";
 import { formatDateShort } from "@/lib/format/date";
 import { formatPrice, formatRent } from "@/lib/format/price";
@@ -7,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 
-import { EarningsCard } from "@/features/earnings/earnings-card";
+import { EarningsCard, EarningsDealLink } from "@/features/earnings/earnings-card";
 import {
     dealBaseAmountInr,
     type EarningsReport,
@@ -25,12 +23,12 @@ function DealRow({ item, kind }: { item: ValuedDeal; kind: "sold" | "live" }) {
     return (
         <li className="flex items-start justify-between gap-4 py-3 first:pbs-0 last:pbe-0">
             <div className="flex flex-col gap-1 min-inline-0">
-                <Link
-                    href={`/broker/pipeline/${deal.id}`}
-                    className="body-sm truncate font-medium text-ink hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                <EarningsDealLink
+                    dealId={deal.id}
+                    className="body-sm truncate font-medium text-ink"
                 >
                     {deal.property.title}
-                </Link>
+                </EarningsDealLink>
                 <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">
                     <span>{deal.buyer.name}</span>
                     <span aria-hidden>·</span>

@@ -1,8 +1,6 @@
-import Link from "next/link";
-
 import { formatCommission } from "@/lib/format/commission";
 
-import { EarningsCard } from "@/features/earnings/earnings-card";
+import { EarningsCard, EarningsDealLink } from "@/features/earnings/earnings-card";
 import type { EarningsReport } from "@/features/earnings/earnings-math";
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -99,12 +97,12 @@ export function EarningsSplit({ report }: { report: EarningsReport }) {
                     <p className="text-xs font-medium tracking-wide text-ink-muted uppercase">
                         Best deal this period
                     </p>
-                    <Link
-                        href={`/broker/pipeline/${best.deal.id}`}
-                        className="body-sm font-medium text-ink hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                    <EarningsDealLink
+                        dealId={best.deal.id}
+                        className="body-sm font-medium text-ink"
                     >
                         {best.deal.property.title}
-                    </Link>
+                    </EarningsDealLink>
                     <p className="body-sm text-ink-muted">
                         {best.deal.buyer.name} ·{" "}
                         <strong className="font-semibold text-brand-text tabular-nums">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -32,6 +32,20 @@ export type MaterialTimePanelProps = Pick<
     | "isTimeDisabled"
 > & { onChange: (value: string) => void; timeZone: string };
 
+function snapNow(
+    timeZone: string,
+    minuteStep: number,
+    secondStep: number,
+    withSeconds: boolean,
+): Date {
+    const now = clockDate(formatInTimeZone(new Date(), timeZone, "HH:mm:ss")) ?? new Date();
+    now.setMinutes(
+        Math.floor(now.getMinutes() / minuteStep) * minuteStep,
+        withSeconds ? Math.floor(now.getSeconds() / secondStep) * secondStep : 0,
+    );
+    return now;
+}
+
 /** MUI supplies the accessible clock dial; the surrounding controls follow our M3 theme. */
 export default function MaterialTimePanel({
     value,
@@ -47,8 +61,11 @@ export default function MaterialTimePanel({
     isTimeDisabled,
     timeZone,
 }: MaterialTimePanelProps) {
-    const [selected, setSelected] = useState(() => clockDate(value));
-    const current = selected ?? new Date(2000, 0, 1, 12, 0);
+    const seconds = granularity === "second";
+    const [selected, setSelected] = useState(
+        () => clockDate(value) ?? snapNow(timeZone, minuteStep, secondStep, seconds),
+    );
+    const current = selected ?? snapNow(timeZone, minuteStep, secondStep, seconds);
     const [view, setView] = useState<"hours" | "minutes" | "seconds">("hours");
     const [typing, setTyping] = useState(false);
     const [typedHour, setTypedHour] = useState(
@@ -58,7 +75,6 @@ export default function MaterialTimePanel({
     const [message, setMessage] = useState("");
     const period = current.getHours() >= 12 ? "PM" : "AM";
     const blocked = disabled || readOnly;
-    const seconds = granularity === "second";
     const views =
         granularity === "hour"
             ? (["hours"] as const)
@@ -97,6 +113,12 @@ export default function MaterialTimePanel({
         setMessage("");
         onChange(clockValue(next, seconds));
     };
+    useEffect(() => {
+        if (value || blocked) return;
+        commit(selected);
+        // Seed an empty open with the current time once (same as Now).
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
+    }, []);
     const setPeriod = (next: "AM" | "PM") => {
         const date = new Date(current);
         date.setHours((date.getHours() % 12) + (next === "PM" ? 12 : 0));
@@ -209,64 +231,79 @@ export default function MaterialTimePanel({
                 </button>
             )}
             {!typing && (
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <TimeClock
-                        value={selected}
-                        referenceDate={current}
-                        ampm
-                        ampmInClock={false}
-                        view={view}
-                        views={[...views]}
-                        onViewChange={setView}
-                        onChange={commit}
-                        disabled={disabled}
-                        readOnly={readOnly}
-                        minutesStep={minuteStep}
-                        minTime={
-                            min && (!max || min <= max) ? (clockDate(min) ?? undefined) : undefined
-                        }
-                        maxTime={
-                            max && (!min || min <= max) ? (clockDate(max) ?? undefined) : undefined
-                        }
-                        shouldDisableTime={(date, unit) =>
-                            unit === "hours" ? date.getHours() % hourStep !== 0 : !allowed(date)
-                        }
-                        sx={{
-                            width: "100%",
-                            height: 280,
-                            maxHeight: 280,
-                            margin: 0,
-                            "& .MuiClock-root": { transform: "scale(1.1)" },
-                            "& .MuiClock-wrapper:focus-visible": {
-                                outline: "2px solid var(--color-brand)",
-                                outlineOffset: 4,
-                                borderRadius: "50%",
-                            },
-                            "@media (prefers-reduced-motion: reduce)": {
-                                "& .MuiClockPointer-root": { transition: "none" },
-                            },
-                            "& .MuiClock-clock": { backgroundColor: "var(--color-surface-muted)" },
-                            "& .MuiClock-pin, & .MuiClockPointer-root": {
-                                backgroundColor: "var(--color-brand)",
-                            },
-                            "& .MuiClockPointer-thumb": {
-                                borderColor: "var(--color-brand)",
-                                backgroundColor: "var(--color-brand)",
-                            },
-                            "& .MuiClockNumber-root": {
-                                fontFamily: "inherit",
-                                color: "var(--color-ink)",
-                                fontWeight: 500,
-                            },
-                            "& .MuiClockNumber-root.Mui-selected": {
-                                color: "var(--color-surface)",
-                            },
-                            "& .MuiClockNumber-root.Mui-disabled": {
-                                color: "var(--color-ink-subtle)",
-                            },
-                        }}
-                    />
-                </LocalizationProvider>
+                <div className={styles.clock}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <TimeClock
+                            value={selected}
+                            referenceDate={current}
+                            ampm
+                            ampmInClock={false}
+                            view={view}
+                            views={[...views]}
+                            onViewChange={setView}
+                            onChange={commit}
+                            disabled={disabled}
+                            readOnly={readOnly}
+                            minutesStep={minuteStep}
+                            minTime={
+                                min && (!max || min <= max)
+                                    ? (clockDate(min) ?? undefined)
+                                    : undefined
+                            }
+                            maxTime={
+                                max && (!min || min <= max)
+                                    ? (clockDate(max) ?? undefined)
+                                    : undefined
+                            }
+                            shouldDisableTime={(date, unit) =>
+                                unit === "hours" ? date.getHours() % hourStep !== 0 : !allowed(date)
+                            }
+                            sx={{
+                                width: "100%",
+                                height: 260,
+                                maxHeight: 260,
+                                margin: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                "& .MuiClock-root": {
+                                    margin: 0,
+                                    transform: "scale(1.05)",
+                                    transformOrigin: "center center",
+                                },
+                                "& .MuiClock-wrapper:focus-visible": {
+                                    outline: "2px solid var(--color-brand)",
+                                    outlineOffset: 4,
+                                    borderRadius: "50%",
+                                },
+                                "@media (prefers-reduced-motion: reduce)": {
+                                    "& .MuiClockPointer-root": { transition: "none" },
+                                },
+                                "& .MuiClock-clock": {
+                                    backgroundColor: "var(--color-surface-muted)",
+                                },
+                                "& .MuiClock-pin, & .MuiClockPointer-root": {
+                                    backgroundColor: "var(--color-brand)",
+                                },
+                                "& .MuiClockPointer-thumb": {
+                                    borderColor: "var(--color-brand)",
+                                    backgroundColor: "var(--color-brand)",
+                                },
+                                "& .MuiClockNumber-root": {
+                                    fontFamily: "inherit",
+                                    color: "var(--color-ink)",
+                                    fontWeight: 500,
+                                },
+                                "& .MuiClockNumber-root.Mui-selected": {
+                                    color: "var(--color-surface)",
+                                },
+                                "& .MuiClockNumber-root.Mui-disabled": {
+                                    color: "var(--color-ink-subtle)",
+                                },
+                            }}
+                        />
+                    </LocalizationProvider>
+                </div>
             )}
             {message && (
                 <p role="alert" className={styles.error}>
@@ -310,20 +347,7 @@ export default function MaterialTimePanel({
                         size="sm"
                         variant="ghost"
                         className="text-brand-text hover:bg-brand-soft hover:text-brand-text"
-                        onClick={() => {
-                            const now = clockDate(
-                                formatInTimeZone(new Date(), timeZone, "HH:mm:ss"),
-                            );
-                            if (now) {
-                                now.setMinutes(
-                                    Math.floor(now.getMinutes() / minuteStep) * minuteStep,
-                                    seconds
-                                        ? Math.floor(now.getSeconds() / secondStep) * secondStep
-                                        : 0,
-                                );
-                                commit(now);
-                            }
-                        }}
+                        onClick={() => commit(snapNow(timeZone, minuteStep, secondStep, seconds))}
                         disabled={blocked}
                     >
                         Now

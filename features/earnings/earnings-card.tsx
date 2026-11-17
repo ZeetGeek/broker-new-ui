@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 import { cn } from "@/lib/utils";
+
+import { isSampleDeal } from "@/features/earnings/sample-earnings";
 
 /** Card frame shared by every section on the earnings page. */
 export function EarningsCard({
@@ -69,5 +72,29 @@ export function DeltaPill({
             </span>
             {label}
         </span>
+    );
+}
+
+/** Deal title that opens the deal — plain text for sample rows. */
+export function EarningsDealLink({
+    dealId,
+    className,
+    children,
+}: {
+    dealId: string;
+    className?: string;
+    children: ReactNode;
+}) {
+    if (isSampleDeal(dealId)) return <span className={className}>{children}</span>;
+    return (
+        <Link
+            href={`/broker/pipeline/${dealId}`}
+            className={cn(
+                "hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-ring",
+                className,
+            )}
+        >
+            {children}
+        </Link>
     );
 }

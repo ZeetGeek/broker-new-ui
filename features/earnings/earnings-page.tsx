@@ -29,6 +29,10 @@ import { EarningsRangePicker } from "@/features/earnings/earnings-range-picker";
 import { EarningsPageSkeleton } from "@/features/earnings/earnings-skeleton";
 import { EarningsSplit } from "@/features/earnings/earnings-split";
 import { EarningsTrendChart } from "@/features/earnings/earnings-trend-chart";
+import {
+    buildSampleEarningsDeals,
+    SHOW_SAMPLE_EARNINGS_WHEN_EMPTY,
+} from "@/features/earnings/sample-earnings";
 import { DEAL_LOST_REASON_LABEL } from "@/features/pipeline/stage-meta";
 import { DEFAULT_DEALS_FILTERS } from "@/features/pipeline/types";
 
@@ -95,12 +99,19 @@ export function EarningsPage() {
         staleTime: 60_000,
     });
 
+    // No real deals yet → static sample, clearly labelled, so the page is reviewable.
+    const isSample = SHOW_SAMPLE_EARNINGS_WHEN_EMPTY && data != null && data.items.length === 0;
+    const deals = useMemo(
+        () => (isSample ? buildSampleEarningsDeals() : (data?.items ?? null)),
+        [isSample, data],
+    );
+
     const report = useMemo(
         () =>
-            data
-                ? buildEarningsReport(data.items, selection, (key) => DEAL_LOST_REASON_LABEL[key])
+            deals
+                ? buildEarningsReport(deals, selection, (key) => DEAL_LOST_REASON_LABEL[key])
                 : null,
-        [data, selection],
+        [deals, selection],
     );
 
     if (isPending) return <EarningsPageSkeleton />;
@@ -127,13 +138,13 @@ export function EarningsPage() {
                     What you have earned, what you lost, and what is still in play.
                 </p>
             </div>
-            {data.items.length > 0 ? (
+            {deals && deals.length > 0 ? (
                 <EarningsRangePicker value={selection} onChange={setSelection} />
             ) : null}
         </header>
     );
 
-    if (data.items.length === 0) {
+    if (!deals || deals.length === 0) {
         return (
             <div className="flex flex-col gap-6">
                 {header}
@@ -153,6 +164,30 @@ export function EarningsPage() {
     return (
         <div className="flex flex-col gap-6">
             {header}
+
+            {isSample ? (
+                <p
+                    role="note"
+                    className="body-sm flex items-start gap-2 rounded-control border border-highlight/40 bg-highlight/15 px-4 py-3 text-ink"
+                >
+                    <Info
+                        aria-hidden
+                        className="mbs-0.5 shrink-0 text-highlight-ink block-4 inline-4"
+                    />
+                    <span>
+                        <strong className="font-semibold">Sample data.</strong> You have no deals
+                        yet, so this page shows example numbers. Your real earnings replace them
+                        once you start working deals in your{" "}
+                        <Link
+                            href={BROKER_PIPELINE_HREF}
+                            className="font-medium text-brand-text underline"
+                        >
+                            pipeline
+                        </Link>
+                        .
+                    </span>
+                </p>
+            ) : null}
 
             <EarningsKpis report={report} />
 
