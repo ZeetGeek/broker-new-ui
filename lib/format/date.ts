@@ -49,6 +49,18 @@ export function formatDateShort(date: Date): string {
     return formatInUserTz(date, "d MMM");
 }
 
+/**
+ * Inclusive local calendar range as `1 Jun – 17 Nov 2026`.
+ * Null `from` means open-ended: `Up to 17 Nov 2026`.
+ */
+export function formatDateRangeMedium(from: Date | null, to: Date): string {
+    if (!from) return `Up to ${format(to, "d MMM yyyy")}`;
+    const sameYear = from.getFullYear() === to.getFullYear();
+    const sameDay = differenceInCalendarDays(to, from) === 0;
+    if (sameDay) return format(to, "d MMM yyyy");
+    return `${format(from, sameYear ? "d MMM" : "d MMM yyyy")} – ${format(to, "d MMM yyyy")}`;
+}
+
 /** Calendar-tile parts `{ month: "Aug", day: "24" }` in the user's timezone. */
 export function formatDateTile(date: Date): { month: string; day: string } {
     return { month: formatInUserTz(date, "MMM"), day: formatInUserTz(date, "d") };

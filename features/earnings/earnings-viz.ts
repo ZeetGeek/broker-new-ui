@@ -1,7 +1,9 @@
 /**
- * One colour per meaning on the earnings page, taken from the shared chart
- * palette (`--chart-*` in app/globals.css). A colour means the same thing in
- * every card: sky is always sale, amber is always rent, and so on.
+ * Shared colour meanings on the earnings page.
+ *
+ * Trend chart (area): brand greens only — see `earnings-trend-chart.tsx`.
+ * Hero / pipeline cards still use the stage chart palette for sale vs rent
+ * until those cards are brought onto the one-green system.
  */
 export const VIZ = {
     sale: "var(--color-chart-1)",

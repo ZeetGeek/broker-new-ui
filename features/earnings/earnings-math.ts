@@ -10,7 +10,9 @@
  */
 import {
     addMonths,
+    addQuarters,
     addWeeks,
+    addYears,
     differenceInCalendarDays,
     endOfDay,
     endOfMonth,
@@ -19,14 +21,19 @@ import {
     isBefore,
     startOfDay,
     startOfMonth,
+    startOfQuarter,
     startOfWeek,
     startOfYear,
     subDays,
     subMonths,
+    subQuarters,
+    subWeeks,
     subYears,
 } from "date-fns";
 
 import { isStalled } from "@/lib/api/pipeline";
+import { formatCommission } from "@/lib/format/commission";
+import { formatDateRangeMedium } from "@/lib/format/date";
 import { plural } from "@/lib/format/plural";
 
 import {
@@ -267,29 +274,109 @@ export type EarningsBucket = {
     isToDate: boolean;
 };
 
-export type BucketUnit = "week" | "month";
+export type BucketUnit = "week" | "month" | "quarter" | "year";
 
-/** Short windows read better week by week; anything longer, month by month. */
+/**
+ * Grain scales with range length so a 16-year custom range stays readable
+ * (~16 year marks) instead of hundreds of weeks.
+ */
 export function bucketUnitFor(window: { from: Date; to: Date }): BucketUnit {
-    return differenceInCalendarDays(window.to, window.from) <= 62 ? "week" : "month";
+    const days = differenceInCalendarDays(window.to, window.from);
+    if (days <= 62) return "week";
+    if (days <= 36 * 31) return "month"; // up to ~3 years
+    if (days <= 36 * 92) return "quarter"; // up to ~9 years
+    return "year";
 }
 
-/** Most bars a chart draws. Older history is trimmed, never the latest months. */
+/** Plain unit word for copy ("per week", chart titles). */
+export function bucketUnitWord(unit: BucketUnit): string {
+    return unit;
+}
+
+/** Most points a chart draws. Older history is trimmed; the latest stay. */
 const MAX_BUCKETS = 36;
+
+function startOfBucket(date: Date, unit: BucketUnit): Date {
+    switch (unit) {
+        case "week":
+            return startOfWeek(date, { weekStartsOn: 1 });
+        case "month":
+            return startOfMonth(date);
+        case "quarter":
+            return startOfQuarter(date);
+        case "year":
+            return startOfYear(date);
+    }
+}
+
+function addBucket(date: Date, unit: BucketUnit): Date {
+    switch (unit) {
+        case "week":
+            return addWeeks(date, 1);
+        case "month":
+            return addMonths(date, 1);
+        case "quarter":
+            return addQuarters(date, 1);
+        case "year":
+            return addYears(date, 1);
+    }
+}
+
+/** Earliest bucket start that still fits MAX_BUCKETS ending at `to`. */
+function oldestAllowedBucket(to: Date, unit: BucketUnit): Date {
+    switch (unit) {
+        case "week":
+            return startOfWeek(subWeeks(to, MAX_BUCKETS - 1), { weekStartsOn: 1 });
+        case "month":
+            return startOfMonth(subMonths(to, MAX_BUCKETS - 1));
+        case "quarter":
+            return startOfQuarter(subQuarters(to, MAX_BUCKETS - 1));
+        case "year":
+            return startOfYear(subYears(to, MAX_BUCKETS - 1));
+    }
+}
+
+function bucketLabels(cursor: Date, unit: BucketUnit): { label: string; longLabel: string } {
+    switch (unit) {
+        case "week":
+            return {
+                label: format(cursor, "d MMM"),
+                longLabel: `Week of ${format(cursor, "d MMM yyyy")}`,
+            };
+        case "month":
+            return {
+                label: format(cursor, "MMM"),
+                longLabel: format(cursor, "MMMM yyyy"),
+            };
+        case "quarter": {
+            const q = Math.floor(cursor.getMonth() / 3) + 1;
+            const year = format(cursor, "yy");
+            const longYear = format(cursor, "yyyy");
+            const end = addMonths(cursor, 2);
+            return {
+                label: `Q${q} '${year}`,
+                longLabel: `${format(cursor, "MMM")}–${format(end, "MMM")} ${longYear}`,
+            };
+        }
+        case "year":
+            return {
+                label: format(cursor, "yyyy"),
+                longLabel: format(cursor, "yyyy"),
+            };
+    }
+}
 
 function buildBuckets(from: Date, to: Date, unit: BucketUnit, now: Date): EarningsBucket[] {
     const buckets: EarningsBucket[] = [];
-    let cursor = unit === "week" ? startOfWeek(from, { weekStartsOn: 1 }) : startOfMonth(from);
+    let cursor = startOfBucket(from, unit);
     while (!isAfter(cursor, to)) {
-        const next = unit === "week" ? addWeeks(cursor, 1) : addMonths(cursor, 1);
+        const next = addBucket(cursor, unit);
         const isToDate = !isBefore(now, cursor) && isBefore(now, next);
+        const { label, longLabel } = bucketLabels(cursor, unit);
         buckets.push({
             key: cursor.toISOString(),
-            label: unit === "week" ? format(cursor, "d MMM") : format(cursor, "MMM"),
-            longLabel:
-                unit === "week"
-                    ? `Week of ${format(cursor, "d MMM yyyy")}`
-                    : format(cursor, "MMMM yyyy"),
+            label,
+            longLabel,
             saleInr: 0,
             rentInr: 0,
             totalInr: 0,
@@ -299,7 +386,7 @@ function buildBuckets(from: Date, to: Date, unit: BucketUnit, now: Date): Earnin
         });
         cursor = next;
     }
-    // Month labels gain a year when the chart spans more than one.
+    // Month labels gain a year when the chart spans more than one calendar year.
     if (unit === "month" && buckets.length > 0) {
         const years = new Set(buckets.map((b) => new Date(b.key).getFullYear()));
         if (years.size > 1) {
@@ -331,6 +418,8 @@ export type EarningsReport = {
     comparison: EarningsComparison | null;
     /** Window actually drawn on charts (all time → first deal → today). */
     chartWindow: { from: Date; to: Date };
+    /** True when the chart shows a shorter span than the selected totals window. */
+    chartTrimmed: boolean;
     bucketUnit: BucketUnit;
 
     earnedInr: number;
@@ -437,9 +526,13 @@ export function buildEarningsReport(
             ? startOfMonth(firstResolved)
             : startOfMonth(subMonths(now, 5)));
     const bucketUnit = bucketUnitFor({ from: chartFrom, to: window.to });
-    // Long histories keep the latest months; a stray old deal must not squeeze the chart.
-    const oldestBar = startOfMonth(subMonths(window.to, MAX_BUCKETS - 1));
-    if (bucketUnit === "month" && isBefore(chartFrom, oldestBar)) chartFrom = oldestBar;
+    // Long histories keep the latest buckets; a stray old deal must not squeeze the chart.
+    const oldestBar = oldestAllowedBucket(window.to, bucketUnit);
+    let chartTrimmed = false;
+    if (isBefore(chartFrom, oldestBar)) {
+        chartFrom = oldestBar;
+        chartTrimmed = true;
+    }
     const chartWindow = { from: chartFrom, to: window.to };
     const buckets = buildBuckets(chartFrom, window.to, bucketUnit, now);
 
@@ -530,6 +623,7 @@ export function buildEarningsReport(
         window,
         comparison,
         chartWindow,
+        chartTrimmed,
         bucketUnit,
         earnedInr: money.total,
         saleEarnedInr: money.sale,
@@ -586,16 +680,8 @@ export function percentChange(current: number, previous: number | null): number 
     return Math.round(((current - previous) / previous) * 100);
 }
 
-/**
- * Second clause of the two-tone page headline: what the period means, in one
- * sentence. "Up 18% on the 6 months before." / "9 sold, 4 lost."
- */
-export function earningsHeadline(report: EarningsReport): string {
-    const change = percentChange(report.earnedInr, report.previousEarnedInr);
-    if (report.comparison && change != null && report.earnedInr > 0) {
-        if (change === 0) return `Same as ${report.comparison.phrase}.`;
-        return `${change > 0 ? "Up" : "Down"} ${Math.abs(change)}% on ${report.comparison.phrase}.`;
-    }
+/** Sold / lost line for the selected period. */
+function earningsOutcomesLine(report: EarningsReport): string {
     if (report.closedCount === 0) {
         return report.lostCount > 0
             ? `Nothing sold yet, ${report.lostCount} lost.`
@@ -606,13 +692,87 @@ export function earningsHeadline(report: EarningsReport): string {
         : `${plural(report.closedCount, "deal")} sold.`;
 }
 
+/**
+ * Second clause of the two-tone page headline: what the period means, in one
+ * sentence. Prefers a comparison when there is one, otherwise sold / lost.
+ * "Up 18% on the 6 months before." / "9 sold, 4 lost."
+ */
+export function earningsHeadline(report: EarningsReport): string {
+    const change = percentChange(report.earnedInr, report.previousEarnedInr);
+    if (report.comparison && change != null && report.earnedInr > 0) {
+        if (change === 0) return `Same as ${report.comparison.phrase}.`;
+        return `${change > 0 ? "Up" : "Down"} ${Math.abs(change)}% on ${report.comparison.phrase}.`;
+    }
+    return earningsOutcomesLine(report);
+}
+
+/**
+ * Rotating "Earnings. …" lines for the page header — same pattern as the
+ * dashboard. Built from the current report, so changing the date filter
+ * rebuilds every line (sold/lost, rupees earned, comparison, win rate, pipeline).
+ */
+export function earningsHeadlineLines(report: EarningsReport): string[] {
+    const lines: string[] = [earningsOutcomesLine(report)];
+
+    if (report.earnedInr > 0) {
+        lines.push(`${formatCommission(report.earnedInr)} estimated this period.`);
+    } else {
+        lines.push("No commission earned in this period yet.");
+    }
+
+    const change = percentChange(report.earnedInr, report.previousEarnedInr);
+    if (report.comparison) {
+        if (change != null && report.earnedInr > 0) {
+            lines.push(
+                change === 0
+                    ? `Same as ${report.comparison.phrase}.`
+                    : `${change > 0 ? "Up" : "Down"} ${Math.abs(change)}% on ${report.comparison.phrase}.`,
+            );
+        } else if (report.earnedInr > 0 && report.previousEarnedInr === 0) {
+            lines.push(`Nothing earned in ${report.comparison.phrase}.`);
+        }
+    }
+
+    if (report.winRate != null) {
+        const resolved = report.closedCount + report.lostCount;
+        lines.push(
+            `Win rate ${report.winRate}% — ${report.closedCount} of ${plural(resolved, "finished deal")} sold.`,
+        );
+    }
+
+    if (report.live.potentialInr > 0) {
+        lines.push(`${formatCommission(report.live.potentialInr)} still in your open deals.`);
+    } else if (report.live.count > 0) {
+        lines.push(`${plural(report.live.count, "open deal")} with no commission set yet.`);
+    }
+
+    if (report.avgDaysToClose != null && report.closedCount > 0) {
+        lines.push(
+            report.avgDaysToClose === 0
+                ? "Same-day closes on average."
+                : `Average ${plural(report.avgDaysToClose, "day")} from new client to sold.`,
+        );
+    }
+
+    return lines;
+}
+
 /** "1 Jun – 17 Nov 2026" */
 export function formatWindow(window: { from: Date | null; to: Date }): string {
-    if (!window.from) return `Up to ${format(window.to, "d MMM yyyy")}`;
-    const sameYear = window.from.getFullYear() === window.to.getFullYear();
-    const sameDay = differenceInCalendarDays(window.to, window.from) === 0;
-    if (sameDay) return format(window.to, "d MMM yyyy");
-    return `${format(window.from, sameYear ? "d MMM" : "d MMM yyyy")} – ${format(window.to, "d MMM yyyy")}`;
+    return formatDateRangeMedium(window.from, window.to);
+}
+
+/**
+ * When the chart is a shorter slice than the selected totals window, say so.
+ * Keeps trust when All time / a long custom range trims older buckets.
+ */
+export function chartCoverageNote(report: EarningsReport): string | null {
+    if (!report.chartTrimmed) return null;
+    const chartLabel = formatWindow(report.chartWindow);
+    if (report.window.from == null) {
+        return `Chart shows ${chartLabel}. Totals above use the full range.`;
+    }
+    return `Chart shows ${chartLabel}. Totals above use ${formatWindow(report.window)}.`;
 }
 
 /** Inclusive day count of a bounded window. */

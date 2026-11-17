@@ -2,10 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+    bucketUnitFor,
     buildEarningsReport,
+    chartCoverageNote,
     comparisonFor,
     dealCommissionInr,
     earningsHeadline,
+    earningsHeadlineLines,
     previousWindow,
     resolveEarningsWindow,
 } from "@/features/earnings/earnings-math";
@@ -150,4 +153,58 @@ test("headline says what the period means", () => {
         NOW,
     );
     assert.equal(earningsHeadline(twoMonths), "Same as September.");
+});
+
+test("bucket grain scales with range length; long spans use years not weeks", () => {
+    assert.equal(
+        bucketUnitFor({ from: new Date(2026, 10, 1), to: new Date(2026, 10, 17) }),
+        "week",
+    );
+    assert.equal(
+        bucketUnitFor({ from: new Date(2026, 5, 1), to: new Date(2026, 10, 17) }),
+        "month",
+    );
+    assert.equal(
+        bucketUnitFor({ from: new Date(2020, 0, 1), to: new Date(2026, 10, 17) }),
+        "quarter",
+    );
+    assert.equal(bucketUnitFor({ from: new Date(2010, 9, 10), to: new Date(2026, 9, 10) }), "year");
+});
+
+test("long custom ranges chart by year without trimming a 16-year window", () => {
+    const deals = [
+        deal({ resolvedAt: new Date(2010, 10, 5).toISOString() }),
+        deal({ resolvedAt: new Date(2026, 10, 5).toISOString() }),
+    ];
+    const report = buildEarningsReport(
+        deals,
+        {
+            preset: "custom",
+            customFrom: new Date(2010, 9, 10),
+            customTo: new Date(2026, 9, 10),
+        },
+        (k) => k,
+        NOW,
+    );
+
+    assert.equal(report.bucketUnit, "year");
+    assert.equal(report.chartTrimmed, false);
+    assert.equal(chartCoverageNote(report), null);
+    assert.ok(report.buckets.length <= 36);
+    assert.ok(report.buckets.length >= 16);
+});
+
+test("rotating headline lines follow sold count, rupees, and the date filter", () => {
+    const deals = [deal({}), deal({ resolvedAt: new Date(2026, 9, 5).toISOString() })];
+    const october = buildEarningsReport(deals, { preset: "last_month" }, (k) => k, NOW);
+    const octoberLines = earningsHeadlineLines(october);
+
+    assert.ok(octoberLines.includes("1 deal sold."));
+    assert.ok(octoberLines.some((line) => /estimated this period\.$/.test(line)));
+    assert.ok(octoberLines.some((line) => line.startsWith("Win rate ")));
+
+    const emptyPeriod = buildEarningsReport([], { preset: "this_month" }, (k) => k, NOW);
+    const emptyLines = earningsHeadlineLines(emptyPeriod);
+    assert.ok(emptyLines.includes("Nothing sold in this period yet."));
+    assert.ok(emptyLines.includes("No commission earned in this period yet."));
 });

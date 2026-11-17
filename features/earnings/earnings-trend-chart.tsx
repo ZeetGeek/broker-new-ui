@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
-import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, XAxis, YAxis } from "recharts";
 
 import { formatCommission, formatCommissionTick } from "@/lib/format/commission";
 
@@ -10,17 +10,19 @@ import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
 import {
     type ChartConfig,
     ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
 
 import { EarningsCard } from "@/features/earnings/earnings-card";
 import {
+    bucketUnitWord,
     type EarningsBucket,
     type EarningsReport,
     formatWindow,
 } from "@/features/earnings/earnings-math";
-import { VIZ } from "@/features/earnings/earnings-viz";
 
 type TrendView = "money" | "deals";
 
@@ -29,44 +31,69 @@ const VIEW_OPTIONS = [
     { value: "deals", label: "Sold vs lost" },
 ] as const;
 
+/** Sky + violet — not brand green. */
 const MONEY_CONFIG = {
-    saleInr: { label: "Sale", color: VIZ.sale },
-    rentInr: { label: "Rent", color: VIZ.rent },
+    earned: { label: "Earned", color: "var(--color-chart-1)" },
+    average: { label: "Average", color: "var(--color-chart-2)" },
 } satisfies ChartConfig;
 
 const DEALS_CONFIG = {
-    closed: { label: "Sold", color: VIZ.sold },
-    lost: { label: "Lost", color: VIZ.lost },
+    sold: { label: "Sold", color: "var(--color-chart-1)" },
+    lost: { label: "Lost", color: "var(--color-chart-2)" },
 } satisfies ChartConfig;
 
-/** Lost bars are a quiet stone, not a warning colour: losing a client is normal. */
-const LOST_OPACITY = 0.35;
-/** The bar still filling up (this week or month) is drawn lighter. */
-const TO_DATE_OPACITY = 0.5;
+type MoneyRow = {
+    label: string;
+    longLabel: string;
+    earned: number;
+    average: number;
+    isToDate: boolean;
+};
 
-function Legend({
-    items,
-}: {
-    items: Array<{ key: string; label: string; color: string; value: string; opacity?: number }>;
-}) {
-    return (
-        <dl className="flex flex-wrap gap-x-6 gap-y-2">
-            {items.map((item) => (
-                <div key={item.key} className="flex flex-col gap-0.5">
-                    <dt className="body-xs flex items-center gap-1.5 font-medium text-ink-muted">
-                        <span
-                            aria-hidden
-                            className="rounded-xs block-2.5 inline-2.5"
-                            style={{ backgroundColor: item.color, opacity: item.opacity ?? 1 }}
-                        />
-                        {item.label}
-                    </dt>
-                    <dd className="h5 text-ink tabular-nums">{item.value}</dd>
-                </div>
-            ))}
-        </dl>
-    );
+type DealsRow = {
+    label: string;
+    longLabel: string;
+    sold: number;
+    lost: number;
+    isToDate: boolean;
+};
+
+function moneyRows(buckets: EarningsBucket[], showAverage: boolean): MoneyRow[] {
+    const active = buckets.filter((b) => b.totalInr > 0);
+    const average =
+        !showAverage || active.length === 0
+            ? 0
+            : active.reduce((sum, b) => sum + b.totalInr, 0) / active.length;
+    return buckets.map((b) => ({
+        label: b.label,
+        longLabel: b.longLabel,
+        earned: b.totalInr,
+        average: showAverage ? Math.round(average) : 0,
+        isToDate: b.isToDate,
+    }));
 }
+
+function dealsRows(buckets: EarningsBucket[]): DealsRow[] {
+    return buckets.map((b) => ({
+        label: b.label,
+        longLabel: b.longLabel,
+        sold: b.closed,
+        lost: b.lost,
+        isToDate: b.isToDate,
+    }));
+}
+
+const DOT = {
+    r: 3,
+    strokeWidth: 2,
+    stroke: "var(--color-surface)",
+} as const;
+
+const ACTIVE_DOT = {
+    r: 5,
+    strokeWidth: 2,
+    stroke: "var(--color-surface)",
+} as const;
 
 export function EarningsTrendChart({
     report,
@@ -76,14 +103,20 @@ export function EarningsTrendChart({
     className?: string;
 }) {
     const [view, setView] = useState<TrendView>("money");
+    const gradId = useId().replace(/:/g, "");
     const { buckets, bucketUnit } = report;
-    const unitWord = bucketUnit === "week" ? "week" : "month";
+    const unitWord = bucketUnitWord(bucketUnit);
     const isMoney = view === "money";
     const isEmpty = isMoney
         ? !buckets.some((b) => b.totalInr > 0)
         : !buckets.some((b) => b.closed > 0 || b.lost > 0);
-    const toDate = buckets.find((b) => b.isToDate);
     const dense = buckets.length > 12;
+    const showAverage = buckets.filter((b) => b.totalInr > 0).length >= 2;
+    const moneyData = moneyRows(buckets, showAverage);
+    const dealsData = dealsRows(buckets);
+
+    const fillA = `fill-a-${gradId}`;
+    const fillB = `fill-b-${gradId}`;
 
     return (
         <EarningsCard
@@ -101,45 +134,8 @@ export function EarningsTrendChart({
             }
             className={className}
         >
-            {isMoney ? (
-                <Legend
-                    items={[
-                        {
-                            key: "sale",
-                            label: "Sale",
-                            color: VIZ.sale,
-                            value: formatCommission(report.saleEarnedInr, true),
-                        },
-                        {
-                            key: "rent",
-                            label: "Rent",
-                            color: VIZ.rent,
-                            value: formatCommission(report.rentEarnedInr, true),
-                        },
-                    ]}
-                />
-            ) : (
-                <Legend
-                    items={[
-                        {
-                            key: "sold",
-                            label: "Sold",
-                            color: VIZ.sold,
-                            value: String(report.closedCount),
-                        },
-                        {
-                            key: "lost",
-                            label: "Lost",
-                            color: VIZ.lost,
-                            opacity: LOST_OPACITY,
-                            value: String(report.lostCount),
-                        },
-                    ]}
-                />
-            )}
-
             {isEmpty ? (
-                <div className="flex flex-1 flex-col items-center justify-center gap-1.5 rounded-inner bg-surface-muted/60 px-6 py-10 text-center">
+                <div className="flex flex-col items-center justify-center gap-1.5 px-6 py-12 text-center">
                     <p className="body font-medium text-ink">
                         {isMoney
                             ? "No commission in this period"
@@ -149,19 +145,45 @@ export function EarningsTrendChart({
                         Try a longer period, or mark a deal as sold in your pipeline.
                     </p>
                 </div>
-            ) : (
+            ) : isMoney ? (
                 <ChartContainer
-                    key={view}
-                    config={isMoney ? MONEY_CONFIG : DEALS_CONFIG}
-                    className="aspect-auto flex-1 block-56 inline-full min-block-56 sm:block-64"
+                    key={`money-${bucketUnit}-${buckets.length}-${showAverage}`}
+                    config={MONEY_CONFIG}
+                    className="aspect-auto block-56 inline-full min-block-56 sm:block-64"
                 >
-                    <BarChart
+                    <ComposedChart
                         accessibilityLayer
-                        data={buckets}
-                        margin={{ top: 8, left: 0, right: 0, bottom: 0 }}
-                        barCategoryGap={dense ? "18%" : "28%"}
-                        barGap={isMoney ? 0 : 3}
+                        data={moneyData}
+                        margin={{ top: 12, left: 0, right: 8, bottom: 0 }}
                     >
+                        <defs>
+                            <linearGradient id={fillA} x1="0" y1="0" x2="0" y2="1">
+                                <stop
+                                    offset="5%"
+                                    stopColor="var(--color-earned)"
+                                    stopOpacity={0.35}
+                                />
+                                <stop
+                                    offset="95%"
+                                    stopColor="var(--color-earned)"
+                                    stopOpacity={0}
+                                />
+                            </linearGradient>
+                            {showAverage ? (
+                                <linearGradient id={fillB} x1="0" y1="0" x2="0" y2="1">
+                                    <stop
+                                        offset="5%"
+                                        stopColor="var(--color-average)"
+                                        stopOpacity={0.2}
+                                    />
+                                    <stop
+                                        offset="95%"
+                                        stopColor="var(--color-average)"
+                                        stopOpacity={0}
+                                    />
+                                </linearGradient>
+                            ) : null}
+                        </defs>
                         <CartesianGrid
                             vertical={false}
                             strokeDasharray="3 4"
@@ -171,7 +193,7 @@ export function EarningsTrendChart({
                             dataKey="label"
                             axisLine={false}
                             tickLine={false}
-                            tickMargin={8}
+                            tickMargin={10}
                             interval="preserveStartEnd"
                             minTickGap={dense ? 12 : 4}
                             tick={{ fontSize: 12, fill: "var(--color-ink-muted)" }}
@@ -179,103 +201,165 @@ export function EarningsTrendChart({
                         <YAxis
                             axisLine={false}
                             tickLine={false}
-                            width={isMoney ? 48 : 28}
+                            width={48}
                             tickCount={4}
                             allowDecimals={false}
                             tick={{ fontSize: 11, fill: "var(--color-ink-subtle)" }}
-                            tickFormatter={(value: number) =>
-                                isMoney ? formatCommissionTick(value) : String(value)
-                            }
+                            tickFormatter={(value: number) => formatCommissionTick(value)}
                         />
                         <ChartTooltip
-                            cursor={{ fill: "var(--color-surface-muted)", radius: 8 }}
+                            cursor={{
+                                stroke: "var(--color-ink-subtle)",
+                                strokeDasharray: "4 4",
+                                strokeWidth: 1,
+                            }}
                             content={
                                 <ChartTooltipContent
+                                    indicator="dot"
                                     labelFormatter={(_, payload) => {
-                                        const bucket = payload?.[0]?.payload as
-                                            EarningsBucket | undefined;
-                                        if (!bucket) return "";
-                                        return `${bucket.longLabel}${bucket.isToDate ? " (so far)" : ""}`;
+                                        const row = payload?.[0]?.payload as MoneyRow | undefined;
+                                        if (!row) return "";
+                                        return row.longLabel;
                                     }}
-                                    formatter={(value, name, item) => (
+                                    formatter={(value, name) => (
                                         <div className="flex flex-1 items-center justify-between gap-4">
-                                            <span className="flex items-center gap-2 text-ink-muted">
-                                                <span
-                                                    aria-hidden
-                                                    className="rounded-xs block-2.5 inline-2.5"
-                                                    style={{
-                                                        backgroundColor: item.color,
-                                                        opacity: name === "lost" ? LOST_OPACITY : 1,
-                                                    }}
-                                                />
-                                                {isMoney
-                                                    ? MONEY_CONFIG[
-                                                          name as keyof typeof MONEY_CONFIG
-                                                      ]?.label
-                                                    : DEALS_CONFIG[
-                                                          name as keyof typeof DEALS_CONFIG
-                                                      ]?.label}
+                                            <span className="text-ink-muted">
+                                                {name === "average"
+                                                    ? `Avg / ${unitWord}`
+                                                    : "Earned"}
                                             </span>
                                             <strong className="font-semibold text-ink tabular-nums">
-                                                {isMoney
-                                                    ? formatCommission(Number(value))
-                                                    : Number(value)}
+                                                {formatCommission(Number(value))}
                                             </strong>
                                         </div>
                                     )}
                                 />
                             }
                         />
-                        {isMoney
-                            ? (["saleInr", "rentInr"] as const).map((key) => (
-                                  <Bar
-                                      key={key}
-                                      dataKey={key}
-                                      stackId="commission"
-                                      fill={`var(--color-${key})`}
-                                      radius={4}
-                                      stroke="var(--color-surface)"
-                                      strokeWidth={2}
-                                      maxBarSize={40}
-                                      isAnimationActive={false}
-                                  >
-                                      {buckets.map((b) => (
-                                          <Cell
-                                              key={b.key}
-                                              fillOpacity={b.isToDate ? TO_DATE_OPACITY : 1}
-                                          />
-                                      ))}
-                                  </Bar>
-                              ))
-                            : (["closed", "lost"] as const).map((key) => (
-                                  <Bar
-                                      key={key}
-                                      dataKey={key}
-                                      fill={`var(--color-${key})`}
-                                      radius={[4, 4, 0, 0]}
-                                      maxBarSize={22}
-                                      isAnimationActive={false}
-                                  >
-                                      {buckets.map((b) => (
-                                          <Cell
-                                              key={b.key}
-                                              fillOpacity={
-                                                  (key === "lost" ? LOST_OPACITY : 1) *
-                                                  (b.isToDate ? TO_DATE_OPACITY + 0.3 : 1)
-                                              }
-                                          />
-                                      ))}
-                                  </Bar>
-                              ))}
-                    </BarChart>
+                        <ChartLegend content={<ChartLegendContent />} />
+                        {showAverage ? (
+                            <Area
+                                type="monotone"
+                                dataKey="average"
+                                stroke="var(--color-average)"
+                                strokeWidth={2}
+                                fill={`url(#${fillB})`}
+                                isAnimationActive={false}
+                                dot={{ ...DOT, fill: "var(--color-average)" }}
+                                activeDot={{ ...ACTIVE_DOT, fill: "var(--color-average)" }}
+                            />
+                        ) : null}
+                        <Area
+                            type="monotone"
+                            dataKey="earned"
+                            stroke="var(--color-earned)"
+                            strokeWidth={2.5}
+                            fill={`url(#${fillA})`}
+                            isAnimationActive={false}
+                            dot={{ ...DOT, fill: "var(--color-earned)" }}
+                            activeDot={{ ...ACTIVE_DOT, fill: "var(--color-earned)" }}
+                        />
+                    </ComposedChart>
+                </ChartContainer>
+            ) : (
+                <ChartContainer
+                    key={`deals-${bucketUnit}-${buckets.length}`}
+                    config={DEALS_CONFIG}
+                    className="aspect-auto block-56 inline-full min-block-56 sm:block-64"
+                >
+                    <ComposedChart
+                        accessibilityLayer
+                        data={dealsData}
+                        margin={{ top: 12, left: 0, right: 8, bottom: 0 }}
+                    >
+                        <defs>
+                            <linearGradient id={fillA} x1="0" y1="0" x2="0" y2="1">
+                                <stop
+                                    offset="5%"
+                                    stopColor="var(--color-sold)"
+                                    stopOpacity={0.35}
+                                />
+                                <stop offset="95%" stopColor="var(--color-sold)" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id={fillB} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--color-lost)" stopOpacity={0.2} />
+                                <stop offset="95%" stopColor="var(--color-lost)" stopOpacity={0} />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                            vertical={false}
+                            strokeDasharray="3 4"
+                            stroke="var(--color-border-warm)"
+                        />
+                        <XAxis
+                            dataKey="label"
+                            axisLine={false}
+                            tickLine={false}
+                            tickMargin={10}
+                            interval="preserveStartEnd"
+                            minTickGap={dense ? 12 : 4}
+                            tick={{ fontSize: 12, fill: "var(--color-ink-muted)" }}
+                        />
+                        <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            width={28}
+                            tickCount={4}
+                            allowDecimals={false}
+                            tick={{ fontSize: 11, fill: "var(--color-ink-subtle)" }}
+                            tickFormatter={(value: number) => String(Math.round(value))}
+                        />
+                        <ChartTooltip
+                            cursor={{
+                                stroke: "var(--color-ink-subtle)",
+                                strokeDasharray: "4 4",
+                                strokeWidth: 1,
+                            }}
+                            content={
+                                <ChartTooltipContent
+                                    indicator="dot"
+                                    labelFormatter={(_, payload) => {
+                                        const row = payload?.[0]?.payload as DealsRow | undefined;
+                                        if (!row) return "";
+                                        return row.longLabel;
+                                    }}
+                                    formatter={(value, name) => (
+                                        <div className="flex flex-1 items-center justify-between gap-4">
+                                            <span className="text-ink-muted">
+                                                {name === "lost" ? "Lost" : "Sold"}
+                                            </span>
+                                            <strong className="font-semibold text-ink tabular-nums">
+                                                {Number(value)}
+                                            </strong>
+                                        </div>
+                                    )}
+                                />
+                            }
+                        />
+                        <ChartLegend content={<ChartLegendContent />} />
+                        <Area
+                            type="monotone"
+                            dataKey="lost"
+                            stroke="var(--color-lost)"
+                            strokeWidth={2}
+                            fill={`url(#${fillB})`}
+                            isAnimationActive={false}
+                            dot={{ ...DOT, fill: "var(--color-lost)" }}
+                            activeDot={{ ...ACTIVE_DOT, fill: "var(--color-lost)" }}
+                        />
+                        <Area
+                            type="monotone"
+                            dataKey="sold"
+                            stroke="var(--color-sold)"
+                            strokeWidth={2.5}
+                            fill={`url(#${fillA})`}
+                            isAnimationActive={false}
+                            dot={{ ...DOT, fill: "var(--color-sold)" }}
+                            activeDot={{ ...ACTIVE_DOT, fill: "var(--color-sold)" }}
+                        />
+                    </ComposedChart>
                 </ChartContainer>
             )}
-
-            {!isEmpty && toDate ? (
-                <p className="body-xs text-ink-muted">
-                    Lighter bar: {toDate.longLabel.replace("Week of", "the week of")} so far.
-                </p>
-            ) : null}
 
             <table className="sr-only">
                 <caption>
