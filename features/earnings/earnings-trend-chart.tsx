@@ -33,7 +33,7 @@ const MONEY_CONFIG = {
 
 const DEALS_CONFIG = {
     closed: { label: "Sold", color: "var(--color-success-mid)" },
-    lost: { label: "Lost", color: "var(--color-danger-mid)" },
+    lost: { label: "Lost", color: "var(--color-ink-subtle)" },
 } satisfies ChartConfig;
 
 export function EarningsTrendChart({ report }: { report: EarningsReport }) {

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { formatCommission } from "@/lib/format/commission";
+import { plural } from "@/lib/format/plural";
 import { cn } from "@/lib/utils";
 
 import { type AppIcon, Award, CircleCheck, LostIcon, Wallet } from "@/components/shared/icons";
@@ -28,7 +29,7 @@ function Kpi({
     return (
         <div
             className={cn(
-                "flex flex-col gap-3 rounded-card border p-5 shadow-sm min-inline-0",
+                "flex flex-col gap-3 rounded-card border p-4 shadow-sm min-inline-0 md:p-5",
                 emphasis ? "border-brand/25 bg-brand-soft/60" : "border-border-warm bg-surface",
             )}
         >
@@ -55,13 +56,11 @@ function Kpi({
     );
 }
 
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-
 export function EarningsKpis({ report }: { report: EarningsReport }) {
     const resolved = report.closedCount + report.lostCount;
 
     return (
-        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
             <Kpi
                 emphasis
                 icon={Wallet}
@@ -97,7 +96,7 @@ export function EarningsKpis({ report }: { report: EarningsReport }) {
             />
             <Kpi
                 icon={LostIcon}
-                iconClass="bg-danger-soft text-danger"
+                iconClass="bg-surface-muted text-ink-muted"
                 label="Deals lost"
                 value={report.lostCount > 0 ? report.lostCount : "None"}
                 detail={
@@ -114,9 +113,9 @@ export function EarningsKpis({ report }: { report: EarningsReport }) {
             />
             <Kpi
                 icon={Award}
-                iconClass="bg-stage-3-soft text-stage-3"
+                iconClass="bg-surface-muted text-ink-muted"
                 label="Win rate"
-                value={report.winRate == null ? "—" : `${report.winRate}%`}
+                value={report.winRate == null ? "Not yet" : `${report.winRate}%`}
                 detail={
                     resolved > 0
                         ? `${report.closedCount} of ${plural(resolved, "finished deal")} sold`

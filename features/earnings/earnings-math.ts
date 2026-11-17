@@ -287,7 +287,9 @@ export type EarningsReport = {
 
     live: {
         count: number;
-        valueInr: number;
+        /** Asking price of open sale deals. Rent is monthly, so it is left out. */
+        saleValueInr: number;
+        saleCount: number;
         stageCounts: Record<DealStage, number>;
         stalledCount: number;
         /** Commission on every live deal that has one set. */
@@ -473,7 +475,10 @@ export function buildEarningsReport(
             .slice(0, 5),
         live: {
             count: liveDeals.length,
-            valueInr: liveDeals.reduce((sum, d) => sum + d.property.amountInr, 0),
+            saleValueInr: liveDeals
+                .filter((d) => !d.property.isRent)
+                .reduce((sum, d) => sum + d.property.amountInr, 0),
+            saleCount: liveDeals.filter((d) => !d.property.isRent).length,
             stageCounts,
             stalledCount: liveDeals.filter(isStalled).length,
             potentialInr: valuedLive.reduce((sum, v) => sum + (v.commissionInr ?? 0), 0),

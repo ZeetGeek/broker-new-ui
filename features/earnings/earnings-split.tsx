@@ -1,9 +1,8 @@
 import { formatCommission } from "@/lib/format/commission";
+import { plural } from "@/lib/format/plural";
 
 import { EarningsCard, EarningsDealLink } from "@/features/earnings/earnings-card";
 import type { EarningsReport } from "@/features/earnings/earnings-math";
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** Sale vs rent: where the money came from, plus the single best deal. */
 export function EarningsSplit({ report }: { report: EarningsReport }) {
@@ -68,11 +67,11 @@ export function EarningsSplit({ report }: { report: EarningsReport }) {
                                     <span className="body-sm flex items-center gap-2 font-medium text-ink">
                                         <span
                                             aria-hidden
-                                            className={`rounded-sm block-2.5 inline-2.5 ${row.swatch}`}
+                                            className={`rounded-full block-2 inline-2 ${row.swatch}`}
                                         />
                                         {row.label}
                                     </span>
-                                    <span className="ps-4.5 text-xs text-ink-muted">
+                                    <span className="ps-4 text-xs text-ink-muted">
                                         {row.count > 0 ? plural(row.count, "deal") : "No deals"}
                                     </span>
                                 </dt>

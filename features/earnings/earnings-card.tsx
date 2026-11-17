@@ -25,7 +25,7 @@ export function EarningsCard({
         <section
             aria-labelledby={titleId}
             className={cn(
-                "flex flex-col gap-5 rounded-card border border-border-warm bg-surface p-5 shadow-sm min-inline-0 md:p-6",
+                "flex flex-col gap-4 rounded-card border border-border-warm bg-surface p-4 shadow-sm min-inline-0 md:gap-5 md:p-5",
                 className,
             )}
         >
@@ -60,12 +60,12 @@ export function DeltaPill({
         <span className="flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
             <span
                 className={cn(
-                    "rounded-full px-2 py-0.5 font-semibold tabular-nums",
+                    "rounded-full px-2 py-1 font-semibold tabular-nums",
                     flat
                         ? "bg-surface-muted text-ink-muted"
                         : good
                           ? "bg-success-soft text-success"
-                          : "bg-danger-soft text-danger",
+                          : "bg-surface-muted text-ink",
                 )}
             >
                 {flat ? "No change" : `${percent > 0 ? "↑" : "↓"} ${Math.abs(percent)}%`}

@@ -37,14 +37,14 @@ export function EarningsRangePicker({
     onChange: (next: EarningsSelection) => void;
 }) {
     const [open, setOpen] = useState(false);
-    const window = resolveEarningsWindow(value);
+    const range = resolveEarningsWindow(value);
     const [draft, setDraft] = useState<DateRange | undefined>(undefined);
     const today = startOfDay(new Date());
 
     function handleOpenChange(next: boolean) {
         setOpen(next);
         if (next) {
-            setDraft(window.from ? { from: window.from, to: window.to } : undefined);
+            setDraft(range.from ? { from: range.from, to: range.to } : undefined);
         }
     }
 
@@ -71,7 +71,7 @@ export function EarningsRangePicker({
                         type="button"
                         variant="outline"
                         aria-expanded={open}
-                        aria-label={`Period: ${presetLabel(value)}, ${formatWindow(window)}. Change period`}
+                        aria-label={`Period: ${presetLabel(value)}, ${formatWindow(range)}. Change period`}
                         className="
                           justify-between gap-3 rounded-control border border-border-warm bg-surface
                           px-3.5 font-normal text-ink shadow-none block-control-md
@@ -87,7 +87,7 @@ export function EarningsRangePicker({
                             />
                             <span className="font-medium">{presetLabel(value)}</span>
                             <span className="truncate text-ink-muted max-sm:hidden">
-                                · {formatWindow(window)}
+                                · {formatWindow(range)}
                             </span>
                         </span>
                         <ChevronDown
@@ -124,10 +124,10 @@ export function EarningsRangePicker({
                                         className={cn(
                                             `
                                               flex items-center justify-between gap-3 rounded-control
-                                              px-3 text-start text-sm whitespace-nowrap block-9
-                                              inline-full
+                                              px-3 text-start text-sm whitespace-nowrap block-control-md inline-full
                                               hover:bg-surface-muted
-                                              focus-visible:outline-2 focus-visible:outline-ring
+                                              focus-visible:outline-2
+                                              focus-visible:outline-ring max-md:block-control-lg
                                             `,
                                             active
                                                 ? "bg-brand-soft font-medium text-brand-text hover:bg-brand-soft"

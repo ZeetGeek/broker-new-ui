@@ -1,10 +1,9 @@
+import { plural } from "@/lib/format/plural";
 import { cn } from "@/lib/utils";
 
 import { EarningsCard } from "@/features/earnings/earnings-card";
 import type { EarningsReport } from "@/features/earnings/earnings-math";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 function BarRow({
     label,
@@ -65,7 +64,7 @@ export function EarningsLosses({ report }: { report: EarningsReport }) {
                                         label={row.label}
                                         count={row.count}
                                         max={reasonMax}
-                                        barClass="bg-danger-mid"
+                                        barClass="bg-ink-subtle"
                                     />
                                 ))}
                             </ul>

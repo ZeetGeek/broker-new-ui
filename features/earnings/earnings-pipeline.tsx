@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { formatCommission } from "@/lib/format/commission";
+import { plural } from "@/lib/format/plural";
 import { formatPrice } from "@/lib/format/price";
 import { BROKER_PIPELINE_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
@@ -11,8 +12,6 @@ import { EarningsCard } from "@/features/earnings/earnings-card";
 import type { EarningsReport } from "@/features/earnings/earnings-math";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { DEAL_STAGE_ORDER } from "@/features/pipeline/types";
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** Live pipeline — not tied to the selected period. It is "right now". */
 export function EarningsPipeline({ report }: { report: EarningsReport }) {
@@ -45,10 +44,14 @@ export function EarningsPipeline({ report }: { report: EarningsReport }) {
                         <div className="flex flex-col gap-1 rounded-control bg-surface-muted/70 p-4">
                             <dt className="text-xs font-medium text-ink-muted">Value in play</dt>
                             <dd className="h5 text-ink tabular-nums">
-                                {formatPrice(live.valueInr)}
+                                {live.saleCount > 0
+                                    ? formatPrice(live.saleValueInr)
+                                    : "No sales yet"}
                             </dd>
                             <dd className="text-xs text-ink-muted">
-                                Asking price of {plural(live.count, "open deal")}
+                                {live.saleCount > 0
+                                    ? `Asking price of ${plural(live.saleCount, "open sale")}`
+                                    : "Only rentals are open right now"}
                             </dd>
                         </div>
                         <div className="flex flex-col gap-1 rounded-control bg-brand-soft/70 p-4">
@@ -56,7 +59,7 @@ export function EarningsPipeline({ report }: { report: EarningsReport }) {
                                 Likely commission
                             </dt>
                             <dd className="h5 text-brand-text tabular-nums">
-                                {live.likelyInr > 0 ? formatCommission(live.likelyInr) : "—"}
+                                {live.likelyInr > 0 ? formatCommission(live.likelyInr) : "None yet"}
                             </dd>
                             <dd className="text-xs text-ink-muted">
                                 {live.likelyCount > 0
@@ -69,9 +72,15 @@ export function EarningsPipeline({ report }: { report: EarningsReport }) {
                                 Possible commission
                             </dt>
                             <dd className="h5 text-ink tabular-nums">
-                                {live.potentialInr > 0 ? formatCommission(live.potentialInr) : "—"}
+                                {live.potentialInr > 0
+                                    ? formatCommission(live.potentialInr)
+                                    : "Not set"}
                             </dd>
-                            <dd className="text-xs text-ink-muted">If every open deal sells</dd>
+                            <dd className="text-xs text-ink-muted">
+                                {live.potentialInr > 0
+                                    ? "If every open deal sells"
+                                    : "Owners have not set a commission"}
+                            </dd>
                         </div>
                     </dl>
 
@@ -124,8 +133,8 @@ export function EarningsPipeline({ report }: { report: EarningsReport }) {
                             {live.stalledCount > 0 ? (
                                 <li>
                                     <Link
-                                        href={`${BROKER_PIPELINE_HREF}`}
-                                        className="inline-flex items-center gap-1.5 rounded-full bg-urgent-soft px-3 py-1 text-xs font-medium text-urgent hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                                        href={BROKER_PIPELINE_HREF}
+                                        className="inline-flex items-center gap-1.5 rounded-full bg-urgent-soft px-3 text-xs font-medium text-urgent block-control-sm hover:underline focus-visible:outline-2 focus-visible:outline-ring max-md:block-control-lg"
                                     >
                                         <Clock aria-hidden className="block-3.5 inline-3.5" />
                                         {plural(live.stalledCount, "deal")} gone quiet for 2+ weeks
@@ -133,7 +142,7 @@ export function EarningsPipeline({ report }: { report: EarningsReport }) {
                                 </li>
                             ) : null}
                             {live.acceptedOfferCount > 0 ? (
-                                <li className="inline-flex items-center rounded-full bg-success-soft px-3 py-1 text-xs font-medium text-success">
+                                <li className="inline-flex items-center rounded-full bg-success-soft px-3 text-xs font-medium text-success block-control-sm">
                                     {plural(live.acceptedOfferCount, "offer")} accepted, ready to
                                     close
                                 </li>

@@ -10,7 +10,8 @@
  */
 import type { DealItem, DealLostReason, DealStage, DealStatus } from "@/features/pipeline/types";
 
-export const SHOW_SAMPLE_EARNINGS_WHEN_EMPTY = true;
+/** Dev-only review aid. Never ship invented numbers to a real broker. */
+export const SHOW_SAMPLE_EARNINGS_WHEN_EMPTY = process.env.NODE_ENV !== "production";
 
 const DAY_MS = 86_400_000;
 

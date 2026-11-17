@@ -96,7 +96,8 @@ export function EarningsPage() {
     const { data, error, isPending, refetch, isRefetching } = useQuery({
         queryKey: ["broker", "earnings", "deals"],
         queryFn: ({ signal }) => pipelineApi.list(DEFAULT_DEALS_FILTERS, signal),
-        staleTime: 60_000,
+        // Always refetch on arrival so a deal just marked sold shows up at once.
+        staleTime: 0,
     });
 
     // No real deals yet → static sample, clearly labelled, so the page is reviewable.
@@ -119,12 +120,12 @@ export function EarningsPage() {
     if (error || !report || !data) {
         return (
             <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-                <p className="h5 text-ink">Could not load your earnings</p>
+                <p className="h5 text-ink">Couldn&rsquo;t load your earnings</p>
                 <p className="body text-ink-muted max-inline-96">
                     Check your internet connection and try again. Your deals are safe.
                 </p>
-                <Button type="button" onClick={() => refetch()} disabled={isRefetching}>
-                    {isRefetching ? "Trying again…" : "Try again"}
+                <Button type="button" onClick={() => refetch()} loading={isRefetching}>
+                    Try again
                 </Button>
             </div>
         );
@@ -162,18 +163,15 @@ export function EarningsPage() {
     }
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 md:gap-8">
             {header}
 
             {isSample ? (
                 <p
                     role="note"
-                    className="body-sm flex items-start gap-2 rounded-control border border-highlight/40 bg-highlight/15 px-4 py-3 text-ink"
+                    className="body-sm flex items-start gap-2 rounded-control border border-border-warm bg-surface px-4 py-3 text-ink"
                 >
-                    <Info
-                        aria-hidden
-                        className="mbs-0.5 shrink-0 text-highlight-ink block-4 inline-4"
-                    />
+                    <Info aria-hidden className="mbs-0.5 shrink-0 text-brand block-4 inline-4" />
                     <span>
                         <strong className="font-semibold">Sample data.</strong> You have no deals
                         yet, so this page shows example numbers. Your real earnings replace them
@@ -191,7 +189,7 @@ export function EarningsPage() {
 
             <EarningsKpis report={report} />
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
+            <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-12">
                 <EarningsTrendChart report={report} />
                 <EarningsSplit report={report} />
                 <EarningsPipeline report={report} />
