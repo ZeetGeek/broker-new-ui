@@ -1,0 +1,41 @@
+import type { DealItem } from "@/features/pipeline/types";
+import { isLiveStage } from "@/features/pipeline/types";
+
+/**
+ * How "Mark as sold" behaves for a deal.
+ *
+ * - `immediate`: the deal closes now, the property is marked sold and the
+ *   other clients on it are marked lost.
+ * - `owner`: the final price goes to the owner, who confirms the sale.
+ *   Only for owner listings, and only once the owner portal is live.
+ */
+export type SaleConfirmMode = "immediate" | "owner";
+
+export function saleConfirmMode(input: {
+    isBrokerListing: boolean;
+    ownerPortalOn: boolean;
+}): SaleConfirmMode {
+    return input.ownerPortalOn && !input.isBrokerListing ? "owner" : "immediate";
+}
+
+/** Why "Mark as sold" can't open for this deal right now, or null when it can. */
+export function markSoldBlockedReason(
+    deal: Pick<DealItem, "offerStatus" | "property">,
+    mode: SaleConfirmMode,
+): string | null {
+    if (deal.property.isSold) return "This property is already sold.";
+    if (mode === "owner" && deal.offerStatus === "pending") {
+        return "Waiting for the owner on your offer.";
+    }
+    return null;
+}
+
+/** Other clients still in progress on the same property. */
+export function otherLiveClientCount(deals: readonly DealItem[], deal: DealItem): number {
+    return deals.filter(
+        (other) =>
+            other.id !== deal.id &&
+            other.property.id === deal.property.id &&
+            isLiveStage(other.status),
+    ).length;
+}

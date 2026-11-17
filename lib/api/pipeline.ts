@@ -64,6 +64,10 @@ type ApiLead = {
               exclusiveOwnerId?: string | null;
               isBrokerInventory?: boolean;
               isExclusiveProperty?: boolean;
+              /** `available` | `sold` | `unavailable`. */
+              status?: string | null;
+              ownerType?: string | null;
+              ownedByBrokerId?: string | null;
           } & Omit<
               PropertyFilterRecord,
               "commissionPercent" | "commissionAmount" | "salePrice" | "monthlyRent"
@@ -348,6 +352,11 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             imageSrcs: property.photos?.filter(Boolean) ?? [],
             photoCount: property.photos?.filter(Boolean).length ?? 0,
             isExclusiveProperty,
+            isSold: property.status === "sold",
+            // Same test as the API's: a broker-owned listing.
+            isBrokerListing:
+                (property.ownerType === "broker" && Boolean(property.ownedByBrokerId)) ||
+                Boolean(property.isBrokerInventory),
         },
         owner: {
             name: ownerName,
@@ -648,6 +657,24 @@ function mockSetStage(dealId: string, status: DealStatus, options: SetStageOptio
     if (status !== "lost") deal.lostFromStage = undefined;
     if (options.note?.trim()) deal.note = options.note.trim();
     mockPushHistory(dealId, { status: toApiStage(status), note: options.note?.trim() || null });
+    if (status === "closed") mockCloseProperty(deal);
+}
+
+/** Mock parity with the API: a sale closes the property for every other client. */
+function mockCloseProperty(sold: DealItem) {
+    const now = new Date().toISOString();
+    for (const other of getMockStore().deals) {
+        if (other.property.id !== sold.property.id) continue;
+        other.property.isSold = true;
+        if (other.id === sold.id || !isLiveStage(other.status)) continue;
+        other.lostFromStage = other.status;
+        other.status = "lost";
+        other.stageEnteredAt = now;
+        other.resolvedAt = now;
+        other.closedAmountInr = null;
+        if (other.offerStatus === "pending") other.offerStatus = "rejected";
+        mockPushHistory(other.id, { status: "closed_lost", note: "Sold to another client" });
+    }
 }
 
 export const pipelineApi = {
@@ -680,16 +707,19 @@ export const pipelineApi = {
         options: SetStageOptions = {},
     ): Promise<void> {
         if (isMockMode()) return mockSetStage(dealId, status, options);
-        // `options.closedAmountInr` (final price from "Mark as sold") and
-        // `options.lostReason` (reason from "Mark as lost") are deliberately
-        // NOT sent yet: UpdateLeadStatusDto only accepts `status` and `note`,
-        // and the API rejects unknown fields with a 400 (forbidNonWhitelisted).
-        // Send them as `closedAmount` / `lostReason` once the backend adds them.
+        // `options.lostReason` (reason from "Mark as lost") is deliberately NOT
+        // sent yet: UpdateLeadStatusDto has no such field and the API rejects
+        // unknown fields with a 400 (forbidNonWhitelisted).
+        const closedAmount =
+            status === "closed" && options.closedAmountInr != null && options.closedAmountInr > 0
+                ? Math.round(options.closedAmountInr)
+                : null;
         await apiFetch(`/clients/leads/${dealId}/status`, {
             method: "PATCH",
             body: JSON.stringify({
                 status: toApiStage(status),
                 ...(options.note?.trim() ? { note: options.note.trim() } : {}),
+                ...(closedAmount != null ? { closedAmount } : {}),
             }),
         });
     },
