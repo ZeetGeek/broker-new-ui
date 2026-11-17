@@ -14,10 +14,14 @@
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
-    align-items: center;
+    align-items: stretch;
     gap: 1rem;
     padding: 0.75rem var(--planner-inline-padding);
     min-block-size: 64px;
+}
+.dateRange,
+.dateControls {
+    align-self: center;
 }
 .plannerNav::after {
     content: "";
@@ -84,14 +88,28 @@
     inline-size: 16px;
     block-size: 16px;
 }
-.dayGrid,
-.somedayGrid {
+.dayGrid {
     display: grid;
-    grid-template-columns: repeat(var(--planner-columns), minmax(0, 1fr));
+    grid-template-columns: repeat(var(--planner-columns, 1), minmax(0, 1fr));
     gap: 3.25rem;
     padding: 1.5rem var(--planner-inline-padding) 1.25rem;
 }
+.somedayGrid {
+    display: grid;
+    grid-template-columns: repeat(var(--planner-list-columns, 1), minmax(0, 1fr));
+    gap: 3.25rem;
+    padding: 0.875rem var(--planner-inline-padding) 1.25rem;
+}
+.emptyListColumn {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    padding: 0 0.125rem;
+    pointer-events: none;
+}
 .dayColumn {
+    display: flex;
+    flex-direction: column;
     min-inline-size: 0;
     padding: 0 0.125rem;
 }
@@ -113,15 +131,32 @@
     color: var(--color-brand);
 }
 .ruledList {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
     list-style: none;
     padding: 0;
     margin: 0;
     min-block-size: calc(10 * var(--line-height));
 }
+.ruledList::after {
+    /* Continue the paper rules through space left by taller neighbouring columns. */
+    content: "";
+    flex: 1;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0 var(--line-height),
+        color-mix(in srgb, var(--color-border-warm) 55%, var(--color-surface)) var(--line-height)
+            calc(var(--line-height) + 1px)
+    );
+    pointer-events: none;
+}
 .sortableLine,
+.historyLine,
 .blankLine,
 .composerLine {
     position: relative;
+    flex-shrink: 0;
     min-block-size: var(--line-height);
     border-block-end: 1px solid
         color-mix(in srgb, var(--color-border-warm) 55%, var(--color-surface));
@@ -129,6 +164,12 @@
 .sortableLine {
     cursor: grab;
     user-select: none;
+}
+.historyLine {
+    list-style: none;
+}
+.historyLine .lineTitle {
+    cursor: pointer;
 }
 .taskPlaceholder {
     outline: 1px dashed var(--color-ink-subtle);
@@ -208,13 +249,27 @@
     text-decoration: line-through;
     text-decoration-thickness: 1px;
 }
+.listTaskDate {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-block-start: 0.25rem;
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: normal;
+}
+.listTaskDate svg {
+    flex-shrink: 0;
+}
 .lineCheck {
     position: absolute;
-    inset-inline-start: -23px;
+    inset-inline-start: -22px;
     inset-block-start: 50%;
     transform: translateY(-50%);
-    inline-size: 20px;
-    block-size: 20px;
+    inline-size: 18px;
+    block-size: 18px;
     border-width: 1.5px;
     border-radius: 50%;
     cursor: pointer;
@@ -224,14 +279,19 @@
     cursor: not-allowed;
 }
 .lineCheck [data-slot="checkbox-indicator"] {
-    inline-size: 11px;
-    block-size: 11px;
+    inline-size: 10px;
+    block-size: 10px;
 }
 .lineCheck::after {
-    inset: -9px -5px;
+    inset: -10px -6px;
 }
 .lineCheck[data-checked] {
     opacity: 1;
+}
+@media (hover: hover) {
+    .historyLine .lineCheck[data-checked] {
+        opacity: 0;
+    }
 }
 .lineAction,
 .restoreAction {
@@ -248,7 +308,8 @@
     border-radius: 6px;
     cursor: pointer;
 }
-.lineAction {
+.lineAction,
+.restoreAction {
     opacity: 0;
     inline-size: 20px;
     block-size: 20px;
@@ -256,7 +317,8 @@
     border-radius: 50%;
     background: transparent;
 }
-.lineAction::before {
+.lineAction::before,
+.restoreAction::before {
     content: "";
     position: absolute;
     inset-inline-start: 50%;
@@ -268,21 +330,21 @@
     border-radius: 50%;
     pointer-events: none;
 }
-.lineAction svg {
+.lineAction svg,
+.restoreAction svg {
     inline-size: 14px;
     block-size: 14px;
 }
-.restoreAction:hover {
-    color: var(--color-brand-text);
-    background: var(--color-brand-soft);
-}
 .lineAction:hover,
+.restoreAction:hover,
 .lineAction[data-popup-open] {
     color: var(--color-ink-muted);
     background: transparent;
 }
 .lineAction:hover::before,
 .lineAction:focus-visible::before,
+.restoreAction:hover::before,
+.restoreAction:focus-visible::before,
 .lineAction[data-popup-open]::before {
     border-color: color-mix(in srgb, var(--color-ink-subtle) 40%, var(--color-surface));
 }
@@ -290,56 +352,22 @@
 .taskLine:focus-within .lineCheck,
 .taskLine:hover .lineAction,
 .taskLine:focus-within .lineAction,
+.taskLine:hover .restoreAction,
+.taskLine:focus-within .restoreAction,
 .lineAction[data-popup-open] {
     opacity: 1;
 }
 .overdueMark {
+    display: inline-flex;
+    align-items: center;
     flex-shrink: 0;
     color: var(--color-urgent);
-    font-size: 0.75rem;
-    line-height: 1.5;
+    border-radius: 50%;
+    cursor: help;
 }
-.inlineEdit {
-    flex: 1;
-    min-inline-size: 0;
-}
-.taskTitleField {
-    flex: 1;
-    min-inline-size: 0;
-}
-.titleLimit {
-    display: none;
-    padding-block-end: 0.5rem;
-    color: var(--color-ink-muted);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    line-height: 1.5;
-    font-variant-numeric: tabular-nums;
-}
-.taskTitleField:focus-within .titleLimit {
-    display: block;
-}
-.inlineEdit textarea {
-    display: block;
-    resize: none;
-    overflow: hidden;
-    overflow-wrap: anywhere;
-    cursor: text;
-    user-select: text;
-    inline-size: 100%;
-    min-inline-size: 0;
-    min-block-size: var(--line-height);
-    border: 0;
-    padding: 0.5rem 0;
-    background: transparent;
-    font: inherit;
-    font-weight: 600;
-    line-height: 1.5;
-    color: inherit;
-    outline: none;
-}
-.taskLine[data-editing] {
-    box-shadow: inset 0 -1px 0 var(--color-brand);
+.overdueMark:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
 }
 .dragging {
     opacity: 0.25;
@@ -366,60 +394,29 @@
 .dropTarget {
     background: color-mix(in srgb, var(--color-brand-soft) 30%, var(--color-surface));
 }
-.composer {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    min-block-size: var(--line-height);
-    padding-inline: 0.5rem;
-}
-.composer textarea {
-    display: block;
-    resize: none;
-    overflow: hidden;
-    overflow-wrap: anywhere;
-    inline-size: 100%;
-    min-inline-size: 0;
-    min-block-size: var(--line-height);
-    border: 0;
-    padding: 0.5rem 0;
-    outline: none;
-    background: transparent;
-    color: var(--color-ink);
-    font: inherit;
-    font-weight: 600;
-    line-height: 1.5;
-}
-.composer textarea::placeholder {
-    color: color-mix(in srgb, var(--color-ink-subtle) 75%, var(--color-surface));
-    opacity: 0;
-}
-.dayColumn:hover .composer textarea::placeholder,
-.composer:focus-within textarea::placeholder {
-    opacity: 1;
-}
-.composer:focus-within {
-    box-shadow: inset 0 -1px 0 var(--color-brand);
-}
-.composer button {
-    display: none;
-    color: var(--color-brand-text);
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    min-block-size: var(--line-height);
-}
-.composer:focus-within button:not(:disabled) {
-    display: block;
+.composerLine:hover,
+.composerLine:focus-within {
+    border-block-end-color: var(--color-brand);
 }
 .somedayBar {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     min-block-size: 56px;
     padding-inline: var(--planner-inline-padding);
     border-block-start: 1px solid var(--color-border-warm);
     border-block-end: 1px solid var(--color-border-warm);
     gap: 0.5rem;
+}
+.somedayBarStart {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    flex: 1;
+}
+.somedayBarStart .tabMenu,
+.somedayBarStart .addTabButton {
+    align-self: center;
 }
 .listTabs {
     display: flex;
@@ -500,8 +497,22 @@
     cursor: pointer;
     color: var(--color-ink-subtle);
 }
-.collapseLists {
+.somedayBarEnd {
+    display: flex;
+    align-items: center;
+    align-self: center;
+    flex-shrink: 0;
+    gap: 0.125rem;
     margin-inline-start: auto;
+}
+.listTabNav {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 0;
+}
+.collapseLists {
+    margin-inline-start: 0;
 }
 .collapseLists svg[data-collapsed] {
     transform: rotate(-90deg);
@@ -516,20 +527,72 @@
     background: var(--color-brand-soft);
 }
 .customList {
+    display: flex;
+    flex-direction: column;
     position: relative;
+    isolation: isolate;
     min-inline-size: 0;
 }
-.customListControls {
-    display: flex;
+.customList::before {
+    content: "";
     position: absolute;
-    inset-block-start: 0.6rem;
-    inset-inline-start: -14px;
-    z-index: 1;
-    opacity: 0;
+    inset-block: -0.75rem -2rem;
+    inset-inline: -1.625rem;
+    z-index: -1;
+    pointer-events: none;
 }
-.customList:hover > .customListControls,
-.customList:focus-within > .customListControls {
+.customList:first-child::before {
+    inset-inline-start: calc(-1 * var(--planner-inline-padding));
+}
+.customList:has(> .dayColumn > .dayHeading:hover)::before,
+.customList:has(> .listDragHandle:hover)::before,
+.customList:has(> .listDragHandle:focus-visible)::before,
+.customList.dragging::before {
+    background: color-mix(in srgb, var(--color-ink) 4%, var(--color-surface));
+}
+.customList > .dayColumn {
+    flex: 1;
+}
+.customList > .dayColumn > .dayHeading {
+    padding-block-start: 0.75rem;
+    padding-inline-start: 0.5rem;
+}
+.newListColumn > .dayHeading {
+    /* Sit a bit lower than the top edge so it lines up with list titles. */
+    padding-block: 1.35rem 0.75rem;
+    padding-inline-start: 0.5rem;
+}
+.listHeadingRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-inline-size: 0;
+}
+.listHeadingRow > .h5 {
+    flex: 1;
+    min-inline-size: 0;
+}
+.newListColumn {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    padding-inline: 0.125rem;
+}
+.listColumnFooter {
+    margin-block-start: auto;
+    padding: 0.75rem 0.5rem 0;
+}
+.customList .listHeadingRow .listMenu {
+    flex-shrink: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+.customList:hover .listHeadingRow .listMenu,
+.customList:focus-within .listHeadingRow .listMenu,
+.customList.dragging .listHeadingRow .listMenu {
     opacity: 1;
+    pointer-events: auto;
 }
 .listDragHandle,
 .listMenu {
@@ -542,26 +605,32 @@
 }
 .listDragHandle {
     position: absolute;
-    inset-block-start: -1.5rem;
+    inset-block-start: -0.75rem;
     inset-inline-start: 50%;
     transform: translateX(-50%);
     z-index: 2;
     inline-size: 44px;
     block-size: 44px;
     opacity: 0;
+    pointer-events: none;
     color: var(--color-ink);
     cursor: grab;
     touch-action: none;
 }
-.customList:hover > .listDragHandle,
-.customList:focus-within > .listDragHandle {
+.customList:has(> .dayColumn > .dayHeading:hover) > .listDragHandle,
+.customList > .listDragHandle:hover,
+.customList > .listDragHandle:focus-visible,
+.customList.dragging > .listDragHandle {
     opacity: 1;
+    pointer-events: auto;
 }
 .listDragHandle:active {
     cursor: grabbing;
 }
-.customList:hover {
-    background: color-mix(in srgb, var(--color-ink) 2%, transparent);
+.customList.dragging {
+    z-index: 3;
+    opacity: 0.65;
+    cursor: grabbing;
 }
 .dragTabPreview {
     padding: 0.75rem 1rem;
@@ -573,61 +642,30 @@
     box-shadow: var(--shadow-lg);
     cursor: grabbing;
 }
-.customList .dayHeading h2 {
+.customList .dayHeading h2,
+.listHeadingRow > .h5 {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.dragListPreview {
-    inline-size: 230px;
-    min-block-size: 150px;
-    padding: 1.25rem;
-    color: var(--color-ink);
-    background: var(--color-surface-muted);
-    border-radius: var(--radius-inner);
-    box-shadow: var(--shadow-lg);
-    font-size: 1.125rem;
-    cursor: grabbing;
-}
-.notebookEditor {
-    padding: 0.75rem var(--planner-inline-padding);
-    background: var(--color-surface-muted);
-}
 .nameForm {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    display: grid;
     gap: 0.5rem;
     font-size: 0.875rem;
 }
-.nameForm label {
+.nameLabel {
     color: var(--color-ink-muted);
+    font-weight: 600;
 }
-.nameForm input {
-    flex: 1;
-    max-inline-size: 280px;
-    min-inline-size: 100px;
-    min-block-size: 44px;
-    padding-inline: 0.65rem;
-    border: 1px solid var(--color-border-warm);
-    background: var(--color-surface);
-    color: var(--color-ink);
-    border-radius: var(--radius-control);
-    outline-color: var(--color-brand);
+.nameActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
 }
-.nameForm button {
-    display: grid;
-    place-items: center;
-    min-inline-size: 44px;
-    min-block-size: 44px;
-    padding-inline: 0.5rem;
-    color: var(--color-brand-text);
-    cursor: pointer;
-}
-.nameForm p {
-    flex-basis: 100%;
+.nameError {
     color: var(--color-danger);
+    font-size: 0.8125rem;
 }
 .notebookError,
 .notebookLoading {
@@ -661,29 +699,70 @@
     background: color-mix(in oklab, var(--color-surface) 94%, var(--color-canvas));
     border-end-start-radius: var(--radius-card);
     border-end-end-radius: var(--radius-card);
-    padding-block: 1.5rem 2rem;
+    padding-block: 0.875rem 2rem;
     min-block-size: 350px;
+}
+.listHeadingTools {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.15rem;
+}
+.listHeadingNewList {
+    flex-shrink: 0;
+    margin-inline-end: 0.15rem;
+}
+.customList .listHeadingToolsWithNav .listMenu,
+.customList .listHeadingToolsWithNav .listTabNav {
+    opacity: 1;
+    pointer-events: auto;
 }
 .somedayGrid .ruledList {
     min-block-size: calc(9 * var(--line-height));
+}
+.plannerEmpty {
+    padding: 3rem var(--planner-inline-padding);
+    text-align: center;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--color-ink-muted);
 }
 .columnPicker {
     grid-column: 2;
     grid-row: 1;
     justify-self: center;
 }
-.columnPicker:global(.t-tabs-surface.t-tabs-compact) {
+.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) {
     --tabs-bar-bg: transparent;
     --tabs-pill-bg: var(--color-brand);
     --tabs-text-active: var(--color-brand-text);
     align-self: stretch;
     gap: 1.25rem;
-    margin-block: -0.75rem;
     padding: 0;
     border: 0;
     border-radius: 0;
 }
-.columnPicker:global(.t-tabs-surface.t-tabs-compact) > button {
+.columnPicker.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) {
+    position: relative;
+    align-self: stretch;
+    block-size: 100%;
+    min-block-size: 64px;
+    margin-block: -0.75rem;
+    margin-block-end: -0.75rem;
+}
+.notebookTabPicker.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) {
+    position: relative;
+    block-size: 100%;
+    min-block-size: 56px;
+    min-inline-size: 0;
+    flex: 1;
+    margin-block-end: 0;
+}
+.notebookTabPicker.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact)
+    > :global(.t-tabs-pill) {
+    inset-block-end: 0 !important;
+}
+.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"] {
     align-self: stretch;
     min-inline-size: 44px;
     min-block-size: 44px;
@@ -694,22 +773,63 @@
     font-weight: 600;
     color: var(--color-ink-muted);
 }
-.columnPicker:global(.t-tabs-surface.t-tabs-compact) > button:hover,
-.columnPicker:global(.t-tabs-surface.t-tabs-compact) > button[aria-selected="true"] {
+.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"]:hover,
+.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"][aria-selected="true"] {
     color: var(--color-brand-text);
 }
-.columnPicker:global(.t-tabs-surface.t-tabs-compact) > button:focus-visible {
+.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"]:focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: -2px;
     box-shadow: none;
 }
-.columnPicker:global(.t-tabs-surface.t-tabs-compact) > :global(.t-tabs-pill) {
-    inset-block-start: auto;
-    inset-block-end: 0;
-    block-size: 2px;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
+.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > :global(.t-tabs-pill) {
+    inset-block-start: auto !important;
+    inset-block-end: 1px !important;
+    block-size: 3px !important;
+    height: 3px !important;
+    min-block-size: 3px !important;
+    max-block-size: 3px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+.slidingTabLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.slidingTabName {
+    max-inline-size: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.notebookTabMenu {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 20px;
+    block-size: 20px;
+    border-radius: var(--radius-control);
+    color: var(--color-ink-subtle);
+    cursor: pointer;
+}
+.notebookTabMenu:hover {
+    color: var(--color-brand-text);
+    background: color-mix(in oklab, var(--color-ink) 6%, transparent);
+}
+.slidingTabCount {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 1.125rem;
+    padding: 0.125rem 0.375rem;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--color-ink) 8%, transparent);
+    color: var(--color-ink-muted);
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
 }
 .archive {
     padding: 2.5rem 3rem;
@@ -776,8 +896,10 @@
         grid-column: 1 / -1;
         grid-row: 2;
     }
-    .columnPicker:global(.t-tabs-surface.t-tabs-compact) {
+    .columnPicker.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) {
+        min-block-size: 0;
         margin-block: 0 -0.5rem;
+        margin-block-end: -0.5rem;
     }
     .dateControls {
         grid-column: 2;
@@ -827,11 +949,11 @@
         display: none;
     }
     .lineCheck {
-        inset-inline-start: -24px;
+        inset-inline-start: -23px;
         opacity: 1;
     }
     .lineCheck::after {
-        inset: -14px;
+        inset: -15px;
     }
     .lineAction,
     .restoreAction {
@@ -841,9 +963,6 @@
     }
     .lineTitle {
         font-size: 12px;
-    }
-    .composer textarea::placeholder {
-        opacity: 1;
     }
     .somedayBar {
         padding-inline: 1.25rem;
@@ -862,26 +981,42 @@
     .listTabButton > span {
         max-inline-size: 120px;
     }
-    .customListControls {
-        position: static;
-        justify-content: flex-end;
+    .customList .listHeadingRow .listMenu {
         opacity: 1;
+        pointer-events: auto;
+        min-inline-size: 44px;
+        inline-size: 44px;
         block-size: 44px;
+        min-block-size: 44px;
+    }
+    .customList::before {
+        inset-block-start: -0.75rem;
+        inset-inline: -2.75rem -3.5rem;
+    }
+    .customList:first-child::before {
+        inset-inline-start: -2.75rem;
+    }
+    .customList > .dayColumn > .dayHeading {
+        padding-block-start: 0.25rem;
+    }
+    .newListColumn > .dayHeading {
+        padding-block: 0.85rem 0.5rem;
     }
     .listDragHandle {
         inset-block-start: 0;
         opacity: 1;
+        pointer-events: auto;
     }
     .listDragHandle,
     .listMenu {
         min-inline-size: 44px;
         block-size: 44px;
     }
-    .notebookEditor {
-        padding-inline: 1rem;
-    }
     .somedayGrid .customList + .customList {
         margin-block-start: 1rem;
+    }
+    .newListColumn > .ruledList {
+        display: none;
     }
     .columnPicker {
         display: none;
@@ -901,10 +1036,10 @@
         opacity: 1;
     }
     .archive .lineCheck {
-        inset-inline-start: -24px;
+        inset-inline-start: -23px;
     }
     .archive .lineCheck::after {
-        inset: -14px;
+        inset: -15px;
     }
     .archive .lineAction,
     .archive .restoreAction {
@@ -914,17 +1049,17 @@
 }
 @media (hover: none) {
     .lineCheck,
-    .lineAction {
+    .lineAction,
+    .restoreAction {
         opacity: 1;
     }
-    .composer textarea::placeholder {
+    .customList .listHeadingRow .listMenu {
         opacity: 1;
-    }
-    .customListControls {
-        opacity: 1;
+        pointer-events: auto;
     }
     .listDragHandle {
         opacity: 1;
+        pointer-events: auto;
     }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -42,6 +42,7 @@ import { useTaskNotebook } from "./notebook-store";
 import { createPlannerTask, movePlannerTask, setTaskDeleted } from "./planner-model";
 import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES, useTasks } from "./preview-store";
 import { changeTaskQuickly, type TaskQuickChange } from "./quick-actions";
+import { encodeTaskDraftTitle } from "./quick-add-draft";
 import { TaskDeleteDialog, TaskDetail, TaskReminders } from "./task-detail";
 import { TaskForm, TaskSelect } from "./task-form";
 import { TaskArchive } from "./task-list";
@@ -121,7 +122,8 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         });
     };
     const rawTab = params.get("tab");
-    const tab = rawTab === "completed" || rawTab === "deleted" ? rawTab : "all";
+    const tab =
+        rawTab === "completed" || rawTab === "deleted" || rawTab === "overdue" ? rawTab : "all";
     const view = params.get("view");
     const selected = tasks.find((task) => task.id === params.get("task"));
     const search = params.get("q") ?? "";
@@ -149,12 +151,19 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             ? `${open.length} open ${open.length === 1 ? "task" : "tasks"}`
             : "Add your next follow-up",
     ].filter(Boolean);
+    const overdueCount = open.filter((task) => taskGroup(task, now) === "overdue").length;
     const tabs = [
         {
             value: "all",
             label: "To do",
             count: open.length,
             dotClassName: "bg-sky-400",
+        },
+        {
+            value: "overdue",
+            label: "Overdue",
+            count: overdueCount,
+            dotClassName: "bg-urgent",
         },
         {
             value: "completed",
@@ -170,7 +179,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         },
     ];
     const visible = tasks.filter((task) => {
-        if (!taskMatchesTab(task, tab, !!completionFeedback[task.id])) return false;
+        if (!taskMatchesTab(task, tab, !!completionFeedback[task.id], now)) return false;
         if (!taskMatchesDueFilter(task, due as TaskDueFilter, now)) return false;
         if (!taskMatchesLinkFilter(task, linked as TaskLinkFilter)) return false;
         const client = TASK_CLIENTS.find((c) => c.id === task.clientId);
@@ -274,26 +283,32 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             if (view) close();
         }
     };
-    const rename = (task: Task, title: string) => {
+    const rename = (task: Task, change: TaskQuickChange) => {
         // Only an explicit empty-title submission reaches here; blur cancels an empty edit.
-        if (!title.trim()) {
+        if (change.title !== undefined && !change.title.trim()) {
             return changeTasks(
                 (latest) => setTaskDeleted(latest, task.id, true),
                 "Task moved to Deleted",
             );
         }
-        return changeTasks((latest) =>
-            latest.map((item) =>
-                item.id === task.id && !item.deletedAt
-                    ? { ...item, title, updatedAt: new Date().toISOString() }
-                    : item,
-            ),
-        );
+        return changeTasks((latest) => changeTaskQuickly(latest, task.id, change));
     };
     const quickChange = (task: Task, change: TaskQuickChange) =>
         changeTasks((latest) => changeTaskQuickly(latest, task.id, change));
-    const quickAdd = async (title: string, date: string | null, listId?: string) => {
-        const task = createPlannerTask(title, date, Date.now(), crypto.randomUUID(), listId);
+    const quickAdd = async (
+        title: string,
+        date: string | null,
+        listId?: string,
+        extras?: Parameters<typeof createPlannerTask>[5],
+    ) => {
+        const task = createPlannerTask(
+            title,
+            date,
+            Date.now(),
+            crypto.randomUUID(),
+            listId,
+            extras,
+        );
         return changeTasks((latest) => [...latest, task]);
     };
     const move = async (id: string, date: string | null, beforeId?: string, listId?: string) => {
@@ -320,9 +335,19 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             editing.startDate === (draft.startDate || null) &&
             editing.dueDate === (draft.dueDate || null) &&
             JSON.stringify(editing.repeat) === JSON.stringify(draft.repeat);
+        const catalogs = {
+            clients: TASK_CLIENTS,
+            owners: TASK_OWNERS,
+            properties: TASK_PROPERTIES,
+        };
+        // Create / edit modal: put field values as end-of-title chips (same as quick-add).
+        const title =
+            view === "create" || view === "edit"
+                ? encodeTaskDraftTitle(draft, catalogs, Date.now())
+                : draft.title.trim();
         const next: Task = {
             id: editing?.id ?? crypto.randomUUID(),
-            title: draft.title.trim(),
+            title,
             details: draft.details.trim(),
             startDate: draft.startDate || null,
             startTime: draft.startDate && draft.startTime ? draft.startTime : null,
@@ -556,6 +581,11 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                 tasks={visible}
                                 now={now}
                                 sort={sort}
+                                catalogs={{
+                                    clients: TASK_CLIENTS,
+                                    owners: TASK_OWNERS,
+                                    properties: TASK_PROPERTIES,
+                                }}
                                 busy={busy}
                                 onOpen={(task) => intent(task, "detail")}
                                 onComplete={complete}
@@ -572,6 +602,11 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                 tab={tab === "all" ? "results" : tab}
                                 now={now}
                                 sort={sort}
+                                catalogs={{
+                                    clients: TASK_CLIENTS,
+                                    owners: TASK_OWNERS,
+                                    properties: TASK_PROPERTIES,
+                                }}
                                 busy={busy}
                                 onOpen={(task) => intent(task, "detail")}
                                 onComplete={complete}
@@ -589,14 +624,18 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                         ? "No tasks match these filters"
                                         : tab === "deleted"
                                           ? "No deleted tasks"
-                                          : "Your finished tasks will live here"
+                                          : tab === "overdue"
+                                            ? "No overdue tasks"
+                                            : "Your finished tasks will live here"
                                 }
                                 description={
                                     filtered
                                         ? "Try another search or clear your filters to see more tasks."
                                         : tab === "deleted"
                                           ? "Tasks you delete will appear here. You can restore them whenever you need."
-                                          : "Check off a task when it's done. You can reopen it whenever plans change."
+                                          : tab === "overdue"
+                                            ? "You're caught up. Overdue follow-ups will show up here when a due date has passed."
+                                            : "Check off a task when it's done. You can reopen it whenever plans change."
                                 }
                             >
                                 <Button

@@ -1,4 +1,6 @@
 export const MAX_REMINDER_MINUTES = 365 * 24 * 60;
+/** Extra due-time reminders per task (start reminder is separate and always on). */
+export const MAX_TASK_REMINDERS = 5;
 
 export function isReminderOffset(minutes: number): boolean {
     return Number.isInteger(minutes) && minutes >= 0 && minutes <= MAX_REMINDER_MINUTES;

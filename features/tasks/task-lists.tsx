@@ -1,28 +1,36 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
-
 import {
-    horizontalListSortingStrategy,
-    rectSortingStrategy,
-    SortableContext,
-    useSortable,
-} from "@dnd-kit/sortable";
+    cloneElement,
+    type CSSProperties,
+    type FormEvent,
+    isValidElement,
+    useEffect,
+    useId,
+    useState,
+    type ReactNode,
+} from "react";
+
+import { rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 import { cn } from "@/lib/utils";
 
+import { AppModal } from "@/components/shared/app-modal";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import {
     ArrowLeft,
     ArrowRight,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     Equal,
     MoreHorizontal,
     Pencil,
     Plus,
     Trash2,
-    X,
 } from "@/components/shared/icons";
+import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,6 +38,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 
 import {
     addNotebookList,
@@ -59,6 +68,7 @@ export type TaskListsProps = Pick<
     | "onNotebookChange"
     | "tasks"
     | "sort"
+    | "catalogs"
     | "onAdd"
 > & {
     activeTab: string;
@@ -66,6 +76,7 @@ export type TaskListsProps = Pick<
     today: string;
     actions: TaskPlannerColumnProps["actions"];
     dragPreview?: PlannerDragPreview | null;
+    listColumns: number;
 };
 type Editor = { kind: "new-tab" | "new-list" | "tab" | "list"; id: string; name: string };
 
@@ -77,17 +88,37 @@ export function TaskLists({
     onNotebookChange,
     tasks,
     sort,
+    catalogs,
     onAdd,
     activeTab,
     onSelectTab,
     today,
     actions,
     dragPreview,
+    listColumns,
 }: TaskListsProps) {
     const [open, setOpen] = useState(true);
     const [editor, setEditor] = useState<Editor | null>(null);
     const [notice, setNotice] = useState("");
     const lists = notebook.lists.filter((list) => list.tabId === activeTab);
+    const activeNotebookTab = notebook.tabs.find((tab) => tab.id === activeTab);
+    const [listPage, setListPage] = useState(0);
+    useEffect(() => {
+        setListPage(0);
+    }, [activeTab]);
+    useEffect(() => {
+        setListPage(0);
+    }, [listColumns]);
+    const listCount = lists.length;
+    const listStride = Math.max(1, listColumns);
+    const pageCount = Math.max(1, Math.ceil(listCount / listStride));
+    const maxPage = pageCount - 1;
+    useEffect(() => {
+        setListPage((page) => Math.min(page, maxPage));
+    }, [listCount, maxPage]);
+    const canPrevList = listPage > 0;
+    const canNextList = listPage < maxPage;
+    const visibleLists = lists.slice(listPage * listStride, listPage * listStride + listStride);
     const busy = notebookBusy || actions.busy || notebookLoading || !!notebookError;
     const change = async (updater: NotebookUpdater, message?: string) => {
         const saved = await onNotebookChange(updater);
@@ -116,95 +147,171 @@ export function TaskLists({
         const beforeId = direction === -1 ? lists[index - 1]?.id : lists[index + 2]?.id;
         void change((latest) => moveNotebookList(latest, list.id, activeTab, beforeId));
     };
+    const openNewListEditor = () => {
+        setEditor({ kind: "new-list", id: "", name: "" });
+        setOpen(true);
+    };
+    const newListLinkButton = (
+        <Button
+            type="button"
+            variant="link"
+            size="sm"
+            className="
+              block-auto min-block-0 gap-1 p-0 text-xs font-bold tracking-wide text-brand uppercase
+              hover:text-brand-text
+            "
+            disabled={busy}
+            onClick={openNewListEditor}
+        >
+            <Plus aria-hidden size={14} />
+            New list
+        </Button>
+    );
+    const showListPageNav = listCount > listStride;
+    const listPageChevrons = showListPageNav ? (
+        <div className={styles.listTabNav} aria-label="Browse lists in this tab">
+            <Button
+                type="button"
+                variant="link"
+                size="icon-sm"
+                className="text-brand hover:text-brand-text disabled:opacity-35"
+                aria-label="Previous lists"
+                disabled={!canPrevList}
+                onClick={() => setListPage((page) => Math.max(0, page - 1))}
+            >
+                <ChevronLeft aria-hidden size={16} />
+            </Button>
+            <Button
+                type="button"
+                variant="link"
+                size="icon-sm"
+                className="text-brand hover:text-brand-text disabled:opacity-35"
+                aria-label="Next lists"
+                disabled={!canNextList}
+                onClick={() => setListPage((page) => Math.min(maxPage, page + 1))}
+            >
+                <ChevronRight aria-hidden size={16} />
+            </Button>
+        </div>
+    ) : null;
     return (
         <>
             <div className={styles.somedayBar}>
-                <div className={styles.listTabs} role="tablist" aria-label="Custom list tabs">
-                    <SortableContext
-                        items={notebook.tabs.map((tab) => `tab:${tab.id}`)}
-                        strategy={horizontalListSortingStrategy}
+                <div className={styles.somedayBarStart}>
+                    <button
+                        type="button"
+                        className={styles.addTabButton}
+                        aria-label="Create tab"
+                        title="Create tab"
+                        disabled={busy}
+                        onClick={() => {
+                            setEditor({ kind: "new-tab", id: "", name: "" });
+                            setOpen(true);
+                        }}
                     >
-                        {notebook.tabs.map((tab, index) => (
-                            <ListTab
-                                key={tab.id}
-                                tab={tab}
-                                selected={activeTab === tab.id}
-                                count={
-                                    notebook.lists.filter((list) => list.tabId === tab.id).length
-                                }
-                                busy={busy}
-                                onSelect={() => {
-                                    onSelectTab(tab.id);
-                                    setOpen(true);
-                                    setEditor(null);
-                                }}
-                                onRename={() =>
-                                    setEditor({ kind: "tab", id: tab.id, name: tab.name })
-                                }
-                                onAddList={() => {
-                                    onSelectTab(tab.id);
-                                    setOpen(true);
-                                    setEditor({ kind: "new-list", id: "", name: "" });
-                                }}
-                                onDelete={() =>
-                                    void change(
-                                        (latest) => deleteNotebookTab(latest, tab.id),
-                                        `Tab deleted. Its lists are now in ${notebook.tabs.find((item) => item.id !== tab.id)?.name}.`,
-                                    )
-                                }
-                                onShift={(direction) =>
-                                    void change((latest) =>
-                                        reorderNotebookTab(latest, tab.id, direction),
-                                    )
-                                }
-                                isFirst={index === 0}
-                                isLast={index === notebook.tabs.length - 1}
-                                onlyTab={notebook.tabs.length === 1}
-                            />
-                        ))}
-                    </SortableContext>
-                </div>
-                <button
-                    type="button"
-                    className={styles.addTabButton}
-                    aria-label="Create tab"
-                    title="Create tab"
-                    disabled={busy}
-                    onClick={() => {
-                        setEditor({ kind: "new-tab", id: "", name: "" });
-                        setOpen(true);
-                    }}
-                >
-                    <Plus aria-hidden size={14} />
-                </button>
-                <button
-                    type="button"
-                    className={styles.collapseLists}
-                    aria-label={open ? "Collapse lists" : "Expand lists"}
-                    aria-expanded={open}
-                    aria-controls="task-someday"
-                    onClick={() => setOpen(!open)}
-                >
-                    <ChevronDown aria-hidden size={14} data-collapsed={!open || undefined} />
-                </button>
-            </div>
-            {editor && (
-                <div className={styles.notebookEditor}>
-                    <NameEditor
-                        key={`${editor.kind}-${editor.id}`}
-                        label={
-                            editor.kind === "new-tab"
-                                ? "New tab name"
-                                : editor.kind === "new-list"
-                                  ? "New list name"
-                                  : `Rename ${editor.kind}`
-                        }
-                        initial={editor.name}
-                        busy={busy}
-                        onSave={saveName}
-                        onCancel={() => setEditor(null)}
+                        <Plus aria-hidden size={14} />
+                    </button>
+                    <SlidingTabs
+                        value={activeTab}
+                        options={notebook.tabs.map((tab, tabIndex) => {
+                            const count = notebook.lists.filter(
+                                (list) => list.tabId === tab.id,
+                            ).length;
+                            return {
+                                value: tab.id,
+                                label: (
+                                    <span className={styles.slidingTabLabel}>
+                                        <span className={styles.slidingTabName}>{tab.name}</span>
+                                        <NotebookTabManageMenu
+                                            tab={tab}
+                                            tabIndex={tabIndex}
+                                            tabCount={notebook.tabs.length}
+                                            busy={busy}
+                                            menuAlign="start"
+                                            triggerClassName={styles.notebookTabMenu}
+                                            onRename={() => {
+                                                if (tab.id !== activeTab) onSelectTab(tab.id);
+                                                window.setTimeout(() => {
+                                                    setEditor({
+                                                        kind: "tab",
+                                                        id: tab.id,
+                                                        name: tab.name,
+                                                    });
+                                                }, 0);
+                                            }}
+                                            onMoveLeft={() =>
+                                                void change((latest) =>
+                                                    reorderNotebookTab(latest, tab.id, -1),
+                                                )
+                                            }
+                                            onMoveRight={() =>
+                                                void change((latest) =>
+                                                    reorderNotebookTab(latest, tab.id, 1),
+                                                )
+                                            }
+                                            onDelete={() =>
+                                                void change(
+                                                    (latest) => deleteNotebookTab(latest, tab.id),
+                                                    tab.id === activeTab
+                                                        ? `Tab deleted. Its lists are now in ${notebook.tabs.find((item) => item.id !== tab.id)?.name}.`
+                                                        : "Tab deleted.",
+                                                )
+                                            }
+                                        />
+                                        <span
+                                            className={styles.slidingTabCount}
+                                            aria-label={`${count} ${count === 1 ? "list" : "lists"}`}
+                                        >
+                                            {count}
+                                        </span>
+                                    </span>
+                                ),
+                                ariaLabel: `${tab.name}, ${count} ${count === 1 ? "list" : "lists"}`,
+                            };
+                        })}
+                        onValueChange={(id) => {
+                            if (id !== activeTab) setEditor(null);
+                            onSelectTab(id);
+                            setOpen(true);
+                        }}
+                        label="Custom list tabs"
+                        panelId="task-someday"
+                        className={cn(styles.plannerUnderlineTabs, styles.notebookTabPicker)}
                     />
                 </div>
+                <div className={styles.somedayBarEnd}>
+                    <button
+                        type="button"
+                        className={styles.collapseLists}
+                        aria-label={open ? "Collapse lists" : "Expand lists"}
+                        aria-expanded={open}
+                        aria-controls="task-someday"
+                        onClick={() => setOpen(!open)}
+                    >
+                        <ChevronDown aria-hidden size={14} data-collapsed={!open || undefined} />
+                    </button>
+                </div>
+            </div>
+            {editor && (
+                <NameEditor
+                    key={`${editor.kind}-${editor.id}`}
+                    title={
+                        editor.kind === "new-tab"
+                            ? "Create tab"
+                            : editor.kind === "new-list"
+                              ? "Create list"
+                              : `Rename ${editor.kind}`
+                    }
+                    label={
+                        editor.kind === "new-tab" || editor.kind === "tab"
+                            ? "Tab name"
+                            : "List name"
+                    }
+                    initial={editor.name}
+                    busy={busy}
+                    onSave={saveName}
+                    onCancel={() => setEditor(null)}
+                />
             )}
             {notebookError && (
                 <p className={styles.notebookError} role="alert">
@@ -213,17 +320,21 @@ export function TaskLists({
             )}
             <span className="sr-only" role="status">
                 {notice}
+                {open && listCount > 0
+                    ? `Showing lists ${listPage * listStride + 1}–${Math.min(listCount, listPage * listStride + listStride)} of ${listCount}`
+                    : ""}
             </span>
             {open && (
                 <section
                     id="task-someday"
                     role="tabpanel"
-                    aria-labelledby={`notebook-tab-${activeTab}`}
+                    aria-label={`${activeNotebookTab?.name ?? "My lists"} lists`}
                     className={styles.somedayGrid}
+                    style={{ "--planner-list-columns": listColumns } as CSSProperties}
                 >
                     {notebookLoading ? (
                         <p className={styles.notebookLoading} role="status">
-                            Loading your listsâ€¦
+                            Loading your lists…
                         </p>
                     ) : (
                         !notebookError && (
@@ -231,56 +342,133 @@ export function TaskLists({
                                 items={lists.map((list) => `list:${list.id}`)}
                                 strategy={rectSortingStrategy}
                             >
-                                {lists.map((list, index) => (
-                                    <SortableList
-                                        key={list.id}
-                                        list={list}
-                                        tabs={notebook.tabs}
-                                        busy={busy}
-                                        onlyList={notebook.lists.length === 1}
-                                        isFirst={index === 0}
-                                        isLast={index === lists.length - 1}
-                                        onRename={() =>
-                                            setEditor({
-                                                kind: "list",
-                                                id: list.id,
-                                                name: list.name,
-                                            })
+                                {Array.from({ length: listColumns }, (_, slot) => {
+                                    const list = visibleLists[slot];
+                                    const index = listPage * listStride + slot;
+                                    if (!list) {
+                                        // Multi-column: put “New list” in the next empty column,
+                                        // not under the first list — only when there is a free slot.
+                                        const isNewListSlot =
+                                            listColumns > 1 &&
+                                            slot === visibleLists.length &&
+                                            visibleLists.length < listColumns;
+                                        if (isNewListSlot) {
+                                            return (
+                                                <div
+                                                    key={`new-list-${slot}`}
+                                                    className={styles.newListColumn}
+                                                >
+                                                    <header className={styles.dayHeading}>
+                                                        {newListLinkButton}
+                                                    </header>
+                                                    <ul className={styles.ruledList} aria-hidden>
+                                                        {Array.from({ length: 9 }, (_, line) => (
+                                                            <li
+                                                                key={line}
+                                                                className={styles.blankLine}
+                                                            />
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            );
                                         }
-                                        onDelete={() =>
-                                            void change(
-                                                (latest) => deleteNotebookList(latest, list.id),
-                                                "List deleted. Its tasks are safe in your default list.",
-                                            )
-                                        }
-                                        onMoveTab={(tabId) =>
-                                            void change(
-                                                (latest) =>
-                                                    moveNotebookList(latest, list.id, tabId),
-                                                `List moved to ${notebook.tabs.find((tab) => tab.id === tabId)?.name}.`,
-                                            )
-                                        }
-                                        onShift={(direction) => reorderList(list, direction)}
-                                    >
-                                        <PlannerColumn
-                                            date={null}
-                                            listId={list.id}
-                                            name={list.name}
-                                            today={today}
-                                            tasks={plannerColumnTasks(
-                                                tasks,
-                                                null,
-                                                list.id,
-                                                notebook,
-                                                today,
-                                                sort,
-                                                dragPreview,
-                                            )}
-                                            onAdd={onAdd}
-                                            actions={actions}
-                                        />
-                                    </SortableList>
-                                ))}
+                                        return (
+                                            <div
+                                                key={`empty-list-${slot}`}
+                                                className={styles.emptyListColumn}
+                                                aria-hidden
+                                            >
+                                                <header className={styles.dayHeading}>
+                                                    <h2 className="h5">&nbsp;</h2>
+                                                </header>
+                                                <ul className={styles.ruledList}>
+                                                    {Array.from({ length: 9 }, (_, line) => (
+                                                        <li
+                                                            key={line}
+                                                            className={styles.blankLine}
+                                                        />
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        );
+                                    }
+                                    const isLeadListColumn =
+                                        slot === 0 && list.id === visibleLists[0]?.id;
+                                    const showColumnListNav = showListPageNav && isLeadListColumn;
+                                    const showNewListInHeader =
+                                        listColumns === 1 && isLeadListColumn;
+                                    // Only when every column on this page already has a list.
+                                    const showNewListAtBottom =
+                                        listColumns > 1 &&
+                                        visibleLists.length >= listColumns &&
+                                        isLeadListColumn;
+                                    return (
+                                        <SortableList
+                                            key={list.id}
+                                            list={list}
+                                            tabs={notebook.tabs}
+                                            busy={busy}
+                                            onlyList={notebook.lists.length === 1}
+                                            isFirst={index === 0}
+                                            isLast={index === listCount - 1}
+                                            headingLeading={
+                                                showNewListInHeader ? (
+                                                    <div className={styles.listHeadingNewList}>
+                                                        {newListLinkButton}
+                                                    </div>
+                                                ) : undefined
+                                            }
+                                            headingNav={
+                                                showColumnListNav ? listPageChevrons : undefined
+                                            }
+                                            onRename={() =>
+                                                setEditor({
+                                                    kind: "list",
+                                                    id: list.id,
+                                                    name: list.name,
+                                                })
+                                            }
+                                            onDelete={() =>
+                                                void change(
+                                                    (latest) => deleteNotebookList(latest, list.id),
+                                                    "List deleted. Its tasks are safe in your default list.",
+                                                )
+                                            }
+                                            onMoveTab={(tabId) =>
+                                                void change(
+                                                    (latest) =>
+                                                        moveNotebookList(latest, list.id, tabId),
+                                                    `List moved to ${notebook.tabs.find((tab) => tab.id === tabId)?.name}.`,
+                                                )
+                                            }
+                                            onShift={(direction) => reorderList(list, direction)}
+                                        >
+                                            <PlannerColumn
+                                                date={null}
+                                                listId={list.id}
+                                                name={list.name}
+                                                today={today}
+                                                tasks={plannerColumnTasks(
+                                                    tasks,
+                                                    null,
+                                                    list.id,
+                                                    notebook,
+                                                    today,
+                                                    sort,
+                                                    dragPreview,
+                                                )}
+                                                catalogs={catalogs}
+                                                onAdd={onAdd}
+                                                actions={actions}
+                                                listFooter={
+                                                    showNewListAtBottom
+                                                        ? newListLinkButton
+                                                        : undefined
+                                                }
+                                            />
+                                        </SortableList>
+                                    );
+                                })}
                             </SortableContext>
                         )
                     )}
@@ -290,135 +478,75 @@ export function TaskLists({
     );
 }
 
-function ListTab({
+function NotebookTabManageMenu({
     tab,
-    count,
-    selected,
+    tabIndex,
+    tabCount,
     busy,
-    onSelect,
+    menuAlign,
+    triggerClassName,
     onRename,
-    onAddList,
+    onMoveLeft,
+    onMoveRight,
     onDelete,
-    onShift,
-    isFirst,
-    isLast,
-    onlyTab,
 }: {
     tab: NotebookTab;
-    count: number;
-    selected: boolean;
+    tabIndex: number;
+    tabCount: number;
     busy: boolean;
-    onSelect: () => void;
+    menuAlign: "start" | "end";
+    triggerClassName?: string;
     onRename: () => void;
-    onAddList: () => void;
+    onMoveLeft: () => void;
+    onMoveRight: () => void;
     onDelete: () => void;
-    onShift: (direction: -1 | 1) => void;
-    isFirst: boolean;
-    isLast: boolean;
-    onlyTab: boolean;
 }) {
-    const {
-        setNodeRef,
-        setActivatorNodeRef,
-        attributes,
-        listeners,
-        transform,
-        transition,
-        isDragging,
-        isOver,
-    } = useSortable({
-        id: `tab:${tab.id}`,
-        data: { kind: "tab", tabId: tab.id },
-        disabled: { draggable: busy || onlyTab, droppable: busy },
-    });
     return (
-        <div
-            ref={setNodeRef}
-            style={{ transform: CSS.Transform.toString(transform), transition }}
-            className={cn(
-                styles.listTab,
-                selected && styles.selectedListTab,
-                isOver && styles.tabDropTarget,
-                isDragging && styles.dragging,
-            )}
-        >
-            <DropdownMenu>
-                <DropdownMenuTrigger
-                    render={
-                        <button
-                            type="button"
-                            className={styles.tabMenu}
-                            disabled={busy}
-                            aria-label={`Manage tab ${tab.name}`}
-                        />
-                    }
-                >
-                    <MoreHorizontal className="rotate-90" aria-hidden size={12} />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={onAddList}>
-                        <Plus aria-hidden />
-                        Add list
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={onRename}>
-                        <Pencil aria-hidden />
-                        Rename tab
-                    </DropdownMenuItem>
-                    <DropdownMenuItem disabled={isFirst} onClick={() => onShift(-1)}>
-                        <ArrowLeft aria-hidden />
-                        Move tab left
-                    </DropdownMenuItem>
-                    <DropdownMenuItem disabled={isLast} onClick={() => onShift(1)}>
-                        <ArrowRight aria-hidden />
-                        Move tab right
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem variant="destructive" disabled={onlyTab} onClick={onDelete}>
-                        <Trash2 aria-hidden />
-                        Delete tab{onlyTab ? " (last tab)" : ""}
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-            <button
-                ref={setActivatorNodeRef}
-                {...attributes}
-                {...listeners}
-                type="button"
-                role="tab"
-                aria-pressed={undefined}
-                id={`notebook-tab-${tab.id}`}
-                aria-selected={selected}
-                aria-controls="task-someday"
-                className={styles.listTabButton}
-                disabled={busy}
-                title={onlyTab ? tab.name : `Drag ${tab.name} left or right to reorder`}
-                onClick={onSelect}
-                onKeyDown={(event) => {
-                    listeners?.onKeyDown?.(event);
-                    if (isDragging) return;
-                    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-                    event.preventDefault();
-                    const items = Array.from(
-                        event.currentTarget
-                            .closest('[role="tablist"]')!
-                            .querySelectorAll<HTMLButtonElement>('[role="tab"]'),
-                    );
-                    const index = items.indexOf(event.currentTarget);
-                    const next =
-                        event.key === "Home"
-                            ? 0
-                            : event.key === "End"
-                              ? items.length - 1
-                              : (index + (event.key === "ArrowRight" ? 1 : -1) + items.length) %
-                                items.length;
-                    items[next].focus();
-                    items[next].click();
-                }}
+        <DropdownMenu>
+            <DropdownMenuTrigger
+                render={
+                    <button
+                        type="button"
+                        className={triggerClassName}
+                        disabled={busy}
+                        aria-label={`Manage tab ${tab.name}`}
+                        data-sliding-tab-action=""
+                        onClick={(event) => event.stopPropagation()}
+                        onPointerDown={(event) => event.stopPropagation()}
+                    />
+                }
             >
-                <span title={tab.name}>{tab.name}</span>
-                <small aria-label={`${count} ${count === 1 ? "list" : "lists"}`}>{count}</small>
-            </button>
-        </div>
+                <MoreHorizontal className="rotate-90" aria-hidden size={12} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align={menuAlign}>
+                <DropdownMenuItem
+                    onClick={(event) => {
+                        event.preventDefault();
+                        onRename();
+                    }}
+                >
+                    <Pencil aria-hidden />
+                    Rename tab
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={tabIndex === 0} onClick={onMoveLeft}>
+                    <ArrowLeft aria-hidden />
+                    Move tab left
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={tabIndex === tabCount - 1} onClick={onMoveRight}>
+                    <ArrowRight aria-hidden />
+                    Move tab right
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                    variant="destructive"
+                    disabled={tabCount === 1}
+                    onClick={onDelete}
+                >
+                    <Trash2 aria-hidden />
+                    Delete tab{tabCount === 1 ? " (last tab)" : ""}
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
 
@@ -430,6 +558,8 @@ function SortableList({
     onlyList,
     isFirst,
     isLast,
+    headingLeading,
+    headingNav,
     onRename,
     onDelete,
     onShift,
@@ -442,6 +572,8 @@ function SortableList({
     onlyList: boolean;
     isFirst: boolean;
     isLast: boolean;
+    headingLeading?: ReactNode;
+    headingNav?: ReactNode;
     onRename: () => void;
     onDelete: () => void;
     onShift: (direction: -1 | 1) => void;
@@ -452,6 +584,63 @@ function SortableList({
         data: { kind: "list", listId: list.id, tabId: list.tabId },
         disabled: busy,
     });
+    const listMenu = (
+        <DropdownMenu>
+            <DropdownMenuTrigger
+                render={
+                    <button
+                        type="button"
+                        className={styles.listMenu}
+                        disabled={busy}
+                        aria-label={`Manage list ${list.name}`}
+                    />
+                }
+            >
+                <MoreHorizontal className="rotate-90" aria-hidden size={14} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onRename}>
+                    <Pencil aria-hidden />
+                    Rename list
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={isFirst} onClick={() => onShift(-1)}>
+                    <ArrowLeft aria-hidden />
+                    Move list left
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={isLast} onClick={() => onShift(1)}>
+                    <ArrowRight aria-hidden />
+                    Move list right
+                </DropdownMenuItem>
+                {tabs
+                    .filter((tab) => tab.id !== list.tabId)
+                    .map((tab) => (
+                        <DropdownMenuItem key={tab.id} onClick={() => onMoveTab(tab.id)}>
+                            Move to {tab.name}
+                        </DropdownMenuItem>
+                    ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive" disabled={onlyList} onClick={onDelete}>
+                    <Trash2 aria-hidden />
+                    Delete list{onlyList ? " (last list)" : ""}
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+    const headingActions = (
+        <div
+            className={cn(
+                styles.listHeadingTools,
+                (headingLeading || headingNav) && styles.listHeadingToolsWithNav,
+            )}
+        >
+            {headingLeading}
+            {headingNav}
+            {listMenu}
+        </div>
+    );
+    const column = isValidElement(children)
+        ? cloneElement(children, { headingActions } as Partial<TaskPlannerColumnProps>)
+        : children;
     return (
         <div
             ref={setNodeRef}
@@ -467,64 +656,20 @@ function SortableList({
             >
                 <Equal aria-hidden size={16} strokeWidth={2.5} />
             </button>
-            <div className={styles.customListControls}>
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <button
-                                type="button"
-                                className={styles.listMenu}
-                                disabled={busy}
-                                aria-label={`Manage list ${list.name}`}
-                            />
-                        }
-                    >
-                        <MoreHorizontal className="rotate-90" aria-hidden size={14} />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                        <DropdownMenuItem onClick={onRename}>
-                            <Pencil aria-hidden />
-                            Rename list
-                        </DropdownMenuItem>
-                        <DropdownMenuItem disabled={isFirst} onClick={() => onShift(-1)}>
-                            <ArrowLeft aria-hidden />
-                            Move list left
-                        </DropdownMenuItem>
-                        <DropdownMenuItem disabled={isLast} onClick={() => onShift(1)}>
-                            <ArrowRight aria-hidden />
-                            Move list right
-                        </DropdownMenuItem>
-                        {tabs
-                            .filter((tab) => tab.id !== list.tabId)
-                            .map((tab) => (
-                                <DropdownMenuItem key={tab.id} onClick={() => onMoveTab(tab.id)}>
-                                    Move to {tab.name}
-                                </DropdownMenuItem>
-                            ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                            variant="destructive"
-                            disabled={onlyList}
-                            onClick={onDelete}
-                        >
-                            <Trash2 aria-hidden />
-                            Delete list{onlyList ? " (last list)" : ""}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-            {children}
+            {column}
         </div>
     );
 }
 
 function NameEditor({
+    title,
     label,
     initial,
     busy,
     onSave,
     onCancel,
 }: {
+    title: string;
     label: string;
     initial: string;
     busy: boolean;
@@ -533,46 +678,75 @@ function NameEditor({
 }) {
     const [name, setName] = useState(initial);
     const [error, setError] = useState("");
-    const submit = (event: FormEvent) => {
+    const [saving, setSaving] = useState(false);
+    const formId = useId();
+    const inputId = useId();
+    const errorId = useId();
+    const pending = busy || saving;
+    const submit = async (event: FormEvent) => {
         event.preventDefault();
-        if (busy) return;
+        if (pending) return;
         const result = notebookName.safeParse(name);
         if (!result.success) {
             setError(result.error.issues[0].message);
             return;
         }
-        void onSave(result.data);
+        setError("");
+        setSaving(true);
+        try {
+            if (!(await onSave(result.data))) {
+                setError("The name couldn't be saved. Please try again.");
+            }
+        } catch {
+            setError("The name couldn't be saved. Please try again.");
+        } finally {
+            setSaving(false);
+        }
     };
     return (
-        <form className={styles.nameForm} onSubmit={submit}>
-            <label htmlFor="notebook-item-name">{label}</label>
-            <input
-                id="notebook-item-name"
-                autoFocus
-                value={name}
-                maxLength={80}
-                onChange={(event) => {
-                    setName(event.target.value);
-                    setError("");
-                }}
-                onKeyDown={(event) => {
-                    if (event.key === "Escape") onCancel();
-                }}
-                disabled={busy}
-                aria-invalid={!!error}
-                aria-describedby={error ? "notebook-name-error" : undefined}
-            />
-            <button type="submit" disabled={busy}>
-                {initial ? "Save" : "Create"}
-            </button>
-            <button type="button" onClick={onCancel} disabled={busy} aria-label="Cancel name entry">
-                <X aria-hidden size={16} />
-            </button>
-            {error && (
-                <p id="notebook-name-error" role="alert">
-                    {error}
-                </p>
-            )}
-        </form>
+        <AppModal
+            open
+            title={title}
+            size="sm"
+            padding="md"
+            onOpenChange={(open) => {
+                if (!open && !pending) onCancel();
+            }}
+            footer={
+                <div className={styles.nameActions}>
+                    <Button variant="outline" onClick={onCancel} disabled={pending}>
+                        Cancel
+                    </Button>
+                    <Button type="submit" form={formId} variant="accent" loading={pending}>
+                        {initial ? "Save changes" : title}
+                    </Button>
+                </div>
+            }
+        >
+            <form id={formId} className={styles.nameForm} onSubmit={submit}>
+                <label className={styles.nameLabel} htmlFor={inputId}>
+                    {label}
+                </label>
+                <Input
+                    id={inputId}
+                    autoFocus
+                    value={name}
+                    maxLength={80}
+                    placeholder={label === "Tab name" ? "e.g. Work" : "e.g. Follow-ups"}
+                    onValueChange={(value) => {
+                        setName(value);
+                        setError("");
+                    }}
+                    disabled={pending}
+                    aria-invalid={!!error}
+                    aria-describedby={error ? errorId : undefined}
+                />
+                {error && (
+                    <p className={styles.nameError} id={errorId} role="alert">
+                        {error}
+                    </p>
+                )}
+            </form>
+        </AppModal>
     );
 }

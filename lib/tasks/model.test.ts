@@ -10,6 +10,7 @@ import {
     type Task,
     taskDueReminders,
     taskGroup,
+    taskIsOverdue,
     taskMatchesDueFilter,
     taskMatchesLinkFilter,
     taskMatchesTab,
@@ -46,6 +47,36 @@ const task: Task = {
     priority: "medium",
     deliveredReminderKeys: [],
 };
+
+test("list tasks without a due date become overdue after their start day in India", () => {
+    const listTask = {
+        ...task,
+        dueDate: null,
+        dueTime: null,
+        startDate: "2030-01-01",
+        listId: "someday",
+    };
+    assert.equal(taskGroup(listTask, now), "overdue");
+    assert.equal(taskMatchesDueFilter(listTask, "overdue", now), true);
+    assert.equal(taskMatchesDueFilter(listTask, "undated", now), true);
+    assert.equal(
+        taskGroup({ ...listTask, startDate: "2030-01-02", startTime: "00:01" }, now),
+        "today",
+    );
+    assert.equal(taskGroup({ ...listTask, startDate: "2030-01-03" }, now), "upcoming");
+    assert.equal(taskGroup({ ...listTask, startDate: null }, now), "undated");
+    assert.equal(taskGroup({ ...listTask, dueDate: "2030-01-03" }, now), "upcoming");
+    assert.equal(
+        taskMatchesDueFilter({ ...listTask, dueDate: "2030-01-03" }, "overdue", now),
+        false,
+    );
+    assert.equal(
+        taskGroup({ ...listTask, completedAt: new Date(now).toISOString() }, now),
+        "completed",
+    );
+    assert.equal(taskGroup(listTask, Date.parse("2030-01-01T18:29:59Z")), "today");
+    assert.equal(taskGroup(listTask, Date.parse("2030-01-01T18:30:00Z")), "overdue");
+});
 
 test("start date and time are required; invalid calendar and dependent fields are rejected", () => {
     assert.equal(validateTaskDraft({ ...EMPTY_TASK_DRAFT, title: "Call Aarav" }).valid, false);
@@ -166,6 +197,20 @@ test("next seven days spans India calendar dates inclusively, without including 
     );
 });
 
+test("overdue tab includes only open tasks that are overdue", () => {
+    const overdueOpen = { ...task, dueDate: "2030-01-01" };
+    const upcoming = { ...task, dueDate: "2030-02-01" };
+    const completedOverdue = {
+        ...overdueOpen,
+        completedAt: new Date(now).toISOString(),
+    };
+    assert.equal(taskMatchesTab(overdueOpen, "overdue", false, now), true);
+    assert.equal(taskMatchesTab(upcoming, "overdue", false, now), false);
+    assert.equal(taskMatchesTab(completedOverdue, "overdue", false, now), false);
+    assert.equal(taskMatchesTab(overdueOpen, "all", false, now), true);
+    assert.equal(taskMatchesTab(overdueOpen, "completed", false, now), false);
+});
+
 test("due filters apply to original due dates on completed tasks and intersect the current tab", () => {
     const completed = { ...task, completedAt: new Date(now).toISOString() };
     assert.equal(taskMatchesTab(completed, "completed"), true);
@@ -253,9 +298,19 @@ test("completed tasks honor explicit sorting while the default shows latest comp
     );
 });
 
-test("date-led groups use India midnight and keep today's timed tasks together", () => {
+test("date-led groups use India midnight; past due times on today become overdue", () => {
+    // now = 2 Jan 2030, 00:15 IST — due 10:00 same day is still ahead
     assert.equal(taskGroup(task, now), "today");
-    assert.equal(taskGroup(task, Date.parse("2030-01-02T12:00:00Z")), "today");
+    assert.equal(taskIsOverdue(task, now), false);
+    // 2 Jan 2030, 17:30 IST — 10:00 has passed
+    assert.equal(taskGroup(task, Date.parse("2030-01-02T12:00:00Z")), "overdue");
+    assert.equal(taskIsOverdue(task, Date.parse("2030-01-02T12:00:00Z")), true);
+    assert.equal(taskMatchesDueFilter(task, "overdue", Date.parse("2030-01-02T12:00:00Z")), true);
+    // Date-only today stays in Today even after noon
+    assert.equal(
+        taskGroup({ ...task, dueTime: null, reminders: [] }, Date.parse("2030-01-02T12:00:00Z")),
+        "today",
+    );
     assert.equal(taskGroup({ ...task, dueDate: "2030-01-01" }, now), "overdue");
     assert.equal(taskGroup({ ...task, dueDate: "2030-01-03" }, now), "upcoming");
     assert.equal(taskGroup({ ...task, dueDate: null, dueTime: null }, now), "undated");
@@ -337,7 +392,7 @@ test("multiple reminders deliver independently, in chronological order, with sch
     );
 });
 
-test("custom offsets validate whole-minute ranges and unique choices without a count cap", () => {
+test("custom offsets validate whole-minute ranges, uniqueness, and a five-reminder cap", () => {
     const draft = {
         ...EMPTY_TASK_DRAFT,
         title: "Call",
@@ -346,11 +401,7 @@ test("custom offsets validate whole-minute ranges and unique choices without a c
         dueDate: "2030-01-02",
         dueTime: "10:00",
     };
-    for (const reminders of [
-        [0, 17, 90, 1500],
-        [MAX_REMINDER_MINUTES],
-        Array.from({ length: 40 }, (_, index) => index),
-    ])
+    for (const reminders of [[0, 17, 90, 1500], [MAX_REMINDER_MINUTES], [0, 15, 30, 60, 90]])
         assert.equal(validateTaskDraft({ ...draft, reminders }).valid, true);
     for (const reminders of [
         [-1],
@@ -359,6 +410,7 @@ test("custom offsets validate whole-minute ranges and unique choices without a c
         [Number.POSITIVE_INFINITY],
         [MAX_REMINDER_MINUTES + 1],
         [15, 15],
+        [0, 15, 30, 60, 90, 120],
     ])
         assert.equal(validateTaskDraft({ ...draft, reminders }).valid, false);
     assert.equal(taskReminderAt(task, -1), null);

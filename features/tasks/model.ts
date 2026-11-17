@@ -1,7 +1,12 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
 
-import { isReminderOffset, MAX_REMINDER_MINUTES, reminderLabel } from "@/lib/reminders";
+import {
+    isReminderOffset,
+    MAX_REMINDER_MINUTES,
+    MAX_TASK_REMINDERS,
+    reminderLabel,
+} from "@/lib/reminders";
 import { inputValueInIst, inputValueToUtc, istDateKey } from "@/lib/visits/time";
 
 import { type TaskRepeat, taskRepeatSchema } from "./recurrence";
@@ -23,13 +28,14 @@ export const TASK_PRIORITY_RANK: Record<TaskPriority, number> = {
 
 export const TASK_TABS = [
     { value: "all", label: "To do" },
+    { value: "overdue", label: "Overdue" },
     { value: "completed", label: "Completed" },
     { value: "deleted", label: "Deleted" },
 ] as const;
 export type TaskTab = (typeof TASK_TABS)[number]["value"];
 export type TaskGroup = "overdue" | "today" | "upcoming" | "undated" | "completed";
 
-export { MAX_REMINDER_MINUTES };
+export { MAX_REMINDER_MINUTES, MAX_TASK_REMINDERS };
 export const TASK_REMINDERS: { value: number; label: string }[] = [
     { value: 0, label: "At due time" },
     { value: 15, label: "15 minutes before" },
@@ -43,6 +49,7 @@ export function isTaskReminderOffset(minutes: number): boolean {
 
 const remindersSchema = z
     .array(z.number().int().min(0).max(MAX_REMINDER_MINUTES))
+    .max(MAX_TASK_REMINDERS)
     .refine((values) => new Set(values).size === values.length, "Choose each reminder only once.");
 
 export function isTaskDate(value: string): boolean {
@@ -83,6 +90,8 @@ export const taskSchema = z
         createdAt: z.iso.datetime(),
         updatedAt: z.iso.datetime(),
         priority: z.enum(["low", "medium", "high", "urgent"]),
+        /** Title offset where the typed P1–P4 chip sat; the label itself is not in the title. */
+        priorityAt: z.number().int().min(0).nullable().optional(),
         deliveredReminderKeys: z.array(z.string().min(1)),
     })
     .refine((task) => !task.dueTime || !!task.dueDate, "A time needs a due date.")
@@ -218,7 +227,9 @@ export function validateTaskDraft(draft: TaskDraft) {
         errors.startDate = "Add a start date or due date to repeat this task.";
     if (draft.repeat?.until && draft.repeat.until < (draft.dueDate || draft.startDate))
         errors.repeat = "Repeat end date must be on or after this task’s date.";
-    if (!remindersSchema.safeParse(draft.reminders).success)
+    if (draft.reminders.length > MAX_TASK_REMINDERS)
+        errors.reminders = `You can add up to ${MAX_TASK_REMINDERS} reminders.`;
+    else if (!remindersSchema.safeParse(draft.reminders).success)
         errors.reminders =
             "Use different reminders between 0 minutes and 365 days before the task.";
     if (draft.reminders.length > 0 && (!draft.dueDate || !draft.dueTime))
@@ -305,38 +316,64 @@ export function taskRemindersSummary(task: Pick<Task, "reminders">): string {
     return task.reminders.length ? `${task.reminders.length + 1} reminders` : "At task start";
 }
 
-/** Today stays together for the whole IST day; clock time only drives reminders. */
+/**
+ * Past due dates are overdue. Same-day tasks with an explicit due time become
+ * overdue once that IST clock time has passed (e.g. 11am when it is 12:20).
+ * Date-only today tasks stay in Today until the calendar day rolls over.
+ */
+export function taskIsOverdue(
+    task: Pick<Task, "dueDate"> & Partial<Pick<Task, "startDate" | "dueTime">>,
+    now = Date.now(),
+): boolean {
+    const today = istDateKey(new Date(now));
+    const date = task.dueDate || task.startDate;
+    if (!date) return false;
+    if (date < today) return true;
+    if (date > today) return false;
+    if (task.dueDate && task.dueTime && isTaskTime(task.dueTime)) {
+        const currentTime = inputValueInIst(new Date(now)).slice(11, 16);
+        return task.dueTime < currentTime;
+    }
+    return false;
+}
+
+/** Use the due date, or planned start for undated list tasks. */
 export function taskGroup(task: Task, now = Date.now()): TaskGroup {
     if (task.completedAt) return "completed";
     const today = istDateKey(new Date(now));
-    if (!task.dueDate) {
-        if (task.startDate && task.startDate > today) return "upcoming";
-        return task.startDate === today ? "today" : "undated";
-    }
-    if (task.dueDate < today) return "overdue";
-    return task.dueDate === today ? "today" : "upcoming";
+    const date = task.dueDate || task.startDate;
+    if (!date) return "undated";
+    if (taskIsOverdue(task, now)) return "overdue";
+    return date === today ? "today" : "upcoming";
 }
 
-export function taskMatchesTab(task: Task, tab: TaskTab, completionFeedback = false): boolean {
+export function taskMatchesTab(
+    task: Task,
+    tab: TaskTab,
+    completionFeedback = false,
+    now = Date.now(),
+): boolean {
     if (tab === "deleted") return !!task.deletedAt;
     if (task.deletedAt) return false;
-    return tab === "all" ? !task.completedAt || completionFeedback : !!task.completedAt;
+    if (tab === "overdue") return !task.completedAt && taskIsOverdue(task, now);
+    if (tab === "completed") return !!task.completedAt;
+    return tab === "all" ? !task.completedAt || completionFeedback : false;
 }
 
 export type TaskDueFilter = "" | "any" | "overdue" | "today" | "week" | "undated";
 export type TaskLinkFilter = "" | "any" | "client" | "owner" | "property" | "personal";
 
-/** Filter the original due date in every tab, including completed tasks. */
+/** Filter original dates in every tab; overdue falls back to the start for tasks without a deadline. */
 export function taskMatchesDueFilter(
-    task: Pick<Task, "dueDate">,
+    task: Pick<Task, "dueDate"> & Partial<Pick<Task, "startDate" | "dueTime">>,
     due: TaskDueFilter,
     now = Date.now(),
 ): boolean {
     if (!due || due === "any") return true;
     if (due === "undated") return !task.dueDate;
-    if (!task.dueDate) return false;
     const today = taskDateKey(now);
-    if (due === "overdue") return task.dueDate < today;
+    if (due === "overdue") return taskIsOverdue(task, now);
+    if (!task.dueDate) return false;
     if (due === "today") return task.dueDate === today;
     return task.dueDate >= today && task.dueDate <= taskDateKey(now + 6 * 86_400_000);
 }
@@ -400,8 +437,11 @@ export function taskScheduleLabel(
 export function taskDueLabel(task: Task, now = Date.now()): string {
     if (task.completedAt)
         return `Completed ${formatInTimeZone(task.completedAt, TASK_TIME_ZONE, "d MMM, h:mm a")}`;
-    if (!task.dueDate)
-        return task.startDate ? `Starts ${taskDateLabel(task.startDate, now)}` : "No due date";
+    if (!task.dueDate) {
+        if (!task.startDate) return "No due date";
+        const day = taskDateLabel(task.startDate, now);
+        return taskGroup(task, now) === "overdue" ? `Overdue · Started ${day}` : `Starts ${day}`;
+    }
     const day = taskDateLabel(task.dueDate, now);
     const label = task.dueTime ? `${day}, ${taskTimeLabel(task.dueTime)}` : `${day} · Any time`;
     return taskGroup(task, now) === "overdue" ? `Overdue · ${label}` : label;

@@ -44,7 +44,7 @@ test("new tasks start today in India; start/due and repeat validation agree", ()
     };
     assert.equal(taskGroup(task, now), "upcoming");
     assert.equal(taskGroup({ ...task, startDate: "2030-01-02" }, now), "today");
-    assert.equal(taskGroup({ ...task, startDate: "2030-01-01" }, now), "undated");
+    assert.equal(taskGroup({ ...task, startDate: "2030-01-01" }, now), "overdue");
 });
 
 test("calendar repeats retain anchor through short months and leap years", () => {
@@ -193,7 +193,7 @@ test("owner attachments participate in filters and survive version two migration
             }) => t,
         );
         values.set(
-            "crm.private-tasks.mock.v3.legacy",
+            "crm.private-tasks.mock.v4.legacy",
             JSON.stringify({ version: 2, tasks: legacy }),
         );
         const migrated = await taskPreviewStore.list("legacy");
@@ -204,7 +204,7 @@ test("owner attachments participate in filters and survive version two migration
         assert.equal(migrated[0].repeat, null);
         assert.ok(migrated[0].startDate);
         assert.ok(migrated[0].startTime);
-        assert.equal(JSON.parse(values.get("crm.private-tasks.mock.v3.legacy")!).version, 3);
+        assert.equal(JSON.parse(values.get("crm.private-tasks.mock.v4.legacy")!).version, 4);
     } finally {
         if (original) Object.defineProperty(globalThis, "sessionStorage", original);
         else Reflect.deleteProperty(globalThis, "sessionStorage");

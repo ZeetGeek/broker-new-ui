@@ -137,7 +137,8 @@ test("drag preview moves into an empty day while preserving the original schedul
         preview,
     );
     assert.equal(target[0], original);
-    assert.equal(original.dueDate, today);
+    assert.equal(original.startDate, today);
+    assert.equal(original.dueDate, null);
     assert.equal(target[0].clientId, "client-1");
     assert.equal(target[0].propertyId, "property-1");
 });
@@ -189,6 +190,9 @@ test("To do excludes completed tasks except during brief completion feedback", (
     const [reopened] = setTaskCompleted([completed], task.id, false, now + 2);
     assert.equal(taskMatchesTab(reopened, "all"), true);
     assert.equal(taskMatchesTab(reopened, "completed"), false);
+    const overdue = { ...task, dueDate: "2030-01-01" };
+    assert.equal(taskMatchesTab(overdue, "overdue", false, now), true);
+    assert.equal(taskMatchesTab(completed, "overdue", false, now), false);
 });
 
 test("deleting and restoring preserve CRM context, schedule, priority and completed state", () => {
@@ -235,7 +239,7 @@ test("deleted tasks cannot complete or send reminders; restoring skips missed re
 
 test("overdue tasks stay on their original dates and are excluded from Today", () => {
     const notebook = defaultNotebook();
-    const overdue = { ...task, dueDate: "2030-01-01" };
+    const overdue = { ...task, startDate: "2030-01-01", dueDate: "2030-01-01" };
     assert.equal(plannerDate(overdue, today), "2030-01-01");
     assert.equal(overdue.dueDate, "2030-01-01");
     const dueToday = createPlannerTask("Due today", today, now, "due-today");
@@ -256,7 +260,7 @@ test("overdue tasks stay on their original dates and are excluded from Today", (
         plannerDate({ ...overdue, completedAt: new Date(now).toISOString() }, today),
         "2030-01-01",
     );
-    assert.equal(plannerDate({ ...task, dueDate: null }, today), null);
+    assert.equal(plannerDate({ ...task, startDate: null, dueDate: null }, today), null);
 });
 
 test("moving a task shifts its date range and keeps its times, reminders and linked records", () => {
@@ -271,8 +275,8 @@ test("moving a task shifts its date range and keeps its times, reminders and lin
         clientId: "client-1",
     };
     const [moved] = movePlannerTask([original], task.id, "2030-01-06", undefined, now);
-    assert.equal(moved.startDate, "2030-01-04");
-    assert.equal(moved.dueDate, "2030-01-06");
+    assert.equal(moved.startDate, "2030-01-06");
+    assert.equal(moved.dueDate, "2030-01-08");
     assert.equal(moved.startTime, "09:00");
     assert.equal(moved.dueTime, "17:00");
     assert.equal(moved.clientId, "client-1");
@@ -315,12 +319,13 @@ test("explicitly moving overdue work to Today reschedules it", () => {
 
 test("Someday moves clear due-time reminders, and a newly added task has a valid schedule", () => {
     const [moved] = movePlannerTask(
-        [{ ...task, dueTime: "17:00", reminders: [15] }],
+        [{ ...task, dueDate: today, dueTime: "17:00", reminders: [15] }],
         task.id,
         null,
         undefined,
         now,
     );
+    assert.equal(moved.startDate, null);
     assert.equal(moved.dueDate, null);
     assert.equal(moved.dueTime, null);
     assert.deepEqual(moved.reminders, []);
@@ -330,14 +335,29 @@ test("Someday moves clear due-time reminders, and a newly added task has a valid
     assert.equal(someday.repeat, null);
 });
 
+test("quick-add allows a due time earlier than now and clamps start time to match", () => {
+    // now is 00:15 IST on `today`; 11:00 would normally be after midnight, so use a later clock.
+    const afternoon = Date.parse(`${today}T12:30:00+05:30`);
+    const created = createPlannerTask("Past time visit", today, afternoon, "past-time", undefined, {
+        dueDate: today,
+        dueTime: "11:00",
+    });
+    assert.equal(created.dueDate, today);
+    assert.equal(created.dueTime, "11:00");
+    assert.equal(created.startTime, "11:00");
+    assert.ok(taskSchema.safeParse(created).success);
+});
+
 test("invalid repeat moves are rejected without mutating the original task", () => {
     const repeating = {
         ...task,
+        dueDate: today,
         repeat: { unit: "day" as const, interval: 1, weekdays: [], until: "2030-01-04" },
     };
     assert.throws(
         () => movePlannerTask([repeating], task.id, "2030-01-10", undefined, now),
         /conflicts/,
     );
+    assert.equal(repeating.startDate, today);
     assert.equal(repeating.dueDate, today);
 });
