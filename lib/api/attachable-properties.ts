@@ -55,20 +55,28 @@ function mapRepresentation(item: RepresentationItem): AttachableProperty {
     });
 }
 
-/** Private CRM linking does not require a public listing. Keep drafts, omit unavailable inventory. */
+/**
+ * Properties a client can be linked to from the client side: published,
+ * not sold, not unavailable. Drafts are linked from the property form
+ * (attach clients before publishing), not from here.
+ */
 export async function listAttachableProperties(
     signal?: AbortSignal,
     ownerEnabled = FEATURE_PLATFORM_OWNER,
 ): Promise<AttachableProperty[]> {
     const [inventory, representations] = await Promise.all([
         collectPropertyPages((page) =>
-            propertiesApi.list({ page, limit: 100, excludeSold: true }, signal),
+            propertiesApi.list(
+                { page, limit: 100, excludeSold: true, publishStatus: "published" },
+                signal,
+            ),
         ),
         ownerEnabled ? representativeApi.brokerList("accepted") : Promise.resolve([]),
     ]);
     const own = inventory
         .filter((item) => item.id && item.status !== "sold" && item.status !== "unavailable")
-        .map(mapListing);
+        .map(mapListing)
+        .filter((item) => !item.isDraft);
     const represented = representations.filter((item) => item.propertyId).map(mapRepresentation);
     // Inventory wins if an API response happens to contain the same property twice.
     return [...new Map([...represented, ...own].map((item) => [item.id, item])).values()];

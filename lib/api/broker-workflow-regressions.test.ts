@@ -71,12 +71,13 @@ test("note edits and call logging preserve authoritative finished and offer stag
     assert.equal(writes.length, count);
 });
 
-test("buyer picker loads all own inventory pages without representation requests and keeps linking additive", async (t) => {
+test("buyer picker loads all own published inventory pages, skips drafts, and keeps linking additive", async (t) => {
     const previous = api.defaults.adapter;
     t.after(() => {
         api.defaults.adapter = previous;
     });
     const pages: number[] = [];
+    const queries: Array<string | null> = [];
     const writes: unknown[] = [];
     api.defaults.adapter = async (config) => {
         const url = new URL(config.url!, "https://qa.local");
@@ -89,6 +90,7 @@ test("buyer picker loads all own inventory pages without representation requests
             assert.equal(url.pathname, "/properties");
             const page = Number(url.searchParams.get("page") ?? 1);
             pages.push(page);
+            queries.push(url.searchParams.get("publishStatus"));
             data = {
                 totalPages: 2,
                 items:
@@ -107,14 +109,22 @@ test("buyer picker loads all own inventory pages without representation requests
                           ]
                         : [
                               {
-                                  id: "own-draft",
-                                  title: "Private flat",
+                                  id: "own-rent",
+                                  title: "Rented flat",
                                   status: "available",
-                                  publishStatus: "draft",
+                                  publishStatus: "published",
                                   transactionType: "rent",
                                   monthlyRent: "20000",
                                   commissionAmount: "10000",
                               },
+                              // Drafts are not offered for linking, even if the API returns one.
+                              {
+                                  id: "own-draft",
+                                  title: "Private flat",
+                                  status: "available",
+                                  publishStatus: "draft",
+                              },
+                              { id: "flagged-draft", status: "available", isDraft: true },
                               { id: "unavailable", status: "unavailable" },
                               { id: "own-published", title: "Office", status: "available" },
                           ],
@@ -124,15 +134,15 @@ test("buyer picker loads all own inventory pages without representation requests
     };
     const result = await listAttachableProperties(undefined, false);
     assert.deepEqual(pages, [1, 2]);
+    assert.deepEqual(queries, ["published", "published"]);
     assert.deepEqual(
         result.map((item) => item.id),
-        ["own-published", "own-draft"],
+        ["own-published", "own-rent"],
     );
-    assert.equal(result[1].isDraft, true);
     assert.equal(result[1].amountInr, 20000);
     assert.equal(result[1].commissionAmount, 10000);
-    await clientsApi.attachClientToProperties("qa-buyer", ["own-draft", "own-draft"]);
-    assert.deepEqual(writes, [{ propertyId: "own-draft", clientIds: ["qa-buyer"] }]);
+    await clientsApi.attachClientToProperties("qa-buyer", ["own-rent", "own-rent"]);
+    assert.deepEqual(writes, [{ propertyId: "own-rent", clientIds: ["qa-buyer"] }]);
 });
 
 test("buyer picker propagates inventory failures instead of presenting an empty success", async (t) => {
