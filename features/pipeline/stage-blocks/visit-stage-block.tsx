@@ -1,18 +1,26 @@
 import Link from "next/link";
 
-import { Icon } from "@iconify/react";
-
 import { formatDateShort, formatTimeIn, isSameCalendarDay } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { Calendar, CalendarClock, CalendarPlus, Pencil } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { DealItem } from "@/features/pipeline/types";
+import { canScheduleVisit, scheduleVisitHref } from "@/features/pipeline/visit-link";
 
+/**
+ * Site visit stage: the booked visit, or a prompt to book one. On exclusive
+ * listings both links open Visits for this deal (see `scheduleVisitHref`);
+ * owner-listed deals show the date only.
+ */
 export function VisitStageBlock({ deal }: { deal: DealItem }) {
     const when = deal.nextVisitAt ? new Date(deal.nextVisitAt) : null;
     const isToday = when != null && isSameCalendarDay(when, new Date());
+    const href = scheduleVisitHref(deal);
+    const canSchedule = canScheduleVisit(deal);
+    const StatusIcon = when ? CalendarClock : Calendar;
 
     return (
         <div
@@ -22,11 +30,7 @@ export function VisitStageBlock({ deal }: { deal: DealItem }) {
             )}
         >
             <span className="flex shrink-0 items-center justify-center text-pending block-4.5 inline-4.5">
-                <Icon
-                    icon={when ? "tabler:calendar-event" : "tabler:calendar"}
-                    aria-hidden
-                    className="block-4.5 inline-4.5"
-                />
+                <StatusIcon aria-hidden strokeWidth={1.75} className="block-4.5 inline-4.5" />
             </span>
             <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
                 <p className="body-xs leading-snug font-medium text-ink">
@@ -40,7 +44,7 @@ export function VisitStageBlock({ deal }: { deal: DealItem }) {
                     </p>
                 ) : null}
             </div>
-            {when ? (
+            {!canSchedule ? null : when ? (
                 <Tooltip>
                     <TooltipTrigger
                         render={
@@ -51,7 +55,7 @@ export function VisitStageBlock({ deal }: { deal: DealItem }) {
                                 className="justify-end px-0 text-pending"
                                 render={
                                     <Link
-                                        href="/broker/visits"
+                                        href={href}
                                         aria-label="Reschedule this visit"
                                         onClick={(event) => event.stopPropagation()}
                                     />
@@ -59,22 +63,20 @@ export function VisitStageBlock({ deal }: { deal: DealItem }) {
                             />
                         }
                     >
-                        <Icon icon="tabler:pencil" aria-hidden className="block-4 inline-4" />
+                        <Pencil aria-hidden strokeWidth={1.75} className="block-4 inline-4" />
                     </TooltipTrigger>
                     <TooltipContent>Reschedule on Visits</TooltipContent>
                 </Tooltip>
             ) : (
                 <Button
-                    variant="link"
+                    variant="outline"
                     size="sm"
                     nativeButton={false}
-                    className="px-0 text-xs text-pending"
-                    render={
-                        <Link href="/broker/visits" onClick={(event) => event.stopPropagation()} />
-                    }
+                    className="shrink-0"
+                    render={<Link href={href} onClick={(event) => event.stopPropagation()} />}
                 >
-                    Visits
-                    <Icon icon="tabler:chevron-right" aria-hidden />
+                    <CalendarPlus aria-hidden strokeWidth={1.75} />
+                    Schedule visit
                 </Button>
             )}
         </div>

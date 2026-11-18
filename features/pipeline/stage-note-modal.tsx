@@ -7,7 +7,7 @@ import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
-import { BadgeCheck, LostIcon, StickyNote } from "@/components/shared/icons";
+import { BadgeCheck, Info, LostIcon, StickyNote } from "@/components/shared/icons";
 import { Textarea } from "@/components/ui/textarea";
 
 import {
@@ -18,6 +18,7 @@ import {
     seedCustomFinalPrice,
 } from "@/features/pipeline/final-price-field";
 import { LostReasonField, validateLostReason } from "@/features/pipeline/lost-reason-field";
+import type { SaleConfirmMode } from "@/features/pipeline/sale-mode";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import type { DealItem, DealLostReason, DealStatus } from "@/features/pipeline/types";
 import { isLiveStage } from "@/features/pipeline/types";
@@ -27,6 +28,11 @@ export type StageMoveRequest = {
     status: DealStatus;
     /** Short line for the toast after save. */
     successMessage: string;
+    /**
+     * The deal as it was when the move was asked for. Kept because a deal
+     * opened from a link may not be on the loaded board.
+     */
+    deal?: DealItem;
 };
 
 /**
@@ -53,6 +59,17 @@ function moveDescription(deal: DealItem | null): string {
     return deal ? `${deal.buyer.name} on ${deal.property.title}` : "This client";
 }
 
+/** What else happens when this sale goes through, in one line. */
+function saleConsequence(mode: SaleConfirmMode, otherClientCount: number): string | null {
+    if (mode === "owner") {
+        return "The owner confirms the sale. Once they do, the property closes for every other client.";
+    }
+    if (otherClientCount <= 0) return null;
+    return otherClientCount === 1
+        ? "Your 1 other client on this property will be marked as lost."
+        : `Your ${otherClientCount} other clients on this property will be marked as lost.`;
+}
+
 function notePlaceholder(status: DealStatus): string {
     if (status === "closed") return "e.g. Registry on 12 March, token paid";
     if (status === "lost") return "e.g. Owner would not go below ₹22 L";
@@ -67,6 +84,8 @@ function notePlaceholder(status: DealStatus): string {
 export function StageNoteModal({
     open,
     deal,
+    saleMode = "immediate",
+    otherClientCount = 0,
     request,
     isSaving,
     submitError,
@@ -75,6 +94,10 @@ export function StageNoteModal({
 }: {
     open: boolean;
     deal: DealItem | null;
+    /** How marking sold completes: now, or after the owner confirms. */
+    saleMode?: SaleConfirmMode;
+    /** Other live clients on the same property, closed if this sale goes through. */
+    otherClientCount?: number;
     request: StageMoveRequest | null;
     isSaving: boolean;
     /** Save failure from the parent. Shown inline; the typed note stays. */
@@ -137,10 +160,16 @@ export function StageNoteModal({
         onConfirm(note, {});
     };
 
+    const sendsToOwner = asksFinalPrice && saleMode === "owner";
+    const consequence = asksFinalPrice ? saleConsequence(saleMode, otherClientCount) : null;
     const primaryLabel = isSaving
-        ? "Saving…"
+        ? sendsToOwner
+            ? "Sending…"
+            : "Saving…"
         : asksFinalPrice
-          ? "Mark as sold"
+          ? sendsToOwner
+              ? "Send to owner"
+              : "Mark as sold"
           : asksLostReason
             ? "Mark as lost"
             : "Confirm";
@@ -184,6 +213,17 @@ export function StageNoteModal({
                         error={priceError}
                         disabled={isSaving}
                     />
+                ) : null}
+
+                {consequence ? (
+                    <p className="body-sm flex items-start gap-2 text-ink-muted">
+                        <Info
+                            aria-hidden
+                            strokeWidth={1.75}
+                            className="mbs-0.5 shrink-0 block-4 inline-4"
+                        />
+                        <span>{consequence}</span>
+                    </p>
                 ) : null}
 
                 {asksLostReason ? (

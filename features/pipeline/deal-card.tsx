@@ -38,6 +38,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { DealPartiesPanel } from "@/features/pipeline/deal-parties-panel";
+import { canPutBackOnBoard } from "@/features/pipeline/sale-mode";
 import { NegotiationStageBlock } from "@/features/pipeline/stage-blocks/negotiation-stage-block";
 import { VisitStageBlock } from "@/features/pipeline/stage-blocks/visit-stage-block";
 import { DEAL_STAGE_META, isRevisingOffer, lostReasonLabel } from "@/features/pipeline/stage-meta";
@@ -339,7 +340,9 @@ function DealCardMenu({
                                 Mark as sold
                             </DropdownMenuItem>
                         </>
-                    ) : (
+                    ) : !canPutBackOnBoard(deal) ? null : (
+                        // On a sold property only the sold deal of the broker's own
+                        // listing comes back (the property is then available again).
                         <DropdownMenuItem
                             className={DEAL_MENU_ITEM_CLASS}
                             onClick={(event) =>
@@ -377,9 +380,10 @@ function DealCardMenu({
 }
 
 function StageMiddle({ deal, onMakeOffer }: { deal: DealItem; onMakeOffer?: () => void }) {
-    // Only when there is something to show. An empty "No visit booked yet" /
-    // "No offer yet" box on every card is noise; Make offer stays in the menu.
-    if (deal.status === "visit" && deal.nextVisitAt) return <VisitStageBlock deal={deal} />;
+    // Site visit always shows its block: with no visit booked, booking one is
+    // the next step, so the card asks for it. An empty "No offer yet" box is
+    // still noise; Make offer stays in the menu.
+    if (deal.status === "visit") return <VisitStageBlock deal={deal} />;
     if (deal.status === "negotiation" && deal.offerAmountInr != null)
         return <NegotiationStageBlock deal={deal} onMakeOffer={onMakeOffer} />;
     return null;

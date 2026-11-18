@@ -74,6 +74,15 @@ export type DealProperty = {
      * Drives the "Exclusive property" chip on pipeline cards.
      */
     isExclusiveProperty?: boolean;
+    /** The property has sold (to this client or another). Its deals stay closed. */
+    isSold?: boolean;
+    /** Still a draft (not published). A draft can't be marked sold. */
+    isDraft?: boolean;
+    /**
+     * The broker's own listing (broker inventory), not an owner's listing.
+     * Marking it sold closes it at once; an owner listing may need the owner.
+     */
+    isBrokerListing?: boolean;
 };
 
 /** The buyer side. Mirrors `ClientItem`, trimmed to what a card renders. */

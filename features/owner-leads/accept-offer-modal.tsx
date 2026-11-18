@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { AlertCircle, Check, MapPin } from "@/components/shared/icons";
+import { AlertCircle, Check, Info, MapPin } from "@/components/shared/icons";
 import { Price } from "@/components/shared/price";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
@@ -184,6 +184,18 @@ export function AcceptOfferModal({
                         <p className="body-sm text-ink">{notes}</p>
                     </div>
                 ) : null}
+
+                <p className="body-sm flex items-start gap-2 text-ink-muted">
+                    <Info
+                        aria-hidden
+                        strokeWidth={1.75}
+                        className="mbs-0.5 shrink-0 block-4 inline-4"
+                    />
+                    <span>
+                        Accepting marks your property as sold. Other brokers&apos; clients on it are
+                        closed.
+                    </span>
+                </p>
 
                 {error ? (
                     <p
