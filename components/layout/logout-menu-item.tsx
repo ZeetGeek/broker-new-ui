@@ -43,7 +43,12 @@ export function LogoutMenuItem({ disabled = false, onSelect }: LogoutMenuItemPro
             "
             onClick={onSelect}
         >
-            <AccountMenuIcon name="logout" aria-hidden className="shrink-0 block-4.5 inline-4.5" />
+            <AccountMenuIcon
+                name="logout"
+                aria-hidden
+                className="menu-stroke-icon is-danger shrink-0 block-4.5 inline-4.5"
+            />
+
             <span className="flex-1 min-inline-0">{disabled ? "Signing out…" : "Log out"}</span>
             <LogoutShortcutHint />
         </DropdownMenuItem>

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { profileApi } from "@/lib/api/profile";
 import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
 import {
+    BROKER_ADD_BUYER_HREF,
     BROKER_MY_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
@@ -22,7 +23,7 @@ import {
 import { BROKER_SEARCH_HINTS } from "@/components/layout/search-placeholder-loop";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
-import { BROKER_NAV_ITEMS } from "@/config/nav";
+import { BROKER_MOBILE_PRIMARY_HREFS, BROKER_NAV_ITEMS } from "@/config/nav";
 import { mapBrokerProfileMenuBroker } from "@/features/broker/map-profile-menu";
 import { BrokerProfileMenu } from "@/features/broker/profile-menu";
 import { ChatProvider } from "@/features/chat/chat-provider";
@@ -116,7 +117,22 @@ function BrokerPortalShellInner({ children }: { children: ReactNode }) {
                     navItems={BROKER_NAV_ITEMS}
                     notificationsHref={BROKER_NOTIFICATIONS_HREF}
                     sectionNav={sectionNav}
-                    mobileNav={<PortalMobileNav items={BROKER_NAV_ITEMS} />}
+                    mobileIdentity={{
+                        name: userName,
+                        roleLabel: "Broker",
+                        avatarUrl,
+                        profileHref: "/broker/profile",
+                    }}
+                    mobileNav={
+                        <PortalMobileNav
+                            items={BROKER_NAV_ITEMS}
+                            primaryHrefs={BROKER_MOBILE_PRIMARY_HREFS}
+                            centerAction={{
+                                href: BROKER_ADD_BUYER_HREF,
+                                label: "Add client",
+                            }}
+                        />
+                    }
                     searchHints={BROKER_SEARCH_HINTS}
                     profileMenu={
                         <BrokerProfileMenu

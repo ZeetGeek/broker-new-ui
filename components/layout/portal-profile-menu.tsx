@@ -2,7 +2,6 @@
 
 import { type ReactNode, useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 import { useRouter } from "@/lib/navigation";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
@@ -17,7 +16,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -84,8 +82,8 @@ export type PortalProfileMenuProps = {
     userName: string;
     userAvatarUrl?: string;
     profileHref: string;
-    /** Status row under the name — role, verification, account type, etc. */
-    headerStatus: ReactNode;
+    /** Short role shown under the name on the header pill — "Broker" / "Owner". */
+    roleLabel: string;
     /** Menu body between header and logout (groups + separators). */
     children: ReactNode;
     tooltipLabel?: string;
@@ -118,30 +116,10 @@ function useLogoutHandler() {
     return { handleLogout, isLoggingOut };
 }
 
-function MobileProfileLink({
-    userName,
-    userAvatarUrl,
-    profileHref,
-}: {
-    userName: string;
-    userAvatarUrl?: string;
-    profileHref: string;
-}) {
-    return (
-        <Link
-            href={profileHref}
-            aria-label="Profile"
-            className="flex items-center gap-1 ps-0 pe-1 text-ink-muted sm:hidden"
-        >
-            <UserAvatar name={userName} imageUrl={userAvatarUrl} size="md" />
-        </Link>
-    );
-}
-
 function DesktopProfileDropdown({
     userName,
     userAvatarUrl,
-    headerStatus,
+    roleLabel,
     children,
     tooltipLabel,
     open,
@@ -150,6 +128,8 @@ function DesktopProfileDropdown({
     const { handleLogout, isLoggingOut } = useLogoutHandler();
     const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
+    // Account pill: face + who you are, visible without opening the menu.
+    // Name/role collapse to avatar-only below `lg` so the header never wraps.
     const trigger = (
         <div className="flex items-center justify-center">
             <DropdownMenuTrigger
@@ -157,29 +137,47 @@ function DesktopProfileDropdown({
                     <Button
                         variant="ghost"
                         size="md"
-                        aria-label="Account menu"
+                        aria-label={`Account menu for ${userName}`}
                         className="
-                          gap-1 ps-0 pe-1 text-ink-muted
-                          hover:bg-transparent hover:text-ink
-                          focus:bg-transparent focus-visible:bg-transparent
-                          aria-expanded:bg-transparent data-popup-open:text-ink
+                          group gap-2.5 rounded-full bg-transparent px-0 text-ink-subtle
+                          transition-colors duration-160
+                          hover:bg-transparent hover:text-ink-muted
+                          focus:bg-transparent
+                          focus-visible:border-transparent focus-visible:bg-transparent
+                          focus-visible:ring-0
+                          aria-expanded:bg-transparent data-popup-open:text-ink-muted
                           dark:hover:bg-transparent
                         "
                     />
                 }
             >
-                <UserAvatar name={userName} imageUrl={userAvatarUrl} size="md" />
+                {/* Keyboard focus shows on the avatar only — no pill outline. */}
+                <UserAvatar
+                    name={userName}
+                    imageUrl={userAvatarUrl}
+                    size="md"
+                    className="group-focus-visible:ring-2 group-focus-visible:ring-brand"
+                />
+                <span className="flex flex-col items-start gap-0.5 text-start min-inline-0">
+                    <span className="body-sm truncate leading-tight font-semibold text-ink max-inline-36">
+                        {userName}
+                    </span>
+                    <span className="body-xs leading-tight text-ink-muted">{roleLabel}</span>
+                </span>
                 <AccountMenuIcon
                     name="chevron-down"
                     aria-hidden="true"
-                    className="block-4 inline-4"
+                    className="
+                      transition-transform duration-160 block-3.5 inline-3.5
+                      group-data-popup-open:rotate-180
+                    "
                 />
             </DropdownMenuTrigger>
         </div>
     );
 
     return (
-        <div className="hidden sm:block">
+        <div>
             <DropdownMenu open={open} onOpenChange={onOpenChange}>
                 {tooltipLabel ? (
                     <Tooltip>
@@ -195,27 +193,6 @@ function DesktopProfileDropdown({
                     sideOffset={14}
                     className={cn(portalProfileMenuSurfaceClass)}
                 >
-                    <DropdownMenuGroup>
-                        <DropdownMenuLabel className="flex flex-col gap-3 p-3! font-normal text-ink">
-                            <div className="flex items-center gap-3 min-inline-0">
-                                <UserAvatar
-                                    name={userName}
-                                    imageUrl={userAvatarUrl}
-                                    size="md"
-                                    className="shrink-0"
-                                />
-                                <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
-                                    <p className="body-sm truncate font-semibold text-ink">
-                                        {userName}
-                                    </p>
-                                    {headerStatus}
-                                </div>
-                            </div>
-                        </DropdownMenuLabel>
-                    </DropdownMenuGroup>
-
-                    <PortalProfileMenuSeparator />
-
                     {children}
 
                     <PortalProfileMenuSeparator />
@@ -245,35 +222,27 @@ function DesktopProfileDropdown({
 
 /**
  * Shared account dropdown chrome for owner and broker portals.
- * Portal-specific links and status rows are passed as children / headerStatus.
+ * Portal-specific links are passed as children.
  */
 export function PortalProfileMenu({
     userName,
     userAvatarUrl,
-    profileHref,
-    headerStatus,
+    roleLabel,
     children,
     tooltipLabel,
     open,
     onOpenChange,
 }: PortalProfileMenuProps) {
     return (
-        <>
-            <MobileProfileLink
-                userName={userName}
-                userAvatarUrl={userAvatarUrl}
-                profileHref={profileHref}
-            />
-            <DesktopProfileDropdown
-                userName={userName}
-                userAvatarUrl={userAvatarUrl}
-                headerStatus={headerStatus}
-                tooltipLabel={tooltipLabel}
-                open={open}
-                onOpenChange={onOpenChange}
-            >
-                {children}
-            </DesktopProfileDropdown>
-        </>
+        <DesktopProfileDropdown
+            userName={userName}
+            userAvatarUrl={userAvatarUrl}
+            roleLabel={roleLabel}
+            tooltipLabel={tooltipLabel}
+            open={open}
+            onOpenChange={onOpenChange}
+        >
+            {children}
+        </DesktopProfileDropdown>
     );
 }

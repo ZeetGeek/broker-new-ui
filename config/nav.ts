@@ -71,9 +71,14 @@ const BROKER_MARKETPLACE_NAV_ITEMS: NavItem[] = [
     },
 ];
 
+/**
+ * Ordered by how often a broker opens each page in a working day.
+ * Phone primary tabs use `BROKER_MOBILE_PRIMARY_HREFS` (around the center +).
+ * Compact desktop nav shows the first 3 — everything after goes under "More".
+ */
 export const BROKER_NAV_ITEMS: NavItem[] = [
     { label: "Dashboard", href: "/broker/dashboard", shortcutId: "dashboard" },
-    ...(FEATURE_PLATFORM_OWNER ? BROKER_MARKETPLACE_NAV_ITEMS : []),
+    { label: "Clients", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
     {
         label: "My Listings",
         mobileLabel: "My Listings",
@@ -82,8 +87,28 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
         activePrefixes: ["/broker/my-properties", "/broker/properties"],
     },
     { label: "Pipeline", href: BROKER_PIPELINE_HREF, shortcutId: "pipeline" },
-    { label: "Clients", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
     { label: "Visits", href: "/broker/visits", shortcutId: "visits" },
+    ...(FEATURE_PLATFORM_OWNER ? BROKER_MARKETPLACE_NAV_ITEMS : []),
     { label: "Tasks", href: "/broker/tasks" },
     { label: "Earnings", href: BROKER_EARNINGS_HREF },
 ];
+
+/**
+ * Phone bottom tabs around the center + FAB: two left, one right.
+ * Remaining `BROKER_NAV_ITEMS` land under More.
+ */
+export const BROKER_MOBILE_PRIMARY_HREFS = [
+    "/broker/dashboard",
+    BROKER_CONTACTS_HREF,
+    BROKER_PIPELINE_HREF,
+] as const;
+
+/**
+ * Owner phone tabs around the center + FAB: Home · Properties · Requests.
+ * Remaining `OWNER_NAV_ITEMS` land under More.
+ */
+export const OWNER_MOBILE_PRIMARY_HREFS = [
+    OWNER_OVERVIEW_HREF,
+    OWNER_PROPERTIES_HREF,
+    OWNER_REQUESTS_HREF,
+] as const;

@@ -18,35 +18,15 @@ import { SUPPORT_WHATSAPP_URL } from "@/config/constants";
 export type OwnerProfileMenuProps = {
     userName: string;
     userAvatarUrl?: string;
-    /** Plain status under the name, e.g. "Independent" or org name — never raw enums. */
-    accountStatusLabel: string;
     onShortcutsOpen?: () => void;
     tooltipLabel?: string;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
 };
 
-function OwnerStatus({ accountStatusLabel }: { accountStatusLabel: string }) {
-    return (
-        <div className="body-xs flex items-center gap-2.5 font-medium text-ink-muted">
-            <span className="inline-flex items-center gap-1">
-                <AccountMenuIcon
-                    name="home"
-                    aria-hidden
-                    className="shrink-0 block-3.5 inline-3.5"
-                />
-                Owner
-            </span>
-            <span aria-hidden className="rounded-full bg-ink-subtle/40 block-1 inline-1" />
-            <span className="truncate">{accountStatusLabel}</span>
-        </div>
-    );
-}
-
 export function OwnerProfileMenu({
     userName,
     userAvatarUrl,
-    accountStatusLabel,
     onShortcutsOpen,
     tooltipLabel,
     open,
@@ -57,7 +37,7 @@ export function OwnerProfileMenu({
             userName={userName}
             userAvatarUrl={userAvatarUrl}
             profileHref={OWNER_PROFILE_HREF}
-            headerStatus={<OwnerStatus accountStatusLabel={accountStatusLabel} />}
+            roleLabel="Owner"
             tooltipLabel={tooltipLabel}
             open={open}
             onOpenChange={onOpenChange}
