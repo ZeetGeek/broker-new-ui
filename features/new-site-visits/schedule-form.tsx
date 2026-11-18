@@ -1,97 +1,167 @@
 "use client";
 
-import { type FormEvent, Fragment, useId, useState } from "react";
+import { type FormEvent, useEffect, useId, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
+import type { BookableLead, BrokerVisit } from "@/lib/api/site-visits";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
-import { formatVisitTime, inputValueInIst } from "@/lib/visits/time";
+import { formatVisitDate, formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
-import { AppTimePicker } from "@/components/shared/app-time-picker";
 import { CharacterCount } from "@/components/shared/character-count";
-import { Bell, Clock } from "@/components/shared/icons";
+import { Bell, Building2, UserRound } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 import {
-    newVisitDraft,
-    type SiteVisit,
-    validateDraft,
+    bookableDates,
+    draftForLead,
+    DURATION_CHIPS,
+    isTimeTaken,
+    rescheduleDraft,
+    validateVisitDraft,
     type VisitDraft,
-    visitDurationLabel,
-    visitDurationMinutes,
-    visitEndTime,
+    visitErrorMessage,
 } from "./model";
+import { TimeChips } from "./time-chips";
+import { useBookableLeads, useFreeTimes, useVisitMutations } from "./use-visits";
 import { VisitOverlay } from "./visit-overlay";
 import { VisitDatePicker, VisitEntityCombobox } from "./visit-pickers";
 import { VisitReminderPicker } from "./visit-reminder-picker";
 
 import styles from "./visits.module.css";
 
+/**
+ * Book a visit, or move one (`visit`). Client → property → length → date →
+ * a free start time from the server, so a time shown is a time that books.
+ */
 export function ScheduleForm({
     visit,
-    visits,
-    now,
-    prefill,
-    busy,
-    saveError,
-    onSave,
+    intent,
+    intentMissed = false,
+    onDone,
     onBack,
 }: {
-    visit?: SiteVisit;
-    visits: SiteVisit[];
-    now: number;
-    prefill?: Partial<VisitDraft>;
-    busy: boolean;
-    saveError: string;
-    onSave: (draft: VisitDraft) => Promise<void>;
+    visit?: BrokerVisit;
+    intent?: BookableLead | null;
+    intentMissed?: boolean;
+    onDone: () => void;
     onBack: () => void;
 }) {
     const formId = useId();
-    const [initial] = useState<VisitDraft>(() =>
-        visit
-            ? {
-                  clientId: visit.clientId,
-                  propertyId: visit.propertyId,
-                  date: inputValueInIst(visit.startsAt).slice(0, 10),
-                  startTime: inputValueInIst(visit.startsAt).slice(11),
-                  endTime: inputValueInIst(visit.endsAt).slice(11),
-                  reminders: [...visit.reminders],
-                  notes: visit.notes,
-              }
-            : newVisitDraft(Date.now(), prefill),
-    );
+    const [openedAt] = useState(() => Date.now());
+    const [now, setNow] = useState(openedAt);
+    useEffect(() => {
+        const timer = window.setInterval(() => setNow(Date.now()), 15_000);
+        return () => window.clearInterval(timer);
+    }, []);
+    const dates = useMemo(() => bookableDates(openedAt), [openedAt]);
+    const [initial] = useState<VisitDraft>(() => {
+        if (visit) return rescheduleDraft(visit, openedAt);
+        return { ...draftForLead(intent), date: dates[0] };
+    });
     const [draft, setDraft] = useState(initial);
     const [submitted, setSubmitted] = useState(false);
-    const [manualDuration, setManualDuration] = useState(() =>
-        visitDurationMinutes(initial.startTime, initial.endTime),
+    const [saveError, setSaveError] = useState("");
+    const leadsQuery = useBookableLeads();
+    const { book, reschedule } = useVisitMutations();
+    const busy = book.isPending || reschedule.isPending;
+    const leads = useMemo(() => leadsQuery.data ?? [], [leadsQuery.data]);
+
+    const clientOptions = useMemo(
+        () =>
+            [...new Map(leads.map((lead) => [lead.clientId, lead])).values()]
+                .map((lead) => ({ value: lead.clientId, label: lead.clientName }))
+                .sort((a, b) => a.label.localeCompare(b.label)),
+        [leads],
     );
-    const duration = visitDurationMinutes(draft.startTime, draft.endTime);
-    const presets = [30, 45, 60];
-    const customDuration =
-        manualDuration !== null && !presets.includes(manualDuration)
-            ? manualDuration
-            : duration !== null && !presets.includes(duration)
-              ? duration
-              : null;
-    const durationOptions = customDuration !== null ? [customDuration, ...presets] : presets;
-    const patch = (next: Partial<VisitDraft>) => setDraft((current) => ({ ...current, ...next }));
-    const { errors, valid } = validateDraft(draft, visits, now, visit?.id);
-    const conflict = visits.find((candidate) => candidate.id === errors.conflict);
+    const clientLeads = leads.filter((lead) => lead.clientId === draft.clientId);
+    const propertyOptions = clientLeads.map((lead) => ({
+        value: lead.propertyId,
+        label: lead.propertyTitle,
+    }));
+
+    const free = useFreeTimes(
+        draft.propertyId && draft.leadId && draft.durationMinutes && draft.date
+            ? {
+                  propertyId: draft.propertyId,
+                  leadId: draft.leadId,
+                  date: draft.date,
+                  durationMinutes: draft.durationMinutes,
+                  excludeShowingId: visit?.id,
+              }
+            : null,
+    );
+
+    const patch = (next: Partial<VisitDraft>) => {
+        setSaveError("");
+        setDraft((current) => ({ ...current, ...next }));
+    };
+    const chooseClient = (clientId: string) => {
+        const own = leads.filter((lead) => lead.clientId === clientId);
+        const only = own.length === 1 ? own[0] : undefined;
+        patch({
+            clientId,
+            propertyId: only?.propertyId ?? "",
+            leadId: only?.leadId ?? "",
+            startAt: "",
+        });
+    };
+    const chooseProperty = (propertyId: string) => {
+        const lead = clientLeads.find((item) => item.propertyId === propertyId);
+        patch({ propertyId, leadId: lead?.leadId ?? "", startAt: "" });
+    };
+
+    const errors = validateVisitDraft(draft, now);
     const dirty = JSON.stringify(draft) !== JSON.stringify(initial);
+
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (busy) return;
         setSubmitted(true);
-        if (valid) await onSave(draft);
-        else {
+        // Check against the clock at submit, not the last tick.
+        const valid = Object.keys(validateVisitDraft(draft, Date.now())).length === 0;
+        if (!valid || !draft.durationMinutes) {
             const form = event.currentTarget;
             requestAnimationFrame(() =>
                 form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(),
             );
+            return;
+        }
+        const notes = draft.notes.trim();
+        try {
+            if (visit) {
+                await reschedule.mutateAsync({
+                    id: visit.id,
+                    startAt: draft.startAt,
+                    durationMinutes: draft.durationMinutes,
+                    notes,
+                });
+                toast.success("Visit moved");
+            } else {
+                await book.mutateAsync({
+                    propertyId: draft.propertyId,
+                    leadId: draft.leadId,
+                    startAt: draft.startAt,
+                    durationMinutes: draft.durationMinutes,
+                    ...(notes ? { notes } : {}),
+                });
+                toast.success("Visit scheduled");
+            }
+            onDone();
+        } catch (error) {
+            setSaveError(visitErrorMessage(error));
+            // Keep what was entered; drop the time only if someone took it meanwhile.
+            if (isTimeTaken(error)) setDraft((current) => ({ ...current, startAt: "" }));
+            void free.refetch();
         }
     };
+
+    const show = (key: keyof VisitDraft) => (submitted ? errors[key] : undefined);
+    const noLeads = !visit && leadsQuery.isSuccess && leads.length === 0;
+
     return (
         <VisitOverlay
-            title={visit ? "Edit visit" : "Schedule a visit"}
+            title={visit ? "Reschedule visit" : "Schedule a visit"}
             onClose={onBack}
             busy={busy}
             dirty={dirty}
@@ -105,10 +175,10 @@ export function ScheduleForm({
                         variant="accent"
                         type="submit"
                         form={formId}
-                        disabled={busy}
+                        disabled={busy || noLeads}
                         loading={busy}
                     >
-                        {visit ? "Save changes" : "Schedule visit"}
+                        {busy ? "Saving…" : visit ? "Save new time" : "Schedule visit"}
                     </Button>
                 </>
             )}
@@ -116,211 +186,193 @@ export function ScheduleForm({
             <form id={formId} onSubmit={submit} noValidate>
                 <fieldset disabled={busy} className="m-0 border-0 p-0 min-inline-0">
                     <div className="flex flex-col gap-6">
-                        <div className="flex flex-col gap-4">
-                            <div className={styles.field}>
-                                <label htmlFor={`${formId}-client`}>
-                                    Client <span className={styles.required}>*</span>
-                                </label>
-                                <VisitEntityCombobox
-                                    id={`${formId}-client`}
-                                    kind="client"
-                                    value={draft.clientId}
-                                    onChange={(clientId) => patch({ clientId })}
-                                    disabled={busy}
-                                    error={submitted ? errors.clientId : undefined}
-                                />
+                        {intentMissed && (
+                            <p role="alert" className={styles.conflict}>
+                                This deal can&apos;t be booked here. Visits can be booked for open
+                                deals on your own listings. Choose a client below.
+                            </p>
+                        )}
+                        {noLeads ? (
+                            <p className="body-sm text-ink-muted">
+                                No clients to book for yet. A visit can be booked once a client has
+                                an open deal on one of your own listings.
+                            </p>
+                        ) : visit ? (
+                            <div className="flex flex-col gap-2">
+                                <p className="body-sm flex items-center gap-2 text-ink">
+                                    <UserRound aria-hidden className="shrink-0 block-4 inline-4" />
+                                    {visit.clientName}
+                                </p>
+                                <p className="body-sm flex items-center gap-2 text-ink">
+                                    <Building2 aria-hidden className="shrink-0 block-4 inline-4" />
+                                    {visit.propertyTitle}, {visit.locality}
+                                </p>
+                                <p className="body-xs text-ink-muted">
+                                    Now {formatVisitDate(visit.startsAt)},{" "}
+                                    {formatVisitTime(visit.startsAt)} IST
+                                </p>
                             </div>
-                            <div className={styles.field}>
-                                <label htmlFor={`${formId}-property`}>
-                                    Property <span className={styles.required}>*</span>
-                                </label>
-                                <VisitEntityCombobox
-                                    id={`${formId}-property`}
-                                    kind="property"
-                                    value={draft.propertyId}
-                                    onChange={(propertyId) => patch({ propertyId })}
-                                    disabled={busy}
-                                    error={submitted ? errors.propertyId : undefined}
-                                />
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-4">
-                            <div className={styles.field}>
-                                <label htmlFor={`${formId}-date`}>
-                                    Visit date <span className={styles.required}>*</span>
-                                </label>
-                                <VisitDatePicker
-                                    id={`${formId}-date`}
-                                    value={draft.date}
-                                    onChange={(date) => patch({ date })}
-                                    recorded={
-                                        visit?.status === "completed" ||
-                                        visit?.status === "not_attended"
-                                    }
-                                    disabled={busy}
-                                    error={submitted ? errors.date : undefined}
-                                />
-                            </div>
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        ) : (
+                            <div className="flex flex-col gap-4">
                                 <div className={styles.field}>
-                                    <label htmlFor={`${formId}-start`}>
-                                        Start time (IST) <span className={styles.required}>*</span>
+                                    <label htmlFor={`${formId}-client`}>
+                                        Client <span className={styles.required}>*</span>
                                     </label>
-                                    <AppTimePicker
-                                        className={styles.timeInput}
-                                        id={`${formId}-start`}
-                                        aria-label="Visit start time (IST)"
-                                        value={draft.startTime}
-                                        onChange={(startTime) => {
-                                            if (duration === null) {
-                                                const chosen = visitDurationMinutes(
-                                                    startTime,
-                                                    draft.endTime,
-                                                );
-                                                if (chosen !== null) setManualDuration(chosen);
-                                            }
-                                            patch({
-                                                startTime,
-                                                ...(duration !== null
-                                                    ? {
-                                                          endTime:
-                                                              visitEndTime(startTime, duration) ??
-                                                              "",
-                                                      }
-                                                    : {}),
-                                            });
-                                        }}
-                                        error={submitted ? errors.startTime : undefined}
-                                        disabled={busy}
-                                        required
+                                    <VisitEntityCombobox
+                                        id={`${formId}-client`}
+                                        kind="client"
+                                        options={clientOptions}
+                                        value={draft.clientId}
+                                        onChange={chooseClient}
+                                        disabled={busy || leadsQuery.isPending}
+                                        error={show("clientId")}
                                     />
                                 </div>
                                 <div className={styles.field}>
-                                    <label htmlFor={`${formId}-end`}>
-                                        End time (IST) <span className={styles.required}>*</span>
+                                    <label htmlFor={`${formId}-property`}>
+                                        Property <span className={styles.required}>*</span>
                                     </label>
-                                    <AppTimePicker
-                                        className={styles.timeInput}
-                                        id={`${formId}-end`}
-                                        aria-label="Visit end time (IST)"
-                                        value={draft.endTime}
-                                        onChange={(endTime) => {
-                                            patch({ endTime });
-                                            const chosen = visitDurationMinutes(
-                                                draft.startTime,
-                                                endTime,
-                                            );
-                                            if (chosen !== null) setManualDuration(chosen);
-                                        }}
-                                        error={submitted ? errors.endTime : undefined}
-                                        disabled={busy}
-                                        required
+                                    <VisitEntityCombobox
+                                        id={`${formId}-property`}
+                                        kind="property"
+                                        options={propertyOptions}
+                                        value={draft.propertyId}
+                                        onChange={chooseProperty}
+                                        disabled={busy || !draft.clientId}
+                                        error={show("propertyId")}
+                                        emptyText="Choose a client first."
                                     />
                                 </div>
                             </div>
-                            {draft.date && duration !== null && (
-                                <div
-                                    role="group"
-                                    aria-label="Visit duration"
-                                    className="flex flex-wrap items-center gap-2"
-                                >
-                                    <span className="body-sm text-ink-muted">Duration</span>
-                                    {durationOptions.map((minutes, index) => (
-                                        <Fragment key={minutes}>
-                                            {customDuration !== null && index === 1 && (
-                                                <span
-                                                    aria-hidden="true"
-                                                    className="mx-1 shrink-0 bg-ink/20 block-6 inline-px"
-                                                />
-                                            )}
-                                            <Button
-                                                type="button"
-                                                variant={
-                                                    duration === minutes ? "accent" : "outline"
-                                                }
-                                                size="sm"
-                                                aria-pressed={duration === minutes}
-                                                disabled={
-                                                    busy ||
-                                                    visitEndTime(draft.startTime, minutes) === null
-                                                }
-                                                onClick={() => {
-                                                    if (draft.startTime)
-                                                        patch({
-                                                            endTime:
-                                                                visitEndTime(
-                                                                    draft.startTime,
-                                                                    minutes,
-                                                                ) ?? "",
-                                                        });
-                                                }}
-                                            >
-                                                {visitDurationLabel(minutes)}
-                                            </Button>
-                                        </Fragment>
-                                    ))}
-                                </div>
-                            )}
-                            {conflict && (
-                                <p role="alert" className={styles.conflict}>
-                                    <Clock aria-hidden />
-                                    <span>
-                                        You already have a visit from{" "}
-                                        {formatVisitTime(conflict.startsAt)} to{" "}
-                                        {formatVisitTime(conflict.endsAt)}. Choose another time.
+                        )}
+
+                        {!noLeads && (
+                            <div className="flex flex-col gap-4">
+                                <div className={styles.field}>
+                                    <span id={`${formId}-length`}>
+                                        How long <span className={styles.required}>*</span>
                                     </span>
-                                </p>
-                            )}
-                        </div>
-                        <div className="flex flex-col gap-4">
-                            {draft.date && draft.startTime ? (
-                                <VisitReminderPicker
-                                    reminders={draft.reminders}
-                                    date={draft.date}
-                                    startTime={draft.startTime}
-                                    now={now}
-                                    onChange={(reminders) => patch({ reminders })}
-                                    disabled={busy}
-                                />
-                            ) : (
-                                <p className="body-sm flex items-center gap-2 text-ink-muted">
-                                    <Bell
-                                        aria-hidden="true"
-                                        className="shrink-0 block-4 inline-4"
+                                    <div
+                                        role="group"
+                                        aria-labelledby={`${formId}-length`}
+                                        className="flex flex-wrap gap-2"
+                                    >
+                                        {DURATION_CHIPS.map((chip) => (
+                                            <Button
+                                                key={chip.value}
+                                                type="button"
+                                                size="sm"
+                                                variant={
+                                                    draft.durationMinutes === chip.value
+                                                        ? "accent"
+                                                        : "outline"
+                                                }
+                                                aria-pressed={draft.durationMinutes === chip.value}
+                                                aria-invalid={
+                                                    Boolean(show("durationMinutes")) || undefined
+                                                }
+                                                onClick={() =>
+                                                    patch({
+                                                        durationMinutes: chip.value,
+                                                        startAt: "",
+                                                    })
+                                                }
+                                            >
+                                                {chip.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    {show("durationMinutes") && (
+                                        <p role="alert" className={styles.fieldError}>
+                                            {show("durationMinutes")}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className={styles.field}>
+                                    <label htmlFor={`${formId}-date`}>
+                                        Visit date <span className={styles.required}>*</span>
+                                    </label>
+                                    <VisitDatePicker
+                                        id={`${formId}-date`}
+                                        value={draft.date}
+                                        minDate={dates[0]}
+                                        maxDate={dates[dates.length - 1]}
+                                        onChange={(date) => patch({ date, startAt: "" })}
+                                        disabled={busy}
+                                        error={show("date")}
                                     />
-                                    Add a visit date and start time to set one or more reminders.
-                                </p>
-                            )}
-                            {submitted && errors.reminders && (
-                                <p role="alert" className={styles.fieldError}>
-                                    {errors.reminders}
-                                </p>
-                            )}
-                            <div className={styles.field}>
-                                <label htmlFor={`${formId}-notes`}>Notes (optional)</label>
-                                <Textarea
-                                    id={`${formId}-notes`}
-                                    className={styles.notesInput}
-                                    value={draft.notes}
-                                    onChange={(event) => patch({ notes: event.target.value })}
-                                    maxLength={MAX_CHARS.visitNote}
-                                    rows={5}
-                                    placeholder="Meeting point or anything to remember"
-                                    aria-invalid={(submitted && Boolean(errors.notes)) || undefined}
-                                    aria-describedby={`${formId}-notes-count`}
-                                />
-                                <CharacterCount
-                                    id={`${formId}-notes-count`}
-                                    value={draft.notes}
-                                    maxChars={MAX_CHARS.visitNote}
-                                />
-                                {submitted && errors.notes && (
-                                    <p role="alert" className={styles.fieldError}>
-                                        {errors.notes}
+                                </div>
+                                <div className={styles.field}>
+                                    <span id={`${formId}-start`}>
+                                        Start time (IST) <span className={styles.required}>*</span>
+                                    </span>
+                                    <TimeChips
+                                        labelledBy={`${formId}-start`}
+                                        ready={Boolean(
+                                            draft.leadId && draft.durationMinutes && draft.date,
+                                        )}
+                                        loading={free.isFetching}
+                                        failed={free.isError}
+                                        starts={free.data ?? []}
+                                        value={draft.startAt}
+                                        onChange={(startAt) => patch({ startAt })}
+                                        invalid={Boolean(show("startAt"))}
+                                    />
+                                    {show("startAt") && (
+                                        <p role="alert" className={styles.fieldError}>
+                                            {show("startAt")}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {!noLeads && (
+                            <div className="flex flex-col gap-4">
+                                {draft.date && draft.startAt ? (
+                                    <VisitReminderPicker
+                                        reminders={draft.reminders}
+                                        date={draft.date}
+                                        startTime={inputValueInIst(draft.startAt).slice(11)}
+                                        now={now}
+                                        onChange={(reminders) => patch({ reminders })}
+                                        disabled={busy}
+                                    />
+                                ) : (
+                                    <p className="body-sm flex items-center gap-2 text-ink-muted">
+                                        <Bell
+                                            aria-hidden="true"
+                                            className="shrink-0 block-4 inline-4"
+                                        />
+                                        Pick a start time to set reminders.
                                     </p>
                                 )}
+                                <div className={styles.field}>
+                                    <label htmlFor={`${formId}-notes`}>Notes (optional)</label>
+                                    <Textarea
+                                        id={`${formId}-notes`}
+                                        className={styles.notesInput}
+                                        value={draft.notes}
+                                        onChange={(event) => patch({ notes: event.target.value })}
+                                        maxLength={MAX_CHARS.visitNote}
+                                        rows={4}
+                                        placeholder="Meeting point or anything to remember"
+                                        aria-invalid={Boolean(show("notes")) || undefined}
+                                        aria-describedby={`${formId}-notes-count`}
+                                    />
+                                    <CharacterCount
+                                        id={`${formId}-notes-count`}
+                                        value={draft.notes}
+                                        maxChars={MAX_CHARS.visitNote}
+                                    />
+                                    {show("notes") && (
+                                        <p role="alert" className={styles.fieldError}>
+                                            {show("notes")}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </fieldset>
             </form>

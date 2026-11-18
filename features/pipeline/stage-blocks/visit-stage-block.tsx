@@ -8,16 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { DealItem } from "@/features/pipeline/types";
-import { scheduleVisitHref } from "@/features/pipeline/visit-link";
+import { canScheduleVisit, scheduleVisitHref } from "@/features/pipeline/visit-link";
 
 /**
- * Site visit stage: the booked visit, or a prompt to book one. Both links open
- * Visits for this deal's client and property (see `scheduleVisitHref`).
+ * Site visit stage: the booked visit, or a prompt to book one. On exclusive
+ * listings both links open Visits for this deal (see `scheduleVisitHref`);
+ * owner-listed deals show the date only.
  */
 export function VisitStageBlock({ deal }: { deal: DealItem }) {
     const when = deal.nextVisitAt ? new Date(deal.nextVisitAt) : null;
     const isToday = when != null && isSameCalendarDay(when, new Date());
     const href = scheduleVisitHref(deal);
+    const canSchedule = canScheduleVisit(deal);
     const StatusIcon = when ? CalendarClock : Calendar;
 
     return (
@@ -42,7 +44,7 @@ export function VisitStageBlock({ deal }: { deal: DealItem }) {
                     </p>
                 ) : null}
             </div>
-            {when ? (
+            {!canSchedule ? null : when ? (
                 <Tooltip>
                     <TooltipTrigger
                         render={

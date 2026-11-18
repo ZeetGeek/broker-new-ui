@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { DealItem } from "@/features/pipeline/types";
-import { scheduleVisitHref } from "@/features/pipeline/visit-link";
+import { canScheduleVisit, scheduleVisitHref } from "@/features/pipeline/visit-link";
 
 function deal(id: string, clientId: string, propertyId: string): DealItem {
     return { id, buyer: { id: clientId }, property: { id: propertyId } } as DealItem;
@@ -22,4 +22,13 @@ test("scheduleVisitHref encodes ids safely", () => {
     assert.equal(url.searchParams.get("leadId"), "a&b");
     assert.equal(url.searchParams.get("clientId"), "c d");
     assert.equal(url.searchParams.get("propertyId"), "e/f");
+});
+
+test("only deals on the broker's own exclusive listings offer scheduling", () => {
+    const exclusive = { property: { isExclusiveProperty: true } } as DealItem;
+    const ownerListed = { property: { isExclusiveProperty: false } } as DealItem;
+    const unknown = { property: {} } as DealItem;
+    assert.equal(canScheduleVisit(exclusive), true);
+    assert.equal(canScheduleVisit(ownerListed), false);
+    assert.equal(canScheduleVisit(unknown), false);
 });

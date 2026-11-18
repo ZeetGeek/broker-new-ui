@@ -1,11 +1,17 @@
 import type { DealItem } from "@/features/pipeline/types";
 
 /**
- * Visits, opened on its schedule form for this deal's client and property.
- *
- * Contract for the Visits API integration (Visits does not read it yet):
- * `schedule=1` opens the form, `clientId` / `propertyId` prefill it, and
- * `leadId` is the pipeline deal the visit belongs to.
+ * Visits books only on the broker's own exclusive listings. Owner-listed deals
+ * follow the owner's published times, so their cards offer no scheduling.
+ */
+export function canScheduleVisit(deal: Pick<DealItem, "property">): boolean {
+    return deal.property.isExclusiveProperty === true;
+}
+
+/**
+ * Visits, opened for this deal. `schedule=1` opens the form; Visits moves the
+ * deal's booked visit if it has one (`leadId`), otherwise books a new one with
+ * the client (`clientId`) and property (`propertyId`) filled in.
  */
 export function scheduleVisitHref(deal: Pick<DealItem, "id" | "buyer" | "property">): string {
     const params = new URLSearchParams({

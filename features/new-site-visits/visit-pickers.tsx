@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import { formatVisitDate, istDateKey } from "@/lib/visits/time";
 
-import { AppImage } from "@/components/shared/app-image";
 import { Building2, CalendarDays, ChevronDown, UserRound } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -19,41 +18,29 @@ import {
 } from "@/components/ui/combobox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
-
 import styles from "./visits.module.css";
+
+export type EntityOption = { value: string; label: string; detail?: string };
 
 export function VisitEntityCombobox({
     kind,
     id,
+    options,
     value,
     onChange,
     disabled,
     error,
+    emptyText,
 }: {
     kind: "client" | "property";
     id: string;
+    options: EntityOption[];
     value: string;
     onChange: (value: string) => void;
     disabled?: boolean;
     error?: string;
+    emptyText?: string;
 }) {
-    const options =
-        kind === "client"
-            ? PREVIEW_CLIENTS.map((client) => ({
-                  value: client.id,
-                  label: client.name,
-                  detail: client.type,
-                  search: `${client.phoneDigits} ${client.requirement}`,
-                  imageUrl: undefined,
-              }))
-            : PREVIEW_PROPERTIES.map((property) => ({
-                  value: property.id,
-                  label: property.title,
-                  detail: `${property.configLabel} · ${property.locality}, ${property.city}`,
-                  search: property.address,
-                  imageUrl: property.imageUrl,
-              }));
     const labelFor = (item: string) => options.find((option) => option.value === item)?.label ?? "";
     return (
         <Combobox
@@ -64,7 +51,7 @@ export function VisitEntityCombobox({
             itemToStringLabel={labelFor}
             filter={(item, query) => {
                 const option = options.find((candidate) => candidate.value === item);
-                return `${option?.label} ${option?.detail} ${option?.search}`
+                return `${option?.label} ${option?.detail ?? ""}`
                     .toLowerCase()
                     .includes(query.trim().toLowerCase());
             }}
@@ -80,7 +67,8 @@ export function VisitEntityCombobox({
             />
             <ComboboxContent align="center" className="inline-[min(26rem,calc(100dvw-2rem))]">
                 <ComboboxEmpty>
-                    No {kind === "client" ? "clients" : "properties"} found. Try another search.
+                    {emptyText ??
+                        `No ${kind === "client" ? "clients" : "properties"} found. Try another search.`}
                 </ComboboxEmpty>
                 <ComboboxList className="py-2 max-block-[min(20rem,var(--available-height))]">
                     {(item: string) => {
@@ -93,21 +81,15 @@ export function VisitEntityCombobox({
                                     ) : (
                                         <span className={styles.entityIcon}>
                                             <Building2 aria-hidden />
-                                            {option?.imageUrl && (
-                                                <AppImage
-                                                    src={option.imageUrl}
-                                                    alt=""
-                                                    fill
-                                                    sizes="40px"
-                                                />
-                                            )}
                                         </span>
                                     )}
                                     <span>
                                         <span className={styles.entityName}>{option?.label}</span>
-                                        <span className={styles.entityDetail}>
-                                            {option?.detail}
-                                        </span>
+                                        {option?.detail && (
+                                            <span className={styles.entityDetail}>
+                                                {option.detail}
+                                            </span>
+                                        )}
                                     </span>
                                 </span>
                             </ComboboxItem>
@@ -119,19 +101,22 @@ export function VisitEntityCombobox({
     );
 }
 
+/** IST date picker limited to `[minDate, maxDate]` (YYYY-MM-DD). */
 export function VisitDatePicker({
     id,
     value,
     onChange,
+    minDate,
+    maxDate,
     error,
-    recorded = false,
     disabled = false,
 }: {
     id: string;
     value: string;
     onChange: (value: string) => void;
+    minDate: string;
+    maxDate: string;
     error?: string;
-    recorded?: boolean;
     disabled?: boolean;
 }) {
     const [open, setOpen] = useState(false);
@@ -168,18 +153,17 @@ export function VisitDatePicker({
                         weekStartsOn={1}
                         timeZone="Asia/Kolkata"
                         selected={selected}
-                        defaultMonth={selected}
+                        defaultMonth={selected ?? new Date(`${minDate}T12:00:00+05:30`)}
                         onSelect={(date) => {
                             if (date) {
                                 onChange(istDateKey(date));
                                 setOpen(false);
                             }
                         }}
-                        disabled={
-                            recorded
-                                ? { after: new Date(`${istDateKey(new Date())}T23:59:59+05:30`) }
-                                : { before: new Date(`${istDateKey(new Date())}T00:00:00+05:30`) }
-                        }
+                        disabled={[
+                            { before: new Date(`${minDate}T00:00:00+05:30`) },
+                            { after: new Date(`${maxDate}T23:59:59+05:30`) },
+                        ]}
                     />
                 </PopoverContent>
             </Popover>

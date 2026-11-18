@@ -21,6 +21,8 @@ export type ApiShowing = {
     propertyId: string;
     visitSlotId: string | null;
     scheduledDate: string;
+    /** Visit end (30/45/60 min on exclusive listings, slot end on owner listings). */
+    endAt?: string | null;
     status: string | null;
     notes: string | null;
     createdAt: string | null;
