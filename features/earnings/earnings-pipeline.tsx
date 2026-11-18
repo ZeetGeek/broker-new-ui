@@ -137,49 +137,46 @@ export function EarningsPipeline({
                     No open deals. Attach a client to a property in your pipeline to start one.
                 </p>
             ) : (
-                // Equal gaps between gauge, totals, stages and chips; when the row is
-                // taller than the content, the extra space spreads evenly between them.
-                <div className="mbs-1 flex flex-1 flex-col justify-between gap-5">
-                    <StageGauge report={report} />
+                <div className="mbs-1 flex flex-1 flex-col">
+                    <div className="flex flex-1 flex-col justify-center gap-12">
+                        <StageGauge report={report} />
 
-                    {live.potentialInr > 0 ? (
-                        <dl className="mx-auto grid grid-cols-2 text-center inline-full max-inline-80">
-                            <div className="px-3">
-                                <dt className="text-xs font-semibold text-ink-muted">
-                                    Likely to close
-                                </dt>
-                                <dd className="h5 mbs-1 text-ink tabular-nums">
-                                    {live.likelyInr > 0
-                                        ? formatCommission(live.likelyInr, true)
-                                        : "None yet"}
-                                </dd>
-                                <dd className="body-xs mbs-0.5 text-ink-muted">
-                                    {live.likelyCount > 0
-                                        ? `${plural(live.likelyCount, "deal")} near closing`
-                                        : "None near closing"}
-                                </dd>
-                            </div>
-                            <div className="border-s border-border-warm px-3">
-                                <dt className="text-xs font-semibold text-ink-muted">
-                                    Possible commission
-                                </dt>
-                                <dd className="h5 mbs-1 text-ink tabular-nums">
-                                    {formatCommission(live.potentialInr, true)}
-                                </dd>
-                                <dd className="body-xs mbs-0.5 text-ink-muted">
-                                    If all {plural(live.valuedCount, "deal")} sell
-                                </dd>
-                            </div>
-                        </dl>
-                    ) : (
-                        <p className="body-sm rounded-inner bg-surface-muted p-4 text-center text-ink-muted">
-                            Owners have not set a commission on your open deals yet, so there is
-                            nothing to add up.
-                        </p>
-                    )}
+                        {live.potentialInr > 0 ? (
+                            <dl className="mx-auto grid grid-cols-2 text-center inline-full max-inline-80">
+                                <div className="px-3">
+                                    <dt className="text-xs font-semibold text-ink-muted">
+                                        Likely to close
+                                    </dt>
+                                    <dd className="h5 mbs-1 text-ink tabular-nums">
+                                        {live.likelyInr > 0
+                                            ? formatCommission(live.likelyInr, true)
+                                            : "None yet"}
+                                    </dd>
+                                    <dd className="body-xs mbs-0.5 text-ink-muted">
+                                        {live.likelyCount > 0
+                                            ? `${plural(live.likelyCount, "deal")} near closing`
+                                            : "None near closing"}
+                                    </dd>
+                                </div>
+                                <div className="border-s border-border-warm px-3">
+                                    <dt className="text-xs font-semibold text-ink-muted">
+                                        Possible commission
+                                    </dt>
+                                    <dd className="h5 mbs-1 text-ink tabular-nums">
+                                        {formatCommission(live.potentialInr, true)}
+                                    </dd>
+                                    <dd className="body-xs mbs-0.5 text-ink-muted">
+                                        If all {plural(live.valuedCount, "deal")} sell
+                                    </dd>
+                                </div>
+                            </dl>
+                        ) : (
+                            <p className="body-sm rounded-inner bg-surface-muted p-4 text-center text-ink-muted">
+                                Owners have not set a commission on your open deals yet, so there is
+                                nothing to add up.
+                            </p>
+                        )}
 
-                    {/* Stages + chips stay one block so the divider has equal space above and below. */}
-                    <div className="flex flex-col">
                         <dl className="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-4">
                             {DEAL_STAGE_ORDER.map((stage) => {
                                 const count = live.stageCounts[stage];
@@ -210,30 +207,35 @@ export function EarningsPipeline({
                                 );
                             })}
                         </dl>
-
-                        {live.stalledCount > 0 || live.acceptedOfferCount > 0 ? (
-                            <ul className="mbs-7 flex flex-wrap justify-center gap-2 border-bs border-border-warm pbs-4 sm:pbs-5">
-                                {live.acceptedOfferCount > 0 ? (
-                                    <li className="body-xs inline-flex items-center gap-1.5 rounded-full bg-chart-4/12 px-3 py-1.5 font-semibold text-brand-text">
-                                        <Handshake aria-hidden className="block-3.5 inline-3.5" />
-                                        {plural(live.acceptedOfferCount, "offer")} accepted, ready
-                                        to close
-                                    </li>
-                                ) : null}
-                                {live.stalledCount > 0 ? (
-                                    <li>
-                                        <Link
-                                            href={BROKER_PIPELINE_HREF}
-                                            className="body-xs inline-flex items-center gap-1.5 rounded-full bg-urgent-soft px-3 py-1.5 font-semibold text-urgent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring pointer-coarse:min-block-11"
-                                        >
-                                            <Clock aria-hidden className="block-3.5 inline-3.5" />
-                                            {plural(live.stalledCount, "deal")} quiet for 2+ weeks
-                                        </Link>
-                                    </li>
-                                ) : null}
-                            </ul>
-                        ) : null}
                     </div>
+
+                    {live.stalledCount > 0 || live.acceptedOfferCount > 0 ? (
+                        <ul
+                            className="
+                              flex flex-wrap justify-center gap-2 border-bs border-border-warm
+                              py-4 -mbe-4 sm:py-5 sm:-mbe-5
+                            "
+                        >
+                            {live.acceptedOfferCount > 0 ? (
+                                <li className="body-xs inline-flex items-center gap-1.5 rounded-full bg-chart-4/12 px-3 py-1.5 font-semibold text-brand-text">
+                                    <Handshake aria-hidden className="block-3.5 inline-3.5" />
+                                    {plural(live.acceptedOfferCount, "offer")} accepted, ready to
+                                    close
+                                </li>
+                            ) : null}
+                            {live.stalledCount > 0 ? (
+                                <li>
+                                    <Link
+                                        href={BROKER_PIPELINE_HREF}
+                                        className="body-xs inline-flex items-center gap-1.5 rounded-full bg-urgent-soft px-3 py-1.5 font-semibold text-urgent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring pointer-coarse:min-block-11"
+                                    >
+                                        <Clock aria-hidden className="block-3.5 inline-3.5" />
+                                        {plural(live.stalledCount, "deal")} quiet for 2+ weeks
+                                    </Link>
+                                </li>
+                            ) : null}
+                        </ul>
+                    ) : null}
                 </div>
             )}
         </EarningsCard>
