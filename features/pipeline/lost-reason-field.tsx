@@ -5,7 +5,11 @@ import { RadioGroup } from "@/components/ui/radio-group";
 
 import { ChoiceCard } from "@/features/pipeline/choice-card";
 import { differenceLine } from "@/features/pipeline/final-price-field";
-import { DEAL_LOST_REASON_LABEL, OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
+import {
+    DEAL_LOST_REASON_DETAIL,
+    DEAL_LOST_REASON_LABEL,
+    OFFER_STATUS_LABEL,
+} from "@/features/pipeline/stage-meta";
 import type { DealItem, DealLostReason } from "@/features/pipeline/types";
 
 /** Order a broker would scan them in: price first, it is the most common. */
@@ -15,14 +19,6 @@ const LOST_REASON_ORDER: DealLostReason[] = [
     "not_responding",
     "changed_mind",
 ];
-
-/** Short line under each reason so the four never blur together. */
-const LOST_REASON_DETAIL: Record<DealLostReason, string> = {
-    price: "Client and owner could not meet on the amount",
-    bought_elsewhere: "Client took another property",
-    not_responding: "No reply to calls or messages",
-    changed_mind: "Client is no longer looking",
-};
 
 /** Error sentence when Confirm is pressed with nothing picked, else null. */
 export function validateLostReason(reason: DealLostReason | null): string | null {
@@ -93,7 +89,7 @@ export function LostReasonField({
                                     {offerGap ? ` · ${offerGap}` : null}
                                 </>
                             ) : (
-                                LOST_REASON_DETAIL[key]
+                                DEAL_LOST_REASON_DETAIL[key]
                             )
                         }
                     />

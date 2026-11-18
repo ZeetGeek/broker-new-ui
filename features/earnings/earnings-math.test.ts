@@ -2,8 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+    bucketUnitFor,
     buildEarningsReport,
+    chartCoverageNote,
+    comparisonFor,
     dealCommissionInr,
+    earningsByArea,
+    earningsHeadline,
+    earningsHeadlineLines,
     previousWindow,
     resolveEarningsWindow,
 } from "@/features/earnings/earnings-math";
@@ -106,5 +112,137 @@ test("report counts only deals resolved inside the window", () => {
     assert.equal(
         report.buckets.reduce((s, b) => s + b.totalInr, 0),
         report.earnedInr,
+    );
+});
+
+test("comparisons line up with calendar months and the same stretch last year", () => {
+    const at = (preset: Parameters<typeof resolveEarningsWindow>[0]["preset"]) => {
+        const selection = { preset };
+        return comparisonFor(selection, resolveEarningsWindow(selection, NOW), NOW);
+    };
+
+    const lastMonth = at("last_month");
+    assert.equal(lastMonth?.phrase, "September");
+    assert.equal(lastMonth?.window.from?.getMonth(), 8);
+    assert.equal(lastMonth?.window.to.getDate(), 30);
+
+    const m6 = at("last_6_months"); // 1 Jun – 17 Nov 2026
+    assert.equal(m6?.phrase, "the 6 months before");
+    assert.equal(m6?.window.from?.getFullYear(), 2025);
+    assert.equal(m6?.window.from?.getMonth(), 11); // 1 Dec 2025
+    assert.equal(m6?.window.to.getMonth(), 4); // 17 May 2026
+
+    const fy = at("this_fy"); // 1 Apr – 17 Nov 2026
+    assert.equal(fy?.window.from?.getFullYear(), 2025);
+    assert.equal(fy?.window.from?.getMonth(), 3);
+    assert.equal(fy?.window.to.getFullYear(), 2025);
+    assert.equal(fy?.window.to.getMonth(), 10);
+
+    assert.equal(at("all_time"), null);
+});
+
+test("headline says what the period means", () => {
+    const deals = [deal({}), deal({ resolvedAt: new Date(2026, 9, 5).toISOString() })];
+    const report = buildEarningsReport(deals, { preset: "last_month" }, (k) => k, NOW);
+    // Last month is October: 1 deal; nothing in September.
+    assert.equal(earningsHeadline(report), "1 deal sold.");
+
+    const twoMonths = buildEarningsReport(
+        [...deals, deal({ resolvedAt: new Date(2026, 8, 5).toISOString() })],
+        { preset: "last_month" },
+        (k) => k,
+        NOW,
+    );
+    assert.equal(earningsHeadline(twoMonths), "Same as September.");
+});
+
+test("bucket grain scales with range length; long spans use years not weeks", () => {
+    assert.equal(
+        bucketUnitFor({ from: new Date(2026, 10, 1), to: new Date(2026, 10, 17) }),
+        "week",
+    );
+    assert.equal(
+        bucketUnitFor({ from: new Date(2026, 5, 1), to: new Date(2026, 10, 17) }),
+        "month",
+    );
+    assert.equal(
+        bucketUnitFor({ from: new Date(2020, 0, 1), to: new Date(2026, 10, 17) }),
+        "quarter",
+    );
+    assert.equal(bucketUnitFor({ from: new Date(2010, 9, 10), to: new Date(2026, 9, 10) }), "year");
+});
+
+test("long custom ranges chart by year without trimming a 16-year window", () => {
+    const deals = [
+        deal({ resolvedAt: new Date(2010, 10, 5).toISOString() }),
+        deal({ resolvedAt: new Date(2026, 10, 5).toISOString() }),
+    ];
+    const report = buildEarningsReport(
+        deals,
+        {
+            preset: "custom",
+            customFrom: new Date(2010, 9, 10),
+            customTo: new Date(2026, 9, 10),
+        },
+        (k) => k,
+        NOW,
+    );
+
+    assert.equal(report.bucketUnit, "year");
+    assert.equal(report.chartTrimmed, false);
+    assert.equal(chartCoverageNote(report), null);
+    assert.ok(report.buckets.length <= 36);
+    assert.ok(report.buckets.length >= 16);
+});
+
+test("rotating headline lines follow sold count, rupees, and the date filter", () => {
+    const deals = [deal({}), deal({ resolvedAt: new Date(2026, 9, 5).toISOString() })];
+    const october = buildEarningsReport(deals, { preset: "last_month" }, (k) => k, NOW);
+    const octoberLines = earningsHeadlineLines(october);
+
+    assert.ok(octoberLines.includes("1 deal sold."));
+    assert.ok(octoberLines.some((line) => /estimated this period\.$/.test(line)));
+    assert.ok(octoberLines.some((line) => line.startsWith("Win rate ")));
+
+    const emptyPeriod = buildEarningsReport([], { preset: "this_month" }, (k) => k, NOW);
+    const emptyLines = earningsHeadlineLines(emptyPeriod);
+    assert.ok(emptyLines.includes("Nothing sold in this period yet."));
+    assert.ok(emptyLines.includes("No commission earned in this period yet."));
+});
+
+test("earnings by area groups locality + city, most money first", () => {
+    const rows = earningsByArea([
+        { deal: deal({ property: { locality: "Baner", city: "Pune" } }), commissionInr: 50_000 },
+        { deal: deal({ property: { locality: " baner ", city: "Pune" } }), commissionInr: 30_000 },
+        { deal: deal({ property: { locality: "Baner", city: "Surat" } }), commissionInr: 10_000 },
+        { deal: deal({ property: { locality: "Adajan", city: "Surat" } }), commissionInr: null },
+    ]);
+    assert.deepEqual(
+        rows.map((r) => [r.locality, r.city, r.earnedInr, r.closedCount, r.unvaluedCount]),
+        [
+            ["Baner", "Pune", 80_000, 2, 0],
+            ["Baner", "Surat", 10_000, 1, 0],
+            ["Adajan", "Surat", 0, 1, 1],
+        ],
+    );
+});
+
+test("report areas only count deals sold in the selected period", () => {
+    const report = buildEarningsReport(
+        [
+            deal({ property: { locality: "Vesu" } }),
+            deal({
+                property: { locality: "Vesu" },
+                resolvedAt: new Date(2025, 0, 5).toISOString(),
+            }),
+            deal({ property: { locality: "Vesu" }, status: "lost" }),
+        ],
+        { preset: "this_month" },
+        (key) => key,
+        NOW,
+    );
+    assert.deepEqual(
+        report.areas.map((r) => [r.locality, r.closedCount]),
+        [["Vesu", 1]],
     );
 });

@@ -1,6 +1,19 @@
 .card {
     container: task-card / inline-size;
 }
+.tabsBar {
+    position: relative;
+    z-index: 1;
+    padding-block-end: 0.5rem;
+    margin-inline: calc(-1 * var(--footer-inset, 1rem));
+    padding-inline: var(--footer-inset, 1rem);
+    background: var(--color-surface);
+    border-block-end: 1px solid transparent;
+    transition: border-color 160ms ease-out;
+}
+.tabsBar[data-scrolled="true"] {
+    border-block-end-color: var(--color-border-warm);
+}
 .tabs {
     align-self: flex-start;
     max-inline-size: 100%;
@@ -137,6 +150,10 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+/* Must follow .scrollViewport so this wins over the default 1.5rem gap. */
+.scrollViewport.scrollViewportFlush {
+    margin-block-start: 0;
+}
 .scrollViewport::-webkit-scrollbar {
     display: none;
 }
@@ -210,7 +227,7 @@
 }
 /* Higher specificity than planner .dayHeading so the shared gutter wins. */
 .paper .dayNav {
-    padding: 0.25rem var(--dashboard-row-gutter) 0.5rem;
+    padding: 0.625rem var(--dashboard-row-gutter) 0.5rem;
 }
 .dayNavLabel {
     min-inline-size: 0;

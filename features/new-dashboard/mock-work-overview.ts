@@ -8,6 +8,8 @@ export const MOCK_PIPELINE = PIPELINE_STAGES.slice(0, 4).map((stage, index) => (
     color: COLORS[index],
 }));
 
+export type PreviewVisitPhase = "upcoming" | "running" | "needs_update";
+
 export type PreviewVisit = {
     id: string;
     time: string;
@@ -15,10 +17,14 @@ export type PreviewVisit = {
     client: string;
     property: string;
     location: string;
-    needsUpdate: boolean;
+    phase: PreviewVisitPhase;
     outcome?: "attended" | "notAttended";
     coverImage: string;
     owner: string;
+    amountInr: number;
+    isRent: boolean;
+    commissionPercent?: number | null;
+    commissionAmountInr?: number | null;
 };
 
 export const MOCK_VISITS: PreviewVisit[] = [
@@ -31,7 +37,10 @@ export const MOCK_VISITS: PreviewVisit[] = [
         client: "Aarav Shah",
         property: "3 BHK · Happy Elegance",
         location: "Vesu, Surat",
-        needsUpdate: true,
+        phase: "needs_update",
+        amountInr: 1_25_00_000,
+        isRent: false,
+        commissionPercent: 1.5,
     },
     {
         id: "visit-4",
@@ -40,9 +49,12 @@ export const MOCK_VISITS: PreviewVisit[] = [
         time: "10:00 AM",
         end: "10:45 AM",
         client: "Riya Joshi",
-        property: "4 BHK � Palm Residency",
+        property: "4 BHK · Palm Residency",
         location: "Pal, Surat",
-        needsUpdate: true,
+        phase: "needs_update",
+        amountInr: 2_10_00_000,
+        isRent: false,
+        commissionPercent: 2,
     },
     {
         id: "visit-2",
@@ -53,7 +65,10 @@ export const MOCK_VISITS: PreviewVisit[] = [
         client: "Priya Desai",
         property: "2 BHK · Orchid Homes",
         location: "Adajan, Surat",
-        needsUpdate: false,
+        phase: "running",
+        amountInr: 28_000,
+        isRent: true,
+        commissionAmountInr: 14_000,
     },
     {
         id: "visit-5",
@@ -62,9 +77,12 @@ export const MOCK_VISITS: PreviewVisit[] = [
         time: "12:30 PM",
         end: "1:15 PM",
         client: "Rahul Mehta",
-        property: "3 BHK � Green Meadows",
+        property: "3 BHK · Green Meadows",
         location: "Althan, Surat",
-        needsUpdate: false,
+        phase: "upcoming",
+        amountInr: 95_00_000,
+        isRent: false,
+        commissionPercent: 1,
     },
     {
         id: "visit-6",
@@ -73,9 +91,12 @@ export const MOCK_VISITS: PreviewVisit[] = [
         time: "2:00 PM",
         end: "2:45 PM",
         client: "Ananya Shah",
-        property: "2 BHK � River View Apartments",
+        property: "2 BHK · River View Apartments",
         location: "Jahangirpura, Surat",
-        needsUpdate: false,
+        phase: "upcoming",
+        amountInr: 22_000,
+        isRent: true,
+        commissionAmountInr: null,
     },
     {
         id: "visit-3",
@@ -86,7 +107,10 @@ export const MOCK_VISITS: PreviewVisit[] = [
         client: "Mehul Patel",
         property: "Office · Business Centre",
         location: "Piplod, Surat",
-        needsUpdate: false,
+        phase: "upcoming",
+        amountInr: 1_85_00_000,
+        isRent: false,
+        commissionPercent: 2,
     },
     {
         id: "visit-7",
@@ -95,9 +119,12 @@ export const MOCK_VISITS: PreviewVisit[] = [
         time: "5:00 PM",
         end: "5:45 PM",
         client: "Dev Shah",
-        property: "Villa � Shantivan Bungalows",
+        property: "Villa · Shantivan Bungalows",
         location: "Dumas, Surat",
-        needsUpdate: false,
+        phase: "upcoming",
+        amountInr: 3_40_00_000,
+        isRent: false,
+        commissionPercent: 1.25,
     },
     {
         id: "visit-8",
@@ -106,56 +133,11 @@ export const MOCK_VISITS: PreviewVisit[] = [
         time: "6:00 PM",
         end: "6:45 PM",
         client: "Neha Patel",
-        property: "Shop � High Street Plaza",
+        property: "Shop · High Street Plaza",
         location: "City Light, Surat",
-        needsUpdate: false,
-    },
-    {
-        id: "visit-9",
-        coverImage: "/properties/1.jpg",
-        owner: "Kavita Shah",
-        time: "7:00 AM",
-        end: "7:30 AM",
-        client: "Ishaan Mehta",
-        property: "3 BHK � Sunrise Heights",
-        location: "Vesu, Surat",
-        needsUpdate: false,
-        outcome: "attended",
-    },
-    {
-        id: "visit-10",
-        coverImage: "/properties/2.jpg",
-        owner: "Rajesh Patel",
-        time: "8:00 AM",
-        end: "8:30 AM",
-        client: "Sneha Desai",
-        property: "2 BHK � Lakeview Residency",
-        location: "Pal, Surat",
-        needsUpdate: false,
-        outcome: "attended",
-    },
-    {
-        id: "visit-11",
-        coverImage: "/properties/3.jpg",
-        owner: "Alpa Mehta",
-        time: "7:30 AM",
-        end: "8:00 AM",
-        client: "Kunal Shah",
-        property: "Villa � Garden Enclave",
-        location: "Dumas, Surat",
-        needsUpdate: false,
-        outcome: "notAttended",
-    },
-    {
-        id: "visit-12",
-        coverImage: "/properties/4.jpg",
-        owner: "Vivek Joshi",
-        time: "8:30 AM",
-        end: "9:00 AM",
-        client: "Pooja Patel",
-        property: "Office � Trade Square",
-        location: "Piplod, Surat",
-        needsUpdate: false,
-        outcome: "notAttended",
+        phase: "upcoming",
+        amountInr: 75_00_000,
+        isRent: false,
+        commissionPercent: null,
     },
 ];

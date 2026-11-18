@@ -23,6 +23,7 @@ import {
     Trash2,
     X,
 } from "@/components/shared/icons";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -38,11 +39,22 @@ import { columnValue } from "@/features/pipeline/deal-attention";
 import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
 import { DashboardTasksCard } from "@/features/tasks/dashboard-tasks-card";
 
-import { MOCK_PIPELINE, MOCK_VISITS, type PreviewVisit } from "./mock-work-overview";
+import {
+    MOCK_PIPELINE,
+    MOCK_VISITS,
+    type PreviewVisit,
+    type PreviewVisitPhase,
+} from "./mock-work-overview";
 
 import nextVisitStyles from "./next-visit.module.css";
 import taskStyles from "./task-card.module.css";
 import visitStyles from "./visit-card.module.css";
+
+const VISIT_FILTER_TABS: { value: PreviewVisitPhase; label: string }[] = [
+    { value: "upcoming", label: "Upcoming" },
+    { value: "running", label: "Running" },
+    { value: "needs_update", label: "Needs update" },
+];
 
 const CARD =
     "flex min-inline-0 flex-col rounded-card bg-surface p-4 shadow-sm ring-1 ring-border-warm/50 sm:p-5";
@@ -54,10 +66,12 @@ function useScrollFooter() {
     const viewportRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const [hasMore, setHasMore] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
     const measure = useCallback(() => {
         const viewport = viewportRef.current;
         if (viewport) {
             setHasMore(viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1);
+            setScrolled(viewport.scrollTop > 1);
         }
     }, []);
     useEffect(() => {
@@ -66,7 +80,7 @@ function useScrollFooter() {
         if (contentRef.current) observer.observe(contentRef.current);
         return () => observer.disconnect();
     }, [measure]);
-    return { viewportRef, contentRef, hasMore, measure };
+    return { viewportRef, contentRef, hasMore, scrolled, measure };
 }
 
 function PipelineOverview() {
@@ -229,18 +243,22 @@ function VisitDetails({ visit, children }: { visit: PreviewVisit; children: Reac
                     className={cn(
                         TAG,
                         "self-start",
-                        visit.needsUpdate
+                        visit.phase === "needs_update"
                             ? "bg-urgent-soft text-urgent"
-                            : "bg-brand-soft text-brand-text",
+                            : visit.phase === "running"
+                              ? "bg-sky-100 text-sky-800"
+                              : "bg-brand-soft text-brand-text",
                     )}
                 >
                     {visit.outcome
                         ? visit.outcome === "attended"
                             ? "Attended"
                             : "Not attended"
-                        : visit.needsUpdate
+                        : visit.phase === "needs_update"
                           ? "Needs update"
-                          : "Confirmed"}
+                          : visit.phase === "running"
+                            ? "Running"
+                            : "Upcoming"}
                 </span>
             </PopoverContent>
         </Popover>
@@ -248,7 +266,7 @@ function VisitDetails({ visit, children }: { visit: PreviewVisit; children: Reac
 }
 
 function NextVisit() {
-    const visit = MOCK_VISITS.find((item) => !item.needsUpdate && !item.outcome);
+    const visit = MOCK_VISITS.find((item) => item.phase === "upcoming" && !item.outcome);
     if (!visit) return null;
 
     return (
@@ -362,34 +380,35 @@ function TodayVisits() {
         viewportRef: visitViewportRef,
         contentRef: visitContentRef,
         hasMore: visitsHaveMore,
+        scrolled: visitsScrolled,
         measure: measureVisits,
     } = useScrollFooter();
     const [visits, setVisits] = useState(MOCK_VISITS);
     const [visitAnnouncement, setVisitAnnouncement] = useState("");
-    const [filter, setFilter] = useState<
-        "scheduled" | "needsUpdate" | "confirmed" | "completed" | "notAttended"
-    >("scheduled");
-    const scheduled = visits.length;
-    const needsUpdate = visits.filter((visit) => visit.needsUpdate).length;
-    const completed = visits.filter((visit) => visit.outcome === "attended").length;
-    const notAttended = visits.filter((visit) => visit.outcome === "notAttended").length;
-    const visitTabOptions = [
-        ["scheduled", "Today", scheduled],
-        ["needsUpdate", "Needs update", needsUpdate],
-        ["completed", "Completed", completed],
-        ["notAttended", "Not attended", notAttended],
-    ] as const;
-    const visible = visits.filter((visit) => {
-        if (filter === "needsUpdate") return visit.needsUpdate;
-        if (filter === "confirmed") return !visit.needsUpdate && !visit.outcome;
-        if (filter === "completed") return visit.outcome === "attended";
-        if (filter === "notAttended") return visit.outcome === "notAttended";
-        return true;
-    });
-    const groups =
-        filter === "scheduled"
-            ? (["needsUpdate", "confirmed", "completed", "notAttended"] as const)
-            : ([filter] as const);
+    const [filter, setFilter] = useState<PreviewVisitPhase>("upcoming");
+    const activeVisits = visits.filter((visit) => !visit.outcome);
+    const needsUpdate = activeVisits.filter((visit) => visit.phase === "needs_update").length;
+    const visible = activeVisits.filter((visit) => visit.phase === filter);
+
+    const markOutcome = (visitId: string, client: string, outcome: "attended" | "notAttended") => {
+        setVisits((current) =>
+            current.map((item) => (item.id === visitId ? { ...item, outcome } : item)),
+        );
+        setVisitAnnouncement(
+            `Visit with ${client} marked as ${outcome === "attended" ? "attended" : "not attended"} in this preview.`,
+        );
+    };
+
+    const removeVisit = (visitId: string, client: string) => {
+        setVisits((current) => current.filter((item) => item.id !== visitId));
+        setVisitAnnouncement(`Visit with ${client} deleted from this preview.`);
+    };
+
+    useEffect(() => {
+        const viewport = visitViewportRef.current;
+        if (viewport) viewport.scrollTop = 0;
+        measureVisits();
+    }, [filter, measureVisits, visitViewportRef]);
 
     return (
         <section
@@ -417,23 +436,32 @@ function TodayVisits() {
                     </Button>
                 </div>
             </header>
-            <SlidingTabs
-                value={filter}
-                options={visitTabOptions.map(([value, label, count]) => ({
-                    value,
-                    label: (
-                        <>
-                            {label}
-                            {count > 0 ? <span className={taskStyles.count}>{count}</span> : null}
-                        </>
-                    ),
-                }))}
-                onValueChange={setFilter}
-                label="Filter visits"
-                panelId="visit-list-panel"
-                className={cn(taskStyles.tabs, visitStyles.tabs)}
-                tabClassName={cn(taskStyles.tab, visitStyles.tab)}
-            />
+            <div className={visitStyles.tabsBar} data-scrolled={visitsScrolled ? "true" : "false"}>
+                <SlidingTabs
+                    value={filter}
+                    options={VISIT_FILTER_TABS.map((tab) => {
+                        const count = activeVisits.filter(
+                            (visit) => visit.phase === tab.value,
+                        ).length;
+                        return {
+                            value: tab.value,
+                            label: (
+                                <>
+                                    {tab.label}
+                                    {count > 0 ? (
+                                        <span className={taskStyles.count}>{count}</span>
+                                    ) : null}
+                                </>
+                            ),
+                        };
+                    })}
+                    onValueChange={setFilter}
+                    label="Filter visits"
+                    panelId="visit-list-panel"
+                    className={cn(taskStyles.tabs, visitStyles.tabs)}
+                    tabClassName={cn(taskStyles.tab, visitStyles.tab)}
+                />
+            </div>
             <div
                 ref={visitViewportRef}
                 onScroll={measureVisits}
@@ -443,221 +471,175 @@ function TodayVisits() {
                 aria-label="Today's visit list"
             >
                 <div ref={visitContentRef} className={taskStyles.list}>
-                    <div
-                        key={filter}
-                        id="visit-list-panel"
-                        role="tabpanel"
-                        className="t-tabs-panel"
-                    >
-                        {groups.map((group) => {
-                            const items = visible.filter((visit) =>
-                                group === "needsUpdate"
-                                    ? visit.needsUpdate
-                                    : group === "completed"
-                                      ? visit.outcome === "attended"
-                                      : group === "notAttended"
-                                        ? visit.outcome === "notAttended"
-                                        : !visit.needsUpdate && !visit.outcome,
-                            );
-                            if (!items.length) return null;
-                            return (
-                                <div key={group}>
-                                    {filter === "scheduled" ? (
-                                        <h3
+                    <div key={filter} id="visit-list-panel" role="tabpanel">
+                        <ul className={visitStyles.list}>
+                            {visible.map((visit) => (
+                                <li key={visit.id} className={visitStyles.row}>
+                                    <div className={visitStyles.schedule}>
+                                        <p
                                             className={cn(
-                                                visitStyles.group,
-                                                group === "needsUpdate" && "text-urgent",
+                                                visitStyles.time,
+                                                visit.phase === "needs_update" &&
+                                                    visitStyles.timeNeedsUpdate,
                                             )}
                                         >
-                                            {group === "needsUpdate"
-                                                ? "Needs update"
-                                                : group === "completed"
-                                                  ? "Completed"
-                                                  : group === "notAttended"
-                                                    ? "Not attended"
-                                                    : "Confirmed"}
-                                            <span
-                                                className={cn(
-                                                    group === "needsUpdate"
-                                                        ? "text-urgent"
-                                                        : "text-ink-subtle",
-                                                )}
-                                            >
-                                                {items.length}
-                                            </span>
-                                        </h3>
-                                    ) : null}
-                                    <ul className="divide-y divide-border-warm/60">
-                                        {items.map((visit) => (
-                                            <li key={visit.id} className={visitStyles.row}>
-                                                <div className={visitStyles.cover}>
-                                                    <Building
-                                                        aria-hidden
-                                                        className={visitStyles.coverFallback}
-                                                    />
-                                                    <AppImage
-                                                        src={visit.coverImage}
-                                                        alt={`Cover of ${visit.property}`}
-                                                        fill
-                                                        sizes="104px"
-                                                    />
-                                                </div>
-                                                <div className={visitStyles.propertyInfo}>
-                                                    <p
-                                                        className={cn(
-                                                            visitStyles.time,
-                                                            visit.needsUpdate &&
-                                                                visitStyles.timeNeedsUpdate,
-                                                        )}
-                                                    >
-                                                        <Clock aria-hidden />
-                                                        <span>
-                                                            {visit.time} &ndash; {visit.end}
-                                                        </span>
-                                                    </p>
-                                                    <VisitDetails visit={visit}>
-                                                        <button
-                                                            type="button"
-                                                            className={visitStyles.propertyTitle}
-                                                            title="View visit"
-                                                            aria-label={`View visit for ${visit.property} with ${visit.client}`}
-                                                        >
-                                                            {visit.property}
-                                                        </button>
-                                                    </VisitDetails>
-                                                    <div className={visitStyles.metadata}>
-                                                        <p className={visitStyles.location}>
-                                                            <MapPin aria-hidden />
-                                                            {visit.location}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <dl className={visitStyles.people}>
-                                                    <div>
-                                                        <dt>Client</dt>
-                                                        <dd>{visit.client}</dd>
-                                                    </div>
-                                                    <div>
-                                                        <dt>Owner</dt>
-                                                        <dd>{visit.owner}</dd>
-                                                    </div>
-                                                </dl>
-                                                <div className={visitStyles.actions}>
-                                                    {visit.needsUpdate ? (
-                                                        <>
-                                                            {(
-                                                                ["attended", "notAttended"] as const
-                                                            ).map((outcome) => (
-                                                                <Button
-                                                                    key={outcome}
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className={
-                                                                        outcome === "attended"
-                                                                            ? "text-brand hover:bg-brand-soft hover:text-brand-text"
-                                                                            : "text-danger hover:bg-danger/5 hover:text-danger"
-                                                                    }
-                                                                    title={
-                                                                        outcome === "attended"
-                                                                            ? "Mark as attended"
-                                                                            : "Mark as not attended"
-                                                                    }
-                                                                    aria-label={`Mark visit with ${visit.client} as ${outcome === "attended" ? "attended" : "not attended"}`}
-                                                                    onClick={() => {
-                                                                        setVisits((current) =>
-                                                                            current.map((item) =>
-                                                                                item.id === visit.id
-                                                                                    ? {
-                                                                                          ...item,
-                                                                                          needsUpdate: false,
-                                                                                          outcome,
-                                                                                      }
-                                                                                    : item,
-                                                                            ),
-                                                                        );
-                                                                        setVisitAnnouncement(
-                                                                            `Visit with ${visit.client} marked as ${outcome === "attended" ? "attended" : "not attended"} in this preview.`,
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    {outcome === "attended" ? (
-                                                                        <Check aria-hidden />
-                                                                    ) : (
-                                                                        <X aria-hidden />
-                                                                    )}
-                                                                </Button>
-                                                            ))}
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Popover>
-                                                                <PopoverTrigger
-                                                                    render={
-                                                                        <Button
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            className="text-ink-subtle hover:bg-surface-muted hover:text-ink"
-                                                                            aria-label={`Call ${visit.client}`}
-                                                                            title="Call client"
-                                                                        />
-                                                                    }
-                                                                >
-                                                                    <CallIcon aria-hidden />
-                                                                </PopoverTrigger>
-                                                                <PopoverContent
-                                                                    align="end"
-                                                                    className="max-inline-[calc(100vw-2rem)]"
-                                                                >
-                                                                    <PopoverTitle>
-                                                                        {visit.client}
-                                                                    </PopoverTitle>
-                                                                    <p className="body-sm text-ink-muted">
-                                                                        No client phone number is
-                                                                        available in this preview.
-                                                                    </p>
-                                                                </PopoverContent>
-                                                            </Popover>
+                                            {visit.time.endsWith(visit.end.slice(-2))
+                                                ? visit.time.slice(0, -3)
+                                                : visit.time}
+                                            &ndash;{visit.end}
+                                        </p>
+                                        <div className={visitStyles.actions}>
+                                            {visit.phase === "needs_update" ? (
+                                                <>
+                                                    {(["attended", "notAttended"] as const).map(
+                                                        (outcome) => (
                                                             <Button
+                                                                key={outcome}
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                className="text-danger hover:bg-danger/5 hover:text-danger"
-                                                                aria-label={`Delete visit with ${visit.client}`}
-                                                                title="Delete visit"
-                                                                onClick={() => {
-                                                                    setVisits((current) =>
-                                                                        current.filter(
-                                                                            (item) =>
-                                                                                item.id !==
-                                                                                visit.id,
-                                                                        ),
-                                                                    );
-                                                                    setVisitAnnouncement(
-                                                                        `Visit with ${visit.client} deleted from this preview.`,
-                                                                    );
-                                                                }}
+                                                                className={
+                                                                    outcome === "attended"
+                                                                        ? "text-brand hover:bg-brand-soft hover:text-brand-text"
+                                                                        : "text-danger hover:bg-danger/5 hover:text-danger"
+                                                                }
+                                                                title={
+                                                                    outcome === "attended"
+                                                                        ? "Mark as attended"
+                                                                        : "Mark as not attended"
+                                                                }
+                                                                aria-label={`Mark visit with ${visit.client} as ${outcome === "attended" ? "attended" : "not attended"}`}
+                                                                onClick={() =>
+                                                                    markOutcome(
+                                                                        visit.id,
+                                                                        visit.client,
+                                                                        outcome,
+                                                                    )
+                                                                }
                                                             >
-                                                                <Trash2 aria-hidden />
+                                                                {outcome === "attended" ? (
+                                                                    <Check aria-hidden />
+                                                                ) : (
+                                                                    <X aria-hidden />
+                                                                )}
                                                             </Button>
-                                                        </>
+                                                        ),
                                                     )}
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            );
-                        })}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Popover>
+                                                        <PopoverTrigger
+                                                            render={
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="text-ink-subtle hover:bg-surface-muted hover:text-ink"
+                                                                    aria-label={`Call ${visit.client}`}
+                                                                    title="Call client"
+                                                                />
+                                                            }
+                                                        >
+                                                            <CallIcon aria-hidden />
+                                                        </PopoverTrigger>
+                                                        <PopoverContent
+                                                            align="end"
+                                                            className="max-inline-[calc(100vw-2rem)]"
+                                                        >
+                                                            <PopoverTitle>
+                                                                {visit.client}
+                                                            </PopoverTitle>
+                                                            <p className="body-sm text-ink-muted">
+                                                                No phone number on this Client yet.
+                                                                Open the Client record to add one,
+                                                                then you can call from here.
+                                                            </p>
+                                                        </PopoverContent>
+                                                    </Popover>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-danger hover:bg-danger/5 hover:text-danger"
+                                                        aria-label={`Delete visit with ${visit.client}`}
+                                                        title="Delete visit"
+                                                        onClick={() =>
+                                                            removeVisit(visit.id, visit.client)
+                                                        }
+                                                    >
+                                                        <Trash2 aria-hidden />
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className={visitStyles.details}>
+                                        <div className={visitStyles.cover}>
+                                            <Building
+                                                aria-hidden
+                                                className={visitStyles.coverFallback}
+                                            />
+                                            <AppImage
+                                                src={visit.coverImage}
+                                                alt={`Cover of ${visit.property}`}
+                                                fill
+                                                sizes="64px"
+                                            />
+                                        </div>
+                                        <div className={visitStyles.property}>
+                                            <VisitDetails visit={visit}>
+                                                <button
+                                                    type="button"
+                                                    className={visitStyles.propertyTitle}
+                                                    title="View visit"
+                                                    aria-label={`View visit for ${visit.property} with ${visit.client}`}
+                                                >
+                                                    {visit.property}
+                                                </button>
+                                            </VisitDetails>
+                                            <p className={visitStyles.location}>
+                                                <MapPin aria-hidden />
+                                                {visit.location}
+                                            </p>
+                                            <div className={visitStyles.people}>
+                                                <p className={visitStyles.person}>
+                                                    <span className={visitStyles.personRole}>
+                                                        Client
+                                                    </span>
+                                                    <span className={visitStyles.personName}>
+                                                        {visit.client}
+                                                    </span>
+                                                </p>
+                                                <p className={visitStyles.person}>
+                                                    <span className={visitStyles.personRole}>
+                                                        Owner
+                                                    </span>
+                                                    <span className={visitStyles.personName}>
+                                                        {visit.owner}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className={visitStyles.price}>
+                                            <PriceWithCommission
+                                                amountInr={visit.amountInr}
+                                                isRent={visit.isRent}
+                                                commissionPercent={visit.commissionPercent}
+                                                commissionAmountInr={visit.commissionAmountInr}
+                                                audience="broker"
+                                                size="md"
+                                            />
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
                         {!visible.length && (
                             <p className="body-sm py-8 text-center text-ink-muted">
-                                {filter === "needsUpdate"
+                                {filter === "needs_update"
                                     ? "No visits are waiting for an attendance update."
-                                    : filter === "confirmed"
-                                      ? "No confirmed visits yet today."
-                                      : filter === "completed"
-                                        ? "No visits marked as attended today."
-                                        : filter === "notAttended"
-                                          ? "No visits marked as not attended today."
-                                          : "No visits scheduled today. Select Schedule visit to book one."}
+                                    : filter === "running"
+                                      ? "No visits are running right now."
+                                      : "No upcoming visits yet. Select Schedule visit to book one."}
                             </p>
                         )}
                     </div>

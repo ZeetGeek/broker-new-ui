@@ -214,6 +214,7 @@ const MAP = {
     Trash2: "IconTrash",
     Trees: "IconTrees",
     TrendingDown: "IconTrendingDown",
+    TrendingUp: "IconTrendingUp",
     TriangleAlert: "IconAlertTriangle",
     Truck: "IconTruck",
     Type: "IconTypography",

@@ -10,7 +10,9 @@
  */
 import {
     addMonths,
+    addQuarters,
     addWeeks,
+    addYears,
     differenceInCalendarDays,
     endOfDay,
     endOfMonth,
@@ -19,15 +21,22 @@ import {
     isBefore,
     startOfDay,
     startOfMonth,
+    startOfQuarter,
     startOfWeek,
     startOfYear,
     subDays,
     subMonths,
+    subQuarters,
+    subWeeks,
     subYears,
 } from "date-fns";
 
 import { isStalled } from "@/lib/api/pipeline";
+import { formatCommission } from "@/lib/format/commission";
+import { formatDateRangeMedium } from "@/lib/format/date";
+import { plural } from "@/lib/format/plural";
 
+import { DEAL_LOST_REASON_DETAIL } from "@/features/pipeline/stage-meta";
 import {
     DEAL_STAGE_ORDER,
     type DealItem,
@@ -139,6 +148,80 @@ export function previousWindow(window: EarningsWindow): EarningsWindow | null {
     return { from: startOfDay(subDays(window.from, days)), to };
 }
 
+/** What the selected period is compared against, and how to say it in a sentence. */
+export type EarningsComparison = {
+    window: EarningsWindow;
+    /** Noun phrase that follows "vs" or "on": "September", "the 6 months before". */
+    phrase: string;
+};
+
+const MONTH_PRESETS: Partial<Record<EarningsPreset, number>> = {
+    last_3_months: 3,
+    last_6_months: 6,
+    last_9_months: 9,
+    last_12_months: 12,
+};
+
+/**
+ * Calendar-aware comparison. Month presets compare against whole months, and
+ * year-to-date presets against the same stretch a year earlier, so a festive
+ * month is never measured against half of another one. Null for "all time".
+ */
+export function comparisonFor(
+    selection: EarningsSelection,
+    window: EarningsWindow,
+    now = new Date(),
+): EarningsComparison | null {
+    if (!window.from) return null;
+    const months = MONTH_PRESETS[selection.preset];
+    if (months) {
+        return {
+            window: {
+                from: startOfMonth(subMonths(window.from, months)),
+                to: endOfDay(subMonths(window.to, months)),
+            },
+            phrase: `the ${months} months before`,
+        };
+    }
+    switch (selection.preset) {
+        case "this_month":
+            return {
+                window: { from: startOfMonth(subMonths(now, 1)), to: endOfDay(subMonths(now, 1)) },
+                phrase: "the same days last month",
+            };
+        case "last_month": {
+            const prev = subMonths(window.from, 1);
+            return {
+                window: { from: startOfMonth(prev), to: endOfMonth(prev) },
+                phrase: format(prev, "MMMM"),
+            };
+        }
+        case "this_year":
+        case "this_fy":
+            return {
+                window: { from: subYears(window.from, 1), to: endOfDay(subYears(now, 1)) },
+                phrase:
+                    selection.preset === "this_year"
+                        ? "the same time last year"
+                        : "the same time last financial year",
+            };
+        case "last_fy":
+            return {
+                window: { from: subYears(window.from, 1), to: endOfDay(subDays(window.from, 1)) },
+                phrase: "the financial year before",
+            };
+        default: {
+            const prev = previousWindow(window);
+            if (!prev?.from) return null;
+            const days = windowDays({ from: prev.from, to: prev.to });
+            return {
+                window: prev,
+                phrase: days === 1 ? "the day before" : `the ${days} days before`,
+            };
+        }
+    }
+}
+
 function inWindow(iso: string | null | undefined, window: EarningsWindow): boolean {
     if (!iso) return false;
     const at = new Date(iso);
@@ -188,41 +271,132 @@ export type EarningsBucket = {
     totalInr: number;
     closed: number;
     lost: number;
+    /** Estimated commission that walked away with lost deals in this bucket. */
+    lostInr: number;
+    /**
+     * Lost-reason counts in this bucket. Keys are Mark as lost codes or
+     * `"other"` (free text / missing). Labels are applied in the chart UI.
+     */
+    lostReasonCounts: Partial<Record<DealLostReason | "other", number>>;
     /** True for the bucket holding today — it is still filling up. */
     isToDate: boolean;
 };
 
-export type BucketUnit = "week" | "month";
+export type BucketUnit = "week" | "month" | "quarter" | "year";
 
-/** Short windows read better week by week; anything longer, month by month. */
+/**
+ * Grain scales with range length so a 16-year custom range stays readable
+ * (~16 year marks) instead of hundreds of weeks.
+ */
 export function bucketUnitFor(window: { from: Date; to: Date }): BucketUnit {
-    return differenceInCalendarDays(window.to, window.from) <= 62 ? "week" : "month";
+    const days = differenceInCalendarDays(window.to, window.from);
+    if (days <= 62) return "week";
+    if (days <= 36 * 31) return "month"; // up to ~3 years
+    if (days <= 36 * 92) return "quarter"; // up to ~9 years
+    return "year";
+}
+
+/** Plain unit word for copy ("per week", chart titles). */
+export function bucketUnitWord(unit: BucketUnit): string {
+    return unit;
+}
+
+/** Most points a chart draws. Older history is trimmed; the latest stay. */
+const MAX_BUCKETS = 36;
+
+function startOfBucket(date: Date, unit: BucketUnit): Date {
+    switch (unit) {
+        case "week":
+            return startOfWeek(date, { weekStartsOn: 1 });
+        case "month":
+            return startOfMonth(date);
+        case "quarter":
+            return startOfQuarter(date);
+        case "year":
+            return startOfYear(date);
+    }
+}
+
+function addBucket(date: Date, unit: BucketUnit): Date {
+    switch (unit) {
+        case "week":
+            return addWeeks(date, 1);
+        case "month":
+            return addMonths(date, 1);
+        case "quarter":
+            return addQuarters(date, 1);
+        case "year":
+            return addYears(date, 1);
+    }
+}
+
+/** Earliest bucket start that still fits MAX_BUCKETS ending at `to`. */
+function oldestAllowedBucket(to: Date, unit: BucketUnit): Date {
+    switch (unit) {
+        case "week":
+            return startOfWeek(subWeeks(to, MAX_BUCKETS - 1), { weekStartsOn: 1 });
+        case "month":
+            return startOfMonth(subMonths(to, MAX_BUCKETS - 1));
+        case "quarter":
+            return startOfQuarter(subQuarters(to, MAX_BUCKETS - 1));
+        case "year":
+            return startOfYear(subYears(to, MAX_BUCKETS - 1));
+    }
+}
+
+function bucketLabels(cursor: Date, unit: BucketUnit): { label: string; longLabel: string } {
+    switch (unit) {
+        case "week":
+            return {
+                label: format(cursor, "d MMM"),
+                longLabel: `Week of ${format(cursor, "d MMM yyyy")}`,
+            };
+        case "month":
+            return {
+                label: format(cursor, "MMM"),
+                longLabel: format(cursor, "MMMM yyyy"),
+            };
+        case "quarter": {
+            const q = Math.floor(cursor.getMonth() / 3) + 1;
+            const year = format(cursor, "yy");
+            const longYear = format(cursor, "yyyy");
+            const end = addMonths(cursor, 2);
+            return {
+                label: `Q${q} '${year}`,
+                longLabel: `${format(cursor, "MMM")}–${format(end, "MMM")} ${longYear}`,
+            };
+        }
+        case "year":
+            return {
+                label: format(cursor, "yyyy"),
+                longLabel: format(cursor, "yyyy"),
+            };
+    }
 }
 
 function buildBuckets(from: Date, to: Date, unit: BucketUnit, now: Date): EarningsBucket[] {
     const buckets: EarningsBucket[] = [];
-    let cursor = unit === "week" ? startOfWeek(from, { weekStartsOn: 1 }) : startOfMonth(from);
-    // Hard cap so a stray decade-old deal cannot draw 500 bars.
-    while (!isAfter(cursor, to) && buckets.length < 120) {
-        const next = unit === "week" ? addWeeks(cursor, 1) : addMonths(cursor, 1);
+    let cursor = startOfBucket(from, unit);
+    while (!isAfter(cursor, to)) {
+        const next = addBucket(cursor, unit);
         const isToDate = !isBefore(now, cursor) && isBefore(now, next);
+        const { label, longLabel } = bucketLabels(cursor, unit);
         buckets.push({
             key: cursor.toISOString(),
-            label: unit === "week" ? format(cursor, "d MMM") : format(cursor, "MMM"),
-            longLabel:
-                unit === "week"
-                    ? `Week of ${format(cursor, "d MMM yyyy")}`
-                    : format(cursor, "MMMM yyyy"),
+            label,
+            longLabel,
             saleInr: 0,
             rentInr: 0,
             totalInr: 0,
             closed: 0,
             lost: 0,
+            lostInr: 0,
+            lostReasonCounts: {},
             isToDate,
         });
         cursor = next;
     }
-    // Month labels gain a year when the chart spans more than one.
+    // Month labels gain a year when the chart spans more than one calendar year.
     if (unit === "month" && buckets.length > 0) {
         const years = new Set(buckets.map((b) => new Date(b.key).getFullYear()));
         if (years.size > 1) {
@@ -246,12 +420,66 @@ function bucketIndex(buckets: EarningsBucket[], iso: string): number {
 
 export type ValuedDeal = { deal: DealItem; commissionInr: number | null };
 
-export type LostReasonRow = { key: DealLostReason | "other"; label: string; count: number };
+/** Sold deals in one locality, for "Earnings by area". */
+export type AreaEarningsRow = {
+    /** Normalised "locality|city", stable across periods. */
+    key: string;
+    locality: string;
+    city: string;
+    earnedInr: number;
+    closedCount: number;
+    /** Sold here with no commission set, so they add nothing to `earnedInr`. */
+    unvaluedCount: number;
+};
+
+/**
+ * Groups sold deals by locality + city (two "Baner"s in different cities stay
+ * apart). Most money first; ties go to more deals, then name.
+ */
+export function earningsByArea(valued: ValuedDeal[]): AreaEarningsRow[] {
+    const rows = new Map<string, AreaEarningsRow>();
+    for (const { deal, commissionInr } of valued) {
+        const locality = deal.property.locality?.trim() ?? "";
+        const city = deal.property.city?.trim() ?? "";
+        if (!locality && !city) continue;
+        const key = `${locality.toLowerCase()}|${city.toLowerCase()}`;
+        const row = rows.get(key) ?? {
+            key,
+            locality: locality || city,
+            city: locality ? city : "",
+            earnedInr: 0,
+            closedCount: 0,
+            unvaluedCount: 0,
+        };
+        row.closedCount += 1;
+        if (commissionInr == null) row.unvaluedCount += 1;
+        else row.earnedInr += commissionInr;
+        rows.set(key, row);
+    }
+    return [...rows.values()].sort(
+        (a, b) =>
+            b.earnedInr - a.earnedInr ||
+            b.closedCount - a.closedCount ||
+            a.locality.localeCompare(b.locality),
+    );
+}
+
+export type LostReasonRow = {
+    key: DealLostReason | "other";
+    label: string;
+    /** Same helper line as the Mark as lost modal. Null for “Others”. */
+    detail: string | null;
+    count: number;
+};
 
 export type EarningsReport = {
     window: EarningsWindow;
+    /** What the period is compared against. Null for "all time". */
+    comparison: EarningsComparison | null;
     /** Window actually drawn on charts (all time → first deal → today). */
     chartWindow: { from: Date; to: Date };
+    /** True when the chart shows a shorter span than the selected totals window. */
+    chartTrimmed: boolean;
     bucketUnit: BucketUnit;
 
     earnedInr: number;
@@ -284,6 +512,8 @@ export type EarningsReport = {
     lostFromStages: Array<{ stage: DealStage; count: number }>;
 
     recentClosed: ValuedDeal[];
+    /** Sold deals in range grouped by area, most money first. */
+    areas: AreaEarningsRow[];
 
     live: {
         count: number;
@@ -291,9 +521,13 @@ export type EarningsReport = {
         saleValueInr: number;
         saleCount: number;
         stageCounts: Record<DealStage, number>;
+        /** Commission on live deals in each stage (deals with no commission add 0). */
+        stageCommissionInr: Record<DealStage, number>;
         stalledCount: number;
         /** Commission on every live deal that has one set. */
         potentialInr: number;
+        /** Live deals whose owner set a commission. */
+        valuedCount: number;
         /** Commission on deals in negotiation or with an accepted offer. */
         likelyInr: number;
         likelyCount: number;
@@ -332,7 +566,8 @@ export function buildEarningsReport(
     now = new Date(),
 ): EarningsReport {
     const window = resolveEarningsWindow(selection, now);
-    const prev = previousWindow(window);
+    const comparison = comparisonFor(selection, window, now);
+    const prev = comparison?.window ?? null;
 
     const closedAll = deals.filter((d) => d.status === "closed" && d.resolvedAt);
     const lostAll = deals.filter((d) => d.status === "lost" && d.resolvedAt);
@@ -349,13 +584,20 @@ export function buildEarningsReport(
         .map((d) => new Date(d.resolvedAt as string))
         .filter((d) => !Number.isNaN(d.getTime()))
         .sort((a, b) => a.getTime() - b.getTime())[0];
-    const chartFrom =
+    let chartFrom =
         window.from ??
         (firstResolved && isBefore(firstResolved, subMonths(now, 5))
             ? startOfMonth(firstResolved)
             : startOfMonth(subMonths(now, 5)));
+    const bucketUnit = bucketUnitFor({ from: chartFrom, to: window.to });
+    // Long histories keep the latest buckets; a stray old deal must not squeeze the chart.
+    const oldestBar = oldestAllowedBucket(window.to, bucketUnit);
+    let chartTrimmed = false;
+    if (isBefore(chartFrom, oldestBar)) {
+        chartFrom = oldestBar;
+        chartTrimmed = true;
+    }
     const chartWindow = { from: chartFrom, to: window.to };
-    const bucketUnit = bucketUnitFor(chartWindow);
     const buckets = buildBuckets(chartFrom, window.to, bucketUnit, now);
 
     for (const deal of closed) {
@@ -370,7 +612,17 @@ export function buildEarningsReport(
     }
     for (const deal of lost) {
         const i = bucketIndex(buckets, deal.resolvedAt as string);
-        if (i >= 0) buckets[i].lost += 1;
+        if (i < 0) continue;
+        buckets[i].lost += 1;
+        const c = dealCommissionInr(deal);
+        if (c != null) buckets[i].lostInr += c;
+        const reason = deal.lostReason?.trim();
+        const reasonKey: DealLostReason | "other" = reason
+            ? (LOST_REASON_ORDER as string[]).includes(reason)
+                ? (reason as DealLostReason)
+                : "other"
+            : "other";
+        buckets[i].lostReasonCounts[reasonKey] = (buckets[i].lostReasonCounts[reasonKey] ?? 0) + 1;
     }
 
     const closeDurations = closed
@@ -395,7 +647,7 @@ export function buildEarningsReport(
             .filter((v) => v.commissionInr != null)
             .sort((a, b) => (b.commissionInr ?? 0) - (a.commissionInr ?? 0))[0] ?? null;
 
-    // Loss analysis
+    // Loss analysis — same reasons / details as the Mark as lost modal.
     const reasonCounts = new Map<string, number>();
     let lostWithoutReasonCount = 0;
     for (const deal of lost) {
@@ -407,16 +659,22 @@ export function buildEarningsReport(
         const key = (LOST_REASON_ORDER as string[]).includes(reason) ? reason : "other";
         reasonCounts.set(key, (reasonCounts.get(key) ?? 0) + 1);
     }
+    // Always the same five rows as Mark as lost (4 reasons + Others), zeros included.
+    const othersCount = (reasonCounts.get("other") ?? 0) + lostWithoutReasonCount;
     const lostReasons: LostReasonRow[] = [
         ...LOST_REASON_ORDER.map((key) => ({
             key,
             label: lostReasonLabel(key),
+            detail: DEAL_LOST_REASON_DETAIL[key],
             count: reasonCounts.get(key) ?? 0,
         })),
-        { key: "other" as const, label: "Other reason", count: reasonCounts.get("other") ?? 0 },
-    ]
-        .filter((row) => row.count > 0)
-        .sort((a, b) => b.count - a.count);
+        {
+            key: "other" as const,
+            label: "Others",
+            detail: "No listed reason, or written in as free text",
+            count: othersCount,
+        },
+    ];
 
     const lostFromStages = DEAL_STAGE_ORDER.map((stage) => ({
         stage,
@@ -435,6 +693,14 @@ export function buildEarningsReport(
         deal,
         commissionInr: dealCommissionInr(deal),
     }));
+    const stageCommissionInr = Object.fromEntries(
+        DEAL_STAGE_ORDER.map((stage) => [
+            stage,
+            valuedLive
+                .filter((v) => v.deal.status === stage)
+                .reduce((sum, v) => sum + (v.commissionInr ?? 0), 0),
+        ]),
+    ) as Record<DealStage, number>;
     const likely = valuedLive.filter(
         (v) => v.deal.status === "negotiation" || v.deal.offerStatus === "accepted",
     );
@@ -443,7 +709,9 @@ export function buildEarningsReport(
 
     return {
         window,
+        comparison,
         chartWindow,
+        chartTrimmed,
         bucketUnit,
         earnedInr: money.total,
         saleEarnedInr: money.sale,
@@ -466,6 +734,7 @@ export function buildEarningsReport(
         lostReasons,
         lostWithoutReasonCount,
         lostFromStages,
+        areas: earningsByArea(valuedClosed),
         recentClosed: [...valuedClosed]
             .sort(
                 (a, b) =>
@@ -480,15 +749,17 @@ export function buildEarningsReport(
                 .reduce((sum, d) => sum + d.property.amountInr, 0),
             saleCount: liveDeals.filter((d) => !d.property.isRent).length,
             stageCounts,
+            stageCommissionInr,
             stalledCount: liveDeals.filter(isStalled).length,
             potentialInr: valuedLive.reduce((sum, v) => sum + (v.commissionInr ?? 0), 0),
+            valuedCount: valuedLive.filter((v) => v.commissionInr != null).length,
             likelyInr: likely.reduce((sum, v) => sum + (v.commissionInr ?? 0), 0),
             likelyCount: likely.length,
             acceptedOfferCount: liveDeals.filter((d) => d.offerStatus === "accepted").length,
             topDeals: valuedLive
                 .filter((v) => v.commissionInr != null)
                 .sort((a, b) => (b.commissionInr ?? 0) - (a.commissionInr ?? 0))
-                .slice(0, 5),
+                .slice(0, 10),
         },
     };
 }
@@ -499,13 +770,99 @@ export function percentChange(current: number, previous: number | null): number 
     return Math.round(((current - previous) / previous) * 100);
 }
 
+/** Sold / lost line for the selected period. */
+function earningsOutcomesLine(report: EarningsReport): string {
+    if (report.closedCount === 0) {
+        return report.lostCount > 0
+            ? `Nothing sold yet, ${report.lostCount} lost.`
+            : "Nothing sold in this period yet.";
+    }
+    return report.lostCount > 0
+        ? `${report.closedCount} sold, ${report.lostCount} lost.`
+        : `${plural(report.closedCount, "deal")} sold.`;
+}
+
+/**
+ * Second clause of the two-tone page headline: what the period means, in one
+ * sentence. Prefers a comparison when there is one, otherwise sold / lost.
+ * "Up 18% on the 6 months before." / "9 sold, 4 lost."
+ */
+export function earningsHeadline(report: EarningsReport): string {
+    const change = percentChange(report.earnedInr, report.previousEarnedInr);
+    if (report.comparison && change != null && report.earnedInr > 0) {
+        if (change === 0) return `Same as ${report.comparison.phrase}.`;
+        return `${change > 0 ? "Up" : "Down"} ${Math.abs(change)}% on ${report.comparison.phrase}.`;
+    }
+    return earningsOutcomesLine(report);
+}
+
+/**
+ * Rotating "Earnings. …" lines for the page header — same pattern as the
+ * dashboard. Built from the current report, so changing the date filter
+ * rebuilds every line (sold/lost, rupees earned, comparison, win rate, pipeline).
+ */
+export function earningsHeadlineLines(report: EarningsReport): string[] {
+    const lines: string[] = [earningsOutcomesLine(report)];
+
+    if (report.earnedInr > 0) {
+        lines.push(`${formatCommission(report.earnedInr)} estimated this period.`);
+    } else {
+        lines.push("No commission earned in this period yet.");
+    }
+
+    const change = percentChange(report.earnedInr, report.previousEarnedInr);
+    if (report.comparison) {
+        if (change != null && report.earnedInr > 0) {
+            lines.push(
+                change === 0
+                    ? `Same as ${report.comparison.phrase}.`
+                    : `${change > 0 ? "Up" : "Down"} ${Math.abs(change)}% on ${report.comparison.phrase}.`,
+            );
+        } else if (report.earnedInr > 0 && report.previousEarnedInr === 0) {
+            lines.push(`Nothing earned in ${report.comparison.phrase}.`);
+        }
+    }
+
+    if (report.winRate != null) {
+        const resolved = report.closedCount + report.lostCount;
+        lines.push(
+            `Win rate ${report.winRate}% — ${report.closedCount} of ${plural(resolved, "finished deal")} sold.`,
+        );
+    }
+
+    if (report.live.potentialInr > 0) {
+        lines.push(`${formatCommission(report.live.potentialInr)} still in your open deals.`);
+    } else if (report.live.count > 0) {
+        lines.push(`${plural(report.live.count, "open deal")} with no commission set yet.`);
+    }
+
+    if (report.avgDaysToClose != null && report.closedCount > 0) {
+        lines.push(
+            report.avgDaysToClose === 0
+                ? "Same-day closes on average."
+                : `Average ${plural(report.avgDaysToClose, "day")} from new client to sold.`,
+        );
+    }
+
+    return lines;
+}
+
 /** "1 Jun – 17 Nov 2026" */
 export function formatWindow(window: { from: Date | null; to: Date }): string {
-    if (!window.from) return `Up to ${format(window.to, "d MMM yyyy")}`;
-    const sameYear = window.from.getFullYear() === window.to.getFullYear();
-    const sameDay = differenceInCalendarDays(window.to, window.from) === 0;
-    if (sameDay) return format(window.to, "d MMM yyyy");
-    return `${format(window.from, sameYear ? "d MMM" : "d MMM yyyy")} – ${format(window.to, "d MMM yyyy")}`;
+    return formatDateRangeMedium(window.from, window.to);
+}
+
+/**
+ * When the chart is a shorter slice than the selected totals window, say so.
+ * Keeps trust when All time / a long custom range trims older buckets.
+ */
+export function chartCoverageNote(report: EarningsReport): string | null {
+    if (!report.chartTrimmed) return null;
+    const chartLabel = formatWindow(report.chartWindow);
+    if (report.window.from == null) {
+        return `Chart shows ${chartLabel}. Totals above use the full range.`;
+    }
+    return `Chart shows ${chartLabel}. Totals above use ${formatWindow(report.window)}.`;
 }
 
 /** Inclusive day count of a bounded window. */

@@ -223,7 +223,9 @@ export function buildSampleEarningsDeals(now = new Date()): DealItem[] {
                     : iso(nowMs, Math.floor(rand() * 24)),
             nextVisitAt: null,
             note: "",
-            lostReason: status === "lost" ? pick(LOST_REASONS) : undefined,
+            // Leave ~1 in 6 lost deals without a reason so “Others” shows up.
+            lostReason:
+                status === "lost" ? (rand() > 0.16 ? pick(LOST_REASONS) : undefined) : undefined,
             lostFromStage:
                 status === "lost"
                     ? pick(["contacted", "visit", "visit", "negotiation"] as const)

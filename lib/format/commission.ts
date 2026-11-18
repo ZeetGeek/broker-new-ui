@@ -12,6 +12,11 @@ export function formatCommission(amountInr: number, compact = false): string {
     return `₹${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(amountInr)}`;
 }
 
+/** Chart-axis label: `₹6L`, `₹1.5Cr`, `₹50k`, `₹0`. Trailing zeros dropped. */
+export function formatCommissionTick(amountInr: number): string {
+    return formatCommission(amountInr, true).replace(/\.0+(?=L|Cr)|(\.\d*?[1-9])0+(?=L|Cr)/, "$1");
+}
+
 /** Month keys are calendar months (YYYY-MM), independent of browser timezone. */
 export function formatCommissionMonth(monthKey: string, style: "short" | "long" = "long"): string {
     return new Intl.DateTimeFormat("en-IN", {

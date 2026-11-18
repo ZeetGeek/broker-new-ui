@@ -83,6 +83,7 @@ export function DashboardTasksCard() {
     const viewport = useRef<HTMLDivElement>(null);
     const content = useRef<HTMLDivElement>(null);
     const [hasMore, setHasMore] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
     const [announcement, setAnnouncement] = useState("");
     const today = taskDateKey(now);
 
@@ -163,7 +164,10 @@ export function DashboardTasksCard() {
     useEffect(() => {
         const el = viewport.current;
         if (!el || !content.current) return;
-        const measure = () => setHasMore(el.scrollHeight - el.clientHeight - el.scrollTop > 1);
+        const measure = () => {
+            setHasMore(el.scrollHeight - el.clientHeight - el.scrollTop > 1);
+            setScrolled(el.scrollTop > 1);
+        };
         const observer = new ResizeObserver(measure);
         observer.observe(el);
         observer.observe(content.current);
@@ -174,6 +178,12 @@ export function DashboardTasksCard() {
             el.removeEventListener("scroll", measure);
         };
     }, [isLoading, filter, visible.length]);
+
+    useEffect(() => {
+        const el = viewport.current;
+        if (el) el.scrollTop = 0;
+        setScrolled(false);
+    }, [filter]);
 
     const changeTasks = async (updater: (latest: Task[]) => Task[], message?: string) => {
         if (busy) return false;
@@ -313,54 +323,57 @@ export function DashboardTasksCard() {
                     <Plus aria-hidden /> Add task
                 </Button>
             </header>
-            <div
-                ref={tabs}
-                className={cn("t-tabs t-tabs-surface t-tabs-compact", styles.tabs)}
-                role="tablist"
-                aria-label="Filter tasks"
-            >
-                <span ref={pill} className="t-tabs-pill" aria-hidden />
-                {TAB_OPTIONS.map(({ value, label }, index) => {
-                    const count = countFor(value);
-                    return (
-                        <button
-                            key={value}
-                            id={`dashboard-tasks-tab-${value}`}
-                            type="button"
-                            role="tab"
-                            aria-selected={filter === value}
-                            aria-controls="dashboard-tasks-panel"
-                            tabIndex={filter === value ? 0 : -1}
-                            onClick={() => setFilter(value)}
-                            onKeyDown={(event) => {
-                                const next =
-                                    event.key === "ArrowRight"
-                                        ? (index + 1) % TAB_OPTIONS.length
-                                        : event.key === "ArrowLeft"
-                                          ? (index - 1 + TAB_OPTIONS.length) % TAB_OPTIONS.length
-                                          : event.key === "Home"
-                                            ? 0
-                                            : event.key === "End"
-                                              ? TAB_OPTIONS.length - 1
-                                              : -1;
-                                if (next < 0) return;
-                                event.preventDefault();
-                                setFilter(TAB_OPTIONS[next].value);
-                                tabs.current
-                                    ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-                                    [next]?.focus();
-                            }}
-                            className={cn("t-tab", styles.tab)}
-                        >
-                            {label}
-                            {count > 0 ? <span className={styles.count}>{count}</span> : null}
-                        </button>
-                    );
-                })}
+            <div className={styles.tabsBar} data-scrolled={scrolled ? "true" : "false"}>
+                <div
+                    ref={tabs}
+                    className={cn("t-tabs t-tabs-surface t-tabs-compact", styles.tabs)}
+                    role="tablist"
+                    aria-label="Filter tasks"
+                >
+                    <span ref={pill} className="t-tabs-pill" aria-hidden />
+                    {TAB_OPTIONS.map(({ value, label }, index) => {
+                        const count = countFor(value);
+                        return (
+                            <button
+                                key={value}
+                                id={`dashboard-tasks-tab-${value}`}
+                                type="button"
+                                role="tab"
+                                aria-selected={filter === value}
+                                aria-controls="dashboard-tasks-panel"
+                                tabIndex={filter === value ? 0 : -1}
+                                onClick={() => setFilter(value)}
+                                onKeyDown={(event) => {
+                                    const next =
+                                        event.key === "ArrowRight"
+                                            ? (index + 1) % TAB_OPTIONS.length
+                                            : event.key === "ArrowLeft"
+                                              ? (index - 1 + TAB_OPTIONS.length) %
+                                                TAB_OPTIONS.length
+                                              : event.key === "Home"
+                                                ? 0
+                                                : event.key === "End"
+                                                  ? TAB_OPTIONS.length - 1
+                                                  : -1;
+                                    if (next < 0) return;
+                                    event.preventDefault();
+                                    setFilter(TAB_OPTIONS[next].value);
+                                    tabs.current
+                                        ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                                        [next]?.focus();
+                                }}
+                                className={cn("t-tab", styles.tab)}
+                            >
+                                {label}
+                                {count > 0 ? <span className={styles.count}>{count}</span> : null}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
             <div
                 ref={viewport}
-                className={styles.scrollViewport}
+                className={cn(styles.scrollViewport, styles.scrollViewportFlush)}
                 tabIndex={0}
                 role="region"
                 aria-label="Task list"

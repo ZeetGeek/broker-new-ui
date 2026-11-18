@@ -144,6 +144,14 @@ export const DEAL_LOST_REASON_LABEL: Record<DealLostReason, string> = {
     changed_mind: "Client changed their mind",
 };
 
+/** Short line under each reason so the four never blur together. */
+export const DEAL_LOST_REASON_DETAIL: Record<DealLostReason, string> = {
+    price: "Client and owner could not meet on the amount",
+    bought_elsewhere: "Client took another property",
+    not_responding: "No reply to calls or messages",
+    changed_mind: "Client is no longer looking",
+};
+
 /** Known API codes use plain-language labels; saved free text stays as supplied. */
 export function lostReasonLabel(reason: string): string {
     // hasOwnProperty, not Object.hasOwn: the latter is missing on Android
