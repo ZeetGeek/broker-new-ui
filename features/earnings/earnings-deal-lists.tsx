@@ -36,7 +36,7 @@ const STAGE_BAR_CLASS: Record<DealStage, string> = {
  * Biggest open deals as a horizontal bar chart. Bar length is the deal's
  * commission against the biggest; bar colour is its pipeline stage (legend in
  * the header), so no stage chip is needed. Title sits above each bar; the
- * bar carries the commission and the property price.
+ * commission and property price sit just past the bar's end, in ink.
  */
 export function EarningsOpenDeals({
     report,
@@ -148,24 +148,28 @@ export function EarningsOpenDeals({
                                                     ) : null}
                                                 </EarningsDealLink>
                                             </div>
-                                            {/* Bar holds commission / price; never narrower than
-                                                the amounts it carries. */}
-                                            <span
-                                                className={cn(
-                                                    "flex items-center rounded-control px-3 text-surface block-10 max-inline-full min-inline-24",
-                                                    isLiveStage(deal.status)
-                                                        ? STAGE_BAR_CLASS[deal.status]
-                                                        : "bg-chart-2",
-                                                )}
-                                                style={{ inlineSize: `${pct}%` }}
-                                            >
-                                                <span className="flex items-baseline gap-1.5 whitespace-nowrap">
-                                                    <span className="body-sm font-semibold tabular-nums">
+                                            {/* Amounts sit just past the bar's end in ink. The
+                                                pe-36 reserve keeps room for them, so the longest
+                                                bar plus its label still fits and bar lengths stay
+                                                true to scale (bar % is of the track minus reserve). */}
+                                            <div className="flex items-center gap-2 pe-36">
+                                                <span
+                                                    aria-hidden
+                                                    className={cn(
+                                                        "shrink-0 rounded-control block-8 min-inline-2",
+                                                        isLiveStage(deal.status)
+                                                            ? STAGE_BAR_CLASS[deal.status]
+                                                            : "bg-chart-2",
+                                                    )}
+                                                    style={{ inlineSize: `${pct}%` }}
+                                                />
+                                                <span className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
+                                                    <span className="body-sm font-semibold text-ink tabular-nums">
                                                         {formatCommission(commissionInr ?? 0, true)}
                                                     </span>
                                                     <span
                                                         aria-hidden
-                                                        className="body-sm text-surface/70"
+                                                        className="body-sm text-ink-subtle"
                                                     >
                                                         /
                                                     </span>
@@ -180,11 +184,10 @@ export function EarningsOpenDeals({
                                                         commissionAmountInr={
                                                             deal.property.commissionAmountInr
                                                         }
-                                                        className="text-surface/85"
-                                                        underlineClassName="decoration-surface/60"
+                                                        className="text-ink-muted"
                                                     />
                                                 </span>
-                                            </span>
+                                            </div>
                                         </li>
                                     );
                                 })}
