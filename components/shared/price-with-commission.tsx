@@ -80,6 +80,11 @@ export type PriceWithCommissionProps = TipInput & {
      * @default "auto"
      */
     underline?: "auto" | "never";
+    /**
+     * Overrides the underline colour, e.g. `decoration-surface/60` when the price
+     * sits on a coloured bar. Merged after the default brand underline.
+     */
+    underlineClassName?: string;
     /** Tooltip placement. @default "top" */
     tooltipSide?: "top" | "bottom" | "left" | "right";
     /** Extra classes merged after `size` (colour, truncate, etc.). */
@@ -192,6 +197,7 @@ export function PriceWithCommission({
     showNoRentCommission,
     size = "lg",
     underline = "auto",
+    underlineClassName,
     tooltipSide = "top",
     currency,
     className,
@@ -224,7 +230,10 @@ export function PriceWithCommission({
         priceWithCommissionSize({ size }),
         className,
         showUnderline &&
-            "cursor-help underline decoration-brand/40 decoration-from-font underline-offset-2",
+            cn(
+                "cursor-help underline decoration-brand/40 decoration-from-font underline-offset-2",
+                underlineClassName,
+            ),
     );
 
     if (!tip) {

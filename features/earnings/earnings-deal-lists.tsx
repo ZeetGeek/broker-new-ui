@@ -15,9 +15,6 @@ import { dealBaseAmountInr, type EarningsReport } from "@/features/earnings/earn
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { DEAL_STAGE_ORDER, type DealStage, isLiveStage } from "@/features/pipeline/types";
 
-/** Floor so the smallest bar still fits a readable part of its title. */
-const MIN_BAR_PCT = 25;
-
 /**
  * Soft same-hue fade per stage: full colour where the title sits, ~85% at the
  * bar's end. Same hue keeps colour = stage; written out so Tailwind sees them.
@@ -32,8 +29,8 @@ const STAGE_BAR_CLASS: Record<DealStage, string> = {
 /**
  * Biggest open deals as a horizontal bar chart. Bar length is the deal's
  * commission against the biggest; bar colour is its pipeline stage (legend in
- * the header), so no stage chip is needed. The amount sits right after each
- * bar's end.
+ * the header), so no stage chip is needed. Title sits above each bar; the
+ * bar carries the commission and the property price.
  */
 export function EarningsOpenDeals({
     report,
@@ -127,56 +124,60 @@ export function EarningsOpenDeals({
                                     const stage = isLiveStage(deal.status)
                                         ? DEAL_STAGE_META[deal.status]
                                         : null;
-                                    const pct = Math.max(
-                                        MIN_BAR_PCT,
-                                        ((commissionInr ?? 0) / max) * 100,
-                                    );
+                                    const pct = ((commissionInr ?? 0) / max) * 100;
                                     return (
-                                        <li key={deal.id} className="flex items-center gap-2">
-                                            {/* Bar shares the row with its amount: the longest bar
-                                                leaves room for the amount, which sits right after it. */}
-                                            <EarningsDealLink
-                                                dealId={deal.id}
+                                        <li key={deal.id} className="flex flex-col gap-1.5">
+                                            {/* Title above, so long titles never truncate inside a
+                                                short bar. */}
+                                            <div className="flex min-inline-0">
+                                                <EarningsDealLink
+                                                    dealId={deal.id}
+                                                    className="body-sm truncate font-semibold text-ink min-inline-0"
+                                                >
+                                                    {deal.property.title}
+                                                    {stage ? (
+                                                        <span className="sr-only">
+                                                            , {stage.label}
+                                                        </span>
+                                                    ) : null}
+                                                </EarningsDealLink>
+                                            </div>
+                                            {/* Bar holds commission / price; never narrower than
+                                                the amounts it carries. */}
+                                            <span
                                                 className={cn(
-                                                    "flex shrink-0 items-center rounded-control px-4 text-surface transition-opacity duration-160 block-11 min-inline-0 hover:text-surface hover:no-underline hover:opacity-90",
+                                                    "flex items-center rounded-control px-3 text-surface block-10 max-inline-full min-inline-24",
                                                     isLiveStage(deal.status)
                                                         ? STAGE_BAR_CLASS[deal.status]
                                                         : "bg-chart-2",
                                                 )}
-                                                style={{
-                                                    inlineSize: `calc((100% - 9rem) * ${pct / 100})`,
-                                                }}
+                                                style={{ inlineSize: `${pct}%` }}
                                             >
-                                                <span className="body-sm truncate font-semibold">
-                                                    {deal.property.title}
+                                                <span className="flex items-baseline gap-1.5 whitespace-nowrap">
+                                                    <span className="body-sm font-semibold tabular-nums">
+                                                        {formatCommission(commissionInr ?? 0, true)}
+                                                    </span>
+                                                    <span
+                                                        aria-hidden
+                                                        className="body-sm text-surface/70"
+                                                    >
+                                                        /
+                                                    </span>
+                                                    <PriceWithCommission
+                                                        size="xs"
+                                                        audience="broker"
+                                                        amountInr={deal.property.amountInr}
+                                                        isRent={deal.property.isRent}
+                                                        commissionPercent={
+                                                            deal.property.commissionPercent
+                                                        }
+                                                        commissionAmountInr={
+                                                            deal.property.commissionAmountInr
+                                                        }
+                                                        className="text-surface/85"
+                                                        underlineClassName="decoration-surface/60"
+                                                    />
                                                 </span>
-                                                {stage ? (
-                                                    <span className="sr-only">, {stage.label}</span>
-                                                ) : null}
-                                            </EarningsDealLink>
-                                            <span className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
-                                                <span className="body-sm font-semibold text-ink tabular-nums">
-                                                    {formatCommission(commissionInr ?? 0, true)}
-                                                </span>
-                                                <span
-                                                    aria-hidden
-                                                    className="body-sm text-ink-subtle"
-                                                >
-                                                    /
-                                                </span>
-                                                <PriceWithCommission
-                                                    size="xs"
-                                                    audience="broker"
-                                                    amountInr={deal.property.amountInr}
-                                                    isRent={deal.property.isRent}
-                                                    commissionPercent={
-                                                        deal.property.commissionPercent
-                                                    }
-                                                    commissionAmountInr={
-                                                        deal.property.commissionAmountInr
-                                                    }
-                                                    className="text-ink-muted"
-                                                />
                                             </span>
                                         </li>
                                     );
