@@ -38,6 +38,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { DealPartiesPanel } from "@/features/pipeline/deal-parties-panel";
+import { canPutBackOnBoard } from "@/features/pipeline/sale-mode";
 import { NegotiationStageBlock } from "@/features/pipeline/stage-blocks/negotiation-stage-block";
 import { VisitStageBlock } from "@/features/pipeline/stage-blocks/visit-stage-block";
 import { DEAL_STAGE_META, isRevisingOffer, lostReasonLabel } from "@/features/pipeline/stage-meta";
@@ -339,7 +340,9 @@ function DealCardMenu({
                                 Mark as sold
                             </DropdownMenuItem>
                         </>
-                    ) : (
+                    ) : !canPutBackOnBoard(deal) ? null : (
+                        // On a sold property only the sold deal of the broker's own
+                        // listing comes back (the property is then available again).
                         <DropdownMenuItem
                             className={DEAL_MENU_ITEM_CLASS}
                             onClick={(event) =>
