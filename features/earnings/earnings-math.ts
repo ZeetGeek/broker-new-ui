@@ -410,6 +410,50 @@ function bucketIndex(buckets: EarningsBucket[], iso: string): number {
 
 export type ValuedDeal = { deal: DealItem; commissionInr: number | null };
 
+/** Sold deals in one locality, for "Earnings by area". */
+export type AreaEarningsRow = {
+    /** Normalised "locality|city", stable across periods. */
+    key: string;
+    locality: string;
+    city: string;
+    earnedInr: number;
+    closedCount: number;
+    /** Sold here with no commission set, so they add nothing to `earnedInr`. */
+    unvaluedCount: number;
+};
+
+/**
+ * Groups sold deals by locality + city (two "Baner"s in different cities stay
+ * apart). Most money first; ties go to more deals, then name.
+ */
+export function earningsByArea(valued: ValuedDeal[]): AreaEarningsRow[] {
+    const rows = new Map<string, AreaEarningsRow>();
+    for (const { deal, commissionInr } of valued) {
+        const locality = deal.property.locality?.trim() ?? "";
+        const city = deal.property.city?.trim() ?? "";
+        if (!locality && !city) continue;
+        const key = `${locality.toLowerCase()}|${city.toLowerCase()}`;
+        const row = rows.get(key) ?? {
+            key,
+            locality: locality || city,
+            city: locality ? city : "",
+            earnedInr: 0,
+            closedCount: 0,
+            unvaluedCount: 0,
+        };
+        row.closedCount += 1;
+        if (commissionInr == null) row.unvaluedCount += 1;
+        else row.earnedInr += commissionInr;
+        rows.set(key, row);
+    }
+    return [...rows.values()].sort(
+        (a, b) =>
+            b.earnedInr - a.earnedInr ||
+            b.closedCount - a.closedCount ||
+            a.locality.localeCompare(b.locality),
+    );
+}
+
 export type LostReasonRow = { key: DealLostReason | "other"; label: string; count: number };
 
 export type EarningsReport = {
@@ -452,6 +496,8 @@ export type EarningsReport = {
     lostFromStages: Array<{ stage: DealStage; count: number }>;
 
     recentClosed: ValuedDeal[];
+    /** Sold deals in range grouped by area, most money first. */
+    areas: AreaEarningsRow[];
 
     live: {
         count: number;
@@ -656,6 +702,7 @@ export function buildEarningsReport(
         lostReasons,
         lostWithoutReasonCount,
         lostFromStages,
+        areas: earningsByArea(valuedClosed),
         recentClosed: [...valuedClosed]
             .sort(
                 (a, b) =>

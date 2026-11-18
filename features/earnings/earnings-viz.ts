@@ -27,3 +27,16 @@ export const VIZ_CLASS = {
     lost: { dot: "bg-ink-subtle/40", soft: "bg-surface-muted text-ink-muted" },
     pipeline: { dot: "bg-chart-2", soft: "bg-chart-2/10 text-chart-2" },
 } as const;
+
+/**
+ * "Earnings by area" — one Tailwind 600 hue per rank (top 5). The bar uses the
+ * same soft same-hue fade as "Biggest open deals" (full → 85%). Classes written
+ * out in full so Tailwind generates them.
+ */
+export const AREA_COLOR_CLASS = [
+    { dot: "bg-emerald-600", bar: "bg-linear-to-r from-emerald-600 to-emerald-600/85" },
+    { dot: "bg-cyan-600", bar: "bg-linear-to-r from-cyan-600 to-cyan-600/85" },
+    { dot: "bg-pink-600", bar: "bg-linear-to-r from-pink-600 to-pink-600/85" },
+    { dot: "bg-amber-600", bar: "bg-linear-to-r from-amber-600 to-amber-600/85" },
+    { dot: "bg-lime-600", bar: "bg-linear-to-r from-lime-600 to-lime-600/85" },
+] as const;

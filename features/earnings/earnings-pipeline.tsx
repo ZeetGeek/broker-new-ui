@@ -42,7 +42,7 @@ function StageGauge({ report }: { report: EarningsReport }) {
     return (
         <ChartContainer
             config={CHART_CONFIG}
-            className="mx-auto mbs-2 aspect-auto block-56 inline-full max-inline-80"
+            className="mx-auto aspect-auto block-44 inline-full max-inline-80"
             aria-label={`${plural(live.count, "open deal")}. ${DEAL_STAGE_ORDER.map(
                 (stage) => `${DEAL_STAGE_META[stage].label}: ${live.stageCounts[stage]}`,
             ).join(", ")}`}
@@ -51,7 +51,7 @@ function StageGauge({ report }: { report: EarningsReport }) {
                 data={data}
                 startAngle={180}
                 endAngle={0}
-                cy={176}
+                cy={164}
                 innerRadius={114}
                 outerRadius={150}
                 accessibilityLayer
@@ -137,11 +137,13 @@ export function EarningsPipeline({
                     No open deals. Attach a client to a property in your pipeline to start one.
                 </p>
             ) : (
-                <>
+                // Equal gaps between gauge, totals, stages and chips; when the row is
+                // taller than the content, the extra space spreads evenly between them.
+                <div className="mbs-1 flex flex-1 flex-col justify-between gap-5">
                     <StageGauge report={report} />
 
                     {live.potentialInr > 0 ? (
-                        <dl className="mx-auto mbs-2 grid grid-cols-2 text-center inline-full max-inline-80">
+                        <dl className="mx-auto grid grid-cols-2 text-center inline-full max-inline-80">
                             <div className="px-3">
                                 <dt className="text-xs font-semibold text-ink-muted">
                                     Likely to close
@@ -170,66 +172,69 @@ export function EarningsPipeline({
                             </div>
                         </dl>
                     ) : (
-                        <p className="body-sm mbs-2 rounded-inner bg-surface-muted p-4 text-center text-ink-muted">
+                        <p className="body-sm rounded-inner bg-surface-muted p-4 text-center text-ink-muted">
                             Owners have not set a commission on your open deals yet, so there is
                             nothing to add up.
                         </p>
                     )}
 
-                    <dl className="mbs-auto grid grid-cols-2 gap-x-3 gap-y-4 pbs-5 sm:grid-cols-4">
-                        {DEAL_STAGE_ORDER.map((stage) => {
-                            const count = live.stageCounts[stage];
-                            const commission = live.stageCommissionInr[stage];
-                            return (
-                                <div key={stage} className="text-center">
-                                    <dt className="flex items-center justify-center gap-1.5 text-xs font-semibold text-ink-muted">
-                                        <span
-                                            aria-hidden
-                                            className={cn(
-                                                "shrink-0 rounded-xs block-2 inline-2",
-                                                DEAL_STAGE_META[stage].dotClass,
-                                            )}
-                                        />
-                                        {DEAL_STAGE_META[stage].label}
-                                    </dt>
-                                    <dd className="mbs-1 flex flex-wrap items-baseline justify-center gap-x-1.5 gap-y-0.5 text-sm font-semibold text-ink tabular-nums">
-                                        <span>
-                                            {commission > 0
-                                                ? formatCommission(commission, true)
-                                                : "—"}
-                                        </span>
-                                        <span className="text-xs text-ink-muted">
-                                            {plural(count, "deal")}
-                                        </span>
-                                    </dd>
-                                </div>
-                            );
-                        })}
-                    </dl>
+                    {/* Stages + chips stay one block so the divider has equal space above and below. */}
+                    <div className="flex flex-col">
+                        <dl className="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-4">
+                            {DEAL_STAGE_ORDER.map((stage) => {
+                                const count = live.stageCounts[stage];
+                                const commission = live.stageCommissionInr[stage];
+                                return (
+                                    <div key={stage} className="text-center">
+                                        <dt className="flex items-center justify-center gap-1.5 text-xs font-semibold text-ink-muted">
+                                            <span
+                                                aria-hidden
+                                                className={cn(
+                                                    "shrink-0 rounded-xs block-2 inline-2",
+                                                    DEAL_STAGE_META[stage].dotClass,
+                                                )}
+                                            />
+                                            {DEAL_STAGE_META[stage].label}
+                                        </dt>
+                                        <dd className="mbs-1 flex flex-wrap items-baseline justify-center gap-x-1.5 gap-y-0.5 text-sm font-semibold text-ink tabular-nums">
+                                            <span>
+                                                {commission > 0
+                                                    ? formatCommission(commission, true)
+                                                    : "—"}
+                                            </span>
+                                            <span className="text-xs text-ink-muted">
+                                                {plural(count, "deal")}
+                                            </span>
+                                        </dd>
+                                    </div>
+                                );
+                            })}
+                        </dl>
 
-                    {live.stalledCount > 0 || live.acceptedOfferCount > 0 ? (
-                        <ul className="mbs-5 flex flex-wrap justify-center gap-2 border-bs border-border-warm pbs-4">
-                            {live.acceptedOfferCount > 0 ? (
-                                <li className="body-xs inline-flex items-center gap-1.5 rounded-full bg-chart-4/12 px-3 py-1.5 font-semibold text-brand-text">
-                                    <Handshake aria-hidden className="block-3.5 inline-3.5" />
-                                    {plural(live.acceptedOfferCount, "offer")} accepted, ready to
-                                    close
-                                </li>
-                            ) : null}
-                            {live.stalledCount > 0 ? (
-                                <li>
-                                    <Link
-                                        href={BROKER_PIPELINE_HREF}
-                                        className="body-xs inline-flex items-center gap-1.5 rounded-full bg-urgent-soft px-3 py-1.5 font-semibold text-urgent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring pointer-coarse:min-block-11"
-                                    >
-                                        <Clock aria-hidden className="block-3.5 inline-3.5" />
-                                        {plural(live.stalledCount, "deal")} quiet for 2+ weeks
-                                    </Link>
-                                </li>
-                            ) : null}
-                        </ul>
-                    ) : null}
-                </>
+                        {live.stalledCount > 0 || live.acceptedOfferCount > 0 ? (
+                            <ul className="mbs-7 flex flex-wrap justify-center gap-2 border-bs border-border-warm pbs-7">
+                                {live.acceptedOfferCount > 0 ? (
+                                    <li className="body-xs inline-flex items-center gap-1.5 rounded-full bg-chart-4/12 px-3 py-1.5 font-semibold text-brand-text">
+                                        <Handshake aria-hidden className="block-3.5 inline-3.5" />
+                                        {plural(live.acceptedOfferCount, "offer")} accepted, ready
+                                        to close
+                                    </li>
+                                ) : null}
+                                {live.stalledCount > 0 ? (
+                                    <li>
+                                        <Link
+                                            href={BROKER_PIPELINE_HREF}
+                                            className="body-xs inline-flex items-center gap-1.5 rounded-full bg-urgent-soft px-3 py-1.5 font-semibold text-urgent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring pointer-coarse:min-block-11"
+                                        >
+                                            <Clock aria-hidden className="block-3.5 inline-3.5" />
+                                            {plural(live.stalledCount, "deal")} quiet for 2+ weeks
+                                        </Link>
+                                    </li>
+                                ) : null}
+                            </ul>
+                        ) : null}
+                    </div>
+                </div>
             )}
         </EarningsCard>
     );

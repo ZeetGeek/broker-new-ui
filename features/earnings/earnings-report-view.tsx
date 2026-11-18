@@ -2,6 +2,7 @@ import { Info } from "@/components/shared/icons";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Badge } from "@/components/ui/badge";
 
+import { EarningsAreas } from "@/features/earnings/earnings-areas";
 import { EarningsOpenDeals, EarningsRecentSold } from "@/features/earnings/earnings-deal-lists";
 import { EarningsHero } from "@/features/earnings/earnings-hero";
 import { EarningsLosses } from "@/features/earnings/earnings-losses";
@@ -79,9 +80,15 @@ export function EarningsReportView({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12 lg:gap-5">
                 <EarningsHero report={report} className="lg:col-span-4" />
                 <EarningsTrendChart report={report} className="lg:col-span-8" />
-                <EarningsOpenDeals report={report} className="lg:col-span-8" />
+                {/* Row 2: what is still to win, and where the money has come from. */}
+                <EarningsOpenDeals report={report} className="lg:col-span-5" />
+                <EarningsAreas report={report} className="lg:col-span-3" />
                 <EarningsPipeline report={report} className="lg:col-span-4" />
-                <EarningsRecentSold report={report} className="lg:col-span-8" />
+                {/* Phone keeps priority order (sold before losses); md+ puts losses on the left. */}
+                <EarningsRecentSold
+                    report={report}
+                    className="md:order-last md:col-span-2 lg:col-span-8"
+                />
                 <EarningsLosses report={report} className="lg:col-span-4" />
             </div>
 

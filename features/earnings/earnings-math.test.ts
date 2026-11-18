@@ -7,6 +7,7 @@ import {
     chartCoverageNote,
     comparisonFor,
     dealCommissionInr,
+    earningsByArea,
     earningsHeadline,
     earningsHeadlineLines,
     previousWindow,
@@ -207,4 +208,41 @@ test("rotating headline lines follow sold count, rupees, and the date filter", (
     const emptyLines = earningsHeadlineLines(emptyPeriod);
     assert.ok(emptyLines.includes("Nothing sold in this period yet."));
     assert.ok(emptyLines.includes("No commission earned in this period yet."));
+});
+
+test("earnings by area groups locality + city, most money first", () => {
+    const rows = earningsByArea([
+        { deal: deal({ property: { locality: "Baner", city: "Pune" } }), commissionInr: 50_000 },
+        { deal: deal({ property: { locality: " baner ", city: "Pune" } }), commissionInr: 30_000 },
+        { deal: deal({ property: { locality: "Baner", city: "Surat" } }), commissionInr: 10_000 },
+        { deal: deal({ property: { locality: "Adajan", city: "Surat" } }), commissionInr: null },
+    ]);
+    assert.deepEqual(
+        rows.map((r) => [r.locality, r.city, r.earnedInr, r.closedCount, r.unvaluedCount]),
+        [
+            ["Baner", "Pune", 80_000, 2, 0],
+            ["Baner", "Surat", 10_000, 1, 0],
+            ["Adajan", "Surat", 0, 1, 1],
+        ],
+    );
+});
+
+test("report areas only count deals sold in the selected period", () => {
+    const report = buildEarningsReport(
+        [
+            deal({ property: { locality: "Vesu" } }),
+            deal({
+                property: { locality: "Vesu" },
+                resolvedAt: new Date(2025, 0, 5).toISOString(),
+            }),
+            deal({ property: { locality: "Vesu" }, status: "lost" }),
+        ],
+        { preset: "this_month" },
+        (key) => key,
+        NOW,
+    );
+    assert.deepEqual(
+        report.areas.map((r) => [r.locality, r.closedCount]),
+        [["Vesu", 1]],
+    );
 });
