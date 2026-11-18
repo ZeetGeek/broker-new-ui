@@ -212,7 +212,7 @@ export function EarningsPipeline({
                         </dl>
 
                         {live.stalledCount > 0 || live.acceptedOfferCount > 0 ? (
-                            <ul className="mbs-7 flex flex-wrap justify-center gap-2 border-bs border-border-warm pbs-7">
+                            <ul className="mbs-7 flex flex-wrap justify-center gap-2 border-bs border-border-warm pbs-4 sm:pbs-5">
                                 {live.acceptedOfferCount > 0 ? (
                                     <li className="body-xs inline-flex items-center gap-1.5 rounded-full bg-chart-4/12 px-3 py-1.5 font-semibold text-brand-text">
                                         <Handshake aria-hidden className="block-3.5 inline-3.5" />

@@ -19,8 +19,8 @@ export function EarningsPageSkeleton() {
                 <Skeleton className="rounded-card block-96 lg:col-span-5" />
                 <Skeleton className="rounded-card block-96 lg:col-span-3" />
                 <Skeleton className="rounded-card block-96 lg:col-span-4" />
-                <Skeleton className="rounded-card block-96 md:order-last md:col-span-2 lg:col-span-8" />
-                <Skeleton className="rounded-card block-96 lg:col-span-4" />
+                <Skeleton className="rounded-card block-96 md:order-last md:col-span-2 lg:col-span-6" />
+                <Skeleton className="rounded-card block-96 lg:col-span-6" />
             </div>
         </div>
     );

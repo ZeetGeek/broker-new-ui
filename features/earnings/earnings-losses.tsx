@@ -1,24 +1,25 @@
 "use client";
 
-import { useCallback, useState } from "react";
-
-import { Label, Pie, PieChart, Sector } from "recharts";
-import type { PieSectorShapeProps } from "recharts/types/polar/Pie";
+import { Bar, BarChart, CartesianGrid, LabelList, Rectangle, Text, XAxis, YAxis } from "recharts";
+import type { BarShapeProps } from "recharts/types/cartesian/Bar";
 
 import { plural } from "@/lib/format/plural";
-import { cn } from "@/lib/utils";
 
-import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
+import {
+    type ChartConfig,
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+} from "@/components/ui/chart";
 
 import { EarningsCard } from "@/features/earnings/earnings-card";
 import type { EarningsReport, LostReasonRow } from "@/features/earnings/earnings-math";
 
 /**
  * One warm "loss" family built from the danger tokens, a fixed colour per
- * reason so "price" is the same red in every period. Lightness steps keep the
- * slices apart for colour-blind users; the list beside the ring names them.
- * Not the chart-1…4 palette: those are the stage colours on the pipeline card,
- * and a lost reason in "Negotiation green" would read as a good outcome.
+ * reason so "price" is the same red in every period. Not the chart-1…4
+ * palette: those are the stage colours on the pipeline card, and a lost reason
+ * in "Negotiation green" would read as a good outcome.
  */
 const REASON_COLOR: Record<LostReasonRow["key"], string> = {
     price: "var(--color-danger)",
@@ -28,10 +29,10 @@ const REASON_COLOR: Record<LostReasonRow["key"], string> = {
     other: "color-mix(in oklch, var(--color-ink-subtle) 35%, var(--color-surface))",
 };
 
-type Slice = LostReasonRow & { pct: number; fill: string };
+type ReasonBar = LostReasonRow & { pct: number; fill: string };
 
-function toSlices(rows: LostReasonRow[]): Slice[] {
-    // Out of deals that have a reason, so the ring adds up to 100%.
+function toBars(rows: LostReasonRow[]): ReasonBar[] {
+    // Out of deals that have a reason, so the shares add up to 100%.
     const total = rows.reduce((sum, row) => sum + row.count, 0);
     return rows.map((row) => ({
         ...row,
@@ -40,87 +41,119 @@ function toSlices(rows: LostReasonRow[]): Slice[] {
     }));
 }
 
-function ReasonDonut({ slices, activeIndex }: { slices: Slice[]; activeIndex: number }) {
-    const active = slices[activeIndex];
-    const config = Object.fromEntries(
-        slices.map((slice) => [slice.key, { label: slice.label, color: slice.fill }]),
-    ) satisfies ChartConfig;
+/** "7 deals lost, 2 more than before. You won 70% of finished deals." */
+function lossSummary(lost: number, previous: number | null, winRate: number | null): string {
+    let text = `${plural(lost, "deal")} lost`;
+    if (previous != null) {
+        const diff = lost - previous;
+        text +=
+            diff === 0
+                ? ", same as before"
+                : `, ${Math.abs(diff)} ${diff > 0 ? "more" : "fewer"} than before`;
+    }
+    text += ".";
+    if (winRate != null) text += ` You won ${winRate}% of finished deals.`;
+    return text;
+}
 
-    const renderShape = useCallback(
-        ({ index, outerRadius = 0, ...props }: PieSectorShapeProps) => {
-            if (index === activeIndex) {
-                return (
-                    <g>
-                        <Sector {...props} outerRadius={outerRadius + 8} />
-                        <Sector
-                            {...props}
-                            outerRadius={outerRadius + 18}
-                            innerRadius={outerRadius + 11}
-                        />
-                    </g>
-                );
-            }
-            return <Sector {...props} outerRadius={outerRadius} />;
-        },
-        [activeIndex],
+const CHART_CONFIG = { count: { label: "Deals lost" } } satisfies ChartConfig;
+
+/** Reason name under its column, wrapped to the column width. */
+function ReasonTick({
+    x,
+    y,
+    payload,
+    width,
+}: {
+    x?: number | string;
+    y?: number | string;
+    payload?: { value: string };
+    width: number;
+}) {
+    return (
+        <Text
+            x={Number(x)}
+            y={Number(y)}
+            width={width}
+            textAnchor="middle"
+            verticalAnchor="start"
+            className="fill-ink-muted text-xs"
+        >
+            {payload?.value ?? ""}
+        </Text>
     );
+}
+
+/**
+ * One column per reason, share of reasoned losses on top. The biggest reason
+ * gets a dashed outline so the eye lands there first.
+ */
+function ReasonBars({ bars }: { bars: ReasonBar[] }) {
+    const max = Math.max(...bars.map((bar) => bar.count), 1);
+    const topIndex = bars.findIndex((bar) => bar.count === max);
+    // Rough column width so long reasons wrap instead of colliding.
+    const tickWidth = Math.max(72, Math.min(220, 600 / bars.length));
 
     return (
         <ChartContainer
-            config={config}
-            className="aspect-auto flex-1 inline-full min-block-60"
-            aria-label={slices
-                .map((slice) => `${slice.label}: ${plural(slice.count, "deal")}, ${slice.pct}%`)
+            config={CHART_CONFIG}
+            // Grows with the card so the columns fill the row instead of leaving a gap.
+            className="aspect-auto flex-1 inline-full min-block-64"
+            aria-label={bars
+                .map((bar) => `${bar.label}: ${plural(bar.count, "deal")}, ${bar.pct}%`)
                 .join(". ")}
         >
-            <PieChart>
-                <Pie
-                    data={slices}
+            <BarChart
+                data={bars}
+                margin={{ top: 24, right: 0, bottom: 0, left: 0 }}
+                barCategoryGap="6%"
+                accessibilityLayer
+            >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    height={48}
+                    interval={0}
+                    tick={<ReasonTick width={tickWidth} />}
+                />
+                <YAxis type="number" domain={[0, max]} hide />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <Bar
                     dataKey="count"
-                    nameKey="key"
-                    innerRadius="52%"
-                    outerRadius="78%"
-                    // A prop, not a class: a stroke class would also outline the centre label.
-                    stroke="var(--color-surface)"
-                    strokeWidth={3}
-                    paddingAngle={slices.length > 1 ? 2 : 0}
-                    cornerRadius={6}
-                    shape={renderShape}
+                    radius={8}
+                    strokeWidth={2}
                     isAnimationActive={false}
+                    shape={({ index, ...props }: BarShapeProps) =>
+                        index === topIndex ? (
+                            <Rectangle
+                                {...props}
+                                fillOpacity={0.85}
+                                stroke={props.payload.fill}
+                                strokeDasharray={4}
+                                strokeDashoffset={4}
+                            />
+                        ) : (
+                            <Rectangle {...props} />
+                        )
+                    }
                 >
-                    <Label
-                        content={({ viewBox }) => {
-                            if (!active || !viewBox || !("cx" in viewBox) || !("cy" in viewBox)) {
-                                return null;
-                            }
-                            const cy = viewBox.cy ?? 0;
-                            return (
-                                <text x={viewBox.cx} y={cy} textAnchor="middle" stroke="none">
-                                    <tspan
-                                        x={viewBox.cx}
-                                        y={cy + 2}
-                                        className="fill-ink text-3xl font-bold tabular-nums"
-                                    >
-                                        {active.pct}%
-                                    </tspan>
-                                    <tspan
-                                        x={viewBox.cx}
-                                        y={cy + 24}
-                                        className="fill-ink-muted text-sm font-medium"
-                                    >
-                                        {plural(active.count, "deal")}
-                                    </tspan>
-                                </text>
-                            );
-                        }}
+                    <LabelList
+                        dataKey="pct"
+                        position="top"
+                        offset={8}
+                        className="fill-ink text-xs font-semibold tabular-nums"
+                        formatter={(value) => `${value}%`}
                     />
-                </Pie>
-            </PieChart>
+                </Bar>
+            </BarChart>
         </ChartContainer>
     );
 }
 
-/** Why deals were lost, as a donut with a tappable reason list. */
+/** Why deals were lost, as one column per reason. */
 export function EarningsLosses({
     report,
     className,
@@ -128,81 +161,24 @@ export function EarningsLosses({
     report: EarningsReport;
     className?: string;
 }) {
-    const { lostCount, lostReasons } = report;
-    const slices = toSlices(lostReasons);
-
-    // Track by key so a period change keeps the same reason picked when it still exists.
-    const [activeKey, setActiveKey] = useState<Slice["key"] | null>(null);
-    const foundIndex = slices.findIndex((slice) => slice.key === activeKey);
-    const activeIndex = foundIndex >= 0 ? foundIndex : 0;
+    const { lostCount, lostReasons, previousLostCount, winRate } = report;
+    const bars = toBars(lostReasons);
 
     return (
         <EarningsCard
             title="Why deals were lost"
             titleId="earnings-losses-heading"
+            description={
+                lostCount > 0 ? lossSummary(lostCount, previousLostCount, winRate) : undefined
+            }
             className={className}
         >
             {lostCount === 0 ? (
                 <p className="body-sm text-ink-muted">No deals were lost in this period.</p>
+            ) : bars.length > 0 ? (
+                <ReasonBars bars={bars} />
             ) : (
-                <>
-                    {slices.length > 0 ? (
-                        <div className="flex flex-1 flex-col gap-4">
-                            <ReasonDonut slices={slices} activeIndex={activeIndex} />
-                            <ul className="flex flex-col gap-1">
-                                {slices.map((slice, index) => {
-                                    const isActive = index === activeIndex;
-                                    return (
-                                        <li key={slice.key}>
-                                            <button
-                                                type="button"
-                                                aria-pressed={isActive}
-                                                onClick={() => setActiveKey(slice.key)}
-                                                className={cn(
-                                                    "body-sm flex items-center gap-2.5 rounded-control px-2.5 py-2 text-start transition-colors duration-(--duration-fast) inline-full hover:bg-surface-muted/60 focus-visible:outline-2 focus-visible:outline-brand",
-                                                )}
-                                                style={
-                                                    isActive
-                                                        ? {
-                                                              backgroundColor: `color-mix(in oklch, ${slice.fill} 10%, var(--color-surface))`,
-                                                          }
-                                                        : undefined
-                                                }
-                                            >
-                                                <span
-                                                    aria-hidden
-                                                    className="shrink-0 rounded-full block-2.5 inline-2.5"
-                                                    style={{ backgroundColor: slice.fill }}
-                                                />
-                                                <span
-                                                    className={cn(
-                                                        "flex-1 min-inline-0",
-                                                        isActive
-                                                            ? "font-semibold text-ink"
-                                                            : "text-ink-muted",
-                                                    )}
-                                                >
-                                                    {slice.label}
-                                                </span>
-                                                <span className="shrink-0 text-ink-muted tabular-nums">
-                                                    <strong className="font-semibold text-ink">
-                                                        {slice.count}
-                                                    </strong>{" "}
-                                                    · {slice.pct}%
-                                                </span>
-                                            </button>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </div>
-                    ) : null}
-                    {slices.length === 0 ? (
-                        <p className="body-sm text-ink-muted">
-                            No reasons saved for these deals yet.
-                        </p>
-                    ) : null}
-                </>
+                <p className="body-sm text-ink-muted">No reasons saved for these deals yet.</p>
             )}
         </EarningsCard>
     );
