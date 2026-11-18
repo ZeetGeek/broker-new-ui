@@ -434,6 +434,20 @@ function VisitRow({
             <div className={styles.rowProfiles}>
                 <div className={styles.rowClient}>
                     <UserAvatar
+                        name={visit.ownerName ?? "Owner"}
+                        imageUrl={visit.ownerAvatarUrl ?? undefined}
+                        size="sm"
+                        className="shadow-sm ring-2 ring-surface"
+                    />
+                    <div>
+                        <small>Owner</small>
+                        <strong data-missing={!visit.ownerName || undefined}>
+                            {visit.ownerName ?? "Not added"}
+                        </strong>
+                    </div>
+                </div>
+                <div className={styles.rowClient}>
+                    <UserAvatar
                         name={visit.clientName}
                         size="sm"
                         className="shadow-sm ring-2 ring-surface"

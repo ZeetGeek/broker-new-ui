@@ -18,6 +18,9 @@ export type BrokerVisit = {
     clientId: string;
     clientName: string;
     clientPhone: string | null;
+    /** Property owner; null when the API did not send one. */
+    ownerName: string | null;
+    ownerAvatarUrl: string | null;
     propertyId: string;
     propertyTitle: string;
     locality: string;
@@ -136,6 +139,8 @@ export function mapShowing(api: ApiShowing): BrokerVisit {
         clientId: api.client?.id ?? "",
         clientName: api.client?.name?.trim() || "Client",
         clientPhone: api.client?.phone || null,
+        ownerName: api.owner?.fullName?.trim() || null,
+        ownerAvatarUrl: api.owner?.avatarUrl || null,
         propertyId: api.propertyId,
         propertyTitle: api.property?.title?.trim() || "Property",
         locality: address || city,

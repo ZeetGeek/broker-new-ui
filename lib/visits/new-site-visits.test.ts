@@ -33,6 +33,8 @@ const visit: BrokerVisit = {
     clientId: "client-1",
     clientName: "Ravi",
     clientPhone: null,
+    ownerName: null,
+    ownerAvatarUrl: null,
     propertyId: "prop-1",
     propertyTitle: "Shanti Flat",
     locality: "Vesu",
