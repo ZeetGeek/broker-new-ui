@@ -380,9 +380,10 @@ function DealCardMenu({
 }
 
 function StageMiddle({ deal, onMakeOffer }: { deal: DealItem; onMakeOffer?: () => void }) {
-    // Only when there is something to show. An empty "No visit booked yet" /
-    // "No offer yet" box on every card is noise; Make offer stays in the menu.
-    if (deal.status === "visit" && deal.nextVisitAt) return <VisitStageBlock deal={deal} />;
+    // Site visit always shows its block: with no visit booked, booking one is
+    // the next step, so the card asks for it. An empty "No offer yet" box is
+    // still noise; Make offer stays in the menu.
+    if (deal.status === "visit") return <VisitStageBlock deal={deal} />;
     if (deal.status === "negotiation" && deal.offerAmountInr != null)
         return <NegotiationStageBlock deal={deal} onMakeOffer={onMakeOffer} />;
     return null;
