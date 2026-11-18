@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PropertyAnalyticsPage } from "@/features/properties/property-analytics/property-analytics-page";
 
 export const metadata: Metadata = {
+    title: "Listing analytics",
     robots: { index: false, follow: false },
 };
 

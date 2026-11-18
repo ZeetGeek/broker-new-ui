@@ -319,12 +319,12 @@ export function AppDateRangePicker({
                             {triggerLabel ? (
                                 <span className="flex items-center gap-2 min-inline-0">
                                     <span className="font-medium">{triggerLabel}</span>
-                                    <span className="truncate text-ink-muted max-sm:hidden">
+                                    <span className="truncate font-semibold text-ink-muted max-sm:hidden">
                                         · {triggerDates}
                                     </span>
                                 </span>
                             ) : (
-                                <span className="font-medium">{triggerDates}</span>
+                                <span className="font-semibold">{triggerDates}</span>
                             )}
                             {open && rangeCompare ? (
                                 <span className="body-xs text-ink-muted">

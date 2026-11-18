@@ -36,6 +36,7 @@ import { formatCommission } from "@/lib/format/commission";
 import { formatDateRangeMedium } from "@/lib/format/date";
 import { plural } from "@/lib/format/plural";
 
+import { DEAL_LOST_REASON_DETAIL } from "@/features/pipeline/stage-meta";
 import {
     DEAL_STAGE_ORDER,
     type DealItem,
@@ -270,6 +271,13 @@ export type EarningsBucket = {
     totalInr: number;
     closed: number;
     lost: number;
+    /** Estimated commission that walked away with lost deals in this bucket. */
+    lostInr: number;
+    /**
+     * Lost-reason counts in this bucket. Keys are Mark as lost codes or
+     * `"other"` (free text / missing). Labels are applied in the chart UI.
+     */
+    lostReasonCounts: Partial<Record<DealLostReason | "other", number>>;
     /** True for the bucket holding today — it is still filling up. */
     isToDate: boolean;
 };
@@ -382,6 +390,8 @@ function buildBuckets(from: Date, to: Date, unit: BucketUnit, now: Date): Earnin
             totalInr: 0,
             closed: 0,
             lost: 0,
+            lostInr: 0,
+            lostReasonCounts: {},
             isToDate,
         });
         cursor = next;
@@ -454,7 +464,13 @@ export function earningsByArea(valued: ValuedDeal[]): AreaEarningsRow[] {
     );
 }
 
-export type LostReasonRow = { key: DealLostReason | "other"; label: string; count: number };
+export type LostReasonRow = {
+    key: DealLostReason | "other";
+    label: string;
+    /** Same helper line as the Mark as lost modal. Null for “Others”. */
+    detail: string | null;
+    count: number;
+};
 
 export type EarningsReport = {
     window: EarningsWindow;
@@ -596,7 +612,17 @@ export function buildEarningsReport(
     }
     for (const deal of lost) {
         const i = bucketIndex(buckets, deal.resolvedAt as string);
-        if (i >= 0) buckets[i].lost += 1;
+        if (i < 0) continue;
+        buckets[i].lost += 1;
+        const c = dealCommissionInr(deal);
+        if (c != null) buckets[i].lostInr += c;
+        const reason = deal.lostReason?.trim();
+        const reasonKey: DealLostReason | "other" = reason
+            ? (LOST_REASON_ORDER as string[]).includes(reason)
+                ? (reason as DealLostReason)
+                : "other"
+            : "other";
+        buckets[i].lostReasonCounts[reasonKey] = (buckets[i].lostReasonCounts[reasonKey] ?? 0) + 1;
     }
 
     const closeDurations = closed
@@ -621,7 +647,7 @@ export function buildEarningsReport(
             .filter((v) => v.commissionInr != null)
             .sort((a, b) => (b.commissionInr ?? 0) - (a.commissionInr ?? 0))[0] ?? null;
 
-    // Loss analysis
+    // Loss analysis — same reasons / details as the Mark as lost modal.
     const reasonCounts = new Map<string, number>();
     let lostWithoutReasonCount = 0;
     for (const deal of lost) {
@@ -633,16 +659,22 @@ export function buildEarningsReport(
         const key = (LOST_REASON_ORDER as string[]).includes(reason) ? reason : "other";
         reasonCounts.set(key, (reasonCounts.get(key) ?? 0) + 1);
     }
+    // Always the same five rows as Mark as lost (4 reasons + Others), zeros included.
+    const othersCount = (reasonCounts.get("other") ?? 0) + lostWithoutReasonCount;
     const lostReasons: LostReasonRow[] = [
         ...LOST_REASON_ORDER.map((key) => ({
             key,
             label: lostReasonLabel(key),
+            detail: DEAL_LOST_REASON_DETAIL[key],
             count: reasonCounts.get(key) ?? 0,
         })),
-        { key: "other" as const, label: "Other reason", count: reasonCounts.get("other") ?? 0 },
-    ]
-        .filter((row) => row.count > 0)
-        .sort((a, b) => b.count - a.count);
+        {
+            key: "other" as const,
+            label: "Others",
+            detail: "No listed reason, or written in as free text",
+            count: othersCount,
+        },
+    ];
 
     const lostFromStages = DEAL_STAGE_ORDER.map((stage) => ({
         stage,

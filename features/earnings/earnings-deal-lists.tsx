@@ -222,7 +222,7 @@ export function EarningsRecentSold({
             title="Recently sold"
             titleId="earnings-recent-heading"
             description="Your latest closed deals in this period"
-            className={className}
+            className={cn("block-full min-block-full", className)}
         >
             {best && best.commissionInr != null && report.closedCount > 1 ? (
                 <div className="flex items-center gap-3 rounded-inner bg-chart-4/10 p-3">

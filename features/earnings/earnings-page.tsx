@@ -154,7 +154,6 @@ export function EarningsPage() {
             report={report}
             selection={selection}
             onSelectionChange={setSelection}
-            isSample={isSample}
         />
     );
 }

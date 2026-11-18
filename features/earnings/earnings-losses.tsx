@@ -1,159 +1,99 @@
 "use client";
 
-import { Bar, BarChart, CartesianGrid, LabelList, Rectangle, Text, XAxis, YAxis } from "recharts";
-import type { BarShapeProps } from "recharts/types/cartesian/Bar";
+import { useId, useMemo } from "react";
 
+import { Area, CartesianGrid, ComposedChart, XAxis, YAxis } from "recharts";
+
+import { formatCommission, formatCommissionTick } from "@/lib/format/commission";
 import { plural } from "@/lib/format/plural";
+import { cn } from "@/lib/utils";
 
 import {
     type ChartConfig,
     ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
     ChartTooltip,
     ChartTooltipContent,
 } from "@/components/ui/chart";
 
 import { EarningsCard } from "@/features/earnings/earnings-card";
-import type { EarningsReport, LostReasonRow } from "@/features/earnings/earnings-math";
+import {
+    bucketUnitWord,
+    type EarningsBucket,
+    type EarningsReport,
+} from "@/features/earnings/earnings-math";
+import { DEAL_LOST_REASON_LABEL } from "@/features/pipeline/stage-meta";
+import type { DealLostReason } from "@/features/pipeline/types";
 
-/**
- * One warm "loss" family built from the danger tokens, a fixed colour per
- * reason so "price" is the same red in every period. Not the chart-1…4
- * palette: those are the stage colours on the pipeline card, and a lost reason
- * in "Negotiation green" would read as a good outcome.
- */
-const REASON_COLOR: Record<LostReasonRow["key"], string> = {
-    price: "var(--color-danger)",
-    bought_elsewhere: "color-mix(in oklch, var(--color-danger) 62%, var(--color-ink))",
-    not_responding: "var(--color-danger-mid)",
-    changed_mind: "color-mix(in oklch, var(--color-danger-mid) 50%, var(--color-surface))",
-    other: "color-mix(in oklch, var(--color-ink-subtle) 35%, var(--color-surface))",
+/** Same danger family as Mark as lost — not stage / chart greens. */
+const CHART_CONFIG = {
+    lostInr: { label: "Amount lost", color: "var(--color-danger)" },
+    average: { label: "Average", color: "var(--color-danger-mid)" },
+} satisfies ChartConfig;
+
+const REASON_ORDER: Array<DealLostReason | "other"> = [
+    "price",
+    "bought_elsewhere",
+    "not_responding",
+    "changed_mind",
+    "other",
+];
+
+type ReasonLine = { label: string; count: number };
+
+type LostRow = {
+    label: string;
+    longLabel: string;
+    lost: number;
+    lostInr: number;
+    average: number;
+    reasons: ReasonLine[];
 };
 
-type ReasonBar = LostReasonRow & { pct: number; fill: string };
+function reasonLabel(key: DealLostReason | "other"): string {
+    return key === "other" ? "Others" : DEAL_LOST_REASON_LABEL[key];
+}
 
-function toBars(rows: LostReasonRow[]): ReasonBar[] {
-    // Out of deals that have a reason, so the shares add up to 100%.
-    const total = rows.reduce((sum, row) => sum + row.count, 0);
-    return rows.map((row) => ({
-        ...row,
-        pct: total > 0 ? Math.round((row.count / total) * 100) : 0,
-        fill: REASON_COLOR[row.key],
+function reasonLines(counts: EarningsBucket["lostReasonCounts"]): ReasonLine[] {
+    return REASON_ORDER.filter((key) => (counts[key] ?? 0) > 0).map((key) => ({
+        label: reasonLabel(key),
+        count: counts[key] ?? 0,
     }));
 }
 
-/** "7 deals lost, 2 more than before. You won 70% of finished deals." */
-function lossSummary(lost: number, previous: number | null, winRate: number | null): string {
-    let text = `${plural(lost, "deal")} lost`;
-    if (previous != null) {
-        const diff = lost - previous;
-        text +=
-            diff === 0
-                ? ", same as before"
-                : `, ${Math.abs(diff)} ${diff > 0 ? "more" : "fewer"} than before`;
-    }
-    text += ".";
-    if (winRate != null) text += ` You won ${winRate}% of finished deals.`;
-    return text;
+function lostRows(buckets: EarningsBucket[], showAverage: boolean): LostRow[] {
+    const active = buckets.filter((b) => b.lostInr > 0);
+    const average =
+        !showAverage || active.length === 0
+            ? 0
+            : active.reduce((sum, b) => sum + b.lostInr, 0) / active.length;
+    return buckets.map((b) => ({
+        label: b.label,
+        longLabel: b.longLabel,
+        lost: b.lost,
+        lostInr: b.lostInr,
+        average: showAverage ? Math.round(average) : 0,
+        reasons: reasonLines(b.lostReasonCounts),
+    }));
 }
 
-const CHART_CONFIG = { count: { label: "Deals lost" } } satisfies ChartConfig;
+const DOT = {
+    r: 3,
+    strokeWidth: 2,
+    stroke: "var(--color-surface)",
+} as const;
 
-/** Reason name under its column, wrapped to the column width. */
-function ReasonTick({
-    x,
-    y,
-    payload,
-    width,
-}: {
-    x?: number | string;
-    y?: number | string;
-    payload?: { value: string };
-    width: number;
-}) {
-    return (
-        <Text
-            x={Number(x)}
-            y={Number(y)}
-            width={width}
-            textAnchor="middle"
-            verticalAnchor="start"
-            className="fill-ink-muted text-xs"
-        >
-            {payload?.value ?? ""}
-        </Text>
-    );
-}
+const ACTIVE_DOT = {
+    r: 5,
+    strokeWidth: 2,
+    stroke: "var(--color-surface)",
+} as const;
 
 /**
- * One column per reason, share of reasoned losses on top. The biggest reason
- * gets a dashed outline so the eye lands there first.
+ * Lost commission across the selected period — same area-chart anatomy as
+ * “Commission by month”. Tooltip also lists deal count and reasons.
  */
-function ReasonBars({ bars }: { bars: ReasonBar[] }) {
-    const max = Math.max(...bars.map((bar) => bar.count), 1);
-    const topIndex = bars.findIndex((bar) => bar.count === max);
-    // Rough column width so long reasons wrap instead of colliding.
-    const tickWidth = Math.max(72, Math.min(220, 600 / bars.length));
-
-    return (
-        <ChartContainer
-            config={CHART_CONFIG}
-            // Grows with the card so the columns fill the row instead of leaving a gap.
-            className="aspect-auto flex-1 inline-full min-block-64"
-            aria-label={bars
-                .map((bar) => `${bar.label}: ${plural(bar.count, "deal")}, ${bar.pct}%`)
-                .join(". ")}
-        >
-            <BarChart
-                data={bars}
-                margin={{ top: 24, right: 0, bottom: 0, left: 0 }}
-                barCategoryGap="6%"
-                accessibilityLayer
-            >
-                <CartesianGrid vertical={false} />
-                <XAxis
-                    dataKey="label"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={10}
-                    height={48}
-                    interval={0}
-                    tick={<ReasonTick width={tickWidth} />}
-                />
-                <YAxis type="number" domain={[0, max]} hide />
-                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                <Bar
-                    dataKey="count"
-                    radius={8}
-                    strokeWidth={2}
-                    isAnimationActive={false}
-                    shape={({ index, ...props }: BarShapeProps) =>
-                        index === topIndex ? (
-                            <Rectangle
-                                {...props}
-                                fillOpacity={0.85}
-                                stroke={props.payload.fill}
-                                strokeDasharray={4}
-                                strokeDashoffset={4}
-                            />
-                        ) : (
-                            <Rectangle {...props} />
-                        )
-                    }
-                >
-                    <LabelList
-                        dataKey="pct"
-                        position="top"
-                        offset={8}
-                        className="fill-ink text-xs font-semibold tabular-nums"
-                        formatter={(value) => `${value}%`}
-                    />
-                </Bar>
-            </BarChart>
-        </ChartContainer>
-    );
-}
-
-/** Why deals were lost, as one column per reason. */
 export function EarningsLosses({
     report,
     className,
@@ -161,25 +101,220 @@ export function EarningsLosses({
     report: EarningsReport;
     className?: string;
 }) {
-    const { lostCount, lostReasons, previousLostCount, winRate } = report;
-    const bars = toBars(lostReasons);
+    const gradId = useId().replace(/:/g, "");
+    const { buckets, bucketUnit, lostCount } = report;
+    const unitWord = bucketUnitWord(bucketUnit);
+    const dense = buckets.length > 12;
+    const showAverage = buckets.filter((b) => b.lostInr > 0).length >= 2;
+    const data = useMemo(() => lostRows(buckets, showAverage), [buckets, showAverage]);
+    const isEmpty = lostCount === 0;
+    const lostInrTotal = useMemo(() => buckets.reduce((sum, b) => sum + b.lostInr, 0), [buckets]);
+
+    const fillLost = `fill-lost-${gradId}`;
+    const fillAvg = `fill-avg-${gradId}`;
 
     return (
         <EarningsCard
-            title="Why deals were lost"
+            title={`Lost deals by ${unitWord}`}
             titleId="earnings-losses-heading"
-            description={
-                lostCount > 0 ? lossSummary(lostCount, previousLostCount, winRate) : undefined
+            action={
+                !isEmpty ? (
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                        <span className="body-xs inline-flex items-center gap-1 rounded-full bg-danger-soft px-2.5 py-1 font-semibold text-danger ring-1 ring-danger/10">
+                            <span className="tabular-nums">{lostCount}</span>
+                            <span>{lostCount === 1 ? "deal lost" : "deals lost"}</span>
+                        </span>
+                        <span className="body-xs inline-flex items-center gap-1 rounded-full bg-danger-soft px-2.5 py-1 font-semibold text-danger ring-1 ring-danger/10">
+                            <span className="tabular-nums">
+                                {formatCommission(lostInrTotal, true)}
+                            </span>
+                            <span>lost</span>
+                        </span>
+                    </div>
+                ) : undefined
             }
-            className={className}
+            className={cn("block-full min-block-full", className)}
         >
-            {lostCount === 0 ? (
-                <p className="body-sm text-ink-muted">No deals were lost in this period.</p>
-            ) : bars.length > 0 ? (
-                <ReasonBars bars={bars} />
-            ) : (
-                <p className="body-sm text-ink-muted">No reasons saved for these deals yet.</p>
-            )}
+            <div className="flex flex-1 flex-col pbe-2 min-inline-0 min-block-0">
+                {isEmpty ? (
+                    <div className="flex flex-1 flex-col items-center justify-center gap-1.5 px-6 py-12 text-center">
+                        <p className="body font-medium text-ink">No deals lost in this period</p>
+                        <p className="body-sm text-ink-muted max-inline-sm">
+                            Try a longer period, or check back after deals are marked lost.
+                        </p>
+                    </div>
+                ) : (
+                    <ChartContainer
+                        key={`lost-${bucketUnit}-${buckets.length}-${showAverage}`}
+                        config={CHART_CONFIG}
+                        className="aspect-auto flex-1 inline-full min-block-56 sm:min-block-64"
+                        aria-label={data
+                            .map((row) => {
+                                const reasons =
+                                    row.reasons.length > 0
+                                        ? row.reasons.map((r) => `${r.label} ${r.count}`).join(", ")
+                                        : "no reason saved";
+                                return `${row.longLabel}: ${plural(row.lost, "deal")} lost, ${formatCommission(row.lostInr)}, ${reasons}`;
+                            })
+                            .join(". ")}
+                    >
+                        <ComposedChart
+                            accessibilityLayer
+                            data={data}
+                            margin={{ top: 12, left: 0, right: 8, bottom: 0 }}
+                        >
+                            <defs>
+                                <linearGradient id={fillLost} x1="0" y1="0" x2="0" y2="1">
+                                    <stop
+                                        offset="5%"
+                                        stopColor="var(--color-lostInr)"
+                                        stopOpacity={0.35}
+                                    />
+                                    <stop
+                                        offset="95%"
+                                        stopColor="var(--color-lostInr)"
+                                        stopOpacity={0}
+                                    />
+                                </linearGradient>
+                                {showAverage ? (
+                                    <linearGradient id={fillAvg} x1="0" y1="0" x2="0" y2="1">
+                                        <stop
+                                            offset="5%"
+                                            stopColor="var(--color-average)"
+                                            stopOpacity={0.2}
+                                        />
+                                        <stop
+                                            offset="95%"
+                                            stopColor="var(--color-average)"
+                                            stopOpacity={0}
+                                        />
+                                    </linearGradient>
+                                ) : null}
+                            </defs>
+                            <CartesianGrid
+                                vertical={false}
+                                strokeDasharray="3 4"
+                                stroke="var(--color-border-warm)"
+                            />
+                            <XAxis
+                                dataKey="label"
+                                axisLine={false}
+                                tickLine={false}
+                                tickMargin={10}
+                                interval="preserveStartEnd"
+                                minTickGap={dense ? 12 : 4}
+                                tick={{ fontSize: 12, fill: "var(--color-ink-muted)" }}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                width={40}
+                                tickCount={4}
+                                allowDecimals={false}
+                                tick={{ fontSize: 11, fill: "var(--color-ink-subtle)" }}
+                                tickFormatter={(value: number) => formatCommissionTick(value)}
+                            />
+                            <ChartTooltip
+                                cursor={{
+                                    stroke: "var(--color-ink-subtle)",
+                                    strokeDasharray: "4 4",
+                                    strokeWidth: 1,
+                                }}
+                                content={
+                                    <ChartTooltipContent
+                                        indicator="dot"
+                                        labelFormatter={(_, payload) => {
+                                            const row = payload?.[0]?.payload as
+                                                LostRow | undefined;
+                                            return row?.longLabel ?? "";
+                                        }}
+                                        formatter={(value, name, item) => {
+                                            const row = item?.payload as LostRow | undefined;
+                                            if (name === "average") {
+                                                return (
+                                                    <div className="flex flex-1 items-center justify-between gap-4">
+                                                        <span className="text-ink-muted">
+                                                            Avg / {unitWord}
+                                                        </span>
+                                                        <strong className="font-semibold text-ink tabular-nums">
+                                                            {formatCommission(Number(value))}
+                                                        </strong>
+                                                    </div>
+                                                );
+                                            }
+                                            return (
+                                                <div className="flex flex-1 flex-col gap-1.5">
+                                                    <div className="flex items-center justify-between gap-4">
+                                                        <span className="text-ink-muted">
+                                                            Amount lost
+                                                        </span>
+                                                        <strong className="font-semibold text-ink tabular-nums">
+                                                            {formatCommission(Number(value))}
+                                                        </strong>
+                                                    </div>
+                                                    {row ? (
+                                                        <div className="flex items-center justify-between gap-4">
+                                                            <span className="text-ink-muted">
+                                                                Deals lost
+                                                            </span>
+                                                            <strong className="font-semibold text-ink tabular-nums">
+                                                                {row.lost}
+                                                            </strong>
+                                                        </div>
+                                                    ) : null}
+                                                    {row && row.reasons.length > 0 ? (
+                                                        <div className="flex flex-col gap-1 border-bs border-border-warm pbs-1.5">
+                                                            <span className="body-xs font-medium text-ink-subtle">
+                                                                Reason
+                                                            </span>
+                                                            {row.reasons.map((reason) => (
+                                                                <div
+                                                                    key={reason.label}
+                                                                    className="flex items-center justify-between gap-4"
+                                                                >
+                                                                    <span className="text-ink-muted">
+                                                                        {reason.label}
+                                                                    </span>
+                                                                    <strong className="font-semibold text-ink tabular-nums">
+                                                                        {reason.count}
+                                                                    </strong>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                            );
+                                        }}
+                                    />
+                                }
+                            />
+                            <ChartLegend content={<ChartLegendContent />} />
+                            {showAverage ? (
+                                <Area
+                                    type="monotone"
+                                    dataKey="average"
+                                    stroke="var(--color-average)"
+                                    strokeWidth={2}
+                                    fill={`url(#${fillAvg})`}
+                                    isAnimationActive={false}
+                                    dot={{ ...DOT, fill: "var(--color-average)" }}
+                                    activeDot={{ ...ACTIVE_DOT, fill: "var(--color-average)" }}
+                                />
+                            ) : null}
+                            <Area
+                                type="monotone"
+                                dataKey="lostInr"
+                                stroke="var(--color-lostInr)"
+                                strokeWidth={2.5}
+                                fill={`url(#${fillLost})`}
+                                isAnimationActive={false}
+                                dot={{ ...DOT, fill: "var(--color-lostInr)" }}
+                                activeDot={{ ...ACTIVE_DOT, fill: "var(--color-lostInr)" }}
+                            />
+                        </ComposedChart>
+                    </ChartContainer>
+                )}
+            </div>
         </EarningsCard>
     );
 }

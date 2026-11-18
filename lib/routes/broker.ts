@@ -32,6 +32,11 @@ export function brokerPropertyEditHref(propertyId: string): string {
     return `/broker/properties/${propertyId}/edit`;
 }
 
+/** One deal (a client on a property) opened on the pipeline. The id is the lead id. */
+export function brokerPipelineDealHref(leadId: string): string {
+    return `${BROKER_PIPELINE_HREF}/${encodeURIComponent(leadId)}`;
+}
+
 /** Lead analytics for one of the broker's own listings. */
 export function brokerPropertyAnalyticsHref(propertyId: string): string {
     return `${BROKER_YOUR_LISTINGS_HREF}/${propertyId}/analytics`;
