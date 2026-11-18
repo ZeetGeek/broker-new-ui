@@ -13,10 +13,21 @@ import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { DealKind, EarningsCard, EarningsDealLink } from "@/features/earnings/earnings-card";
 import { dealBaseAmountInr, type EarningsReport } from "@/features/earnings/earnings-math";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
-import { DEAL_STAGE_ORDER, isLiveStage } from "@/features/pipeline/types";
+import { DEAL_STAGE_ORDER, type DealStage, isLiveStage } from "@/features/pipeline/types";
 
 /** Floor so the smallest bar still fits a readable part of its title. */
 const MIN_BAR_PCT = 25;
+
+/**
+ * Soft same-hue fade per stage: full colour where the title sits, ~85% at the
+ * bar's end. Same hue keeps colour = stage; written out so Tailwind sees them.
+ */
+const STAGE_BAR_CLASS: Record<DealStage, string> = {
+    new: "bg-linear-to-r from-stage-1 to-stage-1/85",
+    contacted: "bg-linear-to-r from-stage-2 to-stage-2/85",
+    visit: "bg-linear-to-r from-stage-3 to-stage-3/85",
+    negotiation: "bg-linear-to-r from-stage-4 to-stage-4/85",
+};
 
 /**
  * Biggest open deals as a horizontal bar chart. Bar length is the deal's
@@ -128,7 +139,9 @@ export function EarningsOpenDeals({
                                                 dealId={deal.id}
                                                 className={cn(
                                                     "flex shrink-0 items-center rounded-control px-4 text-surface transition-opacity duration-160 block-11 min-inline-0 hover:text-surface hover:no-underline hover:opacity-90",
-                                                    stage?.dotClass ?? "bg-chart-2",
+                                                    isLiveStage(deal.status)
+                                                        ? STAGE_BAR_CLASS[deal.status]
+                                                        : "bg-chart-2",
                                                 )}
                                                 style={{
                                                     inlineSize: `calc((100% - 9rem) * ${pct / 100})`,
