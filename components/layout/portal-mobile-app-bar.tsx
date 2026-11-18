@@ -73,9 +73,10 @@ export function PortalMobileAppBar({
                 <UserAvatar
                     name={identity.name}
                     imageUrl={identity.avatarUrl}
-                    size="lg"
+                    size="md"
                     className="shrink-0"
                 />
+
                 <span className="flex min-inline-0 flex-col gap-0.5 text-start">
                     <span className="body-xs truncate font-medium leading-tight text-ink-muted">
                         {greeting}
