@@ -96,7 +96,7 @@ export function EarningsHero({
                     <p
                         className={cn(
                             "tabular-nums leading-none",
-                            earnedInr > 0 ? "display-3 text-highlight" : "h2 text-surface",
+                            earnedInr > 0 ? "h1 text-highlight" : "h2 text-surface",
                         )}
                     >
                         {earnedInr > 0 ? formatCommission(earnedInr) : "Nothing yet"}

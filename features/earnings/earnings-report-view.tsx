@@ -7,9 +7,9 @@ import { EarningsHero } from "@/features/earnings/earnings-hero";
 import { EarningsLosses } from "@/features/earnings/earnings-losses";
 import {
     earningsHeadlineLines,
-    formatWindow,
     type EarningsReport,
     type EarningsSelection,
+    formatWindow,
 } from "@/features/earnings/earnings-math";
 import { EarningsPipeline } from "@/features/earnings/earnings-pipeline";
 import { EarningsRangePicker } from "@/features/earnings/earnings-range-picker";
@@ -79,8 +79,8 @@ export function EarningsReportView({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12 lg:gap-5">
                 <EarningsHero report={report} className="lg:col-span-4" />
                 <EarningsTrendChart report={report} className="lg:col-span-8" />
-                <EarningsPipeline report={report} className="lg:col-span-4" />
                 <EarningsOpenDeals report={report} className="lg:col-span-8" />
+                <EarningsPipeline report={report} className="lg:col-span-4" />
                 <EarningsRecentSold report={report} className="lg:col-span-8" />
                 <EarningsLosses report={report} className="lg:col-span-4" />
             </div>

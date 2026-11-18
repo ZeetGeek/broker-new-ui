@@ -6,7 +6,7 @@ import { Area, CartesianGrid, ComposedChart, XAxis, YAxis } from "recharts";
 
 import { formatCommission, formatCommissionTick } from "@/lib/format/commission";
 
-import { TextSegmentedToggle } from "@/components/shared/text-segmented-toggle";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import {
     type ChartConfig,
     ChartContainer,
@@ -21,7 +21,6 @@ import {
     bucketUnitWord,
     type EarningsBucket,
     type EarningsReport,
-    formatWindow,
 } from "@/features/earnings/earnings-math";
 
 type TrendView = "money" | "deals";
@@ -117,249 +116,270 @@ export function EarningsTrendChart({
 
     const fillA = `fill-a-${gradId}`;
     const fillB = `fill-b-${gradId}`;
+    const panelId = `earnings-trend-panel-${gradId}`;
 
     return (
         <EarningsCard
             title={isMoney ? `Commission by ${unitWord}` : `Sold and lost by ${unitWord}`}
             titleId="earnings-trend-heading"
-            description={formatWindow(report.chartWindow)}
             action={
-                <TextSegmentedToggle
-                    size="sm"
+                <SlidingTabs
                     value={view}
                     onValueChange={setView}
                     options={VIEW_OPTIONS}
-                    ariaLabel="Chart view"
+                    label="Chart view"
+                    panelId={panelId}
                 />
             }
             className={className}
         >
-            {isEmpty ? (
-                <div className="flex flex-col items-center justify-center gap-1.5 px-6 py-12 text-center">
-                    <p className="body font-medium text-ink">
-                        {isMoney
-                            ? "No commission in this period"
-                            : "No finished deals in this period"}
-                    </p>
-                    <p className="body-sm text-ink-muted max-inline-sm">
-                        Try a longer period, or mark a deal as sold in your pipeline.
-                    </p>
-                </div>
-            ) : isMoney ? (
-                <ChartContainer
-                    key={`money-${bucketUnit}-${buckets.length}-${showAverage}`}
-                    config={MONEY_CONFIG}
-                    className="aspect-auto block-56 inline-full min-block-56 sm:block-64"
-                >
-                    <ComposedChart
-                        accessibilityLayer
-                        data={moneyData}
-                        margin={{ top: 12, left: 0, right: 8, bottom: 0 }}
+            <div
+                id={panelId}
+                role="tabpanel"
+                aria-labelledby="earnings-trend-heading"
+                className="flex flex-1 flex-col pbe-2 min-inline-0"
+            >
+                {isEmpty ? (
+                    <div className="flex flex-1 flex-col items-center justify-center gap-1.5 px-6 py-12 text-center">
+                        <p className="body font-medium text-ink">
+                            {isMoney
+                                ? "No commission in this period"
+                                : "No finished deals in this period"}
+                        </p>
+                        <p className="body-sm text-ink-muted max-inline-sm">
+                            Try a longer period, or mark a deal as sold in your pipeline.
+                        </p>
+                    </div>
+                ) : isMoney ? (
+                    <ChartContainer
+                        key={`money-${bucketUnit}-${buckets.length}-${showAverage}`}
+                        config={MONEY_CONFIG}
+                        className="aspect-auto flex-1 inline-full min-block-56 sm:min-block-64"
                     >
-                        <defs>
-                            <linearGradient id={fillA} x1="0" y1="0" x2="0" y2="1">
-                                <stop
-                                    offset="5%"
-                                    stopColor="var(--color-earned)"
-                                    stopOpacity={0.35}
-                                />
-                                <stop
-                                    offset="95%"
-                                    stopColor="var(--color-earned)"
-                                    stopOpacity={0}
-                                />
-                            </linearGradient>
+                        <ComposedChart
+                            accessibilityLayer
+                            data={moneyData}
+                            margin={{ top: 12, left: 0, right: 8, bottom: 0 }}
+                        >
+                            <defs>
+                                <linearGradient id={fillA} x1="0" y1="0" x2="0" y2="1">
+                                    <stop
+                                        offset="5%"
+                                        stopColor="var(--color-earned)"
+                                        stopOpacity={0.35}
+                                    />
+                                    <stop
+                                        offset="95%"
+                                        stopColor="var(--color-earned)"
+                                        stopOpacity={0}
+                                    />
+                                </linearGradient>
+                                {showAverage ? (
+                                    <linearGradient id={fillB} x1="0" y1="0" x2="0" y2="1">
+                                        <stop
+                                            offset="5%"
+                                            stopColor="var(--color-average)"
+                                            stopOpacity={0.2}
+                                        />
+                                        <stop
+                                            offset="95%"
+                                            stopColor="var(--color-average)"
+                                            stopOpacity={0}
+                                        />
+                                    </linearGradient>
+                                ) : null}
+                            </defs>
+                            <CartesianGrid
+                                vertical={false}
+                                strokeDasharray="3 4"
+                                stroke="var(--color-border-warm)"
+                            />
+                            <XAxis
+                                dataKey="label"
+                                axisLine={false}
+                                tickLine={false}
+                                tickMargin={10}
+                                interval="preserveStartEnd"
+                                minTickGap={dense ? 12 : 4}
+                                tick={{ fontSize: 12, fill: "var(--color-ink-muted)" }}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                width={36}
+                                tickCount={4}
+                                allowDecimals={false}
+                                tick={{ fontSize: 11, fill: "var(--color-ink-subtle)" }}
+                                tickFormatter={(value: number) => formatCommissionTick(value)}
+                            />
+                            <ChartTooltip
+                                cursor={{
+                                    stroke: "var(--color-ink-subtle)",
+                                    strokeDasharray: "4 4",
+                                    strokeWidth: 1,
+                                }}
+                                content={
+                                    <ChartTooltipContent
+                                        indicator="dot"
+                                        labelFormatter={(_, payload) => {
+                                            const row = payload?.[0]?.payload as
+                                                MoneyRow | undefined;
+                                            if (!row) return "";
+                                            return row.longLabel;
+                                        }}
+                                        formatter={(value, name) => (
+                                            <div className="flex flex-1 items-center justify-between gap-4">
+                                                <span className="text-ink-muted">
+                                                    {name === "average"
+                                                        ? `Avg / ${unitWord}`
+                                                        : "Earned"}
+                                                </span>
+                                                <strong className="font-semibold text-ink tabular-nums">
+                                                    {formatCommission(Number(value))}
+                                                </strong>
+                                            </div>
+                                        )}
+                                    />
+                                }
+                            />
+                            <ChartLegend content={<ChartLegendContent />} />
                             {showAverage ? (
+                                <Area
+                                    type="monotone"
+                                    dataKey="average"
+                                    stroke="var(--color-average)"
+                                    strokeWidth={2}
+                                    fill={`url(#${fillB})`}
+                                    isAnimationActive={false}
+                                    dot={{ ...DOT, fill: "var(--color-average)" }}
+                                    activeDot={{ ...ACTIVE_DOT, fill: "var(--color-average)" }}
+                                />
+                            ) : null}
+                            <Area
+                                type="monotone"
+                                dataKey="earned"
+                                stroke="var(--color-earned)"
+                                strokeWidth={2.5}
+                                fill={`url(#${fillA})`}
+                                isAnimationActive={false}
+                                dot={{ ...DOT, fill: "var(--color-earned)" }}
+                                activeDot={{ ...ACTIVE_DOT, fill: "var(--color-earned)" }}
+                            />
+                        </ComposedChart>
+                    </ChartContainer>
+                ) : (
+                    <ChartContainer
+                        key={`deals-${bucketUnit}-${buckets.length}`}
+                        config={DEALS_CONFIG}
+                        className="aspect-auto flex-1 inline-full min-block-56 sm:min-block-64"
+                    >
+                        <ComposedChart
+                            accessibilityLayer
+                            data={dealsData}
+                            margin={{ top: 12, left: 0, right: 8, bottom: 0 }}
+                        >
+                            <defs>
+                                <linearGradient id={fillA} x1="0" y1="0" x2="0" y2="1">
+                                    <stop
+                                        offset="5%"
+                                        stopColor="var(--color-sold)"
+                                        stopOpacity={0.35}
+                                    />
+                                    <stop
+                                        offset="95%"
+                                        stopColor="var(--color-sold)"
+                                        stopOpacity={0}
+                                    />
+                                </linearGradient>
                                 <linearGradient id={fillB} x1="0" y1="0" x2="0" y2="1">
                                     <stop
                                         offset="5%"
-                                        stopColor="var(--color-average)"
+                                        stopColor="var(--color-lost)"
                                         stopOpacity={0.2}
                                     />
                                     <stop
                                         offset="95%"
-                                        stopColor="var(--color-average)"
+                                        stopColor="var(--color-lost)"
                                         stopOpacity={0}
                                     />
                                 </linearGradient>
-                            ) : null}
-                        </defs>
-                        <CartesianGrid
-                            vertical={false}
-                            strokeDasharray="3 4"
-                            stroke="var(--color-border-warm)"
-                        />
-                        <XAxis
-                            dataKey="label"
-                            axisLine={false}
-                            tickLine={false}
-                            tickMargin={10}
-                            interval="preserveStartEnd"
-                            minTickGap={dense ? 12 : 4}
-                            tick={{ fontSize: 12, fill: "var(--color-ink-muted)" }}
-                        />
-                        <YAxis
-                            axisLine={false}
-                            tickLine={false}
-                            width={48}
-                            tickCount={4}
-                            allowDecimals={false}
-                            tick={{ fontSize: 11, fill: "var(--color-ink-subtle)" }}
-                            tickFormatter={(value: number) => formatCommissionTick(value)}
-                        />
-                        <ChartTooltip
-                            cursor={{
-                                stroke: "var(--color-ink-subtle)",
-                                strokeDasharray: "4 4",
-                                strokeWidth: 1,
-                            }}
-                            content={
-                                <ChartTooltipContent
-                                    indicator="dot"
-                                    labelFormatter={(_, payload) => {
-                                        const row = payload?.[0]?.payload as MoneyRow | undefined;
-                                        if (!row) return "";
-                                        return row.longLabel;
-                                    }}
-                                    formatter={(value, name) => (
-                                        <div className="flex flex-1 items-center justify-between gap-4">
-                                            <span className="text-ink-muted">
-                                                {name === "average"
-                                                    ? `Avg / ${unitWord}`
-                                                    : "Earned"}
-                                            </span>
-                                            <strong className="font-semibold text-ink tabular-nums">
-                                                {formatCommission(Number(value))}
-                                            </strong>
-                                        </div>
-                                    )}
-                                />
-                            }
-                        />
-                        <ChartLegend content={<ChartLegendContent />} />
-                        {showAverage ? (
+                            </defs>
+                            <CartesianGrid
+                                vertical={false}
+                                strokeDasharray="3 4"
+                                stroke="var(--color-border-warm)"
+                            />
+                            <XAxis
+                                dataKey="label"
+                                axisLine={false}
+                                tickLine={false}
+                                tickMargin={10}
+                                interval="preserveStartEnd"
+                                minTickGap={dense ? 12 : 4}
+                                tick={{ fontSize: 12, fill: "var(--color-ink-muted)" }}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                width={28}
+                                tickCount={4}
+                                allowDecimals={false}
+                                tick={{ fontSize: 11, fill: "var(--color-ink-subtle)" }}
+                                tickFormatter={(value: number) => String(Math.round(value))}
+                            />
+                            <ChartTooltip
+                                cursor={{
+                                    stroke: "var(--color-ink-subtle)",
+                                    strokeDasharray: "4 4",
+                                    strokeWidth: 1,
+                                }}
+                                content={
+                                    <ChartTooltipContent
+                                        indicator="dot"
+                                        labelFormatter={(_, payload) => {
+                                            const row = payload?.[0]?.payload as
+                                                DealsRow | undefined;
+                                            if (!row) return "";
+                                            return row.longLabel;
+                                        }}
+                                        formatter={(value, name) => (
+                                            <div className="flex flex-1 items-center justify-between gap-4">
+                                                <span className="text-ink-muted">
+                                                    {name === "lost" ? "Lost" : "Sold"}
+                                                </span>
+                                                <strong className="font-semibold text-ink tabular-nums">
+                                                    {Number(value)}
+                                                </strong>
+                                            </div>
+                                        )}
+                                    />
+                                }
+                            />
+                            <ChartLegend content={<ChartLegendContent />} />
                             <Area
                                 type="monotone"
-                                dataKey="average"
-                                stroke="var(--color-average)"
+                                dataKey="lost"
+                                stroke="var(--color-lost)"
                                 strokeWidth={2}
                                 fill={`url(#${fillB})`}
                                 isAnimationActive={false}
-                                dot={{ ...DOT, fill: "var(--color-average)" }}
-                                activeDot={{ ...ACTIVE_DOT, fill: "var(--color-average)" }}
+                                dot={{ ...DOT, fill: "var(--color-lost)" }}
+                                activeDot={{ ...ACTIVE_DOT, fill: "var(--color-lost)" }}
                             />
-                        ) : null}
-                        <Area
-                            type="monotone"
-                            dataKey="earned"
-                            stroke="var(--color-earned)"
-                            strokeWidth={2.5}
-                            fill={`url(#${fillA})`}
-                            isAnimationActive={false}
-                            dot={{ ...DOT, fill: "var(--color-earned)" }}
-                            activeDot={{ ...ACTIVE_DOT, fill: "var(--color-earned)" }}
-                        />
-                    </ComposedChart>
-                </ChartContainer>
-            ) : (
-                <ChartContainer
-                    key={`deals-${bucketUnit}-${buckets.length}`}
-                    config={DEALS_CONFIG}
-                    className="aspect-auto block-56 inline-full min-block-56 sm:block-64"
-                >
-                    <ComposedChart
-                        accessibilityLayer
-                        data={dealsData}
-                        margin={{ top: 12, left: 0, right: 8, bottom: 0 }}
-                    >
-                        <defs>
-                            <linearGradient id={fillA} x1="0" y1="0" x2="0" y2="1">
-                                <stop
-                                    offset="5%"
-                                    stopColor="var(--color-sold)"
-                                    stopOpacity={0.35}
-                                />
-                                <stop offset="95%" stopColor="var(--color-sold)" stopOpacity={0} />
-                            </linearGradient>
-                            <linearGradient id={fillB} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="var(--color-lost)" stopOpacity={0.2} />
-                                <stop offset="95%" stopColor="var(--color-lost)" stopOpacity={0} />
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                            vertical={false}
-                            strokeDasharray="3 4"
-                            stroke="var(--color-border-warm)"
-                        />
-                        <XAxis
-                            dataKey="label"
-                            axisLine={false}
-                            tickLine={false}
-                            tickMargin={10}
-                            interval="preserveStartEnd"
-                            minTickGap={dense ? 12 : 4}
-                            tick={{ fontSize: 12, fill: "var(--color-ink-muted)" }}
-                        />
-                        <YAxis
-                            axisLine={false}
-                            tickLine={false}
-                            width={28}
-                            tickCount={4}
-                            allowDecimals={false}
-                            tick={{ fontSize: 11, fill: "var(--color-ink-subtle)" }}
-                            tickFormatter={(value: number) => String(Math.round(value))}
-                        />
-                        <ChartTooltip
-                            cursor={{
-                                stroke: "var(--color-ink-subtle)",
-                                strokeDasharray: "4 4",
-                                strokeWidth: 1,
-                            }}
-                            content={
-                                <ChartTooltipContent
-                                    indicator="dot"
-                                    labelFormatter={(_, payload) => {
-                                        const row = payload?.[0]?.payload as DealsRow | undefined;
-                                        if (!row) return "";
-                                        return row.longLabel;
-                                    }}
-                                    formatter={(value, name) => (
-                                        <div className="flex flex-1 items-center justify-between gap-4">
-                                            <span className="text-ink-muted">
-                                                {name === "lost" ? "Lost" : "Sold"}
-                                            </span>
-                                            <strong className="font-semibold text-ink tabular-nums">
-                                                {Number(value)}
-                                            </strong>
-                                        </div>
-                                    )}
-                                />
-                            }
-                        />
-                        <ChartLegend content={<ChartLegendContent />} />
-                        <Area
-                            type="monotone"
-                            dataKey="lost"
-                            stroke="var(--color-lost)"
-                            strokeWidth={2}
-                            fill={`url(#${fillB})`}
-                            isAnimationActive={false}
-                            dot={{ ...DOT, fill: "var(--color-lost)" }}
-                            activeDot={{ ...ACTIVE_DOT, fill: "var(--color-lost)" }}
-                        />
-                        <Area
-                            type="monotone"
-                            dataKey="sold"
-                            stroke="var(--color-sold)"
-                            strokeWidth={2.5}
-                            fill={`url(#${fillA})`}
-                            isAnimationActive={false}
-                            dot={{ ...DOT, fill: "var(--color-sold)" }}
-                            activeDot={{ ...ACTIVE_DOT, fill: "var(--color-sold)" }}
-                        />
-                    </ComposedChart>
-                </ChartContainer>
-            )}
+                            <Area
+                                type="monotone"
+                                dataKey="sold"
+                                stroke="var(--color-sold)"
+                                strokeWidth={2.5}
+                                fill={`url(#${fillA})`}
+                                isAnimationActive={false}
+                                dot={{ ...DOT, fill: "var(--color-sold)" }}
+                                activeDot={{ ...ACTIVE_DOT, fill: "var(--color-sold)" }}
+                            />
+                        </ComposedChart>
+                    </ChartContainer>
+                )}
+            </div>
 
             <table className="sr-only">
                 <caption>

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
@@ -158,13 +158,21 @@ export function DealKind({ isRent }: { isRent: boolean }) {
 export function EarningsDealLink({
     dealId,
     className,
+    style,
     children,
 }: {
     dealId: string;
     className?: string;
+    style?: CSSProperties;
     children: ReactNode;
 }) {
-    if (isSampleDeal(dealId)) return <span className={className}>{children}</span>;
+    if (isSampleDeal(dealId)) {
+        return (
+            <span className={className} style={style}>
+                {children}
+            </span>
+        );
+    }
     return (
         <Link
             href={`/broker/pipeline/${dealId}`}
@@ -172,6 +180,7 @@ export function EarningsDealLink({
                 "rounded-sm hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                 className,
             )}
+            style={style}
         >
             {children}
         </Link>

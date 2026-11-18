@@ -459,6 +459,8 @@ export type EarningsReport = {
         saleValueInr: number;
         saleCount: number;
         stageCounts: Record<DealStage, number>;
+        /** Commission on live deals in each stage (deals with no commission add 0). */
+        stageCommissionInr: Record<DealStage, number>;
         stalledCount: number;
         /** Commission on every live deal that has one set. */
         potentialInr: number;
@@ -613,6 +615,14 @@ export function buildEarningsReport(
         deal,
         commissionInr: dealCommissionInr(deal),
     }));
+    const stageCommissionInr = Object.fromEntries(
+        DEAL_STAGE_ORDER.map((stage) => [
+            stage,
+            valuedLive
+                .filter((v) => v.deal.status === stage)
+                .reduce((sum, v) => sum + (v.commissionInr ?? 0), 0),
+        ]),
+    ) as Record<DealStage, number>;
     const likely = valuedLive.filter(
         (v) => v.deal.status === "negotiation" || v.deal.offerStatus === "accepted",
     );
@@ -660,6 +670,7 @@ export function buildEarningsReport(
                 .reduce((sum, d) => sum + d.property.amountInr, 0),
             saleCount: liveDeals.filter((d) => !d.property.isRent).length,
             stageCounts,
+            stageCommissionInr,
             stalledCount: liveDeals.filter(isStalled).length,
             potentialInr: valuedLive.reduce((sum, v) => sum + (v.commissionInr ?? 0), 0),
             valuedCount: valuedLive.filter((v) => v.commissionInr != null).length,
@@ -669,7 +680,7 @@ export function buildEarningsReport(
             topDeals: valuedLive
                 .filter((v) => v.commissionInr != null)
                 .sort((a, b) => (b.commissionInr ?? 0) - (a.commissionInr ?? 0))
-                .slice(0, 5),
+                .slice(0, 10),
         },
     };
 }

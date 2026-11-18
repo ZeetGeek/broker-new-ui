@@ -137,6 +137,8 @@
         0 4px 8px -4px oklch(0.153 0.02 155 / 0.06), 0 16px 32px -8px oklch(0.153 0.02 155 / 0.1);
     --shadow-xl:
         0 8px 16px -6px oklch(0.153 0.02 155 / 0.08), 0 28px 56px -12px oklch(0.153 0.02 155 / 0.14);
+    /* Upward shadow on a pinned card footer while the list above still scrolls. */
+    --shadow-scroll-edge: 0 -10px 18px -12px rgb(25 28 26 / 28%);
 }
 
 .dark {
@@ -266,6 +268,7 @@
     --shadow-md: var(--shadow-md);
     --shadow-lg: var(--shadow-lg);
     --shadow-xl: var(--shadow-xl);
+    --shadow-scroll-edge: var(--shadow-scroll-edge);
 }
 
 ::-webkit-scrollbar {
