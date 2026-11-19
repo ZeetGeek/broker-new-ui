@@ -4,18 +4,91 @@ import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
+import { useQueryClient } from "@tanstack/react-query";
+
+import { isMockMode } from "@/lib/api/mock-mode";
+import type { NotificationItem } from "@/lib/api/notifications";
+import { getNotificationSocket } from "@/lib/socket/notifications";
+
 import { Bell, X } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import { useAppSelector } from "@/store/hooks";
 
 import { taskDueLabel, taskDueReminders, taskReminderDescription } from "./model";
-import { useTasks } from "./preview-store";
+import { type ReminderToastContent, reminderToastContent } from "./reminder-toast";
+import { useTasks } from "./task-store";
 
-/** Mock in-app delivery only. There is no browser permission or background push. */
 export function TaskReminderListener() {
     const accountId = useAppSelector((state) => state.auth.user?.id);
-    return accountId ? <AccountTaskReminders key={accountId} accountId={accountId} /> : null;
+    const accessToken = useAppSelector((state) => state.auth.accessToken);
+    if (!accountId) return null;
+    if (isMockMode()) return <AccountTaskReminders key={accountId} accountId={accountId} />;
+    return accessToken ? (
+        <LiveReminders key={accountId} accountId={accountId} accessToken={accessToken} />
+    ) : null;
+}
+
+function showReminderToast(id: string, content: ReminderToastContent) {
+    toast.custom(
+        (notification) => (
+            <div
+                role="status"
+                className="flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4 text-ink shadow-lg inline-[min(24rem,calc(100vw-2rem))]"
+            >
+                <span className="flex shrink-0 items-center justify-center rounded-control bg-brand-soft text-brand-text block-9 inline-9">
+                    <Bell className="block-5 inline-5" aria-hidden />
+                </span>
+                <div className="min-inline-0">
+                    <p className="body-xs font-semibold text-brand-text">{content.title}</p>
+                    <p className="body-sm mbs-1 font-semibold wrap-anywhere">{content.line}</p>
+                    {content.detail && (
+                        <p className="body-xs mbs-1 text-ink-subtle">{content.detail}</p>
+                    )}
+                    <Link
+                        className="body-sm mbs-2 inline-flex items-center font-semibold text-brand-text underline-offset-4 min-block-9 hover:underline"
+                        href={content.href}
+                        onClick={() => toast.dismiss(notification.id)}
+                    >
+                        {content.action}
+                    </Link>
+                </div>
+                <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Dismiss reminder"
+                    onClick={() => toast.dismiss(notification.id)}
+                >
+                    <X aria-hidden />
+                </Button>
+            </div>
+        ),
+        { id, duration: 12_000 },
+    );
+}
+
+function LiveReminders({ accountId, accessToken }: { accountId: string; accessToken: string }) {
+    const queryClient = useQueryClient();
+    useEffect(() => {
+        const socket = getNotificationSocket(accessToken);
+        const shown = new Set<string>();
+        const onCreated = (item: NotificationItem) => {
+            const content = reminderToastContent(item);
+            if (!content) return;
+            const id = `reminder-${item.id}`;
+            shown.add(id);
+            showReminderToast(id, content);
+            if (content.kind === "task") {
+                void queryClient.invalidateQueries({ queryKey: ["tasks", accountId] });
+            }
+        };
+        socket.on("notification.created", onCreated);
+        return () => {
+            socket.off("notification.created", onCreated);
+            shown.forEach((id) => toast.dismiss(id));
+        };
+    }, [accessToken, accountId, queryClient]);
+    return null;
 }
 
 function AccountTaskReminders({ accountId }: { accountId: string }) {
@@ -68,48 +141,17 @@ function AccountTaskReminders({ accountId }: { accountId: string }) {
                 for (const { task, reminder } of delivered) {
                     const id = `task-reminder-${accountId}-${task.id}-${reminder.key}`;
                     activeToasts.current.add(id);
-                    toast.custom(
-                        (notification) => (
-                            <div
-                                role="status"
-                                className="flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4 text-ink shadow-lg inline-[min(24rem,calc(100vw-2rem))]"
-                            >
-                                <span className="flex shrink-0 items-center justify-center rounded-control bg-brand-soft text-brand-text block-9 inline-9">
-                                    <Bell className="block-5 inline-5" aria-hidden />
-                                </span>
-                                <div className="min-inline-0">
-                                    <p className="body-xs font-semibold text-brand-text">
-                                        Task reminder
-                                    </p>
-                                    <p className="body-sm mbs-1 font-semibold wrap-anywhere">
-                                        {task.title}
-                                    </p>
-                                    <p className="body-xs mbs-1 text-ink-subtle">
-                                        {taskReminderDescription(reminder)} · {taskDueLabel(task)}
-                                    </p>
-                                    <Link
-                                        className="body-sm mbs-2 inline-flex items-center font-semibold text-brand-text underline-offset-4 min-block-9 hover:underline"
-                                        href={`/broker/tasks?view=detail&task=${encodeURIComponent(task.id)}`}
-                                        onClick={() => toast.dismiss(notification.id)}
-                                    >
-                                        View task
-                                    </Link>
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    aria-label="Dismiss reminder"
-                                    onClick={() => toast.dismiss(notification.id)}
-                                >
-                                    <X aria-hidden />
-                                </Button>
-                            </div>
-                        ),
-                        { id, duration: 12_000 },
-                    );
+                    showReminderToast(id, {
+                        kind: "task",
+                        title: "Task reminder",
+                        line: task.title,
+                        detail: `${taskReminderDescription(reminder)} · ${taskDueLabel(task)}`,
+                        href: `/broker/tasks?view=detail&task=${encodeURIComponent(task.id)}`,
+                        action: "View task",
+                    });
                 }
             } catch {
-                /* Keep the reminder pending when tab storage is unavailable. */
+                return;
             } finally {
                 processing.current = false;
             }

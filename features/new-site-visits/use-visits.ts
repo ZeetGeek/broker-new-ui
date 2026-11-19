@@ -105,6 +105,11 @@ export function useVisitMutations() {
             },
             onSettled: settle,
         }),
+        updateReminders: useMutation({
+            mutationFn: (a: { id: string; reminders: number[] }) =>
+                siteVisitsApi.updateReminders(a.id, a.reminders),
+            onSettled: settle,
+        }),
         cancel: useMutation({ mutationFn: siteVisitsApi.cancel, onSettled: settle }),
         setOutcome: useMutation({
             mutationFn: (a: { id: string; status: "completed" | "no_show" }) =>

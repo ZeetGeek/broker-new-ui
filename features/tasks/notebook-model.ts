@@ -143,3 +143,19 @@ export function moveNotebookTab(
     tabs.splice(to, 0, moved);
     return { ...notebook, tabs };
 }
+
+export function isNewListSlot({
+    slot,
+    listColumns,
+    visibleCount,
+    listCount,
+}: {
+    slot: number;
+    listColumns: number;
+    visibleCount: number;
+    listCount: number;
+}): boolean {
+    return (
+        slot === visibleCount && visibleCount < listColumns && (listColumns > 1 || listCount === 0)
+    );
+}

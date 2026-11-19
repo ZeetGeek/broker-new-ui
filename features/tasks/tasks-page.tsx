@@ -40,14 +40,15 @@ import {
 import { taskListId } from "./notebook-model";
 import { useTaskNotebook } from "./notebook-store";
 import { createPlannerTask, movePlannerTask, setTaskDeleted } from "./planner-model";
-import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES, useTasks } from "./preview-store";
 import { changeTaskQuickly, type TaskQuickChange } from "./quick-actions";
 import { encodeTaskDraftTitle } from "./quick-add-draft";
+import { useTaskCatalogs } from "./task-catalogs";
 import { TaskDeleteDialog, TaskDetail, TaskReminders } from "./task-detail";
 import { TaskForm, TaskSelect } from "./task-form";
 import { TaskArchive } from "./task-list";
 import { TaskPanel } from "./task-panel";
 import { TaskPlanner } from "./task-planner";
+import { useTasks } from "./task-store";
 
 import styles from "./tasks.module.css";
 
@@ -79,8 +80,18 @@ export function TasksPage() {
 }
 
 function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initialQuery: string }) {
-    const { tasks, isLoading, error: loadError, save, update, reset, busy } = useTasks(accountId);
+    const {
+        tasks,
+        isLoading,
+        error: loadError,
+        save,
+        update,
+        reset,
+        busy,
+        isLive,
+    } = useTasks(accountId);
     const lists = useTaskNotebook(accountId);
+    const catalogs = useTaskCatalogs();
     // Read incoming links once; workspace interactions never navigate or write browser history.
     const [params, setParams] = useState(() => new URLSearchParams(initialQuery));
     const [now, setNow] = useState(() => Date.now());
@@ -182,11 +193,11 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         if (!taskMatchesTab(task, tab, !!completionFeedback[task.id], now)) return false;
         if (!taskMatchesDueFilter(task, due as TaskDueFilter, now)) return false;
         if (!taskMatchesLinkFilter(task, linked as TaskLinkFilter)) return false;
-        const client = TASK_CLIENTS.find((c) => c.id === task.clientId);
-        const property = TASK_PROPERTIES.find((p) => p.id === task.propertyId);
-        const owner = TASK_OWNERS.find((o) => o.id === task.ownerId);
+        const client = catalogs.clients.find((c) => c.id === task.clientId);
+        const property = catalogs.properties.find((p) => p.id === task.propertyId);
+        const owner = catalogs.owners.find((o) => o.id === task.ownerId);
         const haystack =
-            `${task.title} ${task.details} ${client?.name ?? ""} ${owner?.name ?? ""} ${property?.title ?? ""} ${property?.locality ?? ""}`.toLowerCase();
+            `${task.title} ${task.details} ${client?.name ?? task.client?.name ?? ""} ${owner?.name ?? task.owner?.name ?? ""} ${property?.title ?? task.property?.title ?? ""} ${property?.locality ?? ""}`.toLowerCase();
         return haystack.includes(search.trim().toLowerCase());
     });
     const close = () => {
@@ -312,18 +323,21 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         return changeTasks((latest) => [...latest, task]);
     };
     const move = async (id: string, date: string | null, beforeId?: string, listId?: string) => {
-        const saved = await changeTasks(
-            (latest) =>
-                movePlannerTask(
-                    latest.map((task) => ({ ...task, listId: taskListId(task, lists.notebook) })),
-                    id,
-                    date,
-                    beforeId,
-                    Date.now(),
-                    listId,
+        const saved = await changeTasks((latest) => {
+            const original = new Map(latest.map((task) => [task.id, task.listId]));
+            return movePlannerTask(
+                latest.map((task) =>
+                    task.listId || !task.startDate
+                        ? { ...task, listId: taskListId(task, lists.notebook) }
+                        : task,
                 ),
-            "Task moved",
-        );
+                id,
+                date,
+                beforeId,
+                Date.now(),
+                listId,
+            ).map((task) => (task.id === id ? task : { ...task, listId: original.get(task.id) }));
+        }, "Task moved");
         if (saved && sort !== "manual") updateWorkspace({ sort: undefined });
         return saved;
     };
@@ -335,11 +349,6 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             editing.startDate === (draft.startDate || null) &&
             editing.dueDate === (draft.dueDate || null) &&
             JSON.stringify(editing.repeat) === JSON.stringify(draft.repeat);
-        const catalogs = {
-            clients: TASK_CLIENTS,
-            owners: TASK_OWNERS,
-            properties: TASK_PROPERTIES,
-        };
         // Create / edit modal: put field values as end-of-title chips (same as quick-add).
         const title =
             view === "create" || view === "edit"
@@ -520,8 +529,9 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                     {loadError && (
                         <div className={styles.error} role="alert">
                             <p>
-                                Tasks couldn’t load. Check that storage is available in this tab, or
-                                reset the task list to start empty.
+                                {isLive
+                                    ? "Your tasks couldn’t be loaded. Check your connection and try again."
+                                    : "Tasks couldn’t load. Check that storage is available in this tab, or reset the task list to start empty."}
                             </p>
                             <Button
                                 className="mbs-3"
@@ -531,12 +541,14 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                 onClick={() =>
                                     void reset().catch(() =>
                                         setError(
-                                            "Allow storage in this browser, then try loading tasks again.",
+                                            isLive
+                                                ? "Your tasks still couldn’t be loaded. Check your connection and try again."
+                                                : "Allow storage in this browser, then try loading tasks again.",
                                         ),
                                     )
                                 }
                             >
-                                Reset task list
+                                {isLive ? "Try again" : "Reset task list"}
                             </Button>
                         </div>
                     )}
@@ -581,11 +593,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                 tasks={visible}
                                 now={now}
                                 sort={sort}
-                                catalogs={{
-                                    clients: TASK_CLIENTS,
-                                    owners: TASK_OWNERS,
-                                    properties: TASK_PROPERTIES,
-                                }}
+                                catalogs={catalogs}
                                 busy={busy}
                                 onOpen={(task) => intent(task, "detail")}
                                 onComplete={complete}
@@ -602,11 +610,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                 tab={tab === "all" ? "results" : tab}
                                 now={now}
                                 sort={sort}
-                                catalogs={{
-                                    clients: TASK_CLIENTS,
-                                    owners: TASK_OWNERS,
-                                    properties: TASK_PROPERTIES,
-                                }}
+                                catalogs={catalogs}
                                 busy={busy}
                                 onOpen={(task) => intent(task, "detail")}
                                 onComplete={complete}
@@ -670,14 +674,16 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             )}
             {view === "create" && (
                 <TaskForm
-                    key={`create-${params.get("visitClient") ?? ""}-${params.get("visitProperty") ?? ""}-${params.get("visitTitle") ?? ""}`}
+                    key={`create-${params.get("visitClient") ?? ""}-${params.get("visitProperty") ?? ""}-${params.get("visitTitle") ?? ""}-${catalogs.ready}`}
                     mode="create"
                     prefill={{
                         title: (params.get("visitTitle") ?? "").slice(0, 160),
-                        clientId: TASK_CLIENTS.some((item) => item.id === params.get("visitClient"))
+                        clientId: catalogs.clients.some(
+                            (item) => item.id === params.get("visitClient"),
+                        )
                             ? params.get("visitClient")!
                             : "",
-                        propertyId: TASK_PROPERTIES.some(
+                        propertyId: catalogs.properties.some(
                             (item) => item.id === params.get("visitProperty"),
                         )
                             ? params.get("visitProperty")!

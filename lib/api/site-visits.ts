@@ -34,6 +34,7 @@ export type BrokerVisit = {
     notes: string;
     bookedAt: string;
     updatedAt: string;
+    reminders: number[];
 };
 
 export type VisitListQuery = {
@@ -153,6 +154,7 @@ export function mapShowing(api: ApiShowing): BrokerVisit {
         notes: api.notes ?? "",
         bookedAt: api.createdAt ?? startsAt,
         updatedAt: api.updatedAt ?? api.createdAt ?? startsAt,
+        reminders: api.reminders?.length ? [...api.reminders] : [30],
     };
 }
 
@@ -237,16 +239,31 @@ export const siteVisitsApi = {
         startAt: string;
         durationMinutes: VisitDuration;
         notes?: string;
+        reminders?: number[];
     }): Promise<void> {
         await apiFetch("/slots/broker/exclusive/book", json("POST", a));
     },
 
     async reschedule(
         id: string,
-        a: { startAt: string; durationMinutes: VisitDuration; notes?: string },
+        a: {
+            startAt: string;
+            durationMinutes: VisitDuration;
+            notes?: string;
+            reminders?: number[];
+        },
     ): Promise<BrokerVisit> {
         return mapShowing(
             await apiFetch<ApiShowing>(`/slots/broker/showings/${id}/reschedule`, json("PATCH", a)),
+        );
+    },
+
+    async updateReminders(id: string, reminders: number[]): Promise<BrokerVisit> {
+        return mapShowing(
+            await apiFetch<ApiShowing>(
+                `/slots/broker/showings/${id}/reminders`,
+                json("PATCH", { reminders }),
+            ),
         );
     },
 

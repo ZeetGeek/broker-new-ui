@@ -68,19 +68,13 @@ import {
     taskReminderAt,
     validateTaskDraft,
 } from "./model";
-import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES } from "./preview-store";
 import { bareTaskDraftTitle } from "./quick-add-draft";
 import { type TaskRepeat, taskRepeatLabel, taskWeekday, WEEKDAYS } from "./recurrence";
+import { type TaskCatalogs, useTaskCatalogs } from "./task-catalogs";
 import { TaskPanel } from "./task-panel";
 import { TaskReminderPicker } from "./task-reminder-picker";
 
 import styles from "./task-form.module.css";
-
-const FORM_CATALOGS = {
-    clients: TASK_CLIENTS,
-    owners: TASK_OWNERS,
-    properties: TASK_PROPERTIES,
-};
 
 export function TaskSelect({
     label,
@@ -100,6 +94,7 @@ export function TaskSelect({
     entity?: "client" | "owner" | "property";
 }) {
     const id = useId();
+    const catalogs = useTaskCatalogs();
     if (toolbar) {
         return (
             <DropdownMenu>
@@ -162,7 +157,7 @@ export function TaskSelect({
                             {(item: string) => {
                                 const property =
                                     entity === "property"
-                                        ? TASK_PROPERTIES.find((p) => p.id === item)
+                                        ? catalogs.properties.find((p) => p.id === item)
                                         : undefined;
                                 return (
                                     <ComboboxItem key={item || "none"} value={item}>
@@ -230,20 +225,22 @@ type ContactOption = {
     label: string;
 };
 
-const CONTACT_OPTIONS: ContactOption[] = [
-    ...TASK_CLIENTS.map((client) => ({
-        key: `client:${client.id}`,
-        kind: "client" as const,
-        id: client.id,
-        label: client.name,
-    })),
-    ...TASK_OWNERS.map((owner) => ({
-        key: `owner:${owner.id}`,
-        kind: "owner" as const,
-        id: owner.id,
-        label: owner.name,
-    })),
-];
+function contactOptions(catalogs: TaskCatalogs): ContactOption[] {
+    return [
+        ...catalogs.clients.map((client) => ({
+            key: `client:${client.id}`,
+            kind: "client" as const,
+            id: client.id,
+            label: client.name,
+        })),
+        ...catalogs.owners.map((owner) => ({
+            key: `owner:${owner.id}`,
+            kind: "owner" as const,
+            id: owner.id,
+            label: owner.name,
+        })),
+    ];
+}
 
 /** One Contacts picker for Client and owner — chips show who is linked. */
 function TaskContactsField({
@@ -259,21 +256,21 @@ function TaskContactsField({
 }) {
     const id = useId();
     const anchor = useComboboxAnchor();
+    const options = contactOptions(useTaskCatalogs());
     const [search, setSearch] = useState("");
     const selected = [
         clientId ? `client:${clientId}` : null,
         ownerId ? `owner:${ownerId}` : null,
     ].filter((value): value is string => !!value);
-    const labelFor = (key: string) =>
-        CONTACT_OPTIONS.find((option) => option.key === key)?.label ?? key;
+    const labelFor = (key: string) => options.find((option) => option.key === key)?.label ?? key;
     const detailFor = (key: string) =>
-        CONTACT_OPTIONS.find((option) => option.key === key)?.kind === "owner" ? "Owner" : "Client";
+        options.find((option) => option.key === key)?.kind === "owner" ? "Owner" : "Client";
     const update = (values: string[]) => {
         if (disabled) return;
         let nextClient = "";
         let nextOwner = "";
         for (const key of values) {
-            const option = CONTACT_OPTIONS.find((item) => item.key === key);
+            const option = options.find((item) => item.key === key);
             if (!option) continue;
             if (option.kind === "client") nextClient = option.id;
             else nextOwner = option.id;
@@ -285,7 +282,7 @@ function TaskContactsField({
         <FormField label="Contacts" htmlFor={id} hint="Link a Client, an owner, or both.">
             <Combobox
                 multiple
-                items={CONTACT_OPTIONS.map((option) => option.key)}
+                items={options.map((option) => option.key)}
                 value={selected}
                 disabled={disabled}
                 inputValue={search}
@@ -370,6 +367,7 @@ export function TaskForm({
     prefill?: Partial<TaskDraft>;
 }) {
     const formId = useId();
+    const catalogs = useTaskCatalogs();
     const detailsCountId = `${formId}-details-count`;
     const detailsErrorId = `${formId}-details-error`;
     const titleRef = useRef<HTMLInputElement>(null);
@@ -386,7 +384,7 @@ export function TaskForm({
                         clientId: base.clientId || null,
                         ownerId: base.ownerId || null,
                     },
-                    FORM_CATALOGS,
+                    catalogs,
                     Date.now(),
                     base.startDate || null,
                 ),
@@ -788,7 +786,7 @@ export function TaskForm({
                                         onChange={(propertyId) => patch({ propertyId })}
                                         options={[
                                             { value: "", label: "No linked property" },
-                                            ...TASK_PROPERTIES.map((property) => ({
+                                            ...catalogs.properties.map((property) => ({
                                                 value: property.id,
                                                 label: `${property.title} · ${property.locality}`,
                                             })),

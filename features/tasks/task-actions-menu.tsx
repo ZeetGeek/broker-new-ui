@@ -60,10 +60,19 @@ export function TaskActionsMenu({
     onOpen,
     onIntent,
     onComplete,
+    open: controlledOpen,
+    onOpenChange,
 }: Pick<TaskRowActions, "busy" | "now" | "onQuickChange" | "onOpen" | "onIntent" | "onComplete"> & {
     task: Task;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }) {
-    const [open, setOpen] = useState(false);
+    const [localOpen, setLocalOpen] = useState(false);
+    const open = controlledOpen ?? localOpen;
+    const setOpen = (value: boolean) => {
+        setLocalOpen(value);
+        onOpenChange?.(value);
+    };
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
     const pending = useRef(false);

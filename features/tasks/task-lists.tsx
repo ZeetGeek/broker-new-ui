@@ -46,6 +46,7 @@ import {
     addNotebookTab,
     deleteNotebookList,
     deleteNotebookTab,
+    isNewListSlot,
     moveNotebookList,
     type NotebookList,
     notebookName,
@@ -347,13 +348,14 @@ export function TaskLists({
                                     const list = visibleLists[slot];
                                     const index = listPage * listStride + slot;
                                     if (!list) {
-                                        // Multi-column: put “New list” in the next empty column,
-                                        // not under the first list — only when there is a free slot.
-                                        const isNewListSlot =
-                                            listColumns > 1 &&
-                                            slot === visibleLists.length &&
-                                            visibleLists.length < listColumns;
-                                        if (isNewListSlot) {
+                                        if (
+                                            isNewListSlot({
+                                                slot,
+                                                listColumns,
+                                                visibleCount: visibleLists.length,
+                                                listCount,
+                                            })
+                                        ) {
                                             return (
                                                 <div
                                                     key={`new-list-${slot}`}

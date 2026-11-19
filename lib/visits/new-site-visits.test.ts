@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { ApiError } from "@/lib/api/client";
-import type { BookableLead, BrokerVisit } from "@/lib/api/site-visits";
+import { type BookableLead, type BrokerVisit, mapShowing } from "@/lib/api/site-visits";
 
 import {
     bookableDates,
@@ -47,6 +47,7 @@ const visit: BrokerVisit = {
     notes: "",
     bookedAt: "2030-01-01T00:00:00.000Z",
     updatedAt: "2030-01-01T00:00:00.000Z",
+    reminders: [60, 15],
 };
 
 const leads: BookableLead[] = [
@@ -240,4 +241,49 @@ test("only a taken time clears the chosen start", () => {
     assert.equal(isTimeTaken(new ApiError("That time on Flat is already booked", 400)), true);
     assert.equal(isTimeTaken(new ApiError("x", 400, { code: "BROKER_TIME_CONFLICT" })), true);
     assert.equal(isTimeTaken(new ApiError("Unable to reach the server", 0)), false);
+});
+
+test("a new visit starts with the 30-minute reminder", () => {
+    assert.deepEqual(EMPTY_DRAFT.reminders, [30]);
+});
+
+test("rescheduling keeps the visit's saved reminders", () => {
+    assert.deepEqual(rescheduleDraft(visit, before).reminders, [60, 15]);
+});
+
+test("a visit from the API without reminders shows the 30-minute default", () => {
+    const mapped = mapShowing({
+        id: "s1",
+        leadId: "lead-1",
+        propertyId: "prop-1",
+        visitSlotId: null,
+        scheduledDate: START,
+        endAt: END,
+        status: "confirmed",
+        notes: null,
+        createdAt: START,
+    });
+    assert.deepEqual(mapped.reminders, [30]);
+    assert.deepEqual(
+        mapShowing({
+            ...{
+                id: "s1",
+                leadId: "lead-1",
+                propertyId: "prop-1",
+                visitSlotId: null,
+                scheduledDate: START,
+                endAt: END,
+                status: "confirmed",
+                notes: null,
+                createdAt: START,
+            },
+            reminders: [15],
+        }).reminders,
+        [15],
+    );
+});
+
+test("a visit needs at least one reminder", () => {
+    const errors = validateVisitDraft({ ...rescheduleDraft(visit, before), reminders: [] }, before);
+    assert.equal(errors.reminders, "Keep at least one reminder for this visit.");
 });

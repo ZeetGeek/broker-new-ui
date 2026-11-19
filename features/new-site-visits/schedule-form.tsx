@@ -63,8 +63,8 @@ export function ScheduleForm({
     const [submitted, setSubmitted] = useState(false);
     const [saveError, setSaveError] = useState("");
     const leadsQuery = useBookableLeads();
-    const { book, reschedule } = useVisitMutations();
-    const busy = book.isPending || reschedule.isPending;
+    const { book, reschedule, updateReminders } = useVisitMutations();
+    const busy = book.isPending || reschedule.isPending || updateReminders.isPending;
     const leads = useMemo(() => leadsQuery.data ?? [], [leadsQuery.data]);
 
     const clientOptions = useMemo(
@@ -129,12 +129,21 @@ export function ScheduleForm({
         }
         const notes = draft.notes.trim();
         try {
-            if (visit) {
+            const onlyReminders =
+                !!visit &&
+                draft.startAt === visit.startsAt &&
+                draft.durationMinutes === visit.durationMinutes &&
+                notes === visit.notes.trim();
+            if (visit && onlyReminders) {
+                await updateReminders.mutateAsync({ id: visit.id, reminders: draft.reminders });
+                toast.success("Reminders updated");
+            } else if (visit) {
                 await reschedule.mutateAsync({
                     id: visit.id,
                     startAt: draft.startAt,
                     durationMinutes: draft.durationMinutes,
                     notes,
+                    reminders: draft.reminders,
                 });
                 toast.success("Visit moved");
             } else {
@@ -144,6 +153,7 @@ export function ScheduleForm({
                     startAt: draft.startAt,
                     durationMinutes: draft.durationMinutes,
                     ...(notes ? { notes } : {}),
+                    reminders: draft.reminders,
                 });
                 toast.success("Visit scheduled");
             }
@@ -345,6 +355,11 @@ export function ScheduleForm({
                                             className="shrink-0 block-4 inline-4"
                                         />
                                         Pick a start time to set reminders.
+                                    </p>
+                                )}
+                                {draft.date && draft.startAt && show("reminders") && (
+                                    <p role="alert" className={styles.fieldError}>
+                                        {show("reminders")}
                                     </p>
                                 )}
                                 <div className={styles.field}>

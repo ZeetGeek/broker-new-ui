@@ -24,20 +24,15 @@ import { useAppSelector } from "@/store/hooks";
 import { nextTaskDates, setTaskCompleted } from "./lifecycle";
 import { sortTasks, type Task, TASK_TIME_ZONE, taskDateKey, taskIsOverdue } from "./model";
 import { createPlannerTask, type PlannerTaskExtras, setTaskDeleted } from "./planner-model";
-import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES, useTasks } from "./preview-store";
 import { changeTaskQuickly, type TaskQuickChange } from "./quick-actions";
 import { QuickAddComposer } from "./quick-add-composer";
 import { shiftTaskDate } from "./recurrence";
+import { useTaskCatalogs } from "./task-catalogs";
 import { TaskLine } from "./task-list";
+import { useTasks } from "./task-store";
 
 import planner from "./planner.module.css";
 import styles from "@/features/new-dashboard/task-card.module.css";
-
-const CATALOGS = {
-    clients: TASK_CLIENTS,
-    owners: TASK_OWNERS,
-    properties: TASK_PROPERTIES,
-};
 
 type DashboardTab = "today" | "overdue";
 
@@ -76,6 +71,7 @@ export function DashboardTasksCard() {
     const router = useRouter();
     const accountId = useAppSelector((state) => state.auth.user?.id) ?? "design-preview";
     const { tasks, isLoading, error, busy, update } = useTasks(accountId);
+    const catalogs = useTaskCatalogs();
     const [filter, setFilter] = useState<DashboardTab>("today");
     const [now, setNow] = useState(() => Date.now());
     const [selectedDay, setSelectedDay] = useState(() => taskDateKey(Date.now()));
@@ -289,7 +285,7 @@ export function DashboardTasksCard() {
     const rowActions = {
         busy,
         now,
-        catalogs: CATALOGS,
+        catalogs,
         onOpen: openTask,
         onComplete: complete,
         onIntent: intent,
@@ -456,7 +452,7 @@ export function DashboardTasksCard() {
                                                 date={selectedDay}
                                                 busy={busy}
                                                 now={now}
-                                                catalogs={CATALOGS}
+                                                catalogs={catalogs}
                                                 onAdd={quickAdd}
                                             />
                                         </li>

@@ -110,9 +110,10 @@ export type VisitDraft = {
     /** ISO start chosen from the server's free times. */
     startAt: string;
     notes: string;
-    /** Shown in the form only; not saved yet. */
     reminders: number[];
 };
+
+export const VISIT_DEFAULT_REMINDERS = [30];
 
 export const EMPTY_DRAFT: VisitDraft = {
     leadId: "",
@@ -122,7 +123,7 @@ export const EMPTY_DRAFT: VisitDraft = {
     date: "",
     startAt: "",
     notes: "",
-    reminders: [],
+    reminders: [30],
 };
 
 export function draftForLead(lead: BookableLead | null | undefined): VisitDraft {
@@ -154,6 +155,7 @@ export function rescheduleDraft(visit: BrokerVisit, now: number): VisitDraft {
         date: visitDay < today ? today : visitDay,
         startAt: upcoming ? visit.startsAt : "",
         notes: visit.notes,
+        reminders: visit.reminders.length ? [...visit.reminders] : [...VISIT_DEFAULT_REMINDERS],
     };
 }
 
@@ -169,6 +171,7 @@ export function validateVisitDraft(draft: VisitDraft, now: number): DraftErrors 
     else if (Date.parse(draft.startAt) <= now) errors.startAt = "Pick a time in the future.";
     if (draft.notes.length > MAX_CHARS.visitNote)
         errors.notes = `Keep the notes under ${MAX_CHARS.visitNote} characters.`;
+    if (!draft.reminders.length) errors.reminders = "Keep at least one reminder for this visit.";
     return errors;
 }
 

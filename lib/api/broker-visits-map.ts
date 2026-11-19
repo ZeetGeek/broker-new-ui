@@ -25,6 +25,7 @@ export type ApiShowing = {
     endAt?: string | null;
     status: string | null;
     notes: string | null;
+    reminders?: number[];
     createdAt: string | null;
     updatedAt?: string | null;
     durationMin?: number;

@@ -7,6 +7,7 @@ import {
     defaultNotebook,
     deleteNotebookList,
     deleteNotebookTab,
+    isNewListSlot,
     moveNotebookList,
     moveNotebookTab,
     notebookSchema,
@@ -173,4 +174,12 @@ test("notebook storage survives reads, isolates accounts and refuses corrupted d
         if (descriptor) Object.defineProperty(globalThis, "sessionStorage", descriptor);
         else Reflect.deleteProperty(globalThis, "sessionStorage");
     }
+});
+
+test("an empty tab offers New list even with a single column", () => {
+    assert.equal(isNewListSlot({ slot: 0, listColumns: 1, visibleCount: 0, listCount: 0 }), true);
+    assert.equal(isNewListSlot({ slot: 0, listColumns: 1, visibleCount: 1, listCount: 1 }), false);
+    assert.equal(isNewListSlot({ slot: 1, listColumns: 3, visibleCount: 1, listCount: 1 }), true);
+    assert.equal(isNewListSlot({ slot: 2, listColumns: 3, visibleCount: 1, listCount: 1 }), false);
+    assert.equal(isNewListSlot({ slot: 0, listColumns: 3, visibleCount: 0, listCount: 0 }), true);
 });

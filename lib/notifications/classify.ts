@@ -52,6 +52,7 @@ const VISIT_TYPES = new Set<NotificationType>([
     "visit_requested",
     "visit_approved",
     "visit_cancelled",
+    "visit_reminder",
 ]);
 
 const BROKER_ACTIONABLE_TYPES = new Set<NotificationType>([
@@ -67,6 +68,7 @@ const OWNER_ACTIONABLE_TYPES = new Set<NotificationType>([
 const ALL_NOTIFICATION_TYPES = new Set<NotificationType>([
     ...REQUEST_TYPES,
     ...VISIT_TYPES,
+    "task_reminder",
     "lead_added",
     "deal_closed",
     "property_sold",
@@ -316,6 +318,14 @@ export function getPropertyLabel(item: NotificationItem): string | null {
 
 export function getNotificationVisual(item: NotificationItem): NotificationVisual {
     const key = notificationKey(item);
+
+    if (item.type === "task_reminder") {
+        return { Icon: BellRing, iconName: "bell-ring", colorClass: "!text-brand" };
+    }
+
+    if (item.type === "visit_reminder") {
+        return { Icon: CalendarClock, iconName: "calendar", colorClass: "!text-brand" };
+    }
 
     if (key.includes("referral")) {
         return { Icon: Gift, iconName: "gift", colorClass: "!text-urgent-mid" };
