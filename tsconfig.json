@@ -29,7 +29,11 @@
         "**/*.tsx",
         "**/*.mts",
         ".next/types/**/*.ts",
-        ".next/dev/types/**/*.ts"
+        ".next/dev/types/**/*.ts",
+        "../.broker-dashboard-review-next/types/**/*.ts",
+        "../.broker-dashboard-review-next/types/**/*.ts",
+        ".next/responsive-review/types/**/*.ts",
+        ".next/responsive-review/types/**/*.ts"
     ],
     "exclude": ["node_modules"]
 }
