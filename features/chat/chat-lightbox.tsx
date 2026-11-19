@@ -65,7 +65,9 @@ export default function ChatLightbox({ src, onClose }: { src: string; onClose: (
                                 </DialogClose>,
                             ],
                         }}
-                        styles={{ button: { minWidth: 48, minHeight: 48, padding: 12 } }}
+                        styles={{
+                            button: { minWidth: "3rem", minHeight: "3rem", padding: "0.75rem" },
+                        }}
                         animation={
                             reduceMotion ? { fade: 0, swipe: 0, navigation: 0, zoom: 0 } : undefined
                         }

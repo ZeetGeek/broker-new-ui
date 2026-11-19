@@ -28,6 +28,7 @@ import {
     type NotificationTab,
 } from "@/lib/notifications/classify";
 import { getNotificationDisplayContent } from "@/lib/notifications/display-content";
+import { measuredPxToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 import { NotificationIcon } from "@/components/shared/icons";
@@ -179,8 +180,8 @@ function NotificationFilterTabs({
         if (!tab || !pill) return;
         const previous = pill.style.transition;
         if (!animate) pill.style.transition = "none";
-        pill.style.transform = `translateX(${tab.offsetLeft}px)`;
-        pill.style.width = `${tab.offsetWidth}px`;
+        pill.style.transform = `translateX(${measuredPxToRem(tab.offsetLeft)})`;
+        pill.style.width = measuredPxToRem(tab.offsetWidth);
         if (!animate) {
             void pill.offsetWidth;
             pill.style.transition = previous;

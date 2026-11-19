@@ -21,7 +21,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
                     style: {
                         background: "var(--color-surface)",
                         color: "var(--color-ink)",
-                        border: "1px solid var(--color-border-warm)",
+                        border: "0.0625rem solid var(--color-border-warm)",
                         borderRadius: "var(--radius-inner)",
                         boxShadow: "var(--shadow-md)",
                     },

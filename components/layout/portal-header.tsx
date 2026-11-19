@@ -2,6 +2,10 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+import {
+    PortalMobileAppBar,
+    type PortalMobileIdentity,
+} from "@/components/layout/portal-mobile-app-bar";
 import { PortalNav } from "@/components/layout/portal-nav";
 import { PortalNotificationsMenu } from "@/components/layout/portal-notifications-menu";
 import { Logo } from "@/components/shared/logo";
@@ -9,11 +13,15 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import type { NavItem } from "@/config/nav";
 
+export type { PortalMobileIdentity };
+
 export type PortalHeaderProps = {
     navItems: NavItem[];
     notificationsHref: string;
     /** Portal account dropdown — owner and broker each pass their menu. */
     profileMenu: ReactNode;
+    /** Phone app-bar identity (avatar + greeting + name). Hidden from `md` up. */
+    mobileIdentity: PortalMobileIdentity;
     /** Rotating search hints; defaults to broker-oriented copy when omitted. */
     searchHints?: readonly string[];
     /** Optional row below the main header bar — e.g. Browse / Mine on properties pages. */
@@ -27,6 +35,7 @@ export function PortalHeader({
     navItems,
     notificationsHref,
     profileMenu,
+    mobileIdentity,
     sectionNav,
     mobileNav,
     children,
@@ -35,44 +44,58 @@ export function PortalHeader({
 
     return (
         <div data-portal-shell className="bg-surface-muted min-block-screen">
-            <div data-portal-content className="overflow-x-hidden px-4 md:px-8">
-                <header>
-                    <div
-                        className="
-                          flex items-center justify-between gap-8 border-be border-border-warm py-5
-                        "
-                    >
-                        <div className="flex flex-1 items-center gap-10 min-inline-0">
-                            <Logo href={homeHref} />
-                            <PortalNav items={navItems} />
-                        </div>
+            {/* Sticky outside overflow-x clip — sticky fails inside overflow-x-hidden. */}
+            <header className="sticky inset-bs-0 z-30">
+                <TooltipProvider>
+                    <div className="px-4 md:px-8">
+                        <PortalMobileAppBar
+                            identity={mobileIdentity}
+                            notificationsHref={notificationsHref}
+                        />
 
-                        <TooltipProvider>
+                        <div
+                            className="
+                              hidden items-center justify-between gap-8 border-be border-border-warm
+                              bg-surface-muted py-5 md:flex
+                            "
+                        >
+                            <div className="flex flex-1 items-center gap-10 min-inline-0">
+                                <Logo href={homeHref} />
+                                <PortalNav items={navItems} />
+                            </div>
+
                             <div className="flex shrink-0 items-center gap-4">
                                 <PortalNotificationsMenu
                                     viewAllHref={notificationsHref}
                                     tooltipLabel="Notifications"
                                     triggerClassName="
-                                      relative rounded-2xl border-0 bg-surface text-ink-muted shadow-sm
-                                      hover:bg-gray-50 hover:text-ink-muted
-                                      aria-expanded:bg-gray-50 aria-expanded:text-ink-muted
+                                      relative rounded-full border-0 bg-surface text-ink-muted shadow-sm
+                                      hover:bg-surface-muted hover:text-ink-muted
+                                      aria-expanded:bg-surface-muted aria-expanded:text-ink-muted
                                     "
+                                />
+
+                                <span
+                                    aria-hidden
+                                    className="shrink-0 bg-ink-subtle/30 block-7 inline-px"
                                 />
 
                                 {profileMenu}
                             </div>
-                        </TooltipProvider>
+                        </div>
                     </div>
+                </TooltipProvider>
+            </header>
 
-                    {sectionNav ? <div className="py-6">{sectionNav}</div> : null}
-                </header>
+            <div data-portal-content className="overflow-x-hidden px-4 md:px-8">
+                {sectionNav ? <div className="py-6">{sectionNav}</div> : null}
 
                 {children ? (
                     <main
                         className={cn(
                             "pbe-8",
                             sectionNav ? "pbs-0" : "pbs-6",
-                            mobileNav && "pbe-[calc(6rem+env(safe-area-inset-bottom))] md:pbe-10",
+                            mobileNav && "pbe-[calc(6.5rem+env(safe-area-inset-bottom))] md:pbe-10",
                         )}
                     >
                         {children}

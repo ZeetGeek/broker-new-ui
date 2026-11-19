@@ -1,6 +1,7 @@
 "use client";
 import { HTMLMotionProps, motion } from "motion/react";
 
+import { pxToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 export const GRADIENT_ANGLES = {
@@ -50,8 +51,8 @@ export function ProgressiveBlur({
                         style={{
                             maskImage: gradient,
                             WebkitMaskImage: gradient,
-                            backdropFilter: `blur(${index * blurIntensity}px)`,
-                            WebkitBackdropFilter: `blur(${index * blurIntensity}px)`,
+                            backdropFilter: `blur(${pxToRem(index * blurIntensity)})`,
+                            WebkitBackdropFilter: `blur(${pxToRem(index * blurIntensity)})`,
                         }}
                         {...props}
                     />

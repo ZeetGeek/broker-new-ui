@@ -234,6 +234,13 @@ function inWindow(iso: string | null | undefined, window: EarningsWindow): boole
 // Commission
 // ---------------------------------------------------------------------------
 
+/** Calendar days from deal created → sold. Null when either date is missing. */
+export function dealDaysToClose(deal: DealItem): number | null {
+    if (!deal.createdAt || !deal.resolvedAt) return null;
+    const days = differenceInCalendarDays(new Date(deal.resolvedAt), new Date(deal.createdAt));
+    return Number.isFinite(days) ? Math.max(0, days) : null;
+}
+
 /** Best known amount the deal closed at (or will close at). */
 export function dealBaseAmountInr(deal: DealItem): number {
     if (deal.closedAmountInr != null && deal.closedAmountInr > 0) return deal.closedAmountInr;
@@ -625,18 +632,7 @@ export function buildEarningsReport(
         buckets[i].lostReasonCounts[reasonKey] = (buckets[i].lostReasonCounts[reasonKey] ?? 0) + 1;
     }
 
-    const closeDurations = closed
-        .filter((d) => d.createdAt)
-        .map((d) =>
-            Math.max(
-                0,
-                differenceInCalendarDays(
-                    new Date(d.resolvedAt as string),
-                    new Date(d.createdAt as string),
-                ),
-            ),
-        )
-        .filter((n) => Number.isFinite(n));
+    const closeDurations = closed.map(dealDaysToClose).filter((n): n is number => n != null);
 
     const valuedClosed: ValuedDeal[] = closed.map((deal) => ({
         deal,

@@ -10,6 +10,7 @@ import {
     OWNER_OVERVIEW_HREF,
     OWNER_PROFILE_HREF,
     OWNER_PROPERTIES_HREF,
+    OWNER_PROPERTIES_NEW_HREF,
     OWNER_REFERRALS_HREF,
     OWNER_REQUESTS_HREF,
     OWNER_VISITS_HREF,
@@ -23,7 +24,7 @@ import {
 } from "@/components/layout/portal-section-nav";
 import { OWNER_SEARCH_HINTS } from "@/components/layout/search-placeholder-loop";
 
-import { OWNER_NAV_ITEMS } from "@/config/nav";
+import { OWNER_MOBILE_PRIMARY_HREFS, OWNER_NAV_ITEMS } from "@/config/nav";
 import { ChatProvider } from "@/features/chat/chat-provider";
 import { OwnerProfileMenu } from "@/features/dashboard/owner-profile-menu";
 import { ShortcutsCheatsheet } from "@/features/shortcuts/shortcuts-cheatsheet";
@@ -44,25 +45,6 @@ const OWNER_SHORTCUT_ROUTES = {
     profile: OWNER_PROFILE_HREF,
     settings: OWNER_PROFILE_HREF,
 };
-
-/** Never surface raw account_type enums in the UI. */
-function resolveOwnerAccountStatusLabel(
-    accountLabel?: string | null,
-    accountType?: string | null,
-    orgName?: string | null,
-): string {
-    const label = accountLabel?.trim();
-    if (label && !/^(individual|organization)$/i.test(label)) {
-        return label;
-    }
-
-    const type = accountType?.trim().toLowerCase();
-    if (type === "organization" || /^organization$/i.test(label ?? "")) {
-        return orgName?.trim() || "Organization";
-    }
-
-    return "Independent";
-}
 
 export function OwnerPortalShell({ children }: { children: ReactNode }) {
     return (
@@ -94,12 +76,6 @@ function OwnerPortalShellInner({ children }: { children: ReactNode }) {
         avatarUrl: profile?.avatarUrl ?? user?.avatarUrl,
         authProvider: profile?.authProvider ?? user?.authProvider,
     });
-    const accountStatusLabel = resolveOwnerAccountStatusLabel(
-        profile?.accountLabel,
-        profile?.accountType ?? user?.accountType,
-        profile?.orgName ?? user?.orgName,
-    );
-
     return (
         <NotificationProvider>
             <ChatProvider>
@@ -107,13 +83,27 @@ function OwnerPortalShellInner({ children }: { children: ReactNode }) {
                     navItems={OWNER_NAV_ITEMS}
                     notificationsHref={OWNER_NOTIFICATIONS_HREF}
                     sectionNav={sectionNav}
-                    mobileNav={<PortalMobileNav items={OWNER_NAV_ITEMS} />}
+                    mobileIdentity={{
+                        name: userName,
+                        roleLabel: "Owner",
+                        avatarUrl,
+                        profileHref: OWNER_PROFILE_HREF,
+                    }}
+                    mobileNav={
+                        <PortalMobileNav
+                            items={OWNER_NAV_ITEMS}
+                            primaryHrefs={OWNER_MOBILE_PRIMARY_HREFS}
+                            centerAction={{
+                                href: OWNER_PROPERTIES_NEW_HREF,
+                                label: "Add property",
+                            }}
+                        />
+                    }
                     searchHints={OWNER_SEARCH_HINTS}
                     profileMenu={
                         <OwnerProfileMenu
                             userName={userName}
                             userAvatarUrl={avatarUrl}
-                            accountStatusLabel={accountStatusLabel}
                             tooltipLabel="Account"
                             onShortcutsOpen={handleShortcutsOpen}
                             open={isProfileMenuOpen}

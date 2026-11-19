@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { PropertyListing } from "@/lib/api/properties";
+
 import {
     mapPropertyListingToMyItem,
     myListingInputToCreatePayload,
     myListingInputToUpdatePayload,
 } from "@/features/properties/your-listings/map-my-listing";
 import type { CreateMyListingInput } from "@/features/properties/your-listings/types";
-import type { PropertyListing } from "@/lib/api/properties";
 
 function input(overrides: Partial<CreateMyListingInput> = {}): CreateMyListingInput {
     return {

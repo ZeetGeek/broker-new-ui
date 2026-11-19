@@ -1,4 +1,5 @@
-import { readRootMs, readRootVar } from "@/lib/motion/css-var";
+import { readRootMs, readRootPx, readRootVar } from "@/lib/motion/css-var";
+import { measuredCssToRem, measuredPxToRem } from "@/lib/styles/rem";
 
 type ClearDissolveElements = {
     wrap: HTMLElement;
@@ -80,7 +81,7 @@ function buildGlow(input: HTMLInputElement, wrap: HTMLElement, text: string): st
             ).forEach(([dx, radiusWidth, radiusHeight, alpha]) => {
                 const layerX = (((centerX + dx) / width) * 100).toFixed(2);
                 layers.push(
-                    `radial-gradient(ellipse ${Math.max(halfWidth * radiusWidth, 2).toFixed(1)}px ${radiusHeight}px at ${layerX}% 100%, rgba(${rgb},${alpha}), transparent)`,
+                    `radial-gradient(ellipse ${measuredPxToRem(Number(Math.max(halfWidth * radiusWidth, 2).toFixed(1)))} ${measuredPxToRem(radiusHeight)} at ${layerX}% 100%, rgba(${rgb},${alpha}), transparent)`,
                 );
             });
         }
@@ -96,11 +97,11 @@ export function copyInputTypeMetrics(
 ): void {
     const computed = getComputedStyle(input);
     for (const layer of [mirror, placeholder]) {
-        layer.style.font = computed.font;
-        layer.style.paddingInlineStart = computed.paddingInlineStart;
-        layer.style.paddingInlineEnd = computed.paddingInlineEnd;
-        layer.style.paddingBlockStart = computed.paddingBlockStart;
-        layer.style.paddingBlockEnd = computed.paddingBlockEnd;
+        layer.style.font = measuredCssToRem(computed.font);
+        layer.style.paddingInlineStart = measuredCssToRem(computed.paddingInlineStart);
+        layer.style.paddingInlineEnd = measuredCssToRem(computed.paddingInlineEnd);
+        layer.style.paddingBlockStart = measuredCssToRem(computed.paddingBlockStart);
+        layer.style.paddingBlockEnd = measuredCssToRem(computed.paddingBlockEnd);
     }
     mirror.style.color = computed.color;
 }
@@ -139,9 +140,9 @@ export function runClearDissolve({
     const total = readRootMs("--clear-dur", 1000);
     const outDur = readRootMs("--clear-out-dur", 400);
     const inDur = readRootMs("--clear-in-dur", 400);
-    const outFly = readRootMs("--clear-out-fly", 12);
-    const inFly = readRootMs("--clear-in-fly", 12);
-    const blur = readRootMs("--clear-blur", 2);
+    const outFly = readRootPx("--clear-out-fly", 12);
+    const inFly = readRootPx("--clear-in-fly", 12);
+    const blur = readRootPx("--clear-blur", 2);
     const delay = readRootMs("--glow-delay", 50);
     const peakAt = readRootMs("--glow-peak-at", 0.15);
     const glowOpacity = readRootMs("--glow-opacity", 0.42);
@@ -153,22 +154,22 @@ export function runClearDissolve({
     wrap.classList.add("is-clearing");
     glow.style.background = buildGlow(input, wrap, mirror.textContent ?? "");
     glow.style.opacity = "0";
-    placeholder.style.transform = `translateY(-${inFly}px)`;
+    placeholder.style.transform = `translateY(${measuredPxToRem(-inFly)})`;
     placeholder.style.opacity = "0.9";
-    placeholder.style.filter = `blur(${blur}px)`;
+    placeholder.style.filter = `blur(${measuredPxToRem(blur)})`;
 
     const startedAt = performance.now();
     function tick(now: number) {
         const elapsed = now - startedAt;
         const outProgress = easeOut(Math.min(1, elapsed / outDur));
-        mirror.style.transform = `translateY(${(outProgress * outFly).toFixed(1)}px)`;
+        mirror.style.transform = `translateY(${measuredPxToRem(Number((outProgress * outFly).toFixed(1)))})`;
         mirror.style.opacity = (1 - outProgress).toFixed(3);
-        mirror.style.filter = `blur(${(outProgress * blur).toFixed(1)}px)`;
+        mirror.style.filter = `blur(${measuredPxToRem(Number((outProgress * blur).toFixed(1)))})`;
 
         const inProgress = easeIn(Math.min(1, elapsed / inDur));
-        placeholder.style.transform = `translateY(${(-inFly + inProgress * inFly).toFixed(1)}px)`;
+        placeholder.style.transform = `translateY(${measuredPxToRem(Number((-inFly + inProgress * inFly).toFixed(1)))})`;
         placeholder.style.opacity = (0.9 + inProgress * 0.1).toFixed(3);
-        placeholder.style.filter = `blur(${(blur - inProgress * blur).toFixed(1)}px)`;
+        placeholder.style.filter = `blur(${measuredPxToRem(Number((blur - inProgress * blur).toFixed(1)))})`;
 
         let glowProgress = 0;
         if (elapsed > delay) {

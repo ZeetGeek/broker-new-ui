@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import Avvvatars from "avvvatars-react";
-import { cva, type VariantProps } from "class-variance-authority";
 
 import { normalizeAvatarUrl } from "@/lib/auth/avatar";
 import { cn } from "@/lib/utils";
@@ -11,104 +10,100 @@ import { cn } from "@/lib/utils";
 import { AppImage } from "@/components/shared/app-image";
 
 /**
- * Outer frame carries ring + shadow (must not use overflow-hidden or the
- * shadow clips). Inner clip keeps the photo / avvatar circular.
+ * The ONE avatar size table for the whole app.
+ *
+ * To resize an avatar step everywhere, edit its row here — nothing else.
+ * - `box`    Tailwind classes for the frame (must be static strings).
+ * - `frame`  White border + soft shadow, scaled to the size so small faces
+ *            stay crisp and large faces get a little more lift.
+ * - `px`     Pixel size painted by avvvatars-react (needs a number).
+ * - `sizes`  `sizes` hint for the photo so the browser picks a small file.
  */
-const avatarFrameVariants = cva("relative inline-flex shrink-0 rounded-full bg-surface", {
-    variants: {
-        size: {
-            /** 20px — tiny credit faces on dense cards. */
-            xxs: "block-5 inline-5",
-            /** 24px — buyer/owner rows on pipeline board cards. */
-            "2xs": "block-6 inline-6",
-            /** 32px — buyer/owner rows on pipeline cards. */
-            xs: "block-8 inline-8",
-            sm: "block-9 inline-9",
-            md: "block-10 inline-10",
-            lg: "block-14 inline-14",
-            fill: "block-full inline-full",
-        },
-        /**
-         * `true` — product default ring + soft shadow.
-         * `false` — bare circle (detail headers that sit on a white surface).
-         */
-        framed: {
-            true: "shadow-xs ring-1 ring-border-warm",
-            false: "shadow-none ring-0",
-        },
-    },
-    defaultVariants: {
-        size: "md",
-        framed: true,
-    },
-});
-
-const avatarMediaClass = "block-full inline-full object-cover object-center";
-
-const avatarImageSizes = {
-    xxs: "20px",
-    "2xs": "24px",
-    xs: "32px",
-    sm: "36px",
-    md: "40px",
-    lg: "56px",
-    fill: "(max-width: 768px) 48px, 56px",
-} as const;
-
-/** Pixel sizes passed to avvvatars-react (it needs a number, not CSS). */
-const avvatarPixelSizes = {
-    xxs: 20,
-    "2xs": 24,
-    xs: 32,
-    sm: 36,
-    md: 40,
-    lg: 56,
+export const AVATAR_SIZES = {
+    /** 20px — tiny credit faces on dense cards. */
+    xxs: { box: "block-5 inline-5", frame: "ring-1 shadow-xs", px: 20, sizes: "20px" },
+    /** 24px — inline people rows on board cards. */
+    "2xs": { box: "block-6 inline-6", frame: "ring-1 shadow-xs", px: 24, sizes: "24px" },
+    /** 32px — buyer/owner rows on pipeline cards. */
+    xs: { box: "block-8 inline-8", frame: "ring-2 shadow-xs", px: 32, sizes: "32px" },
+    /** 36px — list rows, pickers. */
+    sm: { box: "block-9 inline-9", frame: "ring-2 shadow-sm", px: 36, sizes: "36px" },
+    /** 40px — header account button, card headers. */
+    md: { box: "block-10 inline-10", frame: "ring-2 shadow-sm", px: 40, sizes: "40px" },
+    /** 56px — profile / detail headers. */
+    lg: { box: "block-14 inline-14", frame: "ring-3 shadow-md", px: 56, sizes: "56px" },
     /** Parent sets the box; we paint at 96 and stretch to fill. */
-    fill: 96,
+    fill: {
+        box: "block-full inline-full",
+        frame: "ring-3 shadow-md",
+        px: 96,
+        sizes: "(max-width: 768px) 48px, 56px",
+    },
 } as const;
+
+export type UserAvatarSize = keyof typeof AVATAR_SIZES;
+
+/** Colour of the size-scaled border. Width + shadow come from `AVATAR_SIZES`. */
+const FRAME_RING_CLASS = "ring-surface";
 
 /** Stretch avvvatars' fixed-size wrapper to fill our frame. */
-const avvatarFillClass = cn(
-    "[&>div]:rounded-full! [&>div]:block-full! [&>div]:inline-full! [&>div]:max-inline-none!",
-);
+const AVATAR_FILL_CLASS =
+    "[&>div]:rounded-full! [&>div]:block-full! [&>div]:inline-full! [&>div]:max-inline-none!";
 
-export type UserAvatarProps = VariantProps<typeof avatarFrameVariants> & {
+export type UserAvatarProps = {
     name: string;
     imageUrl?: string;
+    /** Size step from `AVATAR_SIZES`. Defaults to `md` (40px). */
+    size?: UserAvatarSize | null;
+    /**
+     * `true` (default) — white border + soft shadow for a lifted look.
+     * `false` — bare circle, for faces packed inside dense rows.
+     */
+    framed?: boolean | null;
     className?: string;
 };
 
-export function UserAvatar({ name, imageUrl, size, framed = true, className }: UserAvatarProps) {
+/**
+ * Circular face for a person. Shows the photo when there is one, otherwise a
+ * generated shape avatar seeded by `name`. Use this everywhere — never
+ * hand-roll an avatar.
+ *
+ * Outer frame carries ring + shadow (no overflow-hidden, or the shadow clips).
+ * Inner span clips the photo / generated avatar to a circle.
+ */
+export function UserAvatar({ name, imageUrl, size, framed, className }: UserAvatarProps) {
     const resolvedImageUrl = normalizeAvatarUrl(imageUrl);
     // Track the URL that failed, not a flag, so a new src retries without an effect.
     const [failedImageUrl, setFailedImageUrl] = useState<string>();
 
-    const resolvedSize = size ?? "md";
+    const step = AVATAR_SIZES[size ?? "md"];
     const showPhoto = Boolean(resolvedImageUrl) && resolvedImageUrl !== failedImageUrl;
 
     return (
-        <span className={cn(avatarFrameVariants({ size, framed }), className)}>
+        <span
+            className={cn(
+                "relative inline-flex shrink-0 rounded-full bg-surface",
+                step.box,
+                framed !== false && [FRAME_RING_CLASS, step.frame],
+                className,
+            )}
+        >
             <span className="relative block overflow-hidden rounded-full block-full inline-full">
                 {showPhoto && resolvedImageUrl ? (
                     <AppImage
                         src={resolvedImageUrl}
                         alt={name}
                         fill
-                        sizes={avatarImageSizes[resolvedSize]}
+                        sizes={step.sizes}
                         quality={75}
                         unoptimized={!resolvedImageUrl.includes("googleusercontent.com")}
                         fallbackSrc={null}
-                        className={avatarMediaClass}
+                        className="object-cover object-center block-full inline-full"
                         onError={() => setFailedImageUrl(resolvedImageUrl)}
                     />
                 ) : (
-                    <span aria-hidden className={cn("block-full inline-full", avvatarFillClass)}>
-                        <Avvvatars
-                            value={name}
-                            style="shape"
-                            size={avvatarPixelSizes[resolvedSize]}
-                            shadow={false}
-                        />
+                    <span aria-hidden className={cn("block-full inline-full", AVATAR_FILL_CLASS)}>
+                        <Avvvatars value={name} style="shape" size={step.px} shadow={false} />
                     </span>
                 )}
             </span>

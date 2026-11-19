@@ -71,9 +71,9 @@ export function EarningsReportView({
                 {/* Phone keeps priority order (sold before losses); md+ puts losses on the left. */}
                 <EarningsRecentSold
                     report={report}
-                    className="md:order-last md:col-span-2 lg:col-span-6"
+                    className="md:order-last md:col-span-2 lg:col-span-5"
                 />
-                <EarningsLosses report={report} className="lg:col-span-6" />
+                <EarningsLosses report={report} className="lg:col-span-7" />
             </div>
         </div>
     );

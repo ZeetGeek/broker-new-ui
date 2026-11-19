@@ -446,7 +446,7 @@ export function MyListingsHeader({
                                                     <span
                                                         aria-hidden
                                                         className={cn(
-                                                            "size-1.5 shrink-0 rounded-full",
+                                                            "shrink-0 rounded-full block-1.5 inline-1.5",
                                                             tab.dotClassName,
                                                         )}
                                                     />

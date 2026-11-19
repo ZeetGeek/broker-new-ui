@@ -2,6 +2,7 @@
 
 import { type CSSProperties, useLayoutEffect, useRef, useState } from "react";
 
+import { measuredPxToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 /**
@@ -42,7 +43,7 @@ export function MarqueeText({ text, className }: { text: string; className?: str
     const overflows = distance > 2;
     const style = overflows
         ? ({
-              "--marquee-distance": `${distance}px`,
+              "--marquee-distance": measuredPxToRem(distance),
               "--marquee-duration": `${marqueeDuration(distance)}s`,
           } as CSSProperties)
         : undefined;

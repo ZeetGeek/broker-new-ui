@@ -4,9 +4,11 @@ import { useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { measuredPxToRem } from "@/lib/styles/rem";
+
 function movePill(pill: HTMLElement, tab: HTMLElement, animate: boolean) {
-    const nextTransform = `translateX(${tab.offsetLeft}px)`;
-    const nextWidth = `${tab.offsetWidth}px`;
+    const nextTransform = `translateX(${measuredPxToRem(tab.offsetLeft)})`;
+    const nextWidth = `${measuredPxToRem(tab.offsetWidth)}`;
     if (!animate) {
         const previous = pill.style.transition;
         pill.style.transition = "none";

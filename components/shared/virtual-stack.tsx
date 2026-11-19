@@ -5,6 +5,8 @@ import { useRef } from "react";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
 
+import { measuredPxToRem } from "@/lib/styles/rem";
+
 export function VirtualStack<T>({
     items,
     estimateSize,
@@ -33,14 +35,17 @@ export function VirtualStack<T>({
             className="overflow-y-auto pe-1 max-block-[calc(100dvh-10rem)] min-block-[520px]"
             style={{ contain: "strict" }}
         >
-            <div className="relative inline-full" style={{ height: virtualizer.getTotalSize() }}>
+            <div
+                className="relative inline-full"
+                style={{ height: measuredPxToRem(virtualizer.getTotalSize()) }}
+            >
                 {virtualizer.getVirtualItems().map((row) => (
                     <div
                         key={row.key}
                         ref={virtualizer.measureElement}
                         data-index={row.index}
                         className="absolute inset-s-0 inset-bs-0 pbe-4 inline-full"
-                        style={{ transform: `translateY(${row.start}px)` }}
+                        style={{ transform: `translateY(${measuredPxToRem(row.start)})` }}
                     >
                         {renderItem(items[row.index], row.index)}
                     </div>

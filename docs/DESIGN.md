@@ -28,6 +28,25 @@ because of restraint, not because of decoration. Three consequences drive every 
 
 ---
 
+## CSS length units
+
+Author CSS, SCSS, CSS modules, and Tailwind arbitrary values in px when convenient.
+The final PostCSS plugin, `postcss-pxtorem`, converts app CSS to rem after Tailwind,
+including media queries, using a 16px baseline (`16px = 1rem`). The root font size
+is left to the browser; the conversion does not add viewport-based scaling.
+Third-party stylesheets loaded directly from `node_modules` are excluded.
+
+PostCSS does not process React inline styles or runtime CSS-in-JS. Use rem strings
+for fixed inline lengths, or `pxToRem` from `lib/styles/rem.ts` for design values.
+Use `measuredPxToRem` for DOM measurements and `measuredCssToRem` for transforms
+returned by layout libraries: these use the current root font size so measured
+positions do not drift when browser text size changes. Keep counts, opacity,
+z-index, scale, SVG/canvas coordinates, and numeric library measurement APIs
+unitless. Read CSS motion length tokens through `readRootPx`, since their built
+values may be rem.
+
+---
+
 ## 1. Colour
 
 ### 1.1 The rule
@@ -37,15 +56,15 @@ signal colours. Nothing else. No blue, no purple, no second brand colour, ever.
 
 Rough on-screen proportion, excluding photos:
 
-| Band               | Share   | What                                              |
-| ------------------ | ------- | ------------------------------------------------- |
-| Warm neutral       | ~60–70% | Page canvas, card surfaces, body text             |
-| Dark green / ink   | ~20%    | Primary buttons, attention cards, progress strip  |
-| Mid green          | ~10%    | Prices, match scores, verified badges, active nav |
-| Highlight + urgent | <5%     | One highlight per card maximum; urgency only      |
+| Band               | Share     | What                                              |
+| ------------------ | --------- | ------------------------------------------------- |
+| Warm neutral       | ~60â€“70% | Page canvas, card surfaces, body text             |
+| Dark green / ink   | ~20%      | Primary buttons, attention cards, progress strip  |
+| Mid green          | ~10%      | Prices, match scores, verified badges, active nav |
+| Highlight + urgent | <5%       | One highlight per card maximum; urgency only      |
 
 The 60-30-10 rule is the starting scaffold. The bright end runs tighter than 10% here
-on purpose — a lime chip that appears twice on a screen means nothing.
+on purpose â€” a lime chip that appears twice on a screen means nothing.
 
 ### 1.2 Tokens
 
@@ -76,14 +95,14 @@ brand-text       #0B5A41   text sitting on brand-soft
 ```
 
 ```
-stage-1         #0284C7   pipeline — New (sky-600)
-stage-1-soft    #BAE6FD   pipeline — New, pill + column fill (sky-200)
-stage-2         #7C3AED   pipeline — Contacted (violet-600)
-stage-2-soft    #DDD6FE   pipeline — Contacted, pill + column fill (violet-200)
-stage-3         #D97706   pipeline — Site visit (amber-600)
-stage-3-soft    #FDE68A   pipeline — Site visit, pill + column fill (amber-200)
-stage-4         #059669   pipeline — Negotiation (emerald-600)
-stage-4-soft    #A7F3D0   pipeline — Negotiation, pill + column fill (emerald-200)
+stage-1         #0284C7   pipeline â€” New (sky-600)
+stage-1-soft    #BAE6FD   pipeline â€” New, pill + column fill (sky-200)
+stage-2         #7C3AED   pipeline â€” Contacted (violet-600)
+stage-2-soft    #DDD6FE   pipeline â€” Contacted, pill + column fill (violet-200)
+stage-3         #D97706   pipeline â€” Site visit (amber-600)
+stage-3-soft    #FDE68A   pipeline â€” Site visit, pill + column fill (amber-200)
+stage-4         #059669   pipeline â€” Negotiation (emerald-600)
+stage-4-soft    #A7F3D0   pipeline â€” Negotiation, pill + column fill (emerald-200)
 ```
 
 ```
@@ -95,16 +114,16 @@ highlight-ink   #1E3A05   text sitting on highlight
 urgent          #C2410C   time pressure only
 urgent-mid      #E8895A   icon/accent between urgent and urgent-soft
 urgent-soft     #FBEBE0
-pending         #92650A   wait state — in progress, no action required. Dark yellow.
+pending         #92650A   wait state â€” in progress, no action required. Dark yellow.
 danger          #B42318   destructive and reject actions only
 danger-mid      #E2725F   icon/accent between danger and danger-soft
 danger-soft     #FDECEA
-success         #1B7A5A   confirms completion only — same value as `brand`
+success         #1B7A5A   confirms completion only â€” same value as `brand`
 success-mid     #7BB89E   icon/accent between success and success-soft
 success-soft    #E3F2EA   same value as `brand-soft`
 ```
 
-### 1.3 Reserved meanings — do not dilute
+### 1.3 Reserved meanings â€” do not dilute
 
 `urgent` means **a deadline is approaching or has passed**. Representation request
 expiring, RERA registration expiring, follow-up overdue, showing starting now. It never
@@ -119,7 +138,7 @@ deadline is close" and "you are about to reject this broker" are not the same me
 in a chart, an open count, the currently active stage. Never two per card.
 
 `success` means **this specific action just completed**. Representation approved, deal
-closed, verification step done. It shares its hex value with `brand` on purpose — this
+closed, verification step done. It shares its hex value with `brand` on purpose â€” this
 is not a fourth hue, it is a semantic alias so approval/completion moments stay
 distinguishable in code and copy from routine brand usage (prices, active nav) without
 adding a colour to the palette.
@@ -128,16 +147,16 @@ adding a colour to the palette.
 number submitted, waiting on verification. It is dark yellow so it does not steal
 `urgent` orange. Never use it for a deadline.
 
-`stage-1` … `stage-4` and their `-soft` fills are **pipeline surfaces only** —
-New → Contacted → Site visit → Negotiation. Each stage owns one Tailwind hue,
-ordered cool to warm to resolved (sky → violet → amber → emerald) so the board
+`stage-1` â€¦ `stage-4` and their `-soft` fills are **pipeline surfaces only** â€”
+New â†’ Contacted â†’ Site visit â†’ Negotiation. Each stage owns one Tailwind hue,
+ordered cool to warm to resolved (sky â†’ violet â†’ amber â†’ emerald) so the board
 reads left-to-right as forward motion and the four columns are told apart at a
 glance. The solid tone carries dots and pill text; the `-soft` fill backs the
 pill, and at 40% it tints the column.
 
-These four hues are **the documented exception to the one-hue rule in §1.1**,
+These four hues are **the documented exception to the one-hue rule in Â§1.1**,
 and the exception stops at the board. Do not use `stage-*` for buttons, badges,
-or any surface outside the pipeline — outside it, green remains the only brand
+or any surface outside the pipeline â€” outside it, green remains the only brand
 hue.
 
 ### 1.4 Contrast
@@ -160,12 +179,12 @@ hue.
 
 | Role    | Face                     | Token            | Applies to                                                          |
 | ------- | ------------------------ | ---------------- | ------------------------------------------------------------------- |
-| Display | Bricolage Grotesque      | `--font-display` | `h1`–`h6`                                                           |
+| Display | Bricolage Grotesque      | `--font-display` | `h1`â€“`h6`                                                         |
 | Body    | DM Sans                  | `--font-sans`    | `p`, `span`, `a`, `li`, `label`, `button`, `input`, everything else |
 | Data    | DM Sans, tabular figures | `.tabular`       | Prices, areas, dates, match %, table columns                        |
 
 Load both through `next/font/google` in `app/layout.tsx` with `display: "swap"` and
-variable font axes. Never load them via a `<link>` to Google's CDN — it costs a
+variable font axes. Never load them via a `<link>` to Google's CDN â€” it costs a
 round trip on 4G and blocks first paint.
 
 ```ts
@@ -185,7 +204,7 @@ const sans = DM_Sans({
 ```
 
 Numbers in prices, areas, and table columns use `font-variant-numeric: tabular-nums`
-so a column of rupee figures aligns. Without this, `₹85 L` and `₹1.2 Cr` jitter against
+so a column of rupee figures aligns. Without this, `â‚¹85 L` and `â‚¹1.2 Cr` jitter against
 each other in a list.
 
 ### 2.2 Scale
@@ -194,7 +213,7 @@ Two values per step: mobile first, then the desktop value after the `md:` breakp
 
 Each step is **one class** in `app/common.scss`. Apply that class plus a colour
 utility (`text-ink`, `text-white`, `text-ink-muted`). Do not restack
-`text-[28px] md:text-[40px] font-bold tracking-tight leading-[1.08]` — that is
+`text-[28px] md:text-[40px] font-bold tracking-tight leading-[1.08]` â€” that is
 what the class is for. Colour stays out of the class so the same step works on
 cream and on `brand-deep`. `.eyebrow` is the exception: uppercase + `ink-muted`
 are part of the pattern.
@@ -222,27 +241,27 @@ are part of the pattern.
 | Body extra small | `.body-xs`   | 12px   | 12px    | 400    | 0        | 1.4     |
 | Eyebrow          | `.eyebrow`   | 12px   | 12px    | 600    | 0.1em    | 1.2     |
 
-Tight tracking on display sizes is not optional — it is what makes Bricolage Grotesque
+Tight tracking on display sizes is not optional â€” it is what makes Bricolage Grotesque
 look intentional rather than default. Loose tracking at 52px reads as a fallback font.
 
-Headings never go below 20px desktop (h6 floor) — that floor is what keeps a heading
+Headings never go below 20px desktop (h6 floor) â€” that floor is what keeps a heading
 reading as a heading rather than body copy. Body never goes above 18px desktop (Body
 large ceiling) for the same reason in reverse. The two scales are read by face and
-weight first, size second — h5/h6 stay display face + 600 weight even where their size
+weight first, size second â€” h5/h6 stay display face + 600 weight even where their size
 sits close to a body step's.
 
 Eyebrow labels are uppercase, `ink-muted`, and sit directly above the value they
 describe: `NEXT SHOWING`, `LOOKING FOR`, `NEEDS ATTENTION`. This is the only place
 uppercase is allowed. Everything else is sentence case, including buttons and headings.
 
-### 2.3 The two-tone headline — the signature element
+### 2.3 The two-tone headline â€” the signature element
 
 Every top-level screen opens with one headline split across two colours at the same
 size and weight. The first clause states the fact; the second states what it means.
 
 ```tsx
 <h1 className="h1">
-    <span className="text-ink">34 properties.</span> <span className="text-ink-muted">₹24.8 Cr on the market.</span>
+    <span className="text-ink">34 properties.</span> <span className="text-ink-muted">â‚¹24.8 Cr on the market.</span>
 </h1>
 ```
 
@@ -251,7 +270,7 @@ rest of the screen can stay quiet. Use it on the dashboard, browse, my propertie
 my brokers, and site visits.
 
 Both clauses end with a full stop. That is deliberate and consistent across screens.
-Write real content into it — `12 requests. 3 waiting on you.` beats
+Write real content into it â€” `12 requests. 3 waiting on you.` beats
 `Welcome back, Rajesh.` because it tells the user what to do next.
 
 ---
@@ -272,23 +291,23 @@ like `p-[13px]`.
 
 ### 3.1a Control height
 
-One height scale drives every interactive control — button, input, select
-trigger, and anything else that sits in a form row. Five steps, `xs`→`xl`,
+One height scale drives every interactive control â€” button, input, select
+trigger, and anything else that sits in a form row. Five steps, `xs`â†’`xl`,
 `calc(var(--spacing) * n)` off Tailwind's base unit so they stay on the 4px
 grid:
 
 ```
 --size-control-xs   24px   dense icon-only controls (icon-xs button)
---size-control-sm   32px   dense contexts — filters, tables, toolbars
---size-control-md   36px   default — most buttons and form fields
+--size-control-sm   32px   dense contexts â€” filters, tables, toolbars
+--size-control-md   36px   default â€” most buttons and form fields
 --size-control-lg   44px   desktop tap-target minimum
---size-control-xl   48px   mobile tap-target minimum — primary mobile actions/forms
+--size-control-xl   48px   mobile tap-target minimum â€” primary mobile actions/forms
 ```
 
 Applied via `block-control-{step}` / `inline-control-{step}` (logical-property
 utilities Tailwind generates from the `--size-control-*` tokens in
 `app/globals.css`). Never a bare `block-9` or an arbitrary height on a control
-— use the step name, so button, input, and select trigger stay the same
+â€” use the step name, so button, input, and select trigger stay the same
 height at the same step without coordinating by hand. New form controls
 (select trigger, textarea, checkbox/radio hit area) consume this same scale
 instead of inventing their own heights.
@@ -304,7 +323,7 @@ touch affordance without making every surface look soft or capsule-shaped.
 --radius-control 12px   buttons, inputs, selects, tabs, segmented controls
 ```
 
-Badges are pills (`rounded-full`) — see §4.4. Checkboxes use `rounded-sm` (6px).
+Badges are pills (`rounded-full`) â€” see Â§4.4. Checkboxes use `rounded-sm` (6px).
 Controls use `rounded-control` (12px); cards and overlays use `rounded-card` (20px).
 `rounded-full` is reserved for genuinely circular geometry such as avatars, radio
 indicators, status dots, switch thumbs, and badges. It is not the default for
@@ -317,10 +336,10 @@ its radius is 0.
 
 Separation comes primarily from surface contrast: white cards on warm cream canvas,
 dark panels against both. Shadows are a secondary, sparingly-used signal on top of
-that contrast, never a replacement for it — the canvas staying off-white is still
+that contrast, never a replacement for it â€” the canvas staying off-white is still
 what keeps card boundaries legible.
 
-Five smooth elevation steps, ink-tinted (never pure black) and layered — a tight
+Five smooth elevation steps, ink-tinted (never pure black) and layered â€” a tight
 near shadow plus a soft diffuse one, both at low opacity so they read as depth, not
 as a drop shadow:
 
@@ -332,7 +351,7 @@ as a drop shadow:
 --shadow-xl   0 8px 16px -6px ink/8%, 0 28px 56px -12px ink/14%        modals, sheets
 ```
 
-Default resting cards use `shadow-sm` or no shadow at all — reach for `md` only on
+Default resting cards use `shadow-sm` or no shadow at all â€” reach for `md` only on
 hover/press feedback, `lg`/`xl` only for content that floats above the page (menus,
 popovers, dialogs). Dark attention cards (`brand-deep`, `brand-ink`) never carry a
 shadow; they already separate through fill contrast.
@@ -353,14 +372,14 @@ White surface, 20px radius, no shadow. Optional eyebrow at top-left, optional st
 badge at top-right, then content.
 
 ```
-┌──────────────────────────────┐
-│ ● NEXT SHOWING    [Confirmed]│  brand mark · eyebrow ink-muted · badge brand-soft
-│                              │
-│ Today, 9:30 AM               │  h2, ink
-│ Andheri · meet at the gate   │  small, ink-muted
-│                              │
-│ [Directions]  [Reschedule]   │  primary action · secondary action
-└──────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ â— NEXT SHOWING    [Confirmed]â”‚  brand mark Â· eyebrow ink-muted Â· badge brand-soft
+â”‚                              â”‚
+â”‚ Today, 9:30 AM               â”‚  h2, ink
+â”‚ Andheri Â· meet at the gate   â”‚  small, ink-muted
+â”‚                              â”‚
+â”‚ [Directions]  [Reschedule]   â”‚  primary action Â· secondary action
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### 4.2 Dark attention card
@@ -380,8 +399,8 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 | Variant           | Fill                                     | Text            | Use                                                                                                                                                                   |
 | ----------------- | ---------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Primary           | `brand-ink`                              | white           | One per screen. Request to represent, Approve, Add property                                                                                                           |
-| Accent            | `brand`                                  | `canvas`        | One per screen, marketing/hero CTAs only. Not for in-app screens — `Primary` owns those                                                                               |
-| Highlight         | `highlight`                              | `highlight-ink` | Dark surfaces only (`brand-deep`/`brand-ink` cards). One per screen, max — the one action that leads on a dark attention card. Never on `canvas`/`surface`.           |
+| Accent            | `brand`                                  | `canvas`        | One per screen, marketing/hero CTAs only. Not for in-app screens â€” `Primary` owns those                                                                             |
+| Highlight         | `highlight`                              | `highlight-ink` | Dark surfaces only (`brand-deep`/`brand-ink` cards). One per screen, max â€” the one action that leads on a dark attention card. Never on `canvas`/`surface`.         |
 | Highlight outline | transparent, 1px `highlight`             | `highlight-ink` | Same dark-surface restriction as Highlight, lower emphasis.                                                                                                           |
 | Outline           | Polaris white face (`btn-polaris-white`) | `#282828`       | Bordered actions site-wide (Call, Cancel, Share, icon buttons). Hover lightly darkens the face; pressed uses a top inset shadow. Keyboard focus rings remain visible. |
 | Outline dark      | transparent, 1px `ink-muted`             | `ink`           | On dark / tinted surfaces where a white face would clash                                                                                                              |
@@ -390,12 +409,12 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 | Destructive       | transparent, 1px `danger`                | `danger`        | Reject, Delete                                                                                                                                                        |
 | Ghost             | none                                     | `ink-muted`     | Tertiary, inside cards                                                                                                                                                |
 
-`brand-soft` fills hover to `brand-soft-hover` — one step deeper in the same green, never a different hue.
+`brand-soft` fills hover to `brand-soft-hover` â€” one step deeper in the same green, never a different hue.
 
-All use the standard 12px control radius. Height comes from the control-height scale (§3.1a):
+All use the standard 12px control radius. Height comes from the control-height scale (Â§3.1a):
 `xs`/`sm`/`default`/`md`/`lg` map to `control-xs`/`control-sm`/`control-md`/
 `control-lg`/`control-xl`. Icon sizes follow the same steps (`icon-xs` through
-`icon-lg`). Button `lg` and input `lg` are the same height — never mix steps in
+`icon-lg`). Button `lg` and input `lg` are the same height â€” never mix steps in
 one form row. `md` (44px) is the desktop tap-target; `lg` (48px) is the mobile
 tap-target floor, so use it on primary mobile actions. Minimum horizontal
 padding 20px. Label is sentence case, verb first, one to three words, no
@@ -410,9 +429,9 @@ target; do not overlap adjacent controls with enlarged invisible hit areas.
 **Loading state** uses the `loading` prop on `components/ui/button.tsx`. The spinner is
 `Tailspin` from `ldrs/react` (`import { Tailspin } from 'ldrs/react'`), `size="16"
 stroke="2" speed="0.9" color="currentColor"`, so it inherits the button's text colour
-in every variant. Never a hand-rolled SVG spinner, never a different loader component —
+in every variant. Never a hand-rolled SVG spinner, never a different loader component â€”
 one spinner, one place, `components/ui/button.tsx`. `loading` disables the control, sets
-`aria-busy`, and keeps the label on screen next to the spinner — it never replaces the
+`aria-busy`, and keeps the label on screen next to the spinner â€” it never replaces the
 label with the spinner alone.
 
 ### 4.4 Badges and chips
@@ -423,7 +442,7 @@ One pill. Flat fill, no gradient, no border, no shadow. A 6px leading dot.
 `rounded-full`, `gap-1.5`.
 
 Colour is a `color` prop on `components/ui/badge.tsx`. This is the exception to
-the one-hue rule in §1.1 — a badge may use the Tailwind palette so states stay
+the one-hue rule in Â§1.1 â€” a badge may use the Tailwind palette so states stay
 distinguishable. Fill is `{color}-200`, text is `{color}-700`, the dot is
 `{color}-600`.
 
@@ -434,7 +453,7 @@ indigo, violet, purple, and stone (the quiet default).
 CSS colour. Do not hand-roll a second pill.
 
 `blur` tints the fill (hue at 80% plus `backdrop-blur-md`). `blur="dark"` is the
-photo-card glass: `bg-ink/30`, `text-surface`, `backdrop-blur-md` — the same
+photo-card glass: `bg-ink/30`, `text-surface`, `backdrop-blur-md` â€” the same
 fill as the photo menu button. On that glass the dot steps up to `{color}-300`
 so it stays visible. Solid pills keep the `{color}-600` dot.
 
@@ -444,25 +463,25 @@ Photo leads. Full-bleed at the top of the card with the card's own radius on the
 top corners, 4:3 aspect ratio, `object-cover`.
 
 ```
-┌──────────────────────────────┐
-│ [Active]                 [♡] │  compact overlay controls on photo
-│                              │
-│         photo 4:3            │
-│                              │
-├──────────────────────────────┤
-│ 3 BHK · Andheri     ₹85 L    │  ink / brand, tabular, right-aligned
-│ 1,450 sq ft · Semi-furnished │  small, ink-muted
-│ 📍 Mumbai                    │
-│ ─────────────────────────    │
-│ 2 requests · listed 4d ago   │  small, ink-subtle
-└──────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ [Active]                 [â™¡] â”‚  compact overlay controls on photo
+â”‚                              â”‚
+â”‚         photo 4:3            â”‚
+â”‚                              â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ 3 BHK Â· Andheri     â‚¹85 L    â”‚  ink / brand, tabular, right-aligned
+â”‚ 1,450 sq ft Â· Semi-furnished â”‚  small, ink-muted
+â”‚ ðŸ“ Mumbai                    â”‚
+â”‚ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€    â”‚
+â”‚ 2 requests Â· listed 4d ago   â”‚  small, ink-subtle
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 Price is `brand`, tabular figures, right-aligned on the same baseline as the title.
 
 **Missing photo is a designed state, not a broken one.** Render a `surface-muted`
-block at the same 4:3 ratio containing a prompt: `Add photos — listings with photos
-get 5× more interest`. Never a gray box, never a broken image icon.
+block at the same 4:3 ratio containing a prompt: `Add photos â€” listings with photos
+get 5Ã— more interest`. Never a gray box, never a broken image icon.
 
 ### 4.6 Metric strip
 
@@ -489,9 +508,9 @@ On mobile this becomes horizontally scrollable stage tabs, not a compressed bar.
 An invitation, never an apology. Headline naming the space, one line of body, one
 primary button.
 
-- Owner, no properties: **Add your first property** · Takes about two minutes. · `[Add property]`
-- Broker, no represented properties: **Browse available properties** · Owners in your area are listing now. · `[Browse properties]`
-- Owner, no requests: **No broker requests yet** · Requests appear here when a broker wants to represent your property.
+- Owner, no properties: **Add your first property** Â· Takes about two minutes. Â· `[Add property]`
+- Broker, no represented properties: **Browse available properties** Â· Owners in your area are listing now. Â· `[Browse properties]`
+- Owner, no requests: **No broker requests yet** Â· Requests appear here when a broker wants to represent your property.
 
 Never `Nothing here yet.` Never an illustration.
 
@@ -535,33 +554,33 @@ placeholder and lives in `config/site.ts` only.
 
 One base-ui primitive, wrapped once in `components/ui/input.tsx`. Five
 sizes (`xs` / `sm` / `default` / `md` / `lg`) off the same control-height
-scale as buttons (§3.1a) — `control-xs` / `control-sm` / `control-md` /
+scale as buttons (Â§3.1a) â€” `control-xs` / `control-sm` / `control-md` /
 `control-lg` / `control-xl`. Input `md`/`lg` and button `md`/`lg` share
-those heights — `md` is the desktop tap-target, `lg` is the
-primary-mobile-form size — an optional icon in either end slot, and
+those heights â€” `md` is the desktop tap-target, `lg` is the
+primary-mobile-form size â€” an optional icon in either end slot, and
 error/success/loading states that share one wiring instead of three.
 
 ```
-┌──────────────────────────────┐
-│ 🔍  Search locality       ✕  │  start icon · value · clear
-├──────────────────────────────┤
-│ ✉️  you@example.com       ✓  │  success — data-success, brand border
-├──────────────────────────────┤
-│ 👤  Broker name          ◌   │  loading — Tailspin in the end slot
-├──────────────────────────────┤
-│    395                    ⚠  │  error — danger border + ring
-│ PIN code must be 6 digits    │  message region, danger text
-└──────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ ðŸ”  Search locality       âœ•  â”‚  start icon Â· value Â· clear
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ âœ‰ï¸  you@example.com       âœ“  â”‚  success â€” data-success, brand border
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ ðŸ‘¤  Broker name          â—Œ   â”‚  loading â€” Tailspin in the end slot
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚    395                    âš   â”‚  error â€” danger border + ring
+â”‚ PIN code must be 6 digits    â”‚  message region, danger text
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 Standard control radius (`rounded-control`), 2px `border-warm`, `surface` fill. Rest state
-carries no shadow — `shadow-xs` is reserved for the rare case an input sits
+carries no shadow â€” `shadow-xs` is reserved for the rare case an input sits
 directly on `canvas` rather than inside a card that already separates it.
 
 **Icon slots.** `startIcon` and `endIcon` accept an `AppIcon` from
 `components/shared/icons` (Tabler).
 Only one thing occupies the end
-slot at a time — `loading`, `success`, `clearable`, and `type="password"`
+slot at a time â€” `loading`, `success`, `clearable`, and `type="password"`
 each claim it automatically, in that priority order, ahead of a plain
 `endIcon`. Never render two end affordances at once.
 
@@ -569,14 +588,14 @@ each claim it automatically, in that priority order, ahead of a plain
 on the bare shadcn primitive: pass `errorText` (a string, not a boolean) and
 the border, focus ring, inline alert glyph, and the message region below the
 field all switch together. `success` sets `data-success` and a `brand`
-border plus a checkmark in the end slot — it is suppressed whenever the
+border plus a checkmark in the end slot â€” it is suppressed whenever the
 field is also invalid, so a field never shows both signals. Success reuses
 the existing `brand` token (the same green that marks "verified" elsewhere
-per §1.3) rather than introducing a new colour.
+per Â§1.3) rather than introducing a new colour.
 
 **Loading** disables the field, sets `aria-busy`, and swaps the end slot for
 the same `Tailspin` spinner as `components/ui/button.tsx` (`size="16"
-stroke="2" speed="0.9" color="currentColor"`) — one spinner, one place,
+stroke="2" speed="0.9" color="currentColor"`) â€” one spinner, one place,
 never a second loader component.
 
 **Helper and error text** live in one region below the field and swap in
@@ -587,9 +606,9 @@ also gets `role="alert"` so it's announced without the user having to
 find it. While `loading`, helper copy uses `t-shimmer` so the in-progress
 label stays alive without a second spinner.
 
-**Password fields** get a reveal toggle in the end slot automatically —
+**Password fields** get a reveal toggle in the end slot automatically â€”
 `type="password"` is enough, no extra prop. **Clearable** fields
-(`clearable`) get a `✕` once they have a value; both toggles are
+(`clearable`) get a `âœ•` once they have a value; both toggles are
 `tabIndex={-1}` so they never enter the regular tab order ahead of the
 field's own value.
 
@@ -602,21 +621,21 @@ One base-ui primitive, wrapped once in `components/ui/select.tsx`. Compound
 API: `Select` / `SelectTrigger` / `SelectValue` / `SelectContent` /
 `SelectItem` (plus optional `SelectGroup`, `SelectLabel`, `SelectSeparator`).
 The trigger uses the same five control-height steps, `rounded-control`, 2px
-`border-warm`, and `surface` fill as Input (§4.10). Default trigger is 36px
+`border-warm`, and `surface` fill as Input (Â§4.10). Default trigger is 36px
 (`control-md`); `lg` is 48px for primary mobile forms sitting next to an
 Input of the same size.
 
 ```
-┌──────────────────────────────┐
-│ 📍  Andheri               ▾  │  start icon · value · chevron
-├──────────────────────────────┤
-│ 🏢  Choose type           ▾  │  placeholder is ink-subtle
-├──────────────────────────────┤
-│ 📍  Baner                 ◌  │  loading — Tailspin replaces chevron
-├──────────────────────────────┤
-│    Choose a locality      ▾  │  error — danger border + ring
-│ Choose a locality to continue│  message region, danger text
-└──────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ ðŸ“  Andheri               â–¾  â”‚  start icon Â· value Â· chevron
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ ðŸ¢  Choose type           â–¾  â”‚  placeholder is ink-subtle
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ ðŸ“  Baner                 â—Œ  â”‚  loading â€” Tailspin replaces chevron
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚    Choose a locality      â–¾  â”‚  error â€” danger border + ring
+â”‚ Choose a locality to continueâ”‚  message region, danger text
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 **Chevron owns the end slot.** `startIcon` is optional. `loading` disables
@@ -630,7 +649,7 @@ is also invalid.
 
 **Popup** is `bg-surface`, `rounded-card`, `shadow-lg`, origin-aware via
 `t-dropdown`. Highlighted items use `brand-soft` / `brand-text`. Never a
-dark glass overlay. Keep the list as this compound select — do not flatten
+dark glass overlay. Keep the list as this compound select â€” do not flatten
 to a native `<select>`.
 
 ### 4.11b Combobox
@@ -638,7 +657,7 @@ to a native `<select>`.
 Filterable cousin of Select. One base-ui primitive, wrapped once in
 `components/ui/combobox.tsx`. Compound API: `Combobox` / `ComboboxInput` /
 `ComboboxContent` / `ComboboxList` / `ComboboxItem` (plus optional group,
-label, separator, empty, chips). Visual tokens match Select exactly —
+label, separator, empty, chips). Visual tokens match Select exactly â€”
 `rounded-control` input shell, five control-height steps, `startIcon`,
 loading Tailspin, error/success message region, and a `bg-surface` +
 `shadow-lg` + `t-dropdown` popup. Items use the same option styling as
@@ -648,14 +667,14 @@ short exclusive sets stay on Select or Radio.
 ### 4.12 Switch
 
 One base-ui primitive, wrapped once in `components/ui/switch.tsx`. Binary
-on/off preference — never a third state, never a substitute for radio when
+on/off preference â€” never a third state, never a substitute for radio when
 there are three or more exclusive options.
 
 ```
-┌──────────────────────────────────────┐
-│ SMS alerts                      (●─) │  label + hint · switch on the end
-│ Site-visit reminders                 │
-└──────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ SMS alerts                      (â—â”€) â”‚  label + hint Â· switch on the end
+â”‚ Site-visit reminders                 â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 Two sizes: `sm` (dense filter rows) and `default` (preference rows). Track is
@@ -665,7 +684,7 @@ border/fill, not a second brand colour.
 
 Always pair with a visible label (`htmlFor`/`id` or a wrapping `<label>`).
 Label sits on the start side; the control sits on the end. Disabled keeps the
-current checked value visible — do not clear it. Thumb motion uses the
+current checked value visible â€” do not clear it. Thumb motion uses the
 instant duration token; never a bouncy spring.
 
 **Icon segmented toggle** (grid/list in screenshot) is not this control. Use
@@ -674,10 +693,10 @@ instant duration token; never a bouncy spring.
 `border-brand`. `aria-pressed` per button; `role="group"` + `aria-label` on
 the shell. Owner listings view toggle is the reference call site.
 
-**Text segmented toggle** — same sliding highlight, text labels (Sale / Rent).
+**Text segmented toggle** â€” same sliding highlight, text labels (Sale / Rent).
 `components/shared/text-segmented-toggle.tsx`. Default: outer + active
 segment `rounded-full`, equal-width segments. `size="sm"`: compact
-`rounded-control` variant on property cards. Not for long option lists — use
+`rounded-control` variant on property cards. Not for long option lists â€” use
 radio option cards or a select.
 
 ### 4.13 Radio
@@ -687,64 +706,64 @@ Compound API only: `RadioGroup` owns the value, `RadioGroupItem` is the
 16px circle. One exclusive choice from a short set.
 
 ```
-┌─────────────────┐  ┌─────────────────┐
-│ ◉  For sale     │  │ ○  For rent     │  option cards — whole tile tappable
-│ Owner wants…    │  │ Owner wants…    │  selected: brand border + brand-soft fill
-└─────────────────┘  └─────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ â—‰  For sale     â”‚  â”‚ â—‹  For rent     â”‚  option cards â€” whole tile tappable
+â”‚ Owner wantsâ€¦    â”‚  â”‚ Owner wantsâ€¦    â”‚  selected: brand border + brand-soft fill
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 Three layouts, same primitive:
 
-| Layout       | When                                                        |
-| ------------ | ----------------------------------------------------------- |
-| Stack        | Short account-type / role lists                             |
-| Grid         | 2–4 columns — furnishing, looking-for, deal extras          |
-| Option cards | Default on property forms — label wraps the item, 48px tall |
+| Layout       | When                                                          |
+| ------------ | ------------------------------------------------------------- |
+| Stack        | Short account-type / role lists                               |
+| Grid         | 2â€“4 columns â€” furnishing, looking-for, deal extras        |
+| Option cards | Default on property forms â€” label wraps the item, 48px tall |
 
 Checked indicator fill is `brand`. Selected cards use `border-brand` +
-`bg-brand-soft` + `text-brand-text`. Hover only shifts the border — no soft
+`bg-brand-soft` + `text-brand-text`. Hover only shifts the border â€” no soft
 fill until selected. Put `aria-invalid` on the group when a
-required choice is empty — not on every item. Circle geometry stays
+required choice is empty â€” not on every item. Circle geometry stays
 `rounded-full`; never restyle a radio into a checkbox look. Multi-select is
 Checkbox; binary on/off is Switch.
 
 ### 4.14 Tooltip
 
 base-ui Tooltip, wrapped once in `components/ui/tooltip.tsx`. Short
-hover/focus hint for icon-only controls and truncated labels — never the only
+hover/focus hint for icon-only controls and truncated labels â€” never the only
 label for a primary action.
 
 ```
-┌────┐
-│ 🔔 │ ← hover/focus
-└────┘
-   ▼
-┌──────────────────────────┐
-│ Send the owner a reminder│  body-xs · border-warm · shadow-sm
-└──────────────────────────┘
+â”Œâ”€â”€â”€â”€â”
+â”‚ ðŸ”” â”‚ â† hover/focus
+â””â”€â”€â”€â”€â”˜
+   â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Send the owner a reminderâ”‚  body-xs Â· border-warm Â· shadow-sm
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 Compound API: optional `TooltipProvider` on a tree, then `Tooltip` +
 `TooltipTrigger` + `TooltipContent`. Default side is `top` with an 8px gap;
 open delay 80ms (intent), close immediate. Motion is `.t-tooltip` in
-`app/transitions-dev.css` — fade + scale, faster on leave.
+`app/transitions-dev.css` â€” fade + scale, faster on leave.
 
 Copy stays short and plain (no full stop on a fragment). Keyboard shortcut
 hints use `ShortcutTooltip` from `components/shared/shortcut-tooltip.tsx` (or
 `Kbd` / `KbdGroup` inside content) so keys match the registry in
-`docs/SHORTCUTS.md`. Prefer a visible label on mobile — tooltips assist
+`docs/SHORTCUTS.md`. Prefer a visible label on mobile â€” tooltips assist
 desktop, they do not replace affordance.
 
 ### 4.15 Tabs
 
 base-ui Tabs, wrapped once in `components/ui/tabs.tsx`. Peer views and section
-chrome — not binary form choices (those are `TextSegmentedToggle` /
+chrome â€” not binary form choices (those are `TextSegmentedToggle` /
 `IconSegmentedToggle`).
 
 ```
-┌─────────────────────────────┐
-│ [ Full details ] Quick add  │  surface-muted track · sliding surface pill
-└─────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ [ Full details ] Quick add  â”‚  surface-muted track Â· sliding surface pill
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 Compound API for product screens can still use base-ui `Tabs` + `TabsList` +
@@ -772,20 +791,20 @@ the same treatment.
 ### 4.16 Dialog
 
 base-ui Dialog, wrapped once in `components/ui/dialog.tsx`. Focused task or
-confirmation on top of the page — not a second page, not a toast.
+confirmation on top of the page â€” not a second page, not a toast.
 
 ```
-┌─────────────────────────────────┐
-│ Title                      [×]  │
-│ Short description               │
-│ Body                            │
-│              Cancel  Save note  │  right-aligned · auto width
-└─────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Title                      [Ã—]  â”‚
+â”‚ Short description               â”‚
+â”‚ Body                            â”‚
+â”‚              Cancel  Save note  â”‚  right-aligned Â· auto width
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 Compound API: `Dialog` + `DialogTrigger` + `DialogPopup` (+ `DialogHeader` /
 `DialogTitle` / `DialogDescription` / `DialogClose`). Product screens use
-`AppModal` from `components/shared/app-modal.tsx` — same visual system: one
+`AppModal` from `components/shared/app-modal.tsx` â€” same visual system: one
 `bg-surface` shell, content-height (`max-block` not forced full viewport), no
 header/footer dividers, quiet close. `AppModalFooter`: ghost cancel + default
 primary, `Button` `size="default"`, auto width, right-aligned.
@@ -802,13 +821,13 @@ did not ask for.
 ### 4.17 Avatar
 
 base-ui Avatar, wrapped once in `components/ui/avatar.tsx`. Circular face for
-a person — photo, initials, or a status badge. Not a logo mark, not a property
+a person â€” photo, initials, or a status badge. Not a logo mark, not a property
 thumbnail.
 
 ```
-┌────┐
-│ PS │  rounded-full · size-10 default · ring-border-warm · shadow-xs
-└────┘
+â”Œâ”€â”€â”€â”€â”
+â”‚ PS â”‚  rounded-full Â· size-10 default Â· ring-border-warm Â· shadow-xs
+â””â”€â”€â”€â”€â”˜
 ```
 
 Compound API: `Avatar` + `AvatarImage` + `AvatarFallback` (+ `AvatarBadge` /
@@ -816,14 +835,14 @@ Compound API: `Avatar` + `AvatarImage` + `AvatarFallback` (+ `AvatarBadge` /
 48px. Frame: `bg-surface`, `ring-1 ring-border-warm`, `shadow-xs` (depth without
 a heavy drop shadow).
 
-Product screens use `UserAvatar` from `components/shared/user-avatar.tsx` —
+Product screens use `UserAvatar` from `components/shared/user-avatar.tsx` â€”
 photo when present, then `avvvatars-react` placeholders: `shape` (default) or
 `character` (initials). Extra sizes: `xxs` 20px and `xs` 32px for dense
 pipeline rows; product `md` 40px, `lg` 56px for headers. Overlapping faces use
 `AvatarStack` (tooltips + `+N` overflow) or compound `AvatarGroup` for short
-static lists — stack faces keep a `ring-surface` so they separate on overlap.
+static lists â€” stack faces keep a `ring-surface` so they separate on overlap.
 
-Always pass a real name for alt text and fallbacks. Face stays a circle —
+Always pass a real name for alt text and fallbacks. Face stays a circle â€”
 never a rounded square. Do not edit `components/ui/avatar.tsx` for one-offs;
 pass `className` or wrap in `components/shared/`. Only avatar library:
 `avvvatars-react` (no boring-avatars or other generators).
@@ -831,33 +850,33 @@ pass `className` or wrap in `components/shared/`. Only avatar library:
 ### 4.18 Checkbox
 
 One base-ui primitive, wrapped once in `components/ui/checkbox.tsx`.
-Multi-select and consent — never a substitute for Radio (one exclusive choice)
+Multi-select and consent â€” never a substitute for Radio (one exclusive choice)
 or Switch (binary preference).
 
 ```
-┌─────────────────────────────┐
-│ ☑  Morning · 9–12           │  option card — whole tile tappable
-└─────────────────────────────┘
-  ☐  I agree to share…           stack — label beside the box
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ â˜‘  Morning Â· 9â€“12           â”‚  option card â€” whole tile tappable
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+  â˜  I agree to shareâ€¦           stack â€” label beside the box
 ```
 
 Fixed 20px square, `rounded-sm` (6px). Unchecked: `bg-surface` +
 `border-border-warm`. Checked and indeterminate: `brand` fill + white mark
-(check or dash). Focus ring snaps in — no fade. Invalid uses `danger-mid`
+(check or dash). Focus ring snaps in â€” no fade. Invalid uses `danger-mid`
 border.
 
 Three layouts, same primitive:
 
-| Layout        | When                                                      |
-| ------------- | --------------------------------------------------------- |
-| Stack         | Consent lines, reminders, short multi-select lists        |
-| Option cards  | Filter sheets (time of day, amenities) — 48px tap height  |
-| Indeterminate | Parent of a partial group only — never a third preference |
+| Layout        | When                                                        |
+| ------------- | ----------------------------------------------------------- |
+| Stack         | Consent lines, reminders, short multi-select lists          |
+| Option cards  | Filter sheets (time of day, amenities) â€” 48px tap height  |
+| Indeterminate | Parent of a partial group only â€” never a third preference |
 
 Always pair with a visible label (`htmlFor`/`id` or a wrapping `<label>`).
 Selected cards use `border-brand` + `bg-brand-soft` + `text-brand-text`.
 Hover only shifts the card border. Motion is `.t-check` from transitions.dev
-25 (`app/transitions-dev.css`) — box fills (`--check-box` 150ms), then the
+25 (`app/transitions-dev.css`) â€” box fills (`--check-box` 150ms), then the
 check stroke-draws (`--check-draw` 350ms); uncheck reverses in
 `--check-uncheck` (150ms). Path stays mounted so a mid-draw uncheck reverses
 cleanly. No bouncy spring.
@@ -867,37 +886,37 @@ cleanly. No bouncy spring.
 Popover + outline Button + Calendar, wrapped once as `AppDatePicker` in
 `components/shared/app-date-picker.tsx`. Do not recompose those three at call
 sites. Value in state / forms is `yyyy-MM-dd`; the trigger always shows
-`dd/mm/yyyy` via `formatDateIn` — never month-first `en-US` formatting.
+`dd/mm/yyyy` via `formatDateIn` â€” never month-first `en-US` formatting.
 Empty placeholder is `Pick a date`.
 
 ```
-┌──────────────────────────────┐
-│ 18/08/2026              📅   │  filled — calendar icon on the end
-├──────────────────────────────┤
-│ Pick a date             📅   │  empty — placeholder is ink-subtle
-└──────────────────────────────┘
-         ┌ <  Sept ▴▾  2026 ▴▾  > ┐
-         │ Su Mo Tu …               │  Button nav · Select month/year
-         │  ·  · 15  …              │  selected = brand fill circle
-         └──────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ 18/08/2026              ðŸ“…   â”‚  filled â€” calendar icon on the end
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ Pick a date             ðŸ“…   â”‚  empty â€” placeholder is ink-subtle
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         â”Œ <  Sept â–´â–¾  2026 â–´â–¾  > â”
+         â”‚ Su Mo Tu â€¦               â”‚  Button nav Â· Select month/year
+         â”‚  Â·  Â· 15  â€¦              â”‚  selected = brand fill circle
+         â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
-Same five control-height steps as Input and Select (`xs`–`lg`). Default is
-`lg` (48px / `control-xl`) for primary mobile forms — the listing
+Same five control-height steps as Input and Select (`xs`â€“`lg`). Default is
+`lg` (48px / `control-xl`) for primary mobile forms â€” the listing
 "Available from" field is the reference call site. Trigger uses
 `rounded-control`, 1px `border-warm`, `surface` fill; open state sets
 `border-ring` via `aria-expanded`. Calendar icon (not a chevron) owns the
 end slot; the date string sits on the start.
 
-Popup is light only — `bg-surface`, `rounded-card`, `border-warm`,
+Popup is light only â€” `bg-surface`, `rounded-card`, `border-warm`,
 `shadow-lg`. Caption is custom: `Button` (ghost, circular hover) for
 prev/next and compact `Select` triggers for month + year (`surface-muted`,
 `ChevronsUpDown`). Day cells are compact and circular; selected day uses a `brand` fill with
-`surface` text — never a under-dot. Unselected today uses a quiet
-`surface-muted` chip. Year range is roughly −10 / +20 years. Month select
-shows short names (`Jan`–`Dec`), not zero-based indices.
+`surface` text â€” never a under-dot. Unselected today uses a quiet
+`surface-muted` chip. Year range is roughly âˆ’10 / +20 years. Month select
+shows short names (`Jan`â€“`Dec`), not zero-based indices.
 
-Pass `invalid` when validation fails — error copy lives under the field
+Pass `invalid` when validation fails â€” error copy lives under the field
 (with the form's `FieldError`), not inside the popover. Always pair with a
 visible label (`htmlFor` / `id`).
 
@@ -908,7 +927,7 @@ visible label (`htmlFor` / `id`).
 ### 5.1 Mobile is the design, desktop is the adaptation
 
 Every screen is composed at 360px as a single scrolling column, then widened. Do not
-design a three-column grid and try to stack it afterwards — the priority order comes
+design a three-column grid and try to stack it afterwards â€” the priority order comes
 out wrong every time.
 
 Order on mobile is strict priority order: what the user must act on sits above the
@@ -917,18 +936,18 @@ dashboard it is today's site visits.
 
 ### 5.2 Breakpoints
 
-|         | Width      | Columns | Nav                 |
-| ------- | ---------- | ------- | ------------------- |
-| Mobile  | <768px     | 1       | Bottom bar, 5 items |
-| Tablet  | 768–1023px | 2       | Bottom bar          |
-| Desktop | ≥1024px    | 3       | Top bar             |
+|         | Width        | Columns | Nav                 |
+| ------- | ------------ | ------- | ------------------- |
+| Mobile  | <768px       | 1       | Bottom bar, 5 items |
+| Tablet  | 768â€“1023px | 2       | Bottom bar          |
+| Desktop | â‰¥1024px    | 3       | Top bar             |
 
 Content max-width 1280px, centred, 16px page gutter on mobile and 32px on desktop.
 
 ### 5.3 Bottom navigation
 
-Five items, fixed, `surface` background with a top `border`. Home · Properties ·
-Contacts · Visits · Profile. Active item is `brand`; inactive is `ink-subtle`. Icon
+Five items, fixed, `surface` background with a top `border`. Home Â· Properties Â·
+Contacts Â· Visits Â· Profile. Active item is `brand`; inactive is `ink-subtle`. Icon
 above a 11px label. Height 56px plus `env(safe-area-inset-bottom)`.
 
 Owners and brokers get different middle items. The bar itself never changes shape
@@ -942,21 +961,21 @@ a **Move to next stage** button on each card. Kanban with drag-and-drop is deskt
 
 ### 5.5 Loading
 
-Skeletons matching the real layout — a card skeleton with a photo block and two text
+Skeletons matching the real layout â€” a card skeleton with a photo block and two text
 bars, not a spinner and not a blank screen. Skeleton fill is `surface-muted` with a
 subtle pulse, wrapped in `@media (prefers-reduced-motion: no-preference)`.
 
-### 5.6 List filter chrome — marketplace band vs Filters sheet
+### 5.6 List filter chrome â€” marketplace band vs Filters sheet
 
 Product rule (also in `AGENTS.md`): **same filter language, different chrome.**
 
 **Marketplace browse** (broker Owner listings / property pool) is the only list that
 gets the multi-segment **top search band**:
 
-- Where · Looking for · Budget · Area · Category · Property type (global dims only)
+- Where Â· Looking for Â· Budget Â· Area Â· Category Â· Property type (global dims only)
 - Band commits on menu close; Reset clears band only
-- Second row: **Filters** (Advanced — BHK / furnishing / ready-to-move when they
-  apply; listed age, commission) · quick chips · search · sort
+- Second row: **Filters** (Advanced â€” BHK / furnishing / ready-to-move when they
+  apply; listed age, commission) Â· quick chips Â· search Â· sort
 
 Reference implementation: `features/properties/owner-listings/`
 (`owner-listings-search-band.tsx`, `owner-listings-filter-sheet.tsx`,
@@ -966,15 +985,15 @@ Reference implementation: `features/properties/owner-listings/`
 and owner mirrors) is a normal / CRM page:
 
 - Use a **Filters** button that opens a sheet (or equivalent dense toolbar)
-- Include **only** the dimensions that page needs — often sale/rent + search +
+- Include **only** the dimensions that page needs â€” often sale/rent + search +
   sort, plus job-specific tabs/chips (status, stage, date range, buyer/owner)
 - Do **not** paste the six-segment marketplace band onto these screens
 
-Why: the band signals “browse a large unknown pool.” Putting it on inventory and
+Why: the band signals â€œbrowse a large unknown pool.â€ Putting it on inventory and
 pipeline screens makes every page feel like a marketplace, crowds the 360px
 first viewport, and duplicates controls brokers will not use on small lists.
 
-When adding filters to a new list: ask “is this marketplace discovery?” If no →
+When adding filters to a new list: ask â€œis this marketplace discovery?â€ If no â†’
 Filters sheet / toolbar, not the Owner listings band.
 
 ### 5.7 Conditional property filters (match Add Property)
@@ -988,20 +1007,20 @@ property type / listing-for via:
 - `lib/visibility/rules.ts` (`FIELD_RULES`)
 
 List and marketplace filters must follow the **same visibility**. Example: user
-selects land / plot → **do not show BHK**, furnishing, bathrooms, parking, floor,
+selects land / plot â†’ **do not show BHK**, furnishing, bathrooms, parking, floor,
 or ready-to-move. Hide the control and **clear** its value so it cannot keep
 narrowing results invisibly.
 
-| Rule                  | Detail                                                                     |
-| --------------------- | -------------------------------------------------------------------------- |
-| Hide, don’t grey out  | Irrelevant dims leave the band / sheet entirely                            |
-| Clear on hide         | Changing category/type/Looking for strips now-invalid filter keys          |
-| One matrix            | Reuse form derive/rules (or a shared helper) — no second hard-coded matrix |
-| Options follow parent | Property types limited by category; budget steps by sale vs rent           |
+| Rule                   | Detail                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| Hide, donâ€™t grey out | Irrelevant dims leave the band / sheet entirely                              |
+| Clear on hide          | Changing category/type/Looking for strips now-invalid filter keys            |
+| One matrix             | Reuse form derive/rules (or a shared helper) â€” no second hard-coded matrix |
+| Options follow parent  | Property types limited by category; budget steps by sale vs rent             |
 
-Canonical examples live in `AGENTS.md` → “UI conventions (conditional property
-filters)”. When adding a new filter dim, check whether `FIELD_RULES` hides the
-matching form field for some selections — if yes, the filter must hide too.
+Canonical examples live in `AGENTS.md` â†’ â€œUI conventions (conditional property
+filters)â€. When adding a new filter dim, check whether `FIELD_RULES` hides the
+matching form field for some selections â€” if yes, the filter must hide too.
 
 ---
 
@@ -1071,27 +1090,27 @@ verification.
 
 ## 6. India formatting
 
-These are display rules and are non-negotiable — a price rendered as `4500000` is a
+These are display rules and are non-negotiable â€” a price rendered as `4500000` is a
 bug, not a style preference.
 
-| Thing                  | Format                        | Example           |
-| ---------------------- | ----------------------------- | ----------------- |
-| Price ≥ 1 crore        | `₹X.XX Cr`                    | `₹1.25 Cr`        |
-| Price 1 lakh – 1 crore | `₹XX L`                       | `₹85 L`           |
-| Price < 1 lakh (rent)  | `₹XX,XXX` Indian grouping     | `₹45,000`         |
-| Rent                   | append `/mo`                  | `₹45,000/mo`      |
-| Area                   | `X,XXX sq ft` Indian grouping | `1,450 sq ft`     |
-| Date                   | `dd/mm/yyyy`                  | `18/08/2026`      |
-| Date, conversational   | `18 Aug` or `Today, 9:30 AM`  |                   |
-| Phone                  | `+91 XXXXX XXXXX`             | `+91 98765 43210` |
-| PIN code               | 6 digits, no space            | `400001`          |
-| Configuration          | `X BHK`, never `X bedroom`    | `3 BHK`           |
+| Thing                    | Format                        | Example           |
+| ------------------------ | ----------------------------- | ----------------- |
+| Price â‰¥ 1 crore        | `â‚¹X.XX Cr`                  | `â‚¹1.25 Cr`      |
+| Price 1 lakh â€“ 1 crore | `â‚¹XX L`                     | `â‚¹85 L`         |
+| Price < 1 lakh (rent)    | `â‚¹XX,XXX` Indian grouping   | `â‚¹45,000`       |
+| Rent                     | append `/mo`                  | `â‚¹45,000/mo`    |
+| Area                     | `X,XXX sq ft` Indian grouping | `1,450 sq ft`     |
+| Date                     | `dd/mm/yyyy`                  | `18/08/2026`      |
+| Date, conversational     | `18 Aug` or `Today, 9:30 AM`  |                   |
+| Phone                    | `+91 XXXXX XXXXX`             | `+91 98765 43210` |
+| PIN code                 | 6 digits, no space            | `400001`          |
+| Configuration            | `X BHK`, never `X bedroom`    | `3 BHK`           |
 
 One rupee helper formats all of these. It lives in `lib/format.ts` and no component
 formats currency inline.
 
 Price inputs show the readable form beneath the field as the user types:
-typing `8500000` displays `₹85 L` below it.
+typing `8500000` displays `â‚¹85 L` below it.
 
 Locale for `Intl` calls is `en-IN`. Currency is `INR`. There is no `en-US` and no
 `USD` anywhere in this codebase.
@@ -1112,7 +1131,7 @@ words, short sentences, sentence case everywhere.
 | Error: failed to save                  | Couldn't save. Check your connection and try again. |
 | Property listing created successfully! | Property added                                      |
 
-No exclamation marks. No "please". No "simply", "just", or "easy". No first person —
+No exclamation marks. No "please". No "simply", "just", or "easy". No first person â€”
 the interface is the product speaking, not a person.
 
 Actions keep the same name through the whole flow. A button that says **Approve**
@@ -1126,14 +1145,14 @@ produces a confirmation that says **Approved**, and a history entry that says
 Things that will be rejected in review:
 
 - Pure white page background, or a cool gray canvas
-- A second brand hue on links, charts, or buttons. Badge colour is the exception in §4.4
+- A second brand hue on links, charts, or buttons. Badge colour is the exception in Â§4.4
 - A shadow that isn't one of the five ink-tinted `--shadow-*` tokens (no default browser
   shadow, no pure-black shadow, no shadow on a dark attention card)
 - Stacking more than one shadow step on the same element
 - Gradients anywhere except the documented broker dashboard status rail, including on photo overlays
 - Orange used decoratively rather than for a deadline
 - Lime appearing more than once per card, or as text on a light surface
-- `rounded-full` on a button, filter chip, input, or tab without a documented circular purpose. Badges are pills — see §4.4
+- `rounded-full` on a button, filter chip, input, or tab without a documented circular purpose. Badges are pills â€” see Â§4.4
 - Title Case or ALL CAPS outside the eyebrow label
 - Arbitrary spacing values (`p-[13px]`, `gap-[7px]`)
 - Emoji in production UI
@@ -1146,7 +1165,7 @@ Things that will be rejected in review:
 - Meaning carried by colour alone with no text label
 - Desktop-first layouts that stack awkwardly instead of being composed mobile-first
 - The Owner listings marketplace **top search band** copied onto My Deals, Your
-  listings, Pipeline, Visits, or other CRM/inventory lists — those use a
-  **Filters** sheet / dense toolbar instead (see §5.6)
+  listings, Pipeline, Visits, or other CRM/inventory lists â€” those use a
+  **Filters** sheet / dense toolbar instead (see Â§5.6)
 - Property filters that stay visible when they cannot apply (e.g. BHK on land /
-  plot) — hide and clear per §5.7 / Add Property `FIELD_RULES`
+  plot) â€” hide and clear per Â§5.7 / Add Property `FIELD_RULES`

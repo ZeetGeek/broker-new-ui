@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { formatCommission } from "@/lib/format/commission";
 import { formatDateIso, formatDateTile } from "@/lib/format/date";
+import { plural } from "@/lib/format/plural";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +12,12 @@ import { Award } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 
 import { DealKind, EarningsCard, EarningsDealLink } from "@/features/earnings/earnings-card";
-import { dealBaseAmountInr, type EarningsReport } from "@/features/earnings/earnings-math";
+import {
+    dealBaseAmountInr,
+    dealDaysToClose,
+    type EarningsReport,
+    type ValuedDeal,
+} from "@/features/earnings/earnings-math";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { DEAL_STAGE_ORDER, type DealStage, isLiveStage } from "@/features/pipeline/types";
 
@@ -30,7 +36,7 @@ const STAGE_BAR_CLASS: Record<DealStage, string> = {
  * Biggest open deals as a horizontal bar chart. Bar length is the deal's
  * commission against the biggest; bar colour is its pipeline stage (legend in
  * the header), so no stage chip is needed. Title sits above each bar; the
- * bar carries the commission and the property price.
+ * commission and property price sit just past the bar's end, in ink.
  */
 export function EarningsOpenDeals({
     report,
@@ -142,24 +148,28 @@ export function EarningsOpenDeals({
                                                     ) : null}
                                                 </EarningsDealLink>
                                             </div>
-                                            {/* Bar holds commission / price; never narrower than
-                                                the amounts it carries. */}
-                                            <span
-                                                className={cn(
-                                                    "flex items-center rounded-control px-3 text-surface block-10 max-inline-full min-inline-24",
-                                                    isLiveStage(deal.status)
-                                                        ? STAGE_BAR_CLASS[deal.status]
-                                                        : "bg-chart-2",
-                                                )}
-                                                style={{ inlineSize: `${pct}%` }}
-                                            >
-                                                <span className="flex items-baseline gap-1.5 whitespace-nowrap">
-                                                    <span className="body-sm font-semibold tabular-nums">
+                                            {/* Amounts sit just past the bar's end in ink. The
+                                                pe-36 reserve keeps room for them, so the longest
+                                                bar plus its label still fits and bar lengths stay
+                                                true to scale (bar % is of the track minus reserve). */}
+                                            <div className="flex items-center gap-2 pe-36">
+                                                <span
+                                                    aria-hidden
+                                                    className={cn(
+                                                        "shrink-0 rounded-control block-8 min-inline-2",
+                                                        isLiveStage(deal.status)
+                                                            ? STAGE_BAR_CLASS[deal.status]
+                                                            : "bg-chart-2",
+                                                    )}
+                                                    style={{ inlineSize: `${pct}%` }}
+                                                />
+                                                <span className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
+                                                    <span className="body-sm font-semibold text-ink tabular-nums">
                                                         {formatCommission(commissionInr ?? 0, true)}
                                                     </span>
                                                     <span
                                                         aria-hidden
-                                                        className="body-sm text-surface/70"
+                                                        className="body-sm text-ink-subtle"
                                                     >
                                                         /
                                                     </span>
@@ -174,11 +184,10 @@ export function EarningsOpenDeals({
                                                         commissionAmountInr={
                                                             deal.property.commissionAmountInr
                                                         }
-                                                        className="text-surface/85"
-                                                        underlineClassName="decoration-surface/60"
+                                                        className="text-ink-muted"
                                                     />
                                                 </span>
-                                            </span>
+                                            </div>
                                         </li>
                                     );
                                 })}
@@ -207,7 +216,11 @@ export function EarningsOpenDeals({
     );
 }
 
-/** Latest sold deals, each led by a small calendar tile. */
+/**
+ * Latest sold deals as a month-grouped list. The period's best deal is
+ * badged in its own row instead of being repeated in a banner; the banner
+ * only appears when the best deal is older than the rows shown.
+ */
 export function EarningsRecentSold({
     report,
     className,
@@ -215,16 +228,20 @@ export function EarningsRecentSold({
     report: EarningsReport;
     className?: string;
 }) {
+    const rows = report.recentClosed;
     const best = report.bestDeal;
+    const showBest = best != null && best.commissionInr != null && report.closedCount > 1;
+    const bestId = showBest ? best.deal.id : null;
+    const bestInList = bestId != null && rows.some((r) => r.deal.id === bestId);
+    const hiddenCount = report.closedCount - rows.length;
 
     return (
         <EarningsCard
             title="Recently sold"
             titleId="earnings-recent-heading"
-            description="Your latest closed deals in this period"
-            className={cn("block-full min-block-full", className)}
+            className={cn("@container block-full min-block-full", className)}
         >
-            {best && best.commissionInr != null && report.closedCount > 1 ? (
+            {showBest && !bestInList ? (
                 <div className="flex items-center gap-3 rounded-inner bg-chart-4/10 p-3">
                     <span
                         aria-hidden
@@ -244,75 +261,120 @@ export function EarningsRecentSold({
                         </EarningsDealLink>
                     </div>
                     <span className="h6 ms-auto shrink-0 text-ink tabular-nums">
-                        {formatCommission(best.commissionInr)}
+                        {formatCommission(best.commissionInr ?? 0)}
                     </span>
                 </div>
             ) : null}
 
-            {report.recentClosed.length === 0 ? (
+            {rows.length === 0 ? (
                 <p className="body-sm text-ink-muted">
                     No deals sold in this period. Try a longer period.
                 </p>
             ) : (
-                <ul className="flex flex-col divide-y divide-border-warm">
-                    {report.recentClosed.map(({ deal, commissionInr }) => {
-                        const soldAt = deal.resolvedAt ? new Date(deal.resolvedAt) : null;
-                        const tile = soldAt ? formatDateTile(soldAt) : null;
-                        const base = dealBaseAmountInr(deal);
-                        return (
-                            <li
-                                key={deal.id}
-                                className="flex items-center gap-3 py-3 first:pbs-0 last:pbe-0"
-                            >
-                                {soldAt && tile ? (
-                                    <time
-                                        dateTime={formatDateIso(soldAt)}
-                                        className="flex shrink-0 flex-col items-center justify-center rounded-inner bg-surface-muted leading-none block-11 inline-11"
-                                    >
-                                        <span className="body-xs font-medium text-ink-muted">
-                                            {tile.month}
-                                        </span>
-                                        <span className="body font-semibold text-ink tabular-nums">
-                                            {tile.day}
-                                        </span>
-                                    </time>
-                                ) : null}
-                                <div className="flex flex-col gap-1 min-inline-0">
-                                    <EarningsDealLink
-                                        dealId={deal.id}
-                                        className="body-sm font-semibold wrap-anywhere text-ink"
-                                    >
-                                        {deal.property.title}
-                                    </EarningsDealLink>
-                                    <p className="body-xs flex flex-wrap items-center gap-x-2 gap-y-1 text-ink-muted">
-                                        <span>{deal.buyer.name}</span>
-                                        <span aria-hidden>·</span>
-                                        <DealKind isRent={deal.property.isRent} />
-                                    </p>
-                                </div>
-                                <div className="ms-auto flex shrink-0 flex-col items-end gap-0.5">
-                                    <span
-                                        className={cn(
-                                            "body-sm font-semibold tabular-nums",
-                                            commissionInr != null ? "text-ink" : "text-ink-muted",
-                                        )}
-                                    >
-                                        {commissionInr != null
-                                            ? formatCommission(commissionInr)
-                                            : "No commission set"}
-                                    </span>
-                                    <span className="body-xs text-ink-muted tabular-nums">
-                                        on{" "}
-                                        {deal.property.isRent
-                                            ? formatRent(base)
-                                            : formatPrice(base)}
-                                    </span>
-                                </div>
-                            </li>
-                        );
-                    })}
-                </ul>
+                <ol className="flex flex-col gap-3">
+                    {rows.map((row) => (
+                        <RecentSoldRow
+                            key={row.deal.id}
+                            row={row}
+                            isBest={bestInList && row.deal.id === bestId}
+                        />
+                    ))}
+                </ol>
             )}
+
+            {hiddenCount > 0 ? (
+                // Full-bleed footer, same as "Biggest open deals": divider on top,
+                // pinned to the card bottom when the card is taller than its list.
+                <footer className="-mx-4 mbs-auto -mbe-4 rounded-b-card border-bs border-border-warm p-4 sm:-mx-5 sm:-mbe-5 sm:px-5">
+                    <p className="body-sm text-ink-muted">
+                        Showing your latest{" "}
+                        <strong className="font-semibold text-ink">{rows.length}</strong> of{" "}
+                        <strong className="font-semibold text-ink">{report.closedCount}</strong>{" "}
+                        sold deals.
+                    </p>
+                </footer>
+            ) : null}
         </EarningsCard>
+    );
+}
+
+function RecentSoldRow({ row, isBest }: { row: ValuedDeal; isBest: boolean }) {
+    const { deal, commissionInr } = row;
+    const soldAt = deal.resolvedAt ? new Date(deal.resolvedAt) : null;
+    const dayParts = soldAt ? formatDateTile(soldAt) : null;
+    const baseInr = dealBaseAmountInr(deal);
+    const daysToClose = dealDaysToClose(deal);
+
+    return (
+        // Each sale is its own bordered box, same as the dashboard visit rows.
+        // Whole box is the tap target (title link is stretched over it), so a
+        // thumb never has to hit the 20px title.
+        <li className="relative flex items-center gap-3 rounded-inner border border-border-warm bg-surface p-3.5 transition-colors duration-160 has-[a:hover]:bg-surface-muted/40">
+            {soldAt && dayParts ? (
+                <time
+                    dateTime={formatDateIso(soldAt)}
+                    className="flex shrink-0 flex-col items-center justify-center gap-1 rounded-inner bg-surface leading-none shadow-xs ring-1 ring-border-warm block-14 inline-14"
+                >
+                    <span className="h6 text-ink tabular-nums">{dayParts.day}</span>
+                    <span className="body-xs text-ink-muted">{dayParts.month}</span>
+                </time>
+            ) : (
+                <span aria-hidden className="shrink-0 inline-14" />
+            )}
+
+            <div className="flex flex-1 flex-col min-inline-0">
+                <div className="flex items-center gap-4">
+                    <div className="flex flex-1 flex-col gap-1 min-inline-0">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <EarningsDealLink
+                                dealId={deal.id}
+                                className="body-sm font-semibold wrap-anywhere text-ink after:absolute after:inset-0 after:rounded-inner"
+                            >
+                                {deal.property.title}
+                            </EarningsDealLink>
+                            {isBest ? (
+                                <span className="body-xs inline-flex items-center rounded-full bg-chart-4/12 px-2 py-0.5 font-semibold text-brand-text">
+                                    Best deal
+                                </span>
+                            ) : null}
+                        </div>
+                        <p className="body-xs flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-ink-muted">
+                            <span>{deal.buyer.name}</span>
+                            <span aria-hidden>·</span>
+                            <DealKind isRent={deal.property.isRent} />
+                        </p>
+                    </div>
+                    {/* Wide cards only (container ≥ 28rem): how long the deal took,
+                            filling the gap between title and amount with real info. Fixed
+                            width + divider keep the columns straight down the card. */}
+                    <p className="hidden shrink-0 flex-col gap-1 self-stretch border-s border-border-warm ps-4 whitespace-nowrap inline-40 @md:flex @md:justify-center">
+                        <span className="body-sm font-semibold text-ink tabular-nums">
+                            {daysToClose == null
+                                ? "—"
+                                : daysToClose === 0
+                                  ? "Same day"
+                                  : plural(daysToClose, "day")}
+                        </span>
+                        <span className="body-xs font-semibold text-ink-muted">to close</span>
+                    </p>
+                    {/* Earned amount on the title line, deal amount on the meta line.
+                            Left-aligned behind a divider, like the days column. */}
+                    <p className="flex shrink-0 flex-col justify-center gap-1 self-stretch border-s border-border-warm ps-4 whitespace-nowrap @md:inline-36">
+                        {commissionInr != null ? (
+                            <span className="body-sm font-semibold text-ink tabular-nums">
+                                {formatCommission(commissionInr)}
+                            </span>
+                        ) : (
+                            <span className="body-sm font-semibold text-ink-muted">
+                                No commission
+                            </span>
+                        )}
+                        <span className="body-xs font-semibold text-ink-muted tabular-nums">
+                            on {deal.property.isRent ? formatRent(baseInr) : formatPrice(baseInr)}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </li>
     );
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { TimePicker, TimePickerColumns, TimePickerPanel } from "@/components/reui/time-picker";
 
+import { TimePicker, TimePickerColumns, TimePickerPanel } from "@/components/reui/time-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -34,7 +34,7 @@ export function Pattern() {
     const isScheduled = scheduled === summary;
 
     return (
-        <Card className="mx-auto w-fit max-w-full">
+        <Card className="mx-auto inline-fit max-inline-full">
             <CardHeader>
                 <CardTitle>Schedule a post</CardTitle>
                 <CardDescription>Pick the day and the time it goes live.</CardDescription>
@@ -50,7 +50,7 @@ export function Pattern() {
                         onSelect={setDate}
                         defaultMonth={FIRST_MONTH}
                     />
-                    <div className="flex justify-center self-stretch max-sm:border-t max-sm:pt-4 sm:border-s sm:ps-4">
+                    <div className="flex justify-center self-stretch max-sm:border-bs max-sm:pbs-4 sm:border-s sm:ps-4">
                         <TimePicker
                             aria-label="Publish time"
                             value={time}
@@ -69,7 +69,7 @@ export function Pattern() {
                 </div>
             </CardContent>
             <CardFooter>
-                <p role="status" className="me-3 min-w-0 flex-1 text-sm">
+                <p role="status" className="me-3 flex-1 text-sm min-inline-0">
                     {isScheduled && <span className="text-muted-foreground">Scheduled for </span>}
                     <span className="font-medium tabular-nums">{summary}</span>
                 </p>

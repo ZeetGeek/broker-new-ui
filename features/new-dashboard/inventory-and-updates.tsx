@@ -10,6 +10,7 @@ import { isMockMode } from "@/lib/api/mock-mode";
 import { myListingsApi } from "@/lib/api/my-listings";
 import { formatRelativePast } from "@/lib/format/date";
 import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
+import { measuredPxToRem } from "@/lib/styles/rem";
 
 import { AppImage } from "@/components/shared/app-image";
 import { AvatarStack } from "@/components/shared/avatar-stack";
@@ -81,8 +82,8 @@ function InventoryTabs({
         placed.current = { x, w };
         const transition = pill.style.transition;
         if (!animate) pill.style.transition = "none";
-        pill.style.transform = `translateX(${x}px)`;
-        pill.style.width = `${w}px`;
+        pill.style.transform = `translateX(${measuredPxToRem(x)})`;
+        pill.style.width = `${measuredPxToRem(w)}`;
         if (!animate) {
             void pill.offsetWidth;
             pill.style.transition = transition;

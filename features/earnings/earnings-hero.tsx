@@ -79,10 +79,10 @@ export function EarningsHero({
             aria-labelledby="earnings-hero-heading"
             className={cn(
                 `
-                  flex flex-col justify-center gap-4 rounded-card p-5 text-surface
-                  block-full min-inline-0 sm:gap-5 sm:p-6
-                  bg-linear-to-br from-[#1b7a5a] to-[#16664d]
-                  shadow-[0_4px_12px_rgb(16_59_45/0.12)]
+                  flex flex-col justify-center gap-4 rounded-card bg-linear-to-br from-[#1b7a5a]
+                  to-[#16664d] p-5 text-surface shadow-[0_4px_12px_rgb(16_59_45/0.12)]
+                  block-full min-inline-0 sm:gap-5
+                  sm:p-6
                 `,
                 className,
             )}
@@ -95,7 +95,7 @@ export function EarningsHero({
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 min-inline-0">
                     <p
                         className={cn(
-                            "tabular-nums leading-none",
+                            "leading-none tabular-nums",
                             earnedInr > 0 ? "h1 text-highlight" : "h2 text-surface",
                         )}
                     >
@@ -107,14 +107,14 @@ export function EarningsHero({
                             <span
                                 aria-hidden
                                 className="
-                                  self-stretch min-block-8 inline-px
-                                  bg-[color-mix(in_srgb,var(--color-brand-soft)_40%,transparent)]
+                                  self-stretch bg-[color-mix(in_srgb,var(--color-brand-soft)_40%,transparent)] inline-px
+                                  min-block-8
                                 "
                             />
                             <div className="flex flex-col gap-1 min-inline-0">
                                 <p className="body-xs font-medium text-brand-soft">About</p>
                                 <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                    <span className="h4 text-surface tabular-nums leading-none">
+                                    <span className="h4 leading-none text-surface tabular-nums">
                                         {formatCommission(perBucketInr, true)}
                                     </span>
                                     <span className="body-xs text-brand-soft">Avg / {avgUnit}</span>
@@ -194,8 +194,8 @@ export function EarningsHero({
                     <div
                         aria-hidden
                         className="
-                          block-px
                           bg-[color-mix(in_srgb,var(--color-brand-soft)_22%,transparent)]
+                          block-px
                         "
                     />
 
@@ -224,9 +224,9 @@ export function EarningsHero({
                                 <dd>
                                     <span
                                         className="
-                                          body-xs inline-flex items-center rounded-full px-2 py-0.5
-                                          font-medium text-brand-soft
-                                          bg-[color-mix(in_srgb,var(--color-surface)_12%,transparent)]
+                                          body-xs inline-flex items-center rounded-full bg-[color-mix(in_srgb,var(--color-surface)_12%,transparent)] px-2
+                                          py-0.5 font-medium
+                                          text-brand-soft
                                         "
                                     >
                                         {row.count > 0 ? plural(row.count, "deal") : "No deals"}
@@ -241,9 +241,9 @@ export function EarningsHero({
             {report.unvaluedClosedCount > 0 ? (
                 <p
                     className="
-                      body-xs flex items-start gap-2 text-brand-soft
-                      border-bs border-[color-mix(in_srgb,var(--color-brand-soft)_18%,transparent)]
-                      pbs-4
+                      body-xs flex items-start gap-2 border-bs
+                      border-[color-mix(in_srgb,var(--color-brand-soft)_18%,transparent)] pbs-4
+                      text-brand-soft
                     "
                 >
                     <Info aria-hidden className="mbs-px shrink-0 block-4 inline-4" />

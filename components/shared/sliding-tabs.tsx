@@ -2,6 +2,7 @@
 
 import { type ReactNode, useCallback, useLayoutEffect, useRef } from "react";
 
+import { measuredPxToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 import styles from "./sliding-tabs.module.css";
@@ -33,8 +34,8 @@ export function SlidingTabs<Value extends string | number>({
         if (!indicator || !active) return;
         const previousTransition = indicator.style.transition;
         if (!animate) indicator.style.transition = "none";
-        indicator.style.transform = `translateX(${active.offsetLeft}px)`;
-        indicator.style.width = `${active.offsetWidth}px`;
+        indicator.style.transform = `translateX(${measuredPxToRem(active.offsetLeft)})`;
+        indicator.style.width = measuredPxToRem(active.offsetWidth);
         if (!animate) {
             void indicator.offsetWidth;
             indicator.style.transition = previousTransition;

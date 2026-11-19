@@ -2,10 +2,12 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { formatInTimeZone } from "date-fns-tz";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { formatInTimeZone } from "date-fns-tz";
+
+import { measuredPxToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 import {
@@ -21,7 +23,7 @@ import { useAppSelector } from "@/store/hooks";
 
 import { nextTaskDates, setTaskCompleted } from "./lifecycle";
 import { sortTasks, type Task, TASK_TIME_ZONE, taskDateKey, taskIsOverdue } from "./model";
-import { createPlannerTask, setTaskDeleted, type PlannerTaskExtras } from "./planner-model";
+import { createPlannerTask, type PlannerTaskExtras, setTaskDeleted } from "./planner-model";
 import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES, useTasks } from "./preview-store";
 import { changeTaskQuickly, type TaskQuickChange } from "./quick-actions";
 import { QuickAddComposer } from "./quick-add-composer";
@@ -147,8 +149,8 @@ export function DashboardTasksCard() {
         const position = () => {
             const active = bar.querySelector<HTMLElement>('[aria-selected="true"]');
             if (!active) return;
-            indicator.style.transform = `translateX(${active.offsetLeft}px)`;
-            indicator.style.width = `${active.offsetWidth}px`;
+            indicator.style.transform = `translateX(${measuredPxToRem(active.offsetLeft)})`;
+            indicator.style.width = measuredPxToRem(active.offsetWidth);
         };
         position();
         const observer = new ResizeObserver(() => {

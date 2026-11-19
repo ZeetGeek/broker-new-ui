@@ -38,7 +38,7 @@ export function EmptyState({
             )}
             aria-live="polite"
         >
-            <div className="flex max-w-sm flex-col items-center gap-3.5">
+            <div className="flex flex-col items-center gap-3.5 max-inline-sm">
                 <Icon
                     aria-hidden
                     className="text-brand-text/70 block-10 inline-10"
@@ -46,14 +46,14 @@ export function EmptyState({
                 />
 
                 <div className="flex flex-col gap-1.5">
-                    <h2 id={headingId} className="h3 text-ink text-balance">
+                    <h2 id={headingId} className="h3 text-balance text-ink">
                         {heading}
                     </h2>
                     <p className="body-sm text-pretty text-ink-muted">{description}</p>
                 </div>
             </div>
 
-            {children ? <div className="flex flex-col items-center pt-1">{children}</div> : null}
+            {children ? <div className="flex flex-col items-center pbs-1">{children}</div> : null}
         </div>
     );
 }

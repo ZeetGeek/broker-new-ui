@@ -4,6 +4,8 @@ import { type ReactNode, useRef } from "react";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
 
+import { measuredPxToRem } from "@/lib/styles/rem";
+
 export function VirtualListBox<T>({
     items,
     getKey,
@@ -42,7 +44,7 @@ export function VirtualListBox<T>({
                 role="list"
                 aria-label={ariaLabel}
                 className={`flex flex-col overflow-y-auto overscroll-contain ${className}`}
-                style={{ gap }}
+                style={{ gap: measuredPxToRem(gap) }}
             >
                 {items.map((item, index) => (
                     <div key={getKey(item, index)} role="listitem">
@@ -60,7 +62,10 @@ export function VirtualListBox<T>({
             aria-label={ariaLabel}
             className={`overflow-y-auto overscroll-contain ${className}`}
         >
-            <div className="relative inline-full" style={{ height: virtualizer.getTotalSize() }}>
+            <div
+                className="relative inline-full"
+                style={{ height: measuredPxToRem(virtualizer.getTotalSize()) }}
+            >
                 {virtualizer.getVirtualItems().map((virtualItem) => {
                     const item = items[virtualItem.index]!;
                     return (
@@ -71,8 +76,8 @@ export function VirtualListBox<T>({
                             role="listitem"
                             className="absolute inset-s-0 inset-bs-0 inline-full"
                             style={{
-                                transform: `translateY(${virtualItem.start}px)`,
-                                paddingBlockEnd: gap,
+                                transform: `translateY(${measuredPxToRem(virtualItem.start)})`,
+                                paddingBlockEnd: measuredPxToRem(gap),
                             }}
                         >
                             {renderItem(item, virtualItem.index)}

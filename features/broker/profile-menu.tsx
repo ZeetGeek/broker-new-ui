@@ -39,40 +39,6 @@ const SAVED_PROPERTIES_HREF = "/broker/saved-properties";
 const REFERRALS_HREF = "/broker/referrals";
 const VERIFICATION_HREF = "/broker/profile#profile-rera";
 
-function VerificationStatus({ state }: { state: BrokerVerificationState }) {
-    const verified = state === "VERIFIED";
-    const pending = state === "PENDING_VERIFICATION";
-    return (
-        <div className="body-xs flex flex-wrap items-center gap-2.5 font-medium text-ink-muted">
-            <span className="inline-flex items-center gap-1">
-                <AccountMenuIcon
-                    name="briefcase"
-                    aria-hidden
-                    className="shrink-0 block-3.5 inline-3.5"
-                />
-                Broker
-            </span>
-            {/* Verification badge temporarily hidden. */}
-            {FEATURE_RERA_VERIFICATION && (
-                <span
-                    className={
-                        verified
-                            ? "inline-flex items-center gap-1 text-brand-text"
-                            : "inline-flex items-center gap-1 text-ink-muted"
-                    }
-                >
-                    <AccountMenuIcon
-                        name={verified ? "verified" : "unverified"}
-                        aria-hidden
-                        className="shrink-0 block-3.5 inline-3.5"
-                    />
-                    {verified ? "RERA verified" : pending ? "Under review" : "Not verified"}
-                </span>
-            )}
-        </div>
-    );
-}
-
 export function BrokerProfileMenu({
     broker,
     onShortcutsOpen,
@@ -85,7 +51,7 @@ export function BrokerProfileMenu({
             userName={broker.name}
             userAvatarUrl={broker.avatarUrl}
             profileHref={PROFILE_HREF}
-            headerStatus={<VerificationStatus state={broker.verificationState} />}
+            roleLabel="Broker"
             tooltipLabel={tooltipLabel}
             open={open}
             onOpenChange={onOpenChange}
