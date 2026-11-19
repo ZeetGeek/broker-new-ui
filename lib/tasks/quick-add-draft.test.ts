@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { TaskDraft } from "@/features/tasks/model";
 import { createPlannerTask } from "@/features/tasks/planner-model";
 import {
     bareTaskDraftTitle,
@@ -19,7 +20,6 @@ import {
     findQuickAddMention,
     parseQuickAdd,
 } from "@/features/tasks/quick-add-parse";
-import type { TaskDraft } from "@/features/tasks/model";
 
 const now = Date.parse("2030-11-16T09:00:00+05:30");
 const catalogs = {

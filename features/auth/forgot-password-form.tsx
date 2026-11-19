@@ -9,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { measuredPxToRem } from "@/lib/styles/rem";
 import { forgotPasswordSchema, type ForgotPasswordValues } from "@/lib/validation/auth";
 
 import { EmailFieldIcon } from "@/components/shared/icons";
@@ -36,7 +37,7 @@ function syncSlideHeight(slide: HTMLElement, pageId: "1" | "2") {
     active.style.position = "relative";
     active.style.inset = "auto";
     active.style.height = "auto";
-    slide.style.height = `${active.offsetHeight}px`;
+    slide.style.height = `${measuredPxToRem(active.offsetHeight)}`;
     active.style.position = previousPosition;
     active.style.inset = previousInset;
     active.style.height = previousHeight;

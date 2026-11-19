@@ -260,8 +260,8 @@ export default function MaterialTimePanel({
                             }
                             sx={{
                                 width: "100%",
-                                height: 260,
-                                maxHeight: 260,
+                                height: "16.25rem",
+                                maxHeight: "16.25rem",
                                 margin: 0,
                                 display: "flex",
                                 alignItems: "center",
@@ -272,8 +272,8 @@ export default function MaterialTimePanel({
                                     transformOrigin: "center center",
                                 },
                                 "& .MuiClock-wrapper:focus-visible": {
-                                    outline: "2px solid var(--color-brand)",
-                                    outlineOffset: 4,
+                                    outline: "0.125rem solid var(--color-brand)",
+                                    outlineOffset: "0.25rem",
                                     borderRadius: "50%",
                                 },
                                 "@media (prefers-reduced-motion: reduce)": {

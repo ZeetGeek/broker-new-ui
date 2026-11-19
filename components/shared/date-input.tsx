@@ -1,12 +1,12 @@
 "use client";
 
 import {
-    useEffect,
-    useRef,
-    useState,
     type ChangeEvent,
     type FocusEvent,
     type KeyboardEvent,
+    useEffect,
+    useRef,
+    useState,
 } from "react";
 
 /**
@@ -137,7 +137,7 @@ export function DateInput({ value, onChange }: { value?: Date; onChange: (date: 
                 onKeyDown={handleKeyDown("day")}
                 onFocus={focusSelect}
                 onBlur={handleBlur("day")}
-                className="w-7 border-none bg-transparent p-0 text-center outline-none"
+                className="border-none bg-transparent p-0 text-center outline-none inline-7"
                 placeholder="DD"
                 aria-label="Day"
             />
@@ -154,7 +154,7 @@ export function DateInput({ value, onChange }: { value?: Date; onChange: (date: 
                 onKeyDown={handleKeyDown("month")}
                 onFocus={focusSelect}
                 onBlur={handleBlur("month")}
-                className="w-7 border-none bg-transparent p-0 text-center outline-none"
+                className="border-none bg-transparent p-0 text-center outline-none inline-7"
                 placeholder="MM"
                 aria-label="Month"
             />
@@ -171,7 +171,7 @@ export function DateInput({ value, onChange }: { value?: Date; onChange: (date: 
                 onKeyDown={handleKeyDown("year")}
                 onFocus={focusSelect}
                 onBlur={handleBlur("year")}
-                className="w-12 border-none bg-transparent p-0 text-center outline-none"
+                className="border-none bg-transparent p-0 text-center outline-none inline-12"
                 placeholder="YYYY"
                 aria-label="Year"
             />

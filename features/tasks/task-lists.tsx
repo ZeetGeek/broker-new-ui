@@ -5,19 +5,19 @@ import {
     type CSSProperties,
     type FormEvent,
     isValidElement,
+    type ReactNode,
     useEffect,
     useId,
     useState,
-    type ReactNode,
 } from "react";
 
 import { rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+import { measuredCssToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import {
     ArrowLeft,
     ArrowRight,
@@ -30,6 +30,7 @@ import {
     Plus,
     Trash2,
 } from "@/components/shared/icons";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -157,7 +158,7 @@ export function TaskLists({
             variant="link"
             size="sm"
             className="
-              block-auto min-block-0 gap-1 p-0 text-xs font-bold tracking-wide text-brand uppercase
+              gap-1 p-0 text-xs font-bold tracking-wide text-brand uppercase block-auto min-block-0
               hover:text-brand-text
             "
             disabled={busy}
@@ -645,7 +646,7 @@ function SortableList({
         <div
             ref={setNodeRef}
             className={cn(styles.customList, isDragging && styles.dragging)}
-            style={{ transform: CSS.Transform.toString(transform), transition }}
+            style={{ transform: measuredCssToRem(CSS.Transform.toString(transform)), transition }}
         >
             <button
                 type="button"

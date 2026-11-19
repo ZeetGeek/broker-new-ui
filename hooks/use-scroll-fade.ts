@@ -12,8 +12,8 @@ export function useScrollFade() {
 
         const updateFades = () => {
             const remaining = list.scrollHeight - list.clientHeight - list.scrollTop;
-            list.style.setProperty("--scroll-fade-top", list.scrollTop > 1 ? "24px" : "0px");
-            list.style.setProperty("--scroll-fade-bottom", remaining > 1 ? "24px" : "0px");
+            list.style.setProperty("--scroll-fade-top", list.scrollTop > 1 ? "1.5rem" : "0rem");
+            list.style.setProperty("--scroll-fade-bottom", remaining > 1 ? "1.5rem" : "0rem");
         };
         updateFades();
         list.addEventListener("scroll", updateFades, { passive: true });

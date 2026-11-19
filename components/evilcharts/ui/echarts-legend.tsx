@@ -1,11 +1,12 @@
 "use client";
 
+import type { CSSProperties } from "react";
+
 import {
+    type ChartConfig,
     getColorsCount,
     indicatorBackground,
-    type ChartConfig,
 } from "@/components/evilcharts/ui/echarts-chart";
-import type { CSSProperties } from "react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Legend overlay (React) — replicates ChartLegendContent + its 7 indicators.
@@ -53,20 +54,30 @@ export function LegendIndicator({
 
     switch (variant) {
         case "square":
-            return <div className="h-2 w-2 shrink-0" style={fill} />;
+            return <div className="shrink-0 block-2 inline-2" style={fill} />;
         case "circle":
-            return <div className="h-2 w-2 shrink-0 rounded-full" style={fill} />;
+            return <div className="shrink-0 rounded-full block-2 inline-2" style={fill} />;
         case "circle-outline":
-            return <div className="h-2.5 w-2.5 shrink-0 rounded-full p-[1.5px]" style={outline} />;
+            return (
+                <div
+                    className="shrink-0 rounded-full p-[1.5px] block-2.5 inline-2.5"
+                    style={outline}
+                />
+            );
         case "vertical-bar":
-            return <div className="h-3 w-1 shrink-0 rounded-[2px]" style={fill} />;
+            return <div className="shrink-0 rounded-[2px] block-3 inline-1" style={fill} />;
         case "horizontal-bar":
-            return <div className="h-1 w-3 shrink-0 rounded-[2px]" style={fill} />;
+            return <div className="shrink-0 rounded-[2px] block-1 inline-3" style={fill} />;
         case "rounded-square-outline":
-            return <div className="h-2.5 w-2.5 shrink-0 rounded-[3px] p-[1.5px]" style={outline} />;
+            return (
+                <div
+                    className="shrink-0 rounded-[3px] p-[1.5px] block-2.5 inline-2.5"
+                    style={outline}
+                />
+            );
         case "rounded-square":
         default:
-            return <div className="h-2 w-2 shrink-0 rounded-[2px]" style={fill} />;
+            return <div className="shrink-0 rounded-[2px] block-2 inline-2" style={fill} />;
     }
 }
 

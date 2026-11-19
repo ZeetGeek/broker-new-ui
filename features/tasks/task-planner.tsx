@@ -23,6 +23,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { formatInTimeZone } from "date-fns-tz";
 import { useReducedMotion } from "motion/react";
 
+import { measuredCssToRem, measuredPxToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
@@ -422,7 +423,10 @@ export function TaskPlanner({
                     }
                 >
                     {dragged && (
-                        <div className={styles.dragPreview} style={{ minHeight: dragHeight }}>
+                        <div
+                            className={styles.dragPreview}
+                            style={{ minHeight: measuredPxToRem(dragHeight) }}
+                        >
                             <span
                                 className={
                                     dragged.completedAt ? styles.completedPreview : undefined
@@ -569,7 +573,9 @@ function SortableLine({
             }}
             className={cn(styles.sortableLine, isDragging && styles.taskPlaceholder)}
             style={{
-                transform: isDragging ? undefined : CSS.Transform.toString(transform),
+                transform: isDragging
+                    ? undefined
+                    : measuredCssToRem(CSS.Transform.toString(transform)),
                 transition,
             }}
         >

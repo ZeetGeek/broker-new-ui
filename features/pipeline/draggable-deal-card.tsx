@@ -3,6 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+import { measuredCssToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
@@ -47,7 +48,7 @@ export function DraggableDealCard({
                 // Transform and opacity only — docs/MOTION.md §4. dnd-kit
                 // drives both on the compositor, so a column of cards reflows
                 // without touching layout.
-                transform: CSS.Translate.toString(transform),
+                transform: measuredCssToRem(CSS.Translate.toString(transform)),
                 transition,
             }}
             // No `touch-none` here: only the handle needs it (it sets its own),

@@ -1,8 +1,8 @@
 "use client";
 
 import {
-    EChartsAreaChart,
     type ChartConfig,
+    EChartsAreaChart,
 } from "@/components/evilcharts/charts/echarts-area-chart";
 
 const chartData = [
@@ -39,12 +39,12 @@ const DELTA = ((LATEST.actual - LATEST.target) / LATEST.target) * 100;
 
 export function EChartsBenchmarkAreaChart() {
     return (
-        <div className="flex h-full w-full flex-col p-4">
+        <div className="flex flex-col p-4 block-full inline-full">
             <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-col gap-1">
-                    <span className="text-muted-foreground text-xs">Weekly signups</span>
+                    <span className="text-xs text-muted-foreground">Weekly signups</span>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-primary text-2xl font-semibold tracking-tight sm:text-3xl">
+                        <span className="text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
                             {LATEST.actual}
                         </span>
                         <span className="text-sm font-medium text-emerald-500">
@@ -53,8 +53,8 @@ export function EChartsBenchmarkAreaChart() {
                     </div>
                 </div>
 
-                <div className="flex flex-col items-end gap-1.5 pt-1">
-                    <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                <div className="flex flex-col items-end gap-1.5 pbs-1">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <svg
                             className="text-primary"
                             width="18"
@@ -73,7 +73,7 @@ export function EChartsBenchmarkAreaChart() {
                         </svg>
                         Actual
                     </div>
-                    <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <svg width="18" height="2" viewBox="0 0 18 2" aria-hidden>
                             <line
                                 x1="0"
@@ -94,7 +94,7 @@ export function EChartsBenchmarkAreaChart() {
                 data={chartData}
                 config={chartConfig}
                 xDataKey="date"
-                className="mt-4 min-h-0 w-full flex-1"
+                className="mbs-4 flex-1 inline-full min-block-0"
                 curveType="smooth"
             >
                 <EChartsAreaChart.Grid />

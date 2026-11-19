@@ -1,6 +1,7 @@
-import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
 import type { ComponentType, ReactNode } from "react";
+
 import * as echarts from "echarts/core";
+import { CanvasRenderer, SVGRenderer } from "echarts/renderers";
 
 export const ECHARTS_RENDERERS = {
     canvas: "canvas",

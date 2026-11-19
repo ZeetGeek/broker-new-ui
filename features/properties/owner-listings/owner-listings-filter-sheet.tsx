@@ -227,7 +227,10 @@ function ChoiceChip({
             {Icon ? (
                 <Icon
                     className={tile ? "block-6 inline-6" : "block-5 inline-5"}
-                    style={{ width: tile ? 24 : 20, height: tile ? 24 : 20 }}
+                    style={{
+                        width: tile ? "1.5rem" : "1.25rem",
+                        height: tile ? "1.5rem" : "1.25rem",
+                    }}
                     strokeWidth={1.6}
                     aria-hidden
                 />
@@ -236,7 +239,7 @@ function ChoiceChip({
             {tile && active ? (
                 <Check
                     className="absolute inset-e-2 inset-bs-2 block-3.5 inline-3.5"
-                    style={{ width: 14, height: 14 }}
+                    style={{ width: "0.875rem", height: "0.875rem" }}
                     aria-hidden
                 />
             ) : null}

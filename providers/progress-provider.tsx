@@ -9,7 +9,7 @@ import { ProgressProvider as BProgressProvider } from "@bprogress/next/app";
 export function ProgressProvider({ children }: { children: React.ReactNode }) {
     return (
         <BProgressProvider
-            height="3px"
+            height="0.1875rem"
             color="#1b7a5a"
             options={{ showSpinner: false }}
             startPosition={0.12}

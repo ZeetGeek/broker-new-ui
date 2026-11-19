@@ -3,6 +3,7 @@ import React, { type ElementType, type JSX, useMemo } from "react";
 
 import { motion } from "motion/react";
 
+import { pxToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 export type TextShimmerProps = {
@@ -67,7 +68,7 @@ function TextShimmerComponent({
             }}
             style={
                 {
-                    "--spread": `${dynamicSpread}px`,
+                    "--spread": pxToRem(dynamicSpread),
                     backgroundImage: `var(--bg), linear-gradient(var(--base-color), var(--base-color))`,
                 } as React.CSSProperties
             }

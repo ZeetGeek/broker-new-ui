@@ -212,8 +212,8 @@ export function EarningsPipeline({
                     {live.stalledCount > 0 || live.acceptedOfferCount > 0 ? (
                         <ul
                             className="
-                              flex flex-wrap justify-center gap-2 border-bs border-border-warm
-                              py-4 -mbe-4 sm:py-5 sm:-mbe-5
+                              -mbe-4 flex flex-wrap justify-center gap-2 border-bs
+                              border-border-warm py-4 sm:-mbe-5 sm:py-5
                             "
                         >
                             {live.acceptedOfferCount > 0 ? (

@@ -1,67 +1,69 @@
 "use client";
 
 import {
-    DEFAULT_ECHARTS_RENDERER,
-    buildChartCss,
-    flattenColor,
-    getColorsCount,
-    resolveColors,
-    seriesPaint,
-    withAlpha,
-    type ChartConfig,
-    type EChartsRenderer,
-    type ResolvedColors,
-} from "@/components/evilcharts/ui/echarts-chart";
-import {
-    tooltipBaseOption,
-    tooltipIndicatorHtml,
-    tooltipRow,
-    tooltipShell,
-    type TooltipPosition,
-    type TooltipRoundness,
-    type TooltipVariant,
-} from "@/components/evilcharts/ui/echarts-tooltip";
-import {
-    Brush,
-    buildBrushDataZoom,
-    syncBrushOverlay,
-    type BrushGeometry,
-    type BrushOverlayElements,
-    type BrushProps,
-    type BrushRange,
-} from "@/components/evilcharts/ui/echarts-brush";
-import {
-    DataZoomComponent,
-    GridComponent,
-    TooltipComponent,
-    type DataZoomComponentOption,
-    type GridComponentOption,
-    type TooltipComponentOption,
-} from "echarts/components";
-import {
     Children,
+    type CSSProperties,
+    type FC,
     isValidElement,
+    type ReactNode,
     useCallback,
     useEffect,
     useId,
     useMemo,
     useRef,
     useState,
-    type CSSProperties,
-    type FC,
-    type ReactNode,
 } from "react";
+
+import { LineChart, type LineSeriesOption } from "echarts/charts";
+import {
+    DataZoomComponent,
+    type DataZoomComponentOption,
+    GridComponent,
+    type GridComponentOption,
+    TooltipComponent,
+    type TooltipComponentOption,
+} from "echarts/components";
+import type { ComposeOption, ImagePatternObject } from "echarts/core";
+import * as echarts from "echarts/core";
+import { motion, useReducedMotion } from "motion/react";
+
+import {
+    Brush,
+    type BrushGeometry,
+    type BrushOverlayElements,
+    type BrushProps,
+    type BrushRange,
+    buildBrushDataZoom,
+    syncBrushOverlay,
+} from "@/components/evilcharts/ui/echarts-brush";
+import {
+    buildChartCss,
+    type ChartConfig,
+    DEFAULT_ECHARTS_RENDERER,
+    type EChartsRenderer,
+    flattenColor,
+    getColorsCount,
+    resolveColors,
+    type ResolvedColors,
+    seriesPaint,
+    withAlpha,
+} from "@/components/evilcharts/ui/echarts-chart";
 import {
     dotItemStyle,
     dotStyle,
-    sampleGradient,
     type DotVariant,
+    sampleGradient,
 } from "@/components/evilcharts/ui/echarts-dot";
 import { LegendOverlay, type LegendVariant } from "@/components/evilcharts/ui/echarts-legend";
-import type { ComposeOption, ImagePatternObject } from "echarts/core";
-import { LineChart, type LineSeriesOption } from "echarts/charts";
-import { motion, useReducedMotion } from "motion/react";
-import * as echarts from "echarts/core";
+import {
+    tooltipBaseOption,
+    tooltipIndicatorHtml,
+    type TooltipPosition,
+    type TooltipRoundness,
+    tooltipRow,
+    tooltipShell,
+    type TooltipVariant,
+} from "@/components/evilcharts/ui/echarts-tooltip";
 
 // Re-export the shared types that were previously declared inline here, so
 // existing consumers/examples keep importing them from the chart module.
@@ -2318,8 +2320,8 @@ export function EChartsAreaChart<TData extends Record<string, unknown>>({
         >
             <style dangerouslySetInnerHTML={{ __html: css }} />
 
-            <div className="relative min-h-0 w-full flex-1">
-                <div ref={mountRef} className="h-full min-h-0 w-full" />
+            <div className="relative flex-1 inline-full min-block-0">
+                <div ref={mountRef} className="block-full inline-full min-block-0" />
             </div>
 
             {legendSlot.present && !isLoading && (
@@ -2343,9 +2345,9 @@ export function EChartsAreaChart<TData extends Record<string, unknown>>({
                         initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.92 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.25, ease: "easeOut" }}
-                        className="text-primary bg-background flex items-center justify-center gap-2 rounded-md border px-2 py-0.5 text-sm"
+                        className="flex items-center justify-center gap-2 rounded-md border bg-background px-2 py-0.5 text-sm text-primary"
                     >
-                        <div className="border-border border-t-primary h-3 w-3 animate-spin rounded-full border" />
+                        <div className="animate-spin rounded-full border border-border border-bs-primary block-3 inline-3" />
                         <span>Loading</span>
                     </motion.div>
                 </div>

@@ -6,6 +6,8 @@ import Link from "next/link";
 
 import useEmblaCarousel from "embla-carousel-react";
 
+import { measuredPxToRem } from "@/lib/styles/rem";
+
 import { AppImage } from "@/components/shared/app-image";
 import { Camera } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
@@ -118,7 +120,7 @@ export function PropertyGallery({ title, imageSrcs, editHref, overlay }: Propert
                     -rect.width * 0.1,
                     Math.min(rect.width * 0.1, (center - rect.left - rect.width / 2) * 0.15),
                 );
-                layer.style.transform = `translate3d(${offset}px, 0, 0)`;
+                layer.style.transform = `translate3d(${measuredPxToRem(offset)}, 0, 0)`;
             });
         };
         const schedule = () => {

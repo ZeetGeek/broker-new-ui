@@ -4,6 +4,8 @@ import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from "reac
 
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 
+import { measuredPxToRem } from "@/lib/styles/rem";
+
 type ColumnBreakpoint = {
     minWidth: number;
     columns: number;
@@ -111,7 +113,7 @@ export function WindowVirtualGrid<T>({
                     gridTemplateColumns: gridClassName
                         ? undefined
                         : `repeat(${columnCount}, minmax(0, 1fr))`,
-                    gap,
+                    gap: measuredPxToRem(gap),
                 }}
             >
                 {items.map((item, index) => (
@@ -129,7 +131,7 @@ export function WindowVirtualGrid<T>({
             role="list"
             aria-label={ariaLabel}
             className="relative inline-full"
-            style={{ height: Math.max(0, virtualizer.getTotalSize() - gap) }}
+            style={{ height: measuredPxToRem(Math.max(0, virtualizer.getTotalSize() - gap)) }}
         >
             {virtualizer.getVirtualItems().map((virtualRow) => {
                 const row = rows[virtualRow.index] ?? [];
@@ -140,15 +142,15 @@ export function WindowVirtualGrid<T>({
                         ref={virtualizer.measureElement}
                         className="absolute inset-s-0 inset-bs-0 inline-full"
                         style={{
-                            transform: `translateY(${virtualRow.start - scrollMargin}px)`,
-                            paddingBlockEnd: gap,
+                            transform: `translateY(${measuredPxToRem(virtualRow.start - scrollMargin)})`,
+                            paddingBlockEnd: measuredPxToRem(gap),
                         }}
                     >
                         <div
                             className="grid"
                             style={{
                                 gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-                                columnGap: gap,
+                                columnGap: measuredPxToRem(gap),
                             }}
                         >
                             {row.map(({ item, index }) => (

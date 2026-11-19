@@ -114,7 +114,7 @@ export function HomeHero() {
 
                     <p
                         className="
-                          body relative -mt-2 text-canvas/90
+                          body relative -mbs-2 text-canvas/90
                           [text-shadow:0_1px_16px_var(--color-brand-ink)] max-inline-[460px]
                         "
                     >

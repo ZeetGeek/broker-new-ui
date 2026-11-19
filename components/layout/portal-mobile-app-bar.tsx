@@ -1,9 +1,10 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 
 import { getUserTimeZone } from "@/lib/datetime/timezone";
+import { cn } from "@/lib/utils";
 
 import { PortalNotificationsMenu } from "@/components/layout/portal-notifications-menu";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -46,6 +47,24 @@ function useDayPartGreeting() {
     );
 }
 
+const SCROLL_THRESHOLD_PX = 8;
+
+function useMobileHeaderScrolled() {
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const update = () => {
+            setScrolled(window.scrollY > SCROLL_THRESHOLD_PX);
+        };
+
+        update();
+        window.addEventListener("scroll", update, { passive: true });
+        return () => window.removeEventListener("scroll", update);
+    }, []);
+
+    return scrolled;
+}
+
 export function PortalMobileAppBar({
     identity,
     notificationsHref,
@@ -54,19 +73,26 @@ export function PortalMobileAppBar({
     notificationsHref: string;
 }) {
     const greeting = useDayPartGreeting();
+    const scrolled = useMobileHeaderScrolled();
 
     return (
         <div
-            className="
-              -mx-4 flex items-center justify-between gap-3 bg-brand-soft px-4 py-4
-              md:hidden
-            "
+            data-scrolled={scrolled ? "true" : "false"}
+            className={cn(
+                `
+                  -mx-4 flex items-center justify-between gap-3 px-4 py-3
+                  transition-[background-color,border-color,box-shadow] duration-160 md:hidden
+                `,
+                scrolled
+                    ? "border-be border-border-warm bg-surface shadow-xs"
+                    : "border-be border-transparent bg-transparent",
+            )}
         >
             <Link
                 href={identity.profileHref}
                 className="
-                  flex min-inline-0 items-center gap-3 rounded-inner pe-1
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
+                  flex items-center gap-3 rounded-inner pe-1 min-inline-0
+                  focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none
                 "
                 aria-label={`Profile for ${identity.name}`}
             >
@@ -77,11 +103,11 @@ export function PortalMobileAppBar({
                     className="shrink-0"
                 />
 
-                <span className="flex min-inline-0 flex-col gap-0.5 text-start">
-                    <span className="body-xs truncate font-medium leading-tight text-ink-muted">
+                <span className="flex flex-col gap-0.5 text-start min-inline-0">
+                    <span className="body-xs truncate leading-tight font-medium text-ink-muted">
                         {greeting}
                     </span>
-                    <span className="body truncate font-semibold leading-tight text-ink">
+                    <span className="body truncate leading-tight font-semibold text-ink">
                         {identity.name}
                     </span>
                 </span>

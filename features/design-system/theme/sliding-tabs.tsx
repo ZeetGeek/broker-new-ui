@@ -2,6 +2,7 @@
 
 import { type ReactNode, useLayoutEffect, useRef } from "react";
 
+import { measuredPxToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 export type SlidingTabOption<T extends string = string> = {
@@ -17,9 +18,12 @@ function movePill(
 ) {
     const nextTransform =
         orientation === "vertical"
-            ? `translateY(${tab.offsetTop}px)`
-            : `translateX(${tab.offsetLeft}px)`;
-    const nextSize = orientation === "vertical" ? `${tab.offsetHeight}px` : `${tab.offsetWidth}px`;
+            ? `translateY(${measuredPxToRem(tab.offsetTop)})`
+            : `translateX(${measuredPxToRem(tab.offsetLeft)})`;
+    const nextSize =
+        orientation === "vertical"
+            ? `${measuredPxToRem(tab.offsetHeight)}`
+            : `${measuredPxToRem(tab.offsetWidth)}`;
     const sizeProp = orientation === "vertical" ? "height" : "width";
 
     if (!animate) {

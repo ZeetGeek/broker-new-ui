@@ -135,7 +135,7 @@ export function EarningsLosses({
             }
             className={cn("block-full min-block-full", className)}
         >
-            <div className="flex flex-1 flex-col pbe-2 min-inline-0 min-block-0">
+            <div className="flex flex-1 flex-col pbe-2 min-block-0 min-inline-0">
                 {isEmpty ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-1.5 px-6 py-12 text-center">
                         <p className="body font-medium text-ink">No deals lost in this period</p>

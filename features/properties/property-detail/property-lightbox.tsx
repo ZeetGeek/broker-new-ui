@@ -76,9 +76,10 @@ export default function PropertyLightbox({
                     "--yarl__thumbnails_thumbnail_background": "var(--color-surface-muted)",
                     "--yarl__thumbnails_thumbnail_border_color": "var(--color-border)",
                     "--yarl__thumbnails_thumbnail_active_border_color": "var(--color-brand-ink)",
-                    "--yarl__thumbnails_thumbnail_focus_box_shadow": "0 0 0 2px var(--color-brand)",
+                    "--yarl__thumbnails_thumbnail_focus_box_shadow":
+                        "0 0 0 0.125rem var(--color-brand)",
                 },
-                button: { minWidth: 48, minHeight: 48, padding: 12 },
+                button: { minWidth: "3rem", minHeight: "3rem", padding: "0.75rem" },
             }}
             animation={reduceMotion ? { fade: 0, swipe: 0, navigation: 0, zoom: 0 } : undefined}
             render={{

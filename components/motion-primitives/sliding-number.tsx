@@ -4,6 +4,8 @@ import useMeasure from "react-use-measure";
 
 import { motion, MotionValue, motionValue, useSpring, useTransform } from "motion/react";
 
+import { measuredPxToRem } from "@/lib/styles/rem";
+
 const TRANSITION = {
     type: "spring" as const,
     stiffness: 280,
@@ -40,7 +42,7 @@ function Number({ mv, number }: { mv: MotionValue<number>; number: number }) {
     const [ref, bounds] = useMeasure();
 
     const y = useTransform(mv, (latest) => {
-        if (!bounds.height) return 0;
+        if (!bounds.height) return "0rem";
         const placeValue = latest % 10;
         const offset = (10 + number - placeValue) % 10;
         let memo = offset * bounds.height;
@@ -49,7 +51,7 @@ function Number({ mv, number }: { mv: MotionValue<number>; number: number }) {
             memo -= 10 * bounds.height;
         }
 
-        return memo;
+        return measuredPxToRem(memo);
     });
 
     // don't render the animated number until we know the height

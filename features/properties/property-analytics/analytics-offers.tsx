@@ -73,7 +73,7 @@ function OfferBar({
             {tick != null ? (
                 <span
                     className="absolute -inset-y-1 rounded-full bg-ink inline-0.5"
-                    style={{ insetInlineStart: `calc(${tick * 100}% - 1px)` }}
+                    style={{ insetInlineStart: `calc(${tick * 100}% - 0.0625rem)` }}
                 />
             ) : null}
         </span>

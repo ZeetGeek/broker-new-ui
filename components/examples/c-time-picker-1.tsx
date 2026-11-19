@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { TimePicker, TimePickerPanel } from "@/components/reui/time-picker";
 
+import { TimePicker, TimePickerPanel } from "@/components/reui/time-picker";
 import { Card } from "@/components/ui/card";
 
 export function Pattern() {
@@ -13,12 +13,12 @@ export function Pattern() {
     return (
         <div className="flex flex-col items-center gap-3">
             {/* `py-0` lets the panel sit flush, so it reads like the popover. */}
-            <Card className="w-fit py-0">
+            <Card className="py-0 inline-fit">
                 <TimePicker value={value} onValueChange={setValue} aria-label="Meeting time">
                     <TimePickerPanel />
                 </TimePicker>
             </Card>
-            <p role="status" className="text-muted-foreground text-sm">
+            <p role="status" className="text-sm text-muted-foreground">
                 {value ? `Meeting at ${value}` : "No meeting time set"}
             </p>
         </div>

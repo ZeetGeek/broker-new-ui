@@ -6,6 +6,8 @@ import dynamic from "next/dynamic";
 import useEmblaCarousel from "embla-carousel-react";
 import { useReducedMotion } from "motion/react";
 
+import { measuredPxToRem } from "@/lib/styles/rem";
+
 import { AppImage } from "@/components/shared/app-image";
 import { Building2 } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
@@ -85,7 +87,7 @@ export function PropertyPhotoGallery({
                     -rect.width * 0.07,
                     Math.min(rect.width * 0.07, (center - rect.left - rect.width / 2) * 0.18),
                 );
-                layer.style.transform = `translate3d(${offset}px, 0, 0)`;
+                layer.style.transform = `translate3d(${measuredPxToRem(offset)}, 0, 0)`;
             });
         };
         const schedule = () => {

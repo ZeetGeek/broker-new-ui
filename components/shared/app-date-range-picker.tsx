@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import type { Matcher } from "react-day-picker";
 
 import { startOfDay } from "date-fns";
@@ -274,7 +274,7 @@ export function AppDateRangePicker({
                             role="option"
                             aria-selected={selected}
                             className={cn(
-                                "justify-start gap-2 px-2.5 py-2.5 font-normal",
+                                "justify-start gap-2 p-2.5 font-normal",
                                 selected &&
                                     "bg-brand-soft font-medium text-brand-text hover:bg-brand-soft",
                             )}
@@ -359,7 +359,7 @@ export function AppDateRangePicker({
                 )}
             >
                 <div className="flex flex-col md:flex-row md:items-start">
-                    <div className="flex min-inline-0 flex-col">
+                    <div className="flex flex-col min-inline-0">
                         <div
                             className={cn(
                                 "flex flex-wrap items-center gap-3 px-5 pbs-4 pbe-3",
@@ -491,13 +491,13 @@ export function AppDateRangePicker({
                             endMonth={upperBound ?? undefined}
                             startMonth={minDate ?? undefined}
                             className="
-                              bg-transparent px-5 pbe-3 pbs-1
+                              bg-transparent px-5 pbs-1 pbe-3
                               [--cell-size:--spacing(11)]
                               sm:[--cell-size:--spacing(12)]
                               [&_table]:flex [&_table]:flex-col
                               [&_tbody]:flex [&_tbody]:flex-col [&_tbody]:gap-3
-                              [&_thead]:block [&_thead_tr]:flex [&_thead_tr]:w-full
-                              [&_tbody_tr]:flex [&_tbody_tr]:w-full
+                              [&_tbody_tr]:flex [&_tbody_tr]:inline-full [&_thead]:block
+                              [&_thead_tr]:flex [&_thead_tr]:inline-full
                             "
                             classNames={{
                                 months: "relative flex flex-col gap-6 sm:flex-row sm:gap-8",

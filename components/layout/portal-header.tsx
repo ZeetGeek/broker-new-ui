@@ -44,9 +44,10 @@ export function PortalHeader({
 
     return (
         <div data-portal-shell className="bg-surface-muted min-block-screen">
-            <div data-portal-content className="overflow-x-hidden px-4 md:px-8">
-                <header>
-                    <TooltipProvider>
+            {/* Sticky outside overflow-x clip — sticky fails inside overflow-x-hidden. */}
+            <header className="sticky inset-bs-0 z-30">
+                <TooltipProvider>
+                    <div className="px-4 md:px-8">
                         <PortalMobileAppBar
                             identity={mobileIdentity}
                             notificationsHref={notificationsHref}
@@ -55,10 +56,10 @@ export function PortalHeader({
                         <div
                             className="
                               hidden items-center justify-between gap-8 border-be border-border-warm
-                              py-5 md:flex
+                              bg-surface-muted py-5 md:flex
                             "
                         >
-                            <div className="flex min-inline-0 flex-1 items-center gap-10">
+                            <div className="flex flex-1 items-center gap-10 min-inline-0">
                                 <Logo href={homeHref} />
                                 <PortalNav items={navItems} />
                             </div>
@@ -76,22 +77,23 @@ export function PortalHeader({
 
                                 <span
                                     aria-hidden
-                                    className="block-7 inline-px shrink-0 bg-ink-subtle/30"
+                                    className="shrink-0 bg-ink-subtle/30 block-7 inline-px"
                                 />
 
                                 {profileMenu}
                             </div>
                         </div>
-                    </TooltipProvider>
+                    </div>
+                </TooltipProvider>
+            </header>
 
-                    {sectionNav ? <div className="py-6">{sectionNav}</div> : null}
-                </header>
+            <div data-portal-content className="overflow-x-hidden px-4 md:px-8">
+                {sectionNav ? <div className="py-6">{sectionNav}</div> : null}
 
                 {children ? (
                     <main
                         className={cn(
-                            // TEMP: keep page content hidden while the phone shell is in progress.
-                            "hidden pbe-8",
+                            "pbe-8",
                             sectionNav ? "pbs-0" : "pbs-6",
                             mobileNav && "pbe-[calc(6.5rem+env(safe-area-inset-bottom))] md:pbe-10",
                         )}

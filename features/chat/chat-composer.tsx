@@ -297,7 +297,7 @@ export function ChatComposer({
                         <EmojiPicker
                             className={styles.picker}
                             width="100%"
-                            height="min(340px, calc(100dvh - 12rem))"
+                            height="min(21.25rem, calc(100dvh - 12rem))"
                             searchPlaceholder="Search emojis…"
                             previewConfig={{ showPreview: false }}
                             autoFocusSearch={false}

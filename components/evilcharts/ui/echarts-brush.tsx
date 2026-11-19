@@ -1,7 +1,9 @@
-import { withAlpha, type ResolvedColors } from "@/components/evilcharts/ui/echarts-chart";
-import type { DataZoomComponentOption } from "echarts/components";
 import type { FC } from "react";
+
+import type { DataZoomComponentOption } from "echarts/components";
 import * as echarts from "echarts/core";
+
+import { type ResolvedColors, withAlpha } from "@/components/evilcharts/ui/echarts-chart";
 
 type EChartsInstance = ReturnType<typeof echarts.init>;
 
