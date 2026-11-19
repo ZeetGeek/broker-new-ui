@@ -171,7 +171,7 @@ export function AppPagination({
             <div className="mx-auto flex flex-wrap items-center justify-center gap-2 p-0">
                 <div className={arrowGroupClass}>
                     <IconButton
-                        variant="ghost"
+                        appearance="ghost"
                         size="sm"
                         type="button"
                         data-id="first"
@@ -183,7 +183,7 @@ export function AppPagination({
                         <ChevronsLeft className="block-4 inline-4" strokeWidth={1.75} />
                     </IconButton>
                     <IconButton
-                        variant="ghost"
+                        appearance="ghost"
                         size="sm"
                         type="button"
                         data-id="prev"
@@ -243,7 +243,7 @@ export function AppPagination({
 
                 <div className={arrowGroupClass}>
                     <IconButton
-                        variant="ghost"
+                        appearance="ghost"
                         size="sm"
                         type="button"
                         data-id="next"
@@ -255,7 +255,7 @@ export function AppPagination({
                         <ChevronRight className="block-4 inline-4" strokeWidth={1.75} />
                     </IconButton>
                     <IconButton
-                        variant="ghost"
+                        appearance="ghost"
                         size="sm"
                         type="button"
                         data-id="last"

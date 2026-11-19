@@ -18,10 +18,10 @@ Always provide `aria-label` or `aria-labelledby` and use a Tabler registry icon.
 Button props, refs, loading, and Base UI `render` composition pass through.
 Keep feature `className` overrides for layout/visibility, rather than restyling the face.
 
-Use `variant="ghost"` inside an already bordered control, such as a period navigator,
+Use `appearance="ghost"` inside an already bordered control, such as a period navigator,
 pagination group, input, or filter chip. It keeps the shared sizing, centering, colours,
 focus and hover fill, without adding a second border or shadow. Standalone icon
-actions use the default `variant="outline"`.
+actions use the default `appearance="outline"`.
 
 Text-labelled ghost buttons, calendar date cells, drag handles and segmented
 selection controls keep their own semantics and are not icon action buttons.

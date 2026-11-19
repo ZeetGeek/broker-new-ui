@@ -218,7 +218,7 @@ export function FilterChip({
         <span className="relative inline-flex">
             {mainButton}
             <IconButton
-                variant="ghost"
+                appearance="ghost"
                 size="xs"
                 tone="brand"
                 aria-label={typeof label === "string" ? `Clear ${label}` : "Clear filter"}

@@ -68,7 +68,7 @@ export function CommissionEarned() {
                     </div>
                     <nav className={styles.navigation} aria-label="Commission periods">
                         <IconButton
-                            variant="ghost"
+                            appearance="ghost"
                             size="sm"
                             aria-label={`Previous ${months} months`}
                             disabled={!window.hasPrevious}
@@ -89,7 +89,7 @@ export function CommissionEarned() {
                             )}
                         </p>
                         <IconButton
-                            variant="ghost"
+                            appearance="ghost"
                             size="sm"
                             aria-label={`Next ${months} months`}
                             disabled={!window.hasNext}

@@ -508,7 +508,7 @@ function NotebookTabManageMenu({
                         size="xs"
                         type="button"
                         className={triggerClassName}
-                        variant="ghost"
+                        appearance="ghost"
                         disabled={busy}
                         aria-label={`Manage tab ${tab.name}`}
                         data-sliding-tab-action=""

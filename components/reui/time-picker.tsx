@@ -1028,7 +1028,9 @@ export function TimePickerInput({
                 }}
             />
             <InputGroupAddon align="inline-end">
-                <PopoverTrigger render={<IconButton {...clockProps} size="sm" variant="ghost" />}>
+                <PopoverTrigger
+                    render={<IconButton {...clockProps} size="sm" appearance="ghost" />}
+                >
                     {CLOCK_ICON}
                 </PopoverTrigger>
             </InputGroupAddon>
