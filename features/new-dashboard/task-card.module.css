@@ -185,12 +185,12 @@
 .paper {
     --line-height: 40px;
     /*
-      Shared with planner .rowGutters so date/nav match the colored bars.
+      Shared with planner .rowGutters to reserve space around the colored bars.
       Start (check) and end (row action) gutters are equal so the list sits
-      centred in the card. Touch keeps a 40px action column (always visible).
+      centred in the card. Touch reserves the actual minimum target size.
     */
-    --dashboard-row-gutter: 2.5rem;
-    --dashboard-action-gutter: 2.5rem;
+    --dashboard-row-gutter: var(--touch-target-min, 2.75rem);
+    --dashboard-action-gutter: var(--touch-target-min, 2.75rem);
     background: transparent;
     border-radius: 0;
 }
@@ -219,6 +219,7 @@
 }
 .dayNav {
     display: flex;
+    flex-wrap: wrap;
     align-items: flex-end;
     justify-content: space-between;
     gap: 0.75rem;
@@ -228,7 +229,11 @@
     padding: 0.625rem var(--dashboard-action-gutter) 0.5rem var(--dashboard-row-gutter);
 }
 .dayNavLabel {
+    flex-shrink: 0;
     min-inline-size: 0;
+}
+.dayNavLabel time {
+    white-space: nowrap;
 }
 .paper :global([data-today]) .dayNavLabel :global(h3) {
     color: var(--color-brand);
@@ -238,11 +243,22 @@
     align-items: center;
     gap: 0.375rem;
     flex-shrink: 0;
+    margin-inline-start: auto;
     padding-block-end: 0.125rem;
 }
 @media (pointer: coarse) {
+    /* The date/nav use the full card width; task action gutters belong to rows. */
+    .paper .dayNav {
+        padding-inline: 0.5rem;
+    }
+
+    /* A one-line task must still leave room for its always-visible action. */
+    .paper .dayColumnFlush {
+        --line-height: var(--touch-target-min, 2.75rem);
+    }
+
     .dayNavButtons :global(button) {
-        min-inline-size: 44px;
-        min-block-size: 44px;
+        min-inline-size: var(--touch-target-min, 2.75rem);
+        min-block-size: var(--touch-target-min, 2.75rem);
     }
 }
