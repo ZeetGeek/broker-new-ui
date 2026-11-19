@@ -4,6 +4,7 @@ import { Accordion as AccordionPrimitive } from "@base-ui/react/accordion";
 
 import { cn } from "@/lib/utils";
 
+import { IconButtonFace } from "@/components/shared/icon-button-face";
 import { ChevronDownIcon, ChevronUpIcon } from "@/components/shared/icons";
 
 function Accordion({ className, ...props }: AccordionPrimitive.Root.Props) {
@@ -51,20 +52,22 @@ function AccordionTrigger({ className, children, ...props }: AccordionPrimitive.
                 {...props}
             >
                 {children}
-                <ChevronDownIcon
-                    data-slot="accordion-trigger-icon"
-                    className="
+                <IconButtonFace className="ms-auto">
+                    <ChevronDownIcon
+                        data-slot="accordion-trigger-icon"
+                        className="
                       pointer-events-none shrink-0
                       group-aria-expanded/accordion-trigger:hidden
                     "
-                />
-                <ChevronUpIcon
-                    data-slot="accordion-trigger-icon"
-                    className="
+                    />
+                    <ChevronUpIcon
+                        data-slot="accordion-trigger-icon"
+                        className="
                       pointer-events-none hidden shrink-0
                       group-aria-expanded/accordion-trigger:inline
                     "
-                />
+                    />
+                </IconButtonFace>
             </AccordionPrimitive.Trigger>
         </AccordionPrimitive.Header>
     );

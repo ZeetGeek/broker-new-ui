@@ -15,6 +15,7 @@ import { useBookSlot } from "@/hooks/use-book-slot";
 
 import { AppImage } from "@/components/shared/app-image";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { DrawerSection, revealDrawerSections } from "@/components/shared/drawer-section";
 import { CalendarClock, MapPin } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -281,8 +282,11 @@ export function BookingDrawer({
 
                 <form
                     id="booking-form"
-                    onSubmit={submit}
-                    className="flex-1 space-y-5 overflow-y-auto p-5"
+                    onSubmit={(event) => {
+                        revealDrawerSections(event.currentTarget);
+                        void submit(event);
+                    }}
+                    className="flex-1 overflow-y-auto p-5"
                 >
                     {!hasBookingAccess ? (
                         <p
@@ -295,48 +299,90 @@ export function BookingDrawer({
                             The owner must approve access before this time can be booked.
                         </p>
                     ) : null}
-                    <BuyerPicker
-                        buyers={allBuyers}
-                        selected={buyerIds}
-                        emptyMessage={buyerListMessage}
-                        onChange={(ids) => form.setValue("buyerIds", ids, { shouldValidate: true })}
-                        onBuyerCreated={(buyer) =>
-                            setCreated({
-                                propertyId,
-                                buyers: [
-                                    buyer,
-                                    ...createdBuyers.filter((row) => row.id !== buyer.id),
-                                ],
-                            })
-                        }
-                    />
-                    {form.formState.errors.buyerIds ? (
-                        <p className="body-xs text-danger">
-                            {form.formState.errors.buyerIds.message}
-                        </p>
-                    ) : null}
-                    {buyerIds.length || apiConflict ? (
-                        <ConflictPanel result={conflict} onOpenVisit={onOpenVisit} />
-                    ) : null}
-                    {localConflict.level === "tight" && !apiConflict ? (
-                        <label
-                            className="
+                    <DrawerSection
+                        title="Clients for this visit"
+                        description="Choose up to three clients to bring to the property."
+                    >
+                        {" "}
+                        <BuyerPicker
+                            buyers={allBuyers}
+                            selected={buyerIds}
+                            emptyMessage={buyerListMessage}
+                            onChange={(ids) =>
+                                form.setValue("buyerIds", ids, { shouldValidate: true })
+                            }
+                            onBuyerCreated={(buyer) =>
+                                setCreated({
+                                    propertyId,
+                                    buyers: [
+                                        buyer,
+                                        ...createdBuyers.filter((row) => row.id !== buyer.id),
+                                    ],
+                                })
+                            }
+                        />
+                        {form.formState.errors.buyerIds ? (
+                            <p className="body-xs text-danger">
+                                {form.formState.errors.buyerIds.message}
+                            </p>
+                        ) : null}
+                    </DrawerSection>
+                    {buyerIds.length > 0 || apiConflict || inlineError ? (
+                        <DrawerSection
+                            title="Timing and availability"
+                            description="Check for overlapping visits and review other available times."
+                        >
+                            {" "}
+                            {buyerIds.length || apiConflict ? (
+                                <ConflictPanel result={conflict} onOpenVisit={onOpenVisit} />
+                            ) : null}
+                            {localConflict.level === "tight" && !apiConflict ? (
+                                <label
+                                    className="
                           flex cursor-pointer items-center gap-3 rounded-inner border
                           border-pending/20 bg-urgent-soft px-3 text-pending min-block-11
                         "
-                        >
-                            <Checkbox
-                                checked={acceptTight}
-                                onCheckedChange={(checked) => form.setValue("acceptTight", checked)}
-                            />
-                            <span className="body-sm font-semibold">I know, book anyway</span>
-                        </label>
-                    ) : null}
-                    {inlineError ? (
-                        <div role="alert" className="rounded-inner bg-danger-soft p-3 text-danger">
-                            <p className="body-sm font-bold">{inlineError}</p>
-                            {alternatives.length ? (
-                                <div className="mbs-3 flex flex-wrap gap-2">
+                                >
+                                    <Checkbox
+                                        checked={acceptTight}
+                                        onCheckedChange={(checked) =>
+                                            form.setValue("acceptTight", checked)
+                                        }
+                                    />
+                                    <span className="body-sm font-semibold">
+                                        I know, book anyway
+                                    </span>
+                                </label>
+                            ) : null}
+                            {inlineError ? (
+                                <div
+                                    role="alert"
+                                    className="rounded-inner bg-danger-soft p-3 text-danger"
+                                >
+                                    <p className="body-sm font-bold">{inlineError}</p>
+                                    {alternatives.length ? (
+                                        <div className="mbs-3 flex flex-wrap gap-2">
+                                            {alternatives.map((candidate) => (
+                                                <Button
+                                                    key={candidate.id}
+                                                    type="button"
+                                                    variant="surface"
+                                                    size="md"
+                                                    className="ring-2 ring-brand/20"
+                                                    onClick={() =>
+                                                        onChooseAlternative(candidate.id)
+                                                    }
+                                                >
+                                                    <CalendarClock aria-hidden />
+                                                    {formatVisitTime(candidate.startsAt)}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                </div>
+                            ) : null}
+                            {apiConflict && alternatives.length ? (
+                                <div className="flex flex-wrap gap-2">
                                     {alternatives.map((candidate) => (
                                         <Button
                                             key={candidate.id}
@@ -352,25 +398,8 @@ export function BookingDrawer({
                                     ))}
                                 </div>
                             ) : null}
-                        </div>
-                    ) : null}
-                    {apiConflict && alternatives.length ? (
-                        <div className="flex flex-wrap gap-2">
-                            {alternatives.map((candidate) => (
-                                <Button
-                                    key={candidate.id}
-                                    type="button"
-                                    variant="surface"
-                                    size="md"
-                                    className="ring-2 ring-brand/20"
-                                    onClick={() => onChooseAlternative(candidate.id)}
-                                >
-                                    <CalendarClock aria-hidden />
-                                    {formatVisitTime(candidate.startsAt)}
-                                </Button>
-                            ))}
-                        </div>
-                    ) : null}
+                        </DrawerSection>
+                    ) : null}{" "}
                 </form>
 
                 <footer

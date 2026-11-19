@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/shared/icon-button";
 import { MapPin, MoreHorizontal, Phone, UserMinus } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
-import { PropertyThumb } from "@/components/shared/property-thumb";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -166,15 +166,7 @@ export function ActiveBrokerCard({
                     "
                 >
                     <span className="flex items-center gap-2 min-inline-0">
-                        <PropertyThumb
-                            src={item.imageSrc}
-                            alt=""
-                            hoverScale={false}
-                            sizes="36px"
-                            iconClassName="block-4 inline-4"
-                            sizeClassName="block-9 inline-9"
-                            className="rounded-[8px] shadow-xs ring-2 ring-surface"
-                        />
+                        <PropertyCoverImage src={item.imageSrc} alt="" sizes="36px" size={36} />
                         <span className="body-sm truncate font-medium text-ink">1 property</span>
                     </span>
                     <span className="body-xs shrink-0 font-semibold text-brand">View</span>

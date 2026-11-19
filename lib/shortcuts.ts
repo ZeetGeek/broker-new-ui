@@ -13,7 +13,10 @@ export type ShortcutId =
     | "shortcuts_cheatsheet"
     | "logout"
     | "add_property"
-    | "add_contact";
+    | "add_contact"
+    | "dashboard_add_listing"
+    | "dashboard_schedule_visit"
+    | "dashboard_add_task";
 
 export type ShortcutScope = "global" | "list" | "form" | "dialog";
 
@@ -159,6 +162,30 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
         displayKeys: ["N"],
         label: "Add client / owner",
         group: "Clients",
+        scope: "list",
+    },
+    {
+        id: "dashboard_add_listing",
+        keys: "Shift+KeyL",
+        displayKeys: ["⇧", "L"],
+        label: "Add listing",
+        group: "Dashboard",
+        scope: "list",
+    },
+    {
+        id: "dashboard_schedule_visit",
+        keys: "Shift+KeyV",
+        displayKeys: ["⇧", "V"],
+        label: "Schedule visit",
+        group: "Dashboard",
+        scope: "list",
+    },
+    {
+        id: "dashboard_add_task",
+        keys: "Shift+KeyT",
+        displayKeys: ["⇧", "T"],
+        label: "Add task",
+        group: "Dashboard",
         scope: "list",
     },
 ] as const;

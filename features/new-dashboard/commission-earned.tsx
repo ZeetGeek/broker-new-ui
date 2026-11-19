@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
 
 import { type CommissionPeriodMonths, getCommissionWindow } from "@/lib/commission-period";
 import {
@@ -185,6 +185,11 @@ export function CommissionEarned() {
                             margin={{ top: 24 }}
                         >
                             <CartesianGrid vertical={false} />
+                            {/* Keep labels inside the plot and its full-height hover highlight. */}
+                            <YAxis
+                                hide
+                                domain={[0, (dataMax: number) => Math.max(1, dataMax * 1.2)]}
+                            />
                             <XAxis
                                 dataKey="monthKey"
                                 axisLine={false}

@@ -1,17 +1,7 @@
 "use client";
 
-import { formatSortLabel } from "@/lib/format/owner-listings-labels";
-import { cn } from "@/lib/utils";
+import { ListToolbarSelect } from "@/components/shared/list-toolbar";
 
-import { ArrowDownUp, ChevronDown } from "@/components/shared/icons";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import { ownerListingsChipClassName } from "@/features/properties/owner-listings/owner-listings-chip-styles";
 import type {
     OwnerListingsFilters,
     OwnerListingSort,
@@ -34,47 +24,15 @@ export function OwnerListingsSortMenu({
     onSortChange,
     className,
 }: OwnerListingsSortMenuProps) {
-    const isDefaultSort = filters.sort === "newest";
-
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <button
-                        type="button"
-                        className={cn(
-                            ownerListingsChipClassName(!isDefaultSort),
-                            "gap-2",
-                            isDefaultSort && "text-ink-muted",
-                            className,
-                        )}
-                    >
-                        <ArrowDownUp
-                            aria-hidden
-                            className="text-brand block-4 inline-4"
-                            strokeWidth={1.75}
-                        />
-                        <span className="hidden sm:inline">{formatSortLabel(filters.sort)}</span>
-                        <span className="sm:hidden">Sort</span>
-                        <ChevronDown
-                            aria-hidden
-                            className="opacity-60 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                    </button>
-                }
-            />
-            <DropdownMenuContent align="end" className="min-inline-44">
-                {SORT_OPTIONS.map((option) => (
-                    <DropdownMenuItem
-                        key={option.value}
-                        onClick={() => onSortChange(option.value)}
-                        className={cn(filters.sort === option.value && "font-semibold text-brand")}
-                    >
-                        {option.label}
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <ListToolbarSelect
+            label="Sort listings"
+            value={filters.sort}
+            options={SORT_OPTIONS}
+            onChange={onSortChange}
+            defaultValue="newest"
+            mobileLabel="Sort"
+            className={className}
+        />
     );
 }

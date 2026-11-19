@@ -13,12 +13,12 @@ import { useRouter } from "@/lib/navigation";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
-import { AppImage } from "@/components/shared/app-image";
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
 import { IconButton } from "@/components/shared/icon-button";
-import { Building2, Check, Eye, MapPin, MoreHorizontal, Phone, X } from "@/components/shared/icons";
+import { Check, Eye, MapPin, MoreHorizontal, Phone, X } from "@/components/shared/icons";
 import { OVERLAY_GLASS_BUTTON_CLASS, OverlayCardActions } from "@/components/shared/overlay-card";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -78,30 +78,12 @@ function LeadCoverImage({
     const extraCount = photoCount > 1 ? photoCount - 1 : 0;
 
     return (
-        <div
-            className="
-              relative aspect-square shrink-0 overflow-hidden rounded-[8px] bg-surface-muted
-              inline-24
-            "
-            aria-hidden={!imageSrc}
+        <PropertyCoverImage
+            src={imageSrc}
+            alt={title}
+            size={96}
+            imageClassName={muted ? "grayscale-60" : undefined}
         >
-            {imageSrc ? (
-                <AppImage
-                    src={imageSrc}
-                    alt={title}
-                    fill
-                    sizes="96px"
-                    className={cn("object-cover", muted && "grayscale-60")}
-                />
-            ) : (
-                <div
-                    className="
-                  flex items-center justify-center text-ink-subtle block-full inline-full
-                "
-                >
-                    <Building2 className="block-6 inline-6" strokeWidth={1.5} />
-                </div>
-            )}
             {extraCount > 0 ? (
                 <span
                     className="
@@ -112,7 +94,7 @@ function LeadCoverImage({
                     +{extraCount}
                 </span>
             ) : null}
-        </div>
+        </PropertyCoverImage>
     );
 }
 

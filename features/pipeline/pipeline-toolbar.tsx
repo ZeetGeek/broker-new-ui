@@ -7,19 +7,10 @@ import {
     normalizePropertyCriteria,
     propertyCriteriaCount,
 } from "@/lib/properties/list-criteria";
-import { cn } from "@/lib/utils";
 
-import { FilterChip, filterChipClassName } from "@/components/shared/filter-chip";
-import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "@/components/shared/icons";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { FilterChip } from "@/components/shared/filter-chip";
+import { SlidersHorizontal } from "@/components/shared/icons";
+import { ListSearchField, ListToolbarSelect } from "@/components/shared/list-toolbar";
 
 import type { DealsFilters, DealSort } from "@/features/pipeline/types";
 import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
@@ -33,31 +24,7 @@ const SORT_OPTIONS: { value: DealSort; label: string }[] = [
     { value: "price_asc", label: "Cheapest first" },
 ];
 
-function sortLabel(sort: DealSort): string {
-    return SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Newest first";
-}
-
 /** Updates as the broker types. The pipeline page debounces the request itself. */
-function PipelineQueryInput({ value, onChange }: { value: string; onChange: (q: string) => void }) {
-    return (
-        <Input
-            size="sm"
-            value={value}
-            onValueChange={onChange}
-            placeholder="Search client, owner or area"
-            aria-label="Search your deals"
-            startIcon={Search}
-            clearable
-            wrapperClassName="rounded-control shadow-sm min-inline-44 inline-44 sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64"
-            className="
-              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
-              block-[38px]!
-              hover:border-ink/25!
-              focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
-            "
-        />
-    );
-}
 
 export function PipelineToolbar({
     filters,
@@ -107,58 +74,22 @@ export function PipelineToolbar({
                 />
                 {leading}
                 <div className="ms-auto flex items-center gap-2">
-                    <PipelineQueryInput value={filters.q} onChange={(q) => onPatch({ q })} />
-                    <DropdownMenu>
-                        <Tooltip>
-                            <TooltipTrigger
-                                render={
-                                    <DropdownMenuTrigger
-                                        render={
-                                            <button
-                                                type="button"
-                                                className={cn(
-                                                    filterChipClassName(filters.sort !== "recent"),
-                                                    filters.sort === "recent" && "text-ink-muted",
-                                                )}
-                                            />
-                                        }
-                                    >
-                                        <ArrowDownUp
-                                            aria-hidden
-                                            className="text-brand block-4 inline-4"
-                                            strokeWidth={1.75}
-                                        />
-                                        <span className="hidden sm:inline">
-                                            {sortLabel(filters.sort)}
-                                        </span>
-                                        <span className="sm:hidden">Sort</span>
-                                        <ChevronDown
-                                            aria-hidden
-                                            className="block-4 inline-4"
-                                            strokeWidth={1.75}
-                                        />
-                                    </DropdownMenuTrigger>
-                                }
-                            />
-                            <TooltipContent side="bottom">
-                                Change the order of the cards.
-                            </TooltipContent>
-                        </Tooltip>
-                        <DropdownMenuContent align="end">
-                            {/* Radio items expose the current sort to screen readers
-                                (aria-checked) and show a tick, not just bold text. */}
-                            <DropdownMenuRadioGroup
-                                value={filters.sort}
-                                onValueChange={(value) => onPatch({ sort: value as DealSort })}
-                            >
-                                {SORT_OPTIONS.map((option) => (
-                                    <DropdownMenuRadioItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </DropdownMenuRadioItem>
-                                ))}
-                            </DropdownMenuRadioGroup>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <ListSearchField
+                        placeholder="Search client, owner or area"
+                        aria-label="Search your deals"
+                        debounceMs={0}
+                        value={filters.q}
+                        onChange={(q) => onPatch({ q })}
+                    />
+                    <ListToolbarSelect
+                        label="Sort deals"
+                        value={filters.sort}
+                        options={SORT_OPTIONS}
+                        defaultValue="recent"
+                        mobileLabel="Sort"
+                        tooltip="Change the order of the cards."
+                        onChange={(sort) => onPatch({ sort })}
+                    />
                 </div>
             </div>
             <OwnerListingsFilterSheet

@@ -343,22 +343,7 @@
     overflow-wrap: anywhere;
 }
 .thumbnail {
-    position: relative;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-    inline-size: 5.5rem;
-    block-size: 5.5rem;
-    overflow: hidden;
-    border: 3px solid var(--color-surface);
-    border-radius: 16px;
-    box-shadow: 0 2px 8px rgb(25 28 26 / 12%);
-    background: var(--color-surface-muted);
-}
-.fallbackIcon {
-    inline-size: 1.25rem;
-    block-size: 1.25rem;
-    color: var(--color-brand-text);
+    --property-cover-size: 4.5rem;
 }
 .prices {
     display: grid;
@@ -400,21 +385,26 @@
 }
 .clientAvatar {
     border: 2px solid var(--color-surface);
-    box-shadow: 0 2px 6px rgb(25 28 26 / 14%);
+    box-shadow: 0 3px 10px -2px rgb(25 28 26 / 8%);
 }
 .overflowClients {
     display: grid;
     gap: 0.5rem;
     justify-items: start;
 }
+.overflowClients > li + li {
+    border-block-start: 1px solid var(--color-border-warm);
+    margin-block-start: 0.5rem;
+    padding-block-start: 0.5rem;
+}
 .clientPerson {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     min-inline-size: 0;
-    color: var(--color-ink-muted);
+    color: var(--color-ink);
     font-size: 0.75rem;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1.5;
 }
 .clientName {
@@ -590,8 +580,8 @@
     color: var(--color-brand-text);
 }
 .eventIcon svg {
-    inline-size: 1.25rem;
-    block-size: 1.25rem;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
 }
 .updateText {
     display: grid;
@@ -772,8 +762,7 @@
 
 @container dashboard-listings (max-width: 18rem) {
     .thumbnail {
-        inline-size: 3.5rem;
-        block-size: 3.5rem;
+        --property-cover-size: 3.5rem;
     }
 
     .listingRow {

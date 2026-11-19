@@ -12,11 +12,9 @@ import {
     portalProfileMenuItemClass,
     portalProfileMenuSurfaceClass,
 } from "@/components/layout/portal-profile-menu";
-import { AppImage } from "@/components/shared/app-image";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     ArrowRight,
-    Building,
     CalendarClock,
     CalendarPlus,
     CallIcon,
@@ -29,6 +27,7 @@ import {
     X,
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -306,6 +305,7 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
                 render={
                     <IconButton
                         size="sm"
+                        appearance={featured ? "inverse" : "outline"}
                         className={s.menuTrigger}
                         aria-label={`More actions for visit with ${visit.client}`}
                     />
@@ -365,10 +365,12 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
             </div>
 
             <div className={s.details}>
-                <div className={s.cover}>
-                    <Building aria-hidden className={s.coverFallback} />
-                    <AppImage src={visit.coverImage} alt="" fill sizes="64px" />
-                </div>
+                <PropertyCoverImage
+                    src={visit.coverImage}
+                    alt=""
+                    className={s.cover}
+                    sizes="64px"
+                />
                 <div className={s.property}>
                     <p id={titleId} className={s.propertyName}>
                         {visit.property}

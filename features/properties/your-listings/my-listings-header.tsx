@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { MyListingsSummary } from "@/lib/api/my-listings";
-import { formatSortLabel } from "@/lib/format/owner-listings-labels";
 import {
     EMPTY_PROPERTY_CRITERIA,
     normalizePropertyCriteria,
@@ -13,22 +12,14 @@ import { getShortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { FilterChip } from "@/components/shared/filter-chip";
+import { SlidersHorizontal } from "@/components/shared/icons";
 import {
-    ArrowDownUp,
-    ChevronDown,
-    Plus,
-    Search,
-    SlidersHorizontal,
-} from "@/components/shared/icons";
+    LIST_SEARCH_WIDTH_CLASS,
+    ListAddButton,
+    ListSearchField,
+    ListToolbarSelect,
+} from "@/components/shared/list-toolbar";
 import { Skeleton } from "@/components/shared/skeleton";
-import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -43,8 +34,10 @@ import type { MyListingsFilters, MyListingSort } from "@/features/properties/you
 
 type StatusTab = "published" | "draft" | "deleted";
 
-const SEARCH_WIDTH_CLASS =
-    "flex-1 min-inline-0 inline-full shadow-sm sm:flex-none sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64";
+const SEARCH_WIDTH_CLASS = cn(
+    LIST_SEARCH_WIDTH_CLASS,
+    "flex-1 shadow-sm inline-full min-inline-0 sm:flex-none",
+);
 
 const STATUS_TABS: {
     key: StatusTab;
@@ -89,99 +82,6 @@ function countSheetFilters(filters: MyListingsFilters): number {
     if (filters.bhk.length > 0) count += 1;
     if (filters.type) count += 1;
     return count;
-}
-
-function MyListingsQueryInput({
-    value,
-    onChange,
-}: {
-    value: string;
-    onChange: (q: string) => void;
-}) {
-    const [draft, setDraft] = useState(value);
-    const [prevValue, setPrevValue] = useState(value);
-
-    // Sync when the parent filter changes (e.g. Clear filters), not while typing.
-    if (value !== prevValue) {
-        setPrevValue(value);
-        setDraft(value);
-    }
-
-    useEffect(() => {
-        if (draft === value) return;
-        const timer = window.setTimeout(() => onChange(draft), 300);
-        return () => window.clearTimeout(timer);
-    }, [draft, onChange, value]);
-
-    return (
-        <Input
-            size="sm"
-            value={draft}
-            onValueChange={setDraft}
-            placeholder="Search listings"
-            aria-label="Search your listings"
-            startIcon={Search}
-            clearable
-            wrapperClassName={SEARCH_WIDTH_CLASS}
-            className="
-              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
-              block-[38px]!
-              hover:border-ink/25!
-              focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
-            "
-        />
-    );
-}
-
-function MyListingsSortMenu({
-    sort,
-    onSortChange,
-}: {
-    sort: MyListingSort;
-    onSortChange: (sort: MyListingSort) => void;
-}) {
-    const isDefaultSort = sort === "newest";
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <button
-                        type="button"
-                        className={cn(
-                            ownerListingsChipClassName(!isDefaultSort),
-                            "gap-2",
-                            isDefaultSort && "text-ink-muted",
-                        )}
-                    >
-                        <ArrowDownUp
-                            aria-hidden
-                            className="text-brand block-4 inline-4"
-                            strokeWidth={1.75}
-                        />
-                        <span className="hidden sm:inline">{formatSortLabel(sort)}</span>
-                        <span className="sm:hidden">Sort</span>
-                        <ChevronDown
-                            aria-hidden
-                            className="opacity-60 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                    </button>
-                }
-            />
-            <DropdownMenuContent align="end" className="min-inline-44">
-                {SORT_OPTIONS.map((option) => (
-                    <DropdownMenuItem
-                        key={option.value}
-                        onClick={() => onSortChange(option.value)}
-                        className={cn(sort === option.value && "font-semibold text-brand")}
-                    >
-                        {option.label}
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
 }
 
 function MyListingsFilterDialog({
@@ -235,39 +135,6 @@ function MyListingsFilterDialog({
                 });
             }}
         />
-    );
-}
-
-function AddPropertyToolbarButton({ onClick }: { onClick: () => void }) {
-    const shortcut = getShortcut("add_property");
-
-    return (
-        <Button
-            type="button"
-            variant="accent"
-            size="sm"
-            onClick={onClick}
-            aria-label="Add property"
-            className="hidden gap-2 px-3.5 block-[38px]! md:inline-flex"
-        >
-            <Plus aria-hidden strokeWidth={1.75} />
-            Add property
-            {shortcut ? (
-                <KbdGroup className="gap-0.5">
-                    {shortcut.displayKeys.map((key) => (
-                        <Kbd
-                            key={key}
-                            className="
-                              border-surface/25 bg-surface/15 px-1.5 text-[10px] text-surface
-                              [box-shadow:none] min-inline-4
-                            "
-                        >
-                            {key}
-                        </Kbd>
-                    ))}
-                </KbdGroup>
-            ) : null}
-        </Button>
     );
 }
 
@@ -465,18 +332,28 @@ export function MyListingsHeader({
                         </OwnerListingsChipsCarousel>
 
                         <div className="flex shrink-0 items-center gap-2.5 min-inline-0">
-                            <MyListingsQueryInput
+                            <ListSearchField
+                                placeholder="Search listings"
+                                aria-label="Search your listings"
+                                wrapperClassName={SEARCH_WIDTH_CLASS}
                                 value={filters.q}
                                 onChange={(q) => onFiltersChange({ ...filters, q, page: 1 })}
                             />
-                            <MyListingsSortMenu
-                                sort={filters.sort}
-                                onSortChange={(sort) =>
-                                    onFiltersChange({ ...filters, sort, page: 1 })
-                                }
+                            <ListToolbarSelect
+                                label="Sort listings"
+                                options={SORT_OPTIONS}
+                                defaultValue="newest"
+                                mobileLabel="Sort"
+                                value={filters.sort}
+                                onChange={(sort) => onFiltersChange({ ...filters, sort, page: 1 })}
                             />
                             {onAddProperty ? (
-                                <AddPropertyToolbarButton onClick={onAddProperty} />
+                                <ListAddButton
+                                    label="Add property"
+                                    shortcutId="add_property"
+                                    onClick={onAddProperty}
+                                    className="hidden md:inline-flex"
+                                />
                             ) : null}
                         </div>
                     </div>

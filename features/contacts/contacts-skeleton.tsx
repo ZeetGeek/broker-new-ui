@@ -19,7 +19,7 @@ function ContactCardSkeleton({ variant }: { variant: "buyer" | "owner" }) {
                 <Bone className="shrink-0 rounded-full block-8 inline-8" />
             </div>
             <div className="flex items-center gap-3">
-                <Bone className="shrink-0 rounded-full border-2 border-white block-10 inline-10" />
+                <Bone className="shrink-0 rounded-full border-2 border-white block-12 inline-12" />
                 <div className="flex flex-1 flex-col gap-2 min-inline-0">
                     <Bone className="rounded-sm block-4 inline-28 max-inline-full" />
                     <Bone className="rounded-sm block-3.5 inline-32 max-inline-full" />
@@ -39,13 +39,13 @@ function ContactCardSkeleton({ variant }: { variant: "buyer" | "owner" }) {
                 </div>
             </div>
             <div className="mbs-auto flex flex-col gap-3 border-bs border-border-warm pbs-3">
-                <div className="flex items-center gap-3 min-block-11">
+                <div className="flex items-center justify-center gap-3 rounded-control border border-dashed border-brand/40 px-3 min-block-11">
                     <Bone className="rounded-sm block-3.5 inline-16" />
                     <div className="flex -space-x-2">
                         {[0, 1, 2].map((index) => (
                             <Bone
                                 key={index}
-                                className="rounded-full ring-2 ring-surface block-7 inline-7"
+                                className="rounded-full ring-2 ring-surface block-6 inline-6"
                             />
                         ))}
                     </div>
@@ -74,7 +74,7 @@ export function ContactsSkeleton({
             </span>
             <div
                 aria-hidden
-                className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
             >
                 {Array.from({ length: count }, (_, index) => (
                     <ContactCardSkeleton key={index} variant={variant} />

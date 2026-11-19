@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import {
     OWNER_PROFILE_HREF,
     OWNER_PROPERTIES_NEW_HREF,
@@ -152,7 +153,7 @@ function CityChips({ city }: { city: string | null }) {
 
     return (
         <>
-            <Badge color="sky">{city}</Badge>
+            <Badge color="sky">{formatPlaceName(city)}</Badge>
             <EditProfileLink />
         </>
     );

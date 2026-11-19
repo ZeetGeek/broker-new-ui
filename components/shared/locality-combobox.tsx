@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { useDebouncedValue, useLocalitySearch } from "@/hooks/use-locations";
 
 import { MapPinned } from "@/components/shared/icons";
@@ -50,6 +51,7 @@ export function LocalityCombobox({
     return (
         <SearchCombobox
             {...(props as SearchComboboxProps)}
+            formatChipLabel={formatPlaceName}
             options={options}
             onSearchChange={setSearch}
             onOpenChange={setOpen}

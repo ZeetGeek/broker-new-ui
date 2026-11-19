@@ -6,21 +6,19 @@ import toast from "react-hot-toast";
 import { useSearchParams } from "@/lib/navigation";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { DrawerSection } from "@/components/shared/drawer-section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
+import { CheckCircle2, SlidersHorizontal, Trash2, X } from "@/components/shared/icons";
 import {
-    CheckCircle2,
-    Plus,
-    Search,
-    SlidersHorizontal,
-    Trash2,
-    X,
-} from "@/components/shared/icons";
+    ListAddButton,
+    ListSearchField,
+    ListToolbarSelect,
+} from "@/components/shared/list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Skeleton } from "@/components/shared/skeleton";
 import { StatusTabs } from "@/components/shared/status-tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 import { useAppSelector } from "@/store/hooks";
@@ -44,7 +42,7 @@ import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES, useTasks } from "./preview-
 import { changeTaskQuickly, type TaskQuickChange } from "./quick-actions";
 import { encodeTaskDraftTitle } from "./quick-add-draft";
 import { TaskDeleteDialog, TaskDetail, TaskReminders } from "./task-detail";
-import { TaskForm, TaskSelect } from "./task-form";
+import { TaskForm } from "./task-form";
 import { TaskArchive } from "./task-list";
 import { TaskPanel } from "./task-panel";
 import { TaskPlanner } from "./task-planner";
@@ -446,19 +444,17 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                     <div className={styles.tools}>
                         <label className={styles.searchField}>
                             <span className="sr-only">Search tasks</span>
-                            <Input
-                                size="sm"
-                                wrapperClassName="rounded-control inline-full"
-                                className="rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20 pointer-coarse:min-block-11"
+                            <ListSearchField
                                 placeholder="Search tasks or linked records"
+                                aria-label="Search tasks"
                                 value={search}
-                                onValueChange={(q) => updateWorkspace({ q: q || undefined })}
-                                startIcon={Search}
-                                clearable
+                                onChange={(q) => updateWorkspace({ q: q || undefined })}
+                                debounceMs={0}
+                                fullWidth
                             />
                         </label>
-                        <TaskSelect
-                            toolbar
+                        <ListToolbarSelect
+                            active
                             label="Sort tasks"
                             value={sort}
                             options={[
@@ -482,9 +478,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                 updateWorkspace({ sort: value === defaultSort ? undefined : value })
                             }
                         />
-                        <Button variant="accent" className={styles.toolbarButton} onClick={create}>
-                            <Plus aria-hidden /> Add task
-                        </Button>
+                        <ListAddButton label="Add task" onClick={create} />
                     </div>
                 </div>
                 <div className={styles.board}>
@@ -789,32 +783,39 @@ function TaskFilters({
                 </div>
             }
         >
-            <fieldset className={styles.filterGroup}>
-                <legend>Due date</legend>
-                <div className={styles.filterOptions}>
-                    {DUE_FILTERS.map((option) => (
-                        <FilterChip
-                            key={option.value}
-                            label={option.label}
-                            isActive={date === option.value}
-                            onClick={() => setDate(option.value)}
-                        />
-                    ))}
-                </div>
-            </fieldset>
-            <fieldset className={styles.filterGroup}>
-                <legend>Linked records</legend>
-                <div className={styles.filterOptions}>
-                    {LINK_FILTERS.map((option) => (
-                        <FilterChip
-                            key={option.value}
-                            label={option.label}
-                            isActive={link === option.value}
-                            onClick={() => setLink(option.value)}
-                        />
-                    ))}
-                </div>
-            </fieldset>
+            <DrawerSection title="Due date" description="Choose when the tasks are due.">
+                <fieldset className={styles.filterGroup}>
+                    <legend className="sr-only">Due date</legend>
+                    <div className={styles.filterOptions}>
+                        {DUE_FILTERS.map((option) => (
+                            <FilterChip
+                                key={option.value}
+                                label={option.label}
+                                isActive={date === option.value}
+                                onClick={() => setDate(option.value)}
+                            />
+                        ))}
+                    </div>
+                </fieldset>
+            </DrawerSection>
+            <DrawerSection
+                title="Linked records"
+                description="Show tasks linked to clients, owners or properties."
+            >
+                <fieldset className={styles.filterGroup}>
+                    <legend className="sr-only">Linked records</legend>
+                    <div className={styles.filterOptions}>
+                        {LINK_FILTERS.map((option) => (
+                            <FilterChip
+                                key={option.value}
+                                label={option.label}
+                                isActive={link === option.value}
+                                onClick={() => setLink(option.value)}
+                            />
+                        ))}
+                    </div>
+                </fieldset>
+            </DrawerSection>
             <p className="body-sm text-ink-muted">
                 Filters apply to the selected tab. Tasks can link to Clients, owners and properties.
             </p>

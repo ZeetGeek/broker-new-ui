@@ -7,6 +7,7 @@ import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
 import { CharacterCount } from "@/components/shared/character-count";
+import { DrawerSection } from "@/components/shared/drawer-section";
 import { CalendarDays, CalendarPlus, Clock, MapPin, Plus } from "@/components/shared/icons";
 import { PropertyPhotoGallery } from "@/components/shared/property-photo-gallery";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -257,26 +258,34 @@ export function VisitDetail({
                 </div>
             )}
         >
-            <div className={styles.detailLayout}>
-                <div className={styles.detailProperty}>
-                    <div>
-                        <h2>{property?.title ?? "Property not available"}</h2>
-                        <p>
-                            {property?.configLabel} · {property?.locality}, {property?.city}
-                        </p>
+            <div className="flex flex-col min-inline-0">
+                <DrawerSection
+                    title="Property"
+                    description="Review the property details and photos."
+                >
+                    <div className="flex flex-col gap-4">
+                        {" "}
+                        <div className={styles.detailProperty}>
+                            <div>
+                                <h2>{property?.title ?? "Property not available"}</h2>
+                                <p>
+                                    {property?.configLabel} · {property?.locality}, {property?.city}
+                                </p>
+                            </div>
+                            <VisitStatusBadge state={state} />
+                        </div>
+                        <PropertyPhotoGallery
+                            key={visit.propertyId}
+                            thumbnailPosition="right"
+                            property={{
+                                title: property?.title ?? "Property",
+                                imageSrc: property?.imageUrl ?? "",
+                                imageSrcs: property?.imageUrls,
+                            }}
+                            onLightboxChange={setLightboxOpen}
+                        />
                     </div>
-                    <VisitStatusBadge state={state} />
-                </div>
-                <PropertyPhotoGallery
-                    key={visit.propertyId}
-                    thumbnailPosition="right"
-                    property={{
-                        title: property?.title ?? "Property",
-                        imageSrc: property?.imageUrl ?? "",
-                        imageSrcs: property?.imageUrls,
-                    }}
-                    onLightboxChange={setLightboxOpen}
-                />
+                </DrawerSection>
                 {ended && (
                     <div className={styles.attendancePrompt}>
                         <Clock aria-hidden />
@@ -289,143 +298,169 @@ export function VisitDetail({
                         </div>
                     </div>
                 )}
-                <section className={styles.detailSchedule} aria-label="Visit date and time">
-                    <div>
-                        <CalendarDays aria-hidden />
-                        <div>
-                            <span>Visit date</span>
-                            <time dateTime={visit.startsAt}>{formatVisitDate(visit.startsAt)}</time>
-                        </div>
-                    </div>
-                    <div>
-                        <Clock aria-hidden />
-                        <div>
-                            <span>{minutes} minutes · IST</span>
-                            <p>
-                                {formatVisitTime(visit.startsAt)} – {formatVisitTime(visit.endsAt)}
-                            </p>
-                        </div>
-                    </div>
-                </section>
-                <section
-                    className={styles.detailGroup}
-                    aria-label="Client, owner and meeting point"
+                <DrawerSection
+                    title="Visit date and time"
+                    description="Check when the visit starts and how long it lasts."
                 >
-                    <div className={styles.detailLine}>
-                        <UserAvatar name={client?.name ?? "Client"} size="sm" />
+                    <section className={styles.detailSchedule} aria-label="Visit date and time">
                         <div>
-                            <span>Client</span>
-                            <strong>{client?.name ?? "Client not available"}</strong>
+                            <CalendarDays aria-hidden />
+                            <div>
+                                <span>Visit date</span>
+                                <time dateTime={visit.startsAt}>
+                                    {formatVisitDate(visit.startsAt)}
+                                </time>
+                            </div>
                         </div>
-                    </div>
-                    <div className={styles.detailLine}>
-                        <UserAvatar
-                            name={property?.owner?.name ?? "Owner"}
-                            imageUrl={property?.owner?.imageUrl}
-                            size="sm"
-                        />
                         <div>
-                            <span>Owner</span>
-                            <strong>{property?.owner?.name ?? "Not added"}</strong>
+                            <Clock aria-hidden />
+                            <div>
+                                <span>{minutes} minutes · IST</span>
+                                <p>
+                                    {formatVisitTime(visit.startsAt)} –{" "}
+                                    {formatVisitTime(visit.endsAt)}
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                    <div className={`${styles.detailLine} ${styles.detailMeetingPoint}`}>
-                        <span className={styles.meetingPointIcon} aria-hidden>
-                            <MapPin />
-                        </span>
-                        <div>
-                            <span>Meeting point</span>
-                            <strong>{property?.address || "No meeting point added"}</strong>
-                        </div>
-                    </div>
-                </section>
-                <section
-                    className={styles.detailReminders}
-                    aria-labelledby="visit-reminders-heading"
+                    </section>
+                </DrawerSection>
+                <DrawerSection
+                    title="People and meeting point"
+                    description="See the client, owner and where to meet."
                 >
-                    <div className={styles.detailSectionHeading}>
-                        <h3 id="visit-reminders-heading">Reminders</h3>
-                        {!live && reminders.length > 0 && <span>Reminders stopped</span>}
-                    </div>
-                    {reminders.length > 0 ? (
-                        <TooltipProvider>
-                            <ul className={styles.detailReminderList} aria-label="Visit reminders">
-                                {reminders.map((reminder) => (
-                                    <li key={reminder.key}>
-                                        <Tooltip>
-                                            <TooltipTrigger
-                                                render={
-                                                    <span
-                                                        tabIndex={0}
-                                                        className={styles.detailReminderChip}
-                                                    />
-                                                }
-                                            >
-                                                {visitReminderLabel(reminder.minutes).replace(
-                                                    /\bminutes?\b/g,
-                                                    "min",
-                                                )}
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <time dateTime={reminder.at}>
-                                                    {formatVisitDate(reminder.at)} ·{" "}
-                                                    {formatVisitTime(reminder.at)} IST
-                                                </time>
-                                                {" · "}
-                                                {!live
-                                                    ? "Stopped"
-                                                    : Date.parse(reminder.at) <= now
-                                                      ? "Time passed"
-                                                      : "Upcoming"}
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </li>
-                                ))}
-                            </ul>
-                        </TooltipProvider>
-                    ) : (
-                        <p className={styles.muted}>No reminders set for this visit.</p>
-                    )}
-                </section>
-                {(visit.notes || visit.attendanceNote) && (
-                    <section className={styles.detailNotes} aria-label="Visit notes">
-                        {visit.notes && (
+                    <section
+                        className={styles.detailGroup}
+                        aria-label="Client, owner and meeting point"
+                    >
+                        <div className={styles.detailLine}>
+                            <UserAvatar name={client?.name ?? "Client"} size="sm" />
                             <div>
-                                <h3>Notes</h3>
-                                <p className={styles.note}>{visit.notes}</p>
+                                <span>Client</span>
+                                <strong>{client?.name ?? "Client not available"}</strong>
                             </div>
-                        )}
-                        {visit.attendanceNote && (
+                        </div>
+                        <div className={styles.detailLine}>
+                            <UserAvatar
+                                name={property?.owner?.name ?? "Owner"}
+                                imageUrl={property?.owner?.imageUrl}
+                                size="sm"
+                            />
                             <div>
-                                <h3>
-                                    {visit.status === "completed"
-                                        ? "Outcome note"
-                                        : visit.status === "cancelled"
-                                          ? "Cancellation reason"
-                                          : "Reason"}
-                                </h3>
-                                <p className={styles.note}>{visit.attendanceNote}</p>
+                                <span>Owner</span>
+                                <strong>{property?.owner?.name ?? "Not added"}</strong>
                             </div>
+                        </div>
+                        <div className={`${styles.detailLine} ${styles.detailMeetingPoint}`}>
+                            <span className={styles.meetingPointIcon} aria-hidden>
+                                <MapPin />
+                            </span>
+                            <div>
+                                <span>Meeting point</span>
+                                <strong>{property?.address || "No meeting point added"}</strong>
+                            </div>
+                        </div>
+                    </section>
+                </DrawerSection>
+                <DrawerSection
+                    title="Reminders"
+                    description="Review reminder times and whether they are still active."
+                >
+                    <section className={styles.detailReminders} aria-label="Visit reminders">
+                        <div className={styles.detailSectionHeading}>
+                            {!live && reminders.length > 0 && <span>Reminders stopped</span>}
+                        </div>
+                        {reminders.length > 0 ? (
+                            <TooltipProvider>
+                                <ul
+                                    className={styles.detailReminderList}
+                                    aria-label="Visit reminders"
+                                >
+                                    {reminders.map((reminder) => (
+                                        <li key={reminder.key}>
+                                            <Tooltip>
+                                                <TooltipTrigger
+                                                    render={
+                                                        <span
+                                                            tabIndex={0}
+                                                            className={styles.detailReminderChip}
+                                                        />
+                                                    }
+                                                >
+                                                    {visitReminderLabel(reminder.minutes).replace(
+                                                        /\bminutes?\b/g,
+                                                        "min",
+                                                    )}
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <time dateTime={reminder.at}>
+                                                        {formatVisitDate(reminder.at)} ·{" "}
+                                                        {formatVisitTime(reminder.at)} IST
+                                                    </time>
+                                                    {" · "}
+                                                    {!live
+                                                        ? "Stopped"
+                                                        : Date.parse(reminder.at) <= now
+                                                          ? "Time passed"
+                                                          : "Upcoming"}
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </TooltipProvider>
+                        ) : (
+                            <p className={styles.muted}>No reminders set for this visit.</p>
                         )}
                     </section>
-                )}
-                <section className={styles.activitySection} aria-label="Activity">
-                    <h3>Activity</h3>
-                    <ol className={styles.activityList}>
-                        {[...visit.history].reverse().map((event, index) => (
-                            <li key={`${event.at}-${index}`}>
-                                <span className={styles.activityDot} aria-hidden />
+                </DrawerSection>
+                {(visit.notes || visit.attendanceNote) && (
+                    <DrawerSection
+                        title="Visit notes"
+                        description="Read preparation notes and recorded outcomes."
+                    >
+                        <section className={styles.detailNotes} aria-label="Visit notes">
+                            {visit.notes && (
                                 <div>
-                                    <p>{event.label}</p>
-                                    <time dateTime={event.at}>
-                                        {formatVisitDate(event.at)} · {formatVisitTime(event.at)}{" "}
-                                        IST
-                                    </time>
+                                    <h3>Notes</h3>
+                                    <p className={styles.note}>{visit.notes}</p>
                                 </div>
-                            </li>
-                        ))}
-                    </ol>
-                </section>
+                            )}
+                            {visit.attendanceNote && (
+                                <div>
+                                    <h3>
+                                        {visit.status === "completed"
+                                            ? "Outcome note"
+                                            : visit.status === "cancelled"
+                                              ? "Cancellation reason"
+                                              : "Reason"}
+                                    </h3>
+                                    <p className={styles.note}>{visit.attendanceNote}</p>
+                                </div>
+                            )}
+                        </section>
+                    </DrawerSection>
+                )}
+                <DrawerSection
+                    title="Activity"
+                    description="See changes to this visit, newest first."
+                >
+                    <section className={styles.activitySection} aria-label="Activity">
+                        <ol className={styles.activityList}>
+                            {[...visit.history].reverse().map((event, index) => (
+                                <li key={`${event.at}-${index}`}>
+                                    <span className={styles.activityDot} aria-hidden />
+                                    <div>
+                                        <p>{event.label}</p>
+                                        <time dateTime={event.at}>
+                                            {formatVisitDate(event.at)} ·{" "}
+                                            {formatVisitTime(event.at)} IST
+                                        </time>
+                                    </div>
+                                </li>
+                            ))}
+                        </ol>
+                    </section>
+                </DrawerSection>
             </div>
         </VisitOverlay>
     );

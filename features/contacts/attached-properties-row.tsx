@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 
 import { OVERLAY_GLASS_BUTTON_CLASS } from "@/components/shared/overlay-card";
-import { PropertyThumb } from "@/components/shared/property-thumb";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { ContactPropertyCardItem } from "@/features/contacts/contact-card-model";
@@ -12,17 +12,15 @@ const MAX_VISIBLE = 3;
 
 function PropertyCoverTile({ property }: { property: ContactPropertyCardItem }) {
     return (
-        <PropertyThumb
+        <PropertyCoverImage
             src={property.coverUrl}
             alt=""
-            hoverScale={false}
             sizes="36px"
-            iconClassName="block-4 inline-4"
-            sizeClassName="block-9 inline-9"
             className="
-              rounded-[8px] shadow-xs ring-2 ring-surface transition-transform duration-160
+              transition-transform duration-160
               group-hover/tile:-translate-y-0.5
             "
+            size={36}
         />
     );
 }

@@ -3,6 +3,88 @@
 Single source of truth for making things common. `.claude/rules/` and
 `.cursor/rules/` only point here.
 
+## Square property cover images
+
+Use `PropertyCoverImage` from `components/shared/property-cover-image.tsx` for
+square property photos in compact cards and list rows. It owns the 2px white
+frame, shared 12px corners, soft layered shadow, and missing-photo placeholder.
+It uses `AppImage` for loading, optimisation, and failed-photo fallback.
+
+Pass `src`, `alt` (empty for decorative images), and `size` in pixels (default 64).
+Use `className` for layout and `imageClassName` for crop positioning. When responsive
+classes change the rendered frame width, also provide the matching `sizes` value.
+Use `priority` only for an image that needs preloading. For responsive CSS modules,
+set `--property-cover-size` on the frame and provide matching `sizes`; the `size` prop
+provides its default. Optional `children` preserve photo-count badges. Square
+thumbnails in dashboards, contacts, visits, selectors, and deal/lead summaries use
+this component. Rectangular `PropertyThumb` uses, full property cards, and property
+galleries retain their existing components.
+
+## Drawer accordion sections
+
+Use `DrawerSection` from `components/shared/drawer-section.tsx` to group fields
+and record details in drawers. Give every group a plain-language `title` and
+short `description`. Groups start open and collapse independently using the
+heading or chevron, including with a keyboard. Collapsing keeps the contents
+mounted so field values are preserved. Header and footer actions stay outside
+the sections. Small confirmations and empty/error messages remain compact.
+
+The component owns the headings, description, spacing, dividers and disclosure
+icon. `WizardSection` delegates to it for existing property, Client, Owner and
+Task forms; its section stack retains the form's established spacing.
+
+For custom or React Hook Form validation, call `revealDrawerSections(form)`
+before focusing errors. Native invalid events reveal enclosing sections
+automatically. Deep links to section content should reveal that section before
+scrolling to it. Do not nest an interactive action inside the disclosure heading.
+
+## Area name colours
+
+Geographic chips (areas, cities, states, and countries) display their labels with
+`formatPlaceName` from `lib/format/owner-listings-labels.ts`. This is display-only
+title case: keep the original values for saved data, filters, and colour lookup.
+`LocalityCombobox` applies it to selected chips in forms and profile editors.
+
+Use `areaColorClassName(area)` from `lib/styles/area-color.ts` to assign colours
+to any area presentation: a chip, label, row, or another element. The function
+returns background and text colour classes without imposing shape or layout.
+The same name has the same colour across pages, list orders, and sessions.
+Capitalisation, extra spaces, and equivalent Unicode forms do not affect colour.
+Each page owns its rendering. Keep plain addresses and location text in their
+existing layout unless a colour treatment is requested.
+
+Colours come from a fixed palette; different names can share a colour. These
+colours carry no status or priority meaning. Keep the palette order and hash
+stable to preserve assignments. Do not assign area colours by list index or
+random values.
+
+## List toolbar controls
+
+Use `ListSearchField`, `ListToolbarSelect`, and `ListAddButton` from
+`components/shared/list-toolbar.tsx` for list-page search, sort/filter dropdowns,
+and primary add actions. They own the shared control face, icons, focus states,
+touch sizing, and optional keyboard shortcut badge. Compose only the controls
+the page needs; keep tabs, filter sheets, layout, and domain logic on the page.
+
+`ListSearchField` debounces changes by 300ms and follows external filter resets.
+Pass `debounceMs={0}` for local filtering or when the page already debounces
+requests. Use `fullWidth` inside a page-sized wrapper. Set the placeholder and
+accessible label for the current list.
+
+`ListToolbarSelect` takes page-specific `options`, `value`, and `onChange`.
+Use `defaultValue` for sort highlighting, `active` for an explicitly highlighted
+filter, and `mobileLabel="Sort"` for compact phone labels. It exposes the selected
+option as a radio item. A date-range dropdown keeps its date-filter semantics.
+
+`ListAddButton` takes `label`, an optional `icon` (defaults to Plus), an optional
+`trailingIcon` for a dropdown cue, an optional `shortcutId`, and normal button props.
+It defaults to the accent variant; use
+`variant="outline"` for secondary add actions.
+The page keeps shortcut handling, action behavior, and breakpoint visibility;
+existing phone FABs remain separate. Form selects, autocomplete fields, modal
+pickers, and global navigation search retain their own patterns. Marketplace
+search bands retain their discovery layout.
+
 ## Icon-only actions
 
 Use `IconButton` from `components/shared/icon-button.tsx` for compact icon actions,
@@ -23,8 +105,16 @@ pagination group, input, or filter chip. It keeps the shared sizing, centering, 
 focus and hover fill, without adding a second border or shadow. Standalone icon
 actions use the default `appearance="outline"`.
 
+Use `appearance="inverse"` on dark cards for a translucent face, light icon,
+and subtle hover border. Keep the icon fully opaque for contrast.
+
 Text-labelled ghost buttons, calendar date cells, drag handles and segmented
 selection controls keep their own semantics and are not icon action buttons.
+
+Inside an existing interactive trigger (such as an accordion header or native
+`summary`), use `IconButtonFace` from `components/shared/icon-button-face.tsx`.
+It shares the `IconButton` styles and sizes as a decorative span, preserving one
+keyboard target and avoiding a nested button.
 
 ## Attached client summaries
 

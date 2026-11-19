@@ -1,29 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import { getShortcut } from "@/lib/shortcuts";
-import { cn } from "@/lib/utils";
-
-import { FilterChip, filterChipClassName } from "@/components/shared/filter-chip";
+import { FilterChip } from "@/components/shared/filter-chip";
+import { Home, User } from "@/components/shared/icons";
 import {
-    ArrowDownUp,
-    ChevronDown,
-    ClientsTabIcon,
-    OwnersTabIcon,
-    Plus,
-    Search,
-} from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+    ListAddButton,
+    ListSearchField,
+    ListToolbarSelect,
+} from "@/components/shared/list-toolbar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import type {
@@ -43,45 +27,6 @@ const SORT_OPTIONS: { value: ContactsSort; label: string }[] = [
     { value: "most_active", label: "Most active" },
 ];
 
-function ContactsQueryInput({ value, onChange }: { value: string; onChange: (q: string) => void }) {
-    const [draft, setDraft] = useState(value);
-    const [prevValue, setPrevValue] = useState(value);
-
-    if (value !== prevValue) {
-        setPrevValue(value);
-        setDraft(value);
-    }
-
-    useEffect(() => {
-        if (draft === value) return;
-        const timer = window.setTimeout(() => onChange(draft), 300);
-        return () => window.clearTimeout(timer);
-    }, [draft, onChange, value]);
-
-    return (
-        <Input
-            size="sm"
-            value={draft}
-            onValueChange={setDraft}
-            placeholder="Search name, number or area"
-            aria-label="Search your clients"
-            startIcon={Search}
-            clearable
-            wrapperClassName="
-              min-inline-44 inline-44 shadow-sm
-              sm:min-inline-52 sm:inline-52
-              lg:min-inline-64 lg:inline-64
-            "
-            className="
-              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
-              block-[38px]!
-              hover:border-ink/25!
-              focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
-            "
-        />
-    );
-}
-
 export function ContactsHeader({
     filters,
     onFiltersChange,
@@ -97,7 +42,6 @@ export function ContactsHeader({
 }) {
     const isBuyers = filters.tab === "buyers";
     const addLabel = isBuyers ? "Add client" : "Add owner";
-    const addShortcut = getShortcut("add_contact");
 
     const setTab = (tab: ContactsTab) => {
         onFiltersChange({ ...filters, tab });
@@ -114,7 +58,7 @@ export function ContactsHeader({
                                     value: "buyers" as const,
                                     label: "Clients",
                                     mobileLabel: "Clients",
-                                    icon: ClientsTabIcon,
+                                    icon: User,
                                     count:
                                         summary != null && summary.buyerCount > 0
                                             ? summary.buyerCount
@@ -125,7 +69,7 @@ export function ContactsHeader({
                                     value: "owners" as const,
                                     label: "Owners",
                                     mobileLabel: "Owners",
-                                    icon: OwnersTabIcon,
+                                    icon: Home,
                                     count:
                                         summary != null && summary.ownerCount > 0
                                             ? summary.ownerCount
@@ -207,98 +151,30 @@ export function ContactsHeader({
                     </OwnerListingsChipsCarousel>
 
                     <div className="flex shrink-0 items-center gap-2.5">
-                        <ContactsQueryInput
+                        <ListSearchField
+                            placeholder="Search name, number or area"
+                            aria-label="Search your clients"
                             value={filters.q}
                             onChange={(q) => onFiltersChange({ ...filters, q })}
                         />
 
-                        <DropdownMenu>
-                            <Tooltip>
-                                <TooltipTrigger
-                                    render={
-                                        <DropdownMenuTrigger
-                                            render={
-                                                <button
-                                                    type="button"
-                                                    className={cn(
-                                                        filterChipClassName(
-                                                            filters.sort !== "recent",
-                                                        ),
-                                                        "gap-2",
-                                                        filters.sort === "recent" &&
-                                                            "text-ink-muted",
-                                                    )}
-                                                />
-                                            }
-                                        >
-                                            <ArrowDownUp
-                                                aria-hidden
-                                                className="text-brand block-4 inline-4"
-                                                strokeWidth={1.75}
-                                            />
-                                            <span className="hidden sm:inline">
-                                                {SORT_OPTIONS.find(
-                                                    (option) => option.value === filters.sort,
-                                                )?.label ?? "Recent first"}
-                                            </span>
-                                            <span className="sm:hidden">Sort</span>
-                                            <ChevronDown
-                                                aria-hidden
-                                                className="opacity-60 block-3.5 inline-3.5"
-                                                strokeWidth={1.75}
-                                            />
-                                        </DropdownMenuTrigger>
-                                    }
-                                />
-                                <TooltipContent side="bottom">
-                                    Change the order of the list.
-                                </TooltipContent>
-                            </Tooltip>
-                            <DropdownMenuContent align="end" className="min-inline-44">
-                                {SORT_OPTIONS.map((option) => (
-                                    <DropdownMenuItem
-                                        key={option.value}
-                                        onClick={() =>
-                                            onFiltersChange({ ...filters, sort: option.value })
-                                        }
-                                        className={cn(
-                                            filters.sort === option.value &&
-                                                "font-semibold text-brand",
-                                        )}
-                                    >
-                                        {option.label}
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        <ListToolbarSelect
+                            label="Sort clients"
+                            value={filters.sort}
+                            options={SORT_OPTIONS}
+                            defaultValue="recent"
+                            mobileLabel="Sort"
+                            tooltip="Change the order of the list."
+                            onChange={(sort) => onFiltersChange({ ...filters, sort })}
+                        />
 
                         {onAdd ? (
-                            <Button
-                                type="button"
-                                variant="accent"
-                                size="sm"
+                            <ListAddButton
+                                label={addLabel}
+                                shortcutId="add_contact"
                                 onClick={onAdd}
-                                aria-label={addLabel}
-                                className="hidden gap-2 px-3.5 block-[38px]! md:inline-flex"
-                            >
-                                <Plus aria-hidden strokeWidth={1.75} />
-                                {addLabel}
-                                {addShortcut ? (
-                                    <KbdGroup className="gap-0.5">
-                                        {addShortcut.displayKeys.map((key) => (
-                                            <Kbd
-                                                key={key}
-                                                className="
-                                                  border-surface/25 bg-surface/15 px-1.5 text-[10px]
-                                                  text-surface [box-shadow:none] min-inline-4
-                                                "
-                                            >
-                                                {key}
-                                            </Kbd>
-                                        ))}
-                                    </KbdGroup>
-                                ) : null}
-                            </Button>
+                                className="hidden md:inline-flex"
+                            />
                         ) : null}
                     </div>
                 </div>

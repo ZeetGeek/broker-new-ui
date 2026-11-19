@@ -360,6 +360,26 @@ export function DashboardTasksCard() {
                                         <h3 className="h5">{dayLabel(selectedDay, "EEEE")}</h3>
                                     </div>
                                     <div className={styles.dayNavButtons}>
+                                        {selectedDay !== today ? (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="me-1"
+                                                aria-label="Go to today's tasks"
+                                                onClick={() => {
+                                                    const currentTime = Date.now();
+                                                    setNow(currentTime);
+                                                    setSelectedDay(taskDateKey(currentTime));
+                                                    setFilter("today");
+                                                    setScrolled(false);
+                                                    if (viewport.current)
+                                                        viewport.current.scrollTop = 0;
+                                                }}
+                                            >
+                                                Today
+                                            </Button>
+                                        ) : null}
                                         <IconButton
                                             size="sm"
                                             type="button"

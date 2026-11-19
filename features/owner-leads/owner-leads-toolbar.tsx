@@ -1,17 +1,18 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode } from "react";
 
+import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
-import { ArrowDownUp, ChevronDown, Search } from "@/components/shared/icons";
+import { ChevronDown } from "@/components/shared/icons";
+import { ListSearchField, ListToolbarSelect } from "@/components/shared/list-toolbar";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type OwnerLeadsDealType = "" | "sale" | "rent";
@@ -36,49 +37,11 @@ const TYPE_OPTIONS: { value: OwnerLeadsDealType; label: string }[] = [
     { value: "rent", label: "Rent" },
 ];
 
-function sortLabel(sort: OwnerLeadsSort): string {
-    return SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Newest first";
-}
-
 const CHIP_CLASS = `
   body-sm flex shrink-0 items-center gap-1.5 rounded-control border border-border-warm bg-surface
   px-3 font-medium text-ink transition-colors duration-160 block-control-md
   hover:border-ink/25
 `;
-
-function LeadsQueryInput({ value, onChange }: { value: string; onChange: (q: string) => void }) {
-    const [draft, setDraft] = useState(value);
-    const [prevValue, setPrevValue] = useState(value);
-
-    if (value !== prevValue) {
-        setPrevValue(value);
-        setDraft(value);
-    }
-
-    useEffect(() => {
-        if (draft === value) return;
-        const timer = window.setTimeout(() => onChange(draft), 300);
-        return () => window.clearTimeout(timer);
-    }, [draft, onChange, value]);
-
-    return (
-        <Input
-            size="default"
-            value={draft}
-            onValueChange={setDraft}
-            placeholder="Search broker, buyer or area"
-            aria-label="Search your leads"
-            startIcon={Search}
-            clearable
-            wrapperClassName="min-inline-44 inline-44 sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64"
-            className="
-              rounded-control border! border-border-warm bg-surface font-medium shadow-sm
-              hover:border-ink/25!
-              focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
-            "
-        />
-    );
-}
 
 function FilterMenu({
     label,
@@ -157,7 +120,7 @@ export function OwnerLeadsToolbar({
 
             <FilterMenu
                 label="Area"
-                valueLabel={filters.locality || "Area"}
+                valueLabel={formatPlaceName(filters.locality) || "Area"}
                 isDefault={!filters.locality}
             >
                 <DropdownMenuItem
@@ -172,7 +135,7 @@ export function OwnerLeadsToolbar({
                         onClick={() => onPatch({ locality })}
                         className={cn(filters.locality === locality && "font-semibold")}
                     >
-                        {locality}
+                        {formatPlaceName(locality)}
                     </DropdownMenuItem>
                 ))}
             </FilterMenu>
@@ -199,53 +162,23 @@ export function OwnerLeadsToolbar({
                 ))}
             </FilterMenu>
 
-            <DropdownMenu>
-                <Tooltip>
-                    <TooltipTrigger
-                        render={
-                            <DropdownMenuTrigger
-                                render={
-                                    <button
-                                        type="button"
-                                        className={cn(
-                                            CHIP_CLASS,
-                                            filters.sort === "recent" && "text-ink-muted",
-                                        )}
-                                    />
-                                }
-                            >
-                                <ArrowDownUp
-                                    aria-hidden
-                                    className="text-brand block-4 inline-4"
-                                    strokeWidth={1.75}
-                                />
-                                <span className="hidden sm:inline">{sortLabel(filters.sort)}</span>
-                                <span className="sm:hidden">Sort</span>
-                                <ChevronDown
-                                    aria-hidden
-                                    className="block-4 inline-4"
-                                    strokeWidth={1.75}
-                                />
-                            </DropdownMenuTrigger>
-                        }
-                    />
-                    <TooltipContent side="bottom">Change the order of the cards.</TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent align="end">
-                    {SORT_OPTIONS.map((option) => (
-                        <DropdownMenuItem
-                            key={option.value}
-                            onClick={() => onPatch({ sort: option.value })}
-                            className={cn(filters.sort === option.value && "font-semibold")}
-                        >
-                            {option.label}
-                        </DropdownMenuItem>
-                    ))}
-                </DropdownMenuContent>
-            </DropdownMenu>
+            <ListToolbarSelect
+                label="Sort leads"
+                value={filters.sort}
+                options={SORT_OPTIONS}
+                defaultValue="recent"
+                mobileLabel="Sort"
+                tooltip="Change the order of the cards."
+                onChange={(sort) => onPatch({ sort })}
+            />
 
             <div className="ms-auto flex flex-wrap items-center gap-2">
-                <LeadsQueryInput value={filters.q} onChange={(q) => onPatch({ q })} />
+                <ListSearchField
+                    placeholder="Search broker, buyer or area"
+                    aria-label="Search your leads"
+                    value={filters.q}
+                    onChange={(q) => onPatch({ q })}
+                />
                 {trailing}
             </div>
         </div>

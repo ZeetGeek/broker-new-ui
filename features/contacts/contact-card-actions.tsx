@@ -8,7 +8,6 @@ import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     CallIcon,
-    Eye,
     Link2,
     Lock,
     MoreHorizontal,
@@ -52,7 +51,6 @@ const MENU_ITEM_CLASS =
 export function ContactCardActions({
     name,
     phoneDigits,
-    onOpen,
     onEdit,
     editLabel = "Edit client",
     onAttach,
@@ -140,11 +138,8 @@ export function ContactCardActions({
                 <DropdownMenuContent
                     align="end"
                     onClick={stop}
-                    className="t-dropdown t-profile-menu animate-none! rounded-card border border-border-warm bg-surface p-1.5 text-ink shadow-xl ring-0 min-inline-48 before:backdrop-blur-none data-open:animate-none! data-closed:animate-none!"
+                    className="t-dropdown t-profile-menu animate-none! rounded-card border border-border-warm bg-surface p-1.5 text-ink shadow-xl ring-0 min-inline-40 before:backdrop-blur-none data-open:animate-none! data-closed:animate-none!"
                 >
-                    <DropdownMenuItem className={MENU_ITEM_CLASS} onClick={onOpen}>
-                        <Eye aria-hidden /> View details
-                    </DropdownMenuItem>
                     {onEdit ? (
                         <DropdownMenuItem
                             className={MENU_ITEM_CLASS}

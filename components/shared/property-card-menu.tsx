@@ -151,7 +151,7 @@ const ITEM_CLASS = `
 `;
 
 const ICON_CLASS = "menu-stroke-icon block-4.5 inline-4.5 shrink-0 text-ink!";
-const SEPARATOR_CLASS = "mx-1.5 my-1.5 bg-border-warm";
+const SEPARATOR_CLASS = "my-1.5 bg-border-warm";
 /* Keep pointer events so the `title` hint still shows on a disabled row. */
 const DISABLED_ITEM_CLASS =
     "data-disabled:pointer-events-auto data-disabled:cursor-not-allowed data-disabled:opacity-50";

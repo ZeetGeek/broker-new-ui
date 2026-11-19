@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 
+import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import {
     EMPTY_PROPERTY_CRITERIA,
     normalizePropertyCriteria,
@@ -112,7 +113,7 @@ function DiscoveryWhereMenu({
                         <span className="flex flex-1 flex-col min-inline-0">
                             <span className="text-xs font-medium text-ink-muted">Where</span>
                             <span className="truncate text-sm font-medium text-ink">
-                                {value || "Anywhere"}
+                                {formatPlaceName(value) || "Anywhere"}
                             </span>
                         </span>
                     </button>

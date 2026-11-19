@@ -1,4 +1,5 @@
 "use client";
+
 import { type ComponentProps, type ReactNode, useId, useState } from "react";
 import { Controller, type FieldPath, useFormContext } from "react-hook-form";
 
@@ -11,8 +12,9 @@ import { ConditionalField } from "@/components/property/fields/conditional-field
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { AppTimePicker } from "@/components/shared/app-time-picker";
+import { DrawerSection } from "@/components/shared/drawer-section";
 import { IconButton } from "@/components/shared/icon-button";
-import { type AppIcon, Check, ChevronDown, Minus, Plus, X } from "@/components/shared/icons";
+import { type AppIcon, Check, Minus, Plus, X } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Button } from "@/components/ui/button";
@@ -1333,67 +1335,15 @@ export function WizardSection({
     tone?: "default" | "private";
 }) {
     return (
-        <details open className={cn("group/section", tone === "private" && "text-brand-text")}>
-            <summary
-                onClick={(event) => {
-                    // Keep native keyboard activation, but limit pointer toggles to the controls.
-                    if (event.detail === 0 && event.target === event.currentTarget) return;
-                    if (
-                        !(event.target instanceof Element) ||
-                        !event.target.closest("[data-section-toggle]")
-                    ) {
-                        event.preventDefault();
-                    }
-                }}
-                className="
-                  flex cursor-default list-none items-center justify-between gap-4
-                  focus-visible:outline-2 focus-visible:-outline-offset-2
-                  focus-visible:outline-brand
-                  [&::-webkit-details-marker]:hidden
-                "
-            >
-                <span className="min-inline-0">
-                    <span
-                        role="heading"
-                        aria-level={2}
-                        data-section-toggle
-                        className="
-                          flex cursor-pointer items-center gap-2.5 font-display text-xl
-                          font-semibold tracking-[-0.02em] text-ink underline-offset-4 inline-fit
-                          hover:underline
-                        "
-                    >
-                        {title}
-                    </span>
-                    {description ? (
-                        <span className="mbs-1.5 block text-sm/6 text-ink-muted max-inline-2xl">
-                            {description}
-                        </span>
-                    ) : null}
-                </span>
-                <span
-                    data-section-toggle
-                    className="
-                      -me-1.5 flex shrink-0 cursor-pointer items-center justify-center rounded-lg
-                      text-ink-muted block-8 inline-8
-                      hover:bg-surface-muted
-                    "
-                >
-                    <ChevronDown
-                        aria-hidden
-                        className="block-5 inline-5 group-open/section:rotate-180"
-                    />
-                </span>
-            </summary>
-            <div className="pbs-5">{children}</div>
-        </details>
+        <DrawerSection title={title} description={description} tone={tone} className="py-0">
+            {children}
+        </DrawerSection>
     );
 }
 
 /** Field groups inside a section. */
 export const FORM_STACK_CLASS = "flex flex-col gap-4";
 /** Consistent spacing and subtle dividers between wizard sections. */
-export const FORM_SECTIONS_CLASS =
-    "flex flex-col divide-y divide-border-warm [&>*:not(:last-child)]:pbe-6 [&>*+*]:pbs-6";
+export const FORM_SECTIONS_CLASS = "flex flex-col [&>*:not(:last-child)]:pbe-6 [&>*+*]:pbs-6";
 export const FORM_GRID_CLASS = "grid gap-4 md:grid-cols-2";
 export const FORM_GRID_3_CLASS = "grid gap-4 sm:grid-cols-3";

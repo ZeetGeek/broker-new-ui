@@ -1,4 +1,5 @@
 "use client";
+
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
@@ -13,6 +14,7 @@ import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { CharacterCount } from "@/components/shared/character-count";
+import { DrawerSection, revealDrawerSections } from "@/components/shared/drawer-section";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     type AppIcon,
@@ -26,12 +28,11 @@ import {
     MapPin,
     Phone,
     Plus,
-    StickyNote,
     Tag,
     Trash2,
     UserRound,
 } from "@/components/shared/icons";
-import { PropertyThumb } from "@/components/shared/property-thumb";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
@@ -146,18 +147,22 @@ function DetailSection({
     const hasCustomContent = children != null;
 
     return (
-        <section ref={sectionRef} className="scroll-mbs-5 pbe-6">
-            <div className="mbe-4 flex items-center gap-2">
-                <h3 className="body font-bold text-ink">{title}</h3>
-                {locked ? (
+        <DrawerSection
+            sectionRef={sectionRef}
+            title={title}
+            description="See the properties linked to this contact."
+            headingLevel={3}
+        >
+            {locked ? (
+                <div className="mbe-4 flex items-center gap-2">
                     <span
                         className="flex items-center gap-1 text-[11px] text-ink-subtle"
                         title="Owner details come from the platform"
                     >
                         <Lock aria-hidden className="block-3 inline-3" /> Platform managed
                     </span>
-                ) : null}
-            </div>
+                </div>
+            ) : null}
 
             {children}
             {!hasCustomContent && (filled.length || showEmpty) ? (
@@ -221,7 +226,7 @@ function DetailSection({
                     {showEmpty ? "Hide empty fields" : "Show empty fields"}
                 </button>
             ) : null}
-        </section>
+        </DrawerSection>
     );
 }
 
@@ -256,13 +261,11 @@ function AttachedPropertyRows({
                             href={brokerPropertyDetailHref(property.id)}
                             className="flex flex-1 items-center gap-3 min-inline-0"
                         >
-                            <PropertyThumb
+                            <PropertyCoverImage
                                 src={property.coverUrl}
                                 alt=""
-                                hoverScale={false}
                                 sizes="72px"
-                                iconClassName="block-6 inline-6"
-                                sizeClassName="block-18 inline-18"
+                                size={72}
                             />
                             <span className="flex-1 min-inline-0">
                                 <span className="body-sm block truncate font-semibold text-ink">
@@ -476,8 +479,10 @@ function BuyerPanel({
 
     return (
         <>
-            <section className="scroll-mbs-5 pbe-6">
-                <h3 className="body mbe-4 font-bold text-ink">Requirement</h3>
+            <DrawerSection
+                title="Property needs"
+                description="Review preferred locations, property requirements and budgets."
+            >
                 <IconFactGrid
                     onAdd={onEdit}
                     facts={[
@@ -535,7 +540,7 @@ function BuyerPanel({
                             : []),
                     ]}
                 />
-            </section>
+            </DrawerSection>
 
             <DetailSection title="Matched properties" onAdd={onAttach} sectionRef={propertiesRef}>
                 <AttachedPropertyRows
@@ -595,8 +600,10 @@ function BuyerPanel({
                 </p>
             </AppModal>
 
-            <section className="scroll-mbs-5 pbe-6">
-                <h3 className="body mbe-4 font-bold text-ink">Client details</h3>
+            <DrawerSection
+                title="Contact details"
+                description="Find the client’s phone number, email and how they found you."
+            >
                 <IconFactGrid
                     onAdd={onEdit}
                     facts={[
@@ -619,20 +626,18 @@ function BuyerPanel({
                         },
                     ]}
                 />
-            </section>
+            </DrawerSection>
 
-            <section className="scroll-mbs-5">
-                <div className="mbe-4 flex items-center justify-between gap-2">
-                    <h3 className="body flex items-center gap-2 font-bold text-ink">
-                        <StickyNote
-                            aria-hidden
-                            className="text-ink-muted block-5 inline-5"
-                            strokeWidth={1.75}
-                        />
-                        Notes
-                    </h3>
-                    {saved ? <span className="body-sm font-medium text-success">Saved</span> : null}
-                </div>
+            <DrawerSection
+                title="Notes"
+                description="Keep useful context for the next conversation."
+                headingLevel={3}
+            >
+                {saved ? (
+                    <p className="body-sm mbe-3 font-medium text-success" role="status">
+                        Saved
+                    </p>
+                ) : null}
                 <textarea
                     aria-label="Client notes"
                     aria-describedby="client-notes-count"
@@ -654,7 +659,7 @@ function BuyerPanel({
                     maxChars={MAX_CHARS.contactNote}
                     className="mbs-2"
                 />
-            </section>
+            </DrawerSection>
         </>
     );
 }
@@ -709,8 +714,10 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
 
     return (
         <>
-            <section className="scroll-mbs-5 pbe-6">
-                <h3 className="body mbe-4 font-bold text-ink">Details</h3>
+            <DrawerSection
+                title="Owner and location"
+                description="Review the owner type, location and address."
+            >
                 <IconFactGrid
                     onAdd={isPlatform ? undefined : onEdit}
                     facts={[
@@ -759,7 +766,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                             : []),
                     ]}
                 />
-            </section>
+            </DrawerSection>
 
             {onAttach || linkedProperties.length > 0 ? (
                 <DetailSection title="Linked listing" onAdd={onAttach} sectionRef={propertiesRef}>
@@ -767,8 +774,10 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                 </DetailSection>
             ) : null}
 
-            <section className="scroll-mbs-5 pbe-6">
-                <h3 className="body mbe-4 font-bold text-ink">Contact details</h3>
+            <DrawerSection
+                title="Contact details"
+                description="Find the owner’s phone number, email and source."
+            >
                 <IconFactGrid
                     onAdd={isPlatform ? undefined : onEdit}
                     facts={[
@@ -792,20 +801,18 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                         },
                     ]}
                 />
-            </section>
+            </DrawerSection>
 
-            <section className="scroll-mbs-5">
-                <div className="mbe-4 flex items-center justify-between gap-2">
-                    <h3 className="body flex items-center gap-2 font-bold text-ink">
-                        <StickyNote
-                            aria-hidden
-                            className="text-ink-muted block-5 inline-5"
-                            strokeWidth={1.75}
-                        />
-                        Notes
-                    </h3>
-                    {saved ? <span className="body-sm font-medium text-success">Saved</span> : null}
-                </div>
+            <DrawerSection
+                title="Notes"
+                description="Keep useful context for the next conversation."
+                headingLevel={3}
+            >
+                {saved ? (
+                    <p className="body-sm mbe-3 font-medium text-success" role="status">
+                        Saved
+                    </p>
+                ) : null}
                 <textarea
                     aria-label="Owner notes"
                     aria-describedby={isPlatform ? undefined : "owner-notes-count"}
@@ -839,7 +846,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                         className="mbs-2"
                     />
                 )}
-            </section>
+            </DrawerSection>
         </>
     );
 }
@@ -908,7 +915,13 @@ export function ContactDetailPanel({
 
     useEffect(() => {
         if (open && initialSection === "properties")
-            window.setTimeout(() => propertiesRef.current?.scrollIntoView({ block: "start" }), 220);
+            window.setTimeout(() => {
+                const section = propertiesRef.current;
+                if (section) {
+                    revealDrawerSections(section);
+                    section.scrollIntoView({ block: "start" });
+                }
+            }, 220);
     }, [initialSection, open]);
 
     if (!contact) {

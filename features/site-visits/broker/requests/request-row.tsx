@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { REQUEST_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitTime, visitAge } from "@/lib/visits/time";
 
-import { AppImage } from "@/components/shared/app-image";
 import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import {
     CalendarClock,
@@ -20,6 +19,7 @@ import {
     WhatsAppIcon,
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -88,23 +88,13 @@ export const RequestRow = memo(function RequestRow({
                   sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:p-5
                 "
             >
-                <div
-                    className="
-                      relative shrink-0 overflow-hidden rounded-inner bg-surface-muted block-20
-                      inline-20
-                      sm:block-24 sm:inline-24
-                    "
-                >
-                    <AppImage
-                        src={
-                            request.property.coverUrl ??
-                            "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                        }
-                        alt=""
-                        fill
-                        sizes="96px"
-                    />
-                </div>
+                <PropertyCoverImage
+                    src={request.property.coverUrl}
+                    alt=""
+                    size={80}
+                    sizes="(min-width: 640px) 96px, 80px"
+                    className="sm:[--property-cover-size:96px]"
+                />
 
                 <div className="flex flex-col pbs-1! min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">

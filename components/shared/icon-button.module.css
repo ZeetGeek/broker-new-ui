@@ -24,6 +24,15 @@
 .button[data-tone="brand"] {
     --icon-button-color: var(--color-brand-text);
 }
+
+/* Translucent face for dark cards, with a full-contrast icon. */
+.button[data-icon-appearance="inverse"] {
+    --icon-button-color: var(--color-surface);
+    --icon-button-fill: color-mix(in srgb, var(--color-surface) 10%, transparent);
+    --icon-button-border: color-mix(in srgb, var(--color-surface) 20%, transparent);
+    --icon-button-hover: color-mix(in srgb, var(--color-surface) 18%, transparent);
+    --icon-button-hover-border: color-mix(in srgb, var(--color-surface) 30%, transparent);
+}
 .button[data-tone="danger"] {
     --icon-button-color: var(--color-danger);
 }
@@ -91,6 +100,10 @@
 
 .button.button:disabled,
 .button.button[aria-disabled="true"] {
+    box-shadow: none;
+}
+
+.button.button[data-icon-appearance="inverse"] {
     box-shadow: none;
 }
 

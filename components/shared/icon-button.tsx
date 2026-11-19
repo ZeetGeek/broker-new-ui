@@ -9,8 +9,8 @@ import styles from "./icon-button.module.css";
 export type IconButtonProps = Omit<ComponentProps<typeof Button>, "variant" | "size" | "color"> & {
     /** Face size: 24, 32, 36, 44 or 48px. Touch targets expand to at least 44px. */
     size?: "xs" | "sm" | "md" | "lg" | "xl";
-    /** Ghost for actions inside a bordered control; outline for standalone actions. */
-    appearance?: "outline" | "ghost";
+    /** Ghost inside grouped controls; inverse on dark surfaces; outline otherwise. */
+    appearance?: "outline" | "ghost" | "inverse";
     tone?: "neutral" | "brand" | "danger" | "success" | "warning";
     /** Custom icon colour; the background, border and shadow derive from it. */
     color?: CSSProperties["color"];

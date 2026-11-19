@@ -48,36 +48,12 @@
     align-items: center;
     gap: 0.375rem 0.5rem;
     min-inline-size: 0;
-    /* Border-only box, same height as the action buttons beside it. */
-    min-block-size: var(--size-control-lg);
-    padding: 0.375rem 1.125rem;
-    /* border-warm vanishes on the warm page bg; tint from ink instead. */
-    border: 1px solid color-mix(in srgb, var(--color-ink) 18%, transparent);
-    background: var(--color-surface);
-    border-radius: var(--radius-control);
+    min-block-size: 2.375rem;
     color: var(--color-ink-muted);
 }
 
 .metadataDivider {
     display: none;
-}
-
-.actions {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.5rem;
-}
-
-.actions > button,
-.actions > a {
-    flex-direction: column;
-    gap: 0.375rem;
-    min-inline-size: 0;
-    min-block-size: 4rem;
-    padding: 0.625rem 0.25rem;
-    font-size: 0.8125rem;
-    white-space: normal;
-    text-align: center;
 }
 
 .stats {
@@ -200,18 +176,6 @@
 @media (min-width: 640px) {
     .dashboard {
         gap: 1.5rem;
-    }
-
-    .actions {
-        display: flex;
-        flex-wrap: wrap;
-    }
-
-    .actions > button,
-    .actions > a {
-        flex-direction: row;
-        min-block-size: 2.75rem;
-        padding-inline: 1rem;
     }
 
     .metadataDivider {
@@ -383,13 +347,6 @@
     .summary {
         flex: 1;
         font: inherit;
-    }
-}
-
-@media (min-width: 640px) and (max-width: 1023.98px) {
-    .actions > button,
-    .actions > a {
-        flex: 1 1 0;
     }
 }
 

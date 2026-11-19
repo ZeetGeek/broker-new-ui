@@ -4,16 +4,28 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { useQuery } from "@tanstack/react-query";
+import { tinykeys } from "tinykeys";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 import { myListingsApi } from "@/lib/api/my-listings";
 import { formatWeekdayDate } from "@/lib/format/date";
+import { formatPlaceName } from "@/lib/format/owner-listings-labels";
+import { useRouter } from "@/lib/navigation";
+import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
+import { areaColorClassName } from "@/lib/styles/area-color";
+import { cn } from "@/lib/utils";
 
+import {
+    portalProfileMenuItemClass,
+    portalProfileMenuSurfaceClass,
+    PortalProfileShortcutHint,
+} from "@/components/layout/portal-profile-menu";
 import {
     Building2,
     CalendarCheck,
     CalendarPlus,
     CheckCheck,
+    ChevronDown,
     Clock,
     MapPin,
     Pencil,
@@ -21,8 +33,15 @@ import {
     UserRoundPlus,
     Users,
 } from "@/components/shared/icons";
+import { ListAddButton } from "@/components/shared/list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
@@ -64,19 +83,21 @@ function WorkingAreas({ areas }: { areas: string[] }) {
         <div className="inline-flex flex-wrap items-center gap-1.5 max-inline-full min-inline-0">
             <MapPin aria-hidden className="shrink-0 block-4 inline-4" />
             <span className="shrink-0">Working in</span>
-            {uniqueAreas.slice(0, 3).map((area, index) => (
+            {uniqueAreas.slice(0, 3).map((area) => (
                 <span
                     key={area}
-                    className="truncate font-medium max-inline-[14ch] sm:max-inline-[22ch]"
+                    className={cn(
+                        "body-xs inline-flex rounded-full px-2.5 py-1 font-semibold wrap-break-word max-inline-full min-inline-0",
+                        areaColorClassName(area),
+                    )}
                 >
-                    {area}
-                    {index < Math.min(uniqueAreas.length, 3) - 1 ? "," : ""}
+                    {formatPlaceName(area)}
                 </span>
             ))}
             {uniqueAreas.length > 3 ? (
                 <Popover>
                     <PopoverTrigger
-                        className="shrink-0 rounded-control p-0 font-medium text-ink underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ring pointer-coarse:min-block-11"
+                        className="body-xs touch-target shrink-0 cursor-pointer rounded-sm p-1 font-semibold text-brand-text underline decoration-brand/35 underline-offset-4 outline-none hover:decoration-brand focus-visible:ring-2 focus-visible:ring-ring/30"
                         aria-label={`View ${uniqueAreas.length - 3} more working areas`}
                     >
                         +{uniqueAreas.length - 3} more
@@ -98,7 +119,14 @@ function WorkingAreas({ areas }: { areas: string[] }) {
                                         aria-hidden
                                         className="mbs-0.5 shrink-0 block-4 inline-4"
                                     />
-                                    <span className="wrap-anywhere min-inline-0">{area}</span>
+                                    <span
+                                        className={cn(
+                                            "body-xs rounded-full px-2.5 py-1 font-semibold wrap-anywhere min-inline-0",
+                                            areaColorClassName(area),
+                                        )}
+                                    >
+                                        {formatPlaceName(area)}
+                                    </span>
                                 </li>
                             ))}
                         </ul>
@@ -122,11 +150,13 @@ function WorkingAreas({ areas }: { areas: string[] }) {
 }
 
 export function NewBrokerDashboard() {
+    const router = useRouter();
     const dispatch = useAppDispatch();
     const hydrated = useAppSelector((state) => state.auth.hydrated);
     const { data, profile, status, error } = useAppSelector((state) => state.dashboard);
     const [now, setNow] = useState<Date | null>(null);
     const [addClientOpen, setAddClientOpen] = useState(false);
+    const [addMenuOpen, setAddMenuOpen] = useState(false);
     const listings = useQuery({
         queryKey: ["my-listings-summary", "broker"],
         queryFn: () => myListingsApi.summary(),
@@ -145,6 +175,46 @@ export function NewBrokerDashboard() {
     useEffect(() => {
         if (hydrated) void dispatch(fetchBrokerDashboard());
     }, [hydrated, dispatch]);
+
+    useEffect(() => {
+        if (!hydrated || status !== "succeeded") return;
+        const actions: [ShortcutId, () => void][] = [
+            ["add_contact", () => setAddClientOpen(true)],
+            ["dashboard_add_listing", () => router.push("/broker/properties/new")],
+            ["dashboard_schedule_visit", () => router.push("/broker/visits?tab=slots")],
+            ["dashboard_add_task", () => router.push("/broker/tasks?view=create")],
+        ];
+        return tinykeys(
+            window,
+            Object.fromEntries(
+                actions.flatMap(([id, action]) => {
+                    const shortcut = getShortcut(id);
+                    if (!shortcut) return [];
+                    return [
+                        [
+                            shortcut.keys,
+                            (event: KeyboardEvent) => {
+                                if (event.repeat || event.defaultPrevented || addClientOpen) return;
+                                const target = event.target;
+                                if (
+                                    target instanceof HTMLElement &&
+                                    target.closest(
+                                        'input, textarea, select, [contenteditable="true"], [role="textbox"]',
+                                    )
+                                )
+                                    return;
+                                if (document.querySelector('[role="dialog"], [role="alertdialog"]'))
+                                    return;
+                                event.preventDefault();
+                                setAddMenuOpen(false);
+                                action();
+                            },
+                        ],
+                    ];
+                }),
+            ),
+        );
+    }, [hydrated, status, addClientOpen, router]);
 
     if (status === "failed") {
         return (
@@ -274,36 +344,70 @@ export function NewBrokerDashboard() {
                         </span>
                         <WorkingAreas areas={view.serviceAreas} />
                     </div>
-                    <div className="shrink-0 max-lg:inline-full">
-                        <div className={styles.actions}>
-                            <Button
-                                variant="accent"
-                                size="md"
+                    <DropdownMenu open={addMenuOpen} onOpenChange={setAddMenuOpen}>
+                        <DropdownMenuTrigger
+                            render={
+                                <ListAddButton
+                                    label="Quick add"
+                                    trailingIcon={ChevronDown}
+                                    className="ms-auto"
+                                />
+                            }
+                        />
+                        <DropdownMenuContent
+                            align="end"
+                            aria-label="Add actions"
+                            className={cn(
+                                portalProfileMenuSurfaceClass,
+                                "inline-auto min-inline-56",
+                            )}
+                        >
+                            <DropdownMenuItem
+                                className={portalProfileMenuItemClass}
                                 onClick={() => setAddClientOpen(true)}
                             >
                                 <UserRoundPlus aria-hidden />
                                 Add client
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="md"
-                                nativeButton={false}
+                                <PortalProfileShortcutHint
+                                    shortcutId="add_contact"
+                                    showWhenAvailable
+                                />
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className={portalProfileMenuItemClass}
                                 render={<Link href="/broker/properties/new" />}
                             >
-                                <Plus aria-hidden />
+                                <Building2 aria-hidden />
                                 Add listing
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="md"
-                                nativeButton={false}
+                                <PortalProfileShortcutHint
+                                    shortcutId="dashboard_add_listing"
+                                    showWhenAvailable
+                                />
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className={portalProfileMenuItemClass}
                                 render={<Link href="/broker/visits?tab=slots" />}
                             >
                                 <CalendarPlus aria-hidden />
                                 Schedule visit
-                            </Button>
-                        </div>
-                    </div>
+                                <PortalProfileShortcutHint
+                                    shortcutId="dashboard_schedule_visit"
+                                    showWhenAvailable
+                                />
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                className={portalProfileMenuItemClass}
+                                render={<Link href="/broker/tasks?view=create" />}
+                            >
+                                <Plus aria-hidden />
+                                Add task
+                                <PortalProfileShortcutHint
+                                    shortcutId="dashboard_add_task"
+                                    showWhenAvailable
+                                />
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </header>
             <ul aria-label="Your work overview" className={styles.stats}>

@@ -28,24 +28,12 @@
     block-size: 32px;
     min-inline-size: 32px;
     min-block-size: 32px;
-    color: var(--color-surface);
 }
 
 .menuTrigger::after {
     position: absolute;
     inset: -6px;
     content: "";
-}
-
-.menuTrigger:hover,
-.menuTrigger[aria-expanded="true"] {
-    background: color-mix(in srgb, var(--color-brand-soft) 12%, transparent);
-    color: var(--color-surface);
-}
-
-.menuTrigger:focus-visible {
-    outline: 2px solid var(--color-brand-soft);
-    outline-offset: 2px;
 }
 
 .schedule {
@@ -102,22 +90,7 @@
 }
 
 .cover {
-    position: relative;
-    flex-shrink: 0;
-    inline-size: 64px;
-    block-size: 64px;
-    overflow: hidden;
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--color-brand-soft) 12%, transparent);
-}
-
-.coverFallback {
-    position: absolute;
-    inset: 0;
-    margin: auto;
-    inline-size: 24px;
-    block-size: 24px;
-    color: var(--color-brand-soft);
+    --property-cover-size: 64px;
 }
 
 .property {
@@ -265,10 +238,9 @@
     }
 
     .cover {
+        --property-cover-size: 3.25rem;
         grid-area: cover;
         align-self: center;
-        inline-size: 3.25rem;
-        block-size: 3.25rem;
     }
 
     .propertyName {

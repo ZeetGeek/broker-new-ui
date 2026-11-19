@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { cn } from "@/lib/utils";
 
-import { Search } from "@/components/shared/icons";
-import { Input } from "@/components/ui/input";
+import { ListSearchField } from "@/components/shared/list-toolbar";
 
 import type {
     ReferralsFilters,
@@ -48,45 +45,6 @@ const CHIP_CLASS = `
 `;
 
 /** Debounced so typing does not refetch on every keystroke. */
-function ReferralsQueryInput({
-    value,
-    onChange,
-}: {
-    value: string;
-    onChange: (q: string) => void;
-}) {
-    const [draft, setDraft] = useState(value);
-    const [prevValue, setPrevValue] = useState(value);
-
-    // An external change (cleared filters) wins over a stale draft.
-    if (value !== prevValue) {
-        setPrevValue(value);
-        setDraft(value);
-    }
-
-    useEffect(() => {
-        if (draft === value) return;
-        const timer = window.setTimeout(() => onChange(draft), 300);
-        return () => window.clearTimeout(timer);
-    }, [draft, onChange, value]);
-
-    return (
-        <Input
-            size="sm"
-            value={draft}
-            onValueChange={setDraft}
-            placeholder="Search name or number"
-            aria-label="Search the brokers you invited"
-            startIcon={Search}
-            clearable
-            wrapperClassName="
-              min-inline-44 inline-44 shadow-sm
-              sm:min-inline-52 sm:inline-52
-              lg:min-inline-64 lg:inline-64
-            "
-        />
-    );
-}
 
 type ReferralsHeaderProps = {
     filters: ReferralsFilters;
@@ -134,7 +92,12 @@ export function ReferralsHeader({ filters, summary, onPatch }: ReferralsHeaderPr
                 })}
             </div>
 
-            <ReferralsQueryInput value={filters.q} onChange={(q) => onPatch({ q })} />
+            <ListSearchField
+                placeholder="Search name or number"
+                aria-label="Search the brokers you invited"
+                value={filters.q}
+                onChange={(q) => onPatch({ q })}
+            />
         </div>
     );
 }

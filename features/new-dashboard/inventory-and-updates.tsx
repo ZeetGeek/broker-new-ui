@@ -10,7 +10,6 @@ import { myListingsApi } from "@/lib/api/my-listings";
 import { formatRelativePast } from "@/lib/format/date";
 import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
 
-import { AppImage } from "@/components/shared/app-image";
 import { AvatarStack } from "@/components/shared/avatar-stack";
 import { IconButton } from "@/components/shared/icon-button";
 import {
@@ -35,6 +34,7 @@ import {
     listingCommissionTip,
     PriceWithCommission,
 } from "@/components/shared/price-with-commission";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { Skeleton } from "@/components/shared/skeleton";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -160,17 +160,15 @@ function ListingClients({ listing }: { listing: MyListingItem }) {
                 <Popover>
                     <PopoverTrigger
                         className={styles.moreClients}
-                        aria-label={`View ${remaining.length} more interested clients`}
+                        aria-label={`View ${remaining.length} more clients`}
                     >
                         +{remaining.length} {remaining.length === 1 ? "Client" : "Clients"}
                     </PopoverTrigger>
                     <PopoverContent
                         align="start"
-                        className="gap-3 inline-60 max-inline-[calc(100vw-2rem)]"
+                        className="gap-3 inline-44 max-inline-[calc(100vw-2rem)]"
                     >
-                        <PopoverTitle className="body-sm font-semibold">
-                            More interested clients
-                        </PopoverTitle>
+                        <PopoverTitle className="body-sm font-semibold">More clients</PopoverTitle>
                         <ul className={styles.overflowClients}>
                             {remaining.map((client) => (
                                 <li key={client.id}>{person(client)}</li>
@@ -207,18 +205,13 @@ function ListingRow({
         <tr className={styles.listingRow}>
             <td className={styles.propertyCell}>
                 <Link href={href} className={styles.propertyLink}>
-                    <span className={styles.thumbnail}>
-                        <Building2 aria-hidden className={styles.fallbackIcon} />
-                        {listing.imageSrc ? (
-                            <AppImage
-                                src={listing.imageSrc}
-                                alt=""
-                                fill
-                                sizes="88px"
-                                className="object-cover"
-                            />
-                        ) : null}
-                    </span>
+                    <PropertyCoverImage
+                        src={listing.imageSrc}
+                        alt=""
+                        size={72}
+                        sizes="72px"
+                        className={styles.thumbnail}
+                    />
                     <span className={styles.propertyText}>
                         <span className={styles.propertyTitle}>{listing.title}</span>
                         <span className={styles.location}>

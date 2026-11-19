@@ -7,12 +7,13 @@ import { formatBudgetAmount } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
 import { CallIcon, Link2, MapPin, WhatsAppIcon } from "@/components/shared/icons";
-import { PropertyThumb } from "@/components/shared/property-thumb";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { KINDS_WITHOUT_BHK, PROPERTY_KIND_OPTIONS } from "@/features/contacts/buyer-options";
+import { ContactAreaChips } from "@/features/contacts/contact-area-chips";
 import { ContactCardActions } from "@/features/contacts/contact-card-actions";
 import type { BuyerRow } from "@/features/contacts/types";
 
@@ -83,9 +84,9 @@ export function BuyerCard({
                     >
                         {
                             {
-                                buy: "Looking to buy property",
-                                rent: "Looking to rent property",
-                                both: "Open to buying or renting",
+                                buy: "Buying",
+                                rent: "Renting",
+                                both: "Buying or renting",
                             }[intent]
                         }
                     </Badge>
@@ -105,7 +106,7 @@ export function BuyerCard({
                     <UserAvatar
                         name={buyer.name}
                         imageUrl={buyer.avatarUrl}
-                        size="md"
+                        size="card"
                         framed={false}
                         className="border-2 border-white shadow-sm"
                     />
@@ -136,7 +137,23 @@ export function BuyerCard({
                     </div>
                 </div>
             </header>
-            <div className="flex flex-1 flex-col gap-3 py-5 min-inline-0">
+            <div className="flex flex-1 flex-col gap-4 py-5 min-inline-0">
+                {areas.length > 0 ? (
+                    <dl>
+                        <div className="flex flex-col gap-1">
+                            <dt className="body-xs font-semibold text-ink-muted">
+                                Preferred locations
+                            </dt>
+                            <dd className="mbs-1 min-inline-0">
+                                <ContactAreaChips
+                                    areas={areas}
+                                    onEditAreas={() => onEdit(buyer)}
+                                    editLabel="Add or edit preferred areas"
+                                />
+                            </dd>
+                        </div>
+                    </dl>
+                ) : null}
                 {requirement ? <p className="body-sm font-medium text-ink">{requirement}</p> : null}
                 {saleBudget || rentBudget ? (
                     <dl
@@ -149,7 +166,9 @@ export function BuyerCard({
                     >
                         {saleBudget ? (
                             <div className="flex flex-col gap-1">
-                                <dt className="body-xs font-medium text-ink-muted">Sale budget</dt>
+                                <dt className="body-xs font-semibold text-ink-muted">
+                                    Sale budget
+                                </dt>
                                 <dd className="body tabular font-bold wrap-break-word text-brand-text">
                                     {saleBudget}
                                 </dd>
@@ -157,7 +176,7 @@ export function BuyerCard({
                         ) : null}
                         {rentBudget ? (
                             <div className="flex flex-col gap-1">
-                                <dt className="body-xs font-medium text-ink-muted">
+                                <dt className="body-xs font-semibold text-ink-muted">
                                     Monthly rent budget
                                 </dt>
                                 <dd className="body tabular font-bold wrap-break-word text-brand-text">
@@ -167,24 +186,11 @@ export function BuyerCard({
                         ) : null}
                     </dl>
                 ) : null}
-                {areas.length > 0 ? (
-                    <dl>
-                        <div className="flex flex-col gap-1">
-                            <dt className="body-xs font-medium text-ink-muted">
-                                Preferred locations
-                            </dt>
-                            <dd className="body-sm wrap-break-word text-ink">{areas.join(", ")}</dd>
-                        </div>
-                    </dl>
-                ) : null}
             </div>
             <footer className="mbs-auto flex flex-col gap-3 border-bs border-border-warm pbs-3">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-block-11">
-                    {propertyCount > 0 ? (
-                        <span className="body-sm text-ink-muted">Properties</span>
-                    ) : null}
                     <Button
-                        variant="link"
+                        variant="outline"
                         type="button"
                         aria-label={
                             propertyCount
@@ -196,27 +202,27 @@ export function BuyerCard({
                             if (propertyCount) (onOpenProperties ?? onOpen)(buyer);
                             else onAttachProperties(buyer);
                         }}
-                        className="gap-2 px-0 text-brand-text min-block-11"
+                        className="gap-2 border-dashed border-brand/40 font-semibold text-brand-text shadow-none inline-full min-block-11 hover:border-brand hover:bg-brand-soft/30"
                     >
+                        {propertyCount > 0 ? (
+                            <span className="body-sm font-semibold text-ink-muted">Properties</span>
+                        ) : null}
                         {propertyCount > 0 ? (
                             <span className="flex items-center -space-x-2" aria-hidden>
                                 {linkedProperties.slice(0, 3).map((property) => (
-                                    <PropertyThumb
+                                    <PropertyCoverImage
                                         key={property.id}
                                         src={property.coverUrl}
                                         alt=""
-                                        hoverScale={false}
-                                        sizes="28px"
-                                        sizeClassName="block-7 inline-7"
-                                        iconClassName="block-3.5 inline-3.5"
-                                        className="rounded-full ring-2 ring-surface"
+                                        sizes="24px"
+                                        size={24}
                                     />
                                 ))}
                             </span>
                         ) : (
                             <Link2 aria-hidden />
                         )}
-                        <span>{propertyCount ? `${propertyCount} linked` : "Link a property"}</span>
+                        <span>{propertyCount ? `${propertyCount} linked` : "Attach property"}</span>
                     </Button>
                 </div>
                 {canContact ? (
@@ -227,7 +233,7 @@ export function BuyerCard({
                         <Button
                             size="md"
                             variant="outline"
-                            className="inline-full min-block-11"
+                            className="font-semibold inline-full min-block-11"
                             nativeButton={false}
                             render={
                                 <a
@@ -241,7 +247,7 @@ export function BuyerCard({
                         <Button
                             size="md"
                             variant="accent"
-                            className="inline-full min-block-11"
+                            className="font-semibold inline-full min-block-11"
                             nativeButton={false}
                             render={
                                 <a

@@ -220,7 +220,7 @@
 
 .chart {
     inline-size: 100%;
-    block-size: 16rem;
+    block-size: 20rem;
     margin-block-start: 1.25rem;
     aspect-ratio: auto;
     font-variant-numeric: tabular-nums;
@@ -286,7 +286,7 @@
 
 @container (max-width: 24rem) {
     .chart {
-        block-size: 13rem;
+        block-size: 16rem;
     }
 }
 

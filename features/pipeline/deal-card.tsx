@@ -6,11 +6,9 @@ import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/pho
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
 
-import { AppImage } from "@/components/shared/app-image";
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import { IconButton } from "@/components/shared/icon-button";
 import {
-    Building2,
     CallIcon,
     CircleCheck,
     GripVertical,
@@ -24,6 +22,7 @@ import {
 import { OverlayCardActions } from "@/components/shared/overlay-card";
 import { Price } from "@/components/shared/price";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -120,30 +119,12 @@ function DealCoverImage({ property, muted = false }: { property: DealProperty; m
         property.photoCount != null && property.photoCount > 1 ? property.photoCount - 1 : 0;
 
     return (
-        <div
-            className="
-              relative aspect-square shrink-0 overflow-hidden rounded-xl border-2 border-white bg-surface-muted shadow-sm
-              inline-20
-            "
-            aria-hidden={!src}
+        <PropertyCoverImage
+            src={src}
+            alt={property.title}
+            size={80}
+            imageClassName={muted ? "grayscale-60" : undefined}
         >
-            {src ? (
-                <AppImage
-                    src={src}
-                    alt={property.title}
-                    fill
-                    sizes="80px"
-                    className={cn("object-cover", muted && "grayscale-60")}
-                />
-            ) : (
-                <div
-                    className="
-                      flex items-center justify-center text-ink-subtle block-full inline-full
-                    "
-                >
-                    <Building2 className="block-6 inline-6" strokeWidth={1.5} />
-                </div>
-            )}
             {extraCount > 0 ? (
                 <span
                     className="
@@ -154,7 +135,7 @@ function DealCoverImage({ property, muted = false }: { property: DealProperty; m
                     +{extraCount}
                 </span>
             ) : null}
-        </div>
+        </PropertyCoverImage>
     );
 }
 

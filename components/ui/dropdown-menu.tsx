@@ -109,8 +109,9 @@ function DropdownMenuItem({
                   pointer-coarse:min-block-11
                   data-disabled:pointer-events-none data-disabled:opacity-50
                   [&_svg]:pointer-events-none [&_svg]:shrink-0
-                  [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
-                  data-[variant=destructive]:*:[svg]:text-danger
+                  data-[variant=destructive]:[&_svg]:text-danger! data-[variant=destructive]:[&_svg_*]:text-danger!
+                  [&_svg:not([class*='size-'])]:block-4
+                  [&_svg:not([class*='size-'])]:inline-4
                 `,
                 className,
             )}
@@ -282,7 +283,7 @@ function DropdownMenuSeparator({ className, ...props }: MenuPrimitive.Separator.
         <MenuPrimitive.Separator
             data-slot="dropdown-menu-separator"
             className={cn(
-                "pointer-events-none mx-1.5 my-1 shrink-0 bg-border-warm/50 block-px",
+                "pointer-events-none -mx-1.5 my-1 shrink-0 bg-border-warm/50 block-px",
                 className,
             )}
             {...props}

@@ -4,8 +4,8 @@ import { useState } from "react";
 
 import { formatVisitDate, istDateKey } from "@/lib/visits/time";
 
-import { AppImage } from "@/components/shared/app-image";
 import { Building2, CalendarDays, ChevronDown, UserRound } from "@/components/shared/icons";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -91,17 +91,11 @@ export function VisitEntityCombobox({
                                     {kind === "client" ? (
                                         <UserAvatar name={option?.label ?? "Client"} size="sm" />
                                     ) : (
-                                        <span className={styles.entityIcon}>
-                                            <Building2 aria-hidden />
-                                            {option?.imageUrl && (
-                                                <AppImage
-                                                    src={option.imageUrl}
-                                                    alt=""
-                                                    fill
-                                                    sizes="40px"
-                                                />
-                                            )}
-                                        </span>
+                                        <PropertyCoverImage
+                                            src={option?.imageUrl}
+                                            alt=""
+                                            size={40}
+                                        />
                                     )}
                                     <span>
                                         <span className={styles.entityName}>{option?.label}</span>

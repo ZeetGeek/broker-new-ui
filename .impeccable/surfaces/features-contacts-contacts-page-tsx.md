@@ -32,7 +32,7 @@ OWN-WORLD: Warm cream canvas, white row surfaces, brand green only; brand-soft i
 
 STORY: Broker lands, reads the two-tone count, filters Buyers/Owners, scans urgency, taps Call/WhatsApp or opens the detail panel.
 
-FIRST VIEWPORT: Headline. Buyers/Owners tabs. Search + sort. Single Add. Dense portrait contact tiles in a 5-across desktop grid (1→2→3→4→5 by breakpoint): brand avatar, budget as brand hero, config/locality, Call/Chat footer.
+FIRST VIEWPORT: Headline. Buyers/Owners tabs. Search + sort. Single Add. Dense portrait contact tiles in a 4-across desktop grid (1→2→3→4 by breakpoint): brand avatar, budget as brand hero, config/locality, Call/Chat footer.
 
 FORM: Brief-pinned calm field roster (seed bd621076 dealt 6/4/7; user pinned sparse phone-first over the roll). Signature move: overdue rows stay lit in urgent-soft until noticed.
 
