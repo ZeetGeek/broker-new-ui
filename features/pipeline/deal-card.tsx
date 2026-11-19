@@ -1,5 +1,4 @@
 "use client";
-
 import { type KeyboardEvent, useRef, useState } from "react";
 
 import { formatDateIn } from "@/lib/format/date";
@@ -9,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     Building2,
     CallIcon,
@@ -83,11 +83,7 @@ const PINNED_HOVER_COLOR: Record<DealStage, string> = {
     negotiation: "hover:text-stage-4",
 };
 
-const CHROME_ICON_BUTTON_CLASS = `
-  flex shrink-0 items-center justify-center rounded-full border border-border-warm bg-surface
-  text-ink-muted block-control-sm inline-control-sm
-  hover:border-ink/20 hover:bg-surface-muted hover:text-ink
-`;
+const CHROME_ICON_BUTTON_CLASS = "shrink-0";
 
 /** Same surface, row rhythm, and hover treatment as the property listing menu. */
 const DEAL_MENU_SURFACE_CLASS = `
@@ -227,9 +223,8 @@ function DealCardMenu({
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger
                 render={
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
+                    <IconButton
+                        size="sm"
                         disabled={isBusy}
                         aria-label={`More actions for ${deal.buyer.name}`}
                         className={CHROME_ICON_BUTTON_CLASS}
@@ -481,7 +476,8 @@ export function DealCard({
                         <Tooltip>
                             <TooltipTrigger
                                 render={
-                                    <button
+                                    <IconButton
+                                        size="sm"
                                         type="button"
                                         disabled={isBusy}
                                         aria-label={

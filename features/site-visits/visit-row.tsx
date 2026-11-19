@@ -1,11 +1,11 @@
 "use client";
-
 import type { ReactNode } from "react";
 
 import { formatDurationUntil, formatTimeIn } from "@/lib/format/date";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import {
     Clock3,
     Lock,
@@ -341,19 +341,14 @@ export function VisitRow({
 
                 {canCall ? (
                     <Hint label={`Call ${counterparty.name}`}>
-                        <Button
-                            size="icon-sm"
-                            variant="ghost"
+                        <IconButton
+                            size="sm"
                             aria-label={`Call ${counterparty.name}`}
                             render={<a href={`tel:+91${counterparty.phoneDigits}`} />}
-                            className="
-                              lg:opacity-0 lg:transition-opacity lg:duration-160
-                              lg:group-hover/row:opacity-100
-                              lg:focus-visible:opacity-100
-                            "
+                            className="lg:opacity-0 lg:transition-opacity lg:duration-160 lg:group-hover/row:opacity-100 lg:focus-visible:opacity-100"
                         >
                             <PhoneCall aria-hidden />
-                        </Button>
+                        </IconButton>
                     </Hint>
                 ) : null}
 
@@ -361,19 +356,13 @@ export function VisitRow({
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
-                                <Button
-                                    size="icon-sm"
-                                    variant="ghost"
+                                <IconButton
+                                    size="sm"
                                     aria-label="More actions for this visit"
-                                    className="
-                                      lg:opacity-0 lg:transition-opacity lg:duration-160
-                                      lg:group-hover/row:opacity-100
-                                      lg:focus-visible:opacity-100
-                                      lg:aria-expanded:opacity-100
-                                    "
+                                    className="lg:opacity-0 lg:transition-opacity lg:duration-160 lg:group-hover/row:opacity-100 lg:focus-visible:opacity-100 lg:aria-expanded:opacity-100"
                                 >
                                     <MoreHorizontal aria-hidden />
-                                </Button>
+                                </IconButton>
                             }
                         />
                         <DropdownMenuContent align="end">

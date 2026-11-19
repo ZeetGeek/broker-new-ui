@@ -1,11 +1,11 @@
 "use client";
-
 import { type SyntheticEvent, useState } from "react";
 
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     CallIcon,
     Eye,
@@ -16,7 +16,6 @@ import {
     StickyNote,
     WhatsAppIcon,
 } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -72,9 +71,8 @@ export function ContactCardActions({
                 <Tooltip>
                     <TooltipTrigger
                         render={
-                            <Button
-                                variant="outline"
-                                size="icon-xs"
+                            <IconButton
+                                size="xs"
                                 nativeButton={false}
                                 render={
                                     <a href={callHref} aria-label={`Call ${name}`} onClick={stop} />
@@ -92,11 +90,10 @@ export function ContactCardActions({
                 <Tooltip>
                     <TooltipTrigger
                         render={
-                            <Button
-                                variant="outline"
-                                size="icon-xs"
+                            <IconButton
+                                size="xs"
                                 nativeButton={false}
-                                className="text-brand"
+                                className=""
                                 render={
                                     <a
                                         href={formatWhatsAppUrl(phoneDigits)}
@@ -121,13 +118,12 @@ export function ContactCardActions({
                         render={
                             <DropdownMenuTrigger
                                 render={
-                                    <Button
+                                    <IconButton
                                         type="button"
-                                        variant="outline"
-                                        size="icon-sm"
+                                        size="sm"
                                         aria-label={`More actions for ${name}`}
                                         onClick={stop}
-                                        className="rounded-full"
+                                        className=""
                                     />
                                 }
                             >

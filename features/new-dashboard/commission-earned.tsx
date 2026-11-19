@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import Link from "next/link";
 
@@ -13,6 +12,7 @@ import {
 } from "@/lib/format/commission";
 import { BROKER_EARNINGS_HREF } from "@/lib/routes/broker";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,15 +67,15 @@ export function CommissionEarned() {
                         <p className={`h1 ${styles.total}`}>{formatCommission(total)}</p>
                     </div>
                     <nav className={styles.navigation} aria-label="Commission periods">
-                        <Button
+                        <IconButton
                             variant="ghost"
-                            size="icon-sm"
+                            size="sm"
                             aria-label={`Previous ${months} months`}
                             disabled={!window.hasPrevious}
                             onClick={() => setPage(window.pageIndex + 1)}
                         >
                             <ChevronLeft aria-hidden />
-                        </Button>
+                        </IconButton>
                         <p
                             className={styles.period}
                             aria-live="polite"
@@ -88,15 +88,15 @@ export function CommissionEarned() {
                                 "short",
                             )}
                         </p>
-                        <Button
+                        <IconButton
                             variant="ghost"
-                            size="icon-sm"
+                            size="sm"
                             aria-label={`Next ${months} months`}
                             disabled={!window.hasNext}
                             onClick={() => setPage(window.pageIndex - 1)}
                         >
                             <ChevronRight aria-hidden />
-                        </Button>
+                        </IconButton>
                     </nav>
                 </div>
                 <div className={styles.monthSnapshot}>

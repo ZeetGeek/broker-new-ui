@@ -1,5 +1,4 @@
 "use client";
-
 import { type ComponentProps, type ReactNode, useId, useState } from "react";
 import { Controller, type FieldPath, useFormContext } from "react-hook-form";
 
@@ -12,6 +11,7 @@ import { ConditionalField } from "@/components/property/fields/conditional-field
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { AppTimePicker } from "@/components/shared/app-time-picker";
+import { IconButton } from "@/components/shared/icon-button";
 import { type AppIcon, Check, ChevronDown, Minus, Plus, X } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { SmartPriceInput } from "@/components/shared/smart-price-input";
@@ -1272,10 +1272,9 @@ export function CounterField({
                                 </div>
                             </div>
                             <div className="flex items-center gap-0.5">
-                                <Button
+                                <IconButton
                                     type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
+                                    size="sm"
                                     aria-label={
                                         unset
                                             ? `Set ${resolvedLabel} to ${min}`
@@ -1283,16 +1282,10 @@ export function CounterField({
                                     }
                                     disabled={!unset && value <= min}
                                     onClick={() => commit(Math.max(min, value - 1))}
-                                    className="
-                                      flex items-center justify-center rounded-control
-                                      text-ink-muted block-8 inline-8
-                                      hover:bg-surface-muted
-                                      focus-visible:ring-3 focus-visible:ring-ring/30
-                                      disabled:opacity-30
-                                    "
+                                    className="flex items-center justify-center focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-30"
                                 >
                                     <Minus className="block-3.5 inline-3.5" strokeWidth={2} />
-                                </Button>
+                                </IconButton>
                                 <span
                                     className="
                                       tabular text-center text-sm font-bold text-ink min-inline-6
@@ -1300,23 +1293,16 @@ export function CounterField({
                                 >
                                     {unset ? "—" : value}
                                 </span>
-                                <Button
+                                <IconButton
                                     type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
+                                    size="sm"
                                     aria-label={`Increase ${resolvedLabel}`}
                                     disabled={value >= max}
                                     onClick={() => commit(Math.min(max, value + 1))}
-                                    className="
-                                      flex items-center justify-center rounded-control
-                                      text-ink-muted block-8 inline-8
-                                      hover:bg-surface-muted
-                                      focus-visible:ring-3 focus-visible:ring-ring/30
-                                      disabled:opacity-30
-                                    "
+                                    className="flex items-center justify-center focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-30"
                                 >
                                     <Plus className="block-3.5 inline-3.5" strokeWidth={2} />
-                                </Button>
+                                </IconButton>
                             </div>
                             {error ? (
                                 <p

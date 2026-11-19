@@ -1,10 +1,10 @@
 "use client";
-
 import { useId, useState } from "react";
 
 import { MAX_REMINDER_MINUTES } from "@/lib/reminders";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { Bell, Check, Plus, X } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,16 +131,15 @@ export function ReminderPicker({
                                         </span>
                                     ) : null}
                                 </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon-md"
+                                <IconButton
+                                    size="lg"
                                     type="button"
                                     disabled={disabled}
                                     aria-label={`Remove ${label.toLowerCase()} reminder`}
                                     onClick={() => remove(minutes)}
                                 >
                                     <X aria-hidden="true" />
-                                </Button>
+                                </IconButton>
                             </li>
                         );
                     })}

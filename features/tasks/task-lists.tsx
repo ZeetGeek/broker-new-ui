@@ -1,5 +1,4 @@
 "use client";
-
 import {
     cloneElement,
     type CSSProperties,
@@ -18,6 +17,7 @@ import { measuredCssToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     ArrowLeft,
     ArrowRight,
@@ -171,35 +171,36 @@ export function TaskLists({
     const showListPageNav = listCount > listStride;
     const listPageChevrons = showListPageNav ? (
         <div className={styles.listTabNav} aria-label="Browse lists in this tab">
-            <Button
+            <IconButton
                 type="button"
-                variant="link"
-                size="icon-sm"
+                size="sm"
+                tone="brand"
                 className="text-brand hover:text-brand-text disabled:opacity-35"
                 aria-label="Previous lists"
                 disabled={!canPrevList}
                 onClick={() => setListPage((page) => Math.max(0, page - 1))}
             >
                 <ChevronLeft aria-hidden size={16} />
-            </Button>
-            <Button
+            </IconButton>
+            <IconButton
                 type="button"
-                variant="link"
-                size="icon-sm"
+                size="sm"
+                tone="brand"
                 className="text-brand hover:text-brand-text disabled:opacity-35"
                 aria-label="Next lists"
                 disabled={!canNextList}
                 onClick={() => setListPage((page) => Math.min(maxPage, page + 1))}
             >
                 <ChevronRight aria-hidden size={16} />
-            </Button>
+            </IconButton>
         </div>
     ) : null;
     return (
         <>
             <div className={styles.somedayBar}>
                 <div className={styles.somedayBarStart}>
-                    <button
+                    <IconButton
+                        size="sm"
                         type="button"
                         className={styles.addTabButton}
                         aria-label="Create tab"
@@ -211,7 +212,7 @@ export function TaskLists({
                         }}
                     >
                         <Plus aria-hidden size={14} />
-                    </button>
+                    </IconButton>
                     <SlidingTabs
                         value={activeTab}
                         options={notebook.tabs.map((tab, tabIndex) => {
@@ -277,7 +278,8 @@ export function TaskLists({
                     />
                 </div>
                 <div className={styles.somedayBarEnd}>
-                    <button
+                    <IconButton
+                        size="sm"
                         type="button"
                         className={styles.collapseLists}
                         aria-label={open ? "Collapse lists" : "Expand lists"}
@@ -286,7 +288,7 @@ export function TaskLists({
                         onClick={() => setOpen(!open)}
                     >
                         <ChevronDown aria-hidden size={14} data-collapsed={!open || undefined} />
-                    </button>
+                    </IconButton>
                 </div>
             </div>
             {editor && (
@@ -502,9 +504,11 @@ function NotebookTabManageMenu({
         <DropdownMenu>
             <DropdownMenuTrigger
                 render={
-                    <button
+                    <IconButton
+                        size="xs"
                         type="button"
                         className={triggerClassName}
+                        variant="ghost"
                         disabled={busy}
                         aria-label={`Manage tab ${tab.name}`}
                         data-sliding-tab-action=""
@@ -585,7 +589,8 @@ function SortableList({
         <DropdownMenu>
             <DropdownMenuTrigger
                 render={
-                    <button
+                    <IconButton
+                        size="sm"
                         type="button"
                         className={styles.listMenu}
                         disabled={busy}

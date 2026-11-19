@@ -3,6 +3,29 @@
 Single source of truth for making things common. `.claude/rules/` and
 `.cursor/rules/` only point here.
 
+## Icon-only actions
+
+Use `IconButton` from `components/shared/icon-button.tsx` for compact icon actions,
+including menus, navigation arrows, edit/delete, close, and attachment controls.
+It owns the rounded border, subtle shadow, hover/expanded/pressed fill, focus,
+disabled and loading states. Do not rebuild the face with ghost buttons or local CSS.
+
+Pass `size="xs" | "sm" | "md" | "lg" | "xl"` (24/32/36/44/48px; default `sm`).
+Coarse-pointer targets grow to at least 44px. Use `tone="danger"` for delete/remove,
+or `brand`, `success`, `warning`, and `neutral`. `color` accepts a CSS colour and
+derives the light background, border and shadow from that same icon colour.
+Always provide `aria-label` or `aria-labelledby` and use a Tabler registry icon.
+Button props, refs, loading, and Base UI `render` composition pass through.
+Keep feature `className` overrides for layout/visibility, rather than restyling the face.
+
+Use `variant="ghost"` inside an already bordered control, such as a period navigator,
+pagination group, input, or filter chip. It keeps the shared sizing, centering, colours,
+focus and hover fill, without adding a second border or shadow. Standalone icon
+actions use the default `variant="outline"`.
+
+Text-labelled ghost buttons, calendar date cells, drag handles and segmented
+selection controls keep their own semantics and are not icon action buttons.
+
 ## Attached client summaries
 
 Use `AttachedClientsSummary` from `components/shared/attached-clients-summary.tsx`

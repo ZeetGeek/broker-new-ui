@@ -9,6 +9,7 @@ import { getVisiblePages } from "@/lib/pagination/get-visible-pages";
 import { cn } from "@/lib/utils";
 
 import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
+import { IconButton } from "@/components/shared/icon-button";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
 import {
     Select,
@@ -169,32 +170,30 @@ export function AppPagination({
             {/* Center — nav cluster */}
             <div className="mx-auto flex flex-wrap items-center justify-center gap-2 p-0">
                 <div className={arrowGroupClass}>
-                    <AnimatedBackground
-                        enableHover
-                        className="rounded-md border border-brand bg-brand-soft shadow-none"
-                        transition={reduceMotion ? { duration: 0 } : spring.snappy}
+                    <IconButton
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        data-id="first"
+                        className={arrowButtonClass}
+                        disabled={!canPrev}
+                        aria-label="Go to first page"
+                        onClick={() => onPageChange(1)}
                     >
-                        <button
-                            type="button"
-                            data-id="first"
-                            className={arrowButtonClass}
-                            disabled={!canPrev}
-                            aria-label="Go to first page"
-                            onClick={() => onPageChange(1)}
-                        >
-                            <ChevronsLeft className="block-4 inline-4" strokeWidth={1.75} />
-                        </button>
-                        <button
-                            type="button"
-                            data-id="prev"
-                            className={arrowButtonClass}
-                            disabled={!canPrev}
-                            aria-label="Go to previous page"
-                            onClick={() => onPageChange(current - 1)}
-                        >
-                            <ChevronLeft className="block-4 inline-4" strokeWidth={1.75} />
-                        </button>
-                    </AnimatedBackground>
+                        <ChevronsLeft className="block-4 inline-4" strokeWidth={1.75} />
+                    </IconButton>
+                    <IconButton
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        data-id="prev"
+                        className={arrowButtonClass}
+                        disabled={!canPrev}
+                        aria-label="Go to previous page"
+                        onClick={() => onPageChange(current - 1)}
+                    >
+                        <ChevronLeft className="block-4 inline-4" strokeWidth={1.75} />
+                    </IconButton>
                 </div>
 
                 <div className={pageGroupClass}>
@@ -243,32 +242,30 @@ export function AppPagination({
                 </div>
 
                 <div className={arrowGroupClass}>
-                    <AnimatedBackground
-                        enableHover
-                        className="rounded-md border border-brand bg-brand-soft shadow-none"
-                        transition={reduceMotion ? { duration: 0 } : spring.snappy}
+                    <IconButton
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        data-id="next"
+                        className={arrowButtonClass}
+                        disabled={!canNext}
+                        aria-label="Go to next page"
+                        onClick={() => onPageChange(current + 1)}
                     >
-                        <button
-                            type="button"
-                            data-id="next"
-                            className={arrowButtonClass}
-                            disabled={!canNext}
-                            aria-label="Go to next page"
-                            onClick={() => onPageChange(current + 1)}
-                        >
-                            <ChevronRight className="block-4 inline-4" strokeWidth={1.75} />
-                        </button>
-                        <button
-                            type="button"
-                            data-id="last"
-                            className={arrowButtonClass}
-                            disabled={!canNext}
-                            aria-label="Go to last page"
-                            onClick={() => onPageChange(safeTotal)}
-                        >
-                            <ChevronsRight className="block-4 inline-4" strokeWidth={1.75} />
-                        </button>
-                    </AnimatedBackground>
+                        <ChevronRight className="block-4 inline-4" strokeWidth={1.75} />
+                    </IconButton>
+                    <IconButton
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        data-id="last"
+                        className={arrowButtonClass}
+                        disabled={!canNext}
+                        aria-label="Go to last page"
+                        onClick={() => onPageChange(safeTotal)}
+                    >
+                        <ChevronsRight className="block-4 inline-4" strokeWidth={1.75} />
+                    </IconButton>
                 </div>
             </div>
 

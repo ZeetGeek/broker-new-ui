@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { Bookmark } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -23,14 +24,15 @@ export function PropertySaveButton({
     iconOnly = false,
     className,
 }: PropertySaveButtonProps) {
+    const ActionButton = iconOnly ? IconButton : Button;
     return (
         <Tooltip>
             <TooltipTrigger
                 render={
-                    <Button
+                    <ActionButton
                         type="button"
-                        variant={iconOnly ? "ghost" : "link"}
-                        size={iconOnly ? "icon" : "sm"}
+                        {...(!iconOnly ? { variant: "link" as const } : {})}
+                        size={iconOnly ? "md" : "sm"}
                         aria-pressed={isSaved}
                         aria-label={isSaved ? `Remove ${title} from saved` : `Save ${title}`}
                         onClick={onToggle}

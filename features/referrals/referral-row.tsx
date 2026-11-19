@@ -1,9 +1,9 @@
 "use client";
-
 import { formatRelativePast } from "@/lib/format/date";
 import { buildWhatsAppInviteUrl } from "@/lib/share/referral";
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { ArrowRight, BellRing, MessageSquare, MoreHorizontal } from "@/components/shared/icons";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -198,13 +198,9 @@ export function ReferralRow({
                 <DropdownMenu>
                     <DropdownMenuTrigger
                         render={
-                            <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                aria-label={`More for ${referral.person.name}`}
-                            >
+                            <IconButton size="sm" aria-label={`More for ${referral.person.name}`}>
                                 <MoreHorizontal aria-hidden />
-                            </Button>
+                            </IconButton>
                         }
                     />
                     <DropdownMenuContent align="end">

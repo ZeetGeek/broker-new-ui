@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
@@ -13,6 +12,7 @@ import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/b
 
 import { AppImage } from "@/components/shared/app-image";
 import { AvatarStack } from "@/components/shared/avatar-stack";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     Activity,
     ArrowRight,
@@ -263,27 +263,26 @@ function ListingRow({
             </td>
             <td className={styles.actionsCell}>
                 <div className={styles.rowActions}>
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
+                    <IconButton
+                        size="sm"
                         nativeButton={false}
                         render={<Link href={brokerPropertyEditHref(listing.id)} />}
                         aria-label={`Edit ${listing.title}`}
                         title="Edit listing"
-                        className="text-ink-subtle"
+                        className=""
                     >
                         <Pencil aria-hidden />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
+                    </IconButton>
+                    <IconButton
+                        tone="danger"
+                        size="sm"
                         onClick={() => onDelete(listing)}
                         aria-label={`Delete ${listing.title}`}
                         title="Delete listing"
-                        className="text-danger hover:bg-danger-soft hover:text-danger"
+                        className=""
                     >
                         <Trash2 aria-hidden />
-                    </Button>
+                    </IconButton>
                 </div>
             </td>
         </tr>
@@ -520,18 +519,22 @@ export function InventoryAndUpdates({
     const listingViewportRef = useRef<HTMLDivElement>(null);
     const listingContentRef = useRef<HTMLDivElement>(null);
     const [hasMoreListings, setHasMoreListings] = useState(false);
+    const [listingsScrolled, setListingsScrolled] = useState(false);
     const updateViewportRef = useRef<HTMLDivElement>(null);
     const updateContentRef = useRef<HTMLDivElement>(null);
     const [hasMoreUpdates, setHasMoreUpdates] = useState(false);
+    const [updatesScrolled, setUpdatesScrolled] = useState(false);
 
     useEffect(() => {
         const viewport = updateViewportRef.current;
         const content = updateContentRef.current;
         if (!viewport || !content) return;
-        const measure = () =>
+        const measure = () => {
             setHasMoreUpdates(
                 viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1,
             );
+            setUpdatesScrolled(viewport.scrollTop > 1);
+        };
         const observer = new ResizeObserver(measure);
         observer.observe(viewport);
         observer.observe(content);
@@ -546,10 +549,12 @@ export function InventoryAndUpdates({
         const viewport = listingViewportRef.current;
         const content = listingContentRef.current;
         if (!viewport || !content) return;
-        const measure = () =>
+        const measure = () => {
             setHasMoreListings(
                 viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1,
             );
+            setListingsScrolled(viewport.scrollTop > 1);
+        };
         const observer = new ResizeObserver(measure);
         observer.observe(viewport);
         observer.observe(content);
@@ -629,6 +634,7 @@ export function InventoryAndUpdates({
                     <div
                         ref={listingViewportRef}
                         className={styles.scrollViewport}
+                        data-scrolled={listingsScrolled}
                         role="region"
                         aria-label={`${selectedTab === "draft" ? "Draft" : "Active"} listing list`}
                         tabIndex={0}
@@ -741,7 +747,7 @@ export function InventoryAndUpdates({
                 data-scroll-fade={hasMoreUpdates}
                 aria-labelledby="dashboard-updates-heading"
             >
-                <header className={styles.header}>
+                <header className={styles.header} data-scrolled={updatesScrolled}>
                     <h2 id="dashboard-updates-heading" className="h5 text-ink">
                         Recent updates
                     </h2>

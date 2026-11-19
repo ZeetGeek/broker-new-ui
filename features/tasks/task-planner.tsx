@@ -1,5 +1,4 @@
 "use client";
-
 import { type CSSProperties, type ReactNode, useId, useRef, useState } from "react";
 
 import {
@@ -27,6 +26,7 @@ import { measuredCssToRem, measuredPxToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
+import { IconButton } from "@/components/shared/icon-button";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 
@@ -276,43 +276,48 @@ export function TaskPlanner({
                     >
                         Today
                     </button>
-                    <button
+                    <IconButton
+                        size="sm"
                         type="button"
                         className={styles.navButton}
                         aria-label={`Previous ${columns} days`}
                         onClick={() => shift(-columns)}
                     >
                         <ChevronsLeft aria-hidden size={16} />
-                    </button>
-                    <button
+                    </IconButton>
+                    <IconButton
+                        size="sm"
                         type="button"
                         className={styles.navButton}
                         aria-label="Previous day"
                         onClick={() => shift(-1)}
                     >
                         <ChevronLeft aria-hidden size={16} />
-                    </button>
-                    <button
+                    </IconButton>
+                    <IconButton
+                        size="sm"
                         type="button"
                         className={styles.navButton}
                         aria-label="Next day"
                         onClick={() => shift(1)}
                     >
                         <ChevronRight aria-hidden size={16} />
-                    </button>
-                    <button
+                    </IconButton>
+                    <IconButton
+                        size="sm"
                         type="button"
                         className={styles.navButton}
                         aria-label={`Next ${columns} days`}
                         onClick={() => shift(columns)}
                     >
                         <ChevronsRight aria-hidden size={16} />
-                    </button>
+                    </IconButton>
                     <div className={styles.dateJump}>
                         <label className="sr-only" htmlFor="task-planner-date">
                             Jump to a date
                         </label>
                         <AppDatePicker
+                            iconOnly
                             id="task-planner-date"
                             value={anchor}
                             onChange={(day) => {

@@ -1,5 +1,4 @@
 "use client";
-
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
@@ -14,6 +13,7 @@ import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { CharacterCount } from "@/components/shared/character-count";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     type AppIcon,
     Building2,
@@ -279,18 +279,18 @@ function AttachedPropertyRows({
                             </span>
                         </Link>
                         {canDetach ? (
-                            <Button
+                            <IconButton
+                                tone="danger"
                                 type="button"
-                                variant="ghost"
-                                size="icon-sm"
+                                size="sm"
                                 disabled={busy || Boolean(detachingLeadId)}
                                 loading={busy}
                                 aria-label={`Remove ${property.title}`}
-                                className="text-danger hover:bg-danger-soft hover:text-danger"
+                                className=""
                                 onClick={() => onDetach?.(property)}
                             >
                                 <Trash2 aria-hidden className="block-4 inline-4" />
-                            </Button>
+                            </IconButton>
                         ) : null}
                     </div>
                 );

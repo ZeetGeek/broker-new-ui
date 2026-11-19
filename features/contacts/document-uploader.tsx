@@ -1,12 +1,11 @@
 "use client";
-
 import { type DragEvent, useCallback, useId, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import type { AppIcon } from "@/components/shared/icons";
 import { Paperclip, Trash2, Upload } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -128,14 +127,14 @@ function DocumentRow({
             <Tooltip>
                 <TooltipTrigger
                     render={
-                        <Button
+                        <IconButton
+                            tone="danger"
                             type="button"
-                            variant="ghost"
-                            size="icon-xs"
+                            size="xs"
                             disabled={disabled}
                             onClick={() => onRemove(doc.id)}
                             aria-label={`Remove ${doc.fileName}`}
-                            className="shrink-0 text-ink-muted hover:text-danger"
+                            className="shrink-0"
                         />
                     }
                 >

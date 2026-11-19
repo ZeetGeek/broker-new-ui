@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -9,6 +8,7 @@ import { formatInTimeZone } from "date-fns-tz";
 
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import {
     ArrowRight,
     ChevronLeft,
@@ -360,22 +360,24 @@ export function DashboardTasksCard() {
                                         <h3 className="h5">{dayLabel(selectedDay, "EEEE")}</h3>
                                     </div>
                                     <div className={styles.dayNavButtons}>
-                                        <button
+                                        <IconButton
+                                            size="sm"
                                             type="button"
                                             className={planner.navButton}
                                             aria-label="Previous day"
                                             onClick={() => shiftDay(-1)}
                                         >
                                             <ChevronLeft aria-hidden size={16} />
-                                        </button>
-                                        <button
+                                        </IconButton>
+                                        <IconButton
+                                            size="sm"
                                             type="button"
                                             className={planner.navButton}
                                             aria-label="Next day"
                                             onClick={() => shiftDay(1)}
                                         >
                                             <ChevronRight aria-hidden size={16} />
-                                        </button>
+                                        </IconButton>
                                     </div>
                                 </header>
                                 <ul

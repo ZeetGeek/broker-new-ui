@@ -1,5 +1,4 @@
 "use client";
-
 import type { ReactNode } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
@@ -13,9 +12,9 @@ import type { PropertyShareInput } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
 
 import { AttachedBuyersRow, AttachedOwnerRow } from "@/components/shared/attached-people-row";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     OVERLAY_GLASS_BUTTON_CLASS,
-    OVERLAY_ICON_BUTTON_CLASS,
     OverlayCard,
     OverlayCardSummary,
     OverlayPersonLine,
@@ -81,9 +80,6 @@ function dealPricing(listing: DealCardListing): ListingAskPricesListing {
     };
 }
 
-const BARE_ICON_BUTTON_CLASS =
-    "shrink-0 bg-transparent p-0 hover:bg-transparent block-6! inline-6!";
-
 export function DealWhatsAppButton({
     name,
     phoneDigits,
@@ -128,14 +124,11 @@ export function DealWhatsAppButton({
     }
 
     return (
-        <Button
-            variant="ghost"
-            size={isOverlay ? "icon" : "icon-sm"}
+        <IconButton
+            tone="brand"
+            size="sm"
             nativeButton={false}
-            className={cn(
-                isOverlay ? OVERLAY_ICON_BUTTON_CLASS : BARE_ICON_BUTTON_CLASS,
-                className,
-            )}
+            className={cn("shrink-0", className)}
             render={
                 <a
                     href={formatWhatsAppUrl(phoneDigits)}
@@ -152,7 +145,7 @@ export function DealWhatsAppButton({
                 className={isOverlay ? "block-5 inline-5" : "block-6 inline-6"}
                 aria-hidden
             />
-        </Button>
+        </IconButton>
     );
 }
 

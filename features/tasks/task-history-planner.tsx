@@ -1,10 +1,10 @@
 "use client";
-
 import { type CSSProperties, type ReactNode, useId, useState } from "react";
 
 import { formatInTimeZone } from "date-fns-tz";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
+import { IconButton } from "@/components/shared/icon-button";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 
@@ -106,7 +106,8 @@ export function TaskHistoryPlanner({
                     >
                         Today
                     </button>
-                    <button
+                    <IconButton
+                        size="sm"
                         type="button"
                         className={styles.navButton}
                         disabled={!previous}
@@ -114,8 +115,9 @@ export function TaskHistoryPlanner({
                         onClick={() => shift(-columns)}
                     >
                         <ChevronsLeft aria-hidden size={16} />
-                    </button>
-                    <button
+                    </IconButton>
+                    <IconButton
+                        size="sm"
                         type="button"
                         className={styles.navButton}
                         disabled={!previous}
@@ -123,8 +125,9 @@ export function TaskHistoryPlanner({
                         onClick={() => shift(-1)}
                     >
                         <ChevronLeft aria-hidden size={16} />
-                    </button>
-                    <button
+                    </IconButton>
+                    <IconButton
+                        size="sm"
                         type="button"
                         className={styles.navButton}
                         disabled={!next}
@@ -132,8 +135,9 @@ export function TaskHistoryPlanner({
                         onClick={() => shift(1)}
                     >
                         <ChevronRight aria-hidden size={16} />
-                    </button>
-                    <button
+                    </IconButton>
+                    <IconButton
+                        size="sm"
                         type="button"
                         className={styles.navButton}
                         disabled={!next}
@@ -141,12 +145,13 @@ export function TaskHistoryPlanner({
                         onClick={() => shift(columns)}
                     >
                         <ChevronsRight aria-hidden size={16} />
-                    </button>
+                    </IconButton>
                     <div className={styles.dateJump}>
                         <label className="sr-only" htmlFor={pickerId}>
                             Jump to a date
                         </label>
                         <AppDatePicker
+                            iconOnly
                             id={pickerId}
                             value={first ?? ""}
                             onChange={(date) => {

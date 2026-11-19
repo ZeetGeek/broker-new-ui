@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { AlertCircle, Calendar, MoreHorizontal, RotateCcw } from "@/components/shared/icons";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -155,7 +156,8 @@ export function TaskLine({
                 <DropdownMenu modal={false}>
                     <DropdownMenuTrigger
                         render={
-                            <button
+                            <IconButton
+                                size="xs"
                                 type="button"
                                 className={styles.lineAction}
                                 disabled={busy}

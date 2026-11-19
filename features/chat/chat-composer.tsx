@@ -1,11 +1,11 @@
 "use client";
-
 import { type ChangeEvent, type FormEvent, type KeyboardEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { FileText, ImagePlus, Plus, Smile, X } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
 import {
@@ -169,14 +169,10 @@ export function ChatComposer({
                         </AttachmentDescription>
                     </AttachmentContent>
                     <AttachmentActions>
-                        <Button
+                        <IconButton
                             type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            className="
-                              rounded-full text-ink/60
-                              hover:bg-surface-muted hover:text-ink
-                            "
+                            size="xs"
+                            className=""
                             aria-label={`Remove ${file.name}`}
                             disabled={disabled || sending}
                             onClick={() => {
@@ -186,7 +182,7 @@ export function ChatComposer({
                             }}
                         >
                             <X aria-hidden strokeWidth={1.75} />
-                        </Button>
+                        </IconButton>
                     </AttachmentActions>
                 </Attachment>
             ) : null}
@@ -247,16 +243,15 @@ export function ChatComposer({
                 <Popover open={isEmojiOpen} onOpenChange={setIsEmojiOpen}>
                     <PopoverTrigger
                         render={
-                            <Button
+                            <IconButton
                                 type="button"
-                                size="icon-md"
-                                variant="ghost"
+                                size="lg"
                                 className={TOOL_BUTTON_CLASS}
                                 aria-label="Add an emoji"
                                 disabled={disabled || sending}
                             >
                                 <Smile aria-hidden strokeWidth={1.75} />
-                            </Button>
+                            </IconButton>
                         }
                     />
                     <PopoverContent
@@ -279,20 +274,15 @@ export function ChatComposer({
                             <PopoverTitle className="font-semibold text-ink">
                                 Choose an emoji
                             </PopoverTitle>
-                            <Button
+                            <IconButton
                                 type="button"
-                                variant="ghost"
-                                size="icon-xs"
-                                className="
-                                  text-ink/60
-                                  hover:bg-ink/5 hover:text-ink
-                                  focus-visible:border-ink/25 focus-visible:ring-ink/10
-                                "
+                                size="xs"
+                                className="focus-visible:border-ink/25 focus-visible:ring-ink/10"
                                 aria-label="Close emoji picker"
                                 onClick={() => setIsEmojiOpen(false)}
                             >
                                 <X aria-hidden strokeWidth={1.75} />
-                            </Button>
+                            </IconButton>
                         </PopoverHeader>
                         <EmojiPicker
                             className={styles.picker}

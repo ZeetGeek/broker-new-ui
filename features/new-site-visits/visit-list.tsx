@@ -1,5 +1,4 @@
 "use client";
-
 import { propertyCriteriaCount, type PropertyListCriteria } from "@/lib/properties/list-criteria";
 import { addVisitDays, formatVisitDate, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
@@ -7,6 +6,7 @@ import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { AppImage } from "@/components/shared/app-image";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     type AppIcon,
     Building2,
@@ -58,7 +58,9 @@ function VisitAction({
             <Tooltip>
                 <TooltipTrigger
                     render={
-                        <button
+                        <IconButton
+                            tone={danger ? "danger" : "neutral"}
+                            size="sm"
                             type="button"
                             aria-label={label}
                             className={`${styles.circleAction} ${danger ? styles.dangerAction : ""}`}

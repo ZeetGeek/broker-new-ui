@@ -1,5 +1,4 @@
 "use client";
-
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { type DayButton, getDefaultClassNames } from "react-day-picker";
@@ -10,6 +9,7 @@ import { addMonths, startOfDay } from "date-fns";
 import { formatDateIn, formatDateIso } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import {
     CalendarIcon,
     ChevronLeftIcon,
@@ -188,21 +188,16 @@ function CalendarCaption({
 
     return (
         <div className="flex items-center justify-between gap-1">
-            <Button
+            <IconButton
                 type="button"
-                variant="ghost"
-                size="icon-sm"
+                size="sm"
                 disabled={!canGoPrev}
                 aria-label="Previous month"
-                className="
-                  rounded-full text-ink-muted
-                  hover:bg-surface-muted hover:text-ink
-                  active:translate-y-0 active:scale-100
-                "
+                className="active:translate-y-0 active:scale-100"
                 onClick={() => onMonthChange(addMonths(month, -1))}
             >
                 <ChevronLeftIcon className="block-4 inline-4" />
-            </Button>
+            </IconButton>
 
             <div className="flex items-center gap-1.5">
                 <Select
@@ -277,21 +272,16 @@ function CalendarCaption({
                 </Select>
             </div>
 
-            <Button
+            <IconButton
                 type="button"
-                variant="ghost"
-                size="icon-sm"
+                size="sm"
                 disabled={!canGoNext}
                 aria-label="Next month"
-                className="
-                  rounded-full text-ink-muted
-                  hover:bg-surface-muted hover:text-ink
-                  active:translate-y-0 active:scale-100
-                "
+                className="active:translate-y-0 active:scale-100"
                 onClick={() => onMonthChange(addMonths(month, 1))}
             >
                 <ChevronRightIcon className="block-4 inline-4" />
-            </Button>
+            </IconButton>
         </div>
     );
 }
@@ -316,6 +306,7 @@ export function AppDatePicker({
     min,
     max,
     size = "lg",
+    iconOnly = false,
     className,
     "aria-describedby": describedBy,
 }: {
@@ -331,6 +322,8 @@ export function AppDatePicker({
     min?: string;
     max?: string;
     className?: string;
+    /** Compact calendar action for planner toolbars. */
+    iconOnly?: boolean;
     "aria-describedby"?: string;
 } & VariantProps<typeof datePickerTriggerVariants>) {
     const [open, setOpen] = useState(false);
@@ -354,26 +347,28 @@ export function AppDatePicker({
         if (shouldReset && hasValidDate && selected) setMonth(selected);
     }
 
+    const TriggerButton = iconOnly ? IconButton : Button;
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger
                 render={
-                    <Button
+                    <TriggerButton
                         id={id}
                         type="button"
-                        variant="outline"
+                        {...(iconOnly ? { size: "md" as const } : { variant: "outline" as const })}
+                        aria-label={iconOnly ? "Jump to a date" : undefined}
                         disabled={disabled}
                         aria-invalid={invalid || undefined}
                         aria-describedby={describedBy}
                         aria-expanded={open}
                         onBlur={onBlur}
                         className={cn(
-                            datePickerTriggerVariants({ size }),
-                            !hasValidDate && "text-ink-subtle",
+                            !iconOnly && datePickerTriggerVariants({ size }),
+                            !iconOnly && !hasValidDate && "text-ink-subtle",
                             className,
                         )}
                     >
-                        <span className="truncate">
+                        <span className={iconOnly ? "sr-only" : "truncate"}>
                             {hasValidDate ? formatDateIn(selected) : placeholder}
                         </span>
                         <CalendarIcon
@@ -381,7 +376,7 @@ export function AppDatePicker({
                             data-icon="inline-end"
                             className={datePickerIconVariants({ size })}
                         />
-                    </Button>
+                    </TriggerButton>
                 }
             />
             <PopoverContent

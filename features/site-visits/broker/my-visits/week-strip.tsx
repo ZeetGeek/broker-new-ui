@@ -1,11 +1,11 @@
 "use client";
-
 import { formatInTimeZone } from "date-fns-tz";
 
 import { cn } from "@/lib/utils";
 import { VISITS_TIME_ZONE } from "@/lib/visits/constants";
 import { istDateKey, istDayAsDate, visitWeekDays } from "@/lib/visits/time";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
@@ -34,27 +34,25 @@ export function WeekStrip({
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="body-sm font-semibold text-ink">{monthLabel}</p>
                 <div className="flex items-center gap-1">
-                    <Button
+                    <IconButton
                         type="button"
-                        variant="ghost"
-                        size="icon-md"
+                        size="lg"
                         aria-label="Previous week"
                         onClick={() => onShiftWeek(-1)}
                     >
                         <ChevronLeft aria-hidden />
-                    </Button>
+                    </IconButton>
                     <Button type="button" variant="surface" size="md" onClick={onToday}>
                         Today
                     </Button>
-                    <Button
+                    <IconButton
                         type="button"
-                        variant="ghost"
-                        size="icon-md"
+                        size="lg"
                         aria-label="Next week"
                         onClick={() => onShiftWeek(1)}
                     >
                         <ChevronRight aria-hidden />
-                    </Button>
+                    </IconButton>
                 </div>
             </div>
 

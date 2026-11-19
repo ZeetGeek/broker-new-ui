@@ -1,5 +1,4 @@
 "use client";
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
@@ -14,6 +13,7 @@ import {
     portalProfileMenuSurfaceClass,
 } from "@/components/layout/portal-profile-menu";
 import { AppImage } from "@/components/shared/app-image";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     ArrowRight,
     Building,
@@ -304,9 +304,8 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
         <DropdownMenu>
             <DropdownMenuTrigger
                 render={
-                    <Button
-                        variant={featured ? "ghost" : "outline"}
-                        size={featured ? "icon" : "icon-sm"}
+                    <IconButton
+                        size="sm"
                         className={s.menuTrigger}
                         aria-label={`More actions for visit with ${visit.client}`}
                     />

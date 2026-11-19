@@ -1,5 +1,4 @@
 "use client";
-
 import { memo, useMemo, useState } from "react";
 
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
@@ -8,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, istDateKey } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     BadgeCheck,
     Building2,
@@ -222,10 +222,9 @@ export const PropertyRow = memo(function PropertyRow({
                                 {bookedSlotCount} {bookedSlotCount === 1 ? "slot" : "slots"} booked
                             </span>
                         ) : null}
-                        <Button
+                        <IconButton
                             type="button"
-                            variant="outline"
-                            size="icon-sm"
+                            size="sm"
                             aria-expanded={slotsOpen}
                             aria-label={slotsOpen ? "Hide visit times" : "Show visit times"}
                             onClick={() => setSlotsOpen((value) => !value)}
@@ -237,7 +236,7 @@ export const PropertyRow = memo(function PropertyRow({
                                     slotsOpen && "rotate-180",
                                 )}
                             />
-                        </Button>
+                        </IconButton>
                     </div>
                 </div>
 

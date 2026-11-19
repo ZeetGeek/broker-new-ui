@@ -1,5 +1,4 @@
 "use client";
-
 import {
     type FormEvent,
     type MutableRefObject,
@@ -53,6 +52,7 @@ import {
 } from "@/lib/visibility/rules";
 import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { ArrowRight, Check, ChevronDown, RotateCcw, X } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
@@ -1394,10 +1394,9 @@ function PropertyFormHeader({
                             onClose();
                         }}
                         render={
-                            <Button
+                            <IconButton
                                 type="button"
-                                variant="outline"
-                                size="icon-md"
+                                size="lg"
                                 aria-label="Close"
                                 className="shrink-0"
                             />

@@ -1,5 +1,4 @@
 "use client";
-
 import { type ReactNode, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -14,6 +13,7 @@ import { parseTourEmbed, parseVideoEmbed } from "@/lib/media/embed-url";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 
+import { IconButton } from "@/components/shared/icon-button";
 import {
     type AppIcon,
     Armchair,
@@ -206,26 +206,24 @@ export function PropertyDetailLayout({
                     {!canBookmark ? null : isDraft ? (
                         <Tooltip>
                             <TooltipTrigger render={<span className="inline-flex" tabIndex={0} />}>
-                                <Button
+                                <IconButton
                                     type="button"
-                                    variant="surface"
-                                    size="icon"
+                                    size="md"
                                     className={styles.circleButton}
                                     aria-label="Save property"
                                     disabled
                                 >
                                     <Bookmark aria-hidden size={20} fill="none" />
-                                </Button>
+                                </IconButton>
                             </TooltipTrigger>
                             <TooltipContent side="bottom">
                                 Publish this property to save it
                             </TooltipContent>
                         </Tooltip>
                     ) : (
-                        <Button
+                        <IconButton
                             type="button"
-                            variant="surface"
-                            size="icon"
+                            size="md"
                             className={styles.circleButton}
                             aria-label={saved ? "Unsave property" : "Save property"}
                             aria-pressed={saved}
@@ -237,7 +235,7 @@ export function PropertyDetailLayout({
                                 size={20}
                                 fill={saved ? "currentColor" : "none"}
                             />
-                        </Button>
+                        </IconButton>
                     )}
                     {actions}
                 </div>

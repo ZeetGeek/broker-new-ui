@@ -1,5 +1,4 @@
 "use client";
-
 // Title: Time Picker
 // Description: Shadcn time picker with scrollable hour, minute, second and AM/PM columns, a typable input, steps, bounds and localized labels.
 import type { ComponentProps, KeyboardEvent as ReactKeyboardEvent, ReactNode, Ref } from "react";
@@ -18,14 +17,10 @@ import { flushSync } from "react-dom";
 import { TZDate } from "@date-fns/tz";
 import { cn } from "cn";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { Clock as ClockIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
-import {
-    InputGroup,
-    InputGroupAddon,
-    InputGroupButton,
-    InputGroupInput,
-} from "@/components/ui/input-group";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 /* -------------------------------------------------------------------------- */
@@ -1033,7 +1028,7 @@ export function TimePickerInput({
                 }}
             />
             <InputGroupAddon align="inline-end">
-                <PopoverTrigger render={<InputGroupButton {...clockProps} />}>
+                <PopoverTrigger render={<IconButton {...clockProps} size="sm" variant="ghost" />}>
                     {CLOCK_ICON}
                 </PopoverTrigger>
             </InputGroupAddon>

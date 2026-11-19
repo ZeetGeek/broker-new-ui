@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { memo } from "react";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import { durationMinutes, formatVisitDate, formatVisitTime } from "@/lib/visits/
 import { AppImage } from "@/components/shared/app-image";
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     Building2,
     CalendarDays,
@@ -92,15 +93,14 @@ export const VisitCard = memo(function VisitCard({
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
-                                <Button
+                                <IconButton
                                     type="button"
-                                    variant="outline"
-                                    size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    size="sm"
+                                    className="shrink-0"
                                     aria-label={`Actions for ${visit.property.title}, ${when}`}
                                 >
                                     <MoreHorizontal aria-hidden className="block-4 inline-4" />
-                                </Button>
+                                </IconButton>
                             }
                         />
                         <DropdownMenuContent align="end" className="min-inline-56">

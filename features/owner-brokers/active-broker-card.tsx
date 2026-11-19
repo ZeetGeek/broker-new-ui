@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import Link from "next/link";
 
@@ -8,6 +7,7 @@ import { addCollection, Icon } from "@iconify/react/offline";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { MapPin, MoreHorizontal, Phone, UserMinus } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
@@ -98,12 +98,11 @@ export function ActiveBrokerCard({
                 <DropdownMenu>
                     <DropdownMenuTrigger
                         render={
-                            <Button
+                            <IconButton
                                 type="button"
-                                variant="ghost"
-                                size="icon-sm"
+                                size="sm"
                                 aria-label={`More actions for ${item.brokerName}`}
-                                className="shrink-0 text-ink-muted"
+                                className="shrink-0"
                             />
                         }
                     >

@@ -1,11 +1,11 @@
 "use client";
-
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
 import { copyText } from "@/lib/clipboard";
 import { buildSmsInviteUrl, buildWhatsAppInviteUrl } from "@/lib/share/referral";
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { Check, Copy, MessageSquare, Share2, UserRoundPlus } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
@@ -194,15 +194,14 @@ export function ReferralShareCard({
                 </Button>
 
                 {canNativeShare ? (
-                    <Button
-                        variant="ghost"
-                        size="icon-md"
-                        className="text-white/70 hover:bg-white/10 hover:text-white"
+                    <IconButton
+                        size="lg"
+                        className=""
                         aria-label="Share your invite link another way"
                         onClick={handleNativeShare}
                     >
                         <Share2 aria-hidden />
-                    </Button>
+                    </IconButton>
                 ) : (
                     <Button
                         variant="ghost"
