@@ -166,7 +166,12 @@ export function CommissionEarned() {
                         Open earnings
                     </Button>
                 </header>
-                <div className={styles.chartViewport}>
+                <div
+                    className={styles.chartViewport}
+                    role="region"
+                    aria-label="Monthly commission chart"
+                    tabIndex={months === 12 ? 0 : undefined}
+                >
                     <ChartContainer
                         key={`${months}-${page}`}
                         config={CHART_CONFIG}

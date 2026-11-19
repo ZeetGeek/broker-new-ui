@@ -158,13 +158,11 @@
 
     .statLink {
         flex: 1;
-        grid-template-columns: auto minmax(0, 1fr);
-        grid-template-areas:
-            "icon value"
-            "text text";
-        align-items: start;
-        gap: 0.75rem 0.5rem;
-        padding: 1.125rem;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "text value";
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.875rem;
         border: 1px solid var(--color-border-warm);
         border-radius: var(--radius-card);
         background: var(--color-surface);
@@ -183,9 +181,7 @@
     }
 
     .statLink > svg {
-        grid-area: icon;
-        inline-size: 1.5rem;
-        block-size: 1.5rem;
+        display: none;
     }
 
     .statText {
@@ -268,8 +264,7 @@
 }
 
 @media (min-width: 768px) {
-    .visits > section,
-    .tasks > section {
+    .visits > section {
         flex: 1;
         block-size: auto;
         min-block-size: 680px;
@@ -295,6 +290,18 @@
 
     .pipeline {
         grid-area: pipeline;
+    }
+}
+
+/* A full-width task list should grow with its contents on tablet. */
+@media (min-width: 768px) and (max-width: 1279.98px) {
+    .tasks > section {
+        block-size: auto;
+    }
+
+    .tasks > section > [role="region"] {
+        flex-basis: auto;
+        max-block-size: 32rem;
     }
 }
 

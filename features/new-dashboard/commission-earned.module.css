@@ -72,6 +72,7 @@
 
 .snapshotHeader {
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
     justify-content: space-between;
     gap: 1rem;
@@ -201,6 +202,12 @@
     scrollbar-width: thin;
 }
 
+.chartViewport:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-control);
+}
+
 .yearChart {
     min-inline-size: 36rem;
 }
@@ -280,6 +287,21 @@
 @container (max-width: 24rem) {
     .chart {
         block-size: 13rem;
+    }
+}
+
+@media (max-width: 639.98px) {
+    .summary,
+    .detail {
+        padding: 1rem;
+    }
+
+    .summary {
+        gap: 1.25rem;
+    }
+
+    .snapshotHeader {
+        gap: 0.25rem 0.75rem;
     }
 }
 

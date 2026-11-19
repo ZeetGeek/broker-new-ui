@@ -154,9 +154,26 @@
         --footer-inset: 1.25rem;
     }
 }
-@media (max-width: 639px) {
+@media (max-width: 767.98px) {
     .fixedCard {
-        block-size: 42.5rem; /* 680px — room for ~2 full visit cards */
+        block-size: auto;
+    }
+
+    .scrollViewport {
+        flex-basis: auto;
+        max-block-size: clamp(18rem, 55svh, 28rem);
+        overscroll-behavior-y: auto;
+        scrollbar-width: thin;
+    }
+
+    .scrollViewport::-webkit-scrollbar {
+        display: block;
+        width: 4px;
+    }
+
+    .scrollViewport::-webkit-scrollbar-thumb {
+        border-radius: var(--radius-control);
+        background: var(--color-border-warm);
     }
 }
 

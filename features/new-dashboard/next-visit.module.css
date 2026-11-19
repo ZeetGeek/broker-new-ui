@@ -284,6 +284,8 @@
 
     .people {
         grid-area: people;
+        min-inline-size: 0;
+        overflow-wrap: anywhere;
         align-self: end;
         margin-block-start: 0.75rem;
     }
@@ -313,5 +315,23 @@
     /* Attended / Not attended keep their words: stack them. */
     .actions:not(:has(.actionLabel)) {
         grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@container next-visit (max-width: 16rem) {
+    .details {
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas:
+            "cover name"
+            "cover location"
+            "people people"
+            "price price";
+        row-gap: 0.25rem;
+    }
+
+    .price {
+        justify-self: start;
+        margin-block-start: 0.5rem;
+        text-align: start;
     }
 }

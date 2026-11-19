@@ -528,6 +528,7 @@ function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
                             (visit) => visit.phase === tab.value,
                         ).length;
                         return {
+                            id: `dashboard-visits-tab-${tab.value}`,
                             value: tab.value,
                             label: tab.label,
                             count,
@@ -537,6 +538,7 @@ function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
                     label="Filter visits"
                     panelId="visit-list-panel"
                     className={cn(taskStyles.tabs, visitStyles.tabs)}
+                    tabClassName={visitStyles.tab}
                 />
             </div>
             <div
@@ -548,7 +550,12 @@ function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
                 aria-label="Today's visit list"
             >
                 <div ref={visitContentRef} className={taskStyles.list}>
-                    <div key={filter} id="visit-list-panel" role="tabpanel">
+                    <div
+                        key={filter}
+                        id="visit-list-panel"
+                        role="tabpanel"
+                        aria-labelledby={`dashboard-visits-tab-${filter}`}
+                    >
                         <ul className={visitStyles.list}>
                             {visible.map((visit) => (
                                 <li key={visit.id}>

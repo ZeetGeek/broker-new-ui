@@ -196,7 +196,7 @@ export function NewBrokerDashboard() {
             href: "/broker/visits",
         },
         {
-            label: "Follow-ups to review",
+            label: "Follow-ups",
             icon: CheckCheck,
             urgent: overdue > 0,
             value: followUpTotal,
