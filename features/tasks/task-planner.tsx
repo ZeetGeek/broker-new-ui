@@ -264,7 +264,8 @@ export function TaskPlanner({
                         onValueChange={setPreferredColumns}
                         label="Visible days"
                         panelId={daysPanelId}
-                        className={cn(styles.plannerUnderlineTabs, styles.columnPicker)}
+                        height={36}
+                        className={styles.columnPicker}
                     />
                 )}
                 <div className={styles.dateControls}>

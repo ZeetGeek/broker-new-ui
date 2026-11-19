@@ -4,16 +4,24 @@
 
 $md: 48rem;
 
-@mixin type-step($font, $mobile, $desktop, $weight, $tracking, $leading) {
+@mixin type-step($font, $mobile, $desktop, $weight, $tracking, $leading, $minimum: null) {
     font-family: $font;
-    font-size: $mobile;
+    @if $minimum {
+        font-size: max(#{$mobile}, calc(#{$minimum} / var(--layout-font-scale, 1)));
+    } @else {
+        font-size: $mobile;
+    }
     font-weight: $weight;
     letter-spacing: $tracking;
     line-height: $leading;
 
     @if $mobile != $desktop {
         @media (min-width: $md) {
-            font-size: $desktop;
+            @if $minimum {
+                font-size: max(#{$desktop}, calc(#{$minimum} / var(--layout-font-scale, 1)));
+            } @else {
+                font-size: $desktop;
+            }
         }
     }
 }
@@ -59,25 +67,25 @@ $md: 48rem;
 
     // Body — DM Sans. Named body-* so they do not collide with Tailwind text-*.
     .body-lg {
-        @include type-step(var(--font-sans), 16px, 18px, 400, 0, 1.55);
+        @include type-step(var(--font-sans), 16px, 18px, 400, 0, 1.55, 16px);
     }
 
     .body {
-        @include type-step(var(--font-sans), 14px, 16px, 400, 0, 1.55);
+        @include type-step(var(--font-sans), 14px, 16px, 400, 0, 1.55, 14px);
     }
 
     .body-sm {
-        @include type-step(var(--font-sans), 12px, 14px, 500, 0, 1.45);
+        @include type-step(var(--font-sans), 12px, 14px, 500, 0, 1.45, 12px);
     }
 
     .body-xs {
-        @include type-step(var(--font-sans), 12px, 12px, 400, 0, 1.4);
+        @include type-step(var(--font-sans), 12px, 12px, 400, 0, 1.4, 12px);
     }
 
     // Eyebrow — the only uppercase in the system. Colour is part of the pattern.
     // Slightly stronger weight + tracking so section labels hold the corner of a card.
     .eyebrow {
-        @include type-step(var(--font-sans), 12px, 12px, 600, 0.1em, 1.2);
+        @include type-step(var(--font-sans), 12px, 12px, 600, 0.1em, 1.2, 12px);
         color: var(--color-ink-muted);
         text-transform: uppercase;
     }

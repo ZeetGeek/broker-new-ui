@@ -5,9 +5,14 @@ import Link from "next/link";
 
 import { Label, PolarAngleAxis, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
 
+import { formatDurationUntil } from "@/lib/format/date";
 import { formatBudgetAmount } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
+import {
+    portalProfileMenuItemClass,
+    portalProfileMenuSurfaceClass,
+} from "@/components/layout/portal-profile-menu";
 import { AppImage } from "@/components/shared/app-image";
 import {
     ArrowRight,
@@ -31,6 +36,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
@@ -46,6 +52,7 @@ import {
     type PreviewVisitPhase,
 } from "./mock-work-overview";
 
+import styles from "./dashboard.module.css";
 import nextVisitStyles from "./next-visit.module.css";
 import taskStyles from "./task-card.module.css";
 import visitStyles from "./visit-card.module.css";
@@ -265,117 +272,214 @@ function VisitDetails({ visit, children }: { visit: PreviewVisit; children: Reac
     );
 }
 
-function NextVisit() {
-    const visit = MOCK_VISITS.find((item) => item.phase === "upcoming" && !item.outcome);
-    if (!visit) return null;
+/** `12:30–1:15 PM` — drops the first AM/PM when both ends share it. */
+function visitTimeRange(visit: PreviewVisit) {
+    const start = visit.time.endsWith(visit.end.slice(-2)) ? visit.time.slice(0, -3) : visit.time;
+    return `${start}–${visit.end}`;
+}
+
+function visitStatus(visit: PreviewVisit) {
+    if (visit.phase === "needs_update") return "Ended · needs update";
+    if (visit.phase === "running") return "Happening now";
+    if (visit.startsInMinutes == null) return "Upcoming";
+    // Preview data stores an offset, so measure it from a fixed origin.
+    return `Starts ${formatDurationUntil(new Date(visit.startsInMinutes * 60_000), new Date(0)).label}`;
+}
+
+type VisitCardProps = {
+    visit: PreviewVisit;
+    /** Dark green "Your next visit" card; list rows use the same layout on white. */
+    featured?: boolean;
+    onMarkOutcome?: (outcome: "attended" | "notAttended") => void;
+    onDelete?: () => void;
+};
+
+/** One visit, same anatomy everywhere: time + status → property + people → two actions. */
+function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCardProps) {
+    const s = featured ? nextVisitStyles : visitStyles;
+    const titleId = `visit-card-${featured ? "next" : visit.id}`;
+    const needsUpdate = visit.phase === "needs_update";
+
+    const menu = (
+        <DropdownMenu>
+            <DropdownMenuTrigger
+                render={
+                    <Button
+                        variant={featured ? "ghost" : "outline"}
+                        size={featured ? "icon" : "icon-sm"}
+                        className={s.menuTrigger}
+                        aria-label={`More actions for visit with ${visit.client}`}
+                    />
+                }
+            >
+                <MoreHorizontal aria-hidden />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+                align="end"
+                className={cn(portalProfileMenuSurfaceClass, "inline-auto min-inline-44")}
+            >
+                {/* Preview visits are local; rescheduling happens on the Visits page. */}
+                <DropdownMenuItem
+                    className={portalProfileMenuItemClass}
+                    render={<Link href="/broker/visits" />}
+                >
+                    <CalendarClock aria-hidden />
+                    Reschedule
+                </DropdownMenuItem>
+                {onDelete ? (
+                    <>
+                        <DropdownMenuSeparator className="my-1" />
+                        <DropdownMenuItem
+                            variant="destructive"
+                            className={portalProfileMenuItemClass}
+                            onClick={onDelete}
+                        >
+                            <Trash2 aria-hidden />
+                            Delete visit
+                        </DropdownMenuItem>
+                    </>
+                ) : null}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
 
     return (
-        <section className={nextVisitStyles.card} aria-labelledby="preview-next-visit-title">
-            <div className={nextVisitStyles.header}>
-                <h2 id="preview-next-visit-title" className="body-sm font-semibold">
-                    Your next visit
-                </h2>
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className={nextVisitStyles.menuTrigger}
-                                aria-label="More visit actions"
-                            />
-                        }
-                    >
-                        <MoreHorizontal aria-hidden />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                            render={
-                                <a
-                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(visit.location)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                />
-                            }
-                        >
-                            <MapPin aria-hidden />
-                            View location on Maps
-                        </DropdownMenuItem>
-                        <DropdownMenuItem render={<Link href="/broker/visits" />}>
-                            <CalendarClock aria-hidden />
-                            View all visits
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+        <article className={s.card} aria-labelledby={titleId}>
+            {featured ? (
+                <div className={s.header}>
+                    <h2 className="body-sm font-semibold">Your next visit</h2>
+                    {menu}
+                </div>
+            ) : null}
+
+            <div className={s.schedule}>
+                <p className={cn(s.time, needsUpdate && s.timeNeedsUpdate)}>
+                    {visitTimeRange(visit)}
+                </p>
+                <div className={s.scheduleMeta}>
+                    <p className={s.status} data-phase={visit.phase}>
+                        <Clock aria-hidden />
+                        {visitStatus(visit)}
+                    </p>
+                    {featured ? null : menu}
+                </div>
             </div>
 
-            <div className={nextVisitStyles.schedule}>
-                <p className={nextVisitStyles.time}>
-                    {visit.time.endsWith(visit.end.slice(-2))
-                        ? visit.time.slice(0, -3)
-                        : visit.time}
-                    &ndash;{visit.end}
-                </p>
-                <p className={nextVisitStyles.countdown}>
-                    <Clock aria-hidden className="block-4 inline-4" />
-                    Starts in 1 hour
-                </p>
-            </div>
-
-            <div className={nextVisitStyles.details}>
-                <div className={nextVisitStyles.cover}>
-                    <Building aria-hidden className={nextVisitStyles.coverFallback} />
+            <div className={s.details}>
+                <div className={s.cover}>
+                    <Building aria-hidden className={s.coverFallback} />
                     <AppImage src={visit.coverImage} alt="" fill sizes="64px" />
                 </div>
-                <div className={nextVisitStyles.property}>
-                    <p className={nextVisitStyles.propertyName}>{visit.property}</p>
-                    <p className={nextVisitStyles.location}>
-                        <MapPin aria-hidden className="shrink-0 block-3.5 inline-3.5" />
+                <div className={s.property}>
+                    <p id={titleId} className={s.propertyName}>
+                        {visit.property}
+                    </p>
+                    <p className={s.location}>
+                        <MapPin aria-hidden />
                         {visit.location}
                     </p>
-                    <div className={nextVisitStyles.people}>
-                        <p className={nextVisitStyles.client}>
-                            <span>Client</span>
-                            <span className="font-semibold">{visit.client}</span>
+                    <div className={s.people}>
+                        <p className={s.person}>
+                            <span className={s.personRole}>Client</span>
+                            <span className={s.personName}>{visit.client}</span>
                         </p>
-                        <p className={nextVisitStyles.client}>
-                            <span>Owner</span>
-                            <span className="font-semibold">{visit.owner}</span>
+                        <p className={s.person}>
+                            <span className={s.personRole}>Owner</span>
+                            <span className={s.personName}>{visit.owner}</span>
                         </p>
                     </div>
                 </div>
+                <div className={s.price}>
+                    <PriceWithCommission
+                        amountInr={visit.amountInr}
+                        isRent={visit.isRent}
+                        commissionPercent={visit.commissionPercent}
+                        commissionAmountInr={visit.commissionAmountInr}
+                        audience="broker"
+                        size={featured ? "lg" : "md"}
+                        className={featured ? "text-surface" : undefined}
+                        underlineClassName={featured ? "decoration-surface/50" : undefined}
+                    />
+                </div>
             </div>
 
-            <div className={nextVisitStyles.actions}>
-                <VisitDetails visit={visit}>
-                    <Button variant="highlight" className={nextVisitStyles.action}>
-                        View visit
-                        <ArrowRight aria-hidden />
-                    </Button>
-                </VisitDetails>
-                <Popover>
-                    <PopoverTrigger
-                        render={
+            <div className={s.actions}>
+                {needsUpdate && onMarkOutcome ? (
+                    <>
+                        <Button
+                            variant={featured ? "highlight" : "accent"}
+                            className={s.action}
+                            aria-label={`Mark visit with ${visit.client} as attended`}
+                            onClick={() => onMarkOutcome("attended")}
+                        >
+                            <Check aria-hidden />
+                            Attended
+                        </Button>
+                        <Button
+                            variant={featured ? "ghost" : "outline"}
+                            className={cn(s.action, s.secondaryAction)}
+                            aria-label={`Mark visit with ${visit.client} as not attended`}
+                            onClick={() => onMarkOutcome("notAttended")}
+                        >
+                            <X aria-hidden />
+                            Not attended
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        <VisitDetails visit={visit}>
                             <Button
-                                variant="ghost"
-                                className={cn(nextVisitStyles.action, nextVisitStyles.call)}
-                            />
-                        }
-                    >
-                        <CallIcon aria-hidden />
-                        Call client
-                    </PopoverTrigger>
-                    <PopoverContent className="max-inline-[calc(100vw-2rem)]">
-                        <PopoverTitle>{visit.client}</PopoverTitle>
-                        <p className="body-sm text-ink-muted">Phone number not shared.</p>
-                    </PopoverContent>
-                </Popover>
+                                variant={featured ? "highlight" : "accent"}
+                                className={s.action}
+                            >
+                                View visit
+                                <ArrowRight aria-hidden />
+                            </Button>
+                        </VisitDetails>
+                        <Popover>
+                            <PopoverTrigger
+                                render={
+                                    <Button
+                                        variant={featured ? "ghost" : "outline"}
+                                        className={cn(s.action, s.secondaryAction)}
+                                        aria-label={`Call ${visit.client}`}
+                                    />
+                                }
+                            >
+                                <CallIcon aria-hidden />
+                                {/* Visually hidden on narrow cards; aria-label keeps the name. */}
+                                <span className={s.actionLabel}>Call client</span>
+                            </PopoverTrigger>
+                            <PopoverContent className="max-inline-[calc(100vw-2rem)]">
+                                <PopoverTitle>{visit.client}</PopoverTitle>
+                                <p className="body-sm text-ink-muted">
+                                    No phone number on this Client yet. Open the Client record to
+                                    add one, then you can call from here.
+                                </p>
+                            </PopoverContent>
+                        </Popover>
+                    </>
+                )}
             </div>
-        </section>
+        </article>
     );
 }
 
-function TodayVisits() {
+type VisitActions = {
+    visits: PreviewVisit[];
+    markOutcome: (visitId: string, client: string, outcome: "attended" | "notAttended") => void;
+    removeVisit: (visitId: string, client: string) => void;
+};
+
+function NextVisit({ visits, removeVisit }: Pick<VisitActions, "visits" | "removeVisit">) {
+    const visit = visits.find((item) => item.phase === "upcoming" && !item.outcome);
+    if (!visit) return null;
+    return (
+        <VisitCard visit={visit} featured onDelete={() => removeVisit(visit.id, visit.client)} />
+    );
+}
+
+function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
     const {
         viewportRef: visitViewportRef,
         contentRef: visitContentRef,
@@ -383,26 +487,10 @@ function TodayVisits() {
         scrolled: visitsScrolled,
         measure: measureVisits,
     } = useScrollFooter();
-    const [visits, setVisits] = useState(MOCK_VISITS);
-    const [visitAnnouncement, setVisitAnnouncement] = useState("");
     const [filter, setFilter] = useState<PreviewVisitPhase>("upcoming");
     const activeVisits = visits.filter((visit) => !visit.outcome);
     const needsUpdate = activeVisits.filter((visit) => visit.phase === "needs_update").length;
     const visible = activeVisits.filter((visit) => visit.phase === filter);
-
-    const markOutcome = (visitId: string, client: string, outcome: "attended" | "notAttended") => {
-        setVisits((current) =>
-            current.map((item) => (item.id === visitId ? { ...item, outcome } : item)),
-        );
-        setVisitAnnouncement(
-            `Visit with ${client} marked as ${outcome === "attended" ? "attended" : "not attended"} in this preview.`,
-        );
-    };
-
-    const removeVisit = (visitId: string, client: string) => {
-        setVisits((current) => current.filter((item) => item.id !== visitId));
-        setVisitAnnouncement(`Visit with ${client} deleted from this preview.`);
-    };
 
     useEffect(() => {
         const viewport = visitViewportRef.current;
@@ -415,9 +503,6 @@ function TodayVisits() {
             className={cn(CARD, taskStyles.card, taskStyles.fixedCard)}
             aria-labelledby="preview-today-visits-title"
         >
-            <p className="sr-only" role="status">
-                {visitAnnouncement}
-            </p>
             <header className={visitStyles.header}>
                 <div className={visitStyles.heading}>
                     <h2 id="preview-today-visits-title" className="h5 text-ink">
@@ -445,21 +530,14 @@ function TodayVisits() {
                         ).length;
                         return {
                             value: tab.value,
-                            label: (
-                                <>
-                                    {tab.label}
-                                    {count > 0 ? (
-                                        <span className={taskStyles.count}>{count}</span>
-                                    ) : null}
-                                </>
-                            ),
+                            label: tab.label,
+                            count,
                         };
                     })}
                     onValueChange={setFilter}
                     label="Filter visits"
                     panelId="visit-list-panel"
                     className={cn(taskStyles.tabs, visitStyles.tabs)}
-                    tabClassName={cn(taskStyles.tab, visitStyles.tab)}
                 />
             </div>
             <div
@@ -474,162 +552,14 @@ function TodayVisits() {
                     <div key={filter} id="visit-list-panel" role="tabpanel">
                         <ul className={visitStyles.list}>
                             {visible.map((visit) => (
-                                <li key={visit.id} className={visitStyles.row}>
-                                    <div className={visitStyles.schedule}>
-                                        <p
-                                            className={cn(
-                                                visitStyles.time,
-                                                visit.phase === "needs_update" &&
-                                                    visitStyles.timeNeedsUpdate,
-                                            )}
-                                        >
-                                            {visit.time.endsWith(visit.end.slice(-2))
-                                                ? visit.time.slice(0, -3)
-                                                : visit.time}
-                                            &ndash;{visit.end}
-                                        </p>
-                                        <div className={visitStyles.actions}>
-                                            {visit.phase === "needs_update" ? (
-                                                <>
-                                                    {(["attended", "notAttended"] as const).map(
-                                                        (outcome) => (
-                                                            <Button
-                                                                key={outcome}
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className={
-                                                                    outcome === "attended"
-                                                                        ? "text-brand hover:bg-brand-soft hover:text-brand-text"
-                                                                        : "text-danger hover:bg-danger/5 hover:text-danger"
-                                                                }
-                                                                title={
-                                                                    outcome === "attended"
-                                                                        ? "Mark as attended"
-                                                                        : "Mark as not attended"
-                                                                }
-                                                                aria-label={`Mark visit with ${visit.client} as ${outcome === "attended" ? "attended" : "not attended"}`}
-                                                                onClick={() =>
-                                                                    markOutcome(
-                                                                        visit.id,
-                                                                        visit.client,
-                                                                        outcome,
-                                                                    )
-                                                                }
-                                                            >
-                                                                {outcome === "attended" ? (
-                                                                    <Check aria-hidden />
-                                                                ) : (
-                                                                    <X aria-hidden />
-                                                                )}
-                                                            </Button>
-                                                        ),
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Popover>
-                                                        <PopoverTrigger
-                                                            render={
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="text-ink-subtle hover:bg-surface-muted hover:text-ink"
-                                                                    aria-label={`Call ${visit.client}`}
-                                                                    title="Call client"
-                                                                />
-                                                            }
-                                                        >
-                                                            <CallIcon aria-hidden />
-                                                        </PopoverTrigger>
-                                                        <PopoverContent
-                                                            align="end"
-                                                            className="max-inline-[calc(100vw-2rem)]"
-                                                        >
-                                                            <PopoverTitle>
-                                                                {visit.client}
-                                                            </PopoverTitle>
-                                                            <p className="body-sm text-ink-muted">
-                                                                No phone number on this Client yet.
-                                                                Open the Client record to add one,
-                                                                then you can call from here.
-                                                            </p>
-                                                        </PopoverContent>
-                                                    </Popover>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="text-danger hover:bg-danger/5 hover:text-danger"
-                                                        aria-label={`Delete visit with ${visit.client}`}
-                                                        title="Delete visit"
-                                                        onClick={() =>
-                                                            removeVisit(visit.id, visit.client)
-                                                        }
-                                                    >
-                                                        <Trash2 aria-hidden />
-                                                    </Button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className={visitStyles.details}>
-                                        <div className={visitStyles.cover}>
-                                            <Building
-                                                aria-hidden
-                                                className={visitStyles.coverFallback}
-                                            />
-                                            <AppImage
-                                                src={visit.coverImage}
-                                                alt={`Cover of ${visit.property}`}
-                                                fill
-                                                sizes="64px"
-                                            />
-                                        </div>
-                                        <div className={visitStyles.property}>
-                                            <VisitDetails visit={visit}>
-                                                <button
-                                                    type="button"
-                                                    className={visitStyles.propertyTitle}
-                                                    title="View visit"
-                                                    aria-label={`View visit for ${visit.property} with ${visit.client}`}
-                                                >
-                                                    {visit.property}
-                                                </button>
-                                            </VisitDetails>
-                                            <p className={visitStyles.location}>
-                                                <MapPin aria-hidden />
-                                                {visit.location}
-                                            </p>
-                                            <div className={visitStyles.people}>
-                                                <p className={visitStyles.person}>
-                                                    <span className={visitStyles.personRole}>
-                                                        Client
-                                                    </span>
-                                                    <span className={visitStyles.personName}>
-                                                        {visit.client}
-                                                    </span>
-                                                </p>
-                                                <p className={visitStyles.person}>
-                                                    <span className={visitStyles.personRole}>
-                                                        Owner
-                                                    </span>
-                                                    <span className={visitStyles.personName}>
-                                                        {visit.owner}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className={visitStyles.price}>
-                                            <PriceWithCommission
-                                                amountInr={visit.amountInr}
-                                                isRent={visit.isRent}
-                                                commissionPercent={visit.commissionPercent}
-                                                commissionAmountInr={visit.commissionAmountInr}
-                                                audience="broker"
-                                                size="md"
-                                            />
-                                        </div>
-                                    </div>
+                                <li key={visit.id}>
+                                    <VisitCard
+                                        visit={visit}
+                                        onMarkOutcome={(outcome) =>
+                                            markOutcome(visit.id, visit.client, outcome)
+                                        }
+                                        onDelete={() => removeVisit(visit.id, visit.client)}
+                                    />
                                 </li>
                             ))}
                         </ul>
@@ -649,6 +579,7 @@ function TodayVisits() {
                 data-scroll-shadow={visitsHaveMore}
                 className={cn(
                     taskStyles.fixedFooter,
+                    visitStyles.footer,
                     "flex flex-wrap items-center justify-between gap-2 border-bs border-border-warm",
                 )}
             >
@@ -660,8 +591,8 @@ function TodayVisits() {
                     <p className={visitStyles.footerNote}>
                         <Clock aria-hidden />
                         {needsUpdate === 1
-                            ? "1 visit needs an attendance update"
-                            : `${needsUpdate} visits need an attendance update`}
+                            ? "1 visit needs an update"
+                            : `${needsUpdate} visits need an update`}
                     </p>
                 ) : (
                     <p className="caption text-ink-muted">No attendance updates pending</p>
@@ -673,19 +604,40 @@ function TodayVisits() {
 
 /** Local preview only: this section does not read or write API data. */
 export function WorkOverview() {
+    // Shared so deleting from either card updates both.
+    const [visits, setVisits] = useState(MOCK_VISITS);
+    const [visitAnnouncement, setVisitAnnouncement] = useState("");
+
+    const markOutcome = (visitId: string, client: string, outcome: "attended" | "notAttended") => {
+        setVisits((current) =>
+            current.map((item) => (item.id === visitId ? { ...item, outcome } : item)),
+        );
+        setVisitAnnouncement(
+            `Visit with ${client} marked as ${outcome === "attended" ? "attended" : "not attended"} in this preview.`,
+        );
+    };
+
+    const removeVisit = (visitId: string, client: string) => {
+        setVisits((current) => current.filter((item) => item.id !== visitId));
+        setVisitAnnouncement(`Visit with ${client} deleted from this preview.`);
+    };
+
     return (
-        <div className="grid items-stretch gap-5 xl:grid-cols-3">
-            <div className="flex flex-col gap-5 min-inline-0">
-                <NextVisit />
-                <div className="flex-1 min-inline-0">
-                    <PipelineOverview />
-                </div>
+        <div className={styles.workGrid}>
+            <p className="sr-only" role="status">
+                {visitAnnouncement}
+            </p>
+            <div className={styles.nextVisit}>
+                <NextVisit visits={visits} removeVisit={removeVisit} />
             </div>
-            <div className="flex flex-col min-inline-0">
-                <TodayVisits />
+            <div className={styles.visits}>
+                <TodayVisits visits={visits} markOutcome={markOutcome} removeVisit={removeVisit} />
             </div>
-            <div className="min-inline-0">
+            <div className={styles.tasks}>
                 <DashboardTasksCard />
+            </div>
+            <div className={styles.pipeline}>
+                <PipelineOverview />
             </div>
         </div>
     );

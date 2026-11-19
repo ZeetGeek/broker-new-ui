@@ -365,3 +365,33 @@ Do not build a design system up front for screens that don't exist. In order:
 4. **`<PriceWithCommission>`, `<Price>`, `<PropertyStatusBadge>`, `<EmptyState>`**
    — listing asks first; then the other three that appear on the first screen.
 5. **Everything else** — when the third use appears.
+
+### Surface-pill tabs
+
+Use `SlidingTabs` from `@/components/shared/sliding-tabs` for rounded muted tracks
+with a white sliding active pill (dashboard cards, notifications, property entry
+mode, pricing switches, earnings, and the Tabs catalog). It is the only surface-pill
+implementation; legacy tab modules re-export it.
+
+```tsx
+<SlidingTabs
+    value={view}
+    onValueChange={setView}
+    label="Visit status"
+    height={36}
+    options={[
+        { value: "upcoming", label: "Upcoming", count: 5 },
+        { value: "running", label: "Running", count: 1 },
+        { value: "needs_update", label: "Needs update", count: 2 },
+    ]}
+/>
+```
+
+`height` is the whole horizontal bar height including padding, defaults to 36,
+and accepts design pixels as a number or a CSS length such as `"3rem"`. Phone
+and coarse-pointer tabs retain a minimum 44px touch target. Counts are optional;
+zero is hidden and values above 99 show `99+`. `stretch` fills the available width;
+`orientation="vertical"` uses the same height per row. Supply `panelId` and option
+`id`s when linking tabs to panels. Arrow keys, Home, End, Enter, and Space work;
+reduced motion snaps the pill. Task planner day selectors and notebook tabs use
+the compact surface pill. CRM filter chips remain a separate control.

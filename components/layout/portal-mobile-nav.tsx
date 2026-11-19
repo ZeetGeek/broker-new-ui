@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
+import { MobileActionFan, type MobileFanAction } from "@/components/layout/mobile-action-fan";
 import { resolveActiveNavHref } from "@/components/layout/resolve-active-nav";
 import type { AppIcon } from "@/components/shared/icons";
 import {
@@ -18,6 +19,7 @@ import {
     MoreHorizontal,
     Plus,
     Send,
+    UserRound,
     UserRoundSearch,
     Users,
 } from "@/components/shared/icons";
@@ -30,10 +32,13 @@ import {
 
 import type { NavItem } from "@/config/nav";
 
+const MORE_MENU_EDGE_GAP = 8;
+
 export type PortalMobileCenterAction = {
     href: string;
     /** Accessible name for the raised center control. */
     label: string;
+    actions?: readonly [MobileFanAction, MobileFanAction, MobileFanAction, MobileFanAction];
 };
 
 export type PortalMobileNavProps = {
@@ -46,6 +51,8 @@ export type PortalMobileNavProps = {
     primaryHrefs?: readonly [string, string, string];
     /** Raised green + in the center of the bar — phone app chrome. */
     centerAction?: PortalMobileCenterAction;
+    /** Account page — shown at the bottom of the More menu. */
+    profileHref?: string;
 };
 
 const NAV_ICONS: Record<string, AppIcon> = {
@@ -59,18 +66,26 @@ const NAV_ICONS: Record<string, AppIcon> = {
     "/broker/tasks": CheckCircle2,
     "/broker/referrals": Gift,
     "/broker/earnings": Briefcase,
+    "/broker/profile": UserRound,
     "/owner": LayoutDashboard,
     "/owner/properties": Building2,
     "/owner/brokers": UserRoundSearch,
     "/owner/requests": Send,
     "/owner/visits": Calendar,
     "/owner/leads": Briefcase,
+    "/owner/profile": UserRound,
 };
 
-function NavIcon({ href }: { href: string }) {
+function NavIcon({ href, size = "sm" }: { href: string; size?: "sm" | "md" }) {
     const Icon = NAV_ICONS[href] ?? LayoutDashboard;
 
-    return <Icon aria-hidden className="block-5 inline-5" strokeWidth={1.75} />;
+    return (
+        <Icon
+            aria-hidden
+            className={size === "md" ? "block-6 inline-6" : "block-5 inline-5"}
+            strokeWidth={1.75}
+        />
+    );
 }
 
 function TabLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
@@ -95,6 +110,8 @@ function TabLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 }
 
 function CenterFab({ action }: { action: PortalMobileCenterAction }) {
+    if (action.actions) return <MobileActionFan actions={action.actions} />;
+
     return (
         <Link
             href={action.href}
@@ -147,11 +164,19 @@ function pickPrimaryItems(
     return { left, right, overflow };
 }
 
-export function PortalMobileNav({ items, primaryHrefs, centerAction }: PortalMobileNavProps) {
+export function PortalMobileNav({
+    items,
+    primaryHrefs,
+    centerAction,
+    profileHref,
+}: PortalMobileNavProps) {
     const pathname = usePathname();
     const activeHref = resolveActiveNavHref(pathname, items);
     const { left, right, overflow } = pickPrimaryItems(items, primaryHrefs);
-    const activeOverflow = overflow.find((item) => item.href === activeHref);
+    const profileActive = Boolean(profileHref && pathname.startsWith(profileHref));
+    const activeOverflow =
+        overflow.find((item) => item.href === activeHref) ??
+        (profileActive && profileHref ? { label: "Profile", href: profileHref } : undefined);
     const slots: Array<
         { type: "tab"; item: NavItem } | { type: "fab" } | { type: "more" } | { type: "spacer" }
     > = [];
@@ -159,7 +184,7 @@ export function PortalMobileNav({ items, primaryHrefs, centerAction }: PortalMob
     for (const item of left) slots.push({ type: "tab", item });
     if (centerAction) slots.push({ type: "fab" });
     for (const item of right) slots.push({ type: "tab", item });
-    if (overflow.length > 0) slots.push({ type: "more" });
+    if (overflow.length > 0 || profileHref) slots.push({ type: "more" });
     while (centerAction && slots.length < 5) slots.push({ type: "spacer" });
 
     return (
@@ -226,13 +251,30 @@ export function PortalMobileNav({ items, primaryHrefs, centerAction }: PortalMob
                                     <DropdownMenuContent
                                         side="top"
                                         align="end"
-                                        className="min-inline-52"
+                                        // Compensate for the bar's top padding/border and list gutter.
+                                        sideOffset={() =>
+                                            MORE_MENU_EDGE_GAP +
+                                            parseFloat(
+                                                getComputedStyle(document.documentElement).fontSize,
+                                            ) *
+                                                0.375 +
+                                            1
+                                        }
+                                        alignOffset={() =>
+                                            MORE_MENU_EDGE_GAP -
+                                            parseFloat(
+                                                getComputedStyle(document.documentElement).fontSize,
+                                            ) *
+                                                0.25
+                                        }
+                                        className="gap-0.5 p-1.5 min-inline-40"
                                     >
                                         {overflow.map((item) => (
                                             <DropdownMenuItem
                                                 key={item.href}
                                                 render={<Link href={item.href} />}
                                                 className={cn(
+                                                    "gap-3 px-3 py-2.5 min-block-11",
                                                     item.href === activeHref &&
                                                         "bg-brand-soft text-brand-text",
                                                 )}
@@ -240,10 +282,24 @@ export function PortalMobileNav({ items, primaryHrefs, centerAction }: PortalMob
                                                     item.href === activeHref ? "page" : undefined
                                                 }
                                             >
-                                                <NavIcon href={item.href} />
+                                                <NavIcon href={item.href} size="md" />
                                                 {item.mobileLabel ?? item.label}
                                             </DropdownMenuItem>
                                         ))}
+                                        {profileHref ? (
+                                            <DropdownMenuItem
+                                                render={<Link href={profileHref} />}
+                                                className={cn(
+                                                    "gap-3 px-3 py-2.5 min-block-11",
+                                                    profileActive &&
+                                                        "bg-brand-soft text-brand-text",
+                                                )}
+                                                aria-current={profileActive ? "page" : undefined}
+                                            >
+                                                <NavIcon href={profileHref} size="md" />
+                                                Profile
+                                            </DropdownMenuItem>
+                                        ) : null}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </li>

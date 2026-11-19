@@ -253,30 +253,34 @@ export function CommissionEarned() {
                     <span>Illustrative analytics</span>
                     {latest.isToDate ? <span>* {monthLabel}</span> : null}
                 </footer>
-                <table className="sr-only">
-                    <caption>Illustrative commission earned, {period}, in Indian rupees</caption>
-                    <thead>
-                        <tr>
-                            <th scope="col">Month</th>
-                            <th scope="col">Sale commission</th>
-                            <th scope="col">Rent commission</th>
-                            <th scope="col">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {selectedMonths.map((month) => (
-                            <tr key={month.monthKey}>
-                                <th scope="row">
-                                    {formatCommissionMonth(month.monthKey)}
-                                    {month.isToDate ? " (to date)" : ""}
-                                </th>
-                                <td>{formatCommission(month.sale)}</td>
-                                <td>{formatCommission(month.rent)}</td>
-                                <td>{formatCommission(month.total)}</td>
+                <div className="sr-only">
+                    <table>
+                        <caption>
+                            Illustrative commission earned, {period}, in Indian rupees
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Month</th>
+                                <th scope="col">Sale commission</th>
+                                <th scope="col">Rent commission</th>
+                                <th scope="col">Total</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {selectedMonths.map((month) => (
+                                <tr key={month.monthKey}>
+                                    <th scope="row">
+                                        {formatCommissionMonth(month.monthKey)}
+                                        {month.isToDate ? " (to date)" : ""}
+                                    </th>
+                                    <td>{formatCommission(month.sale)}</td>
+                                    <td>{formatCommission(month.rent)}</td>
+                                    <td>{formatCommission(month.total)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     );

@@ -55,7 +55,7 @@ const buttonVariants = cva(
                   dark:focus-visible:ring-destructive/40
                 `,
                 link: `text-primary underline-offset-4 hover:underline`,
-                accent: `bg-brand text-surface hover:bg-brand/85`,
+                accent: `bg-brand text-surface shadow-brand-glow-soft hover:bg-brand/85 disabled:shadow-none`,
                 highlight: `bg-highlight text-highlight-ink hover:bg-highlight/85`,
                 "highlight-outline": `
                   border-highlight bg-transparent text-highlight

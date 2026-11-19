@@ -39,6 +39,8 @@ import { CommissionEarned } from "./commission-earned";
 import { InventoryAndUpdates } from "./inventory-and-updates";
 import { WorkOverview } from "./work-overview";
 
+import styles from "./dashboard.module.css";
+
 const TIME_ZONE = "Asia/Kolkata";
 const plural = (count: number, singular: string, multiple = `${singular}s`) =>
     `${count} ${count === 1 ? singular : multiple}`;
@@ -224,22 +226,36 @@ export function NewBrokerDashboard() {
     ];
 
     return (
-        <section className="flex flex-col gap-6" aria-labelledby="new-dashboard-heading">
-            <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
-                <div className="flex flex-1 flex-col gap-3 min-inline-0">
-                    <h1
-                        id="new-dashboard-heading"
-                        className="h3 flex items-baseline gap-x-1.5 text-ink"
-                    >
-                        <span className="shrink-0">{formatWeekdayDate(now)}.</span>
-                        <span className="flex-1 min-inline-0">
+        <section className={styles.dashboard} aria-labelledby="new-dashboard-heading">
+            {/* Row 1: date + rotating summary. Row 2 (md+): info left · actions right.
+                Phone hides row 2 — the bottom-nav fan owns the actions. */}
+            <header className="-mbe-1 flex flex-col items-start gap-4 max-lg:-mbe-2 lg:gap-4">
+                <h1 id="new-dashboard-heading" className={`h3 ${styles.heading}`}>
+                    <span className="shrink-0">{formatWeekdayDate(now)}.</span>{" "}
+                    {/* A real space (not margin) so a wrapped summary starts flush left. */}
+                    {/*
+                      Phone: one static line at its natural height. The rotating slot
+                      reserves the tallest message, which leaves a blank line under short
+                      ones once messages wrap — and resizing per message would shift the
+                      cards below every few seconds.
+                    */}
+                    {/* Visibility sits on wrappers: the module's display would beat Tailwind's hidden. */}
+                    <span className="md:hidden">
+                        <span className={styles.summary}>
+                            <span className="text-pretty text-ink-muted">{lines[0]}</span>
+                        </span>
+                    </span>
+                    <span className="min-inline-0 max-md:hidden xl:flex-1">
+                        <span className={styles.summary}>
                             <RotatingHeaderSummary
                                 lines={lines}
                                 loadingPlaceholder="Your day, organised."
                             />
                         </span>
-                    </h1>
-                    <div className="body-sm flex flex-wrap items-center gap-x-2 gap-y-1 text-ink-muted min-inline-0">
+                    </span>
+                </h1>
+                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 inline-full max-md:hidden">
+                    <div className={`body-sm ${styles.metadata}`}>
                         <time
                             dateTime={now.toISOString()}
                             className="inline-flex shrink-0 items-center gap-1.5"
@@ -253,58 +269,53 @@ export function NewBrokerDashboard() {
                             }).format(now)}
                             {" · India time"}
                         </time>
-                        <span aria-hidden className="shrink-0">
+                        <span aria-hidden className={styles.metadataDivider}>
                             ·
                         </span>
                         <WorkingAreas areas={view.serviceAreas} />
                     </div>
-                </div>
-                <div className="shrink-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Button variant="accent" size="md" onClick={() => setAddClientOpen(true)}>
-                            <UserRoundPlus aria-hidden />
-                            Add client
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="md"
-                            nativeButton={false}
-                            render={<Link href="/broker/properties/new" />}
-                        >
-                            <Plus aria-hidden />
-                            Add listing
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="md"
-                            nativeButton={false}
-                            render={<Link href="/broker/visits?tab=slots" />}
-                        >
-                            <CalendarPlus aria-hidden />
-                            Schedule visit
-                        </Button>
+                    <div className="shrink-0 max-lg:inline-full">
+                        <div className={styles.actions}>
+                            <Button
+                                variant="accent"
+                                size="md"
+                                onClick={() => setAddClientOpen(true)}
+                            >
+                                <UserRoundPlus aria-hidden />
+                                Add client
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="md"
+                                nativeButton={false}
+                                render={<Link href="/broker/properties/new" />}
+                            >
+                                <Plus aria-hidden />
+                                Add listing
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="md"
+                                nativeButton={false}
+                                render={<Link href="/broker/visits?tab=slots" />}
+                            >
+                                <CalendarPlus aria-hidden />
+                                Schedule visit
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </header>
-            <ul
-                aria-label="Your work overview"
-                className="grid grid-cols-2 overflow-hidden rounded-card bg-surface shadow-sm ring-1 ring-border-warm/50 lg:grid-cols-4"
-            >
+            <ul aria-label="Your work overview" className={styles.stats}>
                 {stats.map((stat) => (
-                    <li
-                        key={stat.label}
-                        className="relative p-2 after:absolute after:inset-y-4 after:inset-e-0 after:bg-border-warm after:inline-px even:after:hidden lg:last:after:hidden lg:even:after:block"
-                    >
-                        <Link
-                            href={stat.href}
-                            className="group flex items-center gap-3 rounded-control px-3 py-2.5 transition-colors duration-250 ease-out outline-none block-full min-block-11 hover:bg-surface-muted/40 focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
-                        >
+                    <li key={stat.label} className={styles.stat}>
+                        <Link href={stat.href} className={styles.statLink}>
                             <stat.icon
                                 aria-hidden
                                 className={`shrink-0 block-6 inline-6 ${stat.urgent ? "text-urgent" : "text-brand"}`}
                                 strokeWidth={1.75}
                             />
-                            <div className="flex flex-col gap-1 min-inline-0">
+                            <div className={styles.statText}>
                                 <span className="body-sm font-semibold text-ink">{stat.label}</span>
                                 <span className="text-sm font-medium text-ink-muted">
                                     {stat.detail}

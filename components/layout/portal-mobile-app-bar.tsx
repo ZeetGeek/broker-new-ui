@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 
 import { getUserTimeZone } from "@/lib/datetime/timezone";
-import { cn } from "@/lib/utils";
 
 import { PortalNotificationsMenu } from "@/components/layout/portal-notifications-menu";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -47,24 +46,6 @@ function useDayPartGreeting() {
     );
 }
 
-const SCROLL_THRESHOLD_PX = 8;
-
-function useMobileHeaderScrolled() {
-    const [scrolled, setScrolled] = useState(false);
-
-    useEffect(() => {
-        const update = () => {
-            setScrolled(window.scrollY > SCROLL_THRESHOLD_PX);
-        };
-
-        update();
-        window.addEventListener("scroll", update, { passive: true });
-        return () => window.removeEventListener("scroll", update);
-    }, []);
-
-    return scrolled;
-}
-
 export function PortalMobileAppBar({
     identity,
     notificationsHref,
@@ -73,20 +54,13 @@ export function PortalMobileAppBar({
     notificationsHref: string;
 }) {
     const greeting = useDayPartGreeting();
-    const scrolled = useMobileHeaderScrolled();
 
     return (
         <div
-            data-scrolled={scrolled ? "true" : "false"}
-            className={cn(
-                `
-                  -mx-4 flex items-center justify-between gap-3 px-4 py-3
-                  transition-[background-color,border-color,box-shadow] duration-160 md:hidden
-                `,
-                scrolled
-                    ? "border-be border-border-warm bg-surface shadow-xs"
-                    : "border-be border-transparent bg-transparent",
-            )}
+            className="
+              -mx-4 flex items-center justify-between gap-3 border-be border-border-warm px-5 py-4
+              md:hidden
+            "
         >
             <Link
                 href={identity.profileHref}
@@ -118,9 +92,11 @@ export function PortalMobileAppBar({
                 tooltipLabel="Notifications"
                 triggerClassName="
                   relative rounded-full border-0 bg-surface text-ink
+                  block-11! inline-11! min-block-11! min-inline-11!
                   shadow-[0_2px_4px_-1px_rgb(11_31_23/0.08),0_8px_18px_-6px_rgb(11_31_23/0.16)]
                   hover:bg-surface hover:text-ink
                   aria-expanded:bg-surface aria-expanded:text-ink
+                  [&_svg]:block-5! [&_svg]:inline-5!
                 "
             />
         </div>

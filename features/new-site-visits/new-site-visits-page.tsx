@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useSearchParams } from "next/navigation";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -52,6 +53,7 @@ export function NewSiteVisitsPage() {
 }
 
 function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
+    const searchParams = useSearchParams();
     const queryClient = useQueryClient();
     const queryKey = useMemo(() => ["penpot-private-visits-preview-v2", accountId], [accountId]);
     const query = useQuery({
@@ -80,7 +82,9 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const deleting = visits.find((visit) => visit.id === deletingId);
     const [tab, setTab] = useState<VisitTab>("upcoming");
-    const [view, setView] = useState<"schedule" | "edit" | "detail" | null>(null);
+    const [view, setView] = useState<"schedule" | "edit" | "detail" | null>(() =>
+        searchParams.get("view") === "schedule" ? "schedule" : null,
+    );
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const selected = visits.find((visit) => visit.id === selectedId);
     const confirmVisit = visits.find((visit) => visit.id === confirmation?.id);

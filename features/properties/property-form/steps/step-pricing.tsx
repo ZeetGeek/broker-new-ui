@@ -13,9 +13,9 @@ import { useMarketCurrency } from "@/hooks/use-market";
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { BedDouble, Users, Utensils } from "@/components/shared/icons";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 
 import { HOUSEKEEPING_OPTIONS, PG_BED_TYPE_OPTIONS, PG_GENDER_OPTIONS } from "@/constants/property";
-import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
 import {
     CounterField,
     CurrencyField,
@@ -125,7 +125,7 @@ function RentAndDepositSection({
                             <SlidingTabs
                                 value={depositMode}
                                 onValueChange={changeDepositMode}
-                                ariaLabel="How to set the deposit"
+                                label="How to set the deposit"
                                 options={depositModeTabs(currency.symbol)}
                                 className="t-tabs-compact shrink-0"
                             />

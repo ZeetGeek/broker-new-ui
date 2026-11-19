@@ -32,8 +32,8 @@ because of restraint, not because of decoration. Three consequences drive every 
 
 Author CSS, SCSS, CSS modules, and Tailwind arbitrary values in px when convenient.
 The final PostCSS plugin, `postcss-pxtorem`, converts app CSS to rem after Tailwind,
-including media queries, using a 16px baseline (`16px = 1rem`). The root font size
-is left to the browser; the conversion does not add viewport-based scaling.
+including media queries, using a 16px baseline (`16px = 1rem`). Keep this conversion
+baseline at 16; responsive sizing is controlled by the global root scale below.
 Third-party stylesheets loaded directly from `node_modules` are excluded.
 
 PostCSS does not process React inline styles or runtime CSS-in-JS. Use rem strings
@@ -44,6 +44,21 @@ positions do not drift when browser text size changes. Keep counts, opacity,
 z-index, scale, SVG/canvas coordinates, and numeric library measurement APIs
 unitless. Read CSS motion length tokens through `readRootPx`, since their built
 values may be rem.
+
+### Responsive root scale
+
+`app/globals.css` owns `--layout-font-scale`. The root uses
+`font-size: calc(100% * var(--layout-font-scale))`, relative to the browser's preferred
+font size: 93.75% below 48rem, 96.875% from 48rem, and 100% from 80rem. Change these
+three values in one place to tune layout density. Keep the existing Tailwind
+breakpoints and the PostCSS conversion baseline unchanged.
+
+Spacing, headings, and rem-sized surfaces scale together. Named body styles retain
+their minimum readable sizes (14px body, 12px small/caption, 16px large body at the
+default browser setting). Shared buttons and tabs retain a 44px minimum on coarse
+pointers; a narrow viewport alone does not enlarge mouse controls. Form fields
+retain a 44px minimum and 16px font size on phones or coarse pointers. These floors also grow with
+the browser's preferred font size; they do not disable user zoom.
 
 ---
 
@@ -356,7 +371,14 @@ hover/press feedback, `lg`/`xl` only for content that floats above the page (men
 popovers, dialogs). Dark attention cards (`brand-deep`, `brand-ink`) never carry a
 shadow; they already separate through fill contrast.
 
-The focus ring remains the one non-elevation `box-shadow`:
+**Brand glow** — `--shadow-brand-glow` (`shadow-brand-glow`) is not an elevation step.
+It is a brand-green lift (`0 2px 4px -1px ink/18%, 0 8px 16px -4px brand/45%,
+0 14px 28px -6px brand/35%`) reserved for the floating mobile action fan (+) trigger. Inline
+`<Button variant="accent">` uses the gentler `--shadow-brand-glow-soft`
+(`0 1px 2px -1px ink/12%, 0 4px 10px -4px brand/30%, 0 8px 16px -8px brand/20%`). Never on cards, outline/ghost
+buttons, or more than one primary action per screen; drop it when disabled.
+
+The focus ring remains the one non-elevation `box-shadow` besides the brand glow:
 `0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-brand)`.
 
 Borders are 1px `border`. A card may combine a hairline border with a shadow when it
@@ -755,6 +777,11 @@ hints use `ShortcutTooltip` from `components/shared/shortcut-tooltip.tsx` (or
 desktop, they do not replace affordance.
 
 ### 4.15 Tabs
+
+Surface-pill controls share `SlidingTabs` from
+`components/shared/sliding-tabs.tsx`. Pass `height` for the full bar height
+(default 36 design pixels), optional option `count`s, and `stretch` when needed.
+The Tabs catalog demonstrates the common component at 36, 44, and 52px.
 
 base-ui Tabs, wrapped once in `components/ui/tabs.tsx`. Peer views and section
 chrome â€” not binary form choices (those are `TextSegmentedToggle` /

@@ -19,41 +19,6 @@
     max-inline-size: 100%;
     margin-block-start: 1rem;
 }
-.tabs :global(.t-tabs-pill) {
-    border-radius: 8px;
-}
-.tab:global(.t-tab[role="tab"]) {
-    gap: 0.375rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-.count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-inline-size: 1.125rem;
-    padding-block: 0.125rem;
-    padding-inline: 0.375rem;
-    border-radius: 999px;
-    background: color-mix(in oklab, var(--color-ink) 8%, transparent);
-    color: var(--color-ink-muted);
-    font-size: 0.6875rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-}
-.tab:global([aria-selected="true"]) .count {
-    background: var(--color-surface-muted);
-    color: var(--color-ink);
-}
-@media (pointer: coarse) {
-    .tab {
-        min-block-size: 44px;
-    }
-    .tabs :global(.t-tabs-pill) {
-        block-size: 44px;
-    }
-}
 .list {
     padding-block-start: 0;
 }
@@ -191,7 +156,7 @@
 }
 @media (max-width: 639px) {
     .fixedCard {
-        block-size: 600px;
+        block-size: 42.5rem; /* 680px — room for ~2 full visit cards */
     }
 }
 
@@ -202,10 +167,26 @@
 /* Embed the shared planner paper list inside the dashboard card. */
 .paper {
     --line-height: 40px;
-    /* Shared with planner .rowGutters so date/nav match the colored bars. */
-    --dashboard-row-gutter: 1.375rem;
+    /*
+      Shared with planner .rowGutters so date/nav match the colored bars.
+      Start (check) and end (row action) gutters are equal so the list sits
+      centred in the card. Touch keeps a 40px action column (always visible).
+    */
+    --dashboard-row-gutter: 2.5rem;
+    --dashboard-action-gutter: 2.5rem;
     background: transparent;
     border-radius: 0;
+}
+
+/*
+  Mouse / trackpad: actions only show on hover, so both columns shrink to the
+  check's original 22px — tight and equal on each side.
+*/
+@media (hover: hover) and (pointer: fine) {
+    .paper {
+        --dashboard-row-gutter: 1.375rem;
+        --dashboard-action-gutter: 1.375rem;
+    }
 }
 .dayColumnFlush {
     padding-inline: 0;
@@ -227,7 +208,7 @@
 }
 /* Higher specificity than planner .dayHeading so the shared gutter wins. */
 .paper .dayNav {
-    padding: 0.625rem var(--dashboard-row-gutter) 0.5rem;
+    padding: 0.625rem var(--dashboard-action-gutter) 0.5rem var(--dashboard-row-gutter);
 }
 .dayNavLabel {
     min-inline-size: 0;

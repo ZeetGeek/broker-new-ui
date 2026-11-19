@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 
+import { SlidingTabs, TabsPanel } from "@/components/shared/sliding-tabs";
+
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";
-import { SlidingTabs, TabsPanel } from "@/features/design-system/theme/sliding-tabs";
 import {
     TABS_ORIENTATIONS,
     TABS_USES,
@@ -29,9 +30,9 @@ const ENTRY_TABS = [
 ] as const;
 
 const SECTION_TABS = [
-    { value: "visits", label: "My visits", count: 4 },
-    { value: "slots", label: "Open slots", count: 2 },
-    { value: "requests", label: "Requests", count: 0 },
+    { value: "upcoming", label: "Upcoming", count: 5 },
+    { value: "running", label: "Running", count: 1 },
+    { value: "needs_update", label: "Needs update", count: 2 },
 ] as const;
 
 const FILTER_TABS = [
@@ -54,8 +55,10 @@ const VERTICAL_PANELS = {
 
 function TabsDemo({
     options = ENTRY_TABS,
+    height = 36,
 }: {
     options?: ReadonlyArray<{ value: string; label: string }>;
+    height?: number;
 }) {
     const [value, setValue] = useState(options[0]?.value ?? "");
 
@@ -63,7 +66,8 @@ function TabsDemo({
         <SlidingTabs
             value={value}
             onValueChange={setValue}
-            ariaLabel="Demo tabs"
+            height={height}
+            label="Demo tabs"
             options={options.map((tab) => ({ value: tab.value, label: tab.label }))}
         />
     );
@@ -81,7 +85,7 @@ function PanelsDemo() {
                         setValue(next);
                     }
                 }}
-                ariaLabel="Entry mode"
+                label="Entry mode"
                 options={ENTRY_TABS.map((tab) => ({ value: tab.value, label: tab.label }))}
             />
             <TabsPanel
@@ -97,36 +101,21 @@ function PanelsDemo() {
 }
 
 function CountsDemo() {
-    const [value, setValue] = useState<(typeof SECTION_TABS)[number]["value"]>("visits");
+    const [value, setValue] = useState<(typeof SECTION_TABS)[number]["value"]>("upcoming");
 
     return (
         <SlidingTabs
             value={value}
             onValueChange={(next) => {
-                if (next === "visits" || next === "slots" || next === "requests") {
+                if (next === "upcoming" || next === "running" || next === "needs_update") {
                     setValue(next);
                 }
             }}
-            ariaLabel="Site visit sections"
-            stretch
-            className="inline-full"
+            label="Visit status example"
             options={SECTION_TABS.map((tab) => ({
                 value: tab.value,
-                label: (
-                    <>
-                        <span className="truncate">{tab.label}</span>
-                        {tab.count > 0 ? (
-                            <span
-                                className="
-                              tabular rounded-md bg-surface/70 px-1.5 py-0.5 text-[11px]
-                              text-ink-muted
-                            "
-                            >
-                                {tab.count}
-                            </span>
-                        ) : null}
-                    </>
-                ),
+                label: tab.label,
+                count: tab.count,
             }))}
         />
     );
@@ -145,7 +134,7 @@ function VerticalDemo() {
                         setValue(next as keyof typeof VERTICAL_PANELS);
                     }
                 }}
-                ariaLabel="Settings sections"
+                label="Settings sections"
                 orientation="vertical"
                 options={keys.map((tab) => ({
                     value: tab,
@@ -226,6 +215,21 @@ export function TabsThemePage() {
                 </section>
 
                 <section>
+                    <h2 className="h4 text-ink">Height</h2>
+                    <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
+                        Pass height to set the whole bar, including its padding. The default is
+                        36px. Phone tabs keep a minimum 44px touch target.
+                    </p>
+                    <div className="mbs-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+                        {[36, 44, 52].map((height) => (
+                            <Swatch key={height} label={`height={${height}}`}>
+                                <TabsDemo height={height} />
+                            </Swatch>
+                        ))}
+                    </div>
+                </section>
+
+                <section>
                     <h2 className="h4 text-ink">Orientation</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Horizontal is the product default. Vertical slides the pill on the Y axis —
@@ -251,7 +255,9 @@ export function TabsThemePage() {
                     <p className="eyebrow text-highlight">Rules</p>
                     <ul className="body-sm mbs-3 list-disc space-y-2 ps-5 text-[#B8CFC4]">
                         <li>
-                            Motion is <code className="body-xs">.t-tabs</code> +{" "}
+                            Import <code className="body-xs">SlidingTabs</code> from{" "}
+                            <code className="body-xs">components/shared/sliding-tabs</code>. Motion
+                            is <code className="body-xs">.t-tabs</code> +{" "}
                             <code className="body-xs">.t-tabs-surface</code> from{" "}
                             <code className="body-xs">app/transitions-dev.css</code>. Measure the
                             active tab on paint and resize with transitions suspended; tween on

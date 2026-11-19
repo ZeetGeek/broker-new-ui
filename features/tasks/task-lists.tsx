@@ -259,14 +259,9 @@ export function TaskLists({
                                                 )
                                             }
                                         />
-                                        <span
-                                            className={styles.slidingTabCount}
-                                            aria-label={`${count} ${count === 1 ? "list" : "lists"}`}
-                                        >
-                                            {count}
-                                        </span>
                                     </span>
                                 ),
+                                count,
                                 ariaLabel: `${tab.name}, ${count} ${count === 1 ? "list" : "lists"}`,
                             };
                         })}
@@ -277,7 +272,8 @@ export function TaskLists({
                         }}
                         label="Custom list tabs"
                         panelId="task-someday"
-                        className={cn(styles.plannerUnderlineTabs, styles.notebookTabPicker)}
+                        height={36}
+                        className={styles.notebookTabPicker}
                     />
                 </div>
                 <div className={styles.somedayBarEnd}>

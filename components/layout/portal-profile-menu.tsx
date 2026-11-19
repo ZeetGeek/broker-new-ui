@@ -44,6 +44,7 @@ export const portalProfileMenuSurfaceClass = `
   **:data-[variant=destructive]:data-highlighted:text-danger!
   **:data-[variant=destructive]:focus:bg-danger-soft!
   **:data-[variant=destructive]:focus:text-danger!
+  **:data-[slot=dropdown-menu-separator]:-mx-1.5!
 `;
 
 export function PortalProfileMenuSeparator() {
@@ -53,12 +54,19 @@ export function PortalProfileMenuSeparator() {
 export function PortalProfileShortcutHint({
     shortcutId,
     destructive = false,
+    /**
+     * Profile menu only shows shortcuts flagged `showInProfileMenu`.
+     * Pass true for other shared menus (e.g. nav More) that should show any bound shortcut.
+     */
+    showWhenAvailable = false,
 }: {
     shortcutId: ShortcutId;
     destructive?: boolean;
+    showWhenAvailable?: boolean;
 }) {
     const shortcut = getShortcut(shortcutId);
-    if (!shortcut?.showInProfileMenu) return null;
+    if (!shortcut) return null;
+    if (!showWhenAvailable && !shortcut.showInProfileMenu) return null;
 
     return (
         <KbdGroup className="ms-auto hidden gap-0.5 sm:inline-flex">
@@ -158,7 +166,7 @@ function DesktopProfileDropdown({
                     size="md"
                     className="group-focus-visible:ring-2 group-focus-visible:ring-brand"
                 />
-                <span className="flex flex-col items-start gap-0.5 text-start min-inline-0">
+                <span className="hidden flex-col items-start gap-0.5 text-start min-inline-0 lg:flex">
                     <span className="body-sm truncate leading-tight font-semibold text-ink max-inline-36">
                         {userName}
                     </span>
@@ -168,8 +176,8 @@ function DesktopProfileDropdown({
                     name="chevron-down"
                     aria-hidden="true"
                     className="
-                      transition-transform duration-160 block-3.5 inline-3.5
-                      group-data-popup-open:rotate-180
+                      hidden transition-transform duration-160 block-3.5 inline-3.5 group-data-popup-open:rotate-180
+                      lg:block
                     "
                 />
             </DropdownMenuTrigger>

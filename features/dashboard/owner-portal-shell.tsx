@@ -93,6 +93,7 @@ function OwnerPortalShellInner({ children }: { children: ReactNode }) {
                         <PortalMobileNav
                             items={OWNER_NAV_ITEMS}
                             primaryHrefs={OWNER_MOBILE_PRIMARY_HREFS}
+                            profileHref={OWNER_PROFILE_HREF}
                             centerAction={{
                                 href: OWNER_PROPERTIES_NEW_HREF,
                                 label: "Add property",

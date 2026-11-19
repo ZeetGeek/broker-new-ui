@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { formatInTimeZone } from "date-fns-tz";
 
-import { measuredPxToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 import {
@@ -17,6 +16,7 @@ import {
     LockKeyhole,
     Plus,
 } from "@/components/shared/icons";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { Button } from "@/components/ui/button";
 
 import { useAppSelector } from "@/store/hooks";
@@ -80,8 +80,6 @@ export function DashboardTasksCard() {
     const [now, setNow] = useState(() => Date.now());
     const [selectedDay, setSelectedDay] = useState(() => taskDateKey(Date.now()));
     const [completionFeedback, setCompletionFeedback] = useState<Record<string, number>>({});
-    const tabs = useRef<HTMLDivElement>(null);
-    const pill = useRef<HTMLSpanElement>(null);
     const viewport = useRef<HTMLDivElement>(null);
     const content = useRef<HTMLDivElement>(null);
     const [hasMore, setHasMore] = useState(false);
@@ -142,27 +140,6 @@ export function DashboardTasksCard() {
         filter === "today" ? "manual" : "due",
     );
 
-    useLayoutEffect(() => {
-        const bar = tabs.current;
-        const indicator = pill.current;
-        if (!bar || !indicator) return;
-        const position = () => {
-            const active = bar.querySelector<HTMLElement>('[aria-selected="true"]');
-            if (!active) return;
-            indicator.style.transform = `translateX(${measuredPxToRem(active.offsetLeft)})`;
-            indicator.style.width = measuredPxToRem(active.offsetWidth);
-        };
-        position();
-        const observer = new ResizeObserver(() => {
-            indicator.style.transition = "none";
-            position();
-            void indicator.offsetWidth;
-            indicator.style.transition = "";
-        });
-        observer.observe(bar);
-        return () => observer.disconnect();
-    }, [filter, todayCount, overdueCount]);
-
     useEffect(() => {
         const el = viewport.current;
         if (!el || !content.current) return;
@@ -184,7 +161,6 @@ export function DashboardTasksCard() {
     useEffect(() => {
         const el = viewport.current;
         if (el) el.scrollTop = 0;
-        setScrolled(false);
     }, [filter]);
 
     const changeTasks = async (updater: (latest: Task[]) => Task[], message?: string) => {
@@ -326,52 +302,21 @@ export function DashboardTasksCard() {
                 </Button>
             </header>
             <div className={styles.tabsBar} data-scrolled={scrolled ? "true" : "false"}>
-                <div
-                    ref={tabs}
-                    className={cn("t-tabs t-tabs-surface t-tabs-compact", styles.tabs)}
-                    role="tablist"
-                    aria-label="Filter tasks"
-                >
-                    <span ref={pill} className="t-tabs-pill" aria-hidden />
-                    {TAB_OPTIONS.map(({ value, label }, index) => {
-                        const count = countFor(value);
-                        return (
-                            <button
-                                key={value}
-                                id={`dashboard-tasks-tab-${value}`}
-                                type="button"
-                                role="tab"
-                                aria-selected={filter === value}
-                                aria-controls="dashboard-tasks-panel"
-                                tabIndex={filter === value ? 0 : -1}
-                                onClick={() => setFilter(value)}
-                                onKeyDown={(event) => {
-                                    const next =
-                                        event.key === "ArrowRight"
-                                            ? (index + 1) % TAB_OPTIONS.length
-                                            : event.key === "ArrowLeft"
-                                              ? (index - 1 + TAB_OPTIONS.length) %
-                                                TAB_OPTIONS.length
-                                              : event.key === "Home"
-                                                ? 0
-                                                : event.key === "End"
-                                                  ? TAB_OPTIONS.length - 1
-                                                  : -1;
-                                    if (next < 0) return;
-                                    event.preventDefault();
-                                    setFilter(TAB_OPTIONS[next].value);
-                                    tabs.current
-                                        ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-                                        [next]?.focus();
-                                }}
-                                className={cn("t-tab", styles.tab)}
-                            >
-                                {label}
-                                {count > 0 ? <span className={styles.count}>{count}</span> : null}
-                            </button>
-                        );
-                    })}
-                </div>
+                <SlidingTabs
+                    value={filter}
+                    onValueChange={(value) => {
+                        setFilter(value);
+                        setScrolled(false);
+                    }}
+                    label="Filter tasks"
+                    panelId="dashboard-tasks-panel"
+                    className={styles.tabs}
+                    options={TAB_OPTIONS.map((tab) => ({
+                        ...tab,
+                        id: `dashboard-tasks-tab-${tab.value}`,
+                        count: countFor(tab.value),
+                    }))}
+                />
             </div>
             <div
                 ref={viewport}

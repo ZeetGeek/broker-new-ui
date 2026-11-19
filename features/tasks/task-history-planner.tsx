@@ -4,8 +4,6 @@ import { type CSSProperties, type ReactNode, useId, useState } from "react";
 
 import { formatInTimeZone } from "date-fns-tz";
 
-import { cn } from "@/lib/utils";
-
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
@@ -96,7 +94,8 @@ export function TaskHistoryPlanner({
                         onValueChange={setPreferredColumns}
                         label="Visible days"
                         panelId={panelId}
-                        className={cn(styles.plannerUnderlineTabs, styles.columnPicker)}
+                        height={36}
+                        className={styles.columnPicker}
                     />
                 )}
                 <div className={styles.dateControls}>

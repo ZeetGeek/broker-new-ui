@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 
@@ -10,7 +10,6 @@ import { isMockMode } from "@/lib/api/mock-mode";
 import { myListingsApi } from "@/lib/api/my-listings";
 import { formatRelativePast } from "@/lib/format/date";
 import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
-import { measuredPxToRem } from "@/lib/styles/rem";
 
 import { AppImage } from "@/components/shared/app-image";
 import { AvatarStack } from "@/components/shared/avatar-stack";
@@ -37,6 +36,7 @@ import {
     PriceWithCommission,
 } from "@/components/shared/price-with-commission";
 import { Skeleton } from "@/components/shared/skeleton";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
@@ -47,7 +47,6 @@ import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
 import styles from "./inventory-and-updates.module.css";
-import taskStyles from "./task-card.module.css";
 
 type InventoryTab = "published" | "draft";
 const INVENTORY_TABS = [
@@ -64,89 +63,19 @@ function InventoryTabs({
     onChange: (value: InventoryTab) => void;
     counts?: { published: number; draft: number };
 }) {
-    const barRef = useRef<HTMLDivElement>(null);
-    const pillRef = useRef<HTMLSpanElement>(null);
-    const painted = useRef(false);
-    const placed = useRef<{ x: number; w: number } | null>(null);
-
-    const movePill = useCallback((animate: boolean) => {
-        const bar = barRef.current;
-        const pill = pillRef.current;
-        const active = bar?.querySelector<HTMLElement>('[aria-selected="true"]');
-        if (!pill || !active) return;
-        const x = active.offsetLeft;
-        const w = active.offsetWidth;
-        // ResizeObserver reports the box we just wrote. Rewriting transform
-        // with the transition cleared would cancel the slide in progress.
-        if (placed.current?.x === x && placed.current.w === w) return;
-        placed.current = { x, w };
-        const transition = pill.style.transition;
-        if (!animate) pill.style.transition = "none";
-        pill.style.transform = `translateX(${measuredPxToRem(x)})`;
-        pill.style.width = `${measuredPxToRem(w)}`;
-        if (!animate) {
-            void pill.offsetWidth;
-            pill.style.transition = transition;
-        }
-    }, []);
-
-    useLayoutEffect(() => {
-        movePill(painted.current);
-        painted.current = true;
-    }, [value, counts?.published, counts?.draft, movePill]);
-
-    useLayoutEffect(() => {
-        const bar = barRef.current;
-        if (!bar) return;
-        const observer = new ResizeObserver(() => movePill(false));
-        observer.observe(bar);
-        bar.querySelectorAll<HTMLElement>('[role="tab"]').forEach((tab) => observer.observe(tab));
-        return () => observer.disconnect();
-    }, [movePill]);
-
     return (
-        <div
-            ref={barRef}
-            role="tablist"
-            aria-label="Filter your listings"
-            className={`t-tabs t-tabs-surface t-tabs-compact ${styles.listingTabs}`}
-        >
-            <span ref={pillRef} className="t-tabs-pill" aria-hidden="true" />
-            {INVENTORY_TABS.map((tab, index) => (
-                <button
-                    key={tab.value}
-                    id={`dashboard-listings-tab-${tab.value}`}
-                    type="button"
-                    role="tab"
-                    aria-selected={value === tab.value}
-                    aria-controls="dashboard-listings-panel"
-                    tabIndex={value === tab.value ? 0 : -1}
-                    className={`t-tab ${taskStyles.tab}`}
-                    onClick={() => onChange(tab.value)}
-                    onKeyDown={(event) => {
-                        const next =
-                            event.key === "Home"
-                                ? 0
-                                : event.key === "End"
-                                  ? INVENTORY_TABS.length - 1
-                                  : event.key === "ArrowRight"
-                                    ? (index + 1) % INVENTORY_TABS.length
-                                    : event.key === "ArrowLeft"
-                                      ? (index - 1 + INVENTORY_TABS.length) % INVENTORY_TABS.length
-                                      : null;
-                        if (next === null) return;
-                        event.preventDefault();
-                        onChange(INVENTORY_TABS[next].value);
-                        barRef.current
-                            ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-                            [next]?.focus();
-                    }}
-                >
-                    {tab.label}
-                    {counts ? <span className={taskStyles.count}>{counts[tab.value]}</span> : null}
-                </button>
-            ))}
-        </div>
+        <SlidingTabs
+            value={value}
+            onValueChange={onChange}
+            label="Filter your listings"
+            panelId="dashboard-listings-panel"
+            className={styles.listingTabs}
+            options={INVENTORY_TABS.map((tab) => ({
+                ...tab,
+                id: `dashboard-listings-tab-${tab.value}`,
+                count: counts?.[tab.value],
+            }))}
+        />
     );
 }
 

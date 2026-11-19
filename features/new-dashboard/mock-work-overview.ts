@@ -19,6 +19,8 @@ export type PreviewVisit = {
     location: string;
     phase: PreviewVisitPhase;
     outcome?: "attended" | "notAttended";
+    /** Preview only: minutes until an upcoming visit starts. */
+    startsInMinutes?: number;
     coverImage: string;
     owner: string;
     amountInr: number;
@@ -72,6 +74,7 @@ export const MOCK_VISITS: PreviewVisit[] = [
     },
     {
         id: "visit-5",
+        startsInMinutes: 60,
         coverImage: "/properties/1.jpg",
         owner: "Bhavna Shah",
         time: "12:30 PM",
@@ -86,6 +89,7 @@ export const MOCK_VISITS: PreviewVisit[] = [
     },
     {
         id: "visit-6",
+        startsInMinutes: 150,
         coverImage: "/properties/2.jpg",
         owner: "Sanjay Patel",
         time: "2:00 PM",
@@ -100,6 +104,7 @@ export const MOCK_VISITS: PreviewVisit[] = [
     },
     {
         id: "visit-3",
+        startsInMinutes: 240,
         coverImage: "/properties/3.jpg",
         owner: "Kiran Desai",
         time: "3:30 PM",
@@ -114,6 +119,7 @@ export const MOCK_VISITS: PreviewVisit[] = [
     },
     {
         id: "visit-7",
+        startsInMinutes: 330,
         coverImage: "/properties/3.jpg",
         owner: "Pooja Desai",
         time: "5:00 PM",
@@ -128,6 +134,7 @@ export const MOCK_VISITS: PreviewVisit[] = [
     },
     {
         id: "visit-8",
+        startsInMinutes: 390,
         coverImage: "/properties/4.jpg",
         owner: "Manish Joshi",
         time: "6:00 PM",

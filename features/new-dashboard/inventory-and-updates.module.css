@@ -74,7 +74,7 @@
     justify-content: space-between;
     align-items: center;
     gap: 0.375rem 1rem;
-    padding-block: 1rem 0.875rem;
+    padding-block: 1rem 0.25rem;
     color: var(--color-ink-muted);
     font-size: 0.75rem;
     font-weight: 500;
@@ -83,9 +83,6 @@
 
 .listingTabs {
     max-inline-size: 100%;
-}
-.listingTabs :global(.t-tabs-pill) {
-    border-radius: 8px;
 }
 .inventoryContent {
     display: flex;
@@ -99,12 +96,6 @@
     outline: 2px solid var(--color-ring);
     outline-offset: 3px;
     border-radius: var(--radius-control);
-}
-@media (pointer: coarse) {
-    .listingTabs :global(.t-tab),
-    .listingTabs :global(.t-tabs-pill) {
-        block-size: 44px;
-    }
 }
 
 .description,
@@ -155,7 +146,11 @@
 .table {
     table-layout: fixed;
     inline-size: 100%;
-    border-collapse: collapse;
+    /* Separate + spacing so every listing row reads as its own bordered box. */
+    border-collapse: separate;
+    border-spacing: 0 0.75rem;
+    /* border-spacing also pads above the header row; cancel that gap under the tabs. */
+    margin-block-start: -0.75rem;
     text-align: start;
 }
 .table col:nth-child(1) {
@@ -199,35 +194,56 @@
     z-index: -1;
     background: var(--color-surface);
 }
-.table thead::after {
-    content: "";
-    position: absolute;
-    inset-inline: 0;
-    inset-block-end: 0;
-    z-index: 1;
-    block-size: 1px;
-    background: color-mix(in oklab, var(--color-border-warm) 60%, transparent);
-    pointer-events: none;
-}
+/* Header row is a box too: same border + radius as the listing rows, soft fill. */
 .table th {
-    background: var(--color-surface);
-    padding: 0.625rem 0.75rem;
+    border-block: 1px solid var(--color-border-warm);
+    background: color-mix(in srgb, var(--color-surface-muted) 55%, var(--color-surface));
+    padding: 0.625rem;
     color: var(--color-ink-subtle);
     text-align: start;
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1.5;
 }
+/*
+  Row box (same chrome as the visit cards): cells share top/bottom borders,
+  first/last cells close the sides and carry the rounded corners.
+*/
 .listingRow td {
-    padding: 1rem 0.75rem;
+    padding: 0.75rem 0.625rem;
     vertical-align: middle;
+    border-block: 1px solid var(--color-border-warm);
+    background: var(--color-surface);
+    transition: border-color 160ms ease-out;
 }
-.table th:first-child,
 .listingRow td:first-child {
-    padding-inline-start: 0;
+    padding-inline-start: 0.75rem;
+    border-inline-start: 1px solid var(--color-border-warm);
+    border-start-start-radius: var(--radius-card);
+    border-end-start-radius: var(--radius-card);
 }
-.listingRow + .listingRow {
-    border-block-start: 1px solid color-mix(in oklab, var(--color-border-warm) 60%, transparent);
+.listingRow td:last-child {
+    border-inline-end: 1px solid var(--color-border-warm);
+    border-start-end-radius: var(--radius-card);
+    border-end-end-radius: var(--radius-card);
+}
+/*
+  Between thead and tbody the browser spaces twice (24px vs 12px between rows).
+  Shift every body row up by one spacing so header → first row matches row → row.
+*/
+.listingRow {
+    position: relative;
+    inset-block-start: -0.75rem;
+}
+.listingRow:hover td {
+    border-color: color-mix(in srgb, var(--color-ink) 14%, transparent);
+}
+/* Header labels line up with the content inside the boxes. */
+.table th:first-child {
+    padding-inline-start: 0.75rem;
+    border-inline-start: 1px solid var(--color-border-warm);
+    border-start-start-radius: var(--radius-control);
+    border-end-start-radius: var(--radius-control);
 }
 .propertyLink {
     display: flex;
@@ -424,11 +440,14 @@
     gap: 0.375rem;
 }
 .table th:last-child {
-    padding-inline-end: 0;
+    padding-inline-end: 0.75rem;
+    border-inline-end: 1px solid var(--color-border-warm);
+    border-start-end-radius: var(--radius-control);
+    border-end-end-radius: var(--radius-control);
     text-align: start;
 }
 .listingRow td:last-child {
-    padding-inline-end: 0;
+    padding-inline-end: 0.75rem;
 }
 .footer {
     position: relative;
@@ -594,9 +613,15 @@
 }
 
 @container dashboard-listings (max-width: 44rem) {
-    .table,
-    .table tbody {
+    .table {
         display: block;
+    }
+    .table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        /* Net 0.5rem below the tabs after the table's -0.75rem pull-up. */
+        padding-block: 1.25rem 0.75rem;
     }
     .table thead {
         display: none;
@@ -604,15 +629,29 @@
     .table colgroup {
         display: none;
     }
+    /* Stacked layout: the row itself is the box; cells drop their table borders. */
     .listingRow {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
         column-gap: 0.75rem;
-        padding-block: 1rem;
+        padding: 0.875rem;
+        border: 1px solid var(--color-border-warm);
+        border-radius: var(--radius-card);
+        background: var(--color-surface);
+        transition: border-color 160ms ease-out;
+        inset-block-start: 0;
     }
-    .listingRow td {
+    .listingRow:hover {
+        border-color: color-mix(in srgb, var(--color-ink) 14%, transparent);
+    }
+    .listingRow td,
+    .listingRow td:first-child,
+    .listingRow td:last-child {
         inline-size: auto;
         padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: none;
     }
     .propertyCell {
         grid-column: 1 / -1;

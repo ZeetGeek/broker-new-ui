@@ -52,6 +52,8 @@
     --input: oklch(0.93 0.007 106.5);
     --ring: oklch(0.737 0.021 106.9);
     --radius: 0.75rem;
+    /* Portal content cap — header row + page content share it so edges align. */
+    --portal-max-inline: 100rem;
     --sidebar: oklch(0.988 0.003 106.5);
     --sidebar-foreground: oklch(0.153 0.006 107.1);
     --sidebar-primary: oklch(0.228 0.013 107.4);
@@ -139,6 +141,16 @@
         0 8px 16px -6px oklch(0.153 0.02 155 / 0.08), 0 28px 56px -12px oklch(0.153 0.02 155 / 0.14);
     /* Upward shadow on a pinned card footer while the list above still scrolls. */
     --shadow-scroll-edge: 0 -10px 18px -12px rgb(25 28 26 / 28%);
+    /* Brand-green lift + glow: mobile action fan (+) and Button variant="accent". */
+    --shadow-brand-glow:
+        0 2px 4px -1px rgb(11 31 23 / 18%),
+        0 8px 16px -4px color-mix(in srgb, var(--color-brand) 45%, transparent),
+        0 14px 28px -6px color-mix(in srgb, var(--color-brand) 35%, transparent);
+    /* Softer glow for inline buttons — the full glow is sized for the floating (+). */
+    --shadow-brand-glow-soft:
+        0 1px 2px -1px rgb(11 31 23 / 12%),
+        0 4px 10px -4px color-mix(in srgb, var(--color-brand) 30%, transparent),
+        0 8px 16px -8px color-mix(in srgb, var(--color-brand) 20%, transparent);
 }
 
 .dark {
@@ -269,6 +281,8 @@
     --shadow-lg: var(--shadow-lg);
     --shadow-xl: var(--shadow-xl);
     --shadow-scroll-edge: var(--shadow-scroll-edge);
+    --shadow-brand-glow: var(--shadow-brand-glow);
+    --shadow-brand-glow-soft: var(--shadow-brand-glow-soft);
 }
 
 ::-webkit-scrollbar {
@@ -510,7 +524,23 @@
         cursor: pointer;
     }
     html {
+        /* One global rem scale: phone 93.75%, tablet 96.875%, desktop 100%.
+           Percentages preserve the user's browser font-size preference. */
+        --layout-font-scale: 0.9375;
+        --touch-target-min: calc(2.75rem / var(--layout-font-scale));
+        --input-font-min: calc(1rem / var(--layout-font-scale));
+        font-size: calc(100% * var(--layout-font-scale));
         @apply font-sans;
+    }
+    @media (min-width: 48rem) {
+        html {
+            --layout-font-scale: 0.96875;
+        }
+    }
+    @media (min-width: 80rem) {
+        html {
+            --layout-font-scale: 1;
+        }
     }
     h1,
     h2,
@@ -557,17 +587,36 @@
     color: var(--color-ink);
 }
 
-/* Grow the layout box, not an overlapping pseudo-element hit area. */
-@media (pointer: coarse), (max-width: 767px) {
+/* Input capability controls button/tab density; viewport width controls layout.
+   Grow touch targets without enlarging mouse controls at the phone breakpoint. */
+@media (pointer: coarse) {
     .touch-target,
     [data-slot="button"],
+    .t-tab,
+    .t-notif-filter-tab {
+        min-block-size: var(--touch-target-min);
+        min-inline-size: var(--touch-target-min);
+    }
+
+    .t-tabs .t-tabs-pill {
+        min-block-size: var(--touch-target-min);
+    }
+}
+
+/* Fields keep their readable size on narrow screens and touch devices. */
+@media (pointer: coarse), (max-width: 767px) {
     [data-slot="input"],
     [data-slot="select-trigger"],
     [data-slot="combobox-input-group"],
-    [data-slot="combobox-trigger"],
-    .t-notif-filter-tab {
-        min-block-size: 44px;
-        min-inline-size: 44px;
+    [data-slot="combobox-trigger"] {
+        min-block-size: var(--touch-target-min);
+        min-inline-size: var(--touch-target-min);
+    }
+
+    /* Keep field text readable while the surrounding rem layout gets smaller. */
+    html
+        :is(input, textarea, select, [data-slot="select-trigger"], [data-slot="combobox-trigger"]) {
+        font-size: var(--input-font-min);
     }
 }
 

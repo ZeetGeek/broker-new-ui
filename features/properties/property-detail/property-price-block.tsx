@@ -17,8 +17,8 @@ import {
     listingCommissionTip,
     PriceWithCommission,
 } from "@/components/shared/price-with-commission";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 
-import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
 import { buildPropertyHeadlineFacts } from "./property-detail-facts";
@@ -77,7 +77,7 @@ export function PropertyPriceBlock({
                     <SlidingTabs
                         value={mode}
                         onValueChange={setMode}
-                        ariaLabel="Property price"
+                        label="Property price"
                         options={[
                             { value: "sale", label: "For sale" },
                             { value: "rent", label: "For rent" },
