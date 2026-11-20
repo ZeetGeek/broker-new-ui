@@ -3,7 +3,10 @@
 import { useId } from "react";
 
 import { formatPrice } from "@/lib/format/price";
-import type { FinalCommissionType } from "@/lib/validation/final-commission";
+import {
+    type FinalCommissionType,
+    resolveFinalCommission,
+} from "@/lib/validation/final-commission";
 
 import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Input } from "@/components/ui/input";
@@ -29,6 +32,8 @@ export function FinalCommissionField({
     onValueChange: (value: string | null) => void;
 }) {
     const id = useId();
+    const fieldError =
+        error ?? (type === "percent" ? resolveFinalCommission(type, value, 0).error : null);
     return (
         <fieldset disabled={disabled} className="flex flex-col gap-3">
             <legend className="body-sm mbe-3 font-semibold text-ink">
@@ -73,11 +78,11 @@ export function FinalCommissionField({
                     onValueChange={onValueChange}
                     disabled={disabled}
                     placeholder="e.g. 2"
-                    errorText={error}
+                    errorText={fieldError}
                     helperText={`Percentage of the final ${isRent ? "monthly rent" : "sale price"}`}
                 />
             )}
-            {amount != null && !error ? (
+            {amount != null && !fieldError ? (
                 <p className="body-sm text-ink" aria-live="polite">
                     You get <span className="font-semibold">{formatPrice(amount)}</span>
                 </p>

@@ -228,7 +228,7 @@ export function StageNoteModal({
                     primaryLabel={primaryLabel}
                     primaryIcon={<PrimaryIcon aria-hidden strokeWidth={1.75} />}
                     onPrimary={confirm}
-                    primaryDisabled={isSaving}
+                    primaryDisabled={isSaving || (asksFinalPrice && commission.error != null)}
                     secondaryLabel="Cancel"
                     onSecondary={onCancel}
                     secondaryDisabled={isSaving}
