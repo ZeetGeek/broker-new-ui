@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 
+import { amountFormatFor, formatAmountWithSymbol } from "@/lib/format/amount-input";
+import { getActiveCurrency } from "@/lib/format/currency";
+import {
+    type FinalCommissionType,
+    resolveFinalCommission,
+} from "@/lib/validation/final-commission";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
@@ -10,6 +16,7 @@ import { CharacterCount } from "@/components/shared/character-count";
 import { BadgeCheck, Info, LostIcon, StickyNote } from "@/components/shared/icons";
 import { Textarea } from "@/components/ui/textarea";
 
+import { FinalCommissionField } from "@/features/pipeline/final-commission-field";
 import {
     defaultFinalPriceChoice,
     type FinalPriceChoice,
@@ -111,6 +118,9 @@ export function StageNoteModal({
     const [priceError, setPriceError] = useState<string | null>(null);
     const [lostReason, setLostReason] = useState<DealLostReason | null>(null);
     const [lostError, setLostError] = useState<string | null>(null);
+    const [commissionType, setCommissionType] = useState<FinalCommissionType>("percent");
+    const [commissionValue, setCommissionValue] = useState("");
+    const [commissionError, setCommissionError] = useState<string | null>(null);
 
     // Reset the draft when a new move opens, derived on the open edge so we
     // do not setState inside an effect (cascading render lint).
@@ -121,6 +131,9 @@ export function StageNoteModal({
         if (draftKey) {
             setNote("");
             setPriceError(null);
+            setCommissionType(deal?.property.isRent ? "amount" : "percent");
+            setCommissionValue("");
+            setCommissionError(null);
             // No reason preselected: a default would quietly bias the data.
             setLostReason(null);
             setLostError(null);
@@ -135,6 +148,19 @@ export function StageNoteModal({
 
     const asksFinalPrice = request.status === "closed" && deal != null;
     const asksLostReason = request.status === "lost" && deal != null;
+    const finalPrice = deal ? resolveFinalPrice(deal, priceChoice, customPrice) : null;
+    const commission = resolveFinalCommission(
+        commissionType,
+        commissionValue,
+        finalPrice?.amountInr ?? 0,
+    );
+    const currency = getActiveCurrency();
+    // Keep commission durable through the existing status-note and offer-notes API.
+    const commissionLine =
+        asksFinalPrice && commission.amount != null && finalPrice?.amountInr != null
+            ? `Final commission: ${commissionType === "percent" ? `${Number(commissionValue)}% (${formatAmountWithSymbol(commission.amount, currency, amountFormatFor(currency))})` : formatAmountWithSymbol(commission.amount, currency, amountFormatFor(currency))}`
+            : "";
+    const noteMax = MAX_CHARS.pipelineStageNote - (commissionLine ? commissionLine.length + 2 : 0);
 
     const confirm = () => {
         if (asksFinalPrice) {
@@ -144,7 +170,20 @@ export function StageNoteModal({
                 return;
             }
             setPriceError(null);
-            onConfirm(note, { closedAmountInr: result.amountInr });
+            if (commission.error) {
+                setCommissionError(commission.error);
+                return;
+            }
+            if (note.length > noteMax) {
+                setCommissionError(
+                    `Shorten the note to ${noteMax} characters to include the commission.`,
+                );
+                return;
+            }
+            setCommissionError(null);
+            onConfirm([commissionLine, note.trim()].filter(Boolean).join("\n\n"), {
+                closedAmountInr: result.amountInr,
+            });
             return;
         }
         if (asksLostReason) {
@@ -215,6 +254,26 @@ export function StageNoteModal({
                     />
                 ) : null}
 
+                {asksFinalPrice ? (
+                    <FinalCommissionField
+                        type={commissionType}
+                        value={commissionValue}
+                        amount={finalPrice?.amountInr != null ? commission.amount : null}
+                        isRent={deal.property.isRent}
+                        error={commissionError}
+                        disabled={isSaving}
+                        onTypeChange={(next) => {
+                            setCommissionType(next);
+                            setCommissionValue("");
+                            setCommissionError(null);
+                        }}
+                        onValueChange={(next) => {
+                            setCommissionValue(next);
+                            setCommissionError(null);
+                        }}
+                    />
+                ) : null}
+
                 {consequence ? (
                     <p className="body-sm flex items-start gap-2 text-ink-muted">
                         <Info
@@ -248,17 +307,13 @@ export function StageNoteModal({
                         value={note}
                         onChange={(event) => setNote(event.target.value)}
                         rows={asksFinalPrice || asksLostReason ? 3 : 4}
-                        maxLength={MAX_CHARS.pipelineStageNote}
+                        maxLength={noteMax}
                         placeholder={notePlaceholder(request.status)}
                         className="rounded-inner"
                         disabled={isSaving}
                         aria-describedby="stage-note-count"
                     />
-                    <CharacterCount
-                        id="stage-note-count"
-                        value={note}
-                        maxChars={MAX_CHARS.pipelineStageNote}
-                    />
+                    <CharacterCount id="stage-note-count" value={note} maxChars={noteMax} />
                     {submitError ? (
                         <p role="alert" className="body-sm text-danger">
                             {submitError}
