@@ -48,10 +48,10 @@ export function ContactsHeader({
     };
 
     return (
-        <div className="sticky inset-bs-0 z-10">
+        <div className="sticky inset-bs-0 z-10 bg-canvas pbs-2 lg:pbs-0">
             <TooltipProvider>
-                <div className="flex items-center justify-between gap-3 sm:gap-4">
-                    <OwnerListingsChipsCarousel>
+                <div className="flex flex-col gap-3 min-inline-0 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+                    <OwnerListingsChipsCarousel className="flex-none inline-full lg:flex-1 lg:inline-auto">
                         {(
                             [
                                 {
@@ -150,20 +150,28 @@ export function ContactsHeader({
                             : null}
                     </OwnerListingsChipsCarousel>
 
-                    <div className="flex shrink-0 items-center gap-2.5">
+                    <div className="flex items-center gap-2 inline-full min-inline-0 lg:shrink-0 lg:gap-2.5 lg:inline-auto">
                         <ListSearchField
-                            placeholder="Search name, number or area"
-                            aria-label="Search your clients"
+                            fullWidth
+                            wrapperClassName="flex-1 lg:flex-none lg:inline-64"
+                            className="block-11! lg:block-[38px]!"
+                            placeholder={isBuyers ? "Search clients" : "Search owners"}
+                            aria-label={
+                                isBuyers
+                                    ? "Search clients by name, number or area"
+                                    : "Search owners by name, number or area"
+                            }
                             value={filters.q}
                             onChange={(q) => onFiltersChange({ ...filters, q })}
                         />
 
                         <ListToolbarSelect
-                            label="Sort clients"
+                            label={isBuyers ? "Sort clients" : "Sort owners"}
                             value={filters.sort}
                             options={SORT_OPTIONS}
                             defaultValue="recent"
                             mobileLabel="Sort"
+                            className="shrink-0 min-block-11 lg:min-block-0"
                             tooltip="Change the order of the list."
                             onChange={(sort) => onFiltersChange({ ...filters, sort })}
                         />

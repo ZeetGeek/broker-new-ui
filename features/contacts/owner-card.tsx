@@ -57,155 +57,162 @@ export function OwnerCard({
                 : "Property owner";
 
     return (
-        <article
-            onClick={open}
-            className="contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-5 shadow-md transition-[box-shadow,border-color] duration-160 block-full min-block-80 hover:shadow-lg"
-        >
-            <div className="mbe-3 flex items-center justify-between gap-2">
-                <Badge color="emerald">{ownerLabel}</Badge>
-                <ContactCardActions
-                    editLabel="Edit owner"
-                    name={owner.name}
-                    onOpen={open}
-                    onEdit={!isPlatform && onEdit ? () => onEdit(owner) : undefined}
-                    onDelete={!isPlatform && onDelete ? () => onDelete(owner) : undefined}
-                    editLocked={isPlatform}
-                    density="menu"
-                />
-            </div>
-            <header className="flex items-center gap-3 min-inline-0">
-                <UserAvatar
-                    name={owner.name}
-                    imageUrl={owner.avatarUrl}
-                    size="card"
-                    framed={false}
-                    className="border-2 border-white shadow-sm"
-                />
-                <div className="min-inline-0">
-                    <h2 className="body font-semibold text-ink">
-                        <button
-                            type="button"
-                            data-contact-id={owner.id}
-                            aria-label={`Open ${owner.name}`}
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                open();
-                            }}
-                            className="relative rounded-sm text-start wrap-break-word outline-none after:absolute after:inset-x-0 after:inset-y-[-10px] hover:text-brand-text focus-visible:ring-3 focus-visible:ring-ring/30"
-                        >
-                            {owner.name}
-                        </button>
-                    </h2>
-                    {homeLocation ? (
-                        <p className="body-sm mbs-1 flex items-start gap-1 text-ink-muted">
-                            <MapPin aria-hidden className="mbs-0.5 shrink-0 block-3.5 inline-3.5" />
-                            <span className="wrap-break-word min-inline-0">{homeLocation}</span>
-                        </p>
+        <div className="@container/contact-card inline-full min-inline-0">
+            <article
+                onClick={open}
+                className="contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-3 shadow-md transition-[box-shadow,border-color] duration-160 min-inline-0 hover:shadow-lg @[17rem]/contact-card:p-4 @[22rem]/contact-card:p-5"
+            >
+                <div className="mbe-3 flex items-center justify-between gap-2">
+                    <Badge color="emerald" className="wrap-anywhere whitespace-normal min-inline-0">
+                        {ownerLabel}
+                    </Badge>
+                    <ContactCardActions
+                        editLabel="Edit owner"
+                        name={owner.name}
+                        onOpen={open}
+                        onEdit={!isPlatform && onEdit ? () => onEdit(owner) : undefined}
+                        onDelete={!isPlatform && onDelete ? () => onDelete(owner) : undefined}
+                        editLocked={isPlatform}
+                        density="menu"
+                    />
+                </div>
+                <header className="flex items-center gap-2 min-inline-0 @[20rem]/contact-card:gap-3">
+                    <UserAvatar
+                        name={owner.name}
+                        imageUrl={owner.avatarUrl}
+                        size="card"
+                        framed={false}
+                        className="shrink-0 border-2 border-white shadow-sm"
+                    />
+                    <div className="min-inline-0">
+                        <h2 className="body font-semibold text-ink">
+                            <button
+                                type="button"
+                                data-contact-id={owner.id}
+                                aria-label={`Open ${owner.name}`}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    open();
+                                }}
+                                className="relative rounded-sm text-start wrap-anywhere outline-none max-inline-full after:absolute after:inset-x-0 after:inset-y-[-10px] hover:text-brand-text focus-visible:ring-3 focus-visible:ring-ring/30"
+                            >
+                                {owner.name}
+                            </button>
+                        </h2>
+                        {homeLocation ? (
+                            <p className="body-sm mbs-1 flex items-start gap-1 text-ink-muted">
+                                <MapPin
+                                    aria-hidden
+                                    className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
+                                />
+                                <span className="wrap-anywhere min-inline-0">{homeLocation}</span>
+                            </p>
+                        ) : null}
+                    </div>
+                </header>
+                <div className="flex flex-col gap-4 py-4 min-inline-0 @[20rem]/contact-card:pbs-5 @[20rem]/contact-card:pbe-6">
+                    {areas.length > 0 ? (
+                        <dl>
+                            <div className="flex flex-col gap-1">
+                                <dt className="body-xs font-semibold text-ink-muted">
+                                    Property locations
+                                </dt>
+                                <dd className="mbs-1 min-inline-0">
+                                    <ContactAreaChips
+                                        areas={areas}
+                                        onEditAreas={
+                                            !isPlatform && onEdit ? () => onEdit(owner) : undefined
+                                        }
+                                        editLabel="Edit owner area"
+                                    />
+                                </dd>
+                            </div>
+                        </dl>
                     ) : null}
                 </div>
-            </header>
-            <div className="flex flex-1 flex-col gap-4 pbs-5 pbe-6 min-inline-0">
-                {areas.length > 0 ? (
-                    <dl>
-                        <div className="flex flex-col gap-1">
-                            <dt className="body-xs font-semibold text-ink-muted">
-                                Property locations
-                            </dt>
-                            <dd className="mbs-1 min-inline-0">
-                                <ContactAreaChips
-                                    areas={areas}
-                                    onEditAreas={
-                                        !isPlatform && onEdit ? () => onEdit(owner) : undefined
-                                    }
-                                    editLabel="Edit owner area"
-                                />
-                            </dd>
+                <footer className="mbs-auto flex flex-col gap-3 border-bs border-border-warm pbs-3">
+                    {propertyCount > 0 || attach ? (
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-block-11">
+                            <Button
+                                variant="outline"
+                                type="button"
+                                aria-label={
+                                    propertyCount
+                                        ? `View ${propertyCount} linked properties for ${owner.name}`
+                                        : `Link a property to ${owner.name}`
+                                }
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    if (propertyCount) (onOpenProperties ?? onOpen)(owner);
+                                    else attach?.();
+                                }}
+                                className="flex-wrap gap-2 border-dashed border-brand/40 p-2 font-semibold whitespace-normal text-brand-text shadow-none block-auto inline-full min-block-11 min-inline-0 hover:border-brand hover:bg-brand-soft/30 @[20rem]/contact-card:px-4"
+                            >
+                                {propertyCount > 0 ? (
+                                    <span className="body-sm font-semibold text-ink-muted">
+                                        Properties
+                                    </span>
+                                ) : null}
+                                {properties.length > 0 ? (
+                                    <span className="flex items-center -space-x-2" aria-hidden>
+                                        {properties.slice(0, 3).map((property) => (
+                                            <PropertyCoverImage
+                                                key={property.id}
+                                                src={property.coverUrl}
+                                                alt=""
+                                                sizes="24px"
+                                                size={24}
+                                            />
+                                        ))}
+                                    </span>
+                                ) : (
+                                    <Link2 aria-hidden />
+                                )}
+                                <span>
+                                    {propertyCount ? `${propertyCount} linked` : "Attach property"}
+                                </span>
+                            </Button>
                         </div>
-                    </dl>
-                ) : null}
-            </div>
-            <footer className="mbs-auto flex flex-col gap-3 border-bs border-border-warm pbs-3">
-                {propertyCount > 0 || attach ? (
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-block-11">
-                        <Button
-                            variant="outline"
-                            type="button"
-                            aria-label={
-                                propertyCount
-                                    ? `View ${propertyCount} linked properties for ${owner.name}`
-                                    : `Link a property to ${owner.name}`
-                            }
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                if (propertyCount) (onOpenProperties ?? onOpen)(owner);
-                                else attach?.();
-                            }}
-                            className="gap-2 border-dashed border-brand/40 font-semibold text-brand-text shadow-none inline-full min-block-11 hover:border-brand hover:bg-brand-soft/30"
+                    ) : null}
+                    {canContact && owner.phoneDigits ? (
+                        <div
+                            className="grid grid-cols-1 gap-2 @[17rem]/contact-card:grid-cols-2"
+                            onClick={(event) => event.stopPropagation()}
                         >
-                            {propertyCount > 0 ? (
-                                <span className="body-sm font-semibold text-ink-muted">
-                                    Properties
-                                </span>
-                            ) : null}
-                            {properties.length > 0 ? (
-                                <span className="flex items-center -space-x-2" aria-hidden>
-                                    {properties.slice(0, 3).map((property) => (
-                                        <PropertyCoverImage
-                                            key={property.id}
-                                            src={property.coverUrl}
-                                            alt=""
-                                            sizes="24px"
-                                            size={24}
-                                        />
-                                    ))}
-                                </span>
-                            ) : (
-                                <Link2 aria-hidden />
-                            )}
-                            <span>
-                                {propertyCount ? `${propertyCount} linked` : "Attach property"}
-                            </span>
-                        </Button>
-                    </div>
-                ) : null}
-                {canContact && owner.phoneDigits ? (
-                    <div
-                        className="grid grid-cols-2 gap-2"
-                        onClick={(event) => event.stopPropagation()}
-                    >
-                        <Button
-                            size="md"
-                            variant="outline"
-                            className="font-semibold inline-full min-block-11"
-                            nativeButton={false}
-                            render={
-                                <a
-                                    href={`tel:+91${owner.phoneDigits}`}
-                                    aria-label={`Call ${owner.name}`}
-                                />
-                            }
-                        >
-                            <CallIcon aria-hidden /> Call
-                        </Button>
-                        <Button
-                            size="md"
-                            variant="accent"
-                            className="font-semibold inline-full min-block-11"
-                            nativeButton={false}
-                            render={
-                                <a
-                                    href={formatWhatsAppUrl(owner.phoneDigits)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    aria-label={`Message ${owner.name} on WhatsApp`}
-                                />
-                            }
-                        >
-                            <WhatsAppIcon aria-hidden /> WhatsApp
-                        </Button>
-                    </div>
-                ) : null}
-            </footer>
-        </article>
+                            <Button
+                                size="md"
+                                variant="outline"
+                                className="px-2 font-semibold inline-full min-block-11 min-inline-0 @[20rem]/contact-card:px-4"
+                                nativeButton={false}
+                                render={
+                                    <a
+                                        href={`tel:+91${owner.phoneDigits}`}
+                                        aria-label={`Call ${owner.name}`}
+                                    />
+                                }
+                            >
+                                <CallIcon aria-hidden /> Call
+                            </Button>
+                            <Button
+                                size="md"
+                                variant="accent"
+                                className="px-2 font-semibold inline-full min-block-11 min-inline-0 @[20rem]/contact-card:px-4"
+                                nativeButton={false}
+                                render={
+                                    <a
+                                        href={formatWhatsAppUrl(owner.phoneDigits)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        aria-label={`Message ${owner.name} on WhatsApp`}
+                                    />
+                                }
+                            >
+                                <WhatsAppIcon aria-hidden /> WhatsApp
+                            </Button>
+                        </div>
+                    ) : null}
+                </footer>
+            </article>
+        </div>
     );
 }

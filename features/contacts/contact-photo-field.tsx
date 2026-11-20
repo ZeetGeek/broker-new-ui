@@ -2,7 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-import { AppImage } from "@/components/shared/app-image";
+import { IconButton } from "@/components/shared/icon-button";
+import { Trash2 } from "@/components/shared/icons";
 import { PhotoCropModal } from "@/components/shared/photo-crop-modal";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ export function ContactPhotoField({
 
     return (
         <div className="mbe-6 rounded-inner border border-border-warm p-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
                 <button
                     type="button"
                     disabled={disabled}
@@ -52,21 +53,14 @@ export function ContactPhotoField({
                     aria-describedby={`${id}-hint`}
                     className="group relative shrink-0 rounded-full outline-none block-14 inline-14 focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-60"
                 >
-                    {preview ? (
-                        <AppImage
-                            src={preview}
-                            alt={`${name.trim() || "Contact"} profile preview`}
-                            width={56}
-                            height={56}
-                            unoptimized
-                            className="rounded-full object-cover block-full inline-full"
-                        />
-                    ) : (
-                        <UserAvatar name={name.trim() || "New contact"} size="fill" />
-                    )}
+                    <UserAvatar
+                        name={name.trim() || "New contact"}
+                        previewUrl={preview}
+                        size="lg"
+                    />
                 </button>
-                <div className="flex flex-1 flex-wrap items-center justify-between gap-3 min-inline-0">
-                    <div className="flex flex-col gap-1.5 min-inline-0">
+                <div className="flex flex-1 flex-wrap items-center justify-between gap-3 min-inline-0 sm:flex-nowrap">
+                    <div className="flex flex-1 flex-col gap-1.5 min-inline-0">
                         <p className="body-sm font-semibold text-ink">
                             Profile photo{" "}
                             <span className="font-normal text-ink-muted">(optional)</span>
@@ -75,7 +69,7 @@ export function ContactPhotoField({
                             JPG, PNG or WebP · up to 5 MB
                         </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                         <Button
                             type="button"
                             variant="outline"
@@ -86,18 +80,20 @@ export function ContactPhotoField({
                             {file ? "Change photo" : "Add photo"}
                         </Button>
                         {file ? (
-                            <Button
+                            <IconButton
                                 type="button"
-                                variant="ghost"
                                 size="sm"
+                                aria-label="Remove photo"
+                                title="Remove photo"
+                                tone="danger"
                                 disabled={disabled}
                                 onClick={() => {
                                     onChange(null);
                                     setError("");
                                 }}
                             >
-                                Remove photo
-                            </Button>
+                                <Trash2 aria-hidden />
+                            </IconButton>
                         ) : null}
                     </div>
                 </div>

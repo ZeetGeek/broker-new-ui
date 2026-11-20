@@ -59,8 +59,8 @@ import {
 /** Contacts grid: 1 → 2 → 3 → 4 columns, capped at four on desktop. */
 const CONTACT_GRID_BREAKPOINTS = [
     { minWidth: 640, columns: 2 },
-    { minWidth: 768, columns: 3 },
-    { minWidth: 1024, columns: 4 },
+    { minWidth: 1024, columns: 3 },
+    { minWidth: 1280, columns: 4 },
 ];
 
 /** Fills the results band so the teach block sits in the visual middle of the page. */
@@ -456,7 +456,7 @@ export function ContactsPage({
 
     return (
         <TooltipProvider>
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-3 min-inline-0 sm:gap-6">
                 {summaryQuery.isPending ? (
                     <ContactsIntroSkeleton />
                 ) : (
@@ -570,6 +570,7 @@ export function ContactsPage({
                                 getKey={(buyer) => buyer.id}
                                 estimateRowHeight={384}
                                 gap={24}
+                                singleColumnGap={12}
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
                                 ariaLabel="Clients"
                                 renderItem={(buyer) => (
@@ -591,6 +592,7 @@ export function ContactsPage({
                                 getKey={(owner) => owner.id}
                                 estimateRowHeight={320}
                                 gap={24}
+                                singleColumnGap={12}
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
                                 ariaLabel="Owners"
                                 renderItem={(owner) => (

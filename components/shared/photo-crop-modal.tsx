@@ -272,9 +272,8 @@ export function PhotoCropModal({
                         </div>
                         <Button
                             type="button"
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            className="min-block-11"
                             disabled={!loaded || imageFailed || isCropping}
                             onClick={() => {
                                 const image = imgRef.current;
@@ -302,7 +301,7 @@ export function PhotoCropModal({
                     <Button
                         type="button"
                         variant="outline"
-                        size="md"
+                        size="default"
                         disabled={isCropping}
                         onClick={handleCancel}
                     >
@@ -311,14 +310,14 @@ export function PhotoCropModal({
                     <Button
                         type="button"
                         variant="accent"
-                        size="md"
+                        size="default"
                         loading={isCropping}
                         disabled={
                             isCropping || !loaded || imageFailed || !crop?.width || !crop?.height
                         }
                         onClick={() => void handleConfirm()}
                     >
-                        <Check aria-hidden /> {isCropping ? "Preparing photo?" : "Use photo"}
+                        <Check aria-hidden /> {isCropping ? "Preparing photo…" : "Use photo"}
                     </Button>
                 </div>
             </DialogPopup>
