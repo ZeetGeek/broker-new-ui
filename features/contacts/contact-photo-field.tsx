@@ -3,10 +3,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 import { AppImage } from "@/components/shared/app-image";
+import { PhotoCropModal } from "@/components/shared/photo-crop-modal";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
-
-import { ProfileImageCropper } from "@/features/profile/profile-image-cropper";
 
 /** Local photo selection only; uploading belongs to the contact API integration. */
 export function ContactPhotoField({
@@ -131,7 +130,7 @@ export function ContactPhotoField({
                     {error}
                 </p>
             ) : null}
-            <ProfileImageCropper
+            <PhotoCropModal
                 open={source !== null}
                 imageUrl={source?.url ?? null}
                 fileName={source?.name}

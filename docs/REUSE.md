@@ -3,6 +3,15 @@
 Single source of truth for making things common. `.claude/rules/` and
 `.cursor/rules/` only point here.
 
+## Profile photo cropping
+
+Use `PhotoCropModal` from `components/shared/photo-crop-modal.tsx` for profile
+and contact photo cropping. It owns the circular crop guide, live avatar preview,
+Reset action, responsive modal layout, and 512px square PNG output. Pass a local
+image URL, original filename, controlled open state, and `onCropped` callback.
+The caller owns file selection, object-URL cleanup, and any upload. The previous
+`ProfileImageCropper` export is a compatibility alias to this same component.
+
 ## Square property cover images
 
 Use `PropertyCoverImage` from `components/shared/property-cover-image.tsx` for
