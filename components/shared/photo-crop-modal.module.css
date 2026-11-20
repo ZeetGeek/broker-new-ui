@@ -1,0 +1,119 @@
+.modal {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    inline-size: min(35rem, calc(100vw - 1.5rem));
+    max-inline-size: min(35rem, calc(100vw - 1.5rem));
+    max-block-size: min(92dvh, calc(100dvh - 1.5rem));
+    border-radius: 1.25rem;
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1.25rem;
+}
+
+.stage {
+    --crop-stage-height: min(44dvh, 22rem);
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    min-inline-size: 0;
+    min-block-size: calc(var(--crop-stage-height) + 2rem);
+    border: 1px solid var(--color-border-warm);
+    border-radius: 0.875rem;
+    background: var(--color-surface-muted);
+}
+
+.stage > * {
+    grid-area: 1 / 1;
+}
+
+.cropper {
+    inline-size: min(100%, calc(var(--crop-stage-height) * var(--photo-aspect, 1)));
+    --rc-focus-color: var(--color-brand);
+    --rc-drag-handle-bg-colour: var(--color-surface);
+    --rc-border-color: var(--color-brand);
+    --rc-drag-handle-size: 14px;
+    --rc-drag-handle-mobile-size: 24px;
+}
+
+.cropper
+    :global(.ReactCrop__crop-selection:not(.ReactCrop--no-animate .ReactCrop__crop-selection)) {
+    animation: none;
+    background-image: none;
+    outline: 2px solid var(--color-surface);
+    outline-offset: -1px;
+}
+
+.cropper :global(.ReactCrop__crop-selection:focus-visible) {
+    outline: 3px solid var(--color-brand);
+}
+
+.cropper :global(.ReactCrop__drag-handle) {
+    border: 2px solid var(--color-brand);
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgb(0 0 0 / 18%);
+}
+
+.image {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    user-select: none;
+}
+
+.previewRow {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+}
+
+.preview {
+    flex-shrink: 0;
+    inline-size: 3.5rem;
+    block-size: 3.5rem;
+    overflow: hidden;
+    border: 2px solid var(--color-surface);
+    border-radius: 50%;
+    background: var(--color-surface-muted);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+}
+
+.preview canvas {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+}
+
+.footer {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-block-start: 1px solid var(--color-border-warm);
+}
+
+@media (width < 480px) {
+    .body {
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .stage {
+        padding: 0.75rem;
+        min-block-size: calc(var(--crop-stage-height) + 1.5rem);
+    }
+
+    .footer > button {
+        flex: 1;
+    }
+}
