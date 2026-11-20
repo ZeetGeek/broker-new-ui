@@ -64,16 +64,7 @@ export function NewSiteVisitsPage() {
     }, []);
 
     const [tab, setTab] = useState<VisitTab>("upcoming");
-    const [view, setView] = useState<"schedule" | "edit" | "detail" | null>(() =>
-        searchParams.get("view") === "schedule"
-            ? "schedule"
-            : searchParams.get("view") === "detail" && searchParams.get("visit")
-              ? "detail"
-              : null,
-    );
-    const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get("visit"));
-    const selected = visits.find((visit) => visit.id === selectedId);
-    const confirmVisit = visits.find((visit) => visit.id === confirmation?.id);
+    const [searchInput, setSearchInput] = useState("");
     const [search, setSearch] = useState("");
     useEffect(() => {
         const timer = window.setTimeout(() => setSearch(searchInput.trim()), SEARCH_DEBOUNCE_MS);

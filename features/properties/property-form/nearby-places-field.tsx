@@ -215,7 +215,9 @@ export function NearbyPlacesField() {
                     isOn
                         ? `
                           border-brand bg-brand-soft text-brand-text
-                          hover:bg-brand-soft-hover hover:text-brand-text
+                          hover:border-brand
+                          hover:bg-[color-mix(in_oklch,var(--color-brand-soft),var(--color-brand)_4%)]
+                          hover:text-brand-text
                         `
                         : `
                           border-border-warm bg-surface text-ink
@@ -242,7 +244,7 @@ export function NearbyPlacesField() {
                     startIcon={Search}
                     placeholder="Search places or add a name"
                     aria-label="Search or add nearby place"
-                    className="flex-1 min-inline-0"
+                    className="flex-1 text-sm block-control-lg min-inline-0"
                     maxLength={48}
                     onKeyDown={(event) => {
                         if (event.key === "Enter") {

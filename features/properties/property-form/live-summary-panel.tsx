@@ -350,7 +350,8 @@ export function LiveSummaryPanel({
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="gap-2 border-brand/25 bg-surface text-brand-text min-block-11 hover:border-brand/50 hover:bg-surface"
+                                    size="sm"
+                                    className="gap-1.5 border-brand/25 bg-surface text-brand-text hover:border-brand/50 hover:bg-surface"
                                     onClick={() =>
                                         photoFilesRef
                                             ? coverInputRef.current?.click()

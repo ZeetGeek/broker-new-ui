@@ -508,6 +508,7 @@ function ContactSearchPanel({
                 <>
                     <Input
                         id={mode === "owner" ? "owner-contactId" : "attachedBuyers"}
+                        className="text-sm block-control-lg"
                         errorText={error}
                         size="lg"
                         value={query}

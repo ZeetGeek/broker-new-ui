@@ -121,7 +121,7 @@ export function TextField({
             id={name.replace(/\./g, "-")}
             size="lg"
             errorText={error}
-            className={endAction ? "pe-40 sm:pe-44" : undefined}
+            className={cn("text-sm block-control-lg", endAction && "pe-40 sm:pe-44")}
             {...registration}
             {...props}
             onChange={(event) => {
@@ -147,7 +147,7 @@ export function TextField({
                     {input}
                     <div
                         className="
-                          absolute inset-e-1.5 inset-bs-0 z-10 flex items-center block-control-xl
+                          absolute inset-e-1.5 inset-bs-0 z-10 flex items-center block-control-lg
                         "
                     >
                         {endAction}
@@ -170,6 +170,7 @@ export function TimeField({ name, label }: { name: Path; label: string }) {
                 name={name}
                 render={({ field, fieldState }) => (
                     <AppTimePicker
+                        className="**:data-[slot=time-picker-trigger]:text-sm **:data-[slot=time-picker-trigger]:block-control-lg"
                         id={id}
                         name={field.name}
                         inputRef={field.ref}
@@ -248,7 +249,7 @@ export function TextAreaField({
             className={cn(
                 `
                   field-sizing-fixed resize-y rounded-control border-2 border-border-warm bg-surface
-                  px-4 py-3 text-[15px]/6 text-ink outline-none min-block-28
+                  px-4 py-2.5 text-sm/6 text-ink outline-none min-block-27
                   placeholder:text-ink-subtle
                   read-only:bg-surface-muted
                   hover:border-ink-subtle
@@ -368,6 +369,7 @@ export function SelectField({
                         {...(limit == null ? {} : { limit })}
                     >
                         <ComboboxInput
+                            className="text-sm block-control-lg"
                             id={name.replace(/\./g, "-")}
                             ref={field.ref}
                             size="lg"
@@ -427,7 +429,10 @@ export function LocalityField({
             label={label}
             hint={hint}
             visibility={visibility}
-            className={className}
+            className={cn(
+                className,
+                "**:data-[slot=combobox-input-group]:text-sm **:data-[slot=combobox-input-group]:block-control-lg",
+            )}
         >
             <Controller
                 name={name}
@@ -494,6 +499,7 @@ export function NumberField({
                 render={({ field }) => (
                     <Input
                         id={name.replace(/\./g, "-")}
+                        className="text-sm block-control-lg"
                         type="number"
                         inputMode="decimal"
                         min={min}
@@ -540,6 +546,7 @@ function CurrencyControl({
     return (
         <SmartPriceInput
             id={id}
+            className="text-sm block-control-lg"
             size="lg"
             value={typeof value === "number" ? value : null}
             onValueChange={(next) => onChange(next)}
@@ -651,7 +658,7 @@ export function DateField({
                         onBlur={field.onBlur}
                         placeholder={placeholder}
                         invalid={Boolean(error)}
-                        className="border-2 inline-full"
+                        className="border-2 text-sm block-control-lg inline-full"
                     />
                 )}
             />
@@ -734,9 +741,9 @@ export function ChoiceField({
                                     className={cn(
                                         `
                                           flex cursor-pointer gap-3 rounded-control border-2 px-4
-                                          py-3.5 text-start leading-normal font-normal
+                                          py-3 text-start leading-normal font-normal
                                           transition-[background-color,border-color,color,box-shadow]
-                                          duration-160 min-block-12
+                                          duration-160 min-block-11
                                           has-focus-visible:ring-3 has-focus-visible:ring-ring/30
                                         `,
                                         icon || !hasDescription ? "items-center" : "items-start",
@@ -973,7 +980,7 @@ export function MultiChipField({
                                         onValueChange={setDraft}
                                         placeholder={customPlaceholder}
                                         aria-label={`Add custom ${label.toLowerCase()}`}
-                                        className="flex-1 min-inline-0"
+                                        className="flex-1 text-sm block-control-lg min-inline-0"
                                         onKeyDown={(event) => {
                                             if (event.key === "Enter") {
                                                 event.preventDefault();
@@ -1030,7 +1037,7 @@ export function ToggleField({
                             className={cn(
                                 `
                                   flex items-center justify-between gap-4 rounded-control border
-                                  border-border-warm bg-surface px-4 py-3 min-block-14
+                                  border-border-warm bg-surface px-4 py-2.5 min-block-13
                                 `,
                                 className,
                             )}
@@ -1138,6 +1145,7 @@ export function TagInputField({
                             <div className="flex gap-2">
                                 <Input
                                     id={name.replace(/\./g, "-")}
+                                    className="text-sm block-control-lg"
                                     size="lg"
                                     value={draft}
                                     placeholder={placeholder}
@@ -1247,7 +1255,7 @@ export function CounterField({
                                 `
                                   flex flex-wrap items-center justify-between gap-3 rounded-control
                                   border-2 border-border-warm bg-surface px-3 py-2 outline-none
-                                  block-full min-block-14
+                                  block-full min-block-13
                                   focus-visible:ring-3 focus-visible:ring-ring/30
                                 `,
                                 error && "border-danger-mid",
