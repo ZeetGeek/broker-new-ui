@@ -4,6 +4,7 @@ import { propertyCriteriaCount, type PropertyListCriteria } from "@/lib/properti
 import { addVisitDays, formatVisitDate, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
 import { IconButton } from "@/components/shared/icon-button";
@@ -324,7 +325,16 @@ export function VisitList({
                                         );
                                         const state = visitState(visit, now);
                                         return (
-                                            <article className={styles.visitRow} key={visit.id}>
+                                            <article
+                                                data-linked-card
+                                                className={styles.visitRow}
+                                                key={visit.id}
+                                            >
+                                                <CardLink
+                                                    href={`/broker/visits?view=detail&visit=${encodeURIComponent(visit.id)}`}
+                                                    label={`Visit details for ${property?.title} with ${client?.name}`}
+                                                    onOpen={() => onOpen(visit.id)}
+                                                />
                                                 <div className={styles.rowProperty}>
                                                     <PropertyCoverImage
                                                         src={property?.imageUrl}
@@ -334,6 +344,7 @@ export function VisitList({
                                                     <div>
                                                         <button
                                                             type="button"
+                                                            data-card-title
                                                             className={styles.propertyLink}
                                                             aria-label={`Visit details for ${property?.title} with ${client?.name}`}
                                                             onClick={() => onOpen(visit.id)}

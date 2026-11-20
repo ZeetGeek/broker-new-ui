@@ -9,6 +9,7 @@ import { REQUEST_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitTime, visitAge } from "@/lib/visits/time";
 
 import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
+import { CardLink } from "@/components/shared/card-link";
 import {
     CalendarClock,
     Clock3,
@@ -79,9 +80,11 @@ export const RequestRow = memo(function RequestRow({
 
     return (
         <article
+            data-linked-card
             aria-label={`${request.property.title} ${DOT} ${formatVisitTime(request.preferredStartsAt)}`}
             className="overflow-hidden rounded-card border border-border-warm bg-surface shadow-sm"
         >
+            <CardLink href={propertyHref} label={`Open ${request.property.title}`} />
             <div
                 className="
                   grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 p-4

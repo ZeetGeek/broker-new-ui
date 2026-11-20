@@ -12,6 +12,7 @@ import {
     portalProfileMenuItemClass,
     portalProfileMenuSurfaceClass,
 } from "@/components/layout/portal-profile-menu";
+import { CardLink } from "@/components/shared/card-link";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     ArrowRight,
@@ -343,7 +344,8 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
     );
 
     return (
-        <article className={s.card} aria-labelledby={titleId}>
+        <article data-linked-card className={s.card} aria-labelledby={titleId}>
+            <CardLink href="/broker/visits" label={`Open visits for ${visit.property}`} />
             {featured ? (
                 <div className={s.header}>
                     <h2 className="body-sm font-semibold">Your next visit</h2>
@@ -372,7 +374,7 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
                     sizes="64px"
                 />
                 <div className={s.property}>
-                    <p id={titleId} className={s.propertyName}>
+                    <p data-card-title id={titleId} className={s.propertyName}>
                         {visit.property}
                     </p>
                     <p className={s.location}>

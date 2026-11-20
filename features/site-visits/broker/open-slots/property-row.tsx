@@ -6,6 +6,7 @@ import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/ro
 import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, istDateKey } from "@/lib/visits/time";
 
+import { CardLink } from "@/components/shared/card-link";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     BadgeCheck,
@@ -90,6 +91,7 @@ export const PropertyRow = memo(function PropertyRow({
 
     return (
         <article
+            data-linked-card
             tabIndex={-1}
             aria-label={item.property.title}
             className={cn(
@@ -97,6 +99,7 @@ export const PropertyRow = memo(function PropertyRow({
                 inlineError && "border-danger/35",
             )}
         >
+            <CardLink href={propertyHref} label={`Open ${item.property.title}`} />
             <div
                 className="
                   grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 p-4

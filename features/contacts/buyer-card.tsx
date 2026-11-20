@@ -6,6 +6,7 @@ import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatBudgetAmount } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { CallIcon, Link2, MapPin, WhatsAppIcon } from "@/components/shared/icons";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -78,12 +79,17 @@ export function BuyerCard({
             )}
         >
             <article
-                onClick={open}
+                data-linked-card
                 className={cn(
                     "contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-3 shadow-md transition-[box-shadow,border-color] duration-160 min-inline-0 hover:shadow-lg @[17rem]/contact-card:p-4 @[22rem]/contact-card:p-5",
                     (saleBudget || rentBudget) && "block-full min-block-96",
                 )}
             >
+                <CardLink
+                    href={`/broker/contacts?tab=buyers&contact=${encodeURIComponent(buyer.id)}`}
+                    label={`Open ${buyer.name}`}
+                    onOpen={open}
+                />
                 <div className="mbe-3 flex items-center justify-between gap-2">
                     {intent ? (
                         <Badge
@@ -128,6 +134,7 @@ export function BuyerCard({
                             <h2 className="body font-semibold text-ink">
                                 <button
                                     type="button"
+                                    data-card-title
                                     data-contact-id={buyer.id}
                                     aria-label={`Open ${buyer.name}`}
                                     onClick={(event) => {

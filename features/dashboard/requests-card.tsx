@@ -4,6 +4,7 @@ import { formatDateShort } from "@/lib/format/date";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Check, Clock, Send, X } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
@@ -96,7 +97,11 @@ function RequestRow({ item }: { item: RequestRowItem }) {
     const hint = rowHint(item);
 
     return (
-        <li className="flex items-start gap-3 py-2">
+        <li data-linked-card className="flex items-start gap-3 py-2">
+            <CardLink
+                href={brokerOwnerListingDetailHref(item.propertyId)}
+                label={`Open ${item.title}`}
+            />
             <RequestIcon type={item.type} />
             <Tooltip>
                 <TooltipTrigger

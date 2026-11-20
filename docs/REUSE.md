@@ -14,6 +14,24 @@ This is the default for `WindowVirtualGrid` and the shared standard for listing,
 CRM, visit, dashboard, earnings, and analytics card grids. Keep zero-gap joined
 rows, form fields, and card-internal controls on their own spacing scales.
 
+## Cards that navigate
+
+Use `CardLink` from `components/shared/card-link.tsx` inside a card marked
+`data-linked-card`. Pass a real `href` and an accessible `label`. Keep the link
+beside the card content so buttons, menus, other links, and tooltips remain
+independent. Do not wrap those controls in an anchor or navigate from a card's
+`onClick` handler.
+
+Mark the visible title with `data-card-title` for the shared card-hover and
+keyboard-focus underline. `PropertyTitleLink` already supplies this attribute.
+Use `data-card-control` for a custom interactive surface, such as a photo carousel,
+that must sit above the card link. Preserve its own gesture handlers.
+
+For existing detail panels, pass `onOpen`: ordinary clicks open the panel, while
+modified clicks and the browser's link menu follow `href`. That URL must also open
+the intended record directly. Keep cards without a destination, including deleted
+listings and illustrative earnings records, unlinked.
+
 ## Profile photo cropping
 
 Use `PhotoCropModal` from `components/shared/photo-crop-modal.tsx` for profile

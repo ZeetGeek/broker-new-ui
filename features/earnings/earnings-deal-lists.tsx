@@ -8,6 +8,7 @@ import { plural } from "@/lib/format/plural";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { Award } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 
@@ -18,6 +19,7 @@ import {
     type EarningsReport,
     type ValuedDeal,
 } from "@/features/earnings/earnings-math";
+import { isSampleDeal } from "@/features/earnings/sample-earnings";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { DEAL_STAGE_ORDER, type DealStage, isLiveStage } from "@/features/pipeline/types";
 
@@ -132,7 +134,19 @@ export function EarningsOpenDeals({
                                         : null;
                                     const pct = ((commissionInr ?? 0) / max) * 100;
                                     return (
-                                        <li key={deal.id} className="flex flex-col gap-1.5">
+                                        <li
+                                            key={deal.id}
+                                            data-linked-card={
+                                                !isSampleDeal(deal.id) ? "" : undefined
+                                            }
+                                            className="flex flex-col gap-1.5"
+                                        >
+                                            {!isSampleDeal(deal.id) ? (
+                                                <CardLink
+                                                    href={`/broker/pipeline/${encodeURIComponent(deal.id)}`}
+                                                    label={`Open ${deal.property.title}`}
+                                                />
+                                            ) : null}
                                             {/* Title above, so long titles never truncate inside a
                                                 short bar. */}
                                             <div className="flex min-inline-0">
@@ -242,7 +256,16 @@ export function EarningsRecentSold({
             className={cn("@container block-full min-block-full", className)}
         >
             {showBest && !bestInList ? (
-                <div className="flex items-center gap-3 rounded-inner bg-chart-4/10 p-3">
+                <div
+                    data-linked-card={!isSampleDeal(best.deal.id) ? "" : undefined}
+                    className="flex items-center gap-3 rounded-inner bg-chart-4/10 p-3"
+                >
+                    {!isSampleDeal(best.deal.id) ? (
+                        <CardLink
+                            href={`/broker/pipeline/${encodeURIComponent(best.deal.id)}`}
+                            label={`Open ${best.deal.property.title}`}
+                        />
+                    ) : null}
                     <span
                         aria-hidden
                         className="flex shrink-0 items-center justify-center rounded-inner bg-surface text-chart-4 block-9 inline-9"
@@ -309,7 +332,16 @@ function RecentSoldRow({ row, isBest }: { row: ValuedDeal; isBest: boolean }) {
         // Each sale is its own bordered box, same as the dashboard visit rows.
         // Whole box is the tap target (title link is stretched over it), so a
         // thumb never has to hit the 20px title.
-        <li className="relative flex items-center gap-3 rounded-inner border border-border-warm bg-surface p-3.5 transition-colors duration-160 has-[a:hover]:bg-surface-muted/40">
+        <li
+            data-linked-card={!isSampleDeal(deal.id) ? "" : undefined}
+            className="relative flex items-center gap-3 rounded-inner border border-border-warm bg-surface p-3.5 transition-colors duration-160 has-[a:hover]:bg-surface-muted/40"
+        >
+            {!isSampleDeal(deal.id) ? (
+                <CardLink
+                    href={`/broker/pipeline/${encodeURIComponent(deal.id)}`}
+                    label={`Open ${deal.property.title}`}
+                />
+            ) : null}
             {soldAt && dayParts ? (
                 <time
                     dateTime={formatDateIso(soldAt)}
@@ -328,7 +360,7 @@ function RecentSoldRow({ row, isBest }: { row: ValuedDeal; isBest: boolean }) {
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <EarningsDealLink
                                 dealId={deal.id}
-                                className="body-sm font-semibold wrap-anywhere text-ink after:absolute after:inset-0 after:rounded-inner"
+                                className="body-sm font-semibold wrap-anywhere text-ink"
                             >
                                 {deal.property.title}
                             </EarningsDealLink>

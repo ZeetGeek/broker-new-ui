@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "./transitions-dev.css";
+@import "./card-links.css";
 /* Contact surfaces inherit their interaction recipes from the import above. */
 @plugin "tailwind-bootstrap-grid" {
     /* Bootstrap gutter steps so gx-3 / gy-4 etc. exist. */

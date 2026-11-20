@@ -1,11 +1,12 @@
 "use client";
-import { type KeyboardEvent, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { formatDateIn } from "@/lib/format/date";
 import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import { IconButton } from "@/components/shared/icon-button";
 import {
@@ -412,20 +413,10 @@ export function DealCard({
         handlers.onView(deal.id);
     }
 
-    function onKeyDown(event: KeyboardEvent<HTMLElement>) {
-        if (event.target !== event.currentTarget) return;
-        if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            openCard();
-        }
-    }
-
     return (
         <article
             aria-label={`${deal.buyer.name} on ${deal.property.title}${isPinned ? ", pinned" : ""}`}
-            tabIndex={0}
-            onClick={openCard}
-            onKeyDown={onKeyDown}
+            data-linked-card
             className={cn(
                 `
                   group/marquee relative isolate flex transform-gpu cursor-pointer flex-col
@@ -439,6 +430,13 @@ export function DealCard({
                 !live && "block-full",
             )}
         >
+            {!isBusy && !isDragging ? (
+                <CardLink
+                    href={`/broker/pipeline/${encodeURIComponent(deal.id)}`}
+                    label={`Open ${deal.buyer.name} on ${deal.property.title}`}
+                    onOpen={openCard}
+                />
+            ) : null}
             <div
                 className="
                   pointer-events-none relative z-10 flex flex-1 flex-col gap-2.5 p-4 text-ink
@@ -531,6 +529,7 @@ export function DealCard({
                             showEmptyTip
                         />
                         <h3
+                            data-card-title
                             className={cn(
                                 "body font-semibold tracking-wide text-ink capitalize underline-offset-4 group-hover/marquee:underline",
                                 "truncate",

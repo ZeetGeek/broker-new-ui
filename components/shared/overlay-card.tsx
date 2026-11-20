@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { type AppIcon, MapPin, Maximize2, UserPlus } from "@/components/shared/icons";
 import { MarqueeText } from "@/components/shared/marquee-text";
 import { OverlayCardPhotos } from "@/components/shared/overlay-card-photos";
@@ -295,8 +296,9 @@ export function OverlayCard({
     const photos = images && images.length > 0 ? images : imageSrc ? [imageSrc] : [];
 
     return (
-        <article className={cn(CARD_CLASS, className)}>
-            <div className={PHOTO_CLASS}>
+        <article data-linked-card={href ? "" : undefined} className={cn(CARD_CLASS, className)}>
+            {href ? <CardLink href={href} label={`Open ${imageAlt}`} /> : null}
+            <div data-card-control={photos.length > 0 ? "" : undefined} className={PHOTO_CLASS}>
                 <OverlayCardPhotos
                     href={href}
                     images={photos}

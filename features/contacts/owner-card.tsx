@@ -2,6 +2,7 @@
 
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 
+import { CardLink } from "@/components/shared/card-link";
 import { CallIcon, Link2, MapPin, WhatsAppIcon } from "@/components/shared/icons";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -59,9 +60,14 @@ export function OwnerCard({
     return (
         <div className="@container/contact-card inline-full min-inline-0">
             <article
-                onClick={open}
+                data-linked-card
                 className="contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-3 shadow-md transition-[box-shadow,border-color] duration-160 min-inline-0 hover:shadow-lg @[17rem]/contact-card:p-4 @[22rem]/contact-card:p-5"
             >
+                <CardLink
+                    href={`/broker/contacts?tab=owners&contact=${encodeURIComponent(owner.id)}`}
+                    label={`Open ${owner.name}`}
+                    onOpen={open}
+                />
                 <div className="mbe-3 flex items-center justify-between gap-2">
                     <Badge color="emerald" className="wrap-anywhere whitespace-normal min-inline-0">
                         {ownerLabel}
@@ -88,6 +94,7 @@ export function OwnerCard({
                         <h2 className="body font-semibold text-ink">
                             <button
                                 type="button"
+                                data-card-title
                                 data-contact-id={owner.id}
                                 aria-label={`Open ${owner.name}`}
                                 onClick={(event) => {

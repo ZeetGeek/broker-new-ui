@@ -21,6 +21,7 @@ export type PropertyTitleLinkProps = {
 export function PropertyTitleLink({ href, children, className }: PropertyTitleLinkProps) {
     return (
         <Button
+            data-card-title
             variant="link"
             size="sm"
             nativeButton={false}

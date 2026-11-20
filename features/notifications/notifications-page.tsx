@@ -8,6 +8,7 @@ import { toApiInstant } from "@/lib/datetime/api";
 import { formatDateIn, formatTimeIn } from "@/lib/format/date";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
+import { CardLink } from "@/components/shared/card-link";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Badge } from "@/components/ui/badge";
@@ -106,15 +107,25 @@ export function NotificationsPage() {
 
                                 return (
                                     <div
+                                        data-linked-card={item.href ? "" : undefined}
                                         className="
                                           flex flex-col gap-3 border-be border-border-warm p-4
                                           last:border-be-0
                                           sm:flex-row sm:items-start sm:justify-between
                                         "
                                     >
+                                        {item.href ? (
+                                            <CardLink
+                                                href={item.href}
+                                                label={`Open ${item.title}`}
+                                            />
+                                        ) : null}
                                         <div className="min-inline-0">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <p className="body font-medium text-ink">
+                                                <p
+                                                    data-card-title
+                                                    className="body font-medium text-ink"
+                                                >
                                                     {item.title}
                                                 </p>
                                                 {!item.isRead ? (

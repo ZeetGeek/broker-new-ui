@@ -175,7 +175,8 @@ export function EarningsDealLink({
     }
     return (
         <Link
-            href={`/broker/pipeline/${dealId}`}
+            data-card-title
+            href={`/broker/pipeline/${encodeURIComponent(dealId)}`}
             className={cn(
                 "rounded-sm hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                 className,

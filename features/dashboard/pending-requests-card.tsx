@@ -7,6 +7,7 @@ import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
 import { ownerBrokersHref, ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Check, Inbox, X } from "@/components/shared/icons";
 import { TextLinkButton } from "@/components/shared/text-link-button";
@@ -46,16 +47,23 @@ function PendingRequestRow({
 
     return (
         <li
+            data-linked-card
             className={cn(
                 "flex items-center gap-3 border-be border-border-warm py-3 last:border-be-0",
                 busy && "opacity-70",
             )}
         >
+            <CardLink
+                href={ownerPropertyDetailHref(request.propertyId)}
+                label={`Open ${request.propertyTitle}`}
+            />
             <UserAvatar name={brokerLabel} size="sm" />
 
             <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-inline-0">
-                    <p className="body truncate font-semibold text-ink">{brokerLabel}</p>
+                    <p data-card-title className="body truncate font-semibold text-ink">
+                        {brokerLabel}
+                    </p>
                     {/* Verification badge temporarily hidden. */}
                     {FEATURE_RERA_VERIFICATION && request.brokerVerified ? (
                         <Badge variant="brand" className="shrink-0">

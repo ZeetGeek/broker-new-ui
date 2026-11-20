@@ -11,6 +11,7 @@ import { formatRelativePast } from "@/lib/format/date";
 import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
 
 import { AvatarStack } from "@/components/shared/avatar-stack";
+import { CardLink } from "@/components/shared/card-link";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     Activity,
@@ -202,8 +203,9 @@ function ListingRow({
             : brokerPropertyDetailHref(listing.id);
 
     return (
-        <tr className={styles.listingRow}>
+        <tr data-linked-card className={styles.listingRow}>
             <td className={styles.propertyCell}>
+                <CardLink href={href} label={`Open ${listing.title}`} />
                 <Link href={href} className={styles.propertyLink}>
                     <PropertyCoverImage
                         src={listing.imageSrc}
@@ -213,7 +215,9 @@ function ListingRow({
                         className={styles.thumbnail}
                     />
                     <span className={styles.propertyText}>
-                        <span className={styles.propertyTitle}>{listing.title}</span>
+                        <span data-card-title className={styles.propertyTitle}>
+                            {listing.title}
+                        </span>
                         <span className={styles.location}>
                             <MapPin aria-hidden />
                             {[listing.locality, listing.city].filter(Boolean).join(", ")}
@@ -766,6 +770,7 @@ export function InventoryAndUpdates({
                                 {updates.map((item) => (
                                     <li key={item.id}>
                                         <Link
+                                            data-linked-card
                                             href={item.href || "/broker/notifications"}
                                             className={styles.updateLink}
                                         >
@@ -773,7 +778,7 @@ export function InventoryAndUpdates({
                                                 <item.icon aria-hidden strokeWidth={1.75} />
                                             </span>
                                             <span className={styles.updateText}>
-                                                <span className={styles.eventTitle}>
+                                                <span data-card-title className={styles.eventTitle}>
                                                     {item.title}
                                                 </span>
                                                 <span className={styles.secondary}>

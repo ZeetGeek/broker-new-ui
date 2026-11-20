@@ -20,6 +20,7 @@ import {
     AttachedBuyersRow,
     InvitedBrokersRow,
 } from "@/components/shared/attached-people-row";
+import { CardLink } from "@/components/shared/card-link";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import {
     Building2,
@@ -797,12 +798,14 @@ function RepresentedPropertyCard({
 
     return (
         <article
+            data-linked-card
             className={cn(
                 "overflow-hidden rounded-card border border-border-warm bg-surface",
                 "flex flex-col",
                 className,
             )}
         >
+            <CardLink href={detailsHref} label={`Open ${titleLine}`} />
             <div className="flex items-center gap-2 bg-brand-deep px-3 py-2 text-surface">
                 <CircleCheck aria-hidden className="shrink-0 block-4 inline-4" strokeWidth={1.75} />
                 <p className="body-xs font-medium">

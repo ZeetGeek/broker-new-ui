@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import type { BrokerProfile } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { BadgeCheck, MapPin, Send } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -121,13 +122,8 @@ export function BrowseBrokerCard({
 
     return (
         <article
-            role="button"
-            tabIndex={0}
+            data-linked-card
             aria-label={`Open ${name}`}
-            onClick={open}
-            onKeyDown={(event) => {
-                if (event.key === "Enter") open();
-            }}
             className={cn(
                 `
                   contact-card group/card relative flex cursor-pointer flex-col gap-3 rounded-card
@@ -138,6 +134,11 @@ export function BrowseBrokerCard({
                 `,
             )}
         >
+            <CardLink
+                href={`/owner/brokers?broker=${encodeURIComponent(broker.id)}`}
+                label={`Open ${name}`}
+                onOpen={open}
+            />
             <div className="flex items-start gap-3 min-inline-0">
                 <UserAvatar
                     name={name}
@@ -147,7 +148,9 @@ export function BrowseBrokerCard({
                 />
                 <div className="flex-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">
-                        <h2 className="body truncate font-bold text-ink capitalize">{name}</h2>
+                        <h2 data-card-title className="body truncate font-bold text-ink capitalize">
+                            {name}
+                        </h2>
                         {/* Verification badge temporarily hidden. */}
                         {FEATURE_RERA_VERIFICATION && broker.verified ? (
                             <span

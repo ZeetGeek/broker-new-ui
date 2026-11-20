@@ -10,6 +10,7 @@ import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
+import { CardLink } from "@/components/shared/card-link";
 import { Building2, CalendarPlus, Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
 import { PriceWithCommission, toCommissionNumber } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
@@ -89,10 +90,15 @@ export const OwnerPropertyAvailabilityRow = memo(function OwnerPropertyAvailabil
 
     return (
         <article
+            data-linked-card
             tabIndex={-1}
             aria-label={title}
             className="overflow-hidden rounded-card border border-border-warm bg-surface shadow-sm"
         >
+            <CardLink
+                href={ownerPropertyDetailHref(property.id)}
+                label={`Open ${property.title}`}
+            />
             <div
                 className="
                   grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 p-4

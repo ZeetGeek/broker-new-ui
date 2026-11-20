@@ -11,6 +11,7 @@ import { VISIT_STATUS } from "@/lib/visits/status";
 import { durationMinutes, formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
+import { CardLink } from "@/components/shared/card-link";
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import { IconButton } from "@/components/shared/icon-button";
 import {
@@ -67,12 +68,14 @@ export const VisitCard = memo(function VisitCard({
 
     return (
         <article
+            data-linked-card
             aria-label={`${visit.property.title}, ${when}, ${status.label}`}
             className={cn(
                 "flex flex-col gap-3 rounded-[20px] border border-border-warm bg-surface p-4 shadow-sm block-full min-inline-0",
                 cancelled && "bg-surface-muted",
             )}
         >
+            <CardLink href={propertyHref} label={`Open ${visit.property.title}`} />
             <header className="flex items-center justify-between gap-2">
                 <Badge
                     color={
@@ -130,7 +133,10 @@ export const VisitCard = memo(function VisitCard({
                         audience="broker"
                         size="lg"
                     />
-                    <h3 className="body truncate font-semibold tracking-wide text-ink capitalize">
+                    <h3
+                        data-card-title
+                        className="body truncate font-semibold tracking-wide text-ink capitalize"
+                    >
                         <Link
                             href={propertyHref}
                             prefetch={false}

@@ -11,6 +11,7 @@ import { formatAreaSqft } from "@/lib/format/area";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Bookmark, Clock3, MapPin, Users } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
@@ -87,7 +88,11 @@ function PropertyRow({
     const detailsHref = brokerOwnerListingDetailHref(property.id);
 
     return (
-        <li className="flex items-center gap-3 sm:gap-4">
+        <li data-linked-card className="flex items-center gap-3 sm:gap-4">
+            <CardLink
+                href={detailsHref}
+                label={`Open ${property.configLabel} in ${property.locality}`}
+            />
             <Link
                 href={detailsHref}
                 prefetch={false}

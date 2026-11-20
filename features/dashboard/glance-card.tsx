@@ -38,6 +38,7 @@ function GlanceVisitRow({ visit, now }: { visit: OwnerGlanceVisit; now: Date }) 
     return (
         <li>
             <Link
+                data-linked-card
                 href={ownerVisitsHref("scheduled")}
                 className="
                   flex items-start gap-3 rounded-inner py-2.5 outline-none min-inline-0
@@ -51,7 +52,9 @@ function GlanceVisitRow({ visit, now }: { visit: OwnerGlanceVisit; now: Date }) 
                     strokeWidth={1.75}
                 />
                 <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
-                    <p className="body truncate font-semibold text-ink">{visit.propertyTitle}</p>
+                    <p data-card-title className="body truncate font-semibold text-ink">
+                        {visit.propertyTitle}
+                    </p>
                     <p className="body-sm truncate text-ink-muted">
                         {visit.brokerName}
                         <span aria-hidden> · </span>
@@ -72,6 +75,7 @@ function GlanceInviteRow({ invite, now }: { invite: OwnerGlanceInvite; now: Date
     return (
         <li>
             <Link
+                data-linked-card
                 href={
                     invite.propertyId
                         ? ownerPropertyDetailHref(invite.propertyId)
@@ -89,7 +93,9 @@ function GlanceInviteRow({ invite, now }: { invite: OwnerGlanceInvite; now: Date
                     strokeWidth={1.75}
                 />
                 <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
-                    <p className="body truncate font-semibold text-ink">{invite.propertyTitle}</p>
+                    <p data-card-title className="body truncate font-semibold text-ink">
+                        {invite.propertyTitle}
+                    </p>
                     <p className="body-sm truncate text-ink-muted">
                         Invite pending
                         {invite.message ? (

@@ -11,6 +11,7 @@ import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/propert
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
 import { AppImage } from "@/components/shared/app-image";
+import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
     BadgeCheck,
@@ -57,8 +58,8 @@ function PropertyCard({ property }: { property: OwnerProfileProperty }) {
         }) || property.title;
 
     return (
-        <Link
-            href={brokerOwnerListingDetailHref(property.id)}
+        <article
+            data-linked-card
             className="
               flex flex-col overflow-hidden rounded-card border border-border-warm bg-surface
               outline-none
@@ -66,13 +67,16 @@ function PropertyCard({ property }: { property: OwnerProfileProperty }) {
               focus-visible:ring-3 focus-visible:ring-ring/30
             "
         >
+            <CardLink href={brokerOwnerListingDetailHref(property.id)} label={`Open ${name}`} />
             <div className="relative aspect-4/3 bg-surface-muted">
                 {photo ? (
                     <AppImage src={photo} alt="" fill className="object-cover" sizes="320px" />
                 ) : null}
             </div>
             <div className="flex flex-col gap-1 p-4">
-                <p className="body truncate font-semibold text-ink">{name}</p>
+                <p data-card-title className="body truncate font-semibold text-ink">
+                    {name}
+                </p>
                 {place ? <p className="body-sm truncate text-ink-muted">{place}</p> : null}
                 {ask ? (
                     <PriceWithCommission
@@ -86,7 +90,7 @@ function PropertyCard({ property }: { property: OwnerProfileProperty }) {
                     />
                 ) : null}
             </div>
-        </Link>
+        </article>
     );
 }
 

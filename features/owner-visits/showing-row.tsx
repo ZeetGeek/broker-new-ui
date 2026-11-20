@@ -2,10 +2,12 @@
 
 import type { ShowingStatus, VisitShowing } from "@/lib/api/owner-slots";
 import { formatDateIn, formatTimeIn, parseApiInstant } from "@/lib/format/date";
+import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 import { visitAge } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
+import { CardLink } from "@/components/shared/card-link";
 import { Clock3 } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -38,7 +40,16 @@ export function ShowingRow({
     const brokerName = showing.broker?.fullName?.trim() || "Broker";
 
     return (
-        <article className="rounded-card border border-border-warm bg-surface p-4">
+        <article
+            data-linked-card={showing.propertyId ? "" : undefined}
+            className="rounded-card border border-border-warm bg-surface p-4"
+        >
+            {showing.propertyId ? (
+                <CardLink
+                    href={ownerPropertyDetailHref(showing.propertyId)}
+                    label={`Open ${showing.property?.title || "property"}`}
+                />
+            ) : null}
             <div className="grid gap-4 sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-start">
                 <div
                     className="
@@ -54,7 +65,7 @@ export function ShowingRow({
                 </div>
                 <div className="min-inline-0">
                     <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="h6 truncate text-ink">
+                        <h3 data-card-title className="h6 truncate text-ink">
                             {showing.property?.title?.trim() || "Property"}
                         </h3>
                         <span

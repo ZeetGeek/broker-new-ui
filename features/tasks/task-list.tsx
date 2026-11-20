@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { IconButton } from "@/components/shared/icon-button";
 import { AlertCircle, Calendar, MoreHorizontal, RotateCcw } from "@/components/shared/icons";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -100,9 +101,17 @@ export function TaskLine({
 
     return (
         <div
+            data-linked-card
             className={cn(styles.taskLine, task.completedAt && styles.completedLine)}
             data-priority={task.priority}
         >
+            {!busy ? (
+                <CardLink
+                    href={`/broker/tasks?view=detail&task=${encodeURIComponent(task.id)}`}
+                    label={`Open ${rowTitle}`}
+                    onOpen={() => onOpen(task)}
+                />
+            ) : null}
             {!task.deletedAt && (
                 <Checkbox
                     className={styles.lineCheck}
@@ -132,7 +141,7 @@ export function TaskLine({
                     setEditing(true);
                 }}
             >
-                {rowTitle}
+                <span data-card-title>{rowTitle}</span>
                 {date && (
                     <small className={styles.listTaskDate}>
                         <Calendar aria-hidden size={12} />

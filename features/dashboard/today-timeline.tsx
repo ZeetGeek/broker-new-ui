@@ -92,6 +92,7 @@ function TimelineRow({ item }: { item: TodayItem }) {
                 <TooltipTrigger
                     render={
                         <Link
+                            data-linked-card
                             href={item.href}
                             className={`
                               grid grid-cols-[auto_auto_1fr] items-start gap-x-4 py-3.5 outline-none
@@ -116,6 +117,7 @@ function TimelineRow({ item }: { item: TodayItem }) {
                         </span>
                         <div className="min-inline-0">
                             <p
+                                data-card-title
                                 className={cn(
                                     "body font-semibold",
                                     isDone && "text-ink-subtle line-through",
