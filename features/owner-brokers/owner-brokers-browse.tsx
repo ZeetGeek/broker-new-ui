@@ -173,7 +173,7 @@ export function OwnerBrokersBrowse({
                     items={brokers}
                     getKey={(broker) => broker.id}
                     estimateRowHeight={320}
-                    gap={24}
+                    gap="card-grid"
                     breakpoints={OWNER_BROKERS_GRID_BREAKPOINTS}
                     ariaLabel="Brokers"
                     renderItem={(broker) => (

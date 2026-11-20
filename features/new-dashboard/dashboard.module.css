@@ -1,14 +1,14 @@
 .dashboard {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: var(--card-grid-gap);
     min-inline-size: 0;
 }
 
 .workGrid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 1.25rem;
+    gap: var(--card-grid-gap);
 }
 
 .nextVisit,
@@ -115,7 +115,7 @@
 @media (max-width: 639.98px) {
     .stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
+        gap: var(--card-grid-gap);
         overflow: visible;
         border: 0;
         border-radius: 0;
@@ -175,7 +175,7 @@
 
 @media (min-width: 640px) {
     .dashboard {
-        gap: 1.5rem;
+        gap: var(--card-grid-gap);
     }
 
     .metadataDivider {
@@ -272,7 +272,7 @@
 /* Tablet → small desktop: two separate horizontal stat cards per row. */
 @media (min-width: 640px) and (max-width: 1359.98px) {
     .stats {
-        gap: 0.75rem;
+        gap: var(--card-grid-gap);
         overflow: visible;
         border: 0;
         border-radius: 0;

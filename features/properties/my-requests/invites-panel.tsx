@@ -172,7 +172,7 @@ export function InvitesPanel({
                     items={result.items}
                     getKey={(item) => item.id}
                     estimateRowHeight={520}
-                    gap={24}
+                    gap="card-grid"
                     breakpoints={REQUESTS_GRID_BREAKPOINTS}
                     gridClassName={REQUESTS_GRID_CLASS}
                     ariaLabel="Owner invitations"

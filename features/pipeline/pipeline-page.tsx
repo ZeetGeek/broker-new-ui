@@ -808,7 +808,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                 getKey={(deal) => deal.id}
                                 estimateRowHeight={360}
                                 gridClassName="grid grid-cols-1 inline-full sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                                gap={24}
+                                gap="card-grid"
                                 breakpoints={DONE_GRID_BREAKPOINTS}
                                 ariaLabel={view === "sold" ? "Finished deals" : "Lost deals"}
                                 renderItem={renderDealCard}
@@ -857,7 +857,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                         )}
                                         getKey={(deal) => deal.id}
                                         estimateRowHeight={470}
-                                        gap={12}
+                                        gap="card-grid"
                                         ariaLabel={`${DEAL_STAGE_META[mobileStage].label} deals`}
                                         renderItem={renderDealCard}
                                     />

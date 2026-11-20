@@ -120,7 +120,7 @@ export function PropertyAnalyticsPage() {
 
                     {/* Phone and tablet: attention, offers, then the two progress cards.
                         Desktop: attention beside the funnel, offers beside the stages. */}
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12 lg:gap-5">
+                    <div className="grid grid-cols-1 gap-card-grid md:grid-cols-2 lg:grid-cols-12">
                         <AnalyticsAttention
                             report={report}
                             now={now}

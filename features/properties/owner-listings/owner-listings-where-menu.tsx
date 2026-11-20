@@ -22,6 +22,8 @@ import {
     MapPinOff,
     Search,
 } from "@/components/shared/icons";
+import { LocalityCombobox } from "@/components/shared/locality-combobox";
+import type { SearchOption } from "@/components/shared/search-combobox";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -286,49 +288,6 @@ function WhereBrowseRow({
     );
 }
 
-function WhereLocalityRow({
-    locality,
-    city,
-    state,
-    country,
-    listingCount,
-    query,
-    checked,
-    onToggle,
-}: {
-    locality: string;
-    city: string;
-    state: string;
-    country: string;
-    listingCount: number;
-    query?: string;
-    checked: boolean;
-    onToggle: () => void;
-}) {
-    return (
-        <DropdownMenuCheckboxItem
-            checked={checked}
-            onCheckedChange={onToggle}
-            className={checkboxRowClass(checked)}
-        >
-            <LocationIcon />
-            <span className="flex flex-1 flex-col gap-1 text-start min-inline-0">
-                <span className="flex items-center gap-2 min-inline-0">
-                    <span data-slot="where-location-title" className={WHERE_TITLE_CLASS}>
-                        {query ? (
-                            <HighlightMatch text={locality} query={query} />
-                        ) : (
-                            formatPlaceName(locality)
-                        )}
-                    </span>
-                    <WhereListingCountBadge count={listingCount} />
-                </span>
-                <WhereLocationMeta pathLabel={formatLocationPathLabel(city, state, country)} />
-            </span>
-        </DropdownMenuCheckboxItem>
-    );
-}
-
 function WhereNavBar({
     level,
     childCount,
@@ -449,7 +408,6 @@ export function OwnerListingsWhereMenu({
         [locationTree, query],
     );
     const searchGroups = useMemo(() => groupSearchHits(searchHits), [searchHits]);
-    const selectedLocalitySet = useMemo(() => new Set(selectedLocalities), [selectedLocalities]);
     const hasListings = locationTree.length > 0;
     const isSearching = query.trim().length > 0;
     const showEmptyState = !hasListings || (isSearching && searchHits.length === 0);
@@ -561,9 +519,28 @@ export function OwnerListingsWhereMenu({
         setBrowseLevel({ kind: "city", country, state, city });
     };
 
-    const toggleLocality = (locality: string) => {
-        emitWhere({ localities: toggleStringList(selectedLocalities, locality) });
-    };
+    const renderAreaPicker = (options: SearchOption[]) => (
+        <div
+            className="px-1 py-2"
+            onKeyDown={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+        >
+            <label htmlFor="marketplace-areas" className="sr-only">
+                Areas
+            </label>
+            <LocalityCombobox
+                id="marketplace-areas"
+                multiple
+                size="lg"
+                options={options}
+                allowCustom={false}
+                value={selectedLocalities}
+                onValueChange={(localities: string[]) => emitWhere({ localities })}
+                placeholder="Search areas with listings"
+                helperText="Choose one or more areas."
+            />
+        </div>
+    );
 
     const browseChildCount = useMemo(() => {
         if (browseLevel.kind === "country") {
@@ -622,18 +599,12 @@ export function OwnerListingsWhereMenu({
                 browseLevel.city,
             );
             if (!cityGroup) return null;
-            return cityGroup.localities.map((leaf) => (
-                <WhereLocalityRow
-                    key={`${leaf.country}-${leaf.state}-${leaf.city}-${leaf.locality}`}
-                    locality={leaf.locality}
-                    city={leaf.city}
-                    state={leaf.state}
-                    country={leaf.country}
-                    listingCount={leaf.listingCount}
-                    checked={selectedLocalitySet.has(leaf.locality)}
-                    onToggle={() => toggleLocality(leaf.locality)}
-                />
-            ));
+            return renderAreaPicker(
+                cityGroup.localities.map((leaf) => ({
+                    value: leaf.locality,
+                    detail: `${formatLocationPathLabel(leaf.city, leaf.state, leaf.country)} · ${formatListingCount(leaf.listingCount)}`,
+                })),
+            );
         }
 
         if (browseLevel.kind === "state") {
@@ -875,120 +846,127 @@ export function OwnerListingsWhereMenu({
                                         >
                                             {KIND_LABEL[group.kind]}
                                         </p>
-                                        {group.items.map((hit) => {
-                                            if (hit.kind === "locality") {
-                                                return (
-                                                    <WhereLocalityRow
-                                                        key={`locality-${hit.country}-${hit.state}-${hit.city}-${hit.locality}`}
-                                                        locality={hit.locality}
-                                                        city={hit.city}
-                                                        state={hit.state}
-                                                        country={hit.country}
-                                                        listingCount={hit.listingCount}
-                                                        query={query}
-                                                        checked={selectedLocalitySet.has(
-                                                            hit.locality,
-                                                        )}
-                                                        onToggle={() =>
-                                                            toggleLocality(hit.locality)
-                                                        }
-                                                    />
-                                                );
-                                            }
+                                        {group.kind === "locality"
+                                            ? renderAreaPicker(
+                                                  group.items.flatMap((hit) =>
+                                                      hit.kind === "locality"
+                                                          ? [
+                                                                {
+                                                                    value: hit.locality,
+                                                                    detail: `${formatLocationPathLabel(hit.city, hit.state, hit.country)} · ${formatListingCount(hit.listingCount)}`,
+                                                                },
+                                                            ]
+                                                          : [],
+                                                  ),
+                                              )
+                                            : group.items.map((hit) => {
+                                                  const title =
+                                                      hit.kind === "country"
+                                                          ? hit.country
+                                                          : hit.kind === "state"
+                                                            ? hit.state
+                                                            : hit.city;
+                                                  const icon =
+                                                      hit.kind === "country"
+                                                          ? Globe2
+                                                          : hit.kind === "state"
+                                                            ? LandPlot
+                                                            : Building2;
+                                                  const checked =
+                                                      hit.kind === "country"
+                                                          ? isCountrySelected(hit.country)
+                                                          : hit.kind === "state"
+                                                            ? isStateSelected(
+                                                                  hit.country,
+                                                                  hit.state,
+                                                              )
+                                                            : isCitySelected(hit.city);
 
-                                            const title =
-                                                hit.kind === "country"
-                                                    ? hit.country
-                                                    : hit.kind === "state"
-                                                      ? hit.state
-                                                      : hit.city;
-                                            const icon =
-                                                hit.kind === "country"
-                                                    ? Globe2
-                                                    : hit.kind === "state"
-                                                      ? LandPlot
-                                                      : Building2;
-                                            const checked =
-                                                hit.kind === "country"
-                                                    ? isCountrySelected(hit.country)
-                                                    : hit.kind === "state"
-                                                      ? isStateSelected(hit.country, hit.state)
-                                                      : isCitySelected(hit.city);
-
-                                            const childCount =
-                                                hit.kind === "country"
-                                                    ? (findCountryGroup(locationTree, hit.country)
-                                                          ?.states.length ?? 0)
-                                                    : hit.kind === "state"
-                                                      ? (findStateGroup(
-                                                            locationTree,
-                                                            hit.country,
-                                                            hit.state,
-                                                        )?.cities.length ?? 0)
-                                                      : (findCityGroup(
-                                                            locationTree,
-                                                            hit.country,
-                                                            hit.state,
-                                                            hit.city,
-                                                        )?.localities.length ?? 0);
-
-                                            const childLabel =
-                                                hit.kind === "country"
-                                                    ? formatChildCount(
-                                                          childCount,
-                                                          "state",
-                                                          "states",
-                                                      )
-                                                    : hit.kind === "state"
-                                                      ? formatChildCount(
-                                                            childCount,
-                                                            "city",
-                                                            "cities",
-                                                        )
-                                                      : formatChildCount(
-                                                            childCount,
-                                                            "area",
-                                                            "areas",
-                                                        );
-
-                                            return (
-                                                <WhereBrowseRow
-                                                    key={`${hit.kind}-${title}-${hit.pathLabel}`}
-                                                    title={title}
-                                                    meta={formatListingCount(hit.listingCount)}
-                                                    childCount={childCount}
-                                                    childLabel={childLabel}
-                                                    query={query}
-                                                    icon={icon}
-                                                    checked={checked}
-                                                    onToggleSelect={() => {
-                                                        if (hit.kind === "country") {
-                                                            toggleCountrySelect(hit.country);
-                                                            return;
-                                                        }
-                                                        if (hit.kind === "state") {
-                                                            toggleStateSelect(
+                                                  const childCount =
+                                                      hit.kind === "country"
+                                                          ? (findCountryGroup(
+                                                                locationTree,
                                                                 hit.country,
-                                                                hit.state,
-                                                            );
-                                                            return;
-                                                        }
-                                                        toggleCitySelect(hit.city);
-                                                    }}
-                                                    onDrill={() => {
-                                                        if (hit.kind === "country") {
-                                                            drillCountry(hit.country);
-                                                            return;
-                                                        }
-                                                        if (hit.kind === "state") {
-                                                            drillState(hit.country, hit.state);
-                                                            return;
-                                                        }
-                                                        drillCity(hit.country, hit.state, hit.city);
-                                                    }}
-                                                />
-                                            );
-                                        })}
+                                                            )?.states.length ?? 0)
+                                                          : hit.kind === "state"
+                                                            ? (findStateGroup(
+                                                                  locationTree,
+                                                                  hit.country,
+                                                                  hit.state,
+                                                              )?.cities.length ?? 0)
+                                                            : (findCityGroup(
+                                                                  locationTree,
+                                                                  hit.country,
+                                                                  hit.state,
+                                                                  hit.city,
+                                                              )?.localities.length ?? 0);
+
+                                                  const childLabel =
+                                                      hit.kind === "country"
+                                                          ? formatChildCount(
+                                                                childCount,
+                                                                "state",
+                                                                "states",
+                                                            )
+                                                          : hit.kind === "state"
+                                                            ? formatChildCount(
+                                                                  childCount,
+                                                                  "city",
+                                                                  "cities",
+                                                              )
+                                                            : formatChildCount(
+                                                                  childCount,
+                                                                  "area",
+                                                                  "areas",
+                                                              );
+
+                                                  return (
+                                                      <WhereBrowseRow
+                                                          key={`${hit.kind}-${title}-${hit.pathLabel}`}
+                                                          title={title}
+                                                          meta={formatListingCount(
+                                                              hit.listingCount,
+                                                          )}
+                                                          childCount={childCount}
+                                                          childLabel={childLabel}
+                                                          query={query}
+                                                          icon={icon}
+                                                          checked={checked}
+                                                          onToggleSelect={() => {
+                                                              if (hit.kind === "country") {
+                                                                  toggleCountrySelect(hit.country);
+                                                                  return;
+                                                              }
+                                                              if (hit.kind === "state") {
+                                                                  toggleStateSelect(
+                                                                      hit.country,
+                                                                      hit.state,
+                                                                  );
+                                                                  return;
+                                                              }
+                                                              toggleCitySelect(hit.city);
+                                                          }}
+                                                          onDrill={() => {
+                                                              if (hit.kind === "country") {
+                                                                  drillCountry(hit.country);
+                                                                  return;
+                                                              }
+                                                              if (hit.kind === "state") {
+                                                                  drillState(
+                                                                      hit.country,
+                                                                      hit.state,
+                                                                  );
+                                                                  return;
+                                                              }
+                                                              drillCity(
+                                                                  hit.country,
+                                                                  hit.state,
+                                                                  hit.city,
+                                                              );
+                                                          }}
+                                                      />
+                                                  );
+                                              })}
                                     </div>
                                 ))
                             ) : hasListings ? (

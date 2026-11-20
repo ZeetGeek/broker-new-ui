@@ -2,9 +2,12 @@
 
 import { type ReactNode, type Ref, useId, useMemo, useState } from "react";
 
+import { Tailspin } from "ldrs/react";
+
+import { areaColorClassName } from "@/lib/styles/area-color";
 import { cn } from "@/lib/utils";
 
-import type { AppIcon } from "@/components/shared/icons";
+import { type AppIcon, MapPin, Search } from "@/components/shared/icons";
 import {
     Combobox,
     ComboboxChip,
@@ -48,6 +51,10 @@ type CommonProps = {
     inputRef?: Ref<HTMLInputElement>;
     /** Display-only formatting for selected chips; stored values remain unchanged. */
     formatChipLabel?: (value: string) => string;
+    /** Display-only formatting for results and the single selected value. */
+    formatOptionLabel?: (value: string) => string;
+    searchError?: string;
+    onRetry?: () => void;
 };
 
 type SingleProps = CommonProps & {
@@ -92,6 +99,9 @@ export function SearchCombobox(props: SearchComboboxProps) {
         size = "default",
         inputRef,
         formatChipLabel,
+        formatOptionLabel = (value: string) => value,
+        searchError,
+        onRetry,
     } = props;
 
     const generatedId = useId();
@@ -123,19 +133,22 @@ export function SearchCombobox(props: SearchComboboxProps) {
 
         const offerCustom =
             allowCustom &&
+            !searching &&
+            !searchError &&
             typed.length > 0 &&
             !seen.has(typed.toLowerCase()) &&
             !selected.some((value) => sameText(value, typed));
         if (offerCustom) list.push(typed);
 
         return { items: list, customValue: offerCustom ? typed : null };
-    }, [options, allowCustom, typed, selected]);
+    }, [options, allowCustom, typed, selected, searching, searchError]);
 
     function handleInputChange(next: string) {
         setText(next);
         // A single combobox fills its input with the chosen value; searching
         // for exactly that would hide every other option when it reopens.
-        const isSelectedLabel = !props.multiple && props.value && sameText(next, props.value);
+        const isSelectedLabel =
+            !props.multiple && props.value && sameText(next, formatOptionLabel(props.value));
         onSearchChange(isSelectedLabel ? "" : next);
     }
 
@@ -150,11 +163,12 @@ export function SearchCombobox(props: SearchComboboxProps) {
             <ComboboxItem key={item} value={item}>
                 {item === customValue ? (
                     <span className="text-ink-muted">
-                        Use <span className="font-semibold text-ink">“{item}”</span>
+                        Use{" "}
+                        <span className="font-semibold text-ink">“{formatOptionLabel(item)}”</span>
                     </span>
                 ) : (
                     <span className="flex flex-col min-inline-0">
-                        <span className="truncate">{item}</span>
+                        <span className="truncate">{formatOptionLabel(item)}</span>
                         {detail ? (
                             <span className="truncate text-xs font-normal text-ink-subtle">
                                 {detail}
@@ -169,11 +183,62 @@ export function SearchCombobox(props: SearchComboboxProps) {
     const content = (
         <ComboboxContent anchor={props.multiple ? anchor : undefined}>
             {searching ? (
-                <p className="px-2.5 py-1.5 text-xs text-ink-subtle" aria-live="polite">
-                    Searching…
-                </p>
+                <div
+                    role="status"
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-ink-muted"
+                >
+                    <span
+                        aria-hidden
+                        className="flex shrink-0 items-center justify-center text-ink block-8 inline-8"
+                    >
+                        <Tailspin size="16" stroke="2" speed="0.9" color="currentColor" />
+                    </span>
+                    <span>Searching for areas…</span>
+                </div>
             ) : null}
-            <ComboboxEmpty>{searching ? null : typed ? "No matches" : emptyText}</ComboboxEmpty>
+            {searchError && !searching ? (
+                <div
+                    role="alert"
+                    className="flex items-center justify-between gap-3 px-4 py-3 text-sm text-ink-muted"
+                >
+                    <span>{searchError}</span>
+                    {onRetry ? (
+                        <button
+                            type="button"
+                            onClick={onRetry}
+                            className="shrink-0 rounded-sm px-2 font-semibold text-brand outline-none min-block-11 focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            Try again
+                        </button>
+                    ) : null}
+                </div>
+            ) : null}
+            <ComboboxEmpty className="justify-start gap-3 text-start">
+                {searching || searchError ? null : (
+                    <>
+                        <span
+                            aria-hidden
+                            className="flex shrink-0 items-center justify-center rounded-full bg-surface-muted text-ink-muted block-9 inline-9"
+                        >
+                            {typed ? (
+                                <Search className="block-4 inline-4" />
+                            ) : (
+                                <MapPin className="block-4 inline-4" />
+                            )}
+                        </span>
+                        <span className="flex flex-col gap-0.5">
+                            <span className="font-medium text-ink">
+                                {typed ? "No matching areas" : emptyText}
+                            </span>
+                            <span className="text-xs text-ink-muted">
+                                {typed
+                                    ? "Try another area name."
+                                    : "Suggestions will appear as you type."}
+                            </span>
+                        </span>
+                    </>
+                )}
+            </ComboboxEmpty>
             <ComboboxList>{renderItem}</ComboboxList>
         </ComboboxContent>
     );
@@ -191,12 +256,14 @@ export function SearchCombobox(props: SearchComboboxProps) {
                     onValueChange={(next: string[]) => props.onValueChange(next)}
                     onInputValueChange={handleInputChange}
                     onOpenChange={handleOpenChange}
-                    itemToStringLabel={(item: string) => item}
+                    itemToStringLabel={formatOptionLabel}
                     disabled={disabled}
                 >
                     <ComboboxChips
                         ref={anchor}
                         className={cn(
+                            "px-3 py-2 has-data-[slot=combobox-chip]:px-3",
+                            size === "lg" && "min-block-control-xl",
                             disabled && "pointer-events-none bg-surface-muted opacity-50",
                         )}
                     >
@@ -204,8 +271,19 @@ export function SearchCombobox(props: SearchComboboxProps) {
                             {(values: string[]) => (
                                 <>
                                     {values.map((value) => (
-                                        <ComboboxChip key={value}>
-                                            {formatChipLabel ? formatChipLabel(value) : value}
+                                        <ComboboxChip
+                                            key={value}
+                                            className={cn(
+                                                "rounded-full px-2.5 block-7 max-inline-full has-data-[slot=combobox-chip-remove]:pe-1",
+                                                areaColorClassName(value),
+                                            )}
+                                            removeLabel={`Remove ${formatChipLabel ? formatChipLabel(value) : formatOptionLabel(value)}`}
+                                        >
+                                            <span className="truncate min-inline-0">
+                                                {formatChipLabel
+                                                    ? formatChipLabel(value)
+                                                    : formatOptionLabel(value)}
+                                            </span>
                                         </ComboboxChip>
                                     ))}
                                     <ComboboxChipsInput
@@ -215,7 +293,7 @@ export function SearchCombobox(props: SearchComboboxProps) {
                                         disabled={disabled}
                                         aria-invalid={Boolean(errorText) || undefined}
                                         aria-describedby={message ? messageId : undefined}
-                                        className="text-sm block-7 placeholder:text-ink-subtle"
+                                        className="text-sm block-7 min-inline-24 placeholder:text-ink-subtle"
                                     />
                                 </>
                             )}
@@ -247,7 +325,8 @@ export function SearchCombobox(props: SearchComboboxProps) {
             onValueChange={(next: string | null) => props.onValueChange(next ?? "")}
             onInputValueChange={handleInputChange}
             onOpenChange={handleOpenChange}
-            itemToStringLabel={(item: string) => item}
+            itemToStringLabel={formatOptionLabel}
+            disabled={disabled}
         >
             <ComboboxInput
                 id={inputId}

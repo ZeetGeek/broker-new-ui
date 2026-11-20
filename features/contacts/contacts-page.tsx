@@ -569,8 +569,8 @@ export function ContactsPage({
                                 items={buyers}
                                 getKey={(buyer) => buyer.id}
                                 estimateRowHeight={384}
-                                gap={24}
-                                singleColumnGap={12}
+                                gap="card-grid"
+                                gridClassName="grid grid-cols-1 inline-full sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
                                 ariaLabel="Clients"
                                 renderItem={(buyer) => (
@@ -591,8 +591,8 @@ export function ContactsPage({
                                 items={ownersQuery.items}
                                 getKey={(owner) => owner.id}
                                 estimateRowHeight={320}
-                                gap={24}
-                                singleColumnGap={12}
+                                gap="card-grid"
+                                gridClassName="grid grid-cols-1 inline-full sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
                                 ariaLabel="Owners"
                                 renderItem={(owner) => (

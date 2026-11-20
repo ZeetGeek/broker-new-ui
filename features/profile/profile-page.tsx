@@ -40,7 +40,6 @@ import {
     Link2,
     Map,
     MapPin,
-    MapPinned,
     Phone,
     Receipt,
     Tags,
@@ -755,6 +754,7 @@ export function ProfilePage() {
                                             </FieldLabel>
                                             <LocalityCombobox
                                                 id="profile-areas"
+                                                inputRef={field.ref}
                                                 multiple
                                                 size="lg"
                                                 cityId={selectedCity?.id}
@@ -897,14 +897,22 @@ export function ProfilePage() {
                                         <FieldLabel htmlFor="profile-preferred-localities">
                                             Preferred localities
                                         </FieldLabel>
-                                        <Input
-                                            {...field}
+                                        <LocalityCombobox
                                             id="profile-preferred-localities"
+                                            multiple
                                             size="lg"
-                                            startIcon={MapPinned}
-                                            placeholder="Andheri, Baner"
+                                            inputRef={field.ref}
+                                            value={parseCommaList(field.value)}
+                                            options={(
+                                                profile?.owner?.preferredLocalities ?? []
+                                            ).map((value) => ({ value }))}
+                                            onValueChange={(next: string[]) =>
+                                                field.onChange(next.join(", "))
+                                            }
+                                            onBlur={field.onBlur}
+                                            placeholder="Add a preferred area"
                                             errorText={fieldState.error?.message}
-                                            helperText="Separate them with commas."
+                                            helperText="Add areas from any of your preferred cities."
                                         />
                                     </div>
                                 )}

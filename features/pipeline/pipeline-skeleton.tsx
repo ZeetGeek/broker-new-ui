@@ -73,14 +73,14 @@ export function PipelineBoardSkeleton({
             <span className="sr-only">Loading your deals</span>
             <div aria-hidden>
                 {view !== "board" ? (
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-card-grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {Array.from({ length: 8 }, (_, index) => (
                             <DealCardSkeleton key={index} outcome />
                         ))}
                     </div>
                 ) : (
                     <>
-                        <div className="hidden snap-x snap-mandatory items-stretch gap-3 overflow-x-auto md:flex lg:grid lg:snap-none lg:grid-cols-4 lg:gap-4 lg:overflow-visible">
+                        <div className="hidden snap-x snap-mandatory items-stretch gap-3 overflow-x-auto md:flex lg:grid lg:snap-none lg:grid-cols-4 lg:gap-card-grid lg:overflow-visible">
                             {DEAL_STAGE_ORDER.map((stage) => (
                                 <div
                                     key={stage}

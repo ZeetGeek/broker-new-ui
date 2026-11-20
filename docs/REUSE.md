@@ -3,6 +3,17 @@
 Single source of truth for making things common. `.claude/rules/` and
 `.cursor/rules/` only point here.
 
+## Card grid spacing
+
+Use `gap-card-grid` for card grids: 12px below 640px and 16px from 640px upward
+at the default root font size. The same gap applies between rows and columns.
+The source is `--card-grid-gap` in `app/globals.css`; rem units respect text sizing.
+For `WindowVirtualGrid`, pass `gap="card-grid"` so virtual row measurements use
+the rendered CSS gap. Loading placeholders must use the same token and columns.
+This is the default for `WindowVirtualGrid` and the shared standard for listing,
+CRM, visit, dashboard, earnings, and analytics card grids. Keep zero-gap joined
+rows, form fields, and card-internal controls on their own spacing scales.
+
 ## Profile photo cropping
 
 Use `PhotoCropModal` from `components/shared/photo-crop-modal.tsx` for profile
@@ -53,6 +64,14 @@ Geographic chips (areas, cities, states, and countries) display their labels wit
 `formatPlaceName` from `lib/format/owner-listings-labels.ts`. This is display-only
 title case: keep the original values for saved data, filters, and colour lookup.
 `LocalityCombobox` applies it to selected chips in forms and profile editors.
+
+Use `LocalityCombobox` for area-entry fields across contact forms, property forms,
+profile editors, and the marketplace's area filter. Use `multiple` for a list of
+areas; omit it for a single property or owner's location. Supply `cityId` for API
+suggestions, or `options` for preloaded inventory and multi-city preferences.
+Marketplace filters must pass `allowCustom={false}`. Keep the marketplace's
+country/state/city navigation and search band. Loading uses a black spinner
+without a coloured background; selected areas use the shared colour helper below.
 
 Use `areaColorClassName(area)` from `lib/styles/area-color.ts` to assign colours
 to any area presentation: a chip, label, row, or another element. The function

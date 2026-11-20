@@ -53,7 +53,7 @@ export function AnalyticsSkeleton() {
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
+            <div className="grid grid-cols-1 gap-card-grid lg:grid-cols-12">
                 <CardSkeleton rows={3} className="lg:col-span-7" />
                 <CardSkeleton rows={4} className="lg:col-span-5" />
             </div>

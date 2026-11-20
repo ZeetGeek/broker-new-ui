@@ -258,7 +258,7 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                 {profile.properties.length === 0 ? (
                     <p className="body-sm text-ink-muted">No published listings yet.</p>
                 ) : (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-card-grid sm:grid-cols-2 xl:grid-cols-3">
                         {profile.properties.map((property) => (
                             <PropertyCard key={property.id} property={property} />
                         ))}

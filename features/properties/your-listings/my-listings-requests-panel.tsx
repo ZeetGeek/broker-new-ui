@@ -263,7 +263,7 @@ function PlatformMyListingsRequestsPanel() {
                     items={result.items}
                     getKey={(item) => item.id}
                     estimateRowHeight={128}
-                    gap={12}
+                    gap="card-grid"
                     ariaLabel="Requests for your properties"
                     renderItem={(item) => (
                         <RequestRow item={item} busy={busyId === item.id} onRemind={handleRemind} />

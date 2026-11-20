@@ -38,7 +38,7 @@ export function EarningsReportView({
     const headlineKey = `${selection.preset}:${formatWindow(report.window)}:${headlineLines.join("|")}`;
 
     return (
-        <div className="flex flex-col gap-5 sm:gap-6">
+        <div className="flex flex-col gap-card-grid">
             <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
                 <div className="flex flex-col gap-2 min-inline-0">
                     <h1 className="h3 flex items-baseline gap-x-1.5 text-ink">
@@ -61,7 +61,7 @@ export function EarningsReportView({
 
             <EarningsStatStrip report={report} />
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12 lg:gap-5">
+            <div className="grid grid-cols-1 gap-card-grid md:grid-cols-2 lg:grid-cols-12">
                 <EarningsHero report={report} className="lg:col-span-4" />
                 <EarningsTrendChart report={report} className="lg:col-span-8" />
                 {/* Row 2: what is still to win, and where the money has come from. */}

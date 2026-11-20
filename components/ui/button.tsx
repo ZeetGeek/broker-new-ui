@@ -47,12 +47,10 @@ const buttonVariants = cva(
                   dark:hover:bg-muted/50
                 `,
                 destructive: `
-                  bg-destructive/10 text-destructive
-                  hover:bg-destructive/20
-                  focus-visible:border-destructive/40 focus-visible:ring-destructive/20
-                  dark:bg-destructive/20
-                  dark:hover:bg-destructive/30
-                  dark:focus-visible:ring-destructive/40
+                  bg-danger text-white shadow-danger-glow-soft
+                  hover:bg-danger/90
+                  focus-visible:border-danger/40 focus-visible:ring-danger/20
+                  disabled:shadow-none
                 `,
                 link: `text-primary underline-offset-4 hover:underline`,
                 accent: `bg-brand text-surface shadow-brand-glow-soft hover:bg-brand/85 disabled:shadow-none`,

@@ -37,7 +37,7 @@ export const OWNER_BROKERS_GRID_BREAKPOINTS = [
 
 export function browseBrokersGridClass(): string {
     return `
-      grid grid-cols-1 gap-6 motion-safe:animate-pulse
+      grid grid-cols-1 gap-card-grid motion-safe:animate-pulse
       sm:grid-cols-2
       md:grid-cols-3
       lg:grid-cols-4

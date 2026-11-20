@@ -73,7 +73,7 @@ export function MyListingsGrid({
             items={items}
             getKey={(item) => item.id}
             estimateRowHeight={520}
-            gap={24}
+            gap="card-grid"
             breakpoints={GRID_BREAKPOINTS}
             ariaLabel="My Listings"
             gridClassName={MY_LISTINGS_GRID_CLASS}
