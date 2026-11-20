@@ -1,40 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
-    EMPTY_PROPERTY_CRITERIA,
-    matchesPropertyCriteria,
-    type PropertyListCriteria,
-} from "@/lib/properties/list-criteria";
-import { formatVisitDate, formatVisitTime, istDateKey } from "@/lib/visits/time";
+    type BookableLead,
+    type BrokerVisit,
+    siteVisitsApi,
+    type VisitSort,
+    type VisitTab,
+} from "@/lib/api/site-visits";
 
 import { Button } from "@/components/ui/button";
 
-import { useAppSelector } from "@/store/hooks";
-
 import {
-    getVisitActions,
-    repeatVisitDraft,
-    type SiteVisit,
-    validateDraft,
+    matchIntent,
+    parseScheduleIntent,
+    resolveScheduleIntent,
     type VisitActionKind,
     visitDateBounds,
-    type VisitDraft,
-    visitState,
-    type VisitTab,
+    visitErrorMessage,
 } from "./model";
-import {
-    PREVIEW_CLIENTS,
-    PREVIEW_PROPERTIES,
-    sampleVisits,
-    visitPreviewStore,
-} from "./preview-store";
 import { ScheduleForm } from "./schedule-form";
+import { useVisitList, useVisitMutations, useVisitsLive, VISITS_KEY } from "./use-visits";
 import { AttendanceConfirmation, VisitDetail, type VisitIntent } from "./visit-detail";
 import {
     EMPTY_FILTERS,
@@ -43,44 +34,35 @@ import {
     VisitFiltersDialog,
 } from "./visit-filters";
 import { VisitList } from "./visit-list";
-import { VisitOverlay } from "./visit-overlay";
 
 import styles from "./visits.module.css";
 
-export function NewSiteVisitsPage() {
-    const accountId = useAppSelector((state) => state.auth.user?.id) ?? "design-preview";
-    return <SiteVisitsWorkspace key={accountId} accountId={accountId} />;
+const FINISHED_TABS: VisitTab[] = ["completed", "not_attended", "cancelled"];
+const SEARCH_DEBOUNCE_MS = 300;
+
+/** Finished tabs look back 30 days by default; everything else shows all dates. */
+function defaultRange(tab: VisitTab) {
+    return tab === "completed" || tab === "not_attended" ? "past30" : "all";
 }
 
-function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
+type View =
+    | { kind: "schedule"; intent: BookableLead | null; intentMissed: boolean }
+    | { kind: "reschedule"; visit: BrokerVisit }
+    | { kind: "detail"; visit: BrokerVisit }
+    | { kind: "confirm"; visit: BrokerVisit; intent: VisitIntent; from: "list" | "detail" };
+
+export function NewSiteVisitsPage() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const queryClient = useQueryClient();
-    const queryKey = useMemo(() => ["penpot-private-visits-preview-v2", accountId], [accountId]);
-    const query = useQuery({
-        queryKey,
-        queryFn: () => visitPreviewStore.list(accountId),
-        staleTime: Infinity,
-        retry: false,
-    });
-    const visits = query.data ?? [];
+    const mutations = useVisitMutations();
+
     const [now, setNow] = useState(() => Date.now());
     useEffect(() => {
         const timer = window.setInterval(() => setNow(Date.now()), 15_000);
         return () => clearInterval(timer);
     }, []);
-    const [busy, setBusy] = useState(false);
-    const [error, setError] = useState("");
-    const savingRef = useRef(false);
-    const [editorParentId, setEditorParentId] = useState<string | null>(null);
-    const [scheduleSourceId, setScheduleSourceId] = useState<string | null>(null);
-    const scheduleSource = visits.find((visit) => visit.id === scheduleSourceId);
-    const [filtersOpen, setFiltersOpen] = useState(false);
-    const [filterRange, setFilterRange] = useState<string | null>(null);
-    const [confirmation, setConfirmation] = useState<{ id: string; intent: VisitIntent } | null>(
-        null,
-    );
-    const [deletingId, setDeletingId] = useState<string | null>(null);
-    const deleting = visits.find((visit) => visit.id === deletingId);
+
     const [tab, setTab] = useState<VisitTab>("upcoming");
     const [view, setView] = useState<"schedule" | "edit" | "detail" | null>(() =>
         searchParams.get("view") === "schedule"
@@ -93,396 +75,243 @@ function SiteVisitsWorkspace({ accountId }: { accountId: string }) {
     const selected = visits.find((visit) => visit.id === selectedId);
     const confirmVisit = visits.find((visit) => visit.id === confirmation?.id);
     const [search, setSearch] = useState("");
-    const [filterValues, setFilterValues] = useState<VisitFilters>({ ...EMPTY_FILTERS });
-    const [propertyFilters, setPropertyFilters] = useState<PropertyListCriteria>({
-        ...EMPTY_PROPERTY_CRITERIA,
+    useEffect(() => {
+        const timer = window.setTimeout(() => setSearch(searchInput.trim()), SEARCH_DEBOUNCE_MS);
+        return () => window.clearTimeout(timer);
+    }, [searchInput]);
+    const [filters, setFilters] = useState<VisitFilters>({ ...EMPTY_FILTERS });
+    const [sort, setSort] = useState<VisitSort | undefined>(undefined);
+    const [dialog, setDialog] = useState<"filters" | "dates" | null>(null);
+    // The shell's "Schedule visit" action links here with ?view=schedule.
+    const [view, setView] = useState<View | null>(() =>
+        searchParams.get("view") === "schedule"
+            ? { kind: "schedule", intent: null, intentMissed: false }
+            : null,
+    );
+    const [actionError, setActionError] = useState("");
+
+    const range = filters.range || defaultRange(tab);
+    const bounds = range === "custom" ? filters : visitDateBounds(range, now);
+    const list = useVisitList({
+        tab,
+        search,
+        clientId: filters.client || undefined,
+        propertyId: filters.property || undefined,
+        from: bounds.from || undefined,
+        to: bounds.to || undefined,
+        sort,
     });
-    const range =
-        filterValues.range ||
-        (tab === "upcoming" ? "next7" : tab === "running" ? "today" : "past30");
-    const filters: VisitFilters = { ...filterValues, range };
-    const back = () => {
-        setError("");
-        setConfirmation(null);
-        setDeletingId(null);
-        setView(null);
-        setSelectedId(null);
-        setEditorParentId(null);
-        setScheduleSourceId(null);
-    };
-    const openVisit = (id: string) => {
-        setError("");
-        setSelectedId(id);
-        setView("detail");
-    };
-    const closeEditor = () => {
-        setScheduleSourceId(null);
-        if (editorParentId) openVisit(editorParentId);
-        else back();
-    };
-    const schedule = (source?: SiteVisit) => {
-        setError("");
-        setEditorParentId(source?.id ?? null);
-        setScheduleSourceId(source?.id ?? null);
-        setSelectedId(null);
-        setView("schedule");
-    };
-    const clear = () => {
-        setPropertyFilters({ ...EMPTY_PROPERTY_CRITERIA });
-        setFilterValues({ ...EMPTY_FILTERS });
+    const firstPage = list.data?.pages[0];
+    useVisitsLive(firstPage?.nextChangeAt ?? null, list.dataUpdatedAt);
+    const visits = list.data?.pages.flatMap((page) => page.items) ?? [];
+    const filterCount = (filters.client ? 1 : 0) + (filters.property ? 1 : 0);
+    const filtered = filterCount > 0 || Boolean(search) || Boolean(filters.range);
+
+    // A Pipeline "Schedule visit" link: reschedule the deal's booked visit, or
+    // book a new one with the client and property filled in.
+    const intentHandled = useRef(false);
+    useEffect(() => {
+        if (intentHandled.current) return;
+        const intent = parseScheduleIntent(new URLSearchParams(searchParams.toString()));
+        if (!intent) return;
+        intentHandled.current = true;
+        router.replace("/broker/visits", { scroll: false });
+        void (async () => {
+            try {
+                const leads = await queryClient.fetchQuery({
+                    queryKey: [...VISITS_KEY, "bookable"],
+                    queryFn: () => siteVisitsApi.bookable(),
+                });
+                const lead = matchIntent(intent, leads);
+                const active = lead ? await siteVisitsApi.activeForLead(lead.leadId) : null;
+                setView(resolveScheduleIntent(intent, leads, active));
+            } catch {
+                setView({ kind: "schedule", intent: null, intentMissed: false });
+            }
+        })();
+    }, [searchParams, router, queryClient]);
+
+    const clearFilters = () => {
+        setFilters({ ...EMPTY_FILTERS });
+        setSearchInput("");
         setSearch("");
     };
-    const commit = async (next: SiteVisit[], onSuccess: () => void) => {
-        if (savingRef.current) return;
-        savingRef.current = true;
-        setBusy(true);
-        setError("");
+    const close = () => {
+        setActionError("");
+        setView(null);
+    };
+    const confirm = (visit: BrokerVisit, intent: VisitIntent, from: "list" | "detail") => {
+        setActionError("");
+        setView({ kind: "confirm", visit, intent, from });
+    };
+    const handleAction = (visit: BrokerVisit, action: VisitActionKind) => {
+        if (action === "reschedule") setView({ kind: "reschedule", visit });
+        else if (action === "view") setView({ kind: "detail", visit });
+        else confirm(visit, action, "list");
+    };
+    const runConfirm = async (visit: BrokerVisit, intent: VisitIntent) => {
+        setActionError("");
         try {
-            queryClient.setQueryData(queryKey, await visitPreviewStore.save(accountId, next));
-            onSuccess();
-        } catch {
-            setError(
-                "This browser couldn’t save the preview. Check that tab storage is available, then try again.",
-            );
-        } finally {
-            savingRef.current = false;
-            setBusy(false);
+            if (intent === "cancelled") {
+                await mutations.cancel.mutateAsync(visit.id);
+                toast.success("Visit cancelled");
+            } else {
+                await mutations.setOutcome.mutateAsync({
+                    id: visit.id,
+                    status: intent === "completed" ? "completed" : "no_show",
+                });
+                toast.success(intent === "completed" ? "Marked completed" : "Marked not attended");
+            }
+            setView(null);
+        } catch (error) {
+            setActionError(visitErrorMessage(error));
         }
     };
-    const saveDraft = async (draft: VisitDraft, submittedAt: number) => {
-        const editing = view === "schedule" ? undefined : selected;
-        if (view !== "schedule" && (!editing || editing.status === "cancelled")) return;
-        const validation = validateDraft(draft, visits, submittedAt, editing?.id);
-        if (!validation.valid || !validation.times) {
-            setError("Check the visit time. It may now be in the past or overlap another visit.");
-            return;
-        }
-        const at = new Date().toISOString();
-        const next: SiteVisit = editing
-            ? {
-                  ...editing,
-                  clientId: draft.clientId,
-                  propertyId: draft.propertyId,
-                  ...validation.times,
-                  reminders: [...draft.reminders],
-                  notes: draft.notes.trim(),
-                  history: [
-                      ...editing.history,
-                      {
-                          at,
-                          label:
-                              Date.parse(editing.startsAt) !==
-                                  Date.parse(validation.times.startsAt) ||
-                              Date.parse(editing.endsAt) !== Date.parse(validation.times.endsAt)
-                                  ? `Rescheduled from ${formatVisitDate(editing.startsAt)}, ${formatVisitTime(editing.startsAt)} – ${formatVisitTime(editing.endsAt)} IST`
-                                  : "Visit details updated",
-                      },
-                  ],
-              }
-            : {
-                  id: crypto.randomUUID(),
-                  clientId: draft.clientId,
-                  propertyId: draft.propertyId,
-                  ...validation.times,
-                  reminders: [...draft.reminders],
-                  notes: draft.notes.trim(),
-                  status: "scheduled",
-                  attendanceNote: "",
-                  history: [{ at, label: "Created by you" }],
-              };
-        await commit(
-            editing ? visits.map((v) => (v.id === editing.id ? next : v)) : [...visits, next],
-            () => {
-                if (scheduleSourceId && !editing) {
-                    setEditorParentId(null);
-                    setScheduleSourceId(null);
-                    openVisit(next.id);
-                } else back();
-                toast.success(editing ? "Visit updated" : "Visit scheduled");
-            },
-        );
-    };
-    const confirm = async (note: string, submittedAt: number) => {
-        if (!confirmation || !confirmVisit) return;
-        if (!getVisitActions(confirmVisit, submittedAt).includes(confirmation.intent)) {
-            setError("This action is no longer available for the visit. Close and try again.");
-            return;
-        }
-        const message =
-            confirmation.intent === "completed"
-                ? "Visit completed"
-                : confirmation.intent === "not_attended"
-                  ? "Visit not attended"
-                  : "Visit cancelled";
-        const next: SiteVisit = {
-            ...confirmVisit,
-            status: confirmation.intent,
-            attendanceNote: note.trim(),
-            history: [
-                ...confirmVisit.history,
-                {
-                    at: new Date().toISOString(),
-                    label:
-                        confirmVisit.status === "scheduled"
-                            ? message
-                            : `Attendance corrected: ${confirmation.intent === "completed" ? "Completed" : "Not attended"}`,
-                },
-            ],
-        };
-        await commit(
-            visits.map((v) => (v.id === next.id ? next : v)),
-            () => {
-                back();
-                toast.success(message);
-            },
-        );
-    };
-    const handleAction = (id: string, action: VisitActionKind) => {
-        setError("");
-        if (action === "delete") setDeletingId(id);
-        else if (action === "completed" || action === "not_attended" || action === "cancelled")
-            setConfirmation({ id, intent: action });
-    };
-    const deleteVisit = async () => {
-        if (!deleting || !getVisitActions(deleting, now).includes("delete")) return;
-        await commit(
-            visits.filter((visit) => visit.id !== deleting.id),
-            () => {
-                back();
-                toast.success("Visit deleted");
-            },
-        );
-    };
-    const bounds = range === "custom" ? filters : visitDateBounds(range, now);
-    const shown = visits
-        .filter((v) => {
-            const state = visitState(v, now);
-            if (
-                filters.archive
-                    ? filters.archive !== "all" && state !== filters.archive
-                    : state !== tab
-            )
-                return false;
-            if (
-                (filters.client && v.clientId !== filters.client) ||
-                (filters.property && v.propertyId !== filters.property)
-            )
-                return false;
-            const day = istDateKey(v.startsAt);
-            if ((bounds.from && day < bounds.from) || (bounds.to && day > bounds.to)) return false;
-            const client = PREVIEW_CLIENTS.find((c) => c.id === v.clientId);
-            const property = PREVIEW_PROPERTIES.find((p) => p.id === v.propertyId);
-            if (!property || !matchesPropertyCriteria(property, propertyFilters)) return false;
-            return `${client?.name} ${property?.title} ${property?.locality} ${property?.city} ${v.notes}`
-                .toLowerCase()
-                .includes(search.toLowerCase().trim());
-        })
-        .sort(
-            (a, b) =>
-                (tab === "completed" || tab === "not_attended" ? -1 : 1) *
-                (Date.parse(a.startsAt) - Date.parse(b.startsAt)),
-        );
-    const editFromDetail = () => {
-        setError("");
-        setEditorParentId(selected?.id ?? null);
-        setView("edit");
-    };
+    const busy = mutations.cancel.isPending || mutations.setOutcome.isPending;
+    // Keep an open visit current when live updates refresh the list.
+    const fresh = (visit: BrokerVisit) => visits.find((item) => item.id === visit.id) ?? visit;
+
     return (
         <main className={styles.page}>
-            {query.isPending ? (
+            {list.isPending ? (
                 <div role="status" className={styles.loading}>
                     Loading your visits…
                 </div>
-            ) : query.isError ? (
+            ) : list.isError && !list.data ? (
                 <div role="alert" className={styles.empty}>
-                    <h1 className="h3 text-ink">Visits couldn’t be loaded</h1>
-                    <p>{query.error.message}</p>
+                    <h1 className="h3 text-ink">Your visits couldn’t be loaded</h1>
+                    <p>Check your connection and try again.</p>
                     <div className={styles.actions}>
-                        <Button variant="outline" onClick={() => void query.refetch()}>
+                        <Button variant="outline" onClick={() => void list.refetch()}>
                             Try again
                         </Button>
-                        <Button disabled={busy} onClick={() => void commit(sampleVisits(), back)}>
-                            Reset sample visits
-                        </Button>
                     </div>
-                    {error && <p className={styles.error}>{error}</p>}
                 </div>
             ) : (
-                <>
-                    <VisitList
-                        visits={visits}
-                        shown={shown}
-                        tab={tab}
-                        now={now}
-                        filters={filters}
-                        propertyFilters={propertyFilters}
-                        range={range}
-                        search={search}
-                        onSchedule={() => schedule()}
-                        onOpen={openVisit}
-                        onEdit={(id) => {
-                            setError("");
-                            setEditorParentId(null);
-                            setSelectedId(id);
-                            setView("edit");
-                        }}
-                        onAction={handleAction}
-                        onSearch={setSearch}
-                        onTab={(nextTab) => {
-                            setTab(nextTab);
-                            setFilterValues((current) => ({
+                <VisitList
+                    visits={visits}
+                    counts={firstPage!.counts}
+                    firstRun={firstPage!.clientOptions.length === 0}
+                    filtered={filtered}
+                    filterCount={filterCount}
+                    refreshing={list.isPlaceholderData}
+                    hasMore={Boolean(list.hasNextPage)}
+                    loadingMore={list.isFetchingNextPage}
+                    tab={tab}
+                    now={now}
+                    search={searchInput}
+                    range={range}
+                    sort={sort ?? (FINISHED_TABS.includes(tab) ? "start_desc" : "start_asc")}
+                    onTab={(next) => {
+                        setTab(next);
+                        setSort(undefined);
+                        setFilters((current) => ({ ...current, range: "", from: "", to: "" }));
+                    }}
+                    onSearch={setSearchInput}
+                    onRange={(next) => {
+                        if (next === "custom") setDialog("dates");
+                        else
+                            setFilters((current) => ({
                                 ...current,
-                                archive: "",
-                                range: "",
+                                range: next,
                                 from: "",
                                 to: "",
                             }));
-                        }}
-                        onRange={(nextRange) => {
-                            if (nextRange === "custom") {
-                                setFilterRange("custom");
-                                setFiltersOpen(true);
-                            } else
-                                setFilterValues((current) => ({
-                                    ...current,
-                                    range: nextRange,
-                                    from: "",
-                                    to: "",
-                                }));
-                        }}
-                        onFilters={() => {
-                            setFilterRange(null);
-                            setFiltersOpen(true);
-                        }}
-                        onClear={clear}
-                    />
-                </>
+                    }}
+                    onSort={setSort}
+                    onFilters={() => setDialog("filters")}
+                    onClear={clearFilters}
+                    onMore={() => void list.fetchNextPage()}
+                    onSchedule={() =>
+                        setView({ kind: "schedule", intent: null, intentMissed: false })
+                    }
+                    onOpen={(visit) => setView({ kind: "detail", visit })}
+                    onAction={handleAction}
+                />
             )}
-            {query.isSuccess &&
-                (deleting ? (
-                    <VisitOverlay
-                        compact
-                        title="Delete this visit?"
-                        description="This permanently removes the visit and its activity history. The client and property records are kept."
-                        busy={busy}
-                        error={error}
-                        onClose={() => {
-                            setDeletingId(null);
-                            setError("");
-                        }}
-                        footer={(close) => (
-                            <>
-                                <Button variant="outline" disabled={busy} onClick={close}>
-                                    Keep visit
-                                </Button>
-                                <Button
-                                    variant="destructive"
-                                    disabled={busy}
-                                    loading={busy}
-                                    onClick={() => void deleteVisit()}
-                                >
-                                    Delete visit
-                                </Button>
-                            </>
-                        )}
-                    >
-                        <p className={styles.muted}>
-                            {
-                                PREVIEW_CLIENTS.find((client) => client.id === deleting.clientId)
-                                    ?.name
-                            }{" "}
-                            /{" "}
-                            {
-                                PREVIEW_PROPERTIES.find(
-                                    (property) => property.id === deleting.propertyId,
-                                )?.title
-                            }
-                        </p>
-                        <p className={styles.muted}>
-                            {formatVisitDate(deleting.startsAt)} /{" "}
-                            {formatVisitTime(deleting.startsAt)} IST
-                        </p>
-                    </VisitOverlay>
-                ) : confirmation && confirmVisit ? (
-                    <AttendanceConfirmation
-                        key={`${confirmation.id}-${confirmation.intent}`}
-                        visit={confirmVisit}
-                        intent={confirmation.intent}
-                        busy={busy}
-                        error={error}
-                        onClose={() => {
-                            if (!busy) {
-                                setConfirmation(null);
-                                setError("");
-                            }
-                        }}
-                        onConfirm={(note) => confirm(note, Date.now())}
-                    />
-                ) : view === "schedule" ||
-                  (view === "edit" && selected && selected.status !== "cancelled") ? (
-                    <ScheduleForm
-                        key={`${view}-${scheduleSourceId ?? selected?.id ?? "new"}-${selected?.startsAt ?? ""}`}
-                        visit={view === "schedule" ? undefined : selected}
-                        prefill={
-                            view === "schedule" && scheduleSource
-                                ? repeatVisitDraft(scheduleSource)
-                                : undefined
-                        }
-                        visits={visits}
-                        now={now}
-                        busy={busy}
-                        saveError={error}
-                        onSave={(draft) => saveDraft(draft, Date.now())}
-                        onBack={closeEditor}
-                    />
-                ) : selected ? (
-                    <VisitDetail
-                        visit={selected}
-                        now={now}
-                        busy={busy}
-                        onBack={back}
-                        onEdit={editFromDetail}
-                        onScheduleAnother={() => schedule(selected)}
-                        onDelete={() => handleAction(selected.id, "delete")}
-                        onConfirm={(intent) => {
-                            setError("");
-                            setConfirmation({ id: selected.id, intent });
-                        }}
-                    />
-                ) : selectedId ? (
-                    <VisitOverlay
-                        compact
-                        title="Visit not found"
-                        onClose={back}
-                        footer={(close) => <Button onClick={close}>Back to visits</Button>}
-                    >
-                        <p className={styles.muted}>
-                            This sample visit is no longer in the preview.
-                        </p>
-                    </VisitOverlay>
-                ) : null)}
-            {filtersOpen && filterRange === "custom" ? (
+
+            {view?.kind === "schedule" && (
+                <ScheduleForm
+                    intent={view.intent}
+                    intentMissed={view.intentMissed}
+                    onDone={close}
+                    onBack={close}
+                />
+            )}
+            {view?.kind === "reschedule" && (
+                <ScheduleForm
+                    key={view.visit.id}
+                    visit={view.visit}
+                    onDone={close}
+                    onBack={close}
+                />
+            )}
+            {view?.kind === "detail" && (
+                <VisitDetail
+                    visit={fresh(view.visit)}
+                    now={now}
+                    busy={busy}
+                    onBack={close}
+                    onReschedule={() => setView({ kind: "reschedule", visit: fresh(view.visit) })}
+                    onScheduleAnother={() => {
+                        const visit = fresh(view.visit);
+                        setView({
+                            kind: "schedule",
+                            intent: {
+                                leadId: visit.leadId,
+                                clientId: visit.clientId,
+                                clientName: visit.clientName,
+                                propertyId: visit.propertyId,
+                                propertyTitle: visit.propertyTitle,
+                            },
+                            intentMissed: false,
+                        });
+                    }}
+                    onConfirm={(intent) => confirm(fresh(view.visit), intent, "detail")}
+                />
+            )}
+            {view?.kind === "confirm" && (
+                <AttendanceConfirmation
+                    key={`${view.visit.id}-${view.intent}`}
+                    visit={fresh(view.visit)}
+                    intent={view.intent}
+                    busy={busy}
+                    error={actionError}
+                    onClose={() => {
+                        if (busy) return;
+                        setActionError("");
+                        setView(
+                            view.from === "detail" ? { kind: "detail", visit: view.visit } : null,
+                        );
+                    }}
+                    onConfirm={() => runConfirm(view.visit, view.intent)}
+                />
+            )}
+
+            {dialog === "dates" && (
                 <VisitDateRangeDialog
                     value={{ ...filters, range: "custom" }}
-                    onClose={() => setFiltersOpen(false)}
+                    onClose={() => setDialog(null)}
                     onApply={(next) => {
-                        setFilterValues(next);
-                        setFiltersOpen(false);
+                        setFilters(next);
+                        setDialog(null);
                     }}
                 />
-            ) : (
-                filtersOpen && (
-                    <VisitFiltersDialog
-                        value={propertyFilters}
-                        onClose={() => setFiltersOpen(false)}
-                        onApply={(next) => {
-                            setPropertyFilters(next);
-                            setFiltersOpen(false);
-                        }}
-                    />
-                )
             )}
-            {query.isSuccess && shown.length > 0 && (
+            {dialog === "filters" && firstPage && (
+                <VisitFiltersDialog
+                    value={filters}
+                    clientOptions={firstPage.clientOptions}
+                    propertyOptions={firstPage.propertyOptions}
+                    onClose={() => setDialog(null)}
+                    onApply={(next) => {
+                        setFilters(next);
+                        setDialog(null);
+                    }}
+                />
+            )}
+
+            {visits.length > 0 && (
                 <footer className={styles.pageFooter}>
                     <span className={styles.footerLine} aria-hidden />
                     <p>After each visit, mark it as completed or not attended.</p>

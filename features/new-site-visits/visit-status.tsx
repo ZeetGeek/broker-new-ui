@@ -4,7 +4,6 @@ import { STATE_LABELS, type VisitState } from "./model";
 
 export const VISIT_STATUS_COLORS: Record<VisitState, { badge: BadgeColor; dotClassName: string }> =
     {
-        scheduled: { badge: "emerald", dotClassName: "bg-emerald-400" },
         upcoming: { badge: "emerald", dotClassName: "bg-emerald-400" },
         running: { badge: "sky", dotClassName: "bg-sky-400" },
         needs_update: { badge: "amber", dotClassName: "bg-amber-400" },

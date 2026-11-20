@@ -75,6 +75,10 @@ export function VisitReminderPicker({
     };
     const update = (values: number[]) => {
         if (disabled) return;
+        if (!values.length) {
+            setError("Keep at least one reminder for this visit.");
+            return;
+        }
         if (values.length > MAX_VISIT_REMINDERS) {
             setError(`You can add up to ${MAX_VISIT_REMINDERS} reminders per visit.`);
             return;

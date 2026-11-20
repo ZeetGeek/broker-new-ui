@@ -4,6 +4,7 @@ import {
     sortTasks,
     type Task,
     taskDateKey,
+    taskDateLabel,
     type TaskPriority,
     taskReminders,
     taskSchema,
@@ -61,7 +62,7 @@ export function plannerColumnTasks(
 
 /** Keep tasks on their start day; due is an optional deadline on top. */
 export function plannerDate(task: Task, _today: string): string | null {
-    return task.startDate;
+    return task.listId ? null : task.startDate;
 }
 
 export function countPopulatedPlannerDays(tasks: Task[], today: string): number {
@@ -176,7 +177,7 @@ export function movePlannerTask(
     let moved: Task = {
         ...task,
         updatedAt: at,
-        listId: date === null && listId ? listId : task.listId,
+        listId: date === null ? (listId ?? task.listId) : null,
     };
     if (changedDate) {
         const shift = task.startDate && date ? taskDaysBetween(task.startDate, date) : 0;
@@ -204,6 +205,7 @@ export function movePlannerTask(
         tasks.filter(
             (item) =>
                 !item.deletedAt &&
+                !item.completedAt &&
                 item.id !== id &&
                 plannerDate(item, today) === date &&
                 (date !== null || !listId || item.listId === listId),
@@ -217,4 +219,13 @@ export function movePlannerTask(
         const next = item.id === id ? moved : item;
         return positions.has(next.id) ? { ...next, plannerOrder: positions.get(next.id)! } : next;
     });
+}
+
+export function hiddenLandingDay(date: string | null, visibleDays: string[]): string | null {
+    return date && !visibleDays.includes(date) ? date : null;
+}
+
+export function landingNotice(date: string, now = Date.now()): string {
+    const label = taskDateLabel(date, now);
+    return `Scheduled for ${label === "Today" || label === "Tomorrow" ? label.toLowerCase() : label}`;
 }

@@ -1,10 +1,9 @@
 "use client";
 
-import { propertyCriteriaCount, type PropertyListCriteria } from "@/lib/properties/list-criteria";
+import type { BrokerVisit, VisitSort, VisitTab } from "@/lib/api/site-visits";
 import { addVisitDays, formatVisitDate, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
-import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
 import { IconButton } from "@/components/shared/icon-button";
@@ -31,15 +30,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import {
     DATE_RANGES,
     getVisitActions,
-    type SiteVisit,
     VISIT_TABS,
     type VisitActionKind,
+    visitDurationLabel,
     visitState,
-    type VisitTab,
 } from "./model";
-import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "./preview-store";
 import { VISIT_ACTIONS } from "./visit-actions";
-import type { VisitFilters } from "./visit-filters";
 import { VISIT_STATUS_COLORS, VisitStatusBadge } from "./visit-status";
 
 import styles from "./visits.module.css";
@@ -78,62 +74,101 @@ function VisitAction({
     );
 }
 
-const LIST_COPY = {
-    upcoming: ["Your next visits", "Scheduled visits appear here until their start time."],
-    running: ["Happening now", "These visits are within their scheduled start and end times."],
-    needs_update: [
-        "Did these visits happen?",
-        "The time has ended. Record attendance or reschedule.",
-    ],
-    completed: ["Completed visits", "Visits you have confirmed as attended."],
-    not_attended: [
-        "Not attended",
-        "Visits you marked as not attended. Schedule a new visit when ready.",
-    ],
+const LIST_COPY: Record<VisitTab, string> = {
+    upcoming: "Your next visits",
+    running: "Happening now",
+    needs_update: "Did these visits happen?",
+    completed: "Completed visits",
+    not_attended: "Not attended",
+    cancelled: "Cancelled visits",
 };
+
+const EMPTY_TAB_COPY: Record<VisitTab, { heading: string; description: string }> = {
+    upcoming: { heading: "No visits coming up", description: "Visits you book appear here." },
+    running: {
+        heading: "No visit is happening now",
+        description: "A visit shows here from its start time until it ends.",
+    },
+    needs_update: {
+        heading: "You're all up to date",
+        description: "Visits whose time has ended wait here until you mark what happened.",
+    },
+    completed: {
+        heading: "No completed visits yet",
+        description: "Visits you mark as completed show here.",
+    },
+    not_attended: {
+        heading: "No missed visits",
+        description: "Visits a client didn't come to show here.",
+    },
+    cancelled: {
+        heading: "No cancelled visits",
+        description: "Visits you or an owner cancel stay here for your records.",
+    },
+};
+
+export const SORT_OPTIONS: { value: VisitSort; label: string }[] = [
+    { value: "start_asc", label: "Soonest first" },
+    { value: "start_desc", label: "Latest first" },
+    { value: "booked_desc", label: "Recently booked" },
+];
 
 const EMPTY_FRAME =
     "min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]";
 
 export function VisitList({
     visits,
-    shown,
+    counts,
+    firstRun,
+    filtered,
+    filterCount,
+    refreshing,
+    hasMore,
+    loadingMore,
     tab,
     now,
     search,
-    filters,
-    propertyFilters,
     range,
+    sort,
     onTab,
     onSearch,
     onRange,
+    onSort,
     onFilters,
     onClear,
+    onMore,
     onSchedule,
     onOpen,
-    onEdit,
     onAction,
 }: {
-    visits: SiteVisit[];
-    shown: SiteVisit[];
+    visits: BrokerVisit[];
+    counts: Record<VisitTab, number>;
+    /** The broker has never booked a visit. */
+    firstRun: boolean;
+    /** A search, filter or custom date range is narrowing the list. */
+    filtered: boolean;
+    filterCount: number;
+    refreshing: boolean;
+    hasMore: boolean;
+    loadingMore: boolean;
     tab: VisitTab;
     now: number;
     search: string;
-    filters: VisitFilters;
-    propertyFilters: PropertyListCriteria;
     range: string;
+    sort: VisitSort;
     onTab: (tab: VisitTab) => void;
     onSearch: (query: string) => void;
     onRange: (range: string) => void;
+    onSort: (sort: VisitSort) => void;
     onFilters: () => void;
     onClear: () => void;
+    onMore: () => void;
     onSchedule: () => void;
-    onOpen: (id: string) => void;
-    onEdit: (id: string) => void;
-    onAction: (id: string, action: VisitActionKind) => void;
+    onOpen: (visit: BrokerVisit) => void;
+    onAction: (visit: BrokerVisit, action: VisitActionKind) => void;
 }) {
-    const groups = new Map<string, SiteVisit[]>();
-    for (const visit of shown) {
+    const groups = new Map<string, BrokerVisit[]>();
+    for (const visit of visits) {
         const day = istDateKey(visit.startsAt);
         const rows = groups.get(day) ?? [];
         rows.push(visit);
@@ -150,39 +185,21 @@ export function VisitList({
               : day === yesterday
                 ? "Yesterday"
                 : formatVisitDate(startsAt);
-    const count = propertyCriteriaCount(propertyFilters);
-    const filtered = count > 0 || !!search || filters.range === "custom";
-    const copy =
-        filters.archive === "all"
-            ? ["All visits", "Your complete visit history, including cancelled visits."]
-            : filters.archive === "cancelled"
-              ? ["Cancelled visits", "Cancelled visits stay in your history."]
-              : LIST_COPY[tab];
-    const summaryLines = visits.length
-        ? VISIT_TABS.map(({ value }) => {
-              const total = visits.filter((visit) => visitState(visit, now) === value).length;
-              const label = total === 1 ? "visit" : "visits";
-              return {
-                  total,
-                  text:
-                      value === "upcoming"
-                          ? `${total} upcoming ${label}`
-                          : value === "running"
-                            ? `${total} ${label} happening now`
-                            : value === "needs_update"
-                              ? `${total} ${label} ${total === 1 ? "needs" : "need"} an update`
-                              : value === "completed"
-                                ? `${total} completed ${label}`
-                                : `${total} ${label} not attended`,
-              };
-          })
-              .filter(({ total }) => total > 0)
-              .map(({ text }) => text)
-        : ["Schedule your first visit"];
+    const plural = (n: number) => (n === 1 ? "visit" : "visits");
+    const summaryLines = firstRun
+        ? ["Schedule your first visit"]
+        : [
+              counts.upcoming > 0 && `${counts.upcoming} upcoming ${plural(counts.upcoming)}`,
+              counts.running > 0 && `${counts.running} ${plural(counts.running)} happening now`,
+              counts.needs_update > 0 &&
+                  `${counts.needs_update} ${plural(counts.needs_update)} ${counts.needs_update === 1 ? "needs" : "need"} an update`,
+          ].filter((line): line is string => Boolean(line));
+    const empty = EMPTY_TAB_COPY[tab];
+
     return (
         <Tabs
             className="gap-6"
-            value={filters.archive || tab}
+            value={tab}
             onValueChange={(value) => {
                 if (VISIT_TABS.some((t) => t.value === value)) onTab(value as VisitTab);
             }}
@@ -193,42 +210,40 @@ export function VisitList({
                         <span className="text-ink">Site visits.</span>{" "}
                         <RotatingHeaderSummary
                             key={summaryLines.join("|")}
-                            lines={summaryLines}
+                            lines={summaryLines.length ? summaryLines : ["Your visits at a glance"]}
                             loadingPlaceholder="Your visits at a glance"
                         />
                     </h1>
-                    {visits.length === 0 && (
-                        <ListAddButton label="Schedule visit" onClick={onSchedule} />
-                    )}
+                    {firstRun && <ListAddButton label="Schedule visit" onClick={onSchedule} />}
                 </header>
             </PortalSectionNav>
-            <div className={styles.listToolbar}>
-                <div className="flex flex-wrap items-center gap-3 max-inline-full min-inline-0">
-                    <FilterChip
-                        label="Filters"
-                        icon={SlidersHorizontal}
-                        count={count}
-                        isActive={count > 0}
-                        clearable={count > 0}
-                        onClick={onFilters}
-                        onClear={onClear}
-                    />
-                    <StatusTabs
-                        label="Visit status"
-                        value={filters.archive || tab}
-                        tabs={VISIT_TABS.map((t) => ({
-                            ...t,
-                            count: visits.filter((v) => visitState(v, now) === t.value).length,
-                            dotClassName: VISIT_STATUS_COLORS[t.value].dotClassName,
-                        }))}
-                    />
-                </div>
-                {visits.length > 0 && (
+            {!firstRun && (
+                <div className={styles.listToolbar}>
+                    <div className="flex flex-wrap items-center gap-3 max-inline-full min-inline-0">
+                        <FilterChip
+                            label="Filters"
+                            icon={SlidersHorizontal}
+                            count={filterCount}
+                            isActive={filterCount > 0}
+                            clearable={filterCount > 0}
+                            onClick={onFilters}
+                            onClear={onClear}
+                        />
+                        <StatusTabs
+                            label="Visit status"
+                            value={tab}
+                            tabs={VISIT_TABS.map((t) => ({
+                                ...t,
+                                count: counts[t.value],
+                                dotClassName: VISIT_STATUS_COLORS[t.value].dotClassName,
+                            }))}
+                        />
+                    </div>
                     <div className={styles.searchRow}>
                         <label className={styles.searchField}>
                             <span className="sr-only">Search visits</span>
                             <ListSearchField
-                                placeholder="Search client or property"
+                                placeholder="Search client, phone or property"
                                 aria-label="Search visits"
                                 value={search}
                                 onChange={onSearch}
@@ -238,10 +253,16 @@ export function VisitList({
                         </label>
                         <ListToolbarSelect
                             active
-                            label="Visit date range"
+                            label="Visit dates"
                             value={range}
                             options={DATE_RANGES}
                             onChange={onRange}
+                        />
+                        <ListToolbarSelect
+                            label="Sort visits"
+                            value={sort}
+                            options={SORT_OPTIONS}
+                            onChange={onSort}
                         />
                         <ListAddButton label="Schedule visit" onClick={onSchedule} />
                         {filtered && (
@@ -250,21 +271,21 @@ export function VisitList({
                             </Button>
                         )}
                     </div>
-                )}
-            </div>
-            <TabsContent value={filters.archive || tab} aria-label={copy[0]}>
-                {visits.length === 0 ? (
+                </div>
+            )}
+            <TabsContent value={tab} aria-label={LIST_COPY[tab]}>
+                {firstRun ? (
                     <EmptyState
                         className={EMPTY_FRAME}
                         icon={CalendarDays}
                         heading="Schedule your first site visit"
-                        description="Choose a client, a property and a start and end time. We will remind you when it starts and ask how it went."
+                        description="Pick a client, one of your listings, how long, and a free time. The visit then moves through Upcoming and Running on its own."
                     >
                         <Button size="md" variant="accent" onClick={onSchedule}>
                             Schedule a visit
                         </Button>
                     </EmptyState>
-                ) : shown.length === 0 && filtered ? (
+                ) : visits.length === 0 && filtered ? (
                     <div
                         className={`flex flex-col items-center justify-center gap-4 text-center ${EMPTY_FRAME}`}
                         aria-live="polite"
@@ -281,21 +302,18 @@ export function VisitList({
                             Clear filters
                         </button>
                     </div>
-                ) : shown.length === 0 ? (
+                ) : visits.length === 0 ? (
                     <EmptyState
                         className={EMPTY_FRAME}
                         icon={CalendarDays}
-                        heading={
-                            tab === "needs_update" ? "You're all up to date" : "No visits to show"
-                        }
-                        description="Your visits will appear here when there's something to show."
-                    >
-                        <Button size="md" variant="accent" onClick={onSchedule}>
-                            Schedule a visit
-                        </Button>
-                    </EmptyState>
+                        heading={empty.heading}
+                        description={empty.description}
+                    />
                 ) : (
-                    <div className={styles.groups}>
+                    <div
+                        aria-busy={refreshing || undefined}
+                        className={`${styles.groups} ${refreshing ? "opacity-60" : ""}`}
+                    >
                         {[...groups].map(([day, rows]) => (
                             <section
                                 key={day}
@@ -310,140 +328,138 @@ export function VisitList({
                                     </h2>
                                     <span
                                         className={styles.groupCount}
-                                        aria-label={`${rows.length} ${rows.length === 1 ? "visit" : "visits"}`}
+                                        aria-label={`${rows.length} ${plural(rows.length)}`}
                                     >
                                         {rows.length}
                                     </span>
                                 </div>
                                 <div className={styles.list}>
-                                    {rows.map((visit) => {
-                                        const client = PREVIEW_CLIENTS.find(
-                                            (c) => c.id === visit.clientId,
-                                        );
-                                        const property = PREVIEW_PROPERTIES.find(
-                                            (p) => p.id === visit.propertyId,
-                                        );
-                                        const state = visitState(visit, now);
-                                        return (
-                                            <article
-                                                data-linked-card
-                                                className={styles.visitRow}
-                                                key={visit.id}
-                                            >
-                                                <CardLink
-                                                    href={`/broker/visits?view=detail&visit=${encodeURIComponent(visit.id)}`}
-                                                    label={`Visit details for ${property?.title} with ${client?.name}`}
-                                                    onOpen={() => onOpen(visit.id)}
-                                                />
-                                                <div className={styles.rowProperty}>
-                                                    <PropertyCoverImage
-                                                        src={property?.imageUrl}
-                                                        alt={property?.title ?? ""}
-                                                        size={64}
-                                                    />
-                                                    <div>
-                                                        <button
-                                                            type="button"
-                                                            data-card-title
-                                                            className={styles.propertyLink}
-                                                            aria-label={`Visit details for ${property?.title} with ${client?.name}`}
-                                                            onClick={() => onOpen(visit.id)}
-                                                        >
-                                                            {property?.title}
-                                                        </button>
-                                                        <div className={styles.propertyMeta}>
-                                                            <span
-                                                                className={styles.propertyLocation}
-                                                            >
-                                                                <MapPin aria-hidden />
-                                                                {property?.locality},{" "}
-                                                                {property?.city}
-                                                            </span>
-                                                            <span aria-hidden>·</span>
-                                                            <p>{property?.configLabel}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className={styles.rowTime}>
-                                                    <span className={styles.detailIcon} aria-hidden>
-                                                        <CalendarClock />
-                                                    </span>
-                                                    <div>
-                                                        <small>
-                                                            {formatVisitDate(visit.startsAt)}
-                                                        </small>
-                                                        <time dateTime={visit.startsAt}>
-                                                            {formatVisitTime(visit.startsAt)}{" "}
-                                                            {"\u2013"}{" "}
-                                                            {formatVisitTime(visit.endsAt)}
-                                                        </time>
-                                                    </div>
-                                                </div>
-                                                <div className={styles.rowProfiles}>
-                                                    <div className={styles.rowClient}>
-                                                        <UserAvatar
-                                                            name={property?.owner?.name ?? "Owner"}
-                                                            imageUrl={property?.owner?.imageUrl}
-                                                            size="sm"
-                                                            className="shadow-sm ring-2 ring-surface"
-                                                        />
-                                                        <div>
-                                                            <small>Owner</small>
-                                                            <strong
-                                                                data-missing={
-                                                                    !property?.owner || undefined
-                                                                }
-                                                            >
-                                                                {property?.owner?.name ??
-                                                                    "Not added"}
-                                                            </strong>
-                                                        </div>
-                                                    </div>
-                                                    <div className={styles.rowClient}>
-                                                        <UserAvatar
-                                                            name={client?.name ?? "Client"}
-                                                            size="sm"
-                                                            className="shadow-sm ring-2 ring-surface"
-                                                        />
-                                                        <div>
-                                                            <small>Client</small>
-                                                            <strong>
-                                                                {client?.name ?? "Not added"}
-                                                            </strong>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className={styles.rowStatus}>
-                                                    <VisitStatusBadge state={state} />
-                                                </div>
-                                                <div
-                                                    className={styles.rowActions}
-                                                    role="group"
-                                                    aria-label={`Actions for ${property?.title} with ${client?.name}`}
-                                                >
-                                                    {getVisitActions(visit, now).map((action) => (
-                                                        <VisitAction
-                                                            key={action}
-                                                            {...VISIT_ACTIONS[action]}
-                                                            onClick={() =>
-                                                                action === "edit"
-                                                                    ? onEdit(visit.id)
-                                                                    : action === "view"
-                                                                      ? onOpen(visit.id)
-                                                                      : onAction(visit.id, action)
-                                                            }
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </article>
-                                        );
-                                    })}
+                                    {rows.map((visit) => (
+                                        <VisitRow
+                                            key={visit.id}
+                                            visit={visit}
+                                            now={now}
+                                            onOpen={onOpen}
+                                            onAction={onAction}
+                                        />
+                                    ))}
                                 </div>
                             </section>
                         ))}
+                        {hasMore && (
+                            <div className="flex justify-center">
+                                <Button
+                                    variant="outline"
+                                    onClick={onMore}
+                                    disabled={loadingMore}
+                                    loading={loadingMore}
+                                >
+                                    {loadingMore ? "Loading more visits…" : "Show more visits"}
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 )}
             </TabsContent>
         </Tabs>
+    );
+}
+
+function VisitRow({
+    visit,
+    now,
+    onOpen,
+    onAction,
+}: {
+    visit: BrokerVisit;
+    now: number;
+    onOpen: (visit: BrokerVisit) => void;
+    onAction: (visit: BrokerVisit, action: VisitActionKind) => void;
+}) {
+    const state = visitState(visit, now);
+    const waitingForOwner = visit.status === "scheduled" && !visit.isExclusive;
+    return (
+        <article className={styles.visitRow}>
+            <div className={styles.rowProperty}>
+                <PropertyCoverImage src={null} alt="" size={64} />
+                <div>
+                    <button
+                        type="button"
+                        className={styles.propertyLink}
+                        aria-label={`Visit details for ${visit.propertyTitle} with ${visit.clientName}`}
+                        onClick={() => onOpen(visit)}
+                    >
+                        {visit.propertyTitle}
+                    </button>
+                    <div className={styles.propertyMeta}>
+                        <span className={styles.propertyLocation}>
+                            <MapPin aria-hidden />
+                            {visit.locality}
+                        </span>
+                        <span aria-hidden>·</span>
+                        <p>{visitDurationLabel(visit.durationMinutes)}</p>
+                    </div>
+                </div>
+            </div>
+            <div className={styles.rowTime}>
+                <span className={styles.detailIcon} aria-hidden>
+                    <CalendarClock />
+                </span>
+                <div>
+                    <small>{formatVisitDate(visit.startsAt)}</small>
+                    <time dateTime={visit.startsAt}>
+                        {formatVisitTime(visit.startsAt)} {"–"} {formatVisitTime(visit.endsAt)}
+                    </time>
+                </div>
+            </div>
+            <div className={styles.rowProfiles}>
+                <div className={styles.rowClient}>
+                    <UserAvatar
+                        name={visit.ownerName ?? "Owner"}
+                        imageUrl={visit.ownerAvatarUrl ?? undefined}
+                        size="sm"
+                        className="shadow-sm ring-2 ring-surface"
+                    />
+                    <div>
+                        <small>Owner</small>
+                        <strong data-missing={!visit.ownerName || undefined}>
+                            {visit.ownerName ?? "Not added"}
+                        </strong>
+                    </div>
+                </div>
+                <div className={styles.rowClient}>
+                    <UserAvatar
+                        name={visit.clientName}
+                        size="sm"
+                        className="shadow-sm ring-2 ring-surface"
+                    />
+                    <div>
+                        <small>Client</small>
+                        <strong>{visit.clientName}</strong>
+                    </div>
+                </div>
+            </div>
+            <div className={styles.rowStatus}>
+                <VisitStatusBadge state={state} />
+                {waitingForOwner && state === "upcoming" && (
+                    <small className="body-xs text-ink-muted">Waiting for owner</small>
+                )}
+            </div>
+            <div
+                className={styles.rowActions}
+                role="group"
+                aria-label={`Actions for ${visit.propertyTitle} with ${visit.clientName}`}
+            >
+                {getVisitActions(visit, now).map((action) => (
+                    <VisitAction
+                        key={action}
+                        {...VISIT_ACTIONS[action]}
+                        onClick={() =>
+                            action === "view" ? onOpen(visit) : onAction(visit, action)
+                        }
+                    />
+                ))}
+            </div>
+        </article>
     );
 }

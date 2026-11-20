@@ -1,43 +1,13 @@
-import { z } from "zod";
-
-import { isReminderOffset, MAX_REMINDER_MINUTES, reminderLabel } from "@/lib/reminders";
+import { ApiError } from "@/lib/api/client";
+import type { BookableLead, BrokerVisit, VisitDuration, VisitTab } from "@/lib/api/site-visits";
+import { isReminderOffset, reminderLabel } from "@/lib/reminders";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
-import { addVisitDays, inputValueInIst, inputValueToUtc, istDateKey } from "@/lib/visits/time";
+import { addVisitDays, istDateKey } from "@/lib/visits/time";
 
 export const MAX_VISIT_REMINDERS = 6;
 
-const remindersSchema = z
-    .array(z.number().int().min(0).max(MAX_REMINDER_MINUTES))
-    .max(MAX_VISIT_REMINDERS)
-    .refine((values) => new Set(values).size === values.length, "Choose each reminder only once.");
-
-export const visitSchema = z.preprocess(
-    (value) => {
-        if (!value || typeof value !== "object" || "reminders" in value) return value;
-        const legacy = value as Record<string, unknown>;
-        if (!("reminderMinutes" in legacy)) return value;
-        return {
-            ...legacy,
-            reminders: legacy.reminderMinutes === 0 ? [] : [legacy.reminderMinutes],
-        };
-    },
-    z.object({
-        id: z.string(),
-        clientId: z.string(),
-        propertyId: z.string(),
-        startsAt: z.iso.datetime(),
-        endsAt: z.iso.datetime(),
-        reminders: remindersSchema,
-        notes: z.string(),
-        status: z.enum(["scheduled", "completed", "not_attended", "cancelled"]),
-        attendanceNote: z.string().default(""),
-        history: z.array(z.object({ at: z.iso.datetime(), label: z.string() })),
-    }),
-);
-
-export type SiteVisit = z.infer<typeof visitSchema>;
-export type VisitState = "upcoming" | "running" | "needs_update" | SiteVisit["status"];
-export type VisitTab = "upcoming" | "running" | "needs_update" | "completed" | "not_attended";
+/** Where a visit sits right now. Matches the server's tabs. */
+export type VisitState = VisitTab;
 
 export const VISIT_TABS: { value: VisitTab; label: string }[] = [
     { value: "upcoming", label: "Upcoming" },
@@ -45,10 +15,10 @@ export const VISIT_TABS: { value: VisitTab; label: string }[] = [
     { value: "needs_update", label: "Needs update" },
     { value: "completed", label: "Completed" },
     { value: "not_attended", label: "Not attended" },
+    { value: "cancelled", label: "Cancelled" },
 ];
 
 export const STATE_LABELS: Record<VisitState, string> = {
-    scheduled: "Scheduled",
     upcoming: "Upcoming",
     running: "Running",
     needs_update: "Needs update",
@@ -64,6 +34,15 @@ export const VISIT_REMINDERS = [
     { value: 60, label: "1 hour before" },
     { value: 1440, label: "1 day before" },
 ];
+
+export const DURATION_CHIPS: { value: VisitDuration; label: string }[] = [
+    { value: 30, label: "30 min" },
+    { value: 45, label: "45 min" },
+    { value: 60, label: "1 hour" },
+];
+
+/** Visits can be booked today through today + 13 days (IST). */
+export const BOOKABLE_DAYS = 14;
 
 export const DATE_RANGES = [
     { value: "next7", label: "Next 7 days" },
@@ -87,176 +66,194 @@ export function visitDateBounds(range: string, now: number) {
     return { from: "", to: "" };
 }
 
-export type VisitDraft = {
-    clientId: string;
-    propertyId: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-    reminders: number[];
-    notes: string;
-};
-
-export const EMPTY_DRAFT: VisitDraft = {
-    clientId: "",
-    propertyId: "",
-    date: "",
-    startTime: "",
-    endTime: "",
-    reminders: [],
-    notes: "",
-};
-
-/** Round up to the next minute so the default passes future-time validation. */
-export function newVisitDraft(now: number, prefill?: Partial<VisitDraft>): VisitDraft {
-    const start = inputValueInIst(new Date((Math.floor(now / 60_000) + 1) * 60_000));
-    const startTime = prefill?.startTime || start.slice(11);
-    return {
-        ...EMPTY_DRAFT,
-        ...prefill,
-        date: prefill?.date || start.slice(0, 10),
-        startTime,
-        // The form supports same-day visits; never silently wrap into tomorrow.
-        endTime:
-            prefill?.endTime || visitEndTime(startTime, 30) || (startTime < "23:59" ? "23:59" : ""),
-    };
-}
-
-/** A repeat booking links existing records, but starts with a fresh schedule and outcome. */
-export function repeatVisitDraft(visit: SiteVisit): VisitDraft {
-    return {
-        ...EMPTY_DRAFT,
-        clientId: visit.clientId,
-        propertyId: visit.propertyId,
-        reminders: [],
-    };
-}
-
-export function visitState(visit: SiteVisit, now: number): VisitState {
-    if (visit.status !== "scheduled") return visit.status;
+export function visitState(
+    visit: Pick<BrokerVisit, "status" | "startsAt" | "endsAt">,
+    now: number,
+): VisitState {
+    if (visit.status === "completed") return "completed";
+    if (visit.status === "no_show") return "not_attended";
+    if (visit.status === "cancelled") return "cancelled";
     if (Date.parse(visit.endsAt) <= now) return "needs_update";
     if (Date.parse(visit.startsAt) <= now) return "running";
     return "upcoming";
 }
 
-export type VisitActionKind =
-    "edit" | "completed" | "cancelled" | "not_attended" | "delete" | "view";
+export type VisitActionKind = "reschedule" | "completed" | "not_attended" | "cancelled" | "view";
 
-export function getVisitActions(visit: SiteVisit, now: number): VisitActionKind[] {
-    switch (visitState(visit, now)) {
-        case "upcoming":
-            return ["edit", "cancelled"];
-        case "running":
-        case "needs_update":
-            return ["edit", "completed", "cancelled"];
-        case "completed":
-            return ["edit", "not_attended", "delete"];
-        case "not_attended":
-            return ["edit", "completed", "delete"];
-        default:
-            return ["view"];
-    }
+export function getVisitActions(visit: BrokerVisit, now: number): VisitActionKind[] {
+    const actions: VisitActionKind[] = (() => {
+        switch (visitState(visit, now)) {
+            case "upcoming":
+                return ["reschedule", "cancelled"];
+            case "running":
+            case "needs_update":
+                return ["completed", "not_attended", "reschedule", "cancelled"];
+            case "completed":
+                return ["not_attended"];
+            case "not_attended":
+                return ["completed"];
+            default:
+                return ["view"];
+        }
+    })();
+    // Owner-listed visits follow the owner's published times: cancel and rebook.
+    return visit.isExclusive ? actions : actions.filter((action) => action !== "reschedule");
 }
 
-export function draftTimes(draft: VisitDraft): { startsAt: string; endsAt: string } | null {
-    if (
-        !/^\d{4}-\d{2}-\d{2}$/.test(draft.date) ||
-        !/^\d{2}:\d{2}$/.test(draft.startTime) ||
-        !/^\d{2}:\d{2}$/.test(draft.endTime)
-    )
-        return null;
-    try {
-        const times = {
-            startsAt: inputValueToUtc(`${draft.date}T${draft.startTime}`),
-            endsAt: inputValueToUtc(`${draft.date}T${draft.endTime}`),
-        };
-        if (
-            inputValueInIst(times.startsAt) !== `${draft.date}T${draft.startTime}` ||
-            inputValueInIst(times.endsAt) !== `${draft.date}T${draft.endTime}`
-        )
-            return null;
-        return times;
-    } catch {
-        return null;
-    }
+export type VisitDraft = {
+    leadId: string;
+    clientId: string;
+    propertyId: string;
+    durationMinutes: VisitDuration | null;
+    /** IST date key, YYYY-MM-DD. */
+    date: string;
+    /** ISO start chosen from the server's free times. */
+    startAt: string;
+    notes: string;
+    reminders: number[];
+};
+
+export const VISIT_DEFAULT_REMINDERS = [30];
+
+export const EMPTY_DRAFT: VisitDraft = {
+    leadId: "",
+    clientId: "",
+    propertyId: "",
+    durationMinutes: null,
+    date: "",
+    startAt: "",
+    notes: "",
+    reminders: [30],
+};
+
+export function draftForLead(lead: BookableLead | null | undefined): VisitDraft {
+    return lead
+        ? {
+              ...EMPTY_DRAFT,
+              leadId: lead.leadId,
+              clientId: lead.clientId,
+              propertyId: lead.propertyId,
+          }
+        : { ...EMPTY_DRAFT };
 }
 
-export function validateDraft(
-    draft: VisitDraft,
-    visits: SiteVisit[],
-    now: number,
-    excludeId?: string,
-) {
-    const errors: Partial<Record<keyof VisitDraft | "conflict", string>> = {};
+/**
+ * Reschedule starts from the visit's length. Its time is kept only while it is
+ * still ahead; an overdue visit from an earlier day starts on today instead.
+ */
+export function rescheduleDraft(visit: BrokerVisit, now: number): VisitDraft {
+    const length = DURATION_CHIPS.find((chip) => chip.value === visit.durationMinutes)?.value;
+    const upcoming = Date.parse(visit.startsAt) > now;
+    const today = istDateKey(new Date(now));
+    const visitDay = istDateKey(visit.startsAt);
+    return {
+        ...EMPTY_DRAFT,
+        leadId: visit.leadId,
+        clientId: visit.clientId,
+        propertyId: visit.propertyId,
+        durationMinutes: length ?? null,
+        date: visitDay < today ? today : visitDay,
+        startAt: upcoming ? visit.startsAt : "",
+        notes: visit.notes,
+        reminders: visit.reminders.length ? [...visit.reminders] : [...VISIT_DEFAULT_REMINDERS],
+    };
+}
+
+export type DraftErrors = Partial<Record<keyof VisitDraft, string>>;
+
+export function validateVisitDraft(draft: VisitDraft, now: number): DraftErrors {
+    const errors: DraftErrors = {};
     if (!draft.clientId) errors.clientId = "Choose a client.";
-    if (!draft.propertyId) errors.propertyId = "Choose a property.";
+    if (!draft.propertyId || !draft.leadId) errors.propertyId = "Choose a property.";
+    if (!draft.durationMinutes) errors.durationMinutes = "Choose how long the visit is.";
     if (!draft.date) errors.date = "Choose a visit date.";
-    if (!draft.startTime) errors.startTime = "Choose a start time.";
-    if (!draft.endTime) errors.endTime = "Choose an end time.";
+    if (!draft.startAt) errors.startAt = "Choose a start time.";
+    else if (Date.parse(draft.startAt) <= now) errors.startAt = "Pick a time in the future.";
     if (draft.notes.length > MAX_CHARS.visitNote)
         errors.notes = `Keep the notes under ${MAX_CHARS.visitNote} characters.`;
-    const times = draftTimes(draft);
-    if (!remindersSchema.safeParse(draft.reminders).success)
-        errors.reminders =
-            "Choose up to six different reminders between 0 minutes and 365 days before the visit.";
-    if (times) {
-        const original = visits.find((visit) => visit.id === excludeId);
-        const recorded = original?.status === "completed" || original?.status === "not_attended";
-        const keepsTime =
-            original &&
-            Date.parse(times.startsAt) === Date.parse(original.startsAt) &&
-            Date.parse(times.endsAt) === Date.parse(original.endsAt);
-        const keepsStart = original && Date.parse(times.startsAt) === Date.parse(original.startsAt);
-        if (
-            draft.reminders.some((minutes) => {
-                const at = visitReminderAt(times.startsAt, minutes);
-                return (
-                    at &&
-                    Date.parse(at) <= now &&
-                    !(keepsStart && original.reminders.includes(minutes))
-                );
-            })
-        )
-            errors.reminders =
-                "A reminder time has already passed. Remove it or choose a later visit time.";
-        if (!recorded && Date.parse(times.startsAt) <= now && !keepsTime)
-            errors.startTime = "Choose a time in the future.";
-        if (recorded && Date.parse(times.startsAt) > now && !keepsTime)
-            errors.startTime = "A recorded visit cannot start in the future.";
-        if (Date.parse(times.endsAt) <= Date.parse(times.startsAt))
-            errors.endTime = "End time must be after start time.";
-        const conflict = visits.find(
-            (v) =>
-                v.id !== excludeId &&
-                v.status === "scheduled" &&
-                Date.parse(v.startsAt) < Date.parse(times.endsAt) &&
-                Date.parse(v.endsAt) > Date.parse(times.startsAt),
+    if (!draft.reminders.length) errors.reminders = "Keep at least one reminder for this visit.";
+    return errors;
+}
+
+/** What a Pipeline "Schedule visit" link asked for, or null when it isn't one. */
+export type ScheduleIntent = { leadId?: string; clientId?: string; propertyId?: string };
+
+export function parseScheduleIntent(params: URLSearchParams): ScheduleIntent | null {
+    if (params.get("schedule") !== "1") return null;
+    const intent: ScheduleIntent = {};
+    for (const key of ["leadId", "clientId", "propertyId"] as const) {
+        const value = params.get(key)?.trim();
+        if (value) intent[key] = value;
+    }
+    return intent;
+}
+
+/** The bookable deal a link points at: by deal id, else by client + property. */
+export function matchIntent(intent: ScheduleIntent, leads: BookableLead[]): BookableLead | null {
+    if (intent.leadId) {
+        const byLead = leads.find((lead) => lead.leadId === intent.leadId);
+        if (byLead) return byLead;
+    }
+    if (intent.clientId && intent.propertyId) {
+        return (
+            leads.find(
+                (lead) =>
+                    lead.clientId === intent.clientId && lead.propertyId === intent.propertyId,
+            ) ?? null
         );
-        if (conflict && !recorded) errors.conflict = conflict.id;
-    } else if (draft.date && draft.startTime && draft.endTime)
-        errors.date = "Choose a valid date and time.";
-    return { errors, times, valid: Object.keys(errors).length === 0 && times !== null };
+    }
+    return null;
 }
 
-/** A same-day duration exists only after both selected times form a valid interval. */
-export function visitDurationMinutes(startTime: string, endTime: string): number | null {
-    const validTime = /^([01]\d|2[0-3]):[0-5]\d$/;
-    if (!validTime.test(startTime) || !validTime.test(endTime)) return null;
-    const [startHour, startMinute] = startTime.split(":").map(Number);
-    const [endHour, endMinute] = endTime.split(":").map(Number);
-    const minutes = (endHour - startHour) * 60 + endMinute - startMinute;
-    return minutes > 0 ? minutes : null;
+export type IntentView =
+    | { kind: "reschedule"; visit: BrokerVisit }
+    | { kind: "schedule"; intent: BookableLead | null; intentMissed: boolean };
+
+/**
+ * Where a Pipeline link lands. Only a bookable deal (open, on the broker's own
+ * listing) may move its booked visit; anything else gets the explanation.
+ */
+export function resolveScheduleIntent(
+    intent: ScheduleIntent,
+    leads: BookableLead[],
+    activeVisit: BrokerVisit | null,
+): IntentView {
+    const lead = matchIntent(intent, leads);
+    if (!lead) return { kind: "schedule", intent: null, intentMissed: true };
+    if (activeVisit && activeVisit.isExclusive && activeVisit.leadId === lead.leadId)
+        return { kind: "reschedule", visit: activeVisit };
+    return { kind: "schedule", intent: lead, intentMissed: false };
 }
 
-/** Keep the chosen duration on the same IST day; never wrap an end time silently. */
-export function visitEndTime(startTime: string, minutes: number): string | null {
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime) || !Number.isInteger(minutes) || minutes <= 0)
-        return null;
-    const [hour, minute] = startTime.split(":").map(Number);
-    const end = hour * 60 + minute + minutes;
-    return end < 1440
-        ? `${String(Math.floor(end / 60)).padStart(2, "0")}:${String(end % 60).padStart(2, "0")}`
-        : null;
+const TIME_TAKEN_CODES = new Set(["LEAD_TIME_CONFLICT", "BROKER_TIME_CONFLICT"]);
+
+/** The chosen time was taken meanwhile, so the form should drop it. */
+export function isTimeTaken(error: unknown): boolean {
+    if (!(error instanceof ApiError) || error.status !== 400) return false;
+    const code = (error.body as { code?: unknown } | undefined)?.code;
+    return (
+        (typeof code === "string" && TIME_TAKEN_CODES.has(code)) ||
+        /already booked|already has a visit|already have a visit|open visit times/i.test(
+            error.message,
+        )
+    );
+}
+
+/** Plain words for a failed save. Never a server address or internal error. */
+export function visitErrorMessage(error: unknown): string {
+    if (error instanceof ApiError) {
+        if (error.status === 0)
+            return "You seem to be offline. Check your connection and try again.";
+        if (error.status >= 500) return "Something went wrong on our side. Try again in a minute.";
+        if (error.message) return error.message;
+    }
+    return "That didn't save. Check your connection and try again.";
+}
+
+export function bookableDates(now: number): string[] {
+    return Array.from({ length: BOOKABLE_DAYS }, (_, day) =>
+        istDateKey(addVisitDays(new Date(now), day)),
+    );
 }
 
 export function visitDurationLabel(minutes: number): string {
@@ -277,23 +274,11 @@ export function visitReminderAt(startsAt: string, minutes: number): string | nul
 }
 
 /** Each selected offset has its own scheduled instant, earliest first. */
-export function visitReminders(visit: Pick<SiteVisit, "startsAt" | "reminders">) {
+export function visitReminders(visit: { startsAt: string; reminders: number[] }) {
     return [...new Set(visit.reminders)]
         .flatMap((minutes) => {
             const at = visitReminderAt(visit.startsAt, minutes);
             return at ? [{ minutes, at, key: `${visit.startsAt}:${minutes}` }] : [];
         })
         .sort((a, b) => a.at.localeCompare(b.at));
-}
-
-export function notificationKind(
-    visit: SiteVisit,
-    now: number,
-): "reminder" | "start" | "attendance" | null {
-    if (visit.status !== "scheduled") return null;
-    const start = Date.parse(visit.startsAt);
-    if (now >= Date.parse(visit.endsAt)) return "attendance";
-    if (now >= start) return "start";
-    if (visitReminders(visit).some((reminder) => now >= Date.parse(reminder.at))) return "reminder";
-    return null;
 }

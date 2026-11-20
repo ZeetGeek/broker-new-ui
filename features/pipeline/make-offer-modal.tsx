@@ -7,11 +7,12 @@ import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
-import { Handshake } from "@/components/shared/icons";
+import { Handshake, Info } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Textarea } from "@/components/ui/textarea";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { isRevisingOffer } from "@/features/pipeline/stage-meta";
 import type { DealItem } from "@/features/pipeline/types";
 
@@ -181,6 +182,21 @@ export function MakeOfferModal({
                         maxChars={MAX_CHARS.offerNote}
                     />
                 </div>
+
+                {/* Every accepted offer is a sale. Owners only answer once their portal is live. */}
+                {FEATURE_PLATFORM_OWNER ? (
+                    <p className="body-sm flex items-start gap-2 text-ink-muted">
+                        <Info
+                            aria-hidden
+                            strokeWidth={1.75}
+                            className="mbs-0.5 shrink-0 block-4 inline-4"
+                        />
+                        <span>
+                            If the owner accepts, the property is sold to this client and its other
+                            clients are closed.
+                        </span>
+                    </p>
+                ) : null}
 
                 {submitError ? (
                     <p role="alert" className="body-sm text-danger">

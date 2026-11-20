@@ -1,331 +1,184 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { ApiError } from "@/lib/api/client";
+import { type BookableLead, type BrokerVisit, mapShowing } from "@/lib/api/site-visits";
+
 import {
-    draftTimes,
+    bookableDates,
+    DURATION_CHIPS,
     EMPTY_DRAFT,
     getVisitActions,
-    newVisitDraft,
-    notificationKind,
-    repeatVisitDraft,
-    type SiteVisit,
-    validateDraft,
-    visitDurationMinutes,
-    visitEndTime,
+    isTimeTaken,
+    matchIntent,
+    parseScheduleIntent,
+    rescheduleDraft,
+    resolveScheduleIntent,
+    validateVisitDraft,
+    visitErrorMessage,
     visitReminderAt,
     visitReminderLabel,
     visitReminders,
-    visitSchema,
     visitState,
 } from "@/features/new-site-visits/model";
-import {
-    PREVIEW_CLIENTS,
-    PREVIEW_PROPERTIES,
-    visitPreviewStore,
-} from "@/features/new-site-visits/preview-store";
 
-const draft = {
-    ...EMPTY_DRAFT,
-    clientId: "client",
-    propertyId: "property",
-    date: "2030-01-02",
-    startTime: "10:00",
-    endTime: "11:00",
-};
-const now = Date.parse("2030-01-01T00:00:00Z");
+// 2030-01-02 10:00 IST.
+const START = "2030-01-02T04:30:00.000Z";
+const END = "2030-01-02T05:15:00.000Z";
+const before = Date.parse(START) - 60_000;
 
-test("new visits default to the next IST minute with a same-day end time", () => {
-    const openedAt = Date.parse("2030-01-01T04:30:25Z");
-    const next = newVisitDraft(openedAt, {
-        ...EMPTY_DRAFT,
-        clientId: "client",
-        propertyId: "property",
-    });
-    assert.equal(next.date, "2030-01-01");
-    assert.equal(next.startTime, "10:01");
-    assert.equal(next.endTime, "10:31");
-    assert.equal(validateDraft(next, [], openedAt).valid, true);
-    const late = newVisitDraft(Date.parse("2030-01-01T18:15:00Z"));
-    assert.equal(late.startTime, "23:46");
-    assert.equal(late.endTime, "23:59");
-    const midnight = newVisitDraft(Date.parse("2030-01-01T18:29:30Z"));
-    assert.equal(midnight.date, "2030-01-02");
-    assert.equal(midnight.startTime, "00:00");
-    assert.equal(midnight.endTime, "00:30");
-});
-
-test("duration shortcuts never silently roll into another day", () => {
-    assert.equal(visitEndTime("10:00", 45), "10:45");
-    assert.equal(visitEndTime("10:45", 30), "11:15");
-    assert.equal(visitEndTime("23:30", 60), null);
-    assert.equal(visitEndTime("25:00", 30), null);
-    assert.equal(visitEndTime("10:00", -1), null);
-});
-
-test("duration reflects selected times and stays unset until both times are valid", () => {
-    assert.equal(visitDurationMinutes("", ""), null);
-    assert.equal(visitDurationMinutes("10:00", ""), null);
-    assert.equal(visitDurationMinutes("", "11:15"), null);
-    assert.equal(visitDurationMinutes("10:00", "11:15"), 75);
-    assert.equal(visitDurationMinutes("10:00", "10:30"), 30);
-    assert.equal(visitDurationMinutes("11:15", "10:00"), null);
-    assert.equal(visitDurationMinutes("10:00", "10:00"), null);
-});
-
-test("site visits allow six reminders and reject a seventh when validating and saving", () => {
-    const reminders = [0, 5, 10, 15, 30, 60];
-    assert.equal(validateDraft({ ...draft, reminders }, [], now).valid, true);
-    assert.equal(visitSchema.safeParse({ ...visit, reminders }).success, true);
-    const tooMany = [...reminders, 90];
-    assert.match(
-        validateDraft({ ...draft, reminders: tooMany }, [], now).errors.reminders ?? "",
-        /six/,
-    );
-    assert.equal(visitSchema.safeParse({ ...visit, reminders: tooMany }).success, false);
-});
-const visit: SiteVisit = {
-    id: "visit",
-    clientId: "client",
-    propertyId: "property",
-    startsAt: "2030-01-02T04:30:00Z",
-    endsAt: "2030-01-02T05:30:00Z",
-    status: "scheduled",
-    reminders: [30],
+const visit: BrokerVisit = {
+    id: "v1",
+    leadId: "lead-1",
+    clientId: "client-1",
+    clientName: "Ravi",
+    clientPhone: null,
+    ownerName: null,
+    ownerAvatarUrl: null,
+    propertyId: "prop-1",
+    propertyTitle: "Shanti Flat",
+    locality: "Vesu",
+    city: "Surat",
+    isExclusive: true,
+    startsAt: START,
+    endsAt: END,
+    durationMinutes: 45,
+    status: "confirmed",
     notes: "",
-    attendanceNote: "",
-    history: [],
+    bookedAt: "2030-01-01T00:00:00.000Z",
+    updatedAt: "2030-01-01T00:00:00.000Z",
+    reminders: [60, 15],
 };
 
-test("repeat bookings retain linked records without copying dates, reminders or attendance", () => {
-    const original = {
-        ...visit,
-        status: "not_attended" as const,
-        attendanceNote: "Client unavailable",
-        notes: "Old meeting instructions",
-    };
-    const repeated = repeatVisitDraft(original);
-    assert.equal(repeated.clientId, original.clientId);
-    assert.equal(repeated.propertyId, original.propertyId);
-    assert.equal(repeated.date, "");
-    assert.equal(repeated.startTime, "");
-    assert.equal(repeated.endTime, "");
-    assert.equal(repeated.notes, "");
-    assert.deepEqual(repeated.reminders, []);
-    assert.notEqual(repeated.reminders, original.reminders);
-    assert.notEqual(repeated.reminders, EMPTY_DRAFT.reminders);
-    assert.deepEqual(original.reminders, [30]);
-    assert.deepEqual(EMPTY_DRAFT.reminders, []);
-    assert.equal(original.status, "not_attended");
-    assert.equal(
-        validateDraft(
-            { ...repeated, date: "2030-01-03", startTime: "10:00", endTime: "11:00" },
-            [original],
-            now,
-        ).valid,
-        true,
-    );
+const leads: BookableLead[] = [
+    {
+        leadId: "lead-1",
+        clientId: "client-1",
+        clientName: "Ravi",
+        propertyId: "prop-1",
+        propertyTitle: "Shanti Flat",
+    },
+    {
+        leadId: "lead-2",
+        clientId: "client-1",
+        clientName: "Ravi",
+        propertyId: "prop-2",
+        propertyTitle: "Green Villa",
+    },
+];
+
+test("a visit is Running from its start and Needs update from its end", () => {
+    assert.equal(visitState(visit, before), "upcoming");
+    assert.equal(visitState(visit, Date.parse(START)), "running");
+    assert.equal(visitState(visit, Date.parse(END)), "needs_update");
 });
 
-test("visit times use IST regardless of the device timezone", () => {
-    assert.deepEqual(draftTimes(draft), {
-        startsAt: "2030-01-02T04:30:00.000Z",
-        endsAt: "2030-01-02T05:30:00.000Z",
-    });
-    assert.equal(draftTimes({ ...draft, date: "2030-02-30" }), null);
-    assert.equal(draftTimes({ ...draft, startTime: "25:00" }), null);
+test("a marked or cancelled visit keeps its state whatever the time", () => {
+    assert.equal(visitState({ ...visit, status: "completed" }, before), "completed");
+    assert.equal(visitState({ ...visit, status: "no_show" }, before), "not_attended");
+    assert.equal(visitState({ ...visit, status: "cancelled" }, Date.parse(END)), "cancelled");
 });
 
-test("clock boundaries derive running and needs-update without overwriting attendance", () => {
-    assert.equal(visitState(visit, Date.parse(visit.startsAt) - 1), "upcoming");
-    assert.equal(visitState(visit, Date.parse(visit.startsAt)), "running");
-    assert.equal(visitState(visit, Date.parse(visit.endsAt)), "needs_update");
-    for (const status of ["completed", "not_attended", "cancelled"] as const) {
-        assert.equal(visitState({ ...visit, status }, Date.parse(visit.endsAt) + 1), status);
-    }
-    assert.equal(visit.status, "scheduled");
-});
-
-test("actions follow each visit state and allow outcome corrections only after recording attendance", () => {
-    assert.deepEqual(getVisitActions(visit, Date.parse(visit.startsAt) - 1), ["edit", "cancelled"]);
-    for (const at of [Date.parse(visit.startsAt), Date.parse(visit.endsAt)]) {
-        assert.deepEqual(getVisitActions(visit, at), ["edit", "completed", "cancelled"]);
-    }
-    assert.deepEqual(getVisitActions({ ...visit, status: "completed" }, now), [
-        "edit",
-        "not_attended",
-        "delete",
-    ]);
-    assert.deepEqual(getVisitActions({ ...visit, status: "not_attended" }, now), [
-        "edit",
+test("actions follow the visit's state", () => {
+    assert.deepEqual(getVisitActions(visit, before), ["reschedule", "cancelled"]);
+    assert.deepEqual(getVisitActions(visit, Date.parse(START)), [
         "completed",
-        "delete",
+        "not_attended",
+        "reschedule",
+        "cancelled",
     ]);
-    assert.deepEqual(getVisitActions({ ...visit, status: "cancelled" }, now), ["view"]);
+    assert.deepEqual(getVisitActions({ ...visit, status: "completed" }, before), ["not_attended"]);
+    assert.deepEqual(getVisitActions({ ...visit, status: "no_show" }, before), ["completed"]);
+    assert.deepEqual(getVisitActions({ ...visit, status: "cancelled" }, before), ["view"]);
 });
 
-test("recorded visits can correct past times without becoming future appointments", () => {
-    const afterVisit = Date.parse(visit.endsAt) + 60_000;
-    for (const status of ["completed", "not_attended"] as const) {
-        const recorded = { ...visit, status };
-        assert.equal(
-            validateDraft(
-                { ...draft, startTime: "09:00", endTime: "10:00" },
-                [recorded],
-                afterVisit,
-                recorded.id,
-            ).valid,
-            true,
-        );
-        assert.equal(
-            validateDraft({ ...draft, date: "2030-01-03" }, [recorded], afterVisit, recorded.id)
-                .valid,
-            false,
-        );
-    }
+test("visits on an owner's listing cannot be rescheduled", () => {
+    assert.deepEqual(getVisitActions({ ...visit, isExclusive: false }, before), ["cancelled"]);
 });
 
-test("overlapping appointments block saves, but touching boundaries and rescheduling self do not", () => {
-    assert.equal(validateDraft(draft, [visit], now).errors.conflict, "visit");
-    assert.equal(
-        validateDraft({ ...draft, startTime: "10:30", endTime: "11:30" }, [visit], now).valid,
-        false,
-    );
-    assert.equal(
-        validateDraft({ ...draft, startTime: "11:00", endTime: "12:00" }, [visit], now).valid,
-        true,
-    );
-    assert.equal(validateDraft(draft, [visit], now, "visit").valid, true);
-    for (const status of ["completed", "not_attended", "cancelled"] as const) {
-        assert.equal(validateDraft(draft, [{ ...visit, status }], now).valid, true);
-    }
-});
-
-test("incomplete, past and reversed times are rejected", () => {
-    assert.equal(validateDraft(EMPTY_DRAFT, [], now).valid, false);
-    assert.equal(validateDraft({ ...draft, endTime: "10:00" }, [], now).valid, false);
-    assert.equal(validateDraft({ ...draft, endTime: "09:00" }, [], now).valid, false);
-    assert.equal(validateDraft(draft, [], Date.parse(visit.startsAt)).valid, false);
-});
-
-test("editing a running or ended visit can keep its time, but moving it requires a future time", () => {
-    for (const editingNow of [Date.parse(visit.startsAt), Date.parse(visit.endsAt)]) {
-        assert.equal(
-            validateDraft(
-                { ...draft, notes: "Updated meeting point" },
-                [visit],
-                editingNow,
-                visit.id,
-            ).valid,
-            true,
-        );
-        assert.equal(
-            validateDraft(
-                { ...draft, startTime: "09:00", endTime: "10:00" },
-                [visit],
-                editingNow,
-                visit.id,
-            ).valid,
-            false,
-        );
-        assert.equal(
-            validateDraft({ ...draft, date: "2030-01-03" }, [visit], editingNow, visit.id).valid,
-            true,
-        );
-    }
-});
-
-test("optional reminder advances to start and attendance; terminal visits suppress notifications", () => {
-    assert.equal(notificationKind(visit, Date.parse(visit.startsAt) - 31 * 60_000), null);
-    assert.equal(notificationKind(visit, Date.parse(visit.startsAt) - 30 * 60_000), "reminder");
-    assert.equal(
-        notificationKind({ ...visit, reminders: [] }, Date.parse(visit.startsAt) - 1),
-        null,
-    );
-    assert.equal(notificationKind(visit, Date.parse(visit.startsAt)), "start");
-    assert.equal(notificationKind(visit, Date.parse(visit.endsAt)), "attendance");
-    for (const status of ["completed", "not_attended", "cancelled"] as const) {
-        assert.equal(notificationKind({ ...visit, status }, Date.parse(visit.endsAt)), null);
-    }
-});
-
-test("visit changes survive storage reloads and invalid links do not overwrite saved visits", async () => {
-    const previous = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
-    const storage = new Map<string, string>();
-    Object.defineProperty(globalThis, "sessionStorage", {
-        configurable: true,
-        value: {
-            getItem: (key: string) => storage.get(key) ?? null,
-            setItem: (key: string, value: string) => storage.set(key, value),
+test("a length chip must be chosen", () => {
+    const errors = validateVisitDraft(
+        {
+            ...EMPTY_DRAFT,
+            leadId: "lead-1",
+            clientId: "client-1",
+            propertyId: "prop-1",
+            date: "2030-01-02",
+            startAt: START,
         },
+        before,
+    );
+    assert.equal(errors.durationMinutes, "Choose how long the visit is.");
+});
+
+test("a new visit needs a client, property, date and start time", () => {
+    const errors = validateVisitDraft(EMPTY_DRAFT, before);
+    assert.equal(errors.clientId, "Choose a client.");
+    assert.equal(errors.propertyId, "Choose a property.");
+    assert.equal(errors.date, "Choose a visit date.");
+    assert.equal(errors.startAt, "Choose a start time.");
+});
+
+test("a start time that has passed is rejected", () => {
+    const errors = validateVisitDraft(
+        { ...rescheduleDraft(visit, before), durationMinutes: 30 },
+        Date.parse(START) + 1,
+    );
+    assert.equal(errors.startAt, "Pick a time in the future.");
+});
+
+test("a complete draft is valid", () => {
+    assert.deepEqual(validateVisitDraft({ ...rescheduleDraft(visit, before) }, before), {});
+});
+
+test("reschedule starts from the visit's own length and time", () => {
+    const draft = rescheduleDraft(visit, before);
+    assert.equal(draft.durationMinutes, 45);
+    assert.equal(draft.date, "2030-01-02");
+    assert.equal(draft.startAt, START);
+    assert.equal(draft.leadId, "lead-1");
+});
+
+test("length chips are 30 min, 45 min and 1 hour", () => {
+    assert.deepEqual(
+        DURATION_CHIPS.map((chip) => [chip.value, chip.label]),
+        [
+            [30, "30 min"],
+            [45, "45 min"],
+            [60, "1 hour"],
+        ],
+    );
+});
+
+test("the pipeline link opens scheduling only with schedule=1", () => {
+    assert.deepEqual(parseScheduleIntent(new URLSearchParams("schedule=1&leadId=lead-1")), {
+        leadId: "lead-1",
     });
-    try {
-        const record: SiteVisit = {
-            ...visit,
-            clientId: PREVIEW_CLIENTS[0].id,
-            propertyId: PREVIEW_PROPERTIES[0].id,
-        };
-        await visitPreviewStore.save("test-account", [record]);
-        assert.deepEqual(await visitPreviewStore.list("test-account"), [record]);
+    assert.equal(parseScheduleIntent(new URLSearchParams("leadId=lead-1")), null);
+});
 
-        const updated = {
-            ...record,
-            notes: "Meet at reception",
-            reminders: [1440, 90, 15, 0],
-            status: "completed" as const,
-            attendanceNote: "Client attended",
-        };
-        await visitPreviewStore.save("test-account", [updated]);
-        assert.deepEqual(await visitPreviewStore.list("test-account"), [updated]);
-        for (const reminders of [[30, 30], [-1], [1.5], [365 * 1440 + 1]]) {
-            await assert.rejects(
-                visitPreviewStore.save("test-account", [{ ...updated, reminders }]),
-            );
-            assert.deepEqual(await visitPreviewStore.list("test-account"), [updated]);
-        }
+test("the pipeline link finds the deal by id, then by client and property", () => {
+    assert.equal(matchIntent({ leadId: "lead-2" }, leads)?.propertyId, "prop-2");
+    assert.equal(
+        matchIntent({ clientId: "client-1", propertyId: "prop-2" }, leads)?.leadId,
+        "lead-2",
+    );
+});
 
-        const corrected = { ...updated, status: "not_attended" as const };
-        await visitPreviewStore.save("test-account", [corrected]);
-        assert.equal((await visitPreviewStore.list("test-account"))[0].status, "not_attended");
-        await visitPreviewStore.save("test-account", [updated]);
+test("a deal that can't be booked here matches nothing", () => {
+    assert.equal(matchIntent({ leadId: "closed-deal" }, leads), null);
+    assert.equal(matchIntent({ clientId: "client-1" }, leads), null);
+});
 
-        await assert.rejects(
-            visitPreviewStore.save("test-account", [
-                { ...updated, propertyId: "missing-property" },
-            ]),
-        );
-        assert.deepEqual(await visitPreviewStore.list("test-account"), [updated]);
-        await visitPreviewStore.save("test-account", []);
-        assert.deepEqual(await visitPreviewStore.list("test-account"), []);
-
-        const { reminders: _reminders, ...legacy } = record;
-        const key = [...storage.keys()][0];
-        storage.set(
-            key,
-            JSON.stringify({
-                version: 2,
-                visits: [
-                    { ...legacy, reminderMinutes: 30 },
-                    { ...legacy, id: "legacy-without-reminder", reminderMinutes: 0 },
-                ],
-            }),
-        );
-        const migrated = await visitPreviewStore.list("test-account");
-        assert.deepEqual(
-            migrated.map((item) => item.reminders),
-            [[30], []],
-        );
-        const stored = JSON.parse(storage.get(key)!);
-        assert.equal(stored.version, 3);
-        assert.equal("reminderMinutes" in stored.visits[0], false);
-        assert.deepEqual(await visitPreviewStore.list("test-account"), migrated);
-    } finally {
-        if (previous) Object.defineProperty(globalThis, "sessionStorage", previous);
-        else Reflect.deleteProperty(globalThis, "sessionStorage");
-    }
+test("bookable dates are today and the next 13 IST days", () => {
+    const dates = bookableDates(Date.parse("2030-01-01T20:00:00Z"));
+    assert.equal(dates.length, 14);
+    assert.equal(dates[0], "2030-01-02");
+    assert.equal(dates[13], "2030-01-15");
 });
 
 test("multiple and custom visit reminders keep distinct IST instants and readable labels", () => {
-    const reminders = visitReminders({ ...visit, reminders: [0, 15, 90, 1440, 90] });
+    const reminders = visitReminders({ startsAt: START, reminders: [0, 15, 90, 1440, 90] });
     assert.deepEqual(
         reminders.map(({ minutes, at }) => ({ minutes, at })),
         [
@@ -335,39 +188,102 @@ test("multiple and custom visit reminders keep distinct IST instants and readabl
             { minutes: 0, at: "2030-01-02T04:30:00.000Z" },
         ],
     );
-    assert.equal(new Set(reminders.map((item) => item.key)).size, 4);
     assert.equal(visitReminderLabel(90), "1 hour 30 minutes before");
     assert.equal(visitReminderLabel(0), "At visit time");
-    assert.equal(visitReminderAt(visit.startsAt, -1), null);
-    assert.equal(visitReminderAt(visit.startsAt, 0.5), null);
+    assert.equal(visitReminderAt(START, -1), null);
     assert.equal(visitReminderAt("invalid", 30), null);
 });
 
-test("visit reminder validation rejects duplicates, invalid offsets and newly expired reminders", () => {
-    assert.equal(validateDraft({ ...draft, reminders: [1440, 90, 15, 0] }, [], now).valid, true);
-    for (const reminders of [[15, 15], [-1], [1.5], [365 * 1440 + 1]]) {
-        assert.ok(validateDraft({ ...draft, reminders }, [], now).errors.reminders);
-    }
-    const beforeStart = Date.parse(visit.startsAt) - 10 * 60_000;
-    assert.ok(validateDraft({ ...draft, reminders: [15] }, [], beforeStart).errors.reminders);
+test("rescheduling an overdue visit from an earlier day starts on today with no time", () => {
+    const draft = rescheduleDraft(visit, Date.parse("2030-01-05T04:30:00.000Z"));
+    assert.equal(draft.date, "2030-01-05");
+    assert.equal(draft.startAt, "");
+    assert.equal(draft.durationMinutes, 45);
+});
+
+test("the pipeline link reschedules the deal's booked visit only when the deal is bookable", () => {
+    assert.deepEqual(resolveScheduleIntent({ leadId: "lead-1" }, leads, visit), {
+        kind: "reschedule",
+        visit,
+    });
+    assert.deepEqual(resolveScheduleIntent({ leadId: "lead-1" }, leads, null), {
+        kind: "schedule",
+        intent: leads[0],
+        intentMissed: false,
+    });
+    assert.deepEqual(resolveScheduleIntent({ leadId: "closed-deal" }, leads, visit), {
+        kind: "schedule",
+        intent: null,
+        intentMissed: true,
+    });
+});
+
+test("save errors never show server addresses or internal failures", () => {
     assert.equal(
-        validateDraft({ ...draft, reminders: [30] }, [visit], beforeStart, visit.id).valid,
-        true,
-    );
-    assert.ok(
-        validateDraft({ ...draft, reminders: [60] }, [visit], beforeStart, visit.id).errors
-            .reminders,
+        visitErrorMessage(new ApiError("Unable to reach the server at http://api.local", 0)),
+        "You seem to be offline. Check your connection and try again.",
     );
     assert.equal(
-        validateDraft({ ...draft, reminders: [] }, [visit], beforeStart, visit.id).valid,
-        true,
+        visitErrorMessage(new ApiError("Internal server error", 500)),
+        "Something went wrong on our side. Try again in a minute.",
     );
-    assert.ok(
-        validateDraft(
-            { ...draft, startTime: "09:30", reminders: [30] },
-            [visit],
-            Date.parse(visit.startsAt) - 40 * 60_000,
-            visit.id,
-        ).errors.reminders,
+    assert.equal(
+        visitErrorMessage(new ApiError("That time on Flat is already booked", 400)),
+        "That time on Flat is already booked",
     );
+    assert.equal(
+        visitErrorMessage(new Error("boom")),
+        "That didn't save. Check your connection and try again.",
+    );
+});
+
+test("only a taken time clears the chosen start", () => {
+    assert.equal(isTimeTaken(new ApiError("That time on Flat is already booked", 400)), true);
+    assert.equal(isTimeTaken(new ApiError("x", 400, { code: "BROKER_TIME_CONFLICT" })), true);
+    assert.equal(isTimeTaken(new ApiError("Unable to reach the server", 0)), false);
+});
+
+test("a new visit starts with the 30-minute reminder", () => {
+    assert.deepEqual(EMPTY_DRAFT.reminders, [30]);
+});
+
+test("rescheduling keeps the visit's saved reminders", () => {
+    assert.deepEqual(rescheduleDraft(visit, before).reminders, [60, 15]);
+});
+
+test("a visit from the API without reminders shows the 30-minute default", () => {
+    const mapped = mapShowing({
+        id: "s1",
+        leadId: "lead-1",
+        propertyId: "prop-1",
+        visitSlotId: null,
+        scheduledDate: START,
+        endAt: END,
+        status: "confirmed",
+        notes: null,
+        createdAt: START,
+    });
+    assert.deepEqual(mapped.reminders, [30]);
+    assert.deepEqual(
+        mapShowing({
+            ...{
+                id: "s1",
+                leadId: "lead-1",
+                propertyId: "prop-1",
+                visitSlotId: null,
+                scheduledDate: START,
+                endAt: END,
+                status: "confirmed",
+                notes: null,
+                createdAt: START,
+            },
+            reminders: [15],
+        }).reminders,
+        [15],
+    );
+});
+
+test("a visit needs at least one reminder", () => {
+    const errors = validateVisitDraft({ ...rescheduleDraft(visit, before), reminders: [] }, before);
+    assert.equal(errors.reminders, "Keep at least one reminder for this visit.");
 });

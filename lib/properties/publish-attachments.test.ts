@@ -17,7 +17,7 @@ test("broker publishing requires a selected owner, not typed owner details", () 
     assert.equal(propertyPublishAttachmentIssues(values, "broker").length, 1);
 });
 
-test("an owner alone is enough to publish; contacts are optional", () => {
+test("an owner alone is enough to publish; clients are optional", () => {
     const values = structuredClone(DEFAULT_PROPERTY_DRAFT);
     values.owner.contactId = "owner-1";
     assert.deepEqual(propertyPublishAttachmentIssues(values, "broker"), []);

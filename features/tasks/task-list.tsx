@@ -61,6 +61,7 @@ export function TaskLine({
     onQuickChange,
 }: TaskRowActions & { task: Task; archive?: boolean; showDate?: boolean }) {
     const [editing, setEditing] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
     const titleRef = useRef<HTMLButtonElement>(null);
     const refocusRef = useRef(false);
     useEffect(() => {
@@ -104,6 +105,11 @@ export function TaskLine({
             data-linked-card
             className={cn(styles.taskLine, task.completedAt && styles.completedLine)}
             data-priority={task.priority}
+            onContextMenu={(event) => {
+                if (busy) return;
+                event.preventDefault();
+                setMenuOpen(true);
+            }}
         >
             {!busy ? (
                 <CardLink
@@ -162,7 +168,7 @@ export function TaskLine({
                 </Tooltip>
             )}
             {task.deletedAt ? (
-                <DropdownMenu modal={false}>
+                <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
                     <DropdownMenuTrigger
                         render={
                             <IconButton
@@ -193,6 +199,8 @@ export function TaskLine({
                     onOpen={onOpen}
                     onIntent={onIntent}
                     onComplete={onComplete}
+                    open={menuOpen}
+                    onOpenChange={setMenuOpen}
                 />
             )}
         </div>

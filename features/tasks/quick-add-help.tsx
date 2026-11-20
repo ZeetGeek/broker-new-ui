@@ -19,7 +19,7 @@ const SHORTCUTS = [
     },
     {
         label: "Due",
-        examples: ["due tomorrow", "due tomorrow 6pm", "due 25/12 5pm"],
+        examples: ["due tomorrow", "due tomorrow 6pm", "due at 5pm 25/12/2026"],
         tip: "Optional. Needs a start date and time first. Due must be on or after start.",
     },
     {

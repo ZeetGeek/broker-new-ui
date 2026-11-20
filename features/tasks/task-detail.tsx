@@ -1,5 +1,6 @@
 "use client";
 
+import { isMockMode } from "@/lib/api/mock-mode";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
 import { DrawerSection } from "@/components/shared/drawer-section";
@@ -33,8 +34,8 @@ import {
     taskReminders,
     taskTimeLabel,
 } from "./model";
-import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES } from "./preview-store";
 import { taskRepeatLabel } from "./recurrence";
+import { useTaskCatalogs } from "./task-catalogs";
 import { TaskPanel } from "./task-panel";
 
 import styles from "./tasks.module.css";
@@ -58,9 +59,26 @@ export function TaskDetail({
     onRestore: () => void;
     onIntent: (view: string) => void;
 }) {
-    const client = TASK_CLIENTS.find((c) => c.id === task.clientId);
-    const property = TASK_PROPERTIES.find((p) => p.id === task.propertyId);
-    const owner = TASK_OWNERS.find((o) => o.id === task.ownerId);
+    const catalogs = useTaskCatalogs();
+    const client =
+        catalogs.clients.find((c) => c.id === task.clientId) ??
+        (task.clientId && task.client
+            ? { ...task.client, type: "", requirement: "", phoneDigits: "" }
+            : undefined);
+    const property =
+        catalogs.properties.find((p) => p.id === task.propertyId) ??
+        (task.propertyId && task.property
+            ? { ...task.property, locality: "", city: "", configLabel: "", address: "" }
+            : undefined);
+    const owner =
+        catalogs.owners.find((o) => o.id === task.ownerId) ??
+        (task.ownerId && task.owner ? task.owner : undefined);
+    const propertyPlace = property
+        ? [property.locality, property.city].filter(Boolean).join(", ")
+        : "";
+    const propertyFacts = property
+        ? [property.configLabel, property.address].filter(Boolean).join(" · ")
+        : "";
     const nextDates = nextTaskDates(task, now);
     const nextDate = nextDates?.dueDate || nextDates?.startDate;
     const overdue = taskGroup(task, now) === "overdue";
@@ -251,11 +269,11 @@ export function TaskDetail({
                                 <User aria-hidden />
                                 <span>
                                     {client.name}
-                                    <small>Client · {client.type}</small>
+                                    <small>Client{client.type ? ` · ${client.type}` : ""}</small>
                                 </span>
                                 <ChevronDown aria-hidden />
                             </summary>
-                            <p>{client.requirement}</p>
+                            {client.requirement && <p>{client.requirement}</p>}
                             {client.phoneDigits && <p>+{client.phoneDigits}</p>}
                         </details>
                     )}
@@ -265,7 +283,7 @@ export function TaskDetail({
                                 <User aria-hidden />
                                 <span>
                                     {owner.name}
-                                    <small>Owner · Sample CRM record</small>
+                                    <small>Owner{isMockMode() ? " · Sample CRM record" : ""}</small>
                                 </span>
                                 <ChevronDown aria-hidden />
                             </summary>
@@ -281,19 +299,17 @@ export function TaskDetail({
                                 <span>
                                     {property.title}
                                     <small>
-                                        Property · {property.locality}, {property.city}
+                                        Property{propertyPlace ? ` · ${propertyPlace}` : ""}
                                     </small>
                                 </span>
                                 <ChevronDown aria-hidden />
                             </summary>
-                            <p>
-                                {property.configLabel} · {property.address}
-                            </p>
+                            {propertyFacts && <p>{propertyFacts}</p>}
                         </details>
                     )}
                     <p className="body-xs mbs-3 text-ink-subtle">
-                        Linked records are sample data. Changes to this task don’t change these
-                        records.
+                        {isMockMode() ? "Linked records are sample data. " : ""}Changes to this task
+                        don’t change these records.
                     </p>
                 </DrawerSection>
             )}

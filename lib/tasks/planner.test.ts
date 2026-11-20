@@ -6,6 +6,8 @@ import { newTaskDraft, taskDueReminders, taskMatchesTab, taskSchema } from "@/fe
 import { addNotebookList, defaultNotebook } from "@/features/tasks/notebook-model";
 import {
     createPlannerTask,
+    hiddenLandingDay,
+    landingNotice,
     movePlannerTask,
     plannerColumnTasks,
     plannerDate,
@@ -22,11 +24,12 @@ test("new form and inline tasks default to low priority regardless of neighbouri
     const notebook = defaultNotebook();
     for (const date of [today, null]) {
         for (const priority of ["urgent", "high", "medium", "low"] as const) {
+            const list = date === null ? "someday" : undefined;
             const previous = {
-                ...createPlannerTask("Existing task", date, now, "previous", "someday"),
+                ...createPlannerTask("Existing task", date, now, "previous", list),
                 priority,
             };
-            const added = createPlannerTask("New task", date, now + 1000, "added", "someday");
+            const added = createPlannerTask("New task", date, now + 1000, "added", list);
             const rows = plannerColumnTasks(
                 [previous, added],
                 date,
@@ -49,9 +52,10 @@ test("new form and inline tasks default to low priority regardless of neighbouri
 test("default order keeps inline additions below existing tasks in days and named lists", () => {
     const notebook = defaultNotebook();
     for (const date of [today, null]) {
-        const first = createPlannerTask("Zulu", date, now, "first", "someday");
-        const second = createPlannerTask("Alpha", date, now + 1000, "second", "someday");
-        const added = createPlannerTask("New task", date, now + 2000, "added", "someday");
+        const list = date === null ? "someday" : undefined;
+        const first = createPlannerTask("Zulu", date, now, "first", list);
+        const second = createPlannerTask("Alpha", date, now + 1000, "second", list);
+        const added = createPlannerTask("New task", date, now + 2000, "added", list);
         const tasks = [first, second, added];
         const rows = plannerColumnTasks(tasks, date, "someday", notebook, today, "manual");
         assert.deepEqual(
@@ -360,4 +364,58 @@ test("invalid repeat moves are rejected without mutating the original task", () 
     );
     assert.equal(repeating.startDate, today);
     assert.equal(repeating.dueDate, today);
+});
+
+test("a new task on a day outside the visible planner names that day", () => {
+    assert.equal(hiddenLandingDay("2026-11-20", ["2026-11-19"]), "2026-11-20");
+    assert.equal(hiddenLandingDay("2026-11-19", ["2026-11-19", "2026-11-20"]), null);
+    assert.equal(hiddenLandingDay(null, ["2026-11-19"]), null);
+});
+
+test("the landing notice reads naturally", () => {
+    const now = Date.parse("2026-11-19T06:00:00Z");
+    assert.equal(landingNotice("2026-11-20", now), "Scheduled for tomorrow");
+    assert.equal(landingNotice("2026-11-21", now), "Scheduled for Sat, 21 Nov");
+});
+
+test("a task added in a list with a date stays in that list", () => {
+    const notebook = defaultNotebook();
+    const listed = createPlannerTask(
+        "Check with the guard",
+        "2030-01-03",
+        now,
+        "listed",
+        "someday",
+        {
+            startTime: "16:50",
+        },
+    );
+    assert.equal(listed.startDate, "2030-01-03");
+    assert.equal(plannerDate(listed, today), null);
+    const inList = plannerColumnTasks([listed], null, "someday", notebook, today, "manual");
+    assert.deepEqual(
+        inList.map((item) => item.id),
+        ["listed"],
+    );
+    assert.deepEqual(
+        plannerColumnTasks([listed], "2030-01-03", undefined, notebook, today, "manual"),
+        [],
+    );
+});
+
+test("dragging a listed task onto a day moves it into the planner", () => {
+    const listed = createPlannerTask(
+        "Check with the guard",
+        "2030-01-03",
+        now,
+        "listed",
+        "someday",
+        {
+            startTime: "16:50",
+        },
+    );
+    const [moved] = movePlannerTask([listed], "listed", "2030-01-04", undefined, now);
+    assert.equal(moved.listId ?? null, null);
+    assert.equal(moved.startDate, "2030-01-04");
+    assert.equal(plannerDate(moved, today), "2030-01-04");
 });

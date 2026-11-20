@@ -8,7 +8,7 @@ import {
 } from "@/lib/tasks/planner-column-options";
 
 /** Keep the same day-column density in the live planner and task history. */
-export function usePlannerColumns(populatedDayCount: number) {
+export function usePlannerColumns(populatedDayCount: number, calendar = false) {
     const frame = useRef<HTMLElement>(null);
     const [preferredColumns, setPreferredColumns] = useState(5);
     const [viewportMax, setViewportMax] = useState(1);
@@ -24,8 +24,8 @@ export function usePlannerColumns(populatedDayCount: number) {
         return () => observer.disconnect();
     }, []);
     const pickerOptions = useMemo(
-        () => plannerColumnPickerOptions(populatedDayCount, viewportMax),
-        [populatedDayCount, viewportMax],
+        () => plannerColumnPickerOptions(populatedDayCount, viewportMax, calendar),
+        [populatedDayCount, viewportMax, calendar],
     );
     useEffect(() => {
         if (!pickerOptions.length) return;
@@ -40,8 +40,9 @@ export function usePlannerColumns(populatedDayCount: number) {
                 populatedDayCount,
                 viewportMax,
                 pickerOptions,
+                calendar,
             ),
-        [preferredColumns, populatedDayCount, viewportMax, pickerOptions],
+        [preferredColumns, populatedDayCount, viewportMax, pickerOptions, calendar],
     );
     return {
         frame,

@@ -1,5 +1,6 @@
 "use client";
 import { type CSSProperties, type ReactNode, useId, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 import {
     closestCenter,
@@ -23,6 +24,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { useReducedMotion } from "motion/react";
 
 import { measuredCssToRem, measuredPxToRem } from "@/lib/styles/rem";
+import { plannerColumnLabel } from "@/lib/tasks/planner-column-options";
 import { cn } from "@/lib/utils";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
@@ -35,6 +37,8 @@ import { moveNotebookList, moveNotebookTab, taskListId, type TaskNotebook } from
 import type { NotebookUpdater } from "./notebook-store";
 import {
     countPopulatedPlannerDays,
+    hiddenLandingDay,
+    landingNotice,
     plannerColumnTasks,
     plannerDate,
     type PlannerDragPreview,
@@ -101,8 +105,10 @@ export function TaskPlanner({
     const daysPanelId = useId();
     const [anchor, setAnchor] = useState(today);
     const populatedDayCount = countPopulatedPlannerDays(tasks, today);
-    const { frame, columns, pickerOptions, setPreferredColumns } =
-        usePlannerColumns(populatedDayCount);
+    const { frame, columns, pickerOptions, setPreferredColumns } = usePlannerColumns(
+        populatedDayCount,
+        true,
+    );
     const [dragged, setDragged] = useState<Task | null>(null);
     const [dragPreview, setDragPreview] = useState<PlannerDragPreview | null>(null);
     const latestDragPreview = useRef<PlannerDragPreview | null>(null);
@@ -134,6 +140,15 @@ export function TaskPlanner({
     const shift = (offset: number) => {
         const day = shiftTaskDate(anchor, offset);
         if (day) setAnchor(day);
+    };
+    const add: TaskPlannerProps["onAdd"] = async (title, date, listId, extras) => {
+        const added = await onAdd(title, date, listId, extras);
+        const landing = added && !listId ? hiddenLandingDay(date, days) : null;
+        if (landing) {
+            setAnchor(landing);
+            toast.success(landingNotice(landing, actions.now));
+        }
+        return added;
     };
     const collision: CollisionDetection = (args) => {
         const isList = args.active.data.current?.kind === "list";
@@ -258,8 +273,7 @@ export function TaskPlanner({
                         value={columns}
                         options={pickerOptions.map((count) => ({
                             value: count,
-                            label: count === 1 ? "1 day" : `${count} days`,
-                            ariaLabel: count === 1 ? "Show one day" : `Show ${count} days`,
+                            ...plannerColumnLabel(count),
                         }))}
                         onValueChange={setPreferredColumns}
                         label="Visible days"
@@ -400,7 +414,7 @@ export function TaskPlanner({
                                 dragPreview,
                             )}
                             catalogs={catalogs}
-                            onAdd={onAdd}
+                            onAdd={add}
                             actions={rowActions}
                         />
                     ))}
@@ -414,7 +428,7 @@ export function TaskPlanner({
                     tasks={tasks}
                     sort={sort}
                     catalogs={catalogs}
-                    onAdd={onAdd}
+                    onAdd={add}
                     activeTab={activeTab}
                     onSelectTab={setSelectedTab}
                     today={today}

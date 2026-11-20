@@ -27,6 +27,8 @@ export type NotificationType =
     | "referral_rewarded"
     | "property_assigned"
     | "client_assigned"
+    | "task_reminder"
+    | "visit_reminder"
     | "system";
 
 export type NotificationItem = {

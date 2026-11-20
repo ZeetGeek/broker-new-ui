@@ -17,6 +17,7 @@ import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
 import { DealDetailModal } from "@/features/pipeline/deal-detail-modal";
 import { DealNoteModal } from "@/features/pipeline/deal-note-modal";
@@ -35,6 +36,13 @@ import {
     PipelineHeaderSkeleton,
 } from "@/features/pipeline/pipeline-skeleton";
 import { PipelineToolbar } from "@/features/pipeline/pipeline-toolbar";
+import {
+    findDealForMove,
+    markSoldBlockedReason,
+    otherLiveClientCount,
+    type SaleConfirmMode,
+    saleConfirmMode,
+} from "@/features/pipeline/sale-mode";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import {
     type StageMoveDetails,
@@ -103,6 +111,14 @@ function pinSort(pinnedDealIds: string[]) {
         const bPin = pinnedDealIds.includes(b.id) ? 0 : 1;
         return aPin - bPin;
     };
+}
+
+/** Owner listings wait for the owner once the owner portal is live. */
+function saleModeFor(deal: DealItem): SaleConfirmMode {
+    return saleConfirmMode({
+        isBrokerListing: Boolean(deal.property.isBrokerListing),
+        ownerPortalOn: FEATURE_PLATFORM_OWNER,
+    });
 }
 
 export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
@@ -299,10 +315,19 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
 
     const requestMove = useCallback(
         (dealId: string, status: DealStatus, successMessage: string) => {
+            // Snapshot the deal: the detail modal closes right after this call.
+            const deal = findDealForMove(deals, viewDetail, dealId) ?? undefined;
+            if (status === "closed" && deal) {
+                const blocked = markSoldBlockedReason(deal, saleModeFor(deal));
+                if (blocked) {
+                    setActionError(blocked);
+                    return;
+                }
+            }
             setMoveError(null);
-            setMoveRequest({ dealId, status, successMessage });
+            setMoveRequest({ dealId, status, successMessage, deal });
         },
-        [],
+        [deals, viewDetail],
     );
 
     /** Latest detail request. An older, slower response must not replace a newer deal. */
@@ -450,17 +475,31 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             if (!moveRequest) return;
             if (stageGate.begin(moveRequest.dealId) == null) return;
 
+            const deal = findDealForMove(deals, moveRequest.deal ?? null, moveRequest.dealId);
+            const sendToOwner =
+                moveRequest.status === "closed" &&
+                deal != null &&
+                saleModeFor(deal) === "owner" &&
+                details.closedAmountInr != null;
+
             setIsSavingMove(true);
             setBusyId(moveRequest.dealId);
             try {
                 setMoveError(null);
-                await pipelineApi.setStage(moveRequest.dealId, moveRequest.status, {
-                    note,
-                    closedAmountInr: details.closedAmountInr,
-                    lostReason: details.lostReason,
-                });
+                if (sendToOwner) {
+                    // The owner confirms: the final price goes to them as an offer.
+                    await pipelineApi.makeOffer(moveRequest.dealId, details.closedAmountInr!, note);
+                } else {
+                    await pipelineApi.setStage(moveRequest.dealId, moveRequest.status, {
+                        note,
+                        closedAmountInr: details.closedAmountInr,
+                        lostReason: details.lostReason,
+                    });
+                }
                 setMoveRequest(null);
-                toast.success(moveRequest.successMessage);
+                toast.success(
+                    sendToOwner ? "Sent to the owner to confirm." : moveRequest.successMessage,
+                );
             } catch (saveError) {
                 setMoveError(
                     saveError instanceof Error
@@ -474,7 +513,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 setRevision((value) => value + 1);
             }
         },
-        [moveRequest, stageGate],
+        [deals, moveRequest, stageGate],
     );
 
     const handleConfirmOffer = useCallback(
@@ -651,7 +690,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
 
     const moveDeal =
         moveRequest != null
-            ? ((deals ?? []).find((deal) => deal.id === moveRequest.dealId) ?? null)
+            ? findDealForMove(deals, moveRequest.deal ?? null, moveRequest.dealId)
             : null;
 
     const offerDeal =
@@ -895,6 +934,8 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             <StageNoteModal
                 open={moveRequest != null}
                 deal={moveDeal}
+                saleMode={moveDeal ? saleModeFor(moveDeal) : "immediate"}
+                otherClientCount={moveDeal ? otherLiveClientCount(deals ?? [], moveDeal) : 0}
                 request={moveRequest}
                 isSaving={isSavingMove}
                 submitError={moveError}

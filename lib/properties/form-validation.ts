@@ -13,7 +13,7 @@ import {
 
 /**
  * Broker publishing requires a real owner selection; search text and display
- * names do not count. Attaching contacts is optional.
+ * names do not count. Attaching clients is optional.
  */
 export function propertyPublishAttachmentIssues(
     values: PropertyDraftValues,

@@ -1,6 +1,5 @@
 "use client";
 
-import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 
 import { inputValueInIst, inputValueToUtc } from "@/lib/visits/time";
@@ -495,44 +494,3 @@ export const taskPreviewStore = {
         return writeTasks(accountId, []);
     },
 };
-
-export function useTasks(accountId: string) {
-    const queryClient = useQueryClient();
-    const queryKey = TASK_QUERY_KEY(accountId);
-    const mutationKey = ["private-tasks-mutation", accountId];
-    const query = useQuery({
-        queryKey,
-        queryFn: () => taskPreviewStore.list(accountId),
-        staleTime: Infinity,
-        retry: false,
-    });
-    const mutation = useMutation({
-        mutationKey,
-        mutationFn: (next: Task[] | TaskUpdater | "reset") =>
-            next === "reset"
-                ? taskPreviewStore.reset(accountId)
-                : typeof next === "function"
-                  ? taskPreviewStore.update(accountId, next)
-                  : taskPreviewStore.save(accountId, next),
-        onSuccess: (tasks) => queryClient.setQueryData(queryKey, tasks),
-    });
-    const busy = useIsMutating({ mutationKey }) > 0;
-    const save = async (next: Task[]): Promise<void> => {
-        await mutation.mutateAsync(next);
-    };
-    const update = async (updater: TaskUpdater): Promise<void> => {
-        await mutation.mutateAsync(updater);
-    };
-    const reset = async (): Promise<void> => {
-        await mutation.mutateAsync("reset");
-    };
-    return {
-        tasks: query.data ?? [],
-        isLoading: query.isPending,
-        error: query.error,
-        save,
-        update,
-        reset,
-        busy,
-    };
-}
