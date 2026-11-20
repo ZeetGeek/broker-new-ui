@@ -287,6 +287,7 @@ export function PropertyCardMenu({
                     <IconButton
                         type="button"
                         size="sm"
+                        appearance={tone === "overlay" ? "inverse" : "outline"}
                         aria-label="Property actions"
                         aria-haspopup="menu"
                         className={cn(
