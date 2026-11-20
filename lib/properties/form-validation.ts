@@ -43,7 +43,7 @@ export function propertyDraftValidationIssues(values: PropertyDraftValues) {
     });
 }
 
-/** Quick add controls; publishing also runs the complete Full details validation. */
+/** Quick add validates its visible controls without requiring the Full details fields. */
 export const QUICK_ADD_VALIDATION_FIELDS = [
     "basics.listingFor",
     "basics.category",
@@ -72,10 +72,7 @@ export function quickAddValidationIssues(
     intent: "draft" | "publish" = "draft",
 ): { path: string; message: string }[] {
     const fields = new Set<string>(
-        QUICK_ADD_VALIDATION_FIELDS.filter(
-            (path) =>
-                isVisible(path, values) && (portal === "owner" || !path.startsWith("commission.")),
-        ),
+        QUICK_ADD_VALIDATION_FIELDS.filter((path) => isVisible(path, values)),
     );
     const issues = new Map<string, { path: string; message: string }>();
     for (const step of ["basics", "details", "pricing", "media"] as const) {

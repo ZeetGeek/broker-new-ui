@@ -16,6 +16,7 @@ import { AppImage } from "@/components/shared/app-image";
 import { AttachedBuyersRow } from "@/components/shared/attached-people-row";
 import { IconButton } from "@/components/shared/icon-button";
 import {
+    BadgePercent,
     Check,
     CircleHelp,
     Copy,
@@ -142,6 +143,7 @@ export function LiveSummaryPanel({
     }, [buyerCharges, deposit, isSale, ownerDeductions, values]);
 
     const hasPrice = Boolean(price && price > 0);
+    const showDealBreakdown = stepIndex >= 2 && hasPrice;
     const coBrokerPercent = values.deal.coBrokerSharePercent ?? 0;
     const coBrokerShare = (result.brokerRealIncome * coBrokerPercent) / 100;
     const brokerAfterSplit = Math.max(0, result.brokerRealIncome - coBrokerShare);
@@ -258,7 +260,7 @@ export function LiveSummaryPanel({
             className="flex flex-col gap-4 min-inline-0"
             aria-label="Property preview and deal summary"
         >
-            <article className="overflow-hidden rounded-card bg-surface shadow-md">
+            <article className="overflow-hidden rounded-card bg-surface shadow-md min-inline-0">
                 <h2 className="sr-only">Listing preview</h2>
                 {photoFilesRef ? (
                     <input
@@ -275,10 +277,10 @@ export function LiveSummaryPanel({
                 ) : null}
                 <div
                     className={cn(
-                        "relative aspect-4/3 overflow-hidden",
+                        "relative overflow-hidden min-inline-0",
                         cover?.url
-                            ? "bg-surface-muted"
-                            : "mx-3 mbs-3 rounded-inner border border-dashed border-brand/30 bg-brand-soft/60",
+                            ? "aspect-4/3 bg-surface-muted"
+                            : "mx-3 mbs-3 rounded-inner border border-brand/20 bg-brand-soft/60",
                     )}
                 >
                     <div className="absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap gap-1.5 pe-14">
@@ -335,14 +337,16 @@ export function LiveSummaryPanel({
                             unoptimized={/^(blob:|https?:)/.test(cover.url)}
                         />
                     ) : (
-                        <div className="flex flex-col items-center justify-center gap-2 px-4 pbs-12 pbe-4 text-center block-full">
-                            <ImageIcon
-                                className="text-brand block-7 inline-7"
-                                strokeWidth={1.5}
-                                aria-hidden
-                            />
-                            <div>
-                                <p className="text-sm font-semibold text-ink">
+                        <div className="flex flex-col items-center justify-center gap-4 px-5 pbs-12 pbe-6 text-center min-block-60 min-inline-0">
+                            <div className="flex flex-col items-center gap-3">
+                                <span className="flex items-center justify-center rounded-full border border-brand/20 bg-brand/10 text-brand block-12 inline-12">
+                                    <ImageIcon
+                                        className="block-6 inline-6"
+                                        strokeWidth={1.5}
+                                        aria-hidden
+                                    />
+                                </span>
+                                <p className="text-sm/5 font-semibold text-ink">
                                     Your property, at a glance
                                 </p>
                             </div>
@@ -416,7 +420,12 @@ export function LiveSummaryPanel({
                 </div>
             </article>
 
-            <article className="overflow-hidden rounded-card bg-surface shadow-md">
+            <article
+                className={cn(
+                    "overflow-hidden rounded-card bg-surface min-inline-0",
+                    showDealBreakdown ? "shadow-md" : "border border-border-warm",
+                )}
+            >
                 <header className="flex items-start justify-between gap-2 px-4 pbs-4">
                     <div className="min-inline-0">
                         <h2 className="text-sm font-semibold text-ink">
@@ -428,7 +437,7 @@ export function LiveSummaryPanel({
                         <LockKeyhole className="block-3.5 inline-3.5" aria-hidden /> Private
                     </span>
                 </header>
-                {stepIndex >= 2 ? (
+                {showDealBreakdown ? (
                     <>
                         <div className="px-4 py-3">
                             {isSale && "ownerNet" in result ? (
@@ -508,11 +517,25 @@ export function LiveSummaryPanel({
                         </div>
                     </>
                 ) : (
-                    <p className="px-4 pbs-4 pbe-5 text-sm/6 text-ink-muted">
-                        {audience === "owner"
-                            ? "Add the price on Price & deal to see the broker commission."
-                            : "Add the price on Price & deal to see what you earn."}
-                    </p>
+                    <div className="flex flex-col items-center gap-3 px-5 py-6 text-center">
+                        <span className="flex items-center justify-center rounded-full border border-brand/20 bg-brand-soft text-brand-text block-12 inline-12">
+                            <BadgePercent className="block-6 inline-6" aria-hidden />
+                        </span>
+                        <div className="flex flex-col gap-1.5 max-inline-64">
+                            <p className="text-sm font-semibold text-ink">
+                                {audience === "owner"
+                                    ? "Broker commission estimate"
+                                    : "Your commission estimate"}
+                            </p>
+                            <p className="text-xs/5 text-ink-muted">
+                                Add the price and commission in{" "}
+                                <span className="font-semibold text-ink">Price &amp; deal</span>
+                                {audience === "owner"
+                                    ? " to see the broker's estimated fee."
+                                    : " to see your estimated earnings."}
+                            </p>
+                        </div>
+                    </div>
                 )}
             </article>
         </aside>
@@ -570,8 +593,9 @@ function MoneyRow({
                             <IconButton
                                 type="button"
                                 size="sm"
+                                appearance="ghost"
+                                color="var(--color-ink-subtle)"
                                 aria-label={`Explain ${label}`}
-                                className=""
                             />
                         }
                     >

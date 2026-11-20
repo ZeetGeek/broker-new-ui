@@ -1328,8 +1328,8 @@ function PropertyFormHeader({
                       min-inline-0
                     "
                 >
-                    <DialogTitle className="text-2xl font-bold min-inline-0">
-                        {title}. <span className="text-ink-muted">Add the property details.</span>
+                    <DialogTitle className="text-xl font-semibold min-inline-0">
+                        {title}
                     </DialogTitle>
                     <DialogDescription className="sr-only">
                         Property and commission details. Full details walks through every step;
@@ -1339,8 +1339,8 @@ function PropertyFormHeader({
                 </DialogHeader>
             ) : (
                 <div className="flex flex-1 flex-wrap items-center gap-2.5 min-inline-0">
-                    <h1 className="font-display text-2xl font-bold text-ink min-inline-0">
-                        {title}. <span className="text-ink-muted">Add the property details.</span>
+                    <h1 className="font-display text-xl font-semibold text-ink min-inline-0">
+                        {title}
                     </h1>
                     {savedHint}
                 </div>
@@ -1355,13 +1355,13 @@ function PropertyFormHeader({
                     value={entryMode}
                     onValueChange={onEntryModeChange}
                     label="Entry mode"
-                    height={44}
+                    height={36}
                     options={ENTRY_MODE_TABS}
                 />
                 <Button
                     type="button"
                     variant="outline"
-                    size="md"
+                    size="default"
                     loading={savingIntent === "draft"}
                     disabled={isBusy}
                     onClick={(event) => {
@@ -1376,7 +1376,7 @@ function PropertyFormHeader({
                 <Button
                     type="button"
                     variant="accent"
-                    size="md"
+                    size="default"
                     loading={savingIntent === "publish"}
                     disabled={isBusy}
                     onClick={(event) => {
@@ -1396,7 +1396,7 @@ function PropertyFormHeader({
                         render={
                             <IconButton
                                 type="button"
-                                size="lg"
+                                size="md"
                                 aria-label="Close"
                                 className="shrink-0"
                             />

@@ -611,6 +611,46 @@ test("Sale commission uses the same 0.1–5% limits for full details and owner q
     }
 });
 
+test("Broker Quick add validates commission for the selected deal type", () => {
+    const values = listing();
+    const commissionIssues = () =>
+        quickAddValidationIssues(values, "broker").filter((issue) =>
+            issue.path.startsWith("commission."),
+        );
+
+    for (const value of [null, 0, 0.05, 5.1, Number.POSITIVE_INFINITY]) {
+        values.commission.sale.value = value;
+        assert.ok(commissionIssues().some((issue) => issue.path === "commission.sale.value"));
+    }
+    for (const value of [0.1, 2, 5]) {
+        values.commission.sale.value = value;
+        assert.deepEqual(commissionIssues(), []);
+    }
+
+    values.basics.listingFor = "rent";
+    values.rent.monthlyRent = 25000;
+    // A hidden sale commission must not prevent a rental listing from being saved.
+    values.commission.sale.value = 99;
+    for (const value of [0, 25000]) {
+        values.commission.rent.value = value;
+        assert.deepEqual(commissionIssues(), []);
+    }
+    for (const value of [null, -1, Number.POSITIVE_INFINITY]) {
+        values.commission.rent.value = value;
+        assert.ok(commissionIssues().some((issue) => issue.path === "commission.rent.value"));
+    }
+
+    values.basics.listingFor = "both";
+    values.commission.sale.value = null;
+    values.commission.rent.value = null;
+    assert.deepEqual(
+        commissionIssues()
+            .map((issue) => issue.path)
+            .sort(),
+        ["commission.rent.value", "commission.sale.value"],
+    );
+});
+
 test("Quick add validates its visible choices without demanding unrelated full-form fields", () => {
     const values = listing();
     values.basics.listingFor = "rent";
