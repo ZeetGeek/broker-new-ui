@@ -1,5 +1,4 @@
 "use client";
-
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
@@ -17,10 +16,10 @@ import {
 import { cn } from "@/lib/utils";
 
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
+import { IconButton } from "@/components/shared/icon-button";
 import { PropertyMenuIcon } from "@/components/shared/icons";
 import { OVERLAY_ICON_BUTTON_CLASS } from "@/components/shared/overlay-card";
 import shareBrands from "@/components/shared/thesvg-color-share.json";
-import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -152,7 +151,7 @@ const ITEM_CLASS = `
 `;
 
 const ICON_CLASS = "menu-stroke-icon block-4.5 inline-4.5 shrink-0 text-ink!";
-const SEPARATOR_CLASS = "mx-1.5 my-1.5 bg-border-warm";
+const SEPARATOR_CLASS = "my-1.5 bg-border-warm";
 /* Keep pointer events so the `title` hint still shows on a disabled row. */
 const DISABLED_ITEM_CLASS =
     "data-disabled:pointer-events-auto data-disabled:cursor-not-allowed data-disabled:opacity-50";
@@ -285,10 +284,9 @@ export function PropertyCardMenu({
         <DropdownMenu open={open} onOpenChange={handleOpenChange}>
             <DropdownMenuTrigger
                 render={
-                    <Button
+                    <IconButton
                         type="button"
-                        size={tone === "overlay" ? "icon" : "icon-sm"}
-                        variant="ghost"
+                        size="sm"
                         aria-label="Property actions"
                         aria-haspopup="menu"
                         className={cn(

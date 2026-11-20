@@ -1,10 +1,9 @@
 "use client";
-
 import { addCollection, Icon } from "@iconify/react/offline";
 
 import { cn } from "@/lib/utils";
 
-import { OVERLAY_ICON_BUTTON_CLASS } from "@/components/shared/overlay-card";
+import { IconButton } from "@/components/shared/icon-button";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -65,24 +64,15 @@ export function ChatButton({
         <Tooltip>
             <TooltipTrigger
                 render={
-                    <Button
+                    <IconButton
                         type="button"
-                        variant="ghost"
-                        size={isOverlay ? "icon" : size}
+                        size={size === "icon-xs" ? "xs" : size === "icon" ? "md" : "sm"}
                         onClick={() => openChat(peer)}
                         aria-label={`Message ${peer.name}`}
-                        className={cn(
-                            isOverlay
-                                ? OVERLAY_ICON_BUTTON_CLASS
-                                : `
-                                  shrink-0 bg-transparent p-0 text-ink-muted block-6! inline-6!
-                                  hover:bg-transparent hover:text-ink
-                                `,
-                            className,
-                        )}
+                        className={cn("shrink-0", className)}
                     >
                         {icon}
-                    </Button>
+                    </IconButton>
                 }
             />
             <TooltipContent>Message {peer.name}.</TooltipContent>

@@ -1,5 +1,4 @@
 "use client";
-
 import { type MutableRefObject, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -15,6 +14,7 @@ import { FIELD_RULES } from "@/lib/visibility/rules";
 
 import { AppImage } from "@/components/shared/app-image";
 import { AttachedBuyersRow } from "@/components/shared/attached-people-row";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     Check,
     CircleHelp,
@@ -27,7 +27,7 @@ import {
     Upload,
     X,
 } from "@/components/shared/icons";
-import { OVERLAY_ICON_BUTTON_CLASS, OverlayPersonLine } from "@/components/shared/overlay-card";
+import { OverlayPersonLine } from "@/components/shared/overlay-card";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -302,11 +302,10 @@ export function LiveSummaryPanel({
                             <DropdownMenu>
                                 <DropdownMenuTrigger
                                     render={
-                                        <Button
+                                        <IconButton
                                             type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            className={OVERLAY_ICON_BUTTON_CLASS}
+                                            size="md"
+
                                             aria-label="Cover photo options"
                                         />
                                     }
@@ -567,15 +566,11 @@ function MoneyRow({
                 <Popover>
                     <PopoverTrigger
                         render={
-                            <Button
+                            <IconButton
                                 type="button"
-                                variant="ghost"
-                                size="icon-sm"
+                                size="sm"
                                 aria-label={`Explain ${label}`}
-                                className="
-                                  text-ink-subtle min-block-11 min-inline-11
-                                  hover:bg-brand-soft hover:text-brand-text
-                                "
+                                className=""
                             />
                         }
                     >

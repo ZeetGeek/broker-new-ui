@@ -1,5 +1,4 @@
 "use client";
-
 import {
     type FormEvent,
     type MutableRefObject,
@@ -53,8 +52,10 @@ import {
 } from "@/lib/visibility/rules";
 import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { ArrowRight, Check, ChevronDown, RotateCcw, X } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,7 +71,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Progress, ProgressLabel } from "@/components/ui/progress";
 
 import { FORM_STEPS, PROPERTY_TYPES, type PropertyFormStep, toLabel } from "@/constants/property";
-import { SlidingTabs } from "@/features/design-system/theme/sliding-tabs";
 import { ListingScoreCard } from "@/features/properties/property-form/listing-score-card";
 import { LiveSummaryPanel } from "@/features/properties/property-form/live-summary-panel";
 import { PropertyFormSkeleton } from "@/features/properties/property-form/property-form-skeleton";
@@ -1354,7 +1354,8 @@ function PropertyFormHeader({
                 <SlidingTabs
                     value={entryMode}
                     onValueChange={onEntryModeChange}
-                    ariaLabel="Entry mode"
+                    label="Entry mode"
+                    height={44}
                     options={ENTRY_MODE_TABS}
                 />
                 <Button
@@ -1393,10 +1394,9 @@ function PropertyFormHeader({
                             onClose();
                         }}
                         render={
-                            <Button
+                            <IconButton
                                 type="button"
-                                variant="outline"
-                                size="icon-md"
+                                size="lg"
                                 aria-label="Close"
                                 className="shrink-0"
                             />

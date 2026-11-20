@@ -8,6 +8,11 @@ import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
+import {
+    portalProfileMenuItemClass,
+    portalProfileMenuSurfaceClass,
+    PortalProfileShortcutHint,
+} from "@/components/layout/portal-profile-menu";
 import { resolveActiveNavHref } from "@/components/layout/resolve-active-nav";
 import { ChevronDown } from "@/components/shared/icons";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
@@ -33,7 +38,10 @@ export function PortalNav({ items }: PortalNavProps) {
 
     return (
         <LayoutGroup id="portal-nav">
-            <nav className="hidden items-center gap-6 md:flex lg:gap-8" aria-label="Portal">
+            <nav
+                className="hidden shrink-0 items-center gap-6 whitespace-nowrap md:flex lg:gap-8"
+                aria-label="Portal"
+            >
                 {items.map((item, index) => {
                     const isActive = item.href === activeHref;
                     const link = (
@@ -99,18 +107,30 @@ export function PortalNav({ items }: PortalNavProps) {
                                 {compactActive?.mobileLabel ?? compactActive?.label ?? "More"}
                                 <ChevronDown aria-hidden className="block-4 inline-4" />
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="min-inline-52">
+                            <DropdownMenuContent
+                                align="end"
+                                className={cn(
+                                    portalProfileMenuSurfaceClass,
+                                    "inline-auto min-inline-40",
+                                )}
+                            >
                                 {compactItems.map((item) => (
                                     <DropdownMenuItem
                                         key={item.href}
                                         render={<Link href={item.href} />}
                                         aria-current={item.href === activeHref ? "page" : undefined}
                                         className={cn(
-                                            item.href === activeHref &&
-                                                "bg-brand-soft text-brand-text",
+                                            portalProfileMenuItemClass,
+                                            item.href === activeHref && "bg-surface-muted",
                                         )}
                                     >
-                                        {item.label}
+                                        <span className="flex-1 min-inline-0">{item.label}</span>
+                                        {item.shortcutId ? (
+                                            <PortalProfileShortcutHint
+                                                shortcutId={item.shortcutId}
+                                                showWhenAvailable
+                                            />
+                                        ) : null}
                                     </DropdownMenuItem>
                                 ))}
                             </DropdownMenuContent>

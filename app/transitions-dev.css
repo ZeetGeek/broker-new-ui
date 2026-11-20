@@ -541,13 +541,13 @@
 }
 
 .t-tabs-surface.t-tabs-compact .t-tab {
-    height: 30px;
+    height: var(--tabs-control-height, 30px);
     padding: 4px 12px;
 }
 
 .t-tabs-surface.t-tabs-compact .t-tabs-pill {
     top: 3px;
-    height: 30px;
+    height: var(--tabs-control-height, 30px);
 }
 
 .t-tabs-surface.t-tabs-stretch {
@@ -1225,18 +1225,23 @@
     color: var(--color-ink);
 }
 
-/* Stroke icons stay ink at rest and on hover (beats focus:**:text-accent-foreground). */
+/* Neutral icons stay ink; destructive rows keep their semantic icon colour. */
 .t-profile-menu .menu-stroke-icon,
 .t-profile-menu .menu-stroke-icon *,
 .t-profile-menu
-    [data-slot="dropdown-menu-item"][data-highlighted]
+    [data-slot="dropdown-menu-item"]:not([data-variant="destructive"])[data-highlighted]
     > svg:not(.is-brand):not(.is-danger),
 .t-profile-menu
-    [data-slot="dropdown-menu-item"][data-highlighted]
+    [data-slot="dropdown-menu-item"]:not([data-variant="destructive"])[data-highlighted]
     > svg:not(.is-brand):not(.is-danger)
     *,
-.t-profile-menu [data-slot="dropdown-menu-item"]:focus > svg:not(.is-brand):not(.is-danger),
-.t-profile-menu [data-slot="dropdown-menu-item"]:focus > svg:not(.is-brand):not(.is-danger) *,
+.t-profile-menu
+    [data-slot="dropdown-menu-item"]:not([data-variant="destructive"]):focus
+    > svg:not(.is-brand):not(.is-danger),
+.t-profile-menu
+    [data-slot="dropdown-menu-item"]:not([data-variant="destructive"]):focus
+    > svg:not(.is-brand):not(.is-danger)
+    *,
 .t-profile-menu [data-slot="dropdown-menu-sub-trigger"] svg,
 .t-profile-menu [data-slot="dropdown-menu-sub-trigger"] svg * {
     color: var(--color-ink) !important;

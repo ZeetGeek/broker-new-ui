@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -8,6 +10,7 @@ import {
 } from "@/components/layout/portal-mobile-app-bar";
 import { PortalNav } from "@/components/layout/portal-nav";
 import { PortalNotificationsMenu } from "@/components/layout/portal-notifications-menu";
+import { usePortalHeaderScrolled } from "@/components/layout/use-portal-header-scrolled";
 import { Logo } from "@/components/shared/logo";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -41,13 +44,25 @@ export function PortalHeader({
     children,
 }: PortalHeaderProps) {
     const homeHref = navItems[0]?.href ?? "/";
+    const scrolled = usePortalHeaderScrolled();
 
     return (
         <div data-portal-shell className="bg-surface-muted min-block-screen">
             {/* Sticky outside overflow-x clip — sticky fails inside overflow-x-hidden. */}
-            <header className="sticky inset-bs-0 z-30">
+            <header
+                data-scrolled={scrolled ? "true" : "false"}
+                className={cn(
+                    `
+                      sticky inset-bs-0 z-30
+                      transition-[background-color,border-color,box-shadow] duration-160
+                    `,
+                    scrolled
+                        ? "bg-surface shadow-sm md:border-be md:border-border-warm"
+                        : "bg-surface-muted md:border-be md:border-border-warm",
+                )}
+            >
                 <TooltipProvider>
-                    <div className="px-4 md:px-8">
+                    <div className="mx-auto px-4 max-inline-(--portal-max-inline) md:px-8">
                         <PortalMobileAppBar
                             identity={mobileIdentity}
                             notificationsHref={notificationsHref}
@@ -55,12 +70,11 @@ export function PortalHeader({
 
                         <div
                             className="
-                              hidden items-center justify-between gap-8 border-be border-border-warm
-                              bg-surface-muted py-5 md:flex
+                              hidden items-center justify-between gap-4 py-3 md:flex lg:gap-8
                             "
                         >
-                            <div className="flex flex-1 items-center gap-10 min-inline-0">
-                                <Logo href={homeHref} />
+                            <div className="flex flex-1 items-center gap-8 min-inline-0 lg:gap-10">
+                                <Logo href={homeHref} className="shrink-0 whitespace-nowrap" />
                                 <PortalNav items={navItems} />
                             </div>
 
@@ -69,7 +83,8 @@ export function PortalHeader({
                                     viewAllHref={notificationsHref}
                                     tooltipLabel="Notifications"
                                     triggerClassName="
-                                      relative rounded-full border-0 bg-surface text-ink-muted shadow-sm
+                                      relative rounded-full border border-border-warm bg-surface
+                                      text-ink-muted shadow-sm
                                       hover:bg-surface-muted hover:text-ink-muted
                                       aria-expanded:bg-surface-muted aria-expanded:text-ink-muted
                                     "
@@ -87,7 +102,10 @@ export function PortalHeader({
                 </TooltipProvider>
             </header>
 
-            <div data-portal-content className="overflow-x-hidden px-4 md:px-8">
+            <div
+                data-portal-content
+                className="mx-auto overflow-x-hidden px-4 max-inline-(--portal-max-inline) md:px-8"
+            >
                 {sectionNav ? <div className="py-6">{sectionNav}</div> : null}
 
                 {children ? (

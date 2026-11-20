@@ -6,7 +6,7 @@ import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { Plus } from "@/components/shared/icons";
-import { PropertyThumb } from "@/components/shared/property-thumb";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { ContactPropertyCardItem } from "@/features/contacts/contact-card-model";
@@ -92,21 +92,18 @@ export function PropertyCoverStack({
                                     }}
                                     className={cn(
                                         `
-                                          property-cover-tile relative flex shrink-0 overflow-hidden
-                                          rounded-[8px] ring-2 ring-surface block-12 inline-12
+                                          property-cover-tile relative flex shrink-0
+                                          rounded-inner block-12 inline-12
                                         `,
                                         index > 0 && "-ms-2.5",
                                     )}
                                     style={{ zIndex: index + 1 }}
                                 >
-                                    <PropertyThumb
+                                    <PropertyCoverImage
                                         src={property.coverUrl}
                                         alt=""
-                                        hoverScale={false}
                                         sizes="48px"
-                                        iconClassName="block-4.5 inline-4.5"
-                                        sizeClassName="block-full inline-full"
-                                        className="rounded-[8px]"
+                                        size={48}
                                     />
                                 </button>
                             }

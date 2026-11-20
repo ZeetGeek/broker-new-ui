@@ -5,6 +5,7 @@ import { type DayButton, DayPicker, getDefaultClassNames, type Locale } from "re
 
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@/components/shared/icons";
 import { Button, buttonVariants } from "@/components/ui/button";
 
@@ -206,6 +207,8 @@ function Calendar({
                         </td>
                     );
                 },
+                PreviousMonthButton: (props) => <IconButton {...props} size="lg" tone="brand" />,
+                NextMonthButton: (props) => <IconButton {...props} size="lg" tone="brand" />,
                 ...components,
             }}
             {...props}

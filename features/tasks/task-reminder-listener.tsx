@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -10,8 +9,8 @@ import { isMockMode } from "@/lib/api/mock-mode";
 import type { NotificationItem } from "@/lib/api/notifications";
 import { getNotificationSocket } from "@/lib/socket/notifications";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { Bell, X } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 
 import { useAppSelector } from "@/store/hooks";
 
@@ -53,14 +52,13 @@ function showReminderToast(id: string, content: ReminderToastContent) {
                         {content.action}
                     </Link>
                 </div>
-                <Button
-                    variant="ghost"
-                    size="icon-sm"
+                <IconButton
+                    size="sm"
                     aria-label="Dismiss reminder"
                     onClick={() => toast.dismiss(notification.id)}
                 >
                     <X aria-hidden />
-                </Button>
+                </IconButton>
             </div>
         ),
         { id, duration: 12_000 },

@@ -6,19 +6,12 @@ import { cn } from "@/lib/utils";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
-import { AppImage } from "@/components/shared/app-image";
 import { AppTimePicker } from "@/components/shared/app-time-picker";
 import { CharacterCount } from "@/components/shared/character-count";
-import { filterChipClassName } from "@/components/shared/filter-chip";
-import {
-    ArrowDownUp,
-    Bell,
-    Building2,
-    ChevronDown,
-    LockKeyhole,
-    Pencil,
-    UserRound,
-} from "@/components/shared/icons";
+import { revealDrawerSections } from "@/components/shared/drawer-section";
+import { Bell, Building2, LockKeyhole, Pencil, UserRound } from "@/components/shared/icons";
+import { ListToolbarSelect } from "@/components/shared/list-toolbar";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,12 +28,6 @@ import {
     ComboboxValue,
     useComboboxAnchor,
 } from "@/components/ui/combobox";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -97,35 +84,14 @@ export function TaskSelect({
     const catalogs = useTaskCatalogs();
     if (toolbar) {
         return (
-            <DropdownMenu>
-                <DropdownMenuTrigger
-                    render={
-                        <button
-                            type="button"
-                            disabled={disabled}
-                            aria-label={`${label}: ${options.find((option) => option.value === value)?.label ?? value}`}
-                            className={filterChipClassName(true)}
-                        />
-                    }
-                >
-                    <ArrowDownUp aria-hidden className="text-brand block-4 inline-4" />
-                    <span>{options.find((option) => option.value === value)?.label ?? value}</span>
-                    <ChevronDown aria-hidden className="opacity-60 block-3.5 inline-3.5" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-inline-44">
-                    {options.map((option) => (
-                        <DropdownMenuItem
-                            key={option.value}
-                            onClick={() => onChange(option.value)}
-                            className={
-                                value === option.value ? "font-semibold text-brand" : undefined
-                            }
-                        >
-                            {option.label}
-                        </DropdownMenuItem>
-                    ))}
-                </DropdownMenuContent>
-            </DropdownMenu>
+            <ListToolbarSelect
+                label={label}
+                value={value}
+                options={options}
+                onChange={onChange}
+                active
+                disabled={disabled}
+            />
         );
     }
     if (entity) {
@@ -165,17 +131,11 @@ export function TaskSelect({
                                             {item && entity !== "property" ? (
                                                 <UserAvatar name={labelFor(item)} size="sm" />
                                             ) : (
-                                                <span className={styles.entityIcon}>
-                                                    <Building2 aria-hidden />
-                                                    {property?.imageUrl && (
-                                                        <AppImage
-                                                            src={property.imageUrl}
-                                                            alt=""
-                                                            fill
-                                                            sizes="40px"
-                                                        />
-                                                    )}
-                                                </span>
+                                                <PropertyCoverImage
+                                                    src={property?.imageUrl}
+                                                    alt=""
+                                                    size={40}
+                                                />
                                             )}
                                             <span>
                                                 {labelFor(item)}
@@ -425,6 +385,7 @@ export function TaskForm({
         setSaveError("");
         const reminderHasPassed = hasNewPastReminder(Date.now());
         if (!validation.valid || reminderHasPassed) {
+            revealDrawerSections(event.currentTarget);
             setNow(Date.now());
             if (validation.errors.title) titleRef.current?.focus();
             else {

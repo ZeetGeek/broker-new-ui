@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -13,6 +12,7 @@ import {
 } from "@/lib/datetime/time-only";
 
 import type { TimePickerProps } from "@/components/reui/time-picker";
+import { IconButton } from "@/components/shared/icon-button";
 import { Clock, Keyboard } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
@@ -62,7 +62,7 @@ export default function MaterialTimePanel({
     timeZone,
 }: MaterialTimePanelProps) {
     const seconds = granularity === "second";
-    const [selected, setSelected] = useState(
+    const [selected, setSelected] = useState<Date | null>(
         () => clockDate(value) ?? snapNow(timeZone, minuteStep, secondStep, seconds),
     );
     const current = selected ?? snapNow(timeZone, minuteStep, secondStep, seconds);
@@ -311,10 +311,9 @@ export default function MaterialTimePanel({
                 </p>
             )}
             <div className={styles.footer}>
-                <Button
+                <IconButton
                     type="button"
-                    size="icon-sm"
-                    variant="ghost"
+                    size="sm"
                     aria-label={typing ? "Switch to clock" : "Enter time with keyboard"}
                     onClick={() => {
                         setTypedHour(String(current.getHours() % 12 || 12).padStart(2, "0"));
@@ -325,7 +324,7 @@ export default function MaterialTimePanel({
                     disabled={blocked}
                 >
                     {typing ? <Clock aria-hidden /> : <Keyboard aria-hidden />}
-                </Button>
+                </IconButton>
                 <div>
                     <Button
                         type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -13,14 +13,12 @@ import { BROKER_MY_DEALS_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { FilterChip, FilterChipCount } from "@/components/shared/filter-chip";
-import { ArrowDownUp, ChevronDown, Search, SlidersHorizontal } from "@/components/shared/icons";
+import { SlidersHorizontal } from "@/components/shared/icons";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+    LIST_SEARCH_WIDTH_CLASS,
+    ListSearchField,
+    ListToolbarSelect,
+} from "@/components/shared/list-toolbar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type {
@@ -55,8 +53,7 @@ const SENT_SORT_OPTIONS: { value: RequestSort; label: string }[] = [
 ];
 
 export const DEALS_TOOLBAR_CLASS = "flex flex-wrap items-center justify-between gap-3 sm:gap-4";
-export const DEALS_SEARCH_CLASS =
-    "min-inline-44 inline-44 shadow-sm sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64";
+export const DEALS_SEARCH_CLASS = cn(LIST_SEARCH_WIDTH_CLASS, "shadow-sm");
 export const DEALS_SORT_CLASS = "justify-between inline-24 sm:inline-40";
 
 const INVITE_SORT_OPTIONS: { value: InviteSort; label: string }[] = [
@@ -70,41 +67,6 @@ function countTypeFilter(type: DealListingType): number {
     return type ? 1 : 0;
 }
 
-function DealsQueryInput({ value, onChange }: { value: string; onChange: (q: string) => void }) {
-    const [draft, setDraft] = useState(value);
-    const [prevValue, setPrevValue] = useState(value);
-
-    if (value !== prevValue) {
-        setPrevValue(value);
-        setDraft(value);
-    }
-
-    useEffect(() => {
-        if (draft === value) return;
-        const timer = window.setTimeout(() => onChange(draft), 300);
-        return () => window.clearTimeout(timer);
-    }, [draft, onChange, value]);
-
-    return (
-        <Input
-            size="sm"
-            value={draft}
-            onValueChange={setDraft}
-            placeholder="Search requests and invitations"
-            aria-label="Search requests and invitations"
-            startIcon={Search}
-            clearable
-            wrapperClassName={DEALS_SEARCH_CLASS}
-            className="
-              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
-              block-[38px]!
-              hover:border-ink/25!
-              focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
-            "
-        />
-    );
-}
-
 function DealsSortMenu({
     sort,
     options,
@@ -114,49 +76,16 @@ function DealsSortMenu({
     options: { value: string; label: string }[];
     onSortChange: (sort: string) => void;
 }) {
-    const isDefaultSort = sort === "recent";
-    const label = options.find((option) => option.value === sort)?.label ?? "Newest first";
-
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <button
-                        type="button"
-                        className={cn(
-                            ownerListingsChipClassName(!isDefaultSort),
-                            "gap-2",
-                            DEALS_SORT_CLASS,
-                            isDefaultSort && "text-ink-muted",
-                        )}
-                    >
-                        <ArrowDownUp
-                            aria-hidden
-                            className="text-brand block-4 inline-4"
-                            strokeWidth={1.75}
-                        />
-                        <span className="hidden sm:inline">{label}</span>
-                        <span className="sm:hidden">Sort</span>
-                        <ChevronDown
-                            aria-hidden
-                            className="opacity-60 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                    </button>
-                }
-            />
-            <DropdownMenuContent align="end" className="min-inline-44">
-                {options.map((option) => (
-                    <DropdownMenuItem
-                        key={option.value}
-                        onClick={() => onSortChange(option.value)}
-                        className={cn(sort === option.value && "font-semibold text-brand")}
-                    >
-                        {option.label}
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <ListToolbarSelect
+            label="Sort deals"
+            value={sort}
+            options={options}
+            onChange={onSortChange}
+            defaultValue="recent"
+            mobileLabel="Sort"
+            className={DEALS_SORT_CLASS}
+        />
     );
 }
 
@@ -511,12 +440,18 @@ export function MyDealsHeader({
 
                         <div className="flex shrink-0 items-center gap-2.5 max-inline-full">
                             {isInvites ? (
-                                <DealsQueryInput
+                                <ListSearchField
+                                    placeholder="Search requests and invitations"
+                                    aria-label="Search requests and invitations"
+                                    wrapperClassName={DEALS_SEARCH_CLASS}
                                     value={inviteFilters.q}
                                     onChange={(q) => onPatchInvites({ q })}
                                 />
                             ) : (
-                                <DealsQueryInput
+                                <ListSearchField
+                                    placeholder="Search requests and invitations"
+                                    aria-label="Search requests and invitations"
+                                    wrapperClassName={DEALS_SEARCH_CLASS}
                                     value={sentFilters.q}
                                     onChange={(q) => onPatchSent({ q })}
                                 />

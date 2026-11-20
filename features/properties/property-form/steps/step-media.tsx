@@ -760,9 +760,9 @@ function PhotoAttachment({
                 ) : null}
                 <AttachmentAction
                     type="button"
+                    tone="danger"
                     aria-label={`Remove ${photo.name}`}
                     onClick={onRemove}
-                    className="text-danger hover:bg-danger-soft hover:text-danger"
                 >
                     <X aria-hidden strokeWidth={2} />
                 </AttachmentAction>

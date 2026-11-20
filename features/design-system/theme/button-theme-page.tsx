@@ -5,14 +5,12 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { swapText } from "@/lib/motion/swap-text";
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
+import { MoreHorizontal, Trash2 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";
-import {
-    BUTTON_ICON_SIZES,
-    BUTTON_SIZES,
-    BUTTON_VARIANTS,
-} from "@/features/design-system/theme/button-tokens";
+import { BUTTON_SIZES, BUTTON_VARIANTS } from "@/features/design-system/theme/button-tokens";
 
 function Swatch({
     label,
@@ -133,22 +131,43 @@ export function ButtonThemePage() {
                           border-border-warm bg-surface p-5
                         "
                     >
-                        {BUTTON_ICON_SIZES.map((s) => (
-                            <div key={s.name} className="flex flex-col items-center gap-2">
-                                <Button size={s.name} aria-label={s.label}>
-                                    <svg
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        aria-hidden="true"
-                                    >
-                                        <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                                    </svg>
-                                </Button>
-                                <span className="body-xs text-ink-subtle">{s.name}</span>
+                        {(["xs", "sm", "md", "lg", "xl"] as const).map((size) => (
+                            <div key={size} className="flex flex-col items-center gap-2">
+                                <IconButton size={size} aria-label={`More actions (${size})`}>
+                                    <MoreHorizontal aria-hidden />
+                                </IconButton>
+                                <span className="body-xs text-ink-subtle">{size}</span>
                             </div>
                         ))}
+                    </div>
+                </section>
+
+                <section>
+                    <h2 className="h4 text-ink">Icon button colours and states</h2>
+                    <div className="mbs-4 flex flex-wrap items-center gap-4">
+                        {(["neutral", "brand", "danger", "success", "warning"] as const).map(
+                            (tone) => (
+                                <div key={tone} className="flex flex-col items-center gap-2">
+                                    <IconButton tone={tone} aria-label={`${tone} action`}>
+                                        {tone === "danger" ? (
+                                            <Trash2 aria-hidden />
+                                        ) : (
+                                            <MoreHorizontal aria-hidden />
+                                        )}
+                                    </IconButton>
+                                    <span className="body-xs text-ink-muted">{tone}</span>
+                                </div>
+                            ),
+                        )}
+                        <IconButton color="#6d28d9" aria-label="Custom purple action">
+                            <MoreHorizontal aria-hidden />
+                        </IconButton>
+                        <IconButton disabled aria-label="Unavailable action">
+                            <MoreHorizontal aria-hidden />
+                        </IconButton>
+                        <IconButton loading aria-label="Saving action">
+                            <MoreHorizontal aria-hidden />
+                        </IconButton>
                     </div>
                 </section>
 

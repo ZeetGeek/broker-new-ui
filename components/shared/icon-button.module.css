@@ -1,0 +1,128 @@
+.button {
+    --icon-button-size: var(--size-control-sm);
+    --icon-button-color: var(--color-ink);
+    --icon-button-border: var(--color-border-warm);
+    --icon-button-fill: var(--color-surface);
+    --icon-button-hover: var(--color-gray-50);
+    --icon-button-hover-border: var(--color-gray-300);
+    --icon-button-duration: 250ms;
+}
+
+.button[data-icon-size="xs"] {
+    --icon-button-size: var(--size-control-xs);
+}
+.button[data-icon-size="md"] {
+    --icon-button-size: var(--size-control-md);
+}
+.button[data-icon-size="lg"] {
+    --icon-button-size: var(--size-control-lg);
+}
+.button[data-icon-size="xl"] {
+    --icon-button-size: var(--size-control-xl);
+}
+
+.button[data-tone="brand"] {
+    --icon-button-color: var(--color-brand-text);
+}
+
+/* Translucent face for dark cards, with a full-contrast icon. */
+.button[data-icon-appearance="inverse"] {
+    --icon-button-color: var(--color-surface);
+    --icon-button-fill: color-mix(in srgb, var(--color-surface) 10%, transparent);
+    --icon-button-border: color-mix(in srgb, var(--color-surface) 20%, transparent);
+    --icon-button-hover: color-mix(in srgb, var(--color-surface) 18%, transparent);
+    --icon-button-hover-border: color-mix(in srgb, var(--color-surface) 30%, transparent);
+}
+.button[data-tone="danger"] {
+    --icon-button-color: var(--color-danger);
+}
+.button[data-tone="success"] {
+    --icon-button-color: var(--color-success);
+}
+.button[data-tone="warning"] {
+    --icon-button-color: var(--color-pending);
+}
+
+.button:not([data-tone="neutral"]),
+.button[data-custom-color] {
+    --icon-button-border: color-mix(in srgb, var(--icon-button-color) 22%, var(--color-surface));
+    --icon-button-fill: color-mix(in srgb, var(--icon-button-color) 7%, var(--color-surface));
+    --icon-button-hover: color-mix(in srgb, var(--icon-button-color) 13%, var(--color-surface));
+    --icon-button-hover-border: color-mix(
+        in srgb,
+        var(--icon-button-color) 30%,
+        var(--color-surface)
+    );
+    --icon-button-duration: 160ms;
+}
+
+/* Keep one face even when a feature adds positioning or visibility classes. */
+.button.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    inline-size: var(--icon-button-size);
+    block-size: var(--icon-button-size);
+    min-inline-size: var(--icon-button-size);
+    min-block-size: var(--icon-button-size);
+    padding: 0;
+    border: 1px solid var(--icon-button-border);
+    border-radius: var(--radius-control);
+    background: var(--icon-button-fill);
+    color: var(--icon-button-color);
+    box-shadow: 0 2px 3px -1px color-mix(in srgb, var(--icon-button-color) 12%, transparent);
+    transition:
+        background-color var(--icon-button-duration) ease-out,
+        border-color var(--icon-button-duration) ease-out,
+        box-shadow var(--icon-button-duration) ease-out,
+        transform var(--icon-button-duration) ease-out;
+}
+
+@media (pointer: coarse) {
+    .button.button {
+        min-inline-size: var(--touch-target-min, 44px);
+        min-block-size: var(--touch-target-min, 44px);
+    }
+}
+
+.button.button:hover:not(:disabled):not([aria-disabled="true"]),
+.button.button[aria-expanded="true"],
+.button.button[aria-pressed="true"] {
+    background: var(--icon-button-hover);
+    border-color: var(--icon-button-hover-border);
+}
+
+.button.button:focus-visible {
+    outline: 2px solid var(--icon-button-color);
+    outline-offset: 2px;
+}
+
+.button.button:disabled,
+.button.button[aria-disabled="true"] {
+    box-shadow: none;
+}
+
+.button.button[data-icon-appearance="inverse"] {
+    box-shadow: none;
+}
+
+/* A grouped control supplies the outer border and elevation. */
+.button.button[data-icon-appearance="ghost"] {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.button.button[data-icon-appearance="ghost"]:hover:not(:disabled):not([aria-disabled="true"]),
+.button.button[data-icon-appearance="ghost"][aria-expanded="true"],
+.button.button[data-icon-appearance="ghost"][aria-pressed="true"] {
+    background: var(--icon-button-hover);
+    border-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .button.button {
+        transition: none;
+    }
+}

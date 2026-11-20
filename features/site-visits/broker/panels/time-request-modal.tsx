@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -21,6 +20,7 @@ import { useCreateTimeRequest } from "@/hooks/use-time-requests";
 import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppModal } from "@/components/shared/app-modal";
 import { CharacterCount } from "@/components/shared/character-count";
+import { IconButton } from "@/components/shared/icon-button";
 import { Clock3, Plus, Trash2 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
@@ -340,10 +340,10 @@ export function TimeRequestModal({
                                 }
                                 className="flex-1"
                             />
-                            <Button
+                            <IconButton
+                                tone="danger"
                                 type="button"
-                                variant="ghost"
-                                size="md"
+                                size="lg"
                                 aria-label="Remove backup time"
                                 onClick={() =>
                                     form.setValue(
@@ -353,7 +353,7 @@ export function TimeRequestModal({
                                 }
                             >
                                 <Trash2 aria-hidden />
-                            </Button>
+                            </IconButton>
                         </div>
                     ))}
                 </fieldset>

@@ -1,5 +1,4 @@
 "use client";
-
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
@@ -8,8 +7,8 @@ import { formatPrice, formatRent } from "@/lib/format/price";
 import { ownerBrokersHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { GripVertical, Plus } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { OwnerLeadBoardCard } from "@/features/owner-leads/owner-lead-board-card";
@@ -167,12 +166,11 @@ function OwnerLeadColumn({
                 <Tooltip>
                     <TooltipTrigger
                         render={
-                            <Button
-                                variant="ghost"
-                                size="icon-xs"
+                            <IconButton
+                                size="xs"
                                 nativeButton={false}
                                 aria-label={`Invite a broker for ${meta.label}`}
-                                className="shrink-0 text-ink-subtle hover:text-ink"
+                                className="shrink-0"
                                 render={<Link href={ownerBrokersHref()} />}
                             />
                         }

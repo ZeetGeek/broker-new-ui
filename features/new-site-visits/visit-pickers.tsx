@@ -5,6 +5,7 @@ import { useState } from "react";
 import { formatVisitDate, istDateKey } from "@/lib/visits/time";
 
 import { Building2, CalendarDays, ChevronDown, UserRound } from "@/components/shared/icons";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -20,7 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 import styles from "./visits.module.css";
 
-export type EntityOption = { value: string; label: string; detail?: string };
+export type EntityOption = { value: string; label: string; detail?: string; imageUrl?: string };
 
 export function VisitEntityCombobox({
     kind,
@@ -79,9 +80,11 @@ export function VisitEntityCombobox({
                                     {kind === "client" ? (
                                         <UserAvatar name={option?.label ?? "Client"} size="sm" />
                                     ) : (
-                                        <span className={styles.entityIcon}>
-                                            <Building2 aria-hidden />
-                                        </span>
+                                        <PropertyCoverImage
+                                            src={option?.imageUrl}
+                                            alt=""
+                                            size={40}
+                                        />
                                     )}
                                     <span>
                                         <span className={styles.entityName}>{option?.label}</span>

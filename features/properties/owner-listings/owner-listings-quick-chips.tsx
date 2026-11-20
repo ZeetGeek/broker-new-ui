@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { FilterChip } from "@/components/shared/filter-chip";
-import { Search, SlidersHorizontal } from "@/components/shared/icons";
-import { Input } from "@/components/ui/input";
+import { SlidersHorizontal } from "@/components/shared/icons";
+import { ListSearchField } from "@/components/shared/list-toolbar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import type {
@@ -54,51 +52,6 @@ export type OwnerListingsQuickChipsProps = {
     onQueryChange: (q: string) => void;
     onSortChange: (sort: OwnerListingSort) => void;
 };
-
-function OwnerListingsQueryInput({
-    value,
-    onChange,
-}: {
-    value: string;
-    onChange: (q: string) => void;
-}) {
-    const [draft, setDraft] = useState(value);
-    const [prevValue, setPrevValue] = useState(value);
-
-    if (value !== prevValue) {
-        setPrevValue(value);
-        setDraft(value);
-    }
-
-    useEffect(() => {
-        if (draft === value) return;
-        const timer = window.setTimeout(() => onChange(draft), 300);
-        return () => window.clearTimeout(timer);
-    }, [draft, onChange, value]);
-
-    return (
-        <Input
-            size="sm"
-            value={draft}
-            onValueChange={setDraft}
-            placeholder="Search listings"
-            aria-label="Search Marketplace"
-            startIcon={Search}
-            clearable
-            wrapperClassName="
-              min-inline-44 inline-44 shadow-sm
-              sm:min-inline-52 sm:inline-52
-              lg:min-inline-64 lg:inline-64
-            "
-            className="
-              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
-              block-[38px]!
-              hover:border-ink/25!
-              focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
-            "
-        />
-    );
-}
 
 export function OwnerListingsQuickChips({
     filters,
@@ -164,7 +117,12 @@ export function OwnerListingsQuickChips({
                 </OwnerListingsChipsCarousel>
 
                 <div className="flex shrink-0 items-center gap-2.5 max-inline-full">
-                    <OwnerListingsQueryInput value={filters.q} onChange={onQueryChange} />
+                    <ListSearchField
+                        placeholder="Search listings"
+                        aria-label="Search Marketplace"
+                        value={filters.q}
+                        onChange={onQueryChange}
+                    />
                     <OwnerListingsSortMenu filters={filters} onSortChange={onSortChange} />
                 </div>
             </div>

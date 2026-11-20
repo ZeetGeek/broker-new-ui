@@ -42,4 +42,18 @@ export const SHADOW_TOKENS: ShadowToken[] = [
         css: "0 8px 16px -6px ink/8%, 0 28px 56px -12px ink/14%",
         usage: "Modals, bottom sheets",
     },
+    {
+        name: "Brand glow",
+        variable: "--shadow-brand-glow",
+        className: "shadow-brand-glow",
+        css: "0 2px 4px -1px ink/18%, 0 8px 16px -4px brand/45%, 0 14px 28px -6px brand/35%",
+        usage: "Floating brand action only — mobile action fan (+)",
+    },
+    {
+        name: "Brand glow soft",
+        variable: "--shadow-brand-glow-soft",
+        className: "shadow-brand-glow-soft",
+        css: "0 1px 2px -1px ink/12%, 0 4px 10px -4px brand/30%, 0 8px 16px -8px brand/20%",
+        usage: "Inline solid brand buttons — Button accent",
+    },
 ];

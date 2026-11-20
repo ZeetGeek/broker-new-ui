@@ -1,9 +1,8 @@
 "use client";
-
 import { useState } from "react";
 import Link from "next/link";
 
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
 
 import { type CommissionPeriodMonths, getCommissionWindow } from "@/lib/commission-period";
 import {
@@ -13,6 +12,7 @@ import {
 } from "@/lib/format/commission";
 import { BROKER_EARNINGS_HREF } from "@/lib/routes/broker";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,15 +67,15 @@ export function CommissionEarned() {
                         <p className={`h1 ${styles.total}`}>{formatCommission(total)}</p>
                     </div>
                     <nav className={styles.navigation} aria-label="Commission periods">
-                        <Button
-                            variant="ghost"
-                            size="icon-sm"
+                        <IconButton
+                            appearance="ghost"
+                            size="sm"
                             aria-label={`Previous ${months} months`}
                             disabled={!window.hasPrevious}
                             onClick={() => setPage(window.pageIndex + 1)}
                         >
                             <ChevronLeft aria-hidden />
-                        </Button>
+                        </IconButton>
                         <p
                             className={styles.period}
                             aria-live="polite"
@@ -88,15 +88,15 @@ export function CommissionEarned() {
                                 "short",
                             )}
                         </p>
-                        <Button
-                            variant="ghost"
-                            size="icon-sm"
+                        <IconButton
+                            appearance="ghost"
+                            size="sm"
                             aria-label={`Next ${months} months`}
                             disabled={!window.hasNext}
                             onClick={() => setPage(window.pageIndex - 1)}
                         >
                             <ChevronRight aria-hidden />
-                        </Button>
+                        </IconButton>
                     </nav>
                 </div>
                 <div className={styles.monthSnapshot}>
@@ -166,7 +166,12 @@ export function CommissionEarned() {
                         Open earnings
                     </Button>
                 </header>
-                <div className={styles.chartViewport}>
+                <div
+                    className={styles.chartViewport}
+                    role="region"
+                    aria-label="Monthly commission chart"
+                    tabIndex={months === 12 ? 0 : undefined}
+                >
                     <ChartContainer
                         key={`${months}-${page}`}
                         config={CHART_CONFIG}
@@ -180,6 +185,11 @@ export function CommissionEarned() {
                             margin={{ top: 24 }}
                         >
                             <CartesianGrid vertical={false} />
+                            {/* Keep labels inside the plot and its full-height hover highlight. */}
+                            <YAxis
+                                hide
+                                domain={[0, (dataMax: number) => Math.max(1, dataMax * 1.2)]}
+                            />
                             <XAxis
                                 dataKey="monthKey"
                                 axisLine={false}
@@ -253,30 +263,34 @@ export function CommissionEarned() {
                     <span>Illustrative analytics</span>
                     {latest.isToDate ? <span>* {monthLabel}</span> : null}
                 </footer>
-                <table className="sr-only">
-                    <caption>Illustrative commission earned, {period}, in Indian rupees</caption>
-                    <thead>
-                        <tr>
-                            <th scope="col">Month</th>
-                            <th scope="col">Sale commission</th>
-                            <th scope="col">Rent commission</th>
-                            <th scope="col">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {selectedMonths.map((month) => (
-                            <tr key={month.monthKey}>
-                                <th scope="row">
-                                    {formatCommissionMonth(month.monthKey)}
-                                    {month.isToDate ? " (to date)" : ""}
-                                </th>
-                                <td>{formatCommission(month.sale)}</td>
-                                <td>{formatCommission(month.rent)}</td>
-                                <td>{formatCommission(month.total)}</td>
+                <div className="sr-only">
+                    <table>
+                        <caption>
+                            Illustrative commission earned, {period}, in Indian rupees
+                        </caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Month</th>
+                                <th scope="col">Sale commission</th>
+                                <th scope="col">Rent commission</th>
+                                <th scope="col">Total</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {selectedMonths.map((month) => (
+                                <tr key={month.monthKey}>
+                                    <th scope="row">
+                                        {formatCommissionMonth(month.monthKey)}
+                                        {month.isToDate ? " (to date)" : ""}
+                                    </th>
+                                    <td>{formatCommission(month.sale)}</td>
+                                    <td>{formatCommission(month.rent)}</td>
+                                    <td>{formatCommission(month.total)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     );

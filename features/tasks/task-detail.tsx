@@ -3,6 +3,7 @@
 import { isMockMode } from "@/lib/api/mock-mode";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
+import { DrawerSection } from "@/components/shared/drawer-section";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
     Bell,
@@ -145,110 +146,123 @@ export function TaskDetail({
             </span>
             <h2 className={styles.detailTitle}>{task.title}</h2>
             {task.details && <p className={styles.detailDescription}>{task.details}</p>}
-            <dl className={styles.detailSection}>
-                <div className={styles.detailLine}>
-                    <CalendarClock aria-hidden />
-                    <div>
-                        <dt>Start date</dt>
-                        <dd>
-                            {task.startDate ? taskDateLabel(task.startDate, now) : "No start date"}
-                            {task.startTime ? ` · ${taskTimeLabel(task.startTime)} IST` : ""}
-                        </dd>
-                    </div>
-                </div>
-                <div className={styles.detailLine}>
-                    <CalendarClock aria-hidden />
-                    <div>
-                        <dt>Due date</dt>
-                        <dd className={overdue ? styles.overdue : undefined}>
-                            {task.dueDate
-                                ? `${taskDueLabel({ ...task, completedAt: null }, now)} · IST`
-                                : "No due date"}
-                        </dd>
-                    </div>
-                    {!task.completedAt && !task.deletedAt && (
-                        <Button variant="outline" size="sm" onClick={() => onIntent("reschedule")}>
-                            Reschedule
-                        </Button>
-                    )}
-                </div>
-                {task.repeat && (
+            <DrawerSection
+                title="Schedule and reminders"
+                description="Review the dates, repeat schedule, reminders and priority."
+            >
+                <dl>
                     <div className={styles.detailLine}>
-                        <Repeat aria-hidden />
+                        <CalendarClock aria-hidden />
                         <div>
-                            <dt>Repeat</dt>
-                            <dd>{taskRepeatLabel(task.repeat)}</dd>
-                            {task.repeat.until && (
-                                <p className="body-xs mbs-1 text-ink-subtle">
-                                    Ends {taskDateLabel(task.repeat.until, now)}
-                                </p>
-                            )}
-                            {!task.completedAt && (
-                                <p className="body-xs mbs-1 text-ink-subtle">
-                                    {nextDate
-                                        ? `Complete this task to create the next occurrence for ${taskDateLabel(nextDate, now)}.`
-                                        : "This is the last occurrence in this schedule."}
-                                </p>
-                            )}
+                            <dt>Start date</dt>
+                            <dd>
+                                {task.startDate
+                                    ? taskDateLabel(task.startDate, now)
+                                    : "No start date"}
+                                {task.startTime ? ` · ${taskTimeLabel(task.startTime)} IST` : ""}
+                            </dd>
                         </div>
                     </div>
-                )}
-                <div className={styles.detailLine}>
-                    <Bell aria-hidden />
-                    <div>
-                        <dt>Reminders</dt>
-                        <dd>
-                            {task.completedAt || task.deletedAt ? (
-                                task.deletedAt ? (
-                                    "Off · task deleted"
-                                ) : (
-                                    "Off · task completed"
-                                )
-                            ) : reminders.length === 0 ? (
-                                "No reminders"
-                            ) : (
-                                <ul className={styles.detailReminders}>
-                                    {reminders.map((reminder) => (
-                                        <li key={reminder.key}>
-                                            <span>
-                                                {taskReminderDescription(reminder)}
-                                                {task.deliveredReminderKeys.includes(
-                                                    reminder.key,
-                                                ) ? (
-                                                    <span className="text-ink-subtle">
-                                                        {" "}
-                                                        · delivered
-                                                    </span>
-                                                ) : null}
-                                            </span>
-                                            <span className="body-xs text-ink-subtle">
-                                                {reminder.at
-                                                    ? `${formatVisitDate(reminder.at)}, ${formatVisitTime(reminder.at)} IST`
-                                                    : "Set a start date and time"}
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </dd>
+                    <div className={styles.detailLine}>
+                        <CalendarClock aria-hidden />
+                        <div>
+                            <dt>Due date</dt>
+                            <dd className={overdue ? styles.overdue : undefined}>
+                                {task.dueDate
+                                    ? `${taskDueLabel({ ...task, completedAt: null }, now)} · IST`
+                                    : "No due date"}
+                            </dd>
+                        </div>
+                        {!task.completedAt && !task.deletedAt && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onIntent("reschedule")}
+                            >
+                                Reschedule
+                            </Button>
+                        )}
                     </div>
-                    {!task.completedAt && !task.deletedAt && (
-                        <Button variant="ghost" size="sm" onClick={() => onIntent("reminder")}>
-                            {reminders.length ? "Manage" : "Add"}
-                        </Button>
+                    {task.repeat && (
+                        <div className={styles.detailLine}>
+                            <Repeat aria-hidden />
+                            <div>
+                                <dt>Repeat</dt>
+                                <dd>{taskRepeatLabel(task.repeat)}</dd>
+                                {task.repeat.until && (
+                                    <p className="body-xs mbs-1 text-ink-subtle">
+                                        Ends {taskDateLabel(task.repeat.until, now)}
+                                    </p>
+                                )}
+                                {!task.completedAt && (
+                                    <p className="body-xs mbs-1 text-ink-subtle">
+                                        {nextDate
+                                            ? `Complete this task to create the next occurrence for ${taskDateLabel(nextDate, now)}.`
+                                            : "This is the last occurrence in this schedule."}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
                     )}
-                </div>
-                <div className={styles.detailLine}>
-                    <Clock aria-hidden />
-                    <div>
-                        <dt>Priority</dt>
-                        <dd>{TASK_PRIORITY_LABELS[task.priority]}</dd>
+                    <div className={styles.detailLine}>
+                        <Bell aria-hidden />
+                        <div>
+                            <dt>Reminders</dt>
+                            <dd>
+                                {task.completedAt || task.deletedAt ? (
+                                    task.deletedAt ? (
+                                        "Off · task deleted"
+                                    ) : (
+                                        "Off · task completed"
+                                    )
+                                ) : reminders.length === 0 ? (
+                                    "No reminders"
+                                ) : (
+                                    <ul className={styles.detailReminders}>
+                                        {reminders.map((reminder) => (
+                                            <li key={reminder.key}>
+                                                <span>
+                                                    {taskReminderDescription(reminder)}
+                                                    {task.deliveredReminderKeys.includes(
+                                                        reminder.key,
+                                                    ) ? (
+                                                        <span className="text-ink-subtle">
+                                                            {" "}
+                                                            · delivered
+                                                        </span>
+                                                    ) : null}
+                                                </span>
+                                                <span className="body-xs text-ink-subtle">
+                                                    {reminder.at
+                                                        ? `${formatVisitDate(reminder.at)}, ${formatVisitTime(reminder.at)} IST`
+                                                        : "Set a start date and time"}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </dd>
+                        </div>
+                        {!task.completedAt && !task.deletedAt && (
+                            <Button variant="ghost" size="sm" onClick={() => onIntent("reminder")}>
+                                {reminders.length ? "Manage" : "Add"}
+                            </Button>
+                        )}
                     </div>
-                </div>
-            </dl>
+                    <div className={styles.detailLine}>
+                        <Clock aria-hidden />
+                        <div>
+                            <dt>Priority</dt>
+                            <dd>{TASK_PRIORITY_LABELS[task.priority]}</dd>
+                        </div>
+                    </div>
+                </dl>
+            </DrawerSection>
             {(client || owner || property) && (
-                <section className={styles.detailSection}>
-                    <h3>Linked records</h3>
+                <DrawerSection
+                    title="Linked records"
+                    description="See the clients, owners and property connected to this task."
+                >
                     {client && (
                         <details className={styles.record}>
                             <summary>
@@ -297,7 +311,7 @@ export function TaskDetail({
                         {isMockMode() ? "Linked records are sample data. " : ""}Changes to this task
                         don’t change these records.
                     </p>
-                </section>
+                </DrawerSection>
             )}
             <div className={styles.detailFootnote}>
                 <p className="flex items-center gap-1.5">
@@ -419,11 +433,15 @@ export function TaskReminders({
             ]
                 .filter((group) => group.tasks.length)
                 .map((group) => (
-                    <section key={group.label}>
-                        <h2 className={styles.reminderHeading}>
-                            {group.label}{" "}
-                            <span className="text-ink-subtle">({group.tasks.length})</span>
-                        </h2>
+                    <DrawerSection
+                        key={group.label}
+                        title={group.label}
+                        description={
+                            group.label === "Scheduled"
+                                ? "Upcoming reminders for your tasks."
+                                : "Reminders that have already been delivered."
+                        }
+                    >
                         {group.tasks.map(({ task, at, minutes, key, kind }) => {
                             return (
                                 <article key={`${task.id}-${key}`} className={styles.reminderItem}>
@@ -453,7 +471,7 @@ export function TaskReminders({
                                 </article>
                             );
                         })}
-                    </section>
+                    </DrawerSection>
                 ))}
         </TaskPanel>
     );

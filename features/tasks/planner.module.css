@@ -48,7 +48,6 @@
     align-items: center;
     gap: 0.125rem;
 }
-.navButton,
 .todayButton {
     display: inline-grid;
     place-items: center;
@@ -63,7 +62,6 @@
     font-weight: 600;
     padding-inline: 0.625rem;
 }
-.navButton:hover,
 .todayButton:hover {
     color: var(--color-brand-text);
     background: var(--color-surface-muted);
@@ -72,22 +70,7 @@
     inline-size: 36px;
     flex-shrink: 0;
 }
-.dateJump button {
-    inline-size: 36px;
-    min-block-size: 36px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-    justify-content: center;
-}
-.dateJump button > span {
-    display: none;
-}
-.dateJump button svg {
-    inline-size: 16px;
-    block-size: 16px;
-}
+
 .dayGrid {
     display: grid;
     grid-template-columns: repeat(var(--planner-columns, 1), minmax(0, 1fr));
@@ -302,52 +285,18 @@
     display: inline-grid;
     place-items: center;
     flex-shrink: 0;
-    inline-size: var(--task-action-size);
-    block-size: 32px;
-    color: var(--color-ink-subtle);
-    border-radius: 6px;
-    cursor: pointer;
 }
 .lineAction,
 .restoreAction {
     opacity: 0;
-    inline-size: 20px;
-    block-size: 20px;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
 }
-.lineAction::before,
-.restoreAction::before {
-    content: "";
-    position: absolute;
-    inset-inline-start: 50%;
-    inset-block-start: 50%;
-    transform: translate(-50%, -50%);
-    inline-size: 20px;
-    block-size: 20px;
-    border: 1px solid transparent;
-    border-radius: 50%;
-    pointer-events: none;
-}
+
 .lineAction svg,
 .restoreAction svg {
     inline-size: 14px;
     block-size: 14px;
 }
-.lineAction:hover,
-.restoreAction:hover,
-.lineAction[data-popup-open] {
-    color: var(--color-ink-muted);
-    background: transparent;
-}
-.lineAction:hover::before,
-.lineAction:focus-visible::before,
-.restoreAction:hover::before,
-.restoreAction:focus-visible::before,
-.lineAction[data-popup-open]::before {
-    border-color: color-mix(in srgb, var(--color-ink-subtle) 40%, var(--color-surface));
-}
+
 .taskLine:hover .lineCheck,
 .taskLine:focus-within .lineCheck,
 .taskLine:hover .lineAction,
@@ -489,13 +438,7 @@
 }
 .addTabButton,
 .collapseLists {
-    display: grid;
-    place-items: center;
     flex-shrink: 0;
-    inline-size: 36px;
-    min-block-size: 44px;
-    cursor: pointer;
-    color: var(--color-ink-subtle);
 }
 .somedayBarEnd {
     display: flex;
@@ -517,12 +460,7 @@
 .collapseLists svg[data-collapsed] {
     transform: rotate(-90deg);
 }
-.addTabButton:hover,
-.collapseLists:hover,
-.tabMenu:hover,
-.listMenu:hover {
-    color: var(--color-brand-text);
-}
+
 .tabDropTarget {
     background: var(--color-brand-soft);
 }
@@ -730,68 +668,12 @@
 .columnPicker {
     grid-column: 2;
     grid-row: 1;
+    align-self: center;
     justify-self: center;
 }
-.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) {
-    --tabs-bar-bg: transparent;
-    --tabs-pill-bg: var(--color-brand);
-    --tabs-text-active: var(--color-brand-text);
-    align-self: stretch;
-    gap: 1.25rem;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-}
-.columnPicker.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) {
-    position: relative;
-    align-self: stretch;
-    block-size: 100%;
-    min-block-size: 64px;
-    margin-block: -0.75rem;
-    margin-block-end: -0.75rem;
-}
-.notebookTabPicker.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) {
-    position: relative;
-    block-size: 100%;
-    min-block-size: 56px;
+.notebookTabPicker {
+    align-self: center;
     min-inline-size: 0;
-    flex: 1;
-    margin-block-end: 0;
-}
-.notebookTabPicker.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact)
-    > :global(.t-tabs-pill) {
-    inset-block-end: 0 !important;
-}
-.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"] {
-    align-self: stretch;
-    min-inline-size: 44px;
-    min-block-size: 44px;
-    block-size: auto;
-    padding: 0 0.25rem;
-    border-radius: 0;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-ink-muted);
-}
-.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"]:hover,
-.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"][aria-selected="true"] {
-    color: var(--color-brand-text);
-}
-.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > [role="tab"]:focus-visible {
-    outline: 2px solid var(--color-brand);
-    outline-offset: -2px;
-    box-shadow: none;
-}
-.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) > :global(.t-tabs-pill) {
-    inset-block-start: auto !important;
-    inset-block-end: 1px !important;
-    block-size: 3px !important;
-    height: 3px !important;
-    min-block-size: 3px !important;
-    max-block-size: 3px !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
 }
 .slidingTabLabel {
     display: inline-flex;
@@ -805,32 +687,9 @@
     white-space: nowrap;
 }
 .notebookTabMenu {
-    display: grid;
-    place-items: center;
     flex-shrink: 0;
-    inline-size: 20px;
-    block-size: 20px;
-    border-radius: var(--radius-control);
-    color: var(--color-ink-subtle);
-    cursor: pointer;
 }
-.notebookTabMenu:hover {
-    color: var(--color-brand-text);
-    background: color-mix(in oklab, var(--color-ink) 6%, transparent);
-}
-.slidingTabCount {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-inline-size: 1.125rem;
-    padding: 0.125rem 0.375rem;
-    border-radius: 999px;
-    background: color-mix(in oklab, var(--color-ink) 8%, transparent);
-    color: var(--color-ink-muted);
-    font-size: 0.6875rem;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-}
+
 .archive {
     padding: 2.5rem 3rem;
     min-block-size: 60dvh;
@@ -895,11 +754,6 @@
     .columnPicker {
         grid-column: 1 / -1;
         grid-row: 2;
-    }
-    .columnPicker.plannerUnderlineTabs:global(.t-tabs-surface.t-tabs-compact) {
-        min-block-size: 0;
-        margin-block: 0 -0.5rem;
-        margin-block-end: -0.5rem;
     }
     .dateControls {
         grid-column: 2;
@@ -1066,41 +920,26 @@
 /*
  * Dashboard embed: same row as the full planner — check and more menu sit in
  * the gutters outside the ruled line and appear on hover / focus only. The
- * list reserves equal gutters so left/right spacing matches and the scroll
- * viewport does not clip the controls.
+ * list reserves a full action target on the right so the menu never overlaps
+ * the title, including when shared touch-control styles enlarge the button.
  */
 .rowGutters {
     /* Inherits --dashboard-row-gutter from the dashboard .paper wrapper. */
-    padding-inline: var(--dashboard-row-gutter, 1.375rem);
+    padding-inline: var(--dashboard-row-gutter, 1.375rem) var(--dashboard-action-gutter, 2.75rem);
 }
 /* Check further left, more further right — gutters sized so they don’t clip. */
 .rowGutters .taskLine {
-    --task-action-size: 20px;
-    --task-action-gutter: 22px;
+    --task-action-size: var(--dashboard-action-gutter, 2.75rem);
+    --task-action-gutter: var(--dashboard-action-gutter, 2.75rem);
 }
 .rowGutters .lineCheck {
     inset-inline-start: -22px;
 }
 .rowGutters .lineAction,
 .rowGutters .restoreAction {
-    inset-inline-end: -22px;
-    inline-size: 20px;
-    block-size: 20px;
-}
-@media (pointer: coarse) {
-    .rowGutters {
-        padding-inline: var(--dashboard-row-gutter, 1.375rem);
-    }
-    .rowGutters .taskLine {
-        --task-action-size: 44px;
-        --task-action-gutter: 22px;
-    }
-    .rowGutters .lineAction,
-    .rowGutters .restoreAction {
-        inset-inline-end: -22px;
-        inline-size: 44px;
-        block-size: 44px;
-    }
+    inset-inline-end: calc(-1 * var(--dashboard-action-gutter, 2.75rem));
+    inline-size: var(--dashboard-action-gutter, 2.75rem);
+    block-size: var(--dashboard-action-gutter, 2.75rem);
 }
 /*
  * The dashboard card is narrower than 600px even on desktop, so the planner's

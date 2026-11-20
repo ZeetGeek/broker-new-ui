@@ -6,7 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
-import { Button } from "@/components/ui/button";
+import { IconButton } from "@/components/shared/icon-button";
 
 const attachmentVariants = cva(
     `
@@ -193,14 +193,12 @@ function AttachmentActions({ className, ...props }: React.ComponentProps<"div">)
 
 function AttachmentAction({
     className,
-    variant,
-    size = "icon-xs",
+    size = "xs",
     ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<typeof IconButton>) {
     return (
-        <Button
+        <IconButton
             data-slot="attachment-action"
-            variant={variant ?? "ghost"}
             size={size}
             className={cn(className)}
             {...props}

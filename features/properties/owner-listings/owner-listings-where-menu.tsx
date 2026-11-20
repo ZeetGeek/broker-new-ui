@@ -1,5 +1,4 @@
 "use client";
-
 import { useMemo, useState } from "react";
 
 import {
@@ -10,6 +9,7 @@ import {
 } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import {
     type AppIcon,
     Building2,
@@ -260,7 +260,8 @@ function WhereBrowseRow({
                 </span>
                 <WhereLocationMeta pathLabel={meta} />
             </span>
-            <button
+            <IconButton
+                size="sm"
                 type="button"
                 aria-label={`Browse ${formatPlaceName(title)}`}
                 className={cn(
@@ -280,7 +281,7 @@ function WhereBrowseRow({
                 onKeyDown={(event) => event.stopPropagation()}
             >
                 <ChevronRight aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-            </button>
+            </IconButton>
         </DropdownMenuCheckboxItem>
     );
 }

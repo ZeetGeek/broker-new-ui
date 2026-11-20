@@ -1,14 +1,6 @@
 "use client";
 
-import {
-    Fragment,
-    type ReactNode,
-    useCallback,
-    useLayoutEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import { Fragment, type ReactNode, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -28,10 +20,10 @@ import {
     type NotificationTab,
 } from "@/lib/notifications/classify";
 import { getNotificationDisplayContent } from "@/lib/notifications/display-content";
-import { measuredPxToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 import { NotificationIcon } from "@/components/shared/icons";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -169,88 +161,17 @@ function NotificationFilterTabs({
     tabCounts: Record<NotificationTab, number>;
     onTabChange: (tab: NotificationTab) => void;
 }) {
-    const barRef = useRef<HTMLDivElement>(null);
-    const pillRef = useRef<HTMLSpanElement>(null);
-    const painted = useRef(false);
-
-    const moveToActive = useCallback((animate: boolean) => {
-        const bar = barRef.current;
-        const pill = pillRef.current;
-        const tab = bar?.querySelector<HTMLElement>('[aria-selected="true"]');
-        if (!tab || !pill) return;
-        const previous = pill.style.transition;
-        if (!animate) pill.style.transition = "none";
-        pill.style.transform = `translateX(${measuredPxToRem(tab.offsetLeft)})`;
-        pill.style.width = measuredPxToRem(tab.offsetWidth);
-        if (!animate) {
-            void pill.offsetWidth;
-            pill.style.transition = previous;
-        }
-    }, []);
-
-    useLayoutEffect(() => {
-        moveToActive(painted.current);
-        painted.current = true;
-    }, [activeTab, tabCounts, moveToActive]);
-
-    useLayoutEffect(() => {
-        const bar = barRef.current;
-        if (!bar) return;
-        // Keep the observer stable: recreating it on selection would cancel the slide.
-        const observer = new ResizeObserver(() => moveToActive(false));
-        observer.observe(bar);
-        bar.querySelectorAll<HTMLElement>('[role="tab"]').forEach((tab) => observer.observe(tab));
-        return () => observer.disconnect();
-    }, [moveToActive]);
-
-    const tabs = NOTIFICATION_TABS.filter(
-        (tab) => FEATURE_PLATFORM_OWNER || tab.value !== "requests",
-    );
     return (
-        <div
-            ref={barRef}
-            className="t-tabs t-tabs-surface t-tabs-stretch t-notifications-tabs no-scrollbar overflow-x-auto"
-            role="tablist"
-            aria-label="Filter notifications"
-        >
-            <span ref={pillRef} className="t-tabs-pill" aria-hidden="true" />
-            {tabs.map((tab, index) => {
-                const active = activeTab === tab.value;
-                return (
-                    <button
-                        key={tab.value}
-                        type="button"
-                        role="tab"
-                        aria-selected={active}
-                        tabIndex={active ? 0 : -1}
-                        className="t-tab body-xs whitespace-nowrap"
-                        onClick={() => onTabChange(tab.value)}
-                        onKeyDown={(event) => {
-                            let next = index;
-                            if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
-                            else if (event.key === "ArrowLeft")
-                                next = (index - 1 + tabs.length) % tabs.length;
-                            else if (event.key === "Home") next = 0;
-                            else if (event.key === "End") next = tabs.length - 1;
-                            else return;
-                            event.preventDefault();
-                            event.stopPropagation();
-                            onTabChange(tabs[next].value);
-                            const buttons =
-                                event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
-                                    '[role="tab"]',
-                                );
-                            buttons?.[next]?.focus();
-                        }}
-                    >
-                        {tab.label}
-                        {tabCounts[tab.value] > 0 ? (
-                            <span className="tabular text-ink-subtle">{tabCounts[tab.value]}</span>
-                        ) : null}
-                    </button>
-                );
-            })}
-        </div>
+        <SlidingTabs
+            value={activeTab}
+            onValueChange={onTabChange}
+            label="Filter notifications"
+            height={36}
+            stretch
+            options={NOTIFICATION_TABS.filter(
+                (tab) => FEATURE_PLATFORM_OWNER || tab.value !== "requests",
+            ).map((tab) => ({ ...tab, count: tabCounts[tab.value] }))}
+        />
     );
 }
 

@@ -8,6 +8,7 @@ import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { formatVisitDate, formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
 import { CharacterCount } from "@/components/shared/character-count";
+import { DrawerSection, revealDrawerSections } from "@/components/shared/drawer-section";
 import { Bell, Building2, UserRound } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -121,6 +122,7 @@ export function ScheduleForm({
         // Check against the clock at submit, not the last tick.
         const valid = Object.keys(validateVisitDraft(draft, Date.now())).length === 0;
         if (!valid || !draft.durationMinutes) {
+            revealDrawerSections(event.currentTarget);
             const form = event.currentTarget;
             requestAnimationFrame(() =>
                 form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(),
@@ -195,173 +197,210 @@ export function ScheduleForm({
         >
             <form id={formId} onSubmit={submit} noValidate>
                 <fieldset disabled={busy} className="m-0 border-0 p-0 min-inline-0">
-                    <div className="flex flex-col gap-6">
+                    <div className="flex flex-col">
                         {intentMissed && (
-                            <p role="alert" className={styles.conflict}>
+                            <p role="alert" className={`${styles.conflict} mbe-6`}>
                                 This deal can&apos;t be booked here. Visits can be booked for open
                                 deals on your own listings. Choose a client below.
                             </p>
                         )}
-                        {noLeads ? (
-                            <p className="body-sm text-ink-muted">
-                                No clients to book for yet. A visit can be booked once a client has
-                                an open deal on one of your own listings.
-                            </p>
-                        ) : visit ? (
-                            <div className="flex flex-col gap-2">
-                                <p className="body-sm flex items-center gap-2 text-ink">
-                                    <UserRound aria-hidden className="shrink-0 block-4 inline-4" />
-                                    {visit.clientName}
+                        <DrawerSection
+                            title="Client and property"
+                            description={
+                                visit
+                                    ? "The client and property for this visit."
+                                    : "Choose who is visiting and the property they want to see."
+                            }
+                        >
+                            {noLeads ? (
+                                <p className="body-sm text-ink-muted">
+                                    No clients to book for yet. A visit can be booked once a client
+                                    has an open deal on one of your own listings.
                                 </p>
-                                <p className="body-sm flex items-center gap-2 text-ink">
-                                    <Building2 aria-hidden className="shrink-0 block-4 inline-4" />
-                                    {visit.propertyTitle}, {visit.locality}
-                                </p>
-                                <p className="body-xs text-ink-muted">
-                                    Now {formatVisitDate(visit.startsAt)},{" "}
-                                    {formatVisitTime(visit.startsAt)} IST
-                                </p>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col gap-4">
-                                <div className={styles.field}>
-                                    <label htmlFor={`${formId}-client`}>
-                                        Client <span className={styles.required}>*</span>
-                                    </label>
-                                    <VisitEntityCombobox
-                                        id={`${formId}-client`}
-                                        kind="client"
-                                        options={clientOptions}
-                                        value={draft.clientId}
-                                        onChange={chooseClient}
-                                        disabled={busy || leadsQuery.isPending}
-                                        error={show("clientId")}
-                                    />
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={`${formId}-property`}>
-                                        Property <span className={styles.required}>*</span>
-                                    </label>
-                                    <VisitEntityCombobox
-                                        id={`${formId}-property`}
-                                        kind="property"
-                                        options={propertyOptions}
-                                        value={draft.propertyId}
-                                        onChange={chooseProperty}
-                                        disabled={busy || !draft.clientId}
-                                        error={show("propertyId")}
-                                        emptyText="Choose a client first."
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {!noLeads && (
-                            <div className="flex flex-col gap-4">
-                                <div className={styles.field}>
-                                    <span id={`${formId}-length`}>
-                                        How long <span className={styles.required}>*</span>
-                                    </span>
-                                    <div
-                                        role="group"
-                                        aria-labelledby={`${formId}-length`}
-                                        className="flex flex-wrap gap-2"
-                                    >
-                                        {DURATION_CHIPS.map((chip) => (
-                                            <Button
-                                                key={chip.value}
-                                                type="button"
-                                                size="sm"
-                                                variant={
-                                                    draft.durationMinutes === chip.value
-                                                        ? "accent"
-                                                        : "outline"
-                                                }
-                                                aria-pressed={draft.durationMinutes === chip.value}
-                                                aria-invalid={
-                                                    Boolean(show("durationMinutes")) || undefined
-                                                }
-                                                onClick={() =>
-                                                    patch({
-                                                        durationMinutes: chip.value,
-                                                        startAt: "",
-                                                    })
-                                                }
-                                            >
-                                                {chip.label}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                    {show("durationMinutes") && (
-                                        <p role="alert" className={styles.fieldError}>
-                                            {show("durationMinutes")}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className={styles.field}>
-                                    <label htmlFor={`${formId}-date`}>
-                                        Visit date <span className={styles.required}>*</span>
-                                    </label>
-                                    <VisitDatePicker
-                                        id={`${formId}-date`}
-                                        value={draft.date}
-                                        minDate={dates[0]}
-                                        maxDate={dates[dates.length - 1]}
-                                        onChange={(date) => patch({ date, startAt: "" })}
-                                        disabled={busy}
-                                        error={show("date")}
-                                    />
-                                </div>
-                                <div className={styles.field}>
-                                    <span id={`${formId}-start`}>
-                                        Start time (IST) <span className={styles.required}>*</span>
-                                    </span>
-                                    <TimeChips
-                                        labelledBy={`${formId}-start`}
-                                        ready={Boolean(
-                                            draft.leadId && draft.durationMinutes && draft.date,
-                                        )}
-                                        loading={free.isFetching}
-                                        failed={free.isError}
-                                        starts={free.data ?? []}
-                                        value={draft.startAt}
-                                        onChange={(startAt) => patch({ startAt })}
-                                        invalid={Boolean(show("startAt"))}
-                                    />
-                                    {show("startAt") && (
-                                        <p role="alert" className={styles.fieldError}>
-                                            {show("startAt")}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {!noLeads && (
-                            <div className="flex flex-col gap-4">
-                                {draft.date && draft.startAt ? (
-                                    <VisitReminderPicker
-                                        reminders={draft.reminders}
-                                        date={draft.date}
-                                        startTime={inputValueInIst(draft.startAt).slice(11)}
-                                        now={now}
-                                        onChange={(reminders) => patch({ reminders })}
-                                        disabled={busy}
-                                    />
-                                ) : (
-                                    <p className="body-sm flex items-center gap-2 text-ink-muted">
-                                        <Bell
-                                            aria-hidden="true"
+                            ) : visit ? (
+                                <div className="flex flex-col gap-2">
+                                    <p className="body-sm flex items-center gap-2 text-ink">
+                                        <UserRound
+                                            aria-hidden
                                             className="shrink-0 block-4 inline-4"
                                         />
-                                        Pick a start time to set reminders.
+                                        {visit.clientName}
                                     </p>
-                                )}
-                                {draft.date && draft.startAt && show("reminders") && (
-                                    <p role="alert" className={styles.fieldError}>
-                                        {show("reminders")}
+                                    <p className="body-sm flex items-center gap-2 text-ink">
+                                        <Building2
+                                            aria-hidden
+                                            className="shrink-0 block-4 inline-4"
+                                        />
+                                        {visit.propertyTitle}, {visit.locality}
                                     </p>
-                                )}
+                                    <p className="body-xs text-ink-muted">
+                                        Now {formatVisitDate(visit.startsAt)},{" "}
+                                        {formatVisitTime(visit.startsAt)} IST
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-4">
+                                    <div className={styles.field}>
+                                        <label htmlFor={`${formId}-client`}>
+                                            Client <span className={styles.required}>*</span>
+                                        </label>
+                                        <VisitEntityCombobox
+                                            id={`${formId}-client`}
+                                            kind="client"
+                                            options={clientOptions}
+                                            value={draft.clientId}
+                                            onChange={chooseClient}
+                                            disabled={busy || leadsQuery.isPending}
+                                            error={show("clientId")}
+                                        />
+                                    </div>
+                                    <div className={styles.field}>
+                                        <label htmlFor={`${formId}-property`}>
+                                            Property <span className={styles.required}>*</span>
+                                        </label>
+                                        <VisitEntityCombobox
+                                            id={`${formId}-property`}
+                                            kind="property"
+                                            options={propertyOptions}
+                                            value={draft.propertyId}
+                                            onChange={chooseProperty}
+                                            disabled={busy || !draft.clientId}
+                                            error={show("propertyId")}
+                                            emptyText="Choose a client first."
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </DrawerSection>
+
+                        {!noLeads && (
+                            <DrawerSection
+                                title="Visit date and time"
+                                description="Choose how long, the date and a free start time. All times are in India time (IST)."
+                            >
+                                <div className="flex flex-col gap-4">
+                                    <div className={styles.field}>
+                                        <span id={`${formId}-length`}>
+                                            How long <span className={styles.required}>*</span>
+                                        </span>
+                                        <div
+                                            role="group"
+                                            aria-labelledby={`${formId}-length`}
+                                            className="flex flex-wrap gap-2"
+                                        >
+                                            {DURATION_CHIPS.map((chip) => (
+                                                <Button
+                                                    key={chip.value}
+                                                    type="button"
+                                                    size="sm"
+                                                    variant={
+                                                        draft.durationMinutes === chip.value
+                                                            ? "accent"
+                                                            : "outline"
+                                                    }
+                                                    aria-pressed={
+                                                        draft.durationMinutes === chip.value
+                                                    }
+                                                    aria-invalid={
+                                                        Boolean(show("durationMinutes")) ||
+                                                        undefined
+                                                    }
+                                                    onClick={() =>
+                                                        patch({
+                                                            durationMinutes: chip.value,
+                                                            startAt: "",
+                                                        })
+                                                    }
+                                                >
+                                                    {chip.label}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                        {show("durationMinutes") && (
+                                            <p role="alert" className={styles.fieldError}>
+                                                {show("durationMinutes")}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className={styles.field}>
+                                        <label htmlFor={`${formId}-date`}>
+                                            Visit date <span className={styles.required}>*</span>
+                                        </label>
+                                        <VisitDatePicker
+                                            id={`${formId}-date`}
+                                            value={draft.date}
+                                            minDate={dates[0]}
+                                            maxDate={dates[dates.length - 1]}
+                                            onChange={(date) => patch({ date, startAt: "" })}
+                                            disabled={busy}
+                                            error={show("date")}
+                                        />
+                                    </div>
+                                    <div className={styles.field}>
+                                        <span id={`${formId}-start`}>
+                                            Start time (IST){" "}
+                                            <span className={styles.required}>*</span>
+                                        </span>
+                                        <TimeChips
+                                            labelledBy={`${formId}-start`}
+                                            ready={Boolean(
+                                                draft.leadId && draft.durationMinutes && draft.date,
+                                            )}
+                                            loading={free.isFetching}
+                                            failed={free.isError}
+                                            starts={free.data ?? []}
+                                            value={draft.startAt}
+                                            onChange={(startAt) => patch({ startAt })}
+                                            invalid={Boolean(show("startAt"))}
+                                        />
+                                        {show("startAt") && (
+                                            <p role="alert" className={styles.fieldError}>
+                                                {show("startAt")}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </DrawerSection>
+                        )}
+
+                        {!noLeads && (
+                            <DrawerSection
+                                title="Reminders"
+                                description="Choose when you want to be reminded before the visit starts."
+                            >
+                                <div className="flex flex-col gap-4">
+                                    {draft.date && draft.startAt ? (
+                                        <VisitReminderPicker
+                                            reminders={draft.reminders}
+                                            date={draft.date}
+                                            startTime={inputValueInIst(draft.startAt).slice(11)}
+                                            now={now}
+                                            onChange={(reminders) => patch({ reminders })}
+                                            disabled={busy}
+                                        />
+                                    ) : (
+                                        <p className="body-sm flex items-center gap-2 text-ink-muted">
+                                            <Bell
+                                                aria-hidden="true"
+                                                className="shrink-0 block-4 inline-4"
+                                            />
+                                            Pick a start time to set reminders.
+                                        </p>
+                                    )}
+                                    {draft.date && draft.startAt && show("reminders") && (
+                                        <p role="alert" className={styles.fieldError}>
+                                            {show("reminders")}
+                                        </p>
+                                    )}
+                                </div>
+                            </DrawerSection>
+                        )}
+
+                        {!noLeads && (
+                            <DrawerSection
+                                title="Visit notes"
+                                description="Add a meeting point or anything to remember for this visit."
+                            >
                                 <div className={styles.field}>
                                     <label htmlFor={`${formId}-notes`}>Notes (optional)</label>
                                     <Textarea
@@ -386,7 +425,7 @@ export function ScheduleForm({
                                         </p>
                                     )}
                                 </div>
-                            </div>
+                            </DrawerSection>
                         )}
                     </div>
                 </fieldset>

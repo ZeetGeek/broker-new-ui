@@ -73,7 +73,12 @@ export function NewSiteVisitsPage() {
     const [filters, setFilters] = useState<VisitFilters>({ ...EMPTY_FILTERS });
     const [sort, setSort] = useState<VisitSort | undefined>(undefined);
     const [dialog, setDialog] = useState<"filters" | "dates" | null>(null);
-    const [view, setView] = useState<View | null>(null);
+    // The shell's "Schedule visit" action links here with ?view=schedule.
+    const [view, setView] = useState<View | null>(() =>
+        searchParams.get("view") === "schedule"
+            ? { kind: "schedule", intent: null, intentMissed: false }
+            : null,
+    );
     const [actionError, setActionError] = useState("");
 
     const range = filters.range || defaultRange(tab);

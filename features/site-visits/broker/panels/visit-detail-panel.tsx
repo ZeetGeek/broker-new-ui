@@ -6,6 +6,7 @@ import { formatVisitDate, formatVisitDayHeading, formatVisitTime } from "@/lib/v
 import { AppImage } from "@/components/shared/app-image";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
+import { DrawerSection } from "@/components/shared/drawer-section";
 import { CalendarCheck, CallIcon, MapPin, Trash2, WhatsAppIcon } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -110,109 +111,135 @@ export function VisitDetailPanel({
                         {formatVisitTime(visit.endsAt)}
                     </p>
                 </div>
-                <div className="flex-1 space-y-5 overflow-y-auto p-5">
-                    <section className="flex gap-3">
-                        <div
-                            className="
+                <div className="flex-1 overflow-y-auto p-5">
+                    <DrawerSection
+                        title="Property"
+                        description="Review the property, asking price and address."
+                    >
+                        <section className="flex gap-3">
+                            <div
+                                className="
                               relative shrink-0 overflow-hidden rounded-[8px] bg-surface-muted block-20 inline-24
                             "
-                        >
-                            <AppImage
-                                src={
-                                    visit.property.coverUrl ??
-                                    "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                                }
-                                alt=""
-                                fill
-                                sizes="96px"
-                            />
-                        </div>
-                        <div className="min-inline-0">
-                            <h2 className="h5 truncate text-ink">{visit.property.title}</h2>
-                            <p className="body-xs mbs-1 text-ink-muted">
-                                {visit.property.configLabel} ·{" "}
-                                {visit.property.areaSqft.toLocaleString("en-IN")} sqft
-                            </p>
-                            <PriceWithCommission
-                                amountInr={visit.property.amountInr}
-                                isRent={visit.property.purpose === "rent"}
-                                commissionPercent={visit.property.commissionPercent}
-                                commissionAmountInr={visit.property.commissionAmountInr}
-                                audience="broker"
-                                size="sm"
-                                className="mbs-2"
-                            />
-                            <p className="body-xs mbs-2 flex items-start gap-1.5 text-ink-muted">
-                                <MapPin
-                                    aria-hidden
-                                    className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
+                            >
+                                <AppImage
+                                    src={
+                                        visit.property.coverUrl ??
+                                        "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                                    }
+                                    alt=""
+                                    fill
+                                    sizes="96px"
                                 />
-                                {visit.property.address}
-                            </p>
-                        </div>
-                    </section>
-                    <section className="grid gap-2">
-                        {visit.buyers.length > 1 ? (
-                            <AttachedClientsSummary clients={visit.buyers} className="body-sm" />
-                        ) : null}
-                        <ContactBlock
-                            label={visit.buyers.length > 1 ? "Primary client" : "Client"}
-                            person={visit.buyers[0]}
-                            message={buyerMessage}
-                        />
-                        <ContactBlock label="Owner" person={visit.owner} message={ownerMessage} />
-                    </section>
-                    {visit.ownerNote || visit.brokerNote ? (
-                        <section>
-                            <h3 className="body-sm font-bold text-ink">Visit notes</h3>
-                            <div className="mbs-2 space-y-2">
-                                {visit.ownerNote ? (
-                                    <p
-                                        className="
-                                          body-xs rounded-inner bg-surface-muted p-3 text-ink
-                                        "
-                                    >
-                                        <span className="font-bold">Owner:</span> {visit.ownerNote}
-                                    </p>
-                                ) : null}
-                                {visit.brokerNote ? (
-                                    <p
-                                        className="
-                                          body-xs rounded-inner bg-surface-muted p-3 text-ink
-                                        "
-                                    >
-                                        <span className="font-bold">Your note:</span>{" "}
-                                        {visit.brokerNote}
-                                    </p>
-                                ) : null}
+                            </div>
+                            <div className="min-inline-0">
+                                <h2 className="h5 truncate text-ink">{visit.property.title}</h2>
+                                <p className="body-xs mbs-1 text-ink-muted">
+                                    {visit.property.configLabel} ·{" "}
+                                    {visit.property.areaSqft.toLocaleString("en-IN")} sqft
+                                </p>
+                                <PriceWithCommission
+                                    amountInr={visit.property.amountInr}
+                                    isRent={visit.property.purpose === "rent"}
+                                    commissionPercent={visit.property.commissionPercent}
+                                    commissionAmountInr={visit.property.commissionAmountInr}
+                                    audience="broker"
+                                    size="sm"
+                                    className="mbs-2"
+                                />
+                                <p className="body-xs mbs-2 flex items-start gap-1.5 text-ink-muted">
+                                    <MapPin
+                                        aria-hidden
+                                        className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
+                                    />
+                                    {visit.property.address}
+                                </p>
                             </div>
                         </section>
+                    </DrawerSection>
+                    <DrawerSection
+                        title="Clients and owner"
+                        description="Find contact details for everyone involved in the visit."
+                    >
+                        <section className="grid gap-2">
+                            {visit.buyers.length > 1 ? (
+                                <AttachedClientsSummary
+                                    clients={visit.buyers}
+                                    className="body-sm"
+                                />
+                            ) : null}
+                            <ContactBlock
+                                label={visit.buyers.length > 1 ? "Primary client" : "Client"}
+                                person={visit.buyers[0]}
+                                message={buyerMessage}
+                            />
+                            <ContactBlock
+                                label="Owner"
+                                person={visit.owner}
+                                message={ownerMessage}
+                            />
+                        </section>
+                    </DrawerSection>
+                    {visit.ownerNote || visit.brokerNote ? (
+                        <DrawerSection
+                            title="Visit notes"
+                            description="Read the owner’s instructions and your notes."
+                        >
+                            <section>
+                                <div className="mbs-2 space-y-2">
+                                    {visit.ownerNote ? (
+                                        <p
+                                            className="
+                                          body-xs rounded-inner bg-surface-muted p-3 text-ink
+                                        "
+                                        >
+                                            <span className="font-bold">Owner:</span>{" "}
+                                            {visit.ownerNote}
+                                        </p>
+                                    ) : null}
+                                    {visit.brokerNote ? (
+                                        <p
+                                            className="
+                                          body-xs rounded-inner bg-surface-muted p-3 text-ink
+                                        "
+                                        >
+                                            <span className="font-bold">Your note:</span>{" "}
+                                            {visit.brokerNote}
+                                        </p>
+                                    ) : null}
+                                </div>
+                            </section>
+                        </DrawerSection>
                     ) : null}
                     {USE_MOCK_VISITS || visit.outcome ? (
-                        <section className="rounded-inner border border-border-warm p-4">
-                            <div className="flex items-center justify-between gap-3">
-                                <div>
-                                    <h3 className="body-sm font-bold text-ink">Outcome</h3>
-                                    <p className="body-xs text-ink-muted">
-                                        {visit.outcome
-                                            ? `${visit.outcome.interest} · ${visit.outcome.nextStep.replaceAll("_", " ")}`
-                                            : USE_MOCK_VISITS
-                                              ? "Not logged yet"
-                                              : "Saving outcomes is not available yet. Manage client notes and stages in Pipeline."}
-                                    </p>
+                        <DrawerSection
+                            title="Visit outcome"
+                            description="Review the client’s interest, feedback and next step."
+                        >
+                            <section className="rounded-inner border border-border-warm p-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p className="body-xs text-ink-muted">
+                                            {visit.outcome
+                                                ? `${visit.outcome.interest} · ${visit.outcome.nextStep.replaceAll("_", " ")}`
+                                                : USE_MOCK_VISITS
+                                                  ? "Not logged yet"
+                                                  : "Saving outcomes is not available yet. Manage client notes and stages in Pipeline."}
+                                        </p>
+                                    </div>
+                                    {!visit.outcome && USE_MOCK_VISITS ? (
+                                        <Button onClick={onLogOutcome}>
+                                            <CalendarCheck aria-hidden /> Log outcome
+                                        </Button>
+                                    ) : null}
                                 </div>
-                                {!visit.outcome && USE_MOCK_VISITS ? (
-                                    <Button onClick={onLogOutcome}>
-                                        <CalendarCheck aria-hidden /> Log outcome
-                                    </Button>
+                                {visit.outcome?.feedback ? (
+                                    <p className="body-xs mbs-3 text-ink-muted">
+                                        {visit.outcome.feedback}
+                                    </p>
                                 ) : null}
-                            </div>
-                            {visit.outcome?.feedback ? (
-                                <p className="body-xs mbs-3 text-ink-muted">
-                                    {visit.outcome.feedback}
-                                </p>
-                            ) : null}
-                        </section>
+                            </section>
+                        </DrawerSection>
                     ) : null}
                     {![
                         "cancelled_by_broker",

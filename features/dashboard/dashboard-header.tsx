@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 
+import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { BROKER_OWNER_LISTINGS_HREF } from "@/lib/routes/broker";
+import { areaColorClassName } from "@/lib/styles/area-color";
 import { cn } from "@/lib/utils";
 
 import { ChartBar, MapPin, Pencil, Search, UserRoundPlus } from "@/components/shared/icons";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
-import { Badge, badgeVariants } from "@/components/ui/badge";
+import { badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -145,9 +147,15 @@ function ServiceAreaChips({ areas }: { areas: string[] }) {
     return (
         <>
             {areas.map((area) => (
-                <Badge key={area} color="sky">
-                    {area}
-                </Badge>
+                <span
+                    key={area}
+                    className={cn(
+                        "body-xs inline-flex rounded-full px-2.5 py-1 font-semibold wrap-break-word max-inline-full min-inline-0",
+                        areaColorClassName(area),
+                    )}
+                >
+                    {formatPlaceName(area)}
+                </span>
             ))}
             <ShortcutTooltip shortcutId="profile" label="Press to navigate">
                 <Button

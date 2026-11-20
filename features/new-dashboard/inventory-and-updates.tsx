@@ -1,6 +1,5 @@
 "use client";
-
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
 
@@ -10,10 +9,9 @@ import { isMockMode } from "@/lib/api/mock-mode";
 import { myListingsApi } from "@/lib/api/my-listings";
 import { formatRelativePast } from "@/lib/format/date";
 import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
-import { measuredPxToRem } from "@/lib/styles/rem";
 
-import { AppImage } from "@/components/shared/app-image";
 import { AvatarStack } from "@/components/shared/avatar-stack";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     Activity,
     ArrowRight,
@@ -36,7 +34,9 @@ import {
     listingCommissionTip,
     PriceWithCommission,
 } from "@/components/shared/price-with-commission";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { Skeleton } from "@/components/shared/skeleton";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
@@ -47,7 +47,6 @@ import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
 import styles from "./inventory-and-updates.module.css";
-import taskStyles from "./task-card.module.css";
 
 type InventoryTab = "published" | "draft";
 const INVENTORY_TABS = [
@@ -64,89 +63,19 @@ function InventoryTabs({
     onChange: (value: InventoryTab) => void;
     counts?: { published: number; draft: number };
 }) {
-    const barRef = useRef<HTMLDivElement>(null);
-    const pillRef = useRef<HTMLSpanElement>(null);
-    const painted = useRef(false);
-    const placed = useRef<{ x: number; w: number } | null>(null);
-
-    const movePill = useCallback((animate: boolean) => {
-        const bar = barRef.current;
-        const pill = pillRef.current;
-        const active = bar?.querySelector<HTMLElement>('[aria-selected="true"]');
-        if (!pill || !active) return;
-        const x = active.offsetLeft;
-        const w = active.offsetWidth;
-        // ResizeObserver reports the box we just wrote. Rewriting transform
-        // with the transition cleared would cancel the slide in progress.
-        if (placed.current?.x === x && placed.current.w === w) return;
-        placed.current = { x, w };
-        const transition = pill.style.transition;
-        if (!animate) pill.style.transition = "none";
-        pill.style.transform = `translateX(${measuredPxToRem(x)})`;
-        pill.style.width = `${measuredPxToRem(w)}`;
-        if (!animate) {
-            void pill.offsetWidth;
-            pill.style.transition = transition;
-        }
-    }, []);
-
-    useLayoutEffect(() => {
-        movePill(painted.current);
-        painted.current = true;
-    }, [value, counts?.published, counts?.draft, movePill]);
-
-    useLayoutEffect(() => {
-        const bar = barRef.current;
-        if (!bar) return;
-        const observer = new ResizeObserver(() => movePill(false));
-        observer.observe(bar);
-        bar.querySelectorAll<HTMLElement>('[role="tab"]').forEach((tab) => observer.observe(tab));
-        return () => observer.disconnect();
-    }, [movePill]);
-
     return (
-        <div
-            ref={barRef}
-            role="tablist"
-            aria-label="Filter your listings"
-            className={`t-tabs t-tabs-surface t-tabs-compact ${styles.listingTabs}`}
-        >
-            <span ref={pillRef} className="t-tabs-pill" aria-hidden="true" />
-            {INVENTORY_TABS.map((tab, index) => (
-                <button
-                    key={tab.value}
-                    id={`dashboard-listings-tab-${tab.value}`}
-                    type="button"
-                    role="tab"
-                    aria-selected={value === tab.value}
-                    aria-controls="dashboard-listings-panel"
-                    tabIndex={value === tab.value ? 0 : -1}
-                    className={`t-tab ${taskStyles.tab}`}
-                    onClick={() => onChange(tab.value)}
-                    onKeyDown={(event) => {
-                        const next =
-                            event.key === "Home"
-                                ? 0
-                                : event.key === "End"
-                                  ? INVENTORY_TABS.length - 1
-                                  : event.key === "ArrowRight"
-                                    ? (index + 1) % INVENTORY_TABS.length
-                                    : event.key === "ArrowLeft"
-                                      ? (index - 1 + INVENTORY_TABS.length) % INVENTORY_TABS.length
-                                      : null;
-                        if (next === null) return;
-                        event.preventDefault();
-                        onChange(INVENTORY_TABS[next].value);
-                        barRef.current
-                            ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-                            [next]?.focus();
-                    }}
-                >
-                    {tab.label}
-                    {counts ? <span className={taskStyles.count}>{counts[tab.value]}</span> : null}
-                </button>
-            ))}
-        </div>
+        <SlidingTabs
+            value={value}
+            onValueChange={onChange}
+            label="Filter your listings"
+            panelId="dashboard-listings-panel"
+            className={styles.listingTabs}
+            options={INVENTORY_TABS.map((tab) => ({
+                ...tab,
+                id: `dashboard-listings-tab-${tab.value}`,
+                count: counts?.[tab.value],
+            }))}
+        />
     );
 }
 
@@ -231,17 +160,15 @@ function ListingClients({ listing }: { listing: MyListingItem }) {
                 <Popover>
                     <PopoverTrigger
                         className={styles.moreClients}
-                        aria-label={`View ${remaining.length} more interested clients`}
+                        aria-label={`View ${remaining.length} more clients`}
                     >
                         +{remaining.length} {remaining.length === 1 ? "Client" : "Clients"}
                     </PopoverTrigger>
                     <PopoverContent
                         align="start"
-                        className="gap-3 inline-60 max-inline-[calc(100vw-2rem)]"
+                        className="gap-3 inline-44 max-inline-[calc(100vw-2rem)]"
                     >
-                        <PopoverTitle className="body-sm font-semibold">
-                            More interested clients
-                        </PopoverTitle>
+                        <PopoverTitle className="body-sm font-semibold">More clients</PopoverTitle>
                         <ul className={styles.overflowClients}>
                             {remaining.map((client) => (
                                 <li key={client.id}>{person(client)}</li>
@@ -278,18 +205,13 @@ function ListingRow({
         <tr className={styles.listingRow}>
             <td className={styles.propertyCell}>
                 <Link href={href} className={styles.propertyLink}>
-                    <span className={styles.thumbnail}>
-                        <Building2 aria-hidden className={styles.fallbackIcon} />
-                        {listing.imageSrc ? (
-                            <AppImage
-                                src={listing.imageSrc}
-                                alt=""
-                                fill
-                                sizes="88px"
-                                className="object-cover"
-                            />
-                        ) : null}
-                    </span>
+                    <PropertyCoverImage
+                        src={listing.imageSrc}
+                        alt=""
+                        size={72}
+                        sizes="72px"
+                        className={styles.thumbnail}
+                    />
                     <span className={styles.propertyText}>
                         <span className={styles.propertyTitle}>{listing.title}</span>
                         <span className={styles.location}>
@@ -334,27 +256,26 @@ function ListingRow({
             </td>
             <td className={styles.actionsCell}>
                 <div className={styles.rowActions}>
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
+                    <IconButton
+                        size="sm"
                         nativeButton={false}
                         render={<Link href={brokerPropertyEditHref(listing.id)} />}
                         aria-label={`Edit ${listing.title}`}
                         title="Edit listing"
-                        className="text-ink-subtle"
+                        className=""
                     >
                         <Pencil aria-hidden />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
+                    </IconButton>
+                    <IconButton
+                        tone="danger"
+                        size="sm"
                         onClick={() => onDelete(listing)}
                         aria-label={`Delete ${listing.title}`}
                         title="Delete listing"
-                        className="text-danger hover:bg-danger-soft hover:text-danger"
+                        className=""
                     >
                         <Trash2 aria-hidden />
-                    </Button>
+                    </IconButton>
                 </div>
             </td>
         </tr>
@@ -591,18 +512,22 @@ export function InventoryAndUpdates({
     const listingViewportRef = useRef<HTMLDivElement>(null);
     const listingContentRef = useRef<HTMLDivElement>(null);
     const [hasMoreListings, setHasMoreListings] = useState(false);
+    const [listingsScrolled, setListingsScrolled] = useState(false);
     const updateViewportRef = useRef<HTMLDivElement>(null);
     const updateContentRef = useRef<HTMLDivElement>(null);
     const [hasMoreUpdates, setHasMoreUpdates] = useState(false);
+    const [updatesScrolled, setUpdatesScrolled] = useState(false);
 
     useEffect(() => {
         const viewport = updateViewportRef.current;
         const content = updateContentRef.current;
         if (!viewport || !content) return;
-        const measure = () =>
+        const measure = () => {
             setHasMoreUpdates(
                 viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1,
             );
+            setUpdatesScrolled(viewport.scrollTop > 1);
+        };
         const observer = new ResizeObserver(measure);
         observer.observe(viewport);
         observer.observe(content);
@@ -617,10 +542,12 @@ export function InventoryAndUpdates({
         const viewport = listingViewportRef.current;
         const content = listingContentRef.current;
         if (!viewport || !content) return;
-        const measure = () =>
+        const measure = () => {
             setHasMoreListings(
                 viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1,
             );
+            setListingsScrolled(viewport.scrollTop > 1);
+        };
         const observer = new ResizeObserver(measure);
         observer.observe(viewport);
         observer.observe(content);
@@ -700,6 +627,7 @@ export function InventoryAndUpdates({
                     <div
                         ref={listingViewportRef}
                         className={styles.scrollViewport}
+                        data-scrolled={listingsScrolled}
                         role="region"
                         aria-label={`${selectedTab === "draft" ? "Draft" : "Active"} listing list`}
                         tabIndex={0}
@@ -812,7 +740,7 @@ export function InventoryAndUpdates({
                 data-scroll-fade={hasMoreUpdates}
                 aria-labelledby="dashboard-updates-heading"
             >
-                <header className={styles.header}>
+                <header className={styles.header} data-scrolled={updatesScrolled}>
                     <h2 id="dashboard-updates-heading" className="h5 text-ink">
                         Recent updates
                     </h2>

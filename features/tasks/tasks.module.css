@@ -50,10 +50,6 @@
     inline-size: 256px;
     min-inline-size: 200px;
 }
-.toolbarButton {
-    block-size: 38px;
-    padding-inline: 1rem;
-}
 .smallCount {
     display: inline-flex;
     align-items: center;
@@ -375,11 +371,6 @@
     }
     .detailLine {
         flex-wrap: wrap;
-    }
-}
-@media (pointer: coarse) {
-    .toolbarButton {
-        min-block-size: 44px;
     }
 }
 @media (prefers-reduced-motion: reduce) {

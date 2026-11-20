@@ -15,6 +15,7 @@ import {
 } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { Check, Link2, Share2 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -172,13 +173,14 @@ export function PropertySharePopover({
         [shareText, shareUrl],
     );
 
+    const ActionButton = iconOnly ? IconButton : Button;
     const trigger = (
         <DropdownMenuTrigger
             render={
-                <Button
+                <ActionButton
                     type="button"
-                    variant={iconOnly ? "ghost" : "link"}
-                    size={iconOnly ? "icon" : "sm"}
+                    {...(!iconOnly ? { variant: "link" as const } : {})}
+                    size={iconOnly ? "md" : "sm"}
                     aria-label="Share listing"
                     aria-haspopup="menu"
                     className={cn(!iconOnly && "gap-1.5 p-0 font-medium block-auto", className)}
@@ -199,10 +201,10 @@ export function PropertySharePopover({
         return (
             <Tooltip>
                 <TooltipTrigger render={<span className="inline-flex" tabIndex={0} />}>
-                    <Button
+                    <ActionButton
                         type="button"
-                        variant={iconOnly ? "ghost" : "link"}
-                        size={iconOnly ? "icon" : "sm"}
+                        {...(!iconOnly ? { variant: "link" as const } : {})}
+                        size={iconOnly ? "md" : "sm"}
                         aria-label="Share listing"
                         disabled
                         className={cn(!iconOnly && "gap-1.5 p-0 font-medium block-auto", className)}
@@ -213,7 +215,7 @@ export function PropertySharePopover({
                             strokeWidth={1.75}
                         />
                         {iconOnly ? null : "Share"}
-                    </Button>
+                    </ActionButton>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">{disabledReason}</TooltipContent>
             </Tooltip>

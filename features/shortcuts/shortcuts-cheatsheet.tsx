@@ -50,6 +50,9 @@ const SHORTCUT_ICONS: Record<ShortcutId, ComponentType<IconProps>> = {
     logout: LogOut,
     add_property: Plus,
     add_contact: Contact,
+    dashboard_add_listing: Building2,
+    dashboard_schedule_visit: CalendarClock,
+    dashboard_add_task: Plus,
 };
 
 function groupShortcuts(hiddenIds: readonly ShortcutId[]): Map<string, ShortcutDef[]> {

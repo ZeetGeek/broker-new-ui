@@ -1,20 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { ownerRequestsHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { filterChipClassName, FilterChipCount } from "@/components/shared/filter-chip";
-import { ArrowDownUp, ChevronDown, Search } from "@/components/shared/icons";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+import { ListSearchField, ListToolbarSelect } from "@/components/shared/list-toolbar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { OwnerRequestsSummary, OwnerRequestsTab } from "@/features/owner-requests/types";
@@ -82,105 +74,6 @@ function tabCount(summary: OwnerRequestsSummary | null, key: OwnerRequestsTab): 
         case "cancelled":
             return summary.cancelled;
     }
-}
-
-function QueryInput({
-    value,
-    onChange,
-    placeholder,
-}: {
-    value: string;
-    onChange: (q: string) => void;
-    placeholder: string;
-}) {
-    const [draft, setDraft] = useState(value);
-    const [prevValue, setPrevValue] = useState(value);
-
-    if (value !== prevValue) {
-        setPrevValue(value);
-        setDraft(value);
-    }
-
-    useEffect(() => {
-        if (draft === value) return;
-        const timer = window.setTimeout(() => onChange(draft), 300);
-        return () => window.clearTimeout(timer);
-    }, [draft, onChange, value]);
-
-    return (
-        <Input
-            size="sm"
-            value={draft}
-            onValueChange={setDraft}
-            placeholder={placeholder}
-            aria-label={placeholder}
-            startIcon={Search}
-            clearable
-            wrapperClassName="
-              min-inline-44 inline-44 shadow-sm
-              sm:min-inline-52 sm:inline-52
-              lg:min-inline-64 lg:inline-64
-            "
-            className="
-              rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm
-              block-[38px]!
-              hover:border-ink/25!
-              focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20
-            "
-        />
-    );
-}
-
-function SortMenu({
-    sort,
-    onSortChange,
-}: {
-    sort: OwnerRequestsSort;
-    onSortChange: (sort: OwnerRequestsSort) => void;
-}) {
-    const isDefaultSort = sort === "recent";
-    const label = SORT_OPTIONS.find((option) => option.value === sort)?.label ?? "Newest first";
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <button
-                        type="button"
-                        className={cn(
-                            filterChipClassName(!isDefaultSort),
-                            "gap-2",
-                            isDefaultSort && "text-ink-muted",
-                        )}
-                    >
-                        <ArrowDownUp
-                            aria-hidden
-                            className="text-brand block-4 inline-4"
-                            strokeWidth={1.75}
-                        />
-                        <span className="hidden sm:inline">{label}</span>
-                        <span className="sm:hidden">Sort</span>
-                        <ChevronDown
-                            aria-hidden
-                            className="opacity-60 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                    </button>
-                }
-            />
-            <DropdownMenuContent align="end" className="min-inline-44">
-                {SORT_OPTIONS.map((option) => (
-                    <DropdownMenuItem
-                        key={option.value}
-                        onClick={() => onSortChange(option.value)}
-                        className={cn(sort === option.value && "font-semibold text-brand")}
-                    >
-                        {option.label}
-                    </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
 }
 
 export function OwnerRequestsHeader({
@@ -262,12 +155,19 @@ export function OwnerRequestsHeader({
                     </OwnerListingsChipsCarousel>
 
                     <div className="flex shrink-0 items-center gap-2.5">
-                        <QueryInput
+                        <ListSearchField
                             value={search}
                             onChange={onSearchChange}
                             placeholder={searchPlaceholder}
                         />
-                        <SortMenu sort={sort} onSortChange={onSortChange} />
+                        <ListToolbarSelect
+                            label="Sort list"
+                            value={sort}
+                            options={SORT_OPTIONS}
+                            defaultValue="recent"
+                            mobileLabel="Sort"
+                            onChange={onSortChange}
+                        />
                     </div>
                 </div>
             </TooltipProvider>

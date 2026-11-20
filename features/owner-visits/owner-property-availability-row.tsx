@@ -10,9 +10,9 @@ import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
-import { AppImage } from "@/components/shared/app-image";
 import { Building2, CalendarPlus, Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
 import { PriceWithCommission, toCommissionNumber } from "@/components/shared/price-with-commission";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -99,20 +99,13 @@ export const OwnerPropertyAvailabilityRow = memo(function OwnerPropertyAvailabil
                   sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:p-5
                 "
             >
-                <div
-                    className="
-                      relative shrink-0 overflow-hidden rounded-inner bg-surface-muted block-20
-                      inline-20
-                      sm:block-24 sm:inline-24
-                    "
-                >
-                    <AppImage
-                        src={property.photos?.[0] ?? "/properties/1.jpg"}
-                        alt=""
-                        fill
-                        sizes="96px"
-                    />
-                </div>
+                <PropertyCoverImage
+                    src={property.photos?.[0]}
+                    alt=""
+                    size={80}
+                    sizes="(min-width: 640px) 96px, 80px"
+                    className="sm:[--property-cover-size:96px]"
+                />
 
                 <div className="flex flex-col pbs-1! min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">

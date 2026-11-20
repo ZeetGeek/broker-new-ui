@@ -46,6 +46,8 @@ type CommonProps = {
     startIcon?: AppIcon;
     size?: "default" | "lg";
     inputRef?: Ref<HTMLInputElement>;
+    /** Display-only formatting for selected chips; stored values remain unchanged. */
+    formatChipLabel?: (value: string) => string;
 };
 
 type SingleProps = CommonProps & {
@@ -89,6 +91,7 @@ export function SearchCombobox(props: SearchComboboxProps) {
         startIcon,
         size = "default",
         inputRef,
+        formatChipLabel,
     } = props;
 
     const generatedId = useId();
@@ -201,7 +204,9 @@ export function SearchCombobox(props: SearchComboboxProps) {
                             {(values: string[]) => (
                                 <>
                                     {values.map((value) => (
-                                        <ComboboxChip key={value}>{value}</ComboboxChip>
+                                        <ComboboxChip key={value}>
+                                            {formatChipLabel ? formatChipLabel(value) : value}
+                                        </ComboboxChip>
                                     ))}
                                     <ComboboxChipsInput
                                         id={inputId}

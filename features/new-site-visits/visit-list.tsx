@@ -6,21 +6,24 @@ import { addVisitDays, formatVisitDate, formatVisitTime, istDateKey } from "@/li
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     type AppIcon,
-    Building2,
     CalendarClock,
     CalendarDays,
     MapPin,
-    Plus,
-    Search,
     SlidersHorizontal,
 } from "@/components/shared/icons";
+import {
+    ListAddButton,
+    ListSearchField,
+    ListToolbarSelect,
+} from "@/components/shared/list-toolbar";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { StatusTabs } from "@/components/shared/status-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -33,7 +36,6 @@ import {
     visitState,
 } from "./model";
 import { VISIT_ACTIONS } from "./visit-actions";
-import { VisitSelect } from "./visit-select";
 import { VISIT_STATUS_COLORS, VisitStatusBadge } from "./visit-status";
 
 import styles from "./visits.module.css";
@@ -54,7 +56,9 @@ function VisitAction({
             <Tooltip>
                 <TooltipTrigger
                     render={
-                        <button
+                        <IconButton
+                            tone={danger ? "danger" : "neutral"}
+                            size="sm"
                             type="button"
                             aria-label={label}
                             className={`${styles.circleAction} ${danger ? styles.dangerAction : ""}`}
@@ -210,16 +214,7 @@ export function VisitList({
                             loadingPlaceholder="Your visits at a glance"
                         />
                     </h1>
-                    {firstRun && (
-                        <Button
-                            variant="accent"
-                            className={styles.scheduleButton}
-                            onClick={onSchedule}
-                        >
-                            <Plus aria-hidden />
-                            Schedule visit
-                        </Button>
-                    )}
+                    {firstRun && <ListAddButton label="Schedule visit" onClick={onSchedule} />}
                 </header>
             </PortalSectionNav>
             {!firstRun && (
@@ -247,41 +242,29 @@ export function VisitList({
                     <div className={styles.searchRow}>
                         <label className={styles.searchField}>
                             <span className="sr-only">Search visits</span>
-                            <Input
-                                size="sm"
-                                startIcon={Search}
-                                wrapperClassName="rounded-control shadow-sm inline-full"
-                                className="rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20"
+                            <ListSearchField
                                 placeholder="Search client, phone or property"
+                                aria-label="Search visits"
                                 value={search}
-                                onValueChange={onSearch}
-                                clearable
+                                onChange={onSearch}
+                                debounceMs={0}
+                                fullWidth
                             />
                         </label>
-                        <VisitSelect
-                            compact
-                            toolbar
+                        <ListToolbarSelect
+                            active
                             label="Visit dates"
                             value={range}
                             options={DATE_RANGES}
                             onChange={onRange}
                         />
-                        <VisitSelect
-                            compact
-                            toolbar
+                        <ListToolbarSelect
                             label="Sort visits"
                             value={sort}
                             options={SORT_OPTIONS}
-                            onChange={(value) => onSort(value as VisitSort)}
+                            onChange={onSort}
                         />
-                        <Button
-                            variant="accent"
-                            className={styles.scheduleButton}
-                            onClick={onSchedule}
-                        >
-                            <Plus aria-hidden />
-                            Schedule visit
-                        </Button>
+                        <ListAddButton label="Schedule visit" onClick={onSchedule} />
                         {filtered && (
                             <Button variant="ghost" size="sm" onClick={onClear}>
                                 Clear filters
@@ -398,9 +381,7 @@ function VisitRow({
     return (
         <article className={styles.visitRow}>
             <div className={styles.rowProperty}>
-                <span className={styles.propertyThumbnail}>
-                    <Building2 aria-hidden />
-                </span>
+                <PropertyCoverImage src={null} alt="" size={64} />
                 <div>
                     <button
                         type="button"

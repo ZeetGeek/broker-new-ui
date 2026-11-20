@@ -78,7 +78,7 @@ const BROKER_MARKETPLACE_NAV_ITEMS: NavItem[] = [
  */
 export const BROKER_NAV_ITEMS: NavItem[] = [
     { label: "Dashboard", href: "/broker/dashboard", shortcutId: "dashboard" },
-    { label: "Clients", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
+    { label: "Contacts", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
     {
         label: "My Listings",
         mobileLabel: "My Listings",

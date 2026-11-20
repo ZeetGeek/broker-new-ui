@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { BrokerVisit } from "@/lib/api/site-visits";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
+import { DrawerSection } from "@/components/shared/drawer-section";
 import { CalendarDays, CalendarPlus, Clock, MapPin, Plus } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -177,20 +178,28 @@ export function VisitDetail({
                 </div>
             )}
         >
-            <div className={styles.detailLayout}>
-                <div className={styles.detailProperty}>
-                    <div>
-                        <h2>{visit.propertyTitle}</h2>
-                        <p>
-                            {visit.locality}
-                            {visit.city && visit.city !== visit.locality ? `, ${visit.city}` : ""}
-                        </p>
+            <div className="flex flex-col min-inline-0">
+                <DrawerSection title="Property" description="The property for this visit.">
+                    <div className="flex flex-col gap-4">
+                        <div className={styles.detailProperty}>
+                            <div>
+                                <h2>{visit.propertyTitle}</h2>
+                                <p>
+                                    {visit.locality}
+                                    {visit.city && visit.city !== visit.locality
+                                        ? `, ${visit.city}`
+                                        : ""}
+                                </p>
+                            </div>
+                            <VisitStatusBadge state={state} />
+                        </div>
+                        {waitingForOwner && (
+                            <p className={styles.muted}>
+                                Waiting for the owner to confirm this time.
+                            </p>
+                        )}
                     </div>
-                    <VisitStatusBadge state={state} />
-                </div>
-                {waitingForOwner && (
-                    <p className={styles.muted}>Waiting for the owner to confirm this time.</p>
-                )}
+                </DrawerSection>
                 {state === "needs_update" && (
                     <div className={styles.attendancePrompt}>
                         <Clock aria-hidden />
@@ -200,54 +209,71 @@ export function VisitDetail({
                         </div>
                     </div>
                 )}
-                <section className={styles.detailSchedule} aria-label="Visit date and time">
-                    <div>
-                        <CalendarDays aria-hidden />
+                <DrawerSection
+                    title="Visit date and time"
+                    description="Check when the visit starts and how long it lasts."
+                >
+                    <section className={styles.detailSchedule} aria-label="Visit date and time">
                         <div>
-                            <span>Visit date</span>
-                            <time dateTime={visit.startsAt}>{formatVisitDate(visit.startsAt)}</time>
+                            <CalendarDays aria-hidden />
+                            <div>
+                                <span>Visit date</span>
+                                <time dateTime={visit.startsAt}>
+                                    {formatVisitDate(visit.startsAt)}
+                                </time>
+                            </div>
                         </div>
-                    </div>
-                    <div>
-                        <Clock aria-hidden />
                         <div>
-                            <span>{visitDurationLabel(visit.durationMinutes)} · IST</span>
-                            <p>
-                                {formatVisitTime(visit.startsAt)} – {formatVisitTime(visit.endsAt)}
-                            </p>
-                        </div>
-                    </div>
-                </section>
-                <section className={styles.detailGroup} aria-label="Client and place">
-                    <div className={styles.detailLine}>
-                        <UserAvatar name={visit.clientName} size="sm" />
-                        <div>
-                            <span>Client</span>
-                            <strong>{visit.clientName}</strong>
-                        </div>
-                    </div>
-                    <div className={`${styles.detailLine} ${styles.detailMeetingPoint}`}>
-                        <span className={styles.meetingPointIcon} aria-hidden>
-                            <MapPin />
-                        </span>
-                        <div>
-                            <span>Place</span>
-                            <strong>
-                                {visit.locality}
-                                {visit.city && visit.city !== visit.locality
-                                    ? `, ${visit.city}`
-                                    : ""}
-                            </strong>
-                        </div>
-                    </div>
-                </section>
-                {visit.notes && (
-                    <section className={styles.detailNotes} aria-label="Visit notes">
-                        <div>
-                            <h3>Notes</h3>
-                            <p className={styles.note}>{visit.notes}</p>
+                            <Clock aria-hidden />
+                            <div>
+                                <span>{visitDurationLabel(visit.durationMinutes)} · IST</span>
+                                <p>
+                                    {formatVisitTime(visit.startsAt)} –{" "}
+                                    {formatVisitTime(visit.endsAt)}
+                                </p>
+                            </div>
                         </div>
                     </section>
+                </DrawerSection>
+                <DrawerSection
+                    title="Client and place"
+                    description="See who is visiting and where to meet."
+                >
+                    <section className={styles.detailGroup} aria-label="Client and place">
+                        <div className={styles.detailLine}>
+                            <UserAvatar name={visit.clientName} size="sm" />
+                            <div>
+                                <span>Client</span>
+                                <strong>{visit.clientName}</strong>
+                            </div>
+                        </div>
+                        <div className={`${styles.detailLine} ${styles.detailMeetingPoint}`}>
+                            <span className={styles.meetingPointIcon} aria-hidden>
+                                <MapPin />
+                            </span>
+                            <div>
+                                <span>Place</span>
+                                <strong>
+                                    {visit.locality}
+                                    {visit.city && visit.city !== visit.locality
+                                        ? `, ${visit.city}`
+                                        : ""}
+                                </strong>
+                            </div>
+                        </div>
+                    </section>
+                </DrawerSection>
+                {visit.notes && (
+                    <DrawerSection
+                        title="Visit notes"
+                        description="Preparation notes for this visit."
+                    >
+                        <section className={styles.detailNotes} aria-label="Visit notes">
+                            <div>
+                                <p className={styles.note}>{visit.notes}</p>
+                            </div>
+                        </section>
+                    </DrawerSection>
                 )}
             </div>
         </VisitOverlay>

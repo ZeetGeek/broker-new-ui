@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { memo } from "react";
 import Link from "next/link";
@@ -10,11 +10,10 @@ import { cn } from "@/lib/utils";
 import { VISIT_STATUS } from "@/lib/visits/status";
 import { durationMinutes, formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
-import { AppImage } from "@/components/shared/app-image";
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
+import { IconButton } from "@/components/shared/icon-button";
 import {
-    Building2,
     CalendarDays,
     CallIcon,
     MapPin,
@@ -22,6 +21,7 @@ import {
     WhatsAppIcon,
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,15 +92,14 @@ export const VisitCard = memo(function VisitCard({
                     <DropdownMenu>
                         <DropdownMenuTrigger
                             render={
-                                <Button
+                                <IconButton
                                     type="button"
-                                    variant="outline"
-                                    size="icon-sm"
-                                    className="shrink-0 rounded-full"
+                                    size="sm"
+                                    className="shrink-0"
                                     aria-label={`Actions for ${visit.property.title}, ${when}`}
                                 >
                                     <MoreHorizontal aria-hidden className="block-4 inline-4" />
-                                </Button>
+                                </IconButton>
                             }
                         />
                         <DropdownMenuContent align="end" className="min-inline-56">
@@ -115,26 +114,13 @@ export const VisitCard = memo(function VisitCard({
             </header>
 
             <div className="flex items-center gap-3 min-inline-0">
-                <div className="relative aspect-square shrink-0 overflow-hidden rounded-xl bg-surface-muted block-20 inline-20">
-                    {visit.property.coverUrl ? (
-                        <AppImage
-                            src={visit.property.coverUrl}
-                            alt=""
-                            fill
-                            sizes="80px"
-                            className="object-cover"
-                        />
-                    ) : (
-                        <div className="flex items-center justify-center text-ink-subtle block-full">
-                            <Building2 aria-hidden className="block-6 inline-6" />
-                        </div>
-                    )}
+                <PropertyCoverImage src={visit.property.coverUrl} alt="" size={80}>
                     {visit.property.coverUrl && (visit.property.photoCount ?? 0) > 1 ? (
                         <span className="body-xs absolute inset-e-1 inset-be-1 rounded-full bg-ink/65 px-1.5 py-0.5 font-semibold text-surface tabular-nums">
                             +{visit.property.photoCount! - 1}
                         </span>
                     ) : null}
-                </div>
+                </PropertyCoverImage>
                 <div className="flex flex-1 flex-col gap-1 min-inline-0">
                     <PriceWithCommission
                         amountInr={visit.property.amountInr}

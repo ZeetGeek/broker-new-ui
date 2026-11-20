@@ -3,7 +3,8 @@
 import { cn } from "@/lib/utils";
 
 import type { AppIcon } from "@/components/shared/icons";
-import { ArrowDownUp, BadgeCheck, Briefcase, ChevronDown, Tags } from "@/components/shared/icons";
+import { BadgeCheck, Briefcase, ChevronDown, Tags } from "@/components/shared/icons";
+import { ListToolbarSelect } from "@/components/shared/list-toolbar";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -116,7 +117,7 @@ export function BrowseBrokersToolbar({
         (o) => o.value === filters.minExperience,
     )?.label;
     const specialtyLabel = specialties.find((s) => s.key === filters.specialty)?.label;
-    const sortLabel = SORT_OPTIONS.find((o) => o.value === filters.sort)?.label ?? "Sort";
+
     const filtered = hasActiveBrowseFilters(filters);
 
     return (
@@ -167,15 +168,12 @@ export function BrowseBrokersToolbar({
                 />
             ) : null}
 
-            <ChipMenu
-                icon={ArrowDownUp}
-                label={sortLabel}
-                activeLabel={sortLabel}
+            <ListToolbarSelect
+                label="Sort brokers"
                 value={filters.sort}
-                defaultValue="relevance"
                 options={SORT_OPTIONS}
+                defaultValue="relevance"
                 onChange={(sort) => onFiltersChange({ sort })}
-                align="end"
             />
 
             {filtered ? (

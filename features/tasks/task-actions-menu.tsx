@@ -1,5 +1,4 @@
 "use client";
-
 import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -9,6 +8,7 @@ import {
     PortalProfileMenuSeparator,
     portalProfileMenuSurfaceClass,
 } from "@/components/layout/portal-profile-menu";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     ArrowRight,
     Bell,
@@ -124,7 +124,8 @@ export function TaskActionsMenu({
         >
             <DropdownMenuTrigger
                 render={
-                    <button
+                    <IconButton
+                        size="xs"
                         type="button"
                         className={planner.lineAction}
                         disabled={busy}

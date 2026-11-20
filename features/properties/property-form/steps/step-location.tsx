@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -11,6 +10,7 @@ import { useMarket } from "@/hooks/use-market";
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { CharacterCount } from "@/components/shared/character-count";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     Building2,
     Check,
@@ -22,7 +22,6 @@ import {
     RotateCcw,
     Route,
 } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 
 import {
     FORM_GRID_3_CLASS,
@@ -304,55 +303,42 @@ export function StepLocation() {
                             }}
                             endAction={
                                 <div className="flex items-center gap-1.5">
-                                    <Button
+                                    <IconButton
                                         type="button"
-                                        variant="ghost"
-                                        size="icon"
+                                        size="md"
                                         aria-label="Restore generated address"
                                         title="Restore generated address"
                                         onMouseDown={(event) => event.preventDefault()}
                                         onClick={resetToGeneratedAddress}
-                                        className="
-                                          rounded-full border-border-warm bg-surface font-semibold
-                                          text-ink shadow-sm
-                                          hover:bg-surface-muted hover:text-ink
-                                        "
+                                        className="font-semibold"
                                     >
                                         <RotateCcw aria-hidden />
-                                    </Button>
+                                    </IconButton>
                                     {editingAddress ? (
-                                        <Button
+                                        <IconButton
                                             type="button"
-                                            variant="ghost"
-                                            size="icon"
+                                            size="md"
                                             aria-label="Finish editing address"
+                                            tone="brand"
                                             title="Done"
                                             onMouseDown={(event) => event.preventDefault()}
                                             onClick={finishEditingAddress}
-                                            className="
-                                              rounded-full border-border-warm bg-surface
-                                              font-semibold text-brand-text shadow-sm
-                                              hover:bg-brand-soft hover:text-brand-text
-                                            "
+                                            className="font-semibold"
                                         >
                                             <Check className="block-3.5 inline-3.5" aria-hidden />
-                                        </Button>
+                                        </IconButton>
                                     ) : (
-                                        <Button
+                                        <IconButton
                                             type="button"
-                                            variant="ghost"
-                                            size="icon"
+                                            size="md"
                                             aria-label="Edit full address"
+                                            tone="brand"
                                             title="Edit address"
                                             onClick={startEditingAddress}
-                                            className="
-                                              rounded-full border-border-warm bg-surface
-                                              font-semibold text-brand-text shadow-sm
-                                              hover:bg-brand-soft hover:text-brand-text
-                                            "
+                                            className="font-semibold"
                                         >
                                             <Pencil className="block-3.5 inline-3.5" aria-hidden />
-                                        </Button>
+                                        </IconButton>
                                     )}
                                 </div>
                             }

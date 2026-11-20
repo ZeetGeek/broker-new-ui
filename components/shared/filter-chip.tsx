@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
 import type { AppIcon } from "@/components/shared/icons";
 import { X } from "@/components/shared/icons";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
@@ -168,11 +169,12 @@ export function FilterChip({
     const showClear = clearable && isActive;
     const handleClear = onClear ?? onClick;
 
-    const button = (
+    const mainButton = (
         <button
             type="button"
             className={cn(
                 filterChipClassName(isActive),
+                showClear && "pe-10 pointer-coarse:pe-14",
                 warning &&
                     !isActive &&
                     "border-pending/20 bg-urgent-soft/70 text-pending shadow-none",
@@ -209,29 +211,29 @@ export function FilterChip({
                     warning={warning}
                 />
             ) : null}
-            {showClear ? (
-                <span
-                    role="button"
-                    tabIndex={-1}
-                    aria-label="Clear filter"
-                    className={cn(
-                        `
-                          -me-1 inline-flex items-center justify-center rounded-full
-                          text-brand-text/70 block-5 inline-5
-                          hover:bg-brand-text/10 hover:text-brand-text
-                        `,
-                        CHIP_HOVER_TRANSITION,
-                    )}
-                    onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        handleClear();
-                    }}
-                >
-                    <X aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
-                </span>
-            ) : null}
         </button>
+    );
+
+    const button = showClear ? (
+        <span className="relative inline-flex">
+            {mainButton}
+            <IconButton
+                appearance="ghost"
+                size="xs"
+                tone="brand"
+                aria-label={typeof label === "string" ? `Clear ${label}` : "Clear filter"}
+                className="absolute inset-e-1 self-center"
+                onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleClear();
+                }}
+            >
+                <X aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
+            </IconButton>
+        </span>
+    ) : (
+        mainButton
     );
 
     if (!description) return button;

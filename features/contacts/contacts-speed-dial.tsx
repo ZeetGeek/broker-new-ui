@@ -1,7 +1,7 @@
 "use client";
-
 import { useEffect, useRef, useState } from "react";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { Plus, UserPlus, UserRoundPlus, X } from "@/components/shared/icons";
 
 export function ContactsSpeedDial({
@@ -53,19 +53,14 @@ export function ContactsSpeedDial({
                 <div className="t-morph-menu flex flex-col justify-between gap-2 p-3">
                     <div className="flex items-center justify-between px-1">
                         <span className="body-sm font-semibold text-surface">Add client</span>
-                        <button
+                        <IconButton
+                            size="sm"
                             type="button"
                             onClick={() => setOpen(false)}
                             aria-label="Close add menu"
-                            className="
-                              grid place-items-center rounded-control text-surface/80 block-8
-                              inline-8
-                              hover:bg-surface/10 hover:text-surface
-                              focus-visible:ring-2 focus-visible:ring-surface/70
-                            "
                         >
                             <X aria-hidden className="block-4 inline-4" />
-                        </button>
+                        </IconButton>
                     </div>
                     <button
                         type="button"

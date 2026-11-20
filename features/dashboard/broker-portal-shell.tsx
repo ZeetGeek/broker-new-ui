@@ -10,6 +10,7 @@ import {
     BROKER_ADD_BUYER_HREF,
     BROKER_MY_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
+    BROKER_PROPERTIES_NEW_HREF,
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
 import type { ShortcutId } from "@/lib/shortcuts";
@@ -21,6 +22,7 @@ import {
     usePortalSectionNav,
 } from "@/components/layout/portal-section-nav";
 import { BROKER_SEARCH_HINTS } from "@/components/layout/search-placeholder-loop";
+import { Building2, Calendar, CheckCircle2, UserPlus } from "@/components/shared/icons";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { BROKER_MOBILE_PRIMARY_HREFS, BROKER_NAV_ITEMS } from "@/config/nav";
@@ -127,9 +129,32 @@ function BrokerPortalShellInner({ children }: { children: ReactNode }) {
                         <PortalMobileNav
                             items={BROKER_NAV_ITEMS}
                             primaryHrefs={BROKER_MOBILE_PRIMARY_HREFS}
+                            profileHref="/broker/profile"
                             centerAction={{
                                 href: BROKER_ADD_BUYER_HREF,
                                 label: "Add client",
+                                actions: [
+                                    {
+                                        href: BROKER_ADD_BUYER_HREF,
+                                        label: "Add client",
+                                        icon: UserPlus,
+                                    },
+                                    {
+                                        href: BROKER_PROPERTIES_NEW_HREF,
+                                        label: "Add property",
+                                        icon: Building2,
+                                    },
+                                    {
+                                        href: "/broker/visits?view=schedule",
+                                        label: "Site visit",
+                                        icon: Calendar,
+                                    },
+                                    {
+                                        href: "/broker/tasks?view=create",
+                                        label: "Add task",
+                                        icon: CheckCircle2,
+                                    },
+                                ],
                             }}
                         />
                     }

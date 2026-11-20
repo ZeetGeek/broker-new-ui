@@ -30,6 +30,8 @@ export const AVATAR_SIZES = {
     sm: { box: "block-9 inline-9", frame: "ring-2 shadow-sm", px: 36, sizes: "36px" },
     /** 40px — header account button, card headers. */
     md: { box: "block-10 inline-10", frame: "ring-2 shadow-sm", px: 40, sizes: "40px" },
+    /** 48px — contact card headers. */
+    card: { box: "block-12 inline-12", frame: "ring-2 shadow-sm", px: 48, sizes: "48px" },
     /** 56px — profile / detail headers. */
     lg: { box: "block-14 inline-14", frame: "ring-3 shadow-md", px: 56, sizes: "56px" },
     /** Parent sets the box; we paint at 96 and stretch to fill. */
