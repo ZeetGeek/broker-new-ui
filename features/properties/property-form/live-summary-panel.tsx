@@ -280,7 +280,7 @@ export function LiveSummaryPanel({
                         "relative overflow-hidden min-inline-0",
                         cover?.url
                             ? "aspect-4/3 bg-surface-muted"
-                            : "mx-3 mbs-3 rounded-inner border border-brand/20 bg-brand-soft/60",
+                            : "mx-3 mbs-3 rounded-inner border-2 border-dashed border-brand/35 bg-brand-soft/40",
                     )}
                 >
                     <div className="absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap gap-1.5 pe-14">
@@ -339,7 +339,7 @@ export function LiveSummaryPanel({
                     ) : (
                         <div className="flex flex-col items-center justify-center gap-4 px-5 pbs-12 pbe-6 text-center min-block-60 min-inline-0">
                             <div className="flex flex-col items-center gap-3">
-                                <span className="flex items-center justify-center rounded-full border border-brand/20 bg-brand/10 text-brand block-12 inline-12">
+                                <span className="flex items-center justify-center rounded-full border-2 border-dashed border-brand/35 text-brand block-12 inline-12">
                                     <ImageIcon
                                         className="block-6 inline-6"
                                         strokeWidth={1.5}

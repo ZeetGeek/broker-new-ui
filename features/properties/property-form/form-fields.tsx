@@ -369,10 +369,10 @@ export function SelectField({
                         {...(limit == null ? {} : { limit })}
                     >
                         <ComboboxInput
-                            className="text-sm block-control-lg"
+                            className="text-sm"
                             id={name.replace(/\./g, "-")}
                             ref={field.ref}
-                            size="lg"
+                            size="md"
                             startIcon={startIcon}
                             placeholder={placeholder}
                             errorText={error}
@@ -429,10 +429,7 @@ export function LocalityField({
             label={label}
             hint={hint}
             visibility={visibility}
-            className={cn(
-                className,
-                "**:data-[slot=combobox-input-group]:text-sm **:data-[slot=combobox-input-group]:block-control-lg",
-            )}
+            className={className}
         >
             <Controller
                 name={name}
@@ -442,7 +439,8 @@ export function LocalityField({
                         id={name.replace(/\./g, "-")}
                         inputRef={field.ref}
                         cityId={cityId}
-                        size="lg"
+                        size="md"
+                        className="text-sm"
                         value={String(field.value ?? "")}
                         onValueChange={field.onChange}
                         onBlur={field.onBlur}

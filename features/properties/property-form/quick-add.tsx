@@ -114,7 +114,7 @@ export function QuickAdd({
                 </p>
             </header>
 
-            <div className={FORM_SECTIONS_CLASS}>
+            <div className={`${FORM_SECTIONS_CLASS} *:border-border-warm *:not-last:border-be`}>
                 <StepBasics />
 
                 <WizardSection

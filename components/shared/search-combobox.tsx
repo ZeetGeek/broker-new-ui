@@ -16,6 +16,7 @@ import {
     ComboboxContent,
     ComboboxEmpty,
     ComboboxInput,
+    type ComboboxInputProps,
     ComboboxItem,
     ComboboxList,
     ComboboxValue,
@@ -47,7 +48,9 @@ type CommonProps = {
     /** Shown when the list is empty and nothing has been typed. */
     emptyText?: string;
     startIcon?: AppIcon;
-    size?: "default" | "lg";
+    size?: NonNullable<ComboboxInputProps["size"]>;
+    /** Styles the control face for both single and multiple selections. */
+    className?: string;
     inputRef?: Ref<HTMLInputElement>;
     /** Display-only formatting for selected chips; stored values remain unchanged. */
     formatChipLabel?: (value: string) => string;
@@ -97,6 +100,7 @@ export function SearchCombobox(props: SearchComboboxProps) {
         emptyText = "Type to search",
         startIcon,
         size = "default",
+        className,
         inputRef,
         formatChipLabel,
         formatOptionLabel = (value: string) => value,
@@ -262,9 +266,16 @@ export function SearchCombobox(props: SearchComboboxProps) {
                     <ComboboxChips
                         ref={anchor}
                         className={cn(
-                            "px-3 py-2 has-data-[slot=combobox-chip]:px-3",
-                            size === "lg" && "min-block-control-xl",
+                            "has-data-[slot=combobox-chip]:px-3 pointer-coarse:min-block-(--touch-target-min)",
+                            {
+                                xs: "px-2.5 py-0 min-block-control-xs",
+                                sm: "px-3 py-0.5 min-block-control-sm",
+                                default: "px-3.5 py-0.5 min-block-control-md",
+                                md: "px-4 py-1.5 min-block-control-lg",
+                                lg: "px-4 py-2 min-block-control-xl",
+                            }[size],
                             disabled && "pointer-events-none bg-surface-muted opacity-50",
+                            className,
                         )}
                     >
                         <ComboboxValue>
@@ -275,6 +286,8 @@ export function SearchCombobox(props: SearchComboboxProps) {
                                             key={value}
                                             className={cn(
                                                 "rounded-full px-2.5 block-7 max-inline-full has-data-[slot=combobox-chip-remove]:pe-1",
+                                                size === "xs" && "block-5",
+                                                size === "sm" && "block-6",
                                                 areaColorClassName(value),
                                             )}
                                             removeLabel={`Remove ${formatChipLabel ? formatChipLabel(value) : formatOptionLabel(value)}`}
@@ -293,7 +306,11 @@ export function SearchCombobox(props: SearchComboboxProps) {
                                         disabled={disabled}
                                         aria-invalid={Boolean(errorText) || undefined}
                                         aria-describedby={message ? messageId : undefined}
-                                        className="text-sm block-7 min-inline-24 placeholder:text-ink-subtle"
+                                        className={cn(
+                                            "text-sm block-7 min-inline-24 placeholder:text-ink-subtle",
+                                            size === "xs" && "text-xs block-5",
+                                            size === "sm" && "text-[13px] block-6",
+                                        )}
                                     />
                                 </>
                             )}
@@ -332,6 +349,7 @@ export function SearchCombobox(props: SearchComboboxProps) {
                 id={inputId}
                 ref={inputRef}
                 size={size}
+                className={className}
                 startIcon={startIcon}
                 placeholder={placeholder}
                 errorText={errorText}
