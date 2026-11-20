@@ -83,6 +83,11 @@ export type DealProperty = {
      * Marking it sold closes it at once; an owner listing may need the owner.
      */
     isBrokerListing?: boolean;
+    /**
+     * Set when the listing is for sale and for rent. Marking it sold then asks
+     * whether it sold or was rented, and values the deal that way.
+     */
+    saleAndRent?: { salePriceInr: number; monthlyRentInr: number };
 };
 
 /** The buyer side. Mirrors `ClientItem`, trimmed to what a card renders. */

@@ -1,9 +1,11 @@
 /**
- * Earnings report — pure maths over the broker's pipeline deals.
+ * Earnings report — period presets, comparison windows, chart labels and the
+ * headline copy. The numbers come from the API (`GET /earnings/report`, see
+ * `lib/api/earnings.ts`); `buildEarningsReport` below only serves mock mode.
  *
- * Everything here is derived from data the leads API already returns. There
- * is no payments ledger, so every rupee figure is an ESTIMATE: the commission
- * the owner set on the property, applied to the best known deal amount.
+ * There is no payments ledger, so every rupee figure is an ESTIMATE: the
+ * commission the owner set on the property, applied to the best known deal
+ * amount, locked when the deal is sold or lost.
  *
  * - Sale: final price (when saved) → accepted offer → listed ask, × commission %.
  * - Rent: the fixed brokerage the owner set (one-time, not monthly).
@@ -42,6 +44,7 @@ import {
     type DealItem,
     type DealLostReason,
     type DealStage,
+    type DealStatus,
     isLiveStage,
 } from "@/features/pipeline/types";
 
@@ -351,7 +354,7 @@ function oldestAllowedBucket(to: Date, unit: BucketUnit): Date {
     }
 }
 
-function bucketLabels(cursor: Date, unit: BucketUnit): { label: string; longLabel: string } {
+export function bucketLabels(cursor: Date, unit: BucketUnit): { label: string; longLabel: string } {
     switch (unit) {
         case "week":
             return {
@@ -403,14 +406,17 @@ function buildBuckets(from: Date, to: Date, unit: BucketUnit, now: Date): Earnin
         });
         cursor = next;
     }
-    // Month labels gain a year when the chart spans more than one calendar year.
-    if (unit === "month" && buckets.length > 0) {
-        const years = new Set(buckets.map((b) => new Date(b.key).getFullYear()));
-        if (years.size > 1) {
-            for (const b of buckets) b.label = format(new Date(b.key), "MMM yy");
-        }
-    }
+    labelMonthsWithYears(buckets, unit);
     return buckets;
+}
+
+/** Month labels gain a year when the chart spans more than one calendar year. */
+export function labelMonthsWithYears(buckets: EarningsBucket[], unit: BucketUnit): void {
+    if (unit !== "month" || buckets.length === 0) return;
+    const years = new Set(buckets.map((b) => new Date(b.key).getFullYear()));
+    if (years.size > 1) {
+        for (const b of buckets) b.label = format(new Date(b.key), "MMM yy");
+    }
 }
 
 function bucketIndex(buckets: EarningsBucket[], iso: string): number {
@@ -425,7 +431,55 @@ function bucketIndex(buckets: EarningsBucket[], iso: string): number {
 // Report
 // ---------------------------------------------------------------------------
 
-export type ValuedDeal = { deal: DealItem; commissionInr: number | null };
+/**
+ * The few deal fields the earnings page shows. For sold and lost deals the
+ * amounts are the ones locked when the deal closed.
+ */
+export type EarningsDeal = {
+    id: string;
+    status: DealStatus;
+    resolvedAt: string | null;
+    buyer: { name: string };
+    property: {
+        title: string;
+        isRent: boolean;
+        amountInr: number;
+        commissionPercent: number | null;
+        commissionAmountInr: number | null;
+    };
+    /** Calendar days from the deal being added to closing. Null while live. */
+    daysToClose: number | null;
+};
+
+export type ValuedDeal = { deal: EarningsDeal; commissionInr: number | null };
+
+/** A pipeline deal with its estimated commission (mock mode and area grouping). */
+type PipelineValuedDeal = { deal: DealItem; commissionInr: number | null };
+
+export function toEarningsDeal(deal: DealItem): EarningsDeal {
+    return {
+        id: deal.id,
+        status: deal.status,
+        resolvedAt: deal.resolvedAt ?? null,
+        buyer: { name: deal.buyer.name },
+        property: {
+            title: deal.property.title,
+            isRent: deal.property.isRent,
+            amountInr:
+                deal.status === "closed" || deal.status === "lost"
+                    ? dealBaseAmountInr(deal)
+                    : deal.property.amountInr,
+            commissionPercent: deal.property.commissionPercent ?? null,
+            commissionAmountInr: deal.property.commissionAmountInr ?? null,
+        },
+        daysToClose: deal.status === "closed" ? dealDaysToClose(deal) : null,
+    };
+}
+
+const toValued = ({ deal, commissionInr }: PipelineValuedDeal): ValuedDeal => ({
+    deal: toEarningsDeal(deal),
+    commissionInr,
+});
 
 /** Sold deals in one locality, for "Earnings by area". */
 export type AreaEarningsRow = {
@@ -443,7 +497,7 @@ export type AreaEarningsRow = {
  * Groups sold deals by locality + city (two "Baner"s in different cities stay
  * apart). Most money first; ties go to more deals, then name.
  */
-export function earningsByArea(valued: ValuedDeal[]): AreaEarningsRow[] {
+export function earningsByArea(valued: PipelineValuedDeal[]): AreaEarningsRow[] {
     const rows = new Map<string, AreaEarningsRow>();
     for (const { deal, commissionInr } of valued) {
         const locality = deal.property.locality?.trim() ?? "";
@@ -480,6 +534,8 @@ export type LostReasonRow = {
 };
 
 export type EarningsReport = {
+    /** False until the broker has sold or lost any deal, in any period. */
+    hasResolvedDeals: boolean;
     window: EarningsWindow;
     /** What the period is compared against. Null for "all time". */
     comparison: EarningsComparison | null;
@@ -542,6 +598,31 @@ export type EarningsReport = {
         topDeals: ValuedDeal[];
     };
 };
+
+/**
+ * Always the same five rows as Mark as lost (4 reasons + Others), zeros
+ * included. "Others" holds free-text reasons and deals saved with no reason.
+ */
+export function lostReasonRows(
+    countFor: (key: DealLostReason) => number,
+    othersCount: number,
+    lostReasonLabel: (key: DealLostReason) => string,
+): LostReasonRow[] {
+    return [
+        ...LOST_REASON_ORDER.map((key) => ({
+            key,
+            label: lostReasonLabel(key),
+            detail: DEAL_LOST_REASON_DETAIL[key],
+            count: countFor(key),
+        })),
+        {
+            key: "other" as const,
+            label: "Others",
+            detail: "No listed reason, or written in as free text",
+            count: othersCount,
+        },
+    ];
+}
 
 const LOST_REASON_ORDER: DealLostReason[] = [
     "price",
@@ -634,11 +715,11 @@ export function buildEarningsReport(
 
     const closeDurations = closed.map(dealDaysToClose).filter((n): n is number => n != null);
 
-    const valuedClosed: ValuedDeal[] = closed.map((deal) => ({
+    const valuedClosed: PipelineValuedDeal[] = closed.map((deal) => ({
         deal,
         commissionInr: dealCommissionInr(deal),
     }));
-    const bestDeal =
+    const best =
         valuedClosed
             .filter((v) => v.commissionInr != null)
             .sort((a, b) => (b.commissionInr ?? 0) - (a.commissionInr ?? 0))[0] ?? null;
@@ -656,21 +737,11 @@ export function buildEarningsReport(
         reasonCounts.set(key, (reasonCounts.get(key) ?? 0) + 1);
     }
     // Always the same five rows as Mark as lost (4 reasons + Others), zeros included.
-    const othersCount = (reasonCounts.get("other") ?? 0) + lostWithoutReasonCount;
-    const lostReasons: LostReasonRow[] = [
-        ...LOST_REASON_ORDER.map((key) => ({
-            key,
-            label: lostReasonLabel(key),
-            detail: DEAL_LOST_REASON_DETAIL[key],
-            count: reasonCounts.get(key) ?? 0,
-        })),
-        {
-            key: "other" as const,
-            label: "Others",
-            detail: "No listed reason, or written in as free text",
-            count: othersCount,
-        },
-    ];
+    const lostReasons = lostReasonRows(
+        (key) => reasonCounts.get(key) ?? 0,
+        (reasonCounts.get("other") ?? 0) + lostWithoutReasonCount,
+        lostReasonLabel,
+    );
 
     const lostFromStages = DEAL_STAGE_ORDER.map((stage) => ({
         stage,
@@ -685,7 +756,7 @@ export function buildEarningsReport(
             liveDeals.filter((d) => d.status === stage).length,
         ]),
     ) as Record<DealStage, number>;
-    const valuedLive: ValuedDeal[] = liveDeals.map((deal) => ({
+    const valuedLive: PipelineValuedDeal[] = liveDeals.map((deal) => ({
         deal,
         commissionInr: dealCommissionInr(deal),
     }));
@@ -704,6 +775,7 @@ export function buildEarningsReport(
     const resolvedCount = closed.length + lost.length;
 
     return {
+        hasResolvedDeals: closedAll.length + lostAll.length > 0,
         window,
         comparison,
         chartWindow,
@@ -725,7 +797,7 @@ export function buildEarningsReport(
             closeDurations.length === 0
                 ? null
                 : Math.round(closeDurations.reduce((a, b) => a + b, 0) / closeDurations.length),
-        bestDeal,
+        bestDeal: best ? toValued(best) : null,
         buckets,
         lostReasons,
         lostWithoutReasonCount,
@@ -737,7 +809,8 @@ export function buildEarningsReport(
                     new Date(b.deal.resolvedAt as string).getTime() -
                     new Date(a.deal.resolvedAt as string).getTime(),
             )
-            .slice(0, 5),
+            .slice(0, 5)
+            .map(toValued),
         live: {
             count: liveDeals.length,
             saleValueInr: liveDeals
@@ -755,7 +828,8 @@ export function buildEarningsReport(
             topDeals: valuedLive
                 .filter((v) => v.commissionInr != null)
                 .sort((a, b) => (b.commissionInr ?? 0) - (a.commissionInr ?? 0))
-                .slice(0, 10),
+                .slice(0, 10)
+                .map(toValued),
         },
     };
 }

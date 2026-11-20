@@ -7,6 +7,7 @@ import {
     type PropertyFilterRecord,
 } from "@/lib/properties/list-criteria";
 
+import type { ClosedAs } from "@/features/pipeline/closed-as";
 import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
 import {
     DEAL_STAGE_ORDER,
@@ -360,6 +361,10 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
             isBrokerListing:
                 (property.ownerType === "broker" && Boolean(property.ownedByBrokerId)) ||
                 Boolean(property.isBrokerInventory),
+            // The API asks which way a Sale & Rent listing closed.
+            ...(property.transactionType === "both"
+                ? { saleAndRent: { salePriceInr: sale, monthlyRentInr: rent } }
+                : {}),
         },
         owner: {
             name: ownerName,
@@ -553,6 +558,8 @@ export type SetStageOptions = {
     note?: string;
     lostReason?: DealLostReason;
     closedAmountInr?: number;
+    /** How a Sale & Rent listing closed. Required by the API for those listings. */
+    closedAs?: ClosedAs;
 };
 
 /* ------------------------------------------------------------------------ */
@@ -728,6 +735,7 @@ export const pipelineApi = {
                 status: toApiStage(status),
                 ...(options.note?.trim() ? { note: options.note.trim() } : {}),
                 ...(closedAmount != null ? { closedAmount } : {}),
+                ...(status === "closed" && options.closedAs ? { closedAs: options.closedAs } : {}),
                 ...(status === "lost" && options.lostReason
                     ? { lostReason: options.lostReason }
                     : {}),

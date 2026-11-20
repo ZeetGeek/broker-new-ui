@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { TrendingDown, TrendingUp } from "@/components/shared/icons";
 
 import { VIZ_CLASS } from "@/features/earnings/earnings-viz";
-import { isSampleDeal } from "@/features/earnings/sample-earnings";
 
 /** White card used by every section on the earnings page except the dark summary. */
 export function EarningsCard({
@@ -154,7 +153,7 @@ export function DealKind({ isRent }: { isRent: boolean }) {
     );
 }
 
-/** Deal title that opens the deal; plain text for sample rows. */
+/** Deal title that opens the deal. */
 export function EarningsDealLink({
     dealId,
     className,
@@ -166,13 +165,6 @@ export function EarningsDealLink({
     style?: CSSProperties;
     children: ReactNode;
 }) {
-    if (isSampleDeal(dealId)) {
-        return (
-            <span className={className} style={style}>
-                {children}
-            </span>
-        );
-    }
     return (
         <Link
             href={`/broker/pipeline/${dealId}`}

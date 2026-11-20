@@ -12,12 +12,7 @@ import { Award } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 
 import { DealKind, EarningsCard, EarningsDealLink } from "@/features/earnings/earnings-card";
-import {
-    dealBaseAmountInr,
-    dealDaysToClose,
-    type EarningsReport,
-    type ValuedDeal,
-} from "@/features/earnings/earnings-math";
+import { type EarningsReport, type ValuedDeal } from "@/features/earnings/earnings-math";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { DEAL_STAGE_ORDER, type DealStage, isLiveStage } from "@/features/pipeline/types";
 
@@ -302,8 +297,9 @@ function RecentSoldRow({ row, isBest }: { row: ValuedDeal; isBest: boolean }) {
     const { deal, commissionInr } = row;
     const soldAt = deal.resolvedAt ? new Date(deal.resolvedAt) : null;
     const dayParts = soldAt ? formatDateTile(soldAt) : null;
-    const baseInr = dealBaseAmountInr(deal);
-    const daysToClose = dealDaysToClose(deal);
+    // The amount the sale was valued on, locked when it was marked sold.
+    const baseInr = deal.property.amountInr;
+    const { daysToClose } = deal;
 
     return (
         // Each sale is its own bordered box, same as the dashboard visit rows.

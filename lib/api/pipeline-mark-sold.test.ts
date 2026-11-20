@@ -5,6 +5,7 @@ import { api } from "@/lib/api/client";
 import { pipelineApi } from "@/lib/api/pipeline";
 
 import { USE_MOCK_DATA } from "@/config";
+import { dealAsClosed } from "@/features/pipeline/closed-as";
 import {
     canPutBackOnBoard,
     findDealForMove,
@@ -12,7 +13,7 @@ import {
     otherLiveClientCount,
     saleConfirmMode,
 } from "@/features/pipeline/sale-mode";
-import type { DealItem, DealStatus } from "@/features/pipeline/types";
+import { type DealItem, type DealStatus, DEFAULT_DEALS_FILTERS } from "@/features/pipeline/types";
 
 function captureBodies(t: test.TestContext): unknown[] {
     const previous = api.defaults.adapter;
@@ -31,6 +32,79 @@ test("setStage to closed sends closedAmount", { skip: USE_MOCK_DATA }, async (t)
     const bodies = captureBodies(t);
     await pipelineApi.setStage("lead-1", "closed", { closedAmountInr: 4_500_000 });
     assert.deepEqual(bodies, [{ status: "closed_won", closedAmount: 4_500_000 }]);
+});
+
+test("setStage to closed sends closedAs when given", { skip: USE_MOCK_DATA }, async (t) => {
+    const bodies = captureBodies(t);
+    await pipelineApi.setStage("lead-1", "closed", { closedAmountInr: 35_000, closedAs: "rent" });
+    assert.deepEqual(bodies, [{ status: "closed_won", closedAmount: 35_000, closedAs: "rent" }]);
+});
+
+test("a Sale & Rent listing is marked on the deal", { skip: USE_MOCK_DATA }, async (t) => {
+    const previous = api.defaults.adapter;
+    t.after(() => {
+        api.defaults.adapter = previous;
+    });
+    const lead = (id: string, transactionType: string) => ({
+        id,
+        stage: "negotiation",
+        stageHistory: [],
+        client: { id: `c-${id}`, name: "Ravi" },
+        property: {
+            id: `p-${id}`,
+            title: "3 BHK in Vesu",
+            city: "Surat",
+            transactionType,
+            salePrice: "9000000",
+            monthlyRent: "35000",
+            commissionPercent: 2,
+            commissionAmount: "30000",
+        },
+    });
+    api.defaults.adapter = async (config) => ({
+        data: { items: [lead("both", "both"), lead("sale", "sale")], totalPages: 1 },
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config,
+    });
+
+    const { items } = await pipelineApi.list(DEFAULT_DEALS_FILTERS);
+    const both = items.find((deal) => deal.id === "both");
+    const sale = items.find((deal) => deal.id === "sale");
+    assert.deepEqual(both?.property.saleAndRent, {
+        salePriceInr: 9_000_000,
+        monthlyRentInr: 35_000,
+    });
+    assert.equal(sale?.property.saleAndRent, undefined);
+});
+
+test("dealAsClosed values a Sale & Rent deal the way it closed", () => {
+    const both = {
+        id: "d1",
+        status: "negotiation",
+        offerAmountInr: 85_00_000,
+        offerStatus: "accepted",
+        property: {
+            id: "p1",
+            isRent: false,
+            amountInr: 90_00_000,
+            saleAndRent: { salePriceInr: 90_00_000, monthlyRentInr: 35_000 },
+        },
+    } as DealItem;
+
+    const rented = dealAsClosed(both, "rent");
+    assert.equal(rented.property.isRent, true);
+    assert.equal(rented.property.amountInr, 35_000);
+    assert.equal(rented.offerAmountInr, null);
+    assert.equal(rented.offerStatus, null);
+
+    const sold = dealAsClosed(both, "sale");
+    assert.equal(sold.property.isRent, false);
+    assert.equal(sold.property.amountInr, 90_00_000);
+    assert.equal(sold.offerAmountInr, 85_00_000);
+    // The original deal is untouched.
+    assert.equal(both.property.isRent, false);
 });
 
 test("setStage to lost sends the reason, not closedAmount", { skip: USE_MOCK_DATA }, async (t) => {

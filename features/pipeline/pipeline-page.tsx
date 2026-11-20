@@ -494,6 +494,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         note,
                         closedAmountInr: details.closedAmountInr,
                         lostReason: details.lostReason,
+                        closedAs: details.closedAs,
                     });
                 }
                 setMoveRequest(null);

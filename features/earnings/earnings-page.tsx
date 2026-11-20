@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { format, isValid, parseISO } from "date-fns";
 
-import { pipelineApi } from "@/lib/api/pipeline";
+import { earningsReportQueryOptions } from "@/lib/api/earnings";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { BROKER_PIPELINE_HREF } from "@/lib/routes/broker";
 
@@ -15,7 +15,6 @@ import { AlertCircle, Wallet } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import {
-    buildEarningsReport,
     DEFAULT_EARNINGS_PRESET,
     EARNINGS_PRESETS,
     type EarningsPreset,
@@ -23,12 +22,6 @@ import {
 } from "@/features/earnings/earnings-math";
 import { EarningsReportView } from "@/features/earnings/earnings-report-view";
 import { EarningsPageSkeleton } from "@/features/earnings/earnings-skeleton";
-import {
-    buildSampleEarningsDeals,
-    SHOW_SAMPLE_EARNINGS_WHEN_EMPTY,
-} from "@/features/earnings/sample-earnings";
-import { DEAL_LOST_REASON_LABEL } from "@/features/pipeline/stage-meta";
-import { DEFAULT_DEALS_FILTERS } from "@/features/pipeline/types";
 
 const DATE_PARAM = "yyyy-MM-dd";
 
@@ -86,32 +79,18 @@ function useEarningsSelection() {
 
 export function EarningsPage() {
     const [selection, setSelection] = useEarningsSelection();
-
-    const { data, error, isPending, refetch, isRefetching } = useQuery({
-        queryKey: ["broker", "earnings", "deals"],
-        queryFn: ({ signal }) => pipelineApi.list(DEFAULT_DEALS_FILTERS, signal),
-        // Always refetch on arrival so a deal just marked sold shows up at once.
-        staleTime: 0,
-    });
-
-    // No real deals yet → static sample, clearly labelled, so the page is reviewable.
-    const isSample = SHOW_SAMPLE_EARNINGS_WHEN_EMPTY && data != null && data.items.length === 0;
-    const deals = useMemo(
-        () => (isSample ? buildSampleEarningsDeals() : (data?.items ?? null)),
-        [isSample, data],
-    );
-
-    const report = useMemo(
-        () =>
-            deals
-                ? buildEarningsReport(deals, selection, (key) => DEAL_LOST_REASON_LABEL[key])
-                : null,
-        [deals, selection],
-    );
+    const {
+        data: report,
+        error,
+        isPending,
+        isPlaceholderData,
+        refetch,
+        isRefetching,
+    } = useQuery(earningsReportQueryOptions(selection));
 
     if (isPending) return <EarningsPageSkeleton />;
 
-    if (error || !report || !data) {
+    if (error || !report) {
         return (
             <div className="flex flex-col gap-6 pbe-6">
                 <header>
@@ -130,7 +109,8 @@ export function EarningsPage() {
         );
     }
 
-    if (!deals || deals.length === 0) {
+    // First run: nothing sold or lost ever, and nothing on the board.
+    if (!report.hasResolvedDeals && report.live.count === 0) {
         return (
             <div className="flex flex-col gap-6 pbe-6">
                 <header>
@@ -154,6 +134,7 @@ export function EarningsPage() {
             report={report}
             selection={selection}
             onSelectionChange={setSelection}
+            refreshing={isPlaceholderData}
         />
     );
 }

@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 import { Info } from "@/components/shared/icons";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 
@@ -17,8 +19,8 @@ import { EarningsStatStrip } from "@/features/earnings/earnings-stat-strip";
 import { EarningsTrendChart } from "@/features/earnings/earnings-trend-chart";
 
 /**
- * The loaded earnings page. Pure view over a built report, so it renders the
- * same from live deals, the sample set, or a test.
+ * The loaded earnings page. Pure view over a report, so it renders the same
+ * from the API, mock mode, or a test.
  *
  * Mobile order is priority order: headline, outcomes, the money, then what is
  * still to win, then what already happened.
@@ -27,10 +29,13 @@ export function EarningsReportView({
     report,
     selection,
     onSelectionChange,
+    refreshing = false,
 }: {
     report: EarningsReport;
     selection: EarningsSelection;
     onSelectionChange: (next: EarningsSelection) => void;
+    /** A new period is loading: the previous numbers stay, dimmed. */
+    refreshing?: boolean;
 }) {
     const headlineLines = earningsHeadlineLines(report);
     // Remount the loop when the period (or its numbers) change so it does not
@@ -59,21 +64,29 @@ export function EarningsReportView({
                 <EarningsRangePicker value={selection} onChange={onSelectionChange} />
             </header>
 
-            <EarningsStatStrip report={report} />
+            <div
+                aria-busy={refreshing || undefined}
+                className={cn(
+                    "flex flex-col gap-5 transition-opacity duration-160 sm:gap-6",
+                    refreshing && "opacity-60",
+                )}
+            >
+                <EarningsStatStrip report={report} />
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12 lg:gap-5">
-                <EarningsHero report={report} className="lg:col-span-4" />
-                <EarningsTrendChart report={report} className="lg:col-span-8" />
-                {/* Row 2: what is still to win, and where the money has come from. */}
-                <EarningsOpenDeals report={report} className="lg:col-span-5" />
-                <EarningsAreas report={report} className="lg:col-span-3" />
-                <EarningsPipeline report={report} className="lg:col-span-4" />
-                {/* Phone keeps priority order (sold before losses); md+ puts losses on the left. */}
-                <EarningsRecentSold
-                    report={report}
-                    className="md:order-last md:col-span-2 lg:col-span-5"
-                />
-                <EarningsLosses report={report} className="lg:col-span-7" />
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12 lg:gap-5">
+                    <EarningsHero report={report} className="lg:col-span-4" />
+                    <EarningsTrendChart report={report} className="lg:col-span-8" />
+                    {/* Row 2: what is still to win, and where the money has come from. */}
+                    <EarningsOpenDeals report={report} className="lg:col-span-5" />
+                    <EarningsAreas report={report} className="lg:col-span-3" />
+                    <EarningsPipeline report={report} className="lg:col-span-4" />
+                    {/* Phone keeps priority order (sold before losses); md+ puts losses on the left. */}
+                    <EarningsRecentSold
+                        report={report}
+                        className="md:order-last md:col-span-2 lg:col-span-5"
+                    />
+                    <EarningsLosses report={report} className="lg:col-span-7" />
+                </div>
             </div>
         </div>
     );

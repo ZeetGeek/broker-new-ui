@@ -8,8 +8,11 @@ import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
 import { BadgeCheck, Info, LostIcon, StickyNote } from "@/components/shared/icons";
+import { RadioGroup } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 
+import { ChoiceCard } from "@/features/pipeline/choice-card";
+import { type ClosedAs, dealAsClosed } from "@/features/pipeline/closed-as";
 import {
     defaultFinalPriceChoice,
     type FinalPriceChoice,
@@ -42,7 +45,11 @@ export type StageMoveRequest = {
 export type StageMoveDetails = {
     closedAmountInr?: number;
     lostReason?: DealLostReason;
+    /** How a Sale & Rent listing closed. */
+    closedAs?: ClosedAs;
 };
+
+const CLOSED_AS_REQUIRED = "Choose Sold or Rented.";
 
 function moveTitle(status: DealStatus): string {
     if (isLiveStage(status)) {
@@ -111,6 +118,8 @@ export function StageNoteModal({
     const [priceError, setPriceError] = useState<string | null>(null);
     const [lostReason, setLostReason] = useState<DealLostReason | null>(null);
     const [lostError, setLostError] = useState<string | null>(null);
+    const [closedAs, setClosedAs] = useState<ClosedAs | null>(null);
+    const [closedAsError, setClosedAsError] = useState<string | null>(null);
 
     // Reset the draft when a new move opens, derived on the open edge so we
     // do not setState inside an effect (cascading render lint).
@@ -124,6 +133,9 @@ export function StageNoteModal({
             // No reason preselected: a default would quietly bias the data.
             setLostReason(null);
             setLostError(null);
+            // No preselection either: sold vs rented changes the money.
+            setClosedAs(null);
+            setClosedAsError(null);
             if (deal) {
                 setPriceChoice(defaultFinalPriceChoice(deal));
                 setCustomPrice(seedCustomFinalPrice(deal));
@@ -135,16 +147,45 @@ export function StageNoteModal({
 
     const asksFinalPrice = request.status === "closed" && deal != null;
     const asksLostReason = request.status === "lost" && deal != null;
+    // A Sale & Rent listing says how it closed first; the price follows from it.
+    // Owner-confirmed sales go to the owner as an offer on the sale price.
+    const asksClosedAs =
+        asksFinalPrice && deal.property.saleAndRent != null && saleMode !== "owner";
+    const priceDeal = !asksFinalPrice
+        ? null
+        : asksClosedAs
+          ? closedAs
+              ? dealAsClosed(deal, closedAs)
+              : null
+          : deal;
+
+    const chooseClosedAs = (next: ClosedAs) => {
+        setClosedAs(next);
+        setClosedAsError(null);
+        setPriceError(null);
+        if (deal) {
+            const closing = dealAsClosed(deal, next);
+            setPriceChoice(defaultFinalPriceChoice(closing));
+            setCustomPrice(seedCustomFinalPrice(closing));
+        }
+    };
 
     const confirm = () => {
         if (asksFinalPrice) {
-            const result = resolveFinalPrice(deal, priceChoice, customPrice);
+            if (asksClosedAs && !closedAs) {
+                setClosedAsError(CLOSED_AS_REQUIRED);
+                return;
+            }
+            const result = resolveFinalPrice(priceDeal ?? deal, priceChoice, customPrice);
             if (result.error != null) {
                 setPriceError(result.error);
                 return;
             }
             setPriceError(null);
-            onConfirm(note, { closedAmountInr: result.amountInr });
+            onConfirm(note, {
+                closedAmountInr: result.amountInr,
+                ...(asksClosedAs && closedAs ? { closedAs } : {}),
+            });
             return;
         }
         if (asksLostReason) {
@@ -197,9 +238,44 @@ export function StageNoteModal({
             }
         >
             <div className="flex flex-col gap-5">
-                {asksFinalPrice ? (
+                {asksClosedAs ? (
+                    <fieldset className="flex flex-col gap-3" disabled={isSaving}>
+                        <legend className="body-sm mbe-3 font-semibold text-ink">
+                            Did it sell or rent?
+                        </legend>
+                        <RadioGroup
+                            value={closedAs ?? ""}
+                            onValueChange={(value) => chooseClosedAs(value as ClosedAs)}
+                            aria-label="Did it sell or rent?"
+                            aria-invalid={closedAsError ? true : undefined}
+                            className="grid grid-cols-2 gap-2"
+                        >
+                            <ChoiceCard
+                                value="sale"
+                                selected={closedAs === "sale"}
+                                disabled={isSaving}
+                                title="Sold"
+                                detail="The client bought it"
+                            />
+                            <ChoiceCard
+                                value="rent"
+                                selected={closedAs === "rent"}
+                                disabled={isSaving}
+                                title="Rented"
+                                detail="The client is renting it"
+                            />
+                        </RadioGroup>
+                        {closedAsError ? (
+                            <p role="alert" className="body-sm text-danger">
+                                {closedAsError}
+                            </p>
+                        ) : null}
+                    </fieldset>
+                ) : null}
+
+                {priceDeal ? (
                     <FinalPriceField
-                        deal={deal}
+                        deal={priceDeal}
                         choice={priceChoice}
                         onChoiceChange={(next) => {
                             setPriceChoice(next);

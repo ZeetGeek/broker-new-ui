@@ -44,6 +44,9 @@ type RefreshResponse = {
     tokenType?: string;
 };
 
+/** Copy from docs/MESSAGES.md (429 rate limited). */
+export const RATE_LIMITED_MESSAGE = "Too many attempts. Wait a minute and try again.";
+
 /** Unwrap NestJS / gateway error payloads into a readable string. */
 function extractErrorMessage(data: unknown, fallback: string): string {
     if (data == null) return fallback;
@@ -77,6 +80,10 @@ function toApiError(error: unknown): ApiError {
         }
 
         const data = error.response.data;
+        // A proxy may answer a rate limit with an HTML page; never show that.
+        if (error.response.status === 429) {
+            return new ApiError(RATE_LIMITED_MESSAGE, 429, data);
+        }
         const message = extractErrorMessage(data, error.response.statusText || "Request failed");
         return new ApiError(message, error.response.status, data);
     }
