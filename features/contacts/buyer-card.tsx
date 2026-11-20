@@ -73,7 +73,10 @@ export function BuyerCard({
     return (
         <article
             onClick={open}
-            className="contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-5 shadow-md transition-[box-shadow,border-color] duration-160 block-full min-block-96 hover:shadow-lg"
+            className={cn(
+                "contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-5 shadow-md transition-[box-shadow,border-color] duration-160 hover:shadow-lg",
+                (saleBudget || rentBudget) && "block-full min-block-96",
+            )}
         >
             <div className="mbe-3 flex items-center justify-between gap-2">
                 {intent ? (
