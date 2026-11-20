@@ -5,6 +5,7 @@ import { useId } from "react";
 import { formatPrice } from "@/lib/format/price";
 import type { FinalCommissionType } from "@/lib/validation/final-commission";
 
+import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
@@ -19,13 +20,13 @@ export function FinalCommissionField({
     onValueChange,
 }: {
     type: FinalCommissionType;
-    value: string;
+    value: string | null;
     amount: number | null;
     isRent: boolean;
     error: string | null;
     disabled: boolean;
     onTypeChange: (type: FinalCommissionType) => void;
-    onValueChange: (value: string) => void;
+    onValueChange: (value: string | null) => void;
 }) {
     const id = useId();
     return (
@@ -49,20 +50,33 @@ export function FinalCommissionField({
             <label htmlFor={id} className="sr-only">
                 {type === "percent" ? "Final commission percentage" : "Final commission in rupees"}
             </label>
-            <Input
-                id={id}
-                inputMode={type === "percent" ? "decimal" : "numeric"}
-                value={value}
-                onValueChange={onValueChange}
-                disabled={disabled}
-                placeholder={type === "percent" ? "e.g. 2" : "e.g. 25000"}
-                errorText={error}
-                helperText={
-                    type === "percent"
-                        ? `Percentage of the final ${isRent ? "monthly rent" : "sale price"}`
-                        : "Total commission in rupees"
-                }
-            />
+            {type === "amount" ? (
+                <SmartPriceInput
+                    id={id}
+                    size="default"
+                    value={value != null && value !== "" ? Number(value) : null}
+                    onValueChange={(next, status) =>
+                        onValueChange(next != null ? String(next) : status === "empty" ? "" : null)
+                    }
+                    min={0}
+                    max={99_999_999_999}
+                    disabled={disabled}
+                    placeholder="e.g. 25k or 1 lakh"
+                    errorText={error ?? undefined}
+                    helperText="Total commission in rupees"
+                />
+            ) : (
+                <Input
+                    id={id}
+                    inputMode="decimal"
+                    value={value ?? ""}
+                    onValueChange={onValueChange}
+                    disabled={disabled}
+                    placeholder="e.g. 2"
+                    errorText={error}
+                    helperText={`Percentage of the final ${isRent ? "monthly rent" : "sale price"}`}
+                />
+            )}
             {amount != null && !error ? (
                 <p className="body-sm text-ink" aria-live="polite">
                     You get <span className="font-semibold">{formatPrice(amount)}</span>

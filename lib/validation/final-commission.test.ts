@@ -17,6 +17,7 @@ test("commission is optional and zero is an explicit valid commission", () => {
 });
 
 test("invalid commission cannot be saved", () => {
+    assert.ok(resolveFinalCommission("amount", null, 100).error);
     for (const value of ["-1", "101", "2.345", "Infinity", "1e2", "abc"]) {
         assert.ok(resolveFinalCommission("percent", value, 100).error, value);
     }

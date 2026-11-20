@@ -119,7 +119,7 @@ export function StageNoteModal({
     const [lostReason, setLostReason] = useState<DealLostReason | null>(null);
     const [lostError, setLostError] = useState<string | null>(null);
     const [commissionType, setCommissionType] = useState<FinalCommissionType>("percent");
-    const [commissionValue, setCommissionValue] = useState("");
+    const [commissionValue, setCommissionValue] = useState<string | null>("");
     const [commissionError, setCommissionError] = useState<string | null>(null);
 
     // Reset the draft when a new move opens, derived on the open edge so we

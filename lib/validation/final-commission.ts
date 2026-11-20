@@ -2,9 +2,12 @@ export type FinalCommissionType = "percent" | "amount";
 
 export function resolveFinalCommission(
     type: FinalCommissionType,
-    value: string,
+    value: string | null,
     finalPrice: number,
 ) {
+    // Smart inputs use null for invalid text; an empty string means omitted.
+    if (value == null)
+        return { amount: null, error: "Enter a valid commission, or leave it blank." };
     if (!value.trim()) return { amount: null, error: null };
     const number = Number(value);
     if (!/^\d+(?:\.\d{1,2})?$/.test(value) || !Number.isFinite(number) || number < 0) {
