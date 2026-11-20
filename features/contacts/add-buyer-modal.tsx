@@ -34,12 +34,14 @@ import {
     BudgetRangeField,
     ComboboxField,
     ContactFormDrawer,
+    type EmbeddedContactForm,
     FormField,
     NotesField,
     TextField,
 } from "@/features/contacts/contact-form-ui";
 import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
 import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
+import { ContactPhotoField } from "@/features/contacts/contact-photo-field";
 import type { BuyerRow } from "@/features/contacts/types";
 import {
     FORM_SECTIONS_CLASS,
@@ -162,6 +164,7 @@ export function AddBuyerModal({
     buyer = null,
     onUpdated,
     onAttach,
+    embedded,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -170,6 +173,7 @@ export function AddBuyerModal({
     onUpdated?: (name: string) => void;
     /** Edit mode — open the attach-properties sheet for this buyer. */
     onAttach?: () => void;
+    embedded?: EmbeddedContactForm;
 }) {
     const isEdit = Boolean(buyer);
     const market = useMarket();
@@ -188,6 +192,7 @@ export function AddBuyerModal({
     });
     const values = useWatch({ control: form.control });
     const [busy, setBusy] = useState(false);
+    const [photo, setPhoto] = useState<File | null>(null);
     const [initializedFor, setInitializedFor] = useState<BuyerRow | null | undefined>(undefined);
     const [formError, setFormError] = useState<string>();
     const [duplicate, setDuplicate] = useState<{
@@ -211,6 +216,7 @@ export function AddBuyerModal({
     useEffect(() => {
         if (!open) return;
         const timer = window.setTimeout(() => {
+            setPhoto(null);
             form.reset(valuesFromBuyer(buyer, locationDefaults));
             setBusy(false);
             setFormError(undefined);
@@ -243,8 +249,12 @@ export function AddBuyerModal({
     }, [ignoreDuplicate, isEdit, open, values.phone, phoneCountry]);
 
     const onInvalid = () => {
-        document
-            .querySelectorAll<HTMLDetailsElement>(".contacts-form-drawer details")
+        (
+            document.querySelector("[data-contact-create-panel]:not([hidden])") ??
+            document.querySelector(".contacts-form-drawer") ??
+            document
+        )
+            .querySelectorAll<HTMLDetailsElement>("details")
             .forEach((section) => {
                 section.open = true;
             });
@@ -271,6 +281,7 @@ export function AddBuyerModal({
                 const savedId = await contactsApi.saveBuyer(input);
                 onCreated(input.name, savedId);
                 toast.success("Client added");
+                setPhoto(null);
                 form.reset(emptyValues(locationDefaults));
                 onOpenChange(false);
             }
@@ -301,6 +312,7 @@ export function AddBuyerModal({
             const savedId = await contactsApi.saveBuyer(input);
             onCreated(input.name, savedId);
             toast.success("Client added");
+            setPhoto(null);
             form.reset(emptyValues(locationDefaults));
             setDuplicate(null);
             setIgnoreDuplicate(false);
@@ -319,6 +331,7 @@ export function AddBuyerModal({
 
     return (
         <ContactFormDrawer
+            embedded={embedded}
             loading={initializedFor !== buyer}
             skeletonVariant="buyer"
             bothBudgets={values.lookingFor === "both"}
@@ -326,7 +339,7 @@ export function AddBuyerModal({
             onOpenChange={onOpenChange}
             title={isEdit ? "Edit client" : "Add client"}
             description=""
-            isDirty={isDirty}
+            isDirty={isDirty || photo !== null}
             busy={busy}
             primaryLabel={isEdit ? "Save changes" : "Save client"}
             onPrimary={() => void save()}
@@ -345,6 +358,12 @@ export function AddBuyerModal({
                     title="Client details"
                     description="Add their name and the number you can reach them on."
                 >
+                    <ContactPhotoField
+                        name={values.name ?? ""}
+                        file={photo}
+                        onChange={setPhoto}
+                        disabled={busy}
+                    />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <TextField
                             label="Full name"

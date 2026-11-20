@@ -858,6 +858,18 @@ export function MoreDetails({
     );
 }
 
+export type EmbeddedContactForm = {
+    active: boolean;
+    onStateChange: (state: { isDirty: boolean; busy: boolean }) => void;
+};
+
+export const CONTACT_FORM_DRAWER_CLASS = `
+    contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0!
+    rounded-none! block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
+    sm:inline-[min(var(--drawer-width),100vw)]!
+    sm:max-inline-[var(--drawer-width)]!
+`;
+
 export function ContactFormDrawer({
     open,
     onOpenChange,
@@ -875,6 +887,7 @@ export function ContactFormDrawer({
     loading = false,
     skeletonVariant = "buyer",
     bothBudgets = false,
+    embedded,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -893,11 +906,18 @@ export function ContactFormDrawer({
     loading?: boolean;
     skeletonVariant?: "buyer" | "owner";
     bothBudgets?: boolean;
+    embedded?: EmbeddedContactForm;
 }) {
     const bodyRef = useRef<HTMLDivElement>(null);
     const [discardOpen, setDiscardOpen] = useState(false);
 
+    const onStateChange = embedded?.onStateChange;
+    useEffect(() => {
+        onStateChange?.({ isDirty, busy });
+    }, [onStateChange, isDirty, busy]);
+
     const requestClose = (next: boolean) => {
+        if (!next && busy) return;
         if (!next && isDirty && !busy) {
             setDiscardOpen(true);
             return;
@@ -917,7 +937,7 @@ export function ContactFormDrawer({
     }
 
     useEffect(() => {
-        if (!open || busy || loading) return;
+        if (!open || busy || loading || embedded?.active === false) return;
         const unsubscribe = tinykeys(window, {
             "$mod+Enter": (event) => {
                 event.preventDefault();
@@ -933,11 +953,12 @@ export function ContactFormDrawer({
                 : {}),
         });
         return () => unsubscribe();
-    }, [busy, loading, open, onPrimary, onSaveAnother]);
+    }, [busy, loading, open, onPrimary, onSaveAnother, embedded?.active]);
 
     useEffect(() => {
-        if (!footerError || !open) return;
+        if (!footerError || !open || embedded?.active === false) return;
         const scrollRoot =
+            (embedded?.active ? bodyRef.current : null) ??
             bodyRef.current?.closest(".simplebar-content-wrapper") ??
             bodyRef.current?.closest("[data-simplebar]") ??
             bodyRef.current?.parentElement;
@@ -946,7 +967,76 @@ export function ContactFormDrawer({
         } else {
             bodyRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
         }
-    }, [footerError, open]);
+    }, [footerError, open, embedded?.active]);
+
+    const footer = (
+        <div className="flex flex-col gap-3 inline-full">
+            {footerError ? (
+                <p
+                    role="alert"
+                    className="body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger"
+                >
+                    {footerError}
+                </p>
+            ) : null}
+            <div className="flex flex-wrap items-center justify-end gap-2">
+                {loading ? (
+                    <div
+                        role="status"
+                        aria-label="Loading form actions"
+                        aria-busy="true"
+                        className="flex gap-2"
+                    >
+                        {onSaveAnother ? <Skeleton className="block-control-md inline-40" /> : null}
+                        <Skeleton className="block-control-md inline-28" />
+                    </div>
+                ) : (
+                    <>
+                        {onSaveAnother ? (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={onSaveAnother}
+                                disabled={busy}
+                            >
+                                {saveAnotherLabel}
+                            </Button>
+                        ) : null}
+                        <Button
+                            type="button"
+                            variant="accent"
+                            onClick={onPrimary}
+                            disabled={busy}
+                            loading={busy}
+                        >
+                            {primaryLabel}
+                        </Button>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+
+    if (embedded) {
+        if (!embedded.active) return null;
+        return (
+            <div className="flex flex-col block-full min-block-0">
+                <div
+                    ref={bodyRef}
+                    className="flex-1 overflow-y-auto overscroll-contain p-(--dialog-pad) min-block-0"
+                >
+                    {loading ? (
+                        <ContactFormSkeleton variant={skeletonVariant} bothBudgets={bothBudgets} />
+                    ) : (
+                        children
+                    )}
+                </div>
+                <div className="shrink-0 border-bs border-border-warm p-(--dialog-pad)">
+                    {footer}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
@@ -958,11 +1048,7 @@ export function ContactFormDrawer({
                 description={description}
                 size="lg"
                 padding="md"
-                className="
-                  contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0!
-                  rounded-none! block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
-                  sm:inline-[min(46rem,100vw)]! sm:max-inline-184!
-                "
+                className={CONTACT_FORM_DRAWER_CLASS}
                 headerClassName="
                   !space-y-0 !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-b border-border-warm
                 "
@@ -970,58 +1056,7 @@ export function ContactFormDrawer({
                   !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
                 "
                 header={header}
-                footer={
-                    <div className="flex flex-col gap-3 inline-full">
-                        {footerError ? (
-                            <p
-                                role="alert"
-                                className="
-                                  body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold
-                                  text-danger
-                                "
-                            >
-                                {footerError}
-                            </p>
-                        ) : null}
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                            {loading ? (
-                                <div
-                                    role="status"
-                                    aria-label="Loading form actions"
-                                    aria-busy="true"
-                                    className="flex gap-2"
-                                >
-                                    {onSaveAnother ? (
-                                        <Skeleton className="block-control-md inline-40" />
-                                    ) : null}
-                                    <Skeleton className="block-control-md inline-28" />
-                                </div>
-                            ) : (
-                                <>
-                                    {onSaveAnother ? (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={onSaveAnother}
-                                            disabled={busy}
-                                        >
-                                            {saveAnotherLabel}
-                                        </Button>
-                                    ) : null}
-                                    <Button
-                                        type="button"
-                                        variant="accent"
-                                        onClick={onPrimary}
-                                        disabled={busy}
-                                        loading={busy}
-                                    >
-                                        {primaryLabel}
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                }
+                footer={footer}
             >
                 <div ref={bodyRef} className="inline-full">
                     {loading ? (

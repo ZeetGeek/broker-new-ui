@@ -1654,16 +1654,9 @@
 
 @media (min-width: 640px) {
     .t-modal.contacts-detail-drawer {
-        width: 32.5rem !important;
-        max-width: 32.5rem !important;
+        width: var(--drawer-detail-width) !important;
+        max-width: var(--drawer-detail-width) !important;
         border-inline-start: 1px solid var(--color-border-warm);
-    }
-}
-
-@media (min-width: 1280px) {
-    .t-modal.contacts-detail-drawer {
-        width: 40rem !important;
-        max-width: 40rem !important;
     }
 }
 

@@ -178,7 +178,7 @@ export function ContactFormSkeleton({
                             <div className="flex flex-col gap-4 pbs-5">
                                 {section === 2 ? (
                                     <>
-                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                             <FieldSkeleton />
                                             <FieldSkeleton />
                                             <FieldSkeleton />

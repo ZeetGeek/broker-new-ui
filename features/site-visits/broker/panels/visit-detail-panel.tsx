@@ -101,7 +101,8 @@ export function VisitDetailPanel({
                   inset-s-0! inset-bs-auto! inset-be-0! flex translate-0! flex-col gap-0
                   overflow-hidden rounded-b-none p-0 inline-full max-block-[94dvh] max-inline-none
                   sm:inset-s-auto! sm:inset-e-0! sm:inset-bs-0! sm:rounded-none sm:block-full
-                  sm:inline-[520px] sm:max-block-none sm:max-inline-[520px]
+                  sm:inline-[var(--drawer-detail-width)] sm:max-block-none
+                  sm:max-inline-[var(--drawer-detail-width)]
                 "
             >
                 <AppModalHeader title={status.label} />

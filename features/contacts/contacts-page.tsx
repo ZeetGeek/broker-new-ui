@@ -24,6 +24,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
+import { AddContactModal } from "@/features/contacts/add-contact-modal";
 import { AddOwnerModal } from "@/features/contacts/add-owner-modal";
 import {
     AttachBuyerPropertiesModal,
@@ -628,16 +629,23 @@ export function ContactsPage({
                     />
                 )}
 
-                <AddBuyerModal
-                    open={isAddOpen}
-                    onOpenChange={setIsAddOpen}
-                    onCreated={handleCreated}
-                />
-
-                <AddOwnerModal
-                    open={isOwnerAddOpen}
-                    onOpenChange={setIsOwnerAddOpen}
-                    onSaved={handleOwnerSaved}
+                <AddContactModal
+                    open={isAddOpen || isOwnerAddOpen}
+                    initialType={isOwnerAddOpen ? "owner" : "client"}
+                    onOpenChange={(next) => {
+                        if (!next) {
+                            setIsAddOpen(false);
+                            setIsOwnerAddOpen(false);
+                        }
+                    }}
+                    onClientCreated={(name) => {
+                        setFilters((previous) => ({ ...previous, tab: "buyers" }));
+                        handleCreated(name);
+                    }}
+                    onOwnerSaved={(name, mode) => {
+                        setFilters((previous) => ({ ...previous, tab: "owners" }));
+                        handleOwnerSaved(name, mode);
+                    }}
                 />
 
                 <AddOwnerModal

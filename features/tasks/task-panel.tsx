@@ -47,7 +47,8 @@ export function TaskPanel({
                         : `
                           contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0!
                           rounded-none! block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
-                          sm:inline-[min(46rem,100vw)]! sm:max-inline-184!
+                          sm:inline-[min(var(--drawer-width),100vw)]!
+                          sm:max-inline-[var(--drawer-width)]!
                         `
                 }
                 headerClassName={

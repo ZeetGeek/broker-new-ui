@@ -58,17 +58,17 @@ export function DrawerSection({
             }}
         >
             <details open={defaultOpen} data-drawer-section className="group/drawer-section">
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30 [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-sm outline-none [&::-webkit-details-marker]:hidden">
                     <span className="min-inline-0">
                         <span
                             role="heading"
                             aria-level={headingLevel}
-                            className="block font-display text-xl font-semibold tracking-[-0.02em] text-ink"
+                            className="block font-display text-lg font-semibold tracking-[-0.02em] text-ink"
                         >
                             {title}
                         </span>
                         {description ? (
-                            <span className="mbs-1.5 block text-sm/6 text-ink-muted max-inline-2xl">
+                            <span className="mbs-0.5 block text-sm/6 text-ink-muted max-inline-2xl">
                                 {description}
                             </span>
                         ) : null}

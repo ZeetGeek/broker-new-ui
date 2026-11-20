@@ -16,8 +16,6 @@ export function FilterAccordionTrigger({
             className="
               items-center gap-3 rounded-none border-0 px-0 py-5 text-ink
               hover:no-underline
-              focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
-              focus-visible:ring-offset-surface
               data-panel-open:text-ink
             "
         >

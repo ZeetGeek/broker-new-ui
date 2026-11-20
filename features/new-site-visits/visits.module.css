@@ -495,7 +495,7 @@
     translate: none !important;
     scale: 1 !important;
     opacity: 1 !important;
-    inline-size: min(46rem, 100dvw) !important;
+    inline-size: min(var(--drawer-width), 100dvw) !important;
     max-inline-size: 100dvw !important;
     block-size: 100dvh !important;
     max-block-size: 100dvh !important;
