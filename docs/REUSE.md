@@ -185,6 +185,53 @@ Inside an existing interactive trigger (such as an accordion header or native
 It shares the `IconButton` styles and sizes as a decorative span, preserving one
 keyboard target and avoiding a nested button.
 
+## People picker
+
+Use `PeoplePicker` / `PeoplePickerField` from `components/shared/people-picker.tsx`
+whenever a screen selects a **Client**, an **Owner**, or either in a **modal**.
+Pass `kinds="client" | "owner" | "both"` — do not fork a second dropdown look per
+route. The picker is presentation-only: the caller supplies `people`, owns fetch /
+create / retry, and receives the chosen id(s) via `onConfirm`.
+
+- Single-select confirms on row tap by default (`commitOnSelect`); multi-select
+  keeps a draft until the footer Confirm.
+- `PeoplePickerField` is the form / filter face that opens the modal.
+- Optional `onCreate`, `allowClear`, loading / empty / error states match other
+  AppModal pickers. Client rows use `lookingFor` for the same Buying / Renting /
+  Buying or renting badge as contact cards — no custom Hot-style badges.
+
+For **inline** mentions, filter sheets, and compact fields, use
+`PeopleInlineSelect` from `components/shared/people-inline-select.tsx`. It has
+All / Clients / Owners scope tabs (or `lockedScope` for one role), search, optional
+clear (“Any…”), and a **Create it** action when the typed query matches nobody.
+
+See `/design-system/components/people-picker` for live variants.
+
+## Property picker
+
+Use `PropertyPicker` / `PropertyPickerField` from
+`components/shared/property-picker.tsx` whenever a screen selects a **listing**
+in a **modal**. Pass `lookingFor="sale" | "rent" | "both"` — do not fork a
+second dropdown look per route. The picker is presentation-only: the caller
+supplies `properties`, owns fetch / create / retry, and receives the chosen
+id(s) via `onConfirm`.
+
+- Single-select confirms on row tap by default (`commitOnSelect`); multi-select
+  keeps a draft until the footer Confirm.
+- Rows match browse-card meta: ask via `ListingAskPrices` /
+  `<PriceWithCommission>`, property info (`formatPropertyCardName`), location
+  with pin (area, city, state), and Sale / Rent badges — never a street address.
+- `PropertyPickerField` is the form / filter face that opens the modal.
+- Optional `onCreate`, `allowClear`, loading / empty / error states match other
+  AppModal pickers.
+
+For **inline** filters and compact fields, use `PropertyInlineSelect` from
+`components/shared/property-inline-select.tsx`. It has All / Sale / Rent scope
+tabs (or `lockedScope` for one looking-for), search, optional clear
+(“Any…”), and an **Add property** action when the typed query matches nobody.
+
+See `/design-system/components/property-picker` for live variants.
+
 ## Attached client summaries
 
 Use `AttachedClientsSummary` from `components/shared/attached-clients-summary.tsx`
@@ -383,21 +430,25 @@ home indicator. Encoding both as utilities means nobody has to remember.
 This is where reuse actually pays on this platform. Each of these exists
 **exactly once** and is used everywhere the concept appears.
 
-| Component               | Why it must be one component                                                                                                                                                      |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<PriceWithCommission>` | **Listing ask prices** (sale / monthly rent). Hover tip for brokerage — broker "You get" / owner "Broker gets", or the empty-commission copy. Never reimplement this tip.         |
-| `<Price>`               | Non-listing money only: buyer offers, budgets, totals, form previews. INR lakh/crore formatting without a commission tip.                                                         |
-| `<PropertyStatusBadge>` | Status → label + color mapping in one place. Adding a status must not mean editing six files.                                                                                     |
-| `<PhoneNumber>`         | **Contact masking is a product rule.** Owner contact is hidden until a representation is approved. If masking is written by hand anywhere, that is a data leak waiting to happen. |
-| `<DateDisplay>`         | dd/mm/yyyy everywhere, with relative form ("2 days ago") in one place.                                                                                                            |
-| `<AreaDisplay>`         | sq ft with thousands separators, carpet vs built-up labelling.                                                                                                                    |
-| `<PropertyCard>`        | One card used by browse, my-properties, and the owner list. Three cards means three photo-loading strategies and three inconsistent layouts.                                      |
-| `<AppImage>`            | The only raster image primitive. Wraps `next/image` with lazy loading, responsive output, shared quality/placeholder policy, and fallback handling.                               |
-| `<EmptyState>`          | Every empty screen must teach the next action. One component, one shape: icon, headline, action.                                                                                  |
-| `<UserAvatar>`          | Photo or avvvatars-react shape/character fallback.                                                                                                                                |
-| `<VerifiedBadge>`       | The trust signal on the approve screen. Its meaning must never drift.                                                                                                             |
-| `<LoadingSkeleton>`     | Per-shape skeletons. No blank white flashes.                                                                                                                                      |
-| Icons (`icons.tsx`)     | **One Tabler registry.** Import `WhatsAppIcon` / `CallIcon` / `MailIcon` (and other aliases) from `components/shared/icons` — never `lucide-react` or raw `@tabler/icons-react`.  |
+| Component                | Why it must be one component                                                                                                                                                      |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<PriceWithCommission>`  | **Listing ask prices** (sale / monthly rent). Hover tip for brokerage — broker "You get" / owner "Broker gets", or the empty-commission copy. Never reimplement this tip.         |
+| `<Price>`                | Non-listing money only: buyer offers, budgets, totals, form previews. INR lakh/crore formatting without a commission tip.                                                         |
+| `<PropertyStatusBadge>`  | Status → label + color mapping in one place. Adding a status must not mean editing six files.                                                                                     |
+| `<PhoneNumber>`          | **Contact masking is a product rule.** Owner contact is hidden until a representation is approved. If masking is written by hand anywhere, that is a data leak waiting to happen. |
+| `<DateDisplay>`          | dd/mm/yyyy everywhere, with relative form ("2 days ago") in one place.                                                                                                            |
+| `<AreaDisplay>`          | sq ft with thousands separators, carpet vs built-up labelling.                                                                                                                    |
+| `<PropertyCard>`         | One card used by browse, my-properties, and the owner list. Three cards means three photo-loading strategies and three inconsistent layouts.                                      |
+| `<AppImage>`             | The only raster image primitive. Wraps `next/image` with lazy loading, responsive output, shared quality/placeholder policy, and fallback handling.                               |
+| `<EmptyState>`           | Every empty screen must teach the next action. One component, one shape: icon, headline, action.                                                                                  |
+| `<PeoplePicker>`         | Client / Owner / both selection modal (+ `PeoplePickerField`). One picker — pass `kinds`, do not fork dropdown UIs.                                                               |
+| `<PeopleInlineSelect>`   | Compact combobox for mentions / filters. All·Clients·Owners scope + Create it on empty search.                                                                                    |
+| `<PropertyPicker>`       | Listing selection modal (+ `PropertyPickerField`). Pass `lookingFor`, do not fork dropdown UIs.                                                                                   |
+| `<PropertyInlineSelect>` | Compact combobox for property filters. All·Sale·Rent scope + Add property on empty search.                                                                                        |
+| `<UserAvatar>`           | Photo or avvvatars-react shape/character fallback.                                                                                                                                |
+| `<VerifiedBadge>`        | The trust signal on the approve screen. Its meaning must never drift.                                                                                                             |
+| `<LoadingSkeleton>`      | Per-shape skeletons. No blank white flashes.                                                                                                                                      |
+| Icons (`icons.tsx`)      | **One Tabler registry.** Import `WhatsAppIcon` / `CallIcon` / `MailIcon` (and other aliases) from `components/shared/icons` — never `lucide-react` or raw `@tabler/icons-react`.  |
 
 Use `<AppImage>` for every rendered raster photo, including property photos,
 avatars, upload previews, and remote media. A `fill` image must sit in a

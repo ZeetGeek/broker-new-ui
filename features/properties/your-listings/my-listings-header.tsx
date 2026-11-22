@@ -14,30 +14,24 @@ import { cn } from "@/lib/utils";
 import { FilterChip } from "@/components/shared/filter-chip";
 import { SlidersHorizontal } from "@/components/shared/icons";
 import {
-    LIST_SEARCH_WIDTH_CLASS,
     ListAddButton,
     ListSearchField,
     ListToolbarSelect,
 } from "@/components/shared/list-toolbar";
+import {
+    ResponsiveListStatus,
+    ResponsiveListToolbar,
+} from "@/components/shared/responsive-list-toolbar";
 import { Skeleton } from "@/components/shared/skeleton";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ownerListingsChipClassName } from "@/features/properties/owner-listings/owner-listings-chip-styles";
-import {
-    OwnerListingsChipsCarousel,
-    OwnerListingsChipsCarouselSlide,
-} from "@/features/properties/owner-listings/owner-listings-chips-carousel";
 import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
 import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
 import type { MyListingsFilters, MyListingSort } from "@/features/properties/your-listings/types";
 
 type StatusTab = "published" | "draft" | "sold" | "deleted";
-
-const SEARCH_WIDTH_CLASS = cn(
-    LIST_SEARCH_WIDTH_CLASS,
-    "flex-1 shadow-sm inline-full min-inline-0 sm:flex-none",
-);
 
 const STATUS_TABS: {
     key: StatusTab;
@@ -163,9 +157,6 @@ export type MyListingsHeaderProps = {
     onAddProperty?: () => void;
 };
 
-export const MY_LISTINGS_TOOLBAR_CLASS =
-    "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4";
-
 function SkeletonLabel({ children }: { children: React.ReactNode }) {
     return (
         <span className="relative inline-block">
@@ -185,83 +176,79 @@ export function MyListingsToolbarSkeleton({
     return (
         <div role="status" aria-busy="true" className="sticky inset-bs-0 z-10">
             <span className="sr-only">Loading listing controls</span>
-            <div aria-hidden className={MY_LISTINGS_TOOLBAR_CLASS}>
-                <div
-                    className="
-                      -my-1.5 flex flex-1 gap-2.5 overflow-hidden px-0.5 py-1.5 min-inline-0
-                    "
-                >
-                    <div className={ownerListingsChipClassName(false, { interactive: false })}>
-                        <Skeleton className="shrink-0 block-4 inline-4" />
-                        <SkeletonLabel>Filters</SkeletonLabel>
-                    </div>
-                    {STATUS_TABS.map((tab) => (
-                        <div
-                            key={tab.key}
-                            className={ownerListingsChipClassName(false, { interactive: false })}
-                        >
-                            <SkeletonLabel>{tab.label}</SkeletonLabel>
-                            <span
-                                className="
-                                  inline-flex shrink-0 items-center justify-center block-5 inline-8
-                                "
+            <div aria-hidden>
+                <ResponsiveListToolbar
+                    inlineMobileActions
+                    selection={
+                        <>
+                            <div
+                                className={ownerListingsChipClassName(false, {
+                                    interactive: false,
+                                })}
                             >
-                                <Skeleton className="block-4 inline-7" />
-                            </span>
+                                <Skeleton className="shrink-0 block-4 inline-4" />
+                                <SkeletonLabel>Filters</SkeletonLabel>
+                            </div>
+                            <div
+                                className={cn(
+                                    ownerListingsChipClassName(false, { interactive: false }),
+                                    "flex-1 min-inline-0 sm:flex-none",
+                                )}
+                            >
+                                <SkeletonLabel>Published</SkeletonLabel>
+                                <Skeleton className="ms-auto shrink-0 block-4 inline-7" />
+                                <Skeleton className="shrink-0 block-3.5 inline-3.5" />
+                            </div>
+                        </>
+                    }
+                    search={
+                        <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px] min-inline-0 pointer-coarse:min-block-11">
+                            <Skeleton className="shrink-0 block-4 inline-4" />
+                            <Skeleton className="block-3 inline-1/2" />
                         </div>
-                    ))}
-                </div>
-                <div className="flex shrink-0 items-center gap-2.5 min-inline-0">
-                    <div
-                        className={cn(
-                            SEARCH_WIDTH_CLASS,
-                            `
-                              flex items-center gap-2 rounded-control border border-border-warm
-                              bg-surface px-3 block-[38px]
-                            `,
-                        )}
-                    >
-                        <Skeleton className="shrink-0 block-4 inline-4" />
-                        <SkeletonLabel>Search listings</SkeletonLabel>
-                    </div>
-                    <div
-                        className={cn(
-                            ownerListingsChipClassName(false, { interactive: false }),
-                            "gap-2",
-                        )}
-                    >
-                        <Skeleton className="shrink-0 block-4 inline-4" />
-                        <SkeletonLabel>
-                            <span className="hidden sm:inline">Newest first</span>
-                            <span className="sm:hidden">Sort</span>
-                        </SkeletonLabel>
-                        <Skeleton className="shrink-0 block-3.5 inline-3.5" />
-                    </div>
-                    {showAddProperty ? (
-                        <div
-                            className="
+                    }
+                    actions={
+                        <>
+                            <div
+                                className={cn(
+                                    ownerListingsChipClassName(false, { interactive: false }),
+                                    "gap-2",
+                                )}
+                            >
+                                <Skeleton className="shrink-0 block-4 inline-4" />
+                                <SkeletonLabel>
+                                    <span className="hidden sm:inline">Newest first</span>
+                                    <span className="sm:hidden">Sort</span>
+                                </SkeletonLabel>
+                                <Skeleton className="shrink-0 block-3.5 inline-3.5" />
+                            </div>
+                            {showAddProperty ? (
+                                <div
+                                    className="
                               hidden items-center gap-2 rounded-control bg-surface px-3.5 text-sm
                               font-semibold shadow-sm block-[38px]
                               md:inline-flex
                             "
-                        >
-                            <Skeleton className="shrink-0 block-4 inline-4" />
-                            <SkeletonLabel>Add property</SkeletonLabel>
-                            {shortcut ? (
-                                <KbdGroup className="gap-0.5">
-                                    {shortcut.displayKeys.map((key) => (
-                                        <Kbd
-                                            key={key}
-                                            className="invisible px-1.5 text-[10px] min-inline-4"
-                                        >
-                                            {key}
-                                        </Kbd>
-                                    ))}
-                                </KbdGroup>
+                                >
+                                    <Skeleton className="shrink-0 block-4 inline-4" />
+                                    <SkeletonLabel>Add property</SkeletonLabel>
+                                    {shortcut ? (
+                                        <KbdGroup className="gap-0.5">
+                                            {shortcut.displayKeys.map((key) => (
+                                                <Kbd
+                                                    key={key}
+                                                    className="invisible px-1.5 text-[10px] min-inline-4"
+                                                >
+                                                    {key}
+                                                </Kbd>
+                                            ))}
+                                        </KbdGroup>
+                                    ) : null}
+                                </div>
                             ) : null}
-                        </div>
-                    ) : null}
-                </div>
+                        </>
+                    }
+                />
             </div>
         </div>
     );
@@ -295,9 +282,10 @@ export function MyListingsHeader({
         <>
             <div className="sticky inset-bs-0 z-10">
                 <TooltipProvider>
-                    <div className={MY_LISTINGS_TOOLBAR_CLASS}>
-                        <OwnerListingsChipsCarousel>
-                            <OwnerListingsChipsCarouselSlide>
+                    <ResponsiveListToolbar
+                        inlineMobileActions
+                        selection={
+                            <>
                                 <FilterChip
                                     label="Filters"
                                     icon={SlidersHorizontal}
@@ -319,64 +307,85 @@ export function MyListingsHeader({
                                     }
                                     description="Location, budget and property filters"
                                 />
-                            </OwnerListingsChipsCarouselSlide>
-
-                            {STATUS_TABS.map((tab) => {
-                                const active = filters.status === tab.key;
-                                const count = tabCount(summary, tab.key);
-                                return (
-                                    <OwnerListingsChipsCarouselSlide key={tab.key}>
-                                        <FilterChip
-                                            label={
-                                                <span className="inline-flex items-center gap-2.5">
-                                                    <span
-                                                        aria-hidden
-                                                        className={cn(
-                                                            "shrink-0 rounded-full block-1.5 inline-1.5",
-                                                            tab.dotClassName,
-                                                        )}
-                                                    />
-                                                    {tab.label}
-                                                </span>
-                                            }
-                                            count={count}
-                                            showZero
-                                            isLoading={isLoading}
-                                            isActive={active}
-                                            onClick={() => selectStatusTab(tab.key)}
-                                            description={tab.description}
-                                        />
-                                    </OwnerListingsChipsCarouselSlide>
-                                );
-                            })}
-                        </OwnerListingsChipsCarousel>
-
-                        <div className="flex shrink-0 items-center gap-2.5 min-inline-0">
+                                <ResponsiveListStatus
+                                    label="Status"
+                                    value={filters.status}
+                                    options={STATUS_TABS.map((tab) => ({
+                                        value: tab.key,
+                                        label: tab.label,
+                                        dotClassName: tab.dotClassName,
+                                        count: tabCount(summary, tab.key),
+                                    }))}
+                                    isLoading={isLoading}
+                                    onChange={(value) => {
+                                        const selected = STATUS_TABS.find(
+                                            (tab) => tab.key === value,
+                                        );
+                                        if (selected) selectStatusTab(selected.key);
+                                    }}
+                                >
+                                    {STATUS_TABS.map((tab) => {
+                                        const active = filters.status === tab.key;
+                                        const count = tabCount(summary, tab.key);
+                                        return (
+                                            <div key={tab.key}>
+                                                <FilterChip
+                                                    label={
+                                                        <span className="inline-flex items-center gap-2.5">
+                                                            <span
+                                                                aria-hidden
+                                                                className={cn(
+                                                                    "shrink-0 rounded-full block-1.5 inline-1.5",
+                                                                    tab.dotClassName,
+                                                                )}
+                                                            />
+                                                            {tab.label}
+                                                        </span>
+                                                    }
+                                                    count={count}
+                                                    isLoading={isLoading}
+                                                    isActive={active}
+                                                    onClick={() => selectStatusTab(tab.key)}
+                                                    description={tab.description}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </ResponsiveListStatus>
+                            </>
+                        }
+                        search={
                             <ListSearchField
-                                placeholder="Search listings"
+                                fullWidth
+                                searchHelp="Search listings by property title, locality, city or property type."
                                 aria-label="Search your listings"
-                                wrapperClassName={SEARCH_WIDTH_CLASS}
                                 value={filters.q}
                                 onChange={(q) => onFiltersChange({ ...filters, q, page: 1 })}
                             />
-                            <ListToolbarSelect
-                                label="Sort listings"
-                                options={SORT_OPTIONS}
-                                defaultValue="newest"
-                                mobileLabel="Sort"
-                                value={filters.sort}
-                                onChange={(sort) => onFiltersChange({ ...filters, sort, page: 1 })}
-                            />
-                            {onAddProperty ? (
-                                <ListAddButton
-                                    label="Add property"
-                                    shortcutId="add_property"
-                                    onClick={onAddProperty}
-                                    className="hidden md:inline-flex"
+                        }
+                        actions={
+                            <>
+                                <ListToolbarSelect
+                                    label="Sort listings"
+                                    options={SORT_OPTIONS}
+                                    defaultValue="newest"
+                                    mobileLabel="Sort"
+                                    value={filters.sort}
+                                    onChange={(sort) =>
+                                        onFiltersChange({ ...filters, sort, page: 1 })
+                                    }
                                 />
-                            ) : null}
-                        </div>
-                    </div>
+                                {onAddProperty ? (
+                                    <ListAddButton
+                                        label="Add property"
+                                        shortcutId="add_property"
+                                        onClick={onAddProperty}
+                                        className="hidden md:inline-flex"
+                                    />
+                                ) : null}
+                            </>
+                        }
+                    />
                 </TooltipProvider>
             </div>
 

@@ -1,4 +1,5 @@
 .page {
+    min-inline-size: 0;
     max-inline-size: 1120px;
     margin-inline: auto;
     padding-block: 4px 0;
@@ -220,25 +221,10 @@
 .header .propertyMeta {
     gap: 8px 16px;
 }
-.headerActions > * {
-    min-block-size: 44px;
-}
-.circleButton {
-    inline-size: 44px;
-    block-size: 44px;
-    min-inline-size: 44px;
-    padding: 0;
-    border-radius: 50%;
-    border: 1px solid var(--color-border-warm);
-    background: var(--color-surface);
-    color: var(--color-ink);
-}
-.circleButton:hover {
-    background: var(--color-surface-muted);
-}
-.circleButton[aria-pressed="true"] {
-    color: var(--color-brand);
-    background: var(--color-brand-soft);
+.iconSkeleton {
+    inline-size: var(--size-control-md);
+    block-size: var(--size-control-md);
+    border-radius: var(--radius-control);
 }
 .locationLine {
     flex-wrap: wrap;
@@ -259,6 +245,12 @@
     gap: 10px;
     color: var(--color-ink);
     font-weight: 500;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
+}
+.location > span:last-child {
+    min-inline-size: 0;
 }
 .locationIcon {
     display: inline-flex;
@@ -360,13 +352,17 @@
     justify-content: space-between;
     gap: 16px;
     justify-self: start;
+    min-inline-size: 0;
+}
+.carouselControls .headerActions {
+    gap: 8px;
 }
 .carouselCounter {
     justify-self: end;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    block-size: 44px;
+    block-size: var(--size-control-md);
     min-inline-size: 64px;
     padding-inline: 16px;
     font-size: 14px;
@@ -503,11 +499,12 @@
 .bodyGrid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 350px;
-    gap: 28px;
+    gap: var(--card-grid-gap);
     align-items: start;
     margin-block-start: 20px;
 }
 .content {
+    container: property-detail-content / inline-size;
     min-inline-size: 0;
     display: flex;
     flex-direction: column;
@@ -521,23 +518,27 @@
     padding-block-end: 0;
 }
 .overview h2 {
+    overflow-wrap: anywhere;
     font-size: 23px;
     font-weight: 600;
     letter-spacing: -0.02em;
     line-height: 1.35;
 }
 .overview > p {
+    overflow-wrap: anywhere;
     margin-block-start: 6px;
     font-size: 14px;
     color: var(--color-ink-muted);
 }
 .highlights {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
     gap: 12px;
     margin-block-start: 20px;
 }
 .highlight {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -604,6 +605,7 @@
     row-gap: 20px;
 }
 .fact {
+    min-inline-size: 0;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -611,6 +613,7 @@
     font-size: 14px;
 }
 .fact dt {
+    overflow-wrap: anywhere;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -629,6 +632,8 @@
     gap: 20px 24px;
 }
 .amenity {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -643,6 +648,8 @@
     stroke-width: 1.75;
 }
 .address {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     display: flex;
     gap: 14px;
     align-items: flex-start;
@@ -650,6 +657,9 @@
 .address > svg {
     flex-shrink: 0;
     color: var(--color-brand);
+}
+.address > div {
+    min-inline-size: 0;
 }
 .address p {
     padding-inline-start: 38px;
@@ -781,10 +791,12 @@
     inset-block-start: 28px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: var(--card-grid-gap);
     min-inline-size: 0;
 }
 .actionCard {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     padding: 24px;
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-md);
@@ -815,6 +827,11 @@
     margin-block-start: 0;
     padding-block-start: 0;
     font-size: 14px;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+.commissionSummary > div {
+    min-inline-size: 0;
 }
 .commissionSummary > svg {
     flex-shrink: 0;
@@ -856,6 +873,9 @@
 .actionButtons > * {
     inline-size: 100%;
     min-block-size: 48px;
+    min-inline-size: 0;
+    block-size: auto;
+    white-space: normal;
 }
 .railNote {
     display: flex;
@@ -947,6 +967,9 @@
 .contactActions > * {
     min-block-size: 44px;
     flex: 1;
+    min-inline-size: 0;
+    block-size: auto;
+    white-space: normal;
 }
 .commission {
     display: flex;
@@ -990,6 +1013,7 @@
 }
 .managementRow {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
@@ -1007,6 +1031,9 @@
 .secondaryActions > * {
     flex: 1;
     min-block-size: 44px;
+    min-inline-size: 0;
+    block-size: auto;
+    white-space: normal;
 }
 .deleteArea {
     margin-block-start: 8px;
@@ -1054,7 +1081,6 @@
 @media (max-width: 1023px) {
     .bodyGrid {
         grid-template-columns: minmax(0, 1fr) 310px;
-        gap: 32px;
     }
     .actionCard {
         padding: 20px;
@@ -1085,7 +1111,7 @@
         gap: 16px;
     }
     .fullWidthGallery {
-        inline-size: calc(100vw - 32px);
+        inline-size: 100%;
         margin-inline-start: 0;
     }
     .carouselSlide {
@@ -1108,7 +1134,7 @@
     }
 
     .page {
-        padding-block: 0 120px;
+        padding-block: 0 calc(136px + env(safe-area-inset-bottom));
     }
     .topline {
         margin-block-end: 10px;
@@ -1120,6 +1146,27 @@
     }
     .headerContent {
         flex-basis: 100%;
+    }
+    .header h1 {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2em;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+    .header h1 > span:first-child {
+        flex-shrink: 1;
+    }
+    .header h1 > span:last-child {
+        flex: none;
+        inline-size: 100%;
+        overflow: visible;
+    }
+    .header h1 > span:last-child span {
+        white-space: normal;
+        text-wrap: pretty;
+        overflow: visible;
+        text-overflow: clip;
     }
     .headingRow {
         flex-direction: column;
@@ -1158,7 +1205,6 @@
     .bodyGrid {
         display: flex;
         flex-direction: column;
-        gap: 16px;
         margin-block-start: 20px;
     }
     .content,
@@ -1213,16 +1259,22 @@
         inset-inline: 0;
         inset-block-end: 0;
         z-index: 40;
-        display: flex;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
+        gap: 12px;
         border-block-start: 1px solid var(--color-border-warm);
         background: var(--color-surface);
         padding: 14px max(16px, calc((100vw - 1120px) / 2)) calc(14px + env(safe-area-inset-bottom));
     }
     .mobileBar > :last-child {
         min-block-size: 48px;
+        min-inline-size: 0;
+        inline-size: 100%;
+        block-size: auto;
+        padding-inline: 12px;
+        white-space: normal;
     }
     .mobilePrice {
         display: flex;
@@ -1231,6 +1283,60 @@
         min-inline-size: 0;
         font-size: 12px;
         color: var(--color-ink-muted);
+        overflow-wrap: anywhere;
+    }
+}
+
+/* Facts follow their own panel width, including narrow tablet columns. */
+@container property-detail-content (max-width: 24rem) {
+    .facts,
+    .amenities,
+    .locationFacts {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .carouselSlide {
+        flex-basis: 100%;
+    }
+    .carouselFooter:not(.compactCarouselFooter) {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px 12px;
+        padding-block-start: 12px;
+    }
+    .carouselFooter:not(.compactCarouselFooter) .carouselControls {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    .carouselFooter:not(.compactCarouselFooter) .carouselCounter {
+        grid-column: 2;
+        grid-row: 1;
+    }
+    .carouselFooter:not(.compactCarouselFooter) > .galleryProgress {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+    .actionCard,
+    .contact,
+    .peopleCard,
+    .management {
+        padding: 16px;
+    }
+}
+
+/* A long rent or "Price on request" must not squeeze the primary action at 320px. */
+@media (max-width: 360px) {
+    .mobileBar {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+    .mobilePrice {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 4px 12px;
     }
 }
 
@@ -1262,16 +1368,6 @@
 .compactCarouselFooter .headerActions {
     gap: 6px;
 }
-.compactCarouselFooter .circleButton {
-    inline-size: 34px;
-    block-size: 34px;
-    min-inline-size: 34px;
-    min-block-size: 34px;
-}
-.compactCarouselFooter .circleButton svg {
-    inline-size: 16px;
-    block-size: 16px;
-}
 .compactCarouselFooter .carouselCounter {
     block-size: 32px;
     min-inline-size: 48px;
@@ -1279,8 +1375,11 @@
     font-size: 12px;
 }
 @media (pointer: coarse) {
-    .compactCarouselFooter .circleButton {
-        min-inline-size: 44px;
-        min-block-size: 44px;
+    .iconSkeleton {
+        min-inline-size: var(--touch-target-min);
+        min-block-size: var(--touch-target-min);
+    }
+    .carouselCounter {
+        min-block-size: var(--touch-target-min);
     }
 }

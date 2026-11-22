@@ -29,8 +29,8 @@ export function PropertyDetailSkeleton({ isPublic = false }: { isPublic?: boolea
                         </div>
                     </div>
                     <div className={styles.headerActions}>
-                        <Skeleton className={styles.circleButton} />
-                        {!isPublic ? <Skeleton className={styles.circleButton} /> : null}
+                        <Skeleton className={styles.iconSkeleton} />
+                        {!isPublic ? <Skeleton className={styles.iconSkeleton} /> : null}
                     </div>
                 </header>
                 <div className={styles.fullWidthGallery}>
@@ -44,12 +44,18 @@ export function PropertyDetailSkeleton({ isPublic = false }: { isPublic?: boolea
                         </div>
                     </div>
                     <div className={styles.carouselFooter}>
-                        <div className={styles.headerActions}>
-                            <Skeleton className={styles.circleButton} />
-                            <Skeleton className={styles.circleButton} />
+                        <div className={styles.carouselControls}>
+                            <div className={styles.headerActions}>
+                                <Skeleton className={styles.iconSkeleton} />
+                                <Skeleton className={styles.iconSkeleton} />
+                            </div>
                         </div>
-                        <Skeleton className="rounded-full block-1.5 inline-full" />
-                        <Skeleton className="justify-self-end rounded-full block-11 inline-16" />
+                        <Skeleton
+                            className={`${styles.galleryProgress} rounded-full block-1.5 inline-full`}
+                        />
+                        <Skeleton
+                            className={`${styles.carouselCounter} rounded-control inline-16`}
+                        />
                     </div>
                 </div>
                 <div className={styles.bodyGrid}>

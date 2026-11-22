@@ -1,6 +1,13 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
+import {
+    type CSSProperties,
+    type ReactNode,
+    type UIEvent,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 
 import SimpleBar from "simplebar-react";
 
@@ -75,6 +82,8 @@ export type AppModalProps = {
     /** Controls --dialog-pad (header/body/footer inset) */
     padding?: "sm" | "md" | "lg" | "xl";
     className?: string;
+    /** Merged onto the popup (e.g. custom width that must beat size tokens). */
+    style?: CSSProperties;
     bodyClassName?: string;
     headerClassName?: string;
     footerClassName?: string;
@@ -101,6 +110,7 @@ export function AppModal({
     size = "md",
     padding = "lg",
     className,
+    style,
     bodyClassName,
     headerClassName,
     footerClassName,
@@ -111,12 +121,28 @@ export function AppModal({
     const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const [hasMoreBelow, setHasMoreBelow] = useState(false);
+    const [scrolledFromTop, setScrolledFromTop] = useState(false);
+
+    function syncScrollEdges(node: HTMLElement) {
+        setScrolledFromTop(node.scrollTop > 2);
+        setHasMoreBelow(node.scrollHeight - node.clientHeight - node.scrollTop > 2);
+    }
+
     useEffect(() => {
-        if (!open || !nativeScroll) return;
+        if (!open) return undefined;
+        // Reset edge flags after open so a prior scroll does not flash a divider.
+        const frame = window.requestAnimationFrame(() => {
+            setScrolledFromTop(false);
+            setHasMoreBelow(false);
+        });
+        return () => window.cancelAnimationFrame(frame);
+    }, [open]);
+
+    useEffect(() => {
+        if (!open || !nativeScroll || !viewport) return undefined;
         const content = contentRef.current;
-        if (!viewport || !content) return;
-        const update = () =>
-            setHasMoreBelow(viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 2);
+        if (!content) return undefined;
+        const update = () => syncScrollEdges(viewport);
         const observer = new ResizeObserver(update);
         observer.observe(viewport);
         observer.observe(content);
@@ -127,15 +153,19 @@ export function AppModal({
             viewport.removeEventListener("scroll", update);
         };
     }, [open, nativeScroll, viewport]);
+
     const pad = PAD_VALUE[padding];
     const showDescription = hasVisibleDescription(description);
     const titleClass = cn("font-display text-lg font-medium text-ink", titleClassName);
+    const showStickyHeader = showDescription || Boolean(header);
+    const headerScrolled = open && scrolledFromTop;
+    const footerHasMore = open && hasMoreBelow;
 
     return (
         <Dialog open={open} modal={modal} onOpenChange={onOpenChange}>
             <DialogPopup
                 showCloseButton={false}
-                style={{ "--dialog-pad": pad } as CSSProperties}
+                style={{ "--dialog-pad": pad, ...style } as CSSProperties}
                 className={cn(
                     `
                       flex flex-col gap-0 overflow-hidden bg-surface p-0
@@ -150,10 +180,17 @@ export function AppModal({
                     showCloseButton={showCloseButton}
                     titleClassName={cn(titleClass, "not-sr-only")}
                 />
-                {showDescription || header ? (
+                {showStickyHeader ? (
                     <div
                         className={cn(
-                            "shrink-0 space-y-3 px-(--dialog-pad) pbs-3",
+                            `
+                              shrink-0 space-y-3 bg-surface px-(--dialog-pad) pbs-3
+                              transition-[border-color] duration-160
+                            `,
+                            // Keep a 1px slot so showing the divider does not jump layout.
+                            headerScrolled
+                                ? "border-be border-(--dialog-divider)"
+                                : "border-be border-transparent",
                             headerClassName,
                         )}
                     >
@@ -182,6 +219,11 @@ export function AppModal({
                             className="app-modal-simplebar block-full"
                             style={{ maxHeight: "100%" }}
                             autoHide
+                            scrollableNodeProps={{
+                                onScroll: (event: UIEvent<HTMLDivElement>) => {
+                                    syncScrollEdges(event.currentTarget);
+                                },
+                            }}
                         >
                             <div className={cn("p-(--dialog-pad)", bodyClassName)}>{children}</div>
                         </SimpleBar>
@@ -192,9 +234,7 @@ export function AppModal({
                     <div
                         className={cn(
                             "shrink-0 px-(--dialog-pad) pbs-3 pbe-(--dialog-pad)",
-                            nativeScroll &&
-                                hasMoreBelow &&
-                                "shadow-[0_-6px_16px_-8px_rgb(0_0_0/0.2)]",
+                            footerHasMore && "shadow-[0_-6px_16px_-8px_rgb(0_0_0/0.2)]",
                             footerClassName,
                         )}
                     >

@@ -1,0 +1,110 @@
+.container {
+    container: list-toolbar / inline-size;
+    min-inline-size: 0;
+}
+.toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+}
+.selection {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-inline-size: 0;
+}
+.search {
+    grid-row: 1;
+    min-inline-size: 0;
+}
+.actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-inline-size: 0;
+}
+/* Keep the approved status selector on desktop as well as smaller screens. */
+.tabs {
+    display: none;
+}
+.select {
+    flex: 1;
+    min-inline-size: 0;
+}
+.trigger {
+    inline-size: 100%;
+    min-inline-size: 0;
+}
+.trigger > span:last-child svg {
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+    stroke-width: 1.75;
+    opacity: 0.6;
+}
+.label {
+    color: var(--color-ink-muted);
+}
+@container list-toolbar (width < 640px) {
+    .inlineMobileActions {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .inlineMobileActions .selection {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+    .inlineMobileActions .search {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    .inlineMobileActions .actions {
+        grid-column: 2;
+        grid-row: 2;
+    }
+}
+@container visits (max-width: 400px) {
+    .label {
+        display: none;
+    }
+}
+@container visits (min-width: 640px) {
+    .trigger {
+        inline-size: auto;
+    }
+}
+@container list-toolbar (max-width: 400px) {
+    .label {
+        display: none;
+    }
+}
+@container list-toolbar (min-width: 640px) {
+    .select {
+        flex: 0 1 auto;
+    }
+    .trigger {
+        inline-size: auto;
+    }
+    .toolbar {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .selection {
+        grid-column: 1 / -1;
+    }
+    .search {
+        grid-column: 1;
+        grid-row: 2;
+        inline-size: min(17.5rem, 100%);
+        margin-inline-start: auto;
+    }
+}
+@container list-toolbar (min-width: 960px) {
+    .toolbar {
+        grid-template-columns: auto minmax(17.5rem, 1fr) auto;
+    }
+    .selection,
+    .search {
+        grid-column: auto;
+        grid-row: auto;
+    }
+}

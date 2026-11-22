@@ -15,12 +15,14 @@ export function AttachedClientsSummary({
     maxAvatars = 2,
     labelClassName,
     className,
+    interactive = true,
 }: {
     clients: AvatarStackPerson[];
     size?: "2xs" | "sm" | "md";
     maxAvatars?: number;
     labelClassName?: string;
     className?: string;
+    interactive?: boolean;
 }) {
     const summary = summarizeAttachedClients(clients, maxAvatars);
     if (!summary.total) return null;
@@ -37,7 +39,11 @@ export function AttachedClientsSummary({
                     className="shrink-0"
                 />
             )}
-            {single ? (
+            {!interactive ? (
+                <span className={cn("truncate font-semibold text-ink", labelClassName)}>
+                    {single ? single.name : summary.label}
+                </span>
+            ) : single ? (
                 <ContactName
                     name={single.name}
                     contactId={single.id}

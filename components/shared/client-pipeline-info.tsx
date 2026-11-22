@@ -21,15 +21,20 @@ function stageChipClass(stage?: string | null) {
 
 export function ClientPipelineInfo({
     clients,
+    className,
 }: {
     clients: Array<{ id: string; name: string; stage?: string | null }>;
+    className?: string;
 }) {
     return (
         <Popover>
             <PopoverTrigger
                 aria-label="View client pipeline stages"
                 onClick={(event) => event.stopPropagation()}
-                className="absolute inset-s-1.5 inset-bs-1/2 z-10 flex -translate-y-1/2 items-center justify-center rounded-control text-brand-text transition-colors duration-160 block-8 inline-8 hover:bg-brand-soft/30 focus-visible:outline-2 focus-visible:outline-ring"
+                className={cn(
+                    "touch-target z-10 flex items-center justify-center rounded-control text-brand-text transition-colors duration-160 hover:bg-brand-soft/30 focus-visible:outline-2 focus-visible:outline-ring",
+                    className,
+                )}
             >
                 <List aria-hidden className="block-4 inline-4" />
             </PopoverTrigger>

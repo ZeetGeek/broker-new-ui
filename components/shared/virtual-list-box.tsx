@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useRef } from "react";
+import { type ReactNode, type UIEventHandler, useRef } from "react";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
 
@@ -15,6 +15,7 @@ export function VirtualListBox<T>({
     virtualizeAfter = 40,
     ariaLabel,
     className = "max-block-[min(60dvh,32rem)]",
+    onScroll,
 }: {
     items: T[];
     getKey: (item: T, index: number) => string;
@@ -24,6 +25,7 @@ export function VirtualListBox<T>({
     virtualizeAfter?: number;
     ariaLabel: string;
     className?: string;
+    onScroll?: UIEventHandler<HTMLDivElement>;
 }) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const shouldVirtualize = items.length > virtualizeAfter;
@@ -43,6 +45,7 @@ export function VirtualListBox<T>({
             <div
                 role="list"
                 aria-label={ariaLabel}
+                onScroll={onScroll}
                 className={`flex flex-col overflow-y-auto overscroll-contain ${className}`}
                 style={{ gap: measuredPxToRem(gap) }}
             >
@@ -60,6 +63,7 @@ export function VirtualListBox<T>({
             ref={scrollRef}
             role="list"
             aria-label={ariaLabel}
+            onScroll={onScroll}
             className={`overflow-y-auto overscroll-contain ${className}`}
         >
             <div

@@ -1,9 +1,11 @@
 "use client";
 
-import { PartyMeetRow } from "@/components/shared/attached-people-row";
+import { ContactName } from "@/components/shared/contact-name";
 import { UserAvatar } from "@/components/shared/user-avatar";
 
 import type { DealAssignedAgent } from "@/features/pipeline/types";
+
+import styles from "./deal-card.module.css";
 
 type Party = {
     id?: string;
@@ -12,8 +14,7 @@ type Party = {
 };
 
 /**
- * Buyer + owner on every pipeline card — one strip so both sides of a deal
- * stay visible without two full-width rows (AGENTS.md core loop).
+ * Full-width owner and client rows keep both names readable in narrow board columns.
  *
  * Stall state stays on the chip row, not here — colour-only markers would
  * duplicate the day-count chip (docs/DESIGN.md §1.4).
@@ -25,6 +26,7 @@ export function DealPartiesPanel({
     currentUserId,
     onOpenBuyer,
     onOpenOwner,
+    textSize = "xs",
 }: {
     buyer: Party;
     owner: Party;
@@ -33,30 +35,29 @@ export function DealPartiesPanel({
     /** Opens deal / buyer context. Matches property-card manage taps. */
     onOpenBuyer?: () => void;
     onOpenOwner?: () => void;
+    textSize?: "xs" | "sm";
 }) {
     const showHandledBy = Boolean(assignedAgent) && assignedAgent?.id !== currentUserId;
+    const textClass = textSize === "sm" ? "body-sm" : "body-xs";
 
     return (
-        <div className="flex flex-col gap-2">
-            <PartyMeetRow
-                highlightOnHover={false}
-                left={{
-                    id: owner.id,
-                    contactType: "owner",
-                    name: owner.name,
-                    avatarUrl: owner.avatarUrl,
-                    role: "Owner",
-                    onOpen: onOpenOwner,
-                }}
-                right={{
-                    id: buyer.id,
-                    contactType: "buyer",
-                    name: buyer.name,
-                    avatarUrl: buyer.avatarUrl,
-                    role: "Client",
-                    onOpen: onOpenBuyer,
-                }}
-            />
+        <div className={styles.people}>
+            {[
+                { person: owner, label: "Owner", type: "owner" as const, onOpen: onOpenOwner },
+                { person: buyer, label: "Client", type: "buyer" as const, onOpen: onOpenBuyer },
+            ].map(({ person, label, type, onOpen }) => (
+                <div key={type} className={styles.personRow}>
+                    <span className={`${textClass} text-ink-muted`}>{label}</span>
+                    <UserAvatar name={person.name} imageUrl={person.avatarUrl} size="2xs" />
+                    <ContactName
+                        name={person.name}
+                        contactId={person.id}
+                        contactType={type}
+                        onOpen={onOpen}
+                        className={`${textClass} font-semibold text-brand-text ${styles.personName}`}
+                    />
+                </div>
+            ))}
 
             {showHandledBy && assignedAgent ? (
                 <div className="flex items-center gap-2 px-1">
@@ -66,7 +67,7 @@ export function DealPartiesPanel({
                         imageUrl={assignedAgent.avatarUrl}
                         size="xxs"
                     />
-                    <span className="body-xs truncate font-semibold text-ink-muted capitalize">
+                    <span className="body-xs font-semibold wrap-anywhere text-ink-muted capitalize min-inline-0">
                         {assignedAgent.name}
                     </span>
                 </div>

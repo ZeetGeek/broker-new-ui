@@ -71,7 +71,7 @@ export function VisitStageBlock({ deal }: { deal: DealItem }) {
                     variant="outline"
                     size="sm"
                     nativeButton={false}
-                    className="shrink-0"
+                    className="shrink-0 text-xs"
                     render={<Link href={href} onClick={(event) => event.stopPropagation()} />}
                 >
                     <CalendarPlus aria-hidden strokeWidth={1.75} />

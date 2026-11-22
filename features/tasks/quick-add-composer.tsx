@@ -12,7 +12,16 @@ import {
     useState,
 } from "react";
 
-import { Check, Hash, Plus, UserRound } from "@/components/shared/icons";
+import { Check, Plus } from "@/components/shared/icons";
+import {
+    mapTaskClientToPicker,
+    mapTaskOwnerToPicker,
+} from "@/components/shared/map-to-people-picker-person";
+import { mapTaskPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
+import type { PeopleInlineScope } from "@/components/shared/people-inline-select";
+import { PeopleOptionRow } from "@/components/shared/people-option-row";
+import { PropertyOptionRow } from "@/components/shared/property-option-row";
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 
 import { type Task, taskDateLabel } from "./model";
 import type { PlannerTaskExtras } from "./planner-model";
@@ -170,20 +179,67 @@ export function QuickAddComposer({
     );
     const [caret, setCaret] = useState(draft.text.length);
     const [active, setActive] = useState(editing);
-    const [optionIndex, setOptionIndex] = useState(0);
+    const [peopleScopeState, setPeopleScopeState] = useState<{
+        mentionStart: number | null;
+        scope: PeopleInlineScope;
+    }>({ mentionStart: null, scope: "all" });
+    const [optionNav, setOptionNav] = useState<{ key: string; index: number }>({
+        key: "",
+        index: 0,
+    });
     const [hint, setHint] = useState("");
+    const optionsListRef = useRef<HTMLDivElement>(null);
 
     const candidate = active
         ? findQuickAddMention(draft.text, caret, draft.entities, draft.closedMention)
         : null;
-    const options = candidate
+    const contactOptions = candidate
         ? candidate.kind === "property"
-            ? quickAddPropertyOptions(catalogs, candidate.query)
+            ? []
             : quickAddContactOptions(catalogs, candidate.query)
         : [];
+    // Scope resets automatically when a new @ mention opens (different start index).
+    const peopleScope =
+        candidate &&
+        candidate.kind !== "property" &&
+        peopleScopeState.mentionStart === candidate.start
+            ? peopleScopeState.scope
+            : "all";
+    const options = !candidate
+        ? []
+        : candidate.kind === "property"
+          ? quickAddPropertyOptions(catalogs, candidate.query)
+          : peopleScope === "all"
+            ? contactOptions
+            : contactOptions.filter((option) => option.kind === peopleScope);
     // A search with spaces and no matches is ordinary words again.
     const mention =
-        candidate && (options.length > 0 || !/\s/.test(candidate.query)) ? candidate : null;
+        candidate &&
+        (contactOptions.length > 0 ||
+            options.length > 0 ||
+            candidate.kind === "property" ||
+            !/\s/.test(candidate.query))
+            ? candidate
+            : null;
+    const optionNavKey = `${mention?.kind ?? ""}:${mention?.start ?? ""}:${peopleScope}:${candidate?.query ?? ""}`;
+    const optionIndex = optionNav.key === optionNavKey ? optionNav.index : 0;
+    const setOptionIndex = (next: number | ((current: number) => number)) => {
+        setOptionNav((current) => {
+            const base = current.key === optionNavKey ? current.index : 0;
+            return {
+                key: optionNavKey,
+                index: typeof next === "function" ? next(base) : next,
+            };
+        });
+    };
+    const setPeopleScope = (scope: PeopleInlineScope) => {
+        if (!candidate || candidate.kind === "property") return;
+        setPeopleScopeState({ mentionStart: candidate.start, scope });
+        setOptionNav({
+            key: `${candidate.kind}:${candidate.start}:${scope}:${candidate.query}`,
+            index: 0,
+        });
+    };
     const activeOption = options.length ? Math.min(optionIndex, options.length - 1) : -1;
     const parse = parseQuickAdd(draft.text, {
         now,
@@ -227,12 +283,21 @@ export function QuickAddComposer({
 
     useEffect(() => () => window.clearTimeout(blurTimerRef.current), []);
 
+    useLayoutEffect(() => {
+        if (activeOption < 0) return;
+        const root = optionsListRef.current;
+        const el = root?.querySelector<HTMLElement>(`[data-option-index="${activeOption}"]`);
+        el?.scrollIntoView({ block: "nearest" });
+    }, [activeOption]);
+
     const resetDraft = () => {
         historyRef.current = { past: [], future: [] };
         setDraft(newQuickAddDraft(date));
         setCaret(0);
         selectionRef.current = { start: 0, end: 0 };
         pendingCaretRef.current = 0;
+        setPeopleScopeState({ mentionStart: null, scope: "all" });
+        setOptionNav({ key: "", index: 0 });
     };
 
     const remember = (snapshot: DraftSnapshot) => {
@@ -245,7 +310,8 @@ export function QuickAddComposer({
     const restore = (snapshot: DraftSnapshot) => {
         setDraft(snapshot.draft);
         setCaret(snapshot.caret);
-        setOptionIndex(0);
+        setOptionNav({ key: "", index: 0 });
+        setPeopleScopeState({ mentionStart: null, scope: "all" });
         setHint("");
         selectionRef.current = { start: snapshot.caret, end: snapshot.caret };
         pendingCaretRef.current = snapshot.caret;
@@ -440,13 +506,19 @@ export function QuickAddComposer({
         if (mention) {
             if ((event.key === "ArrowDown" || event.key === "ArrowUp") && options.length) {
                 event.preventDefault();
+                event.stopPropagation();
                 const step = event.key === "ArrowDown" ? 1 : -1;
-                setOptionIndex((activeOption + step + options.length) % options.length);
+                setOptionIndex(
+                    (current) =>
+                        (Math.min(current, options.length - 1) + step + options.length) %
+                        options.length,
+                );
                 return;
             }
             if ((event.key === "Enter" || event.key === "Tab") && activeOption >= 0) {
                 event.preventDefault();
-                pick(mention, options[activeOption]);
+                event.stopPropagation();
+                pick(mention, options[activeOption]!);
                 return;
             }
             if (event.key === "Escape") {
@@ -556,46 +628,104 @@ export function QuickAddComposer({
                     />
                     {mention && (
                         <div
-                            id={listboxId}
-                            role="listbox"
-                            aria-label={
-                                mention.kind === "property" ? "Properties" : "Clients and owners"
+                            className={
+                                mention.kind === "property" ? styles.options : styles.peopleOptions
                             }
-                            className={styles.options}
                             onPointerDown={(event) => event.preventDefault()}
                         >
-                            {options.length ? (
-                                options.map((option, index) => (
-                                    <button
-                                        key={`${option.kind}-${option.id}`}
-                                        id={`${listboxId}-${index}`}
-                                        type="button"
-                                        role="option"
-                                        tabIndex={-1}
-                                        aria-selected={index === activeOption}
-                                        className={styles.option}
-                                        data-active={index === activeOption || undefined}
-                                        onPointerEnter={() => setOptionIndex(index)}
-                                        onClick={() => pick(mention, option)}
-                                    >
-                                        {option.kind === "property" ? (
-                                            <Hash aria-hidden />
-                                        ) : (
-                                            <UserRound aria-hidden />
-                                        )}
-                                        <span>
-                                            <strong>{option.label}</strong>
-                                            {option.detail && <small>{option.detail}</small>}
-                                        </span>
-                                    </button>
-                                ))
-                            ) : (
-                                <p className={styles.optionsEmpty}>
-                                    {mention.kind === "property"
-                                        ? "No matching properties"
-                                        : "No matching Clients or owners"}
-                                </p>
-                            )}
+                            {mention.kind !== "property" ? (
+                                <div className={styles.peopleTabs}>
+                                    <SlidingTabs
+                                        label="Filter people by role"
+                                        value={peopleScope}
+                                        onValueChange={setPeopleScope}
+                                        className="self-start"
+                                        height={32}
+                                        options={[
+                                            { value: "all", label: "All" },
+                                            { value: "client", label: "Clients" },
+                                            { value: "owner", label: "Owners" },
+                                        ]}
+                                    />
+                                </div>
+                            ) : null}
+                            <div
+                                id={listboxId}
+                                ref={optionsListRef}
+                                role="listbox"
+                                aria-label={
+                                    mention.kind === "property"
+                                        ? "Properties"
+                                        : "Clients and owners"
+                                }
+                                className={
+                                    mention.kind === "property" ? undefined : styles.peopleList
+                                }
+                            >
+                                {options.length ? (
+                                    options.map((option, index) => (
+                                        <button
+                                            key={`${option.kind}-${option.id}`}
+                                            id={`${listboxId}-${index}`}
+                                            type="button"
+                                            role="option"
+                                            tabIndex={-1}
+                                            aria-selected={index === activeOption}
+                                            data-option-index={index}
+                                            className={
+                                                option.kind === "property"
+                                                    ? styles.option
+                                                    : styles.peopleOption
+                                            }
+                                            data-active={index === activeOption || undefined}
+                                            onPointerEnter={() => setOptionIndex(index)}
+                                            onClick={() => pick(mention, option)}
+                                        >
+                                            {option.kind === "property" ? (
+                                                <PropertyOptionRow
+                                                    property={mapTaskPropertyToPicker(
+                                                        catalogs.properties.find(
+                                                            (property) => property.id === option.id,
+                                                        ) ?? {
+                                                            id: option.id,
+                                                            title: option.label,
+                                                        },
+                                                    )}
+                                                />
+                                            ) : (
+                                                <PeopleOptionRow
+                                                    person={
+                                                        option.kind === "owner"
+                                                            ? mapTaskOwnerToPicker({
+                                                                  id: option.id,
+                                                                  name: option.label,
+                                                                  type: option.type,
+                                                                  phoneDigits: option.phoneDigits,
+                                                              })
+                                                            : mapTaskClientToPicker({
+                                                                  id: option.id,
+                                                                  name: option.label,
+                                                                  type: option.type,
+                                                                  phoneDigits: option.phoneDigits,
+                                                              })
+                                                    }
+                                                    showRolePip
+                                                />
+                                            )}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className={styles.optionsEmpty}>
+                                        {mention.kind === "property"
+                                            ? "No matching properties"
+                                            : peopleScope === "client"
+                                              ? "No matching clients"
+                                              : peopleScope === "owner"
+                                                ? "No matching owners"
+                                                : "No matching Clients or owners"}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

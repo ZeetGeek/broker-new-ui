@@ -11,6 +11,10 @@ import { formatVisitDate, formatVisitTime, inputValueInIst } from "@/lib/visits/
 import { CharacterCount } from "@/components/shared/character-count";
 import { DrawerSection, revealDrawerSections } from "@/components/shared/drawer-section";
 import { Bell, Building2, UserRound } from "@/components/shared/icons";
+import { mapFilterPersonToPicker } from "@/components/shared/map-to-people-picker-person";
+import { mapVisitLeadPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
+import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
+import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -27,7 +31,7 @@ import {
 import { TimeChips } from "./time-chips";
 import { useBookableLeads, useFreeTimes, useVisitMutations } from "./use-visits";
 import { VisitOverlay } from "./visit-overlay";
-import { VisitDatePicker, VisitEntityCombobox } from "./visit-pickers";
+import { VisitDatePicker } from "./visit-pickers";
 import { VisitReminderPicker } from "./visit-reminder-picker";
 
 import styles from "./visits.module.css";
@@ -69,18 +73,26 @@ export function ScheduleForm({
     const busy = book.isPending || reschedule.isPending || updateReminders.isPending;
     const leads = useMemo(() => leadsQuery.data ?? [], [leadsQuery.data]);
 
-    const clientOptions = useMemo(
+    const clientPeople = useMemo(
         () =>
             [...new Map(leads.map((lead) => [lead.clientId, lead])).values()]
-                .map((lead) => ({ value: lead.clientId, label: lead.clientName }))
-                .sort((a, b) => a.label.localeCompare(b.label)),
+                .map((lead) =>
+                    mapFilterPersonToPicker({ id: lead.clientId, name: lead.clientName }, "client"),
+                )
+                .sort((a, b) => a.name.localeCompare(b.name)),
         [leads],
     );
     const clientLeads = leads.filter((lead) => lead.clientId === draft.clientId);
-    const propertyOptions = clientLeads.map((lead) => ({
-        value: lead.propertyId,
-        label: lead.propertyTitle,
-    }));
+    const propertyPickerRows = useMemo(
+        () =>
+            clientLeads.map((lead) =>
+                mapVisitLeadPropertyToPicker({
+                    propertyId: lead.propertyId,
+                    propertyTitle: lead.propertyTitle,
+                }),
+            ),
+        [clientLeads],
+    );
 
     const free = useFreeTimes(
         draft.propertyId && draft.leadId && draft.durationMinutes && draft.date
@@ -245,29 +257,36 @@ export function ScheduleForm({
                                         <label htmlFor={`${formId}-client`}>
                                             Client <span className={styles.required}>*</span>
                                         </label>
-                                        <VisitEntityCombobox
+                                        <PeopleInlineSelect
                                             id={`${formId}-client`}
-                                            kind="client"
-                                            options={clientOptions}
-                                            value={draft.clientId}
-                                            onChange={chooseClient}
+                                            lockedScope="client"
+                                            people={clientPeople}
+                                            value={draft.clientId || null}
+                                            onValueChange={(id) => chooseClient(id ?? "")}
                                             disabled={busy || leadsQuery.isPending}
-                                            error={show("clientId")}
+                                            errorText={show("clientId")}
+                                            placeholder="Select a client"
+                                            size="lg"
                                         />
                                     </div>
                                     <div className={styles.field}>
                                         <label htmlFor={`${formId}-property`}>
                                             Property <span className={styles.required}>*</span>
                                         </label>
-                                        <VisitEntityCombobox
+                                        <PropertyInlineSelect
                                             id={`${formId}-property`}
-                                            kind="property"
-                                            options={propertyOptions}
-                                            value={draft.propertyId}
-                                            onChange={chooseProperty}
+                                            properties={propertyPickerRows}
+                                            value={draft.propertyId || null}
+                                            onValueChange={(id) => chooseProperty(id ?? "")}
                                             disabled={busy || !draft.clientId}
-                                            error={show("propertyId")}
-                                            emptyText="Choose a client first."
+                                            errorText={show("propertyId")}
+                                            helperText={
+                                                !draft.clientId
+                                                    ? "Choose a client first."
+                                                    : undefined
+                                            }
+                                            placeholder="Select a property"
+                                            size="lg"
                                         />
                                     </div>
                                 </div>

@@ -16,7 +16,7 @@ export type WorkflowTarget =
       }
     | { kind: "deal"; mode: "detail" | "offer" | "note"; id: string };
 
-/** Only explicit record/action URLs open workflows. Collection navigation stays navigation. */
+/** Explicit record/action URLs open workflows; collections and property details stay full pages. */
 export function workflowTarget(href: string, portal: "broker" | "owner"): WorkflowTarget | null {
     let url: URL;
     try {
@@ -75,10 +75,12 @@ export function workflowTarget(href: string, portal: "broker" | "owner"): Workfl
     let match = pathname.match(/^\/broker\/properties\/(new|[^/]+)(?:\/(edit))?\/?$/);
     if (match) {
         if (match[1] === "new" && !match[2]) return { kind: "property", mode: "create" };
+        // Property cards and titles always navigate to the full listing page.
+        if (!match[2]) return null;
         try {
             return {
                 kind: "property",
-                mode: match[2] ? "edit" : "detail",
+                mode: "edit",
                 id: decodeURIComponent(match[1]),
             };
         } catch {

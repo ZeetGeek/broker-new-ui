@@ -6,7 +6,7 @@ import { addCollection, Icon } from "@iconify/react/offline";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { offersRent, offersSale } from "@/lib/format/listing-availability";
-import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
@@ -27,7 +27,6 @@ import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale
 import {
     Building2,
     Calendar,
-    CallIcon,
     Camera,
     Check,
     CircleCheck,
@@ -56,6 +55,7 @@ import {
     PriceWithCommission,
 } from "@/components/shared/price-with-commission";
 import { PropertyCardMenu } from "@/components/shared/property-card-menu";
+import { PropertyOwnerContactActions } from "@/components/shared/property-owner-contact-actions";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -65,6 +65,8 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
+
+import styles from "./property-card.module.css";
 
 addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 
@@ -961,105 +963,6 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
     };
 }
 
-/** Bottom bar for broker inventory: WhatsApp (outline) + Call (brand). */
-function OwnedContactSplitBar({
-    ownerName,
-    ownerPhoneDigits,
-}: {
-    ownerName: string;
-    ownerPhoneDigits?: string | null;
-}) {
-    const digits = ownerPhoneDigits?.replace(/\D/g, "") ?? "";
-    const canContact = digits.length >= 10;
-    const phoneLabel = canContact ? formatPhoneIn(digits) : null;
-    const tip = phoneLabel ?? "Attach an owner with a phone number first";
-
-    return (
-        <div
-            className="pointer-events-auto flex gap-2 inline-full"
-            onClick={(event) => event.stopPropagation()}
-        >
-            <Tooltip>
-                <TooltipTrigger
-                    render={
-                        canContact ? (
-                            <Button
-                                variant="outline"
-                                size="md"
-                                nativeButton={false}
-                                className="flex-1 min-inline-0"
-                                render={
-                                    <a
-                                        href={formatWhatsAppUrl(digits)}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label={`WhatsApp ${ownerName} at ${phoneLabel}`}
-                                    />
-                                }
-                            />
-                        ) : (
-                            <Button
-                                variant="outline"
-                                size="md"
-                                type="button"
-                                disabled
-                                className="flex-1 min-inline-0"
-                                aria-label="WhatsApp unavailable — attach an owner first"
-                            />
-                        )
-                    }
-                >
-                    <WhatsAppIcon
-                        aria-hidden
-                        strokeWidth={1.75}
-                        className="shrink-0 block-4.5 inline-4.5"
-                    />
-                    WhatsApp
-                </TooltipTrigger>
-                <TooltipContent side="top">{tip}</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-                <TooltipTrigger
-                    render={
-                        canContact ? (
-                            <Button
-                                variant="accent"
-                                size="md"
-                                nativeButton={false}
-                                className="flex-1 min-inline-0"
-                                render={
-                                    <a
-                                        href={formatTelUrl(digits)}
-                                        aria-label={`Call owner ${ownerName} at ${phoneLabel}`}
-                                    />
-                                }
-                            />
-                        ) : (
-                            <Button
-                                variant="accent"
-                                size="md"
-                                type="button"
-                                disabled
-                                className="flex-1 min-inline-0"
-                                aria-label="Call owner unavailable — attach an owner first"
-                            />
-                        )
-                    }
-                >
-                    <CallIcon
-                        aria-hidden
-                        strokeWidth={1.75}
-                        className="shrink-0 block-4.5 inline-4.5"
-                    />
-                    Call Owner
-                </TooltipTrigger>
-                <TooltipContent side="top">{tip}</TooltipContent>
-            </Tooltip>
-        </div>
-    );
-}
-
 /**
  * Broker/owner inventory card — same overlay chrome as Marketplace and My
  * Deals. Empty Owner / Buyers rows use link "Attach owner" / "Attach buyers";
@@ -1145,7 +1048,8 @@ function OwnedOverlayPropertyCard({
                 priority={priority}
                 // A listing nobody can see yet, or one already sold, reads as inactive.
                 muted={isSold || listing.status !== "published"}
-                className={className}
+                className={cn(styles.ownedCard, className)}
+                panelClassName={styles.panel}
                 chips={
                     <>
                         {!isSold && listing.status === "unpublished" ? (
@@ -1229,9 +1133,14 @@ function OwnedOverlayPropertyCard({
 
                     <OverlayCardSummary
                         href={detailsHref}
-                        price={<ListingAskPrices listing={browse} audience={audience} />}
+                        price={
+                            <div className={styles.prices}>
+                                <ListingAskPrices listing={browse} audience={audience} />
+                            </div>
+                        }
                         headline={headline}
                         locationLabel={`${listing.locality}, ${listing.city}`}
+                        wrapText
                     />
 
                     {ownerRowStyle === "linked" ? null : hasOwner ? (
@@ -1262,30 +1171,25 @@ function OwnedOverlayPropertyCard({
                     {ownerRowStyle === "linked" && (hasOwner || (!isSold && onAttachOwner)) ? (
                         <div className="border-bs border-border-warm pbs-3 inline-full">
                             {hasOwner ? (
-                                <div className="body-sm relative flex items-center justify-center gap-2 rounded-control border border-dashed border-brand/40 px-12 py-2 font-semibold text-brand-text min-block-11 min-inline-0">
-                                    <span className="text-ink-muted">Owner</span>
-                                    <UserAvatar name={ownerName} size="2xs" framed={false} />
-                                    <ContactName
-                                        name={ownerName}
-                                        contactId={listing.ownerId}
-                                        contactType={audience === "broker" ? "owner" : undefined}
-                                        className="wrap-anywhere min-inline-0"
-                                    />
-                                    {!isSold && onAttachOwner ? (
-                                        <Button
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            aria-label={`Change owner: ${ownerName}`}
-                                            className="absolute inset-e-1.5 inset-bs-1/2 -translate-y-1/2"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                onAttachOwner();
-                                            }}
-                                        >
-                                            <UserPlus aria-hidden />
-                                        </Button>
-                                    ) : null}
-                                </div>
+                                <button
+                                    type="button"
+                                    disabled={isSold || !onAttachOwner}
+                                    aria-label={`Change owner: ${ownerName}`}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        onAttachOwner?.();
+                                    }}
+                                    className={cn(
+                                        "body-sm rounded-control border border-dashed border-brand/40 font-semibold text-brand-text inline-full focus-visible:outline-2 focus-visible:outline-ring enabled:cursor-pointer enabled:hover:bg-brand-soft/30",
+                                        styles.ownerRow,
+                                    )}
+                                >
+                                    <span className="shrink-0 text-ink-muted">Owner</span>
+                                    <span className={styles.person}>
+                                        <UserAvatar name={ownerName} size="2xs" framed={false} />
+                                        <span className={styles.personName}>{ownerName}</span>
+                                    </span>
+                                </button>
                             ) : (
                                 <Button
                                     variant="outline"
@@ -1303,30 +1207,45 @@ function OwnedOverlayPropertyCard({
                         </div>
                     ) : null}
                     {ownerRowStyle === "linked" && audience === "broker" ? (
-                        <div className="relative inline-full">
+                        <div className="inline-full min-inline-0">
                             {hasBuyers ? (
-                                <div className="body-sm flex flex-wrap items-center justify-center gap-2 rounded-control border border-dashed border-brand/40 px-12 py-2 min-block-11 min-inline-0">
-                                    <ClientPipelineInfo clients={buyers} />
-                                    <span className="font-semibold text-ink-muted">Clients</span>
-                                    <AttachedClientsSummary
+                                <div
+                                    className={cn(
+                                        "rounded-control border border-dashed border-brand/40",
+                                        styles.clientsRow,
+                                    )}
+                                >
+                                    <ClientPipelineInfo
                                         clients={buyers}
-                                        maxAvatars={3}
-                                        labelClassName="text-brand-text"
+                                        className={styles.pipelineButton}
                                     />
-                                    {handleAddBuyer ? (
-                                        <Button
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            aria-label="Attach more clients"
-                                            className="absolute inset-e-1.5 inset-bs-1/2 -translate-y-1/2"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                handleAddBuyer();
-                                            }}
-                                        >
-                                            <UserPlus aria-hidden />
-                                        </Button>
-                                    ) : null}
+                                    <button
+                                        type="button"
+                                        disabled={!handleAddBuyer}
+                                        aria-label="Manage attached clients"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            handleAddBuyer?.();
+                                        }}
+                                        className={cn(
+                                            "body-sm rounded-control focus-visible:outline-2 focus-visible:outline-ring enabled:cursor-pointer enabled:hover:bg-brand-soft/30",
+                                            styles.clientButton,
+                                        )}
+                                    >
+                                        <span className="shrink-0 font-semibold text-ink-muted">
+                                            Clients
+                                        </span>
+                                        <AttachedClientsSummary
+                                            clients={buyers}
+                                            maxAvatars={3}
+                                            className={styles.clientSummary}
+                                            labelClassName={cn(
+                                                "text-brand-text",
+                                                styles.clientName,
+                                            )}
+                                            interactive={false}
+                                        />
+                                    </button>
                                 </div>
                             ) : (
                                 <Button
@@ -1405,7 +1324,7 @@ function OwnedOverlayPropertyCard({
                     ) : null}
 
                     {showContactBar ? (
-                        <OwnedContactSplitBar
+                        <PropertyOwnerContactActions
                             ownerName={ownerName || "Owner"}
                             ownerPhoneDigits={hasOwnerPhone ? ownerPhoneDigits : null}
                         />

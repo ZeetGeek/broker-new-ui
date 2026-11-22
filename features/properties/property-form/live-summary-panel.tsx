@@ -13,7 +13,7 @@ import { derive } from "@/lib/visibility/derive";
 import { FIELD_RULES } from "@/lib/visibility/rules";
 
 import { AppImage } from "@/components/shared/app-image";
-import { AttachedBuyersRow } from "@/components/shared/attached-people-row";
+import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     BadgePercent,
@@ -21,6 +21,7 @@ import {
     CircleHelp,
     Copy,
     ImageIcon,
+    List,
     LockKeyhole,
     MapPin,
     MoreHorizontal,
@@ -28,8 +29,10 @@ import {
     Upload,
     X,
 } from "@/components/shared/icons";
-import { OverlayPersonLine } from "@/components/shared/overlay-card";
-import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { OVERLAY_ICON_BUTTON_COLORS } from "@/components/shared/overlay-card";
+import { ListingAskPrices } from "@/components/shared/price-with-commission";
+import { PropertyOwnerContactActions } from "@/components/shared/property-owner-contact-actions";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +42,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { BEDROOM_OPTIONS } from "@/constants/property";
 import {
@@ -46,6 +50,9 @@ import {
     removeCoverPhoto,
     replaceCoverPhoto,
 } from "@/features/properties/property-form/cover-photo";
+
+import styles from "./live-summary-panel.module.css";
+import cardStyles from "@/components/shared/property-card.module.css";
 
 function resolveDeposit(values: PropertyDraftValues): number {
     const rent = values.rent.monthlyRent ?? 0;
@@ -143,6 +150,17 @@ export function LiveSummaryPanel({
     }, [buyerCharges, deposit, isSale, ownerDeductions, values]);
 
     const hasPrice = Boolean(price && price > 0);
+    const previewPricing = {
+        saleAmountInr: isSale ? values.sale.expectedPrice : null,
+        rentAmountInr: values.basics.listingFor !== "sell" ? values.rent.monthlyRent : null,
+        commissionPercent: "commissionAsPercent" in result ? result.commissionAsPercent : null,
+        commissionAmount: values.commission.rent.value,
+    };
+    const hasPreviewPrice = Boolean(
+        (previewPricing.saleAmountInr ?? 0) > 0 || (previewPricing.rentAmountInr ?? 0) > 0,
+    );
+    const ownerName = values.owner.name.trim();
+    const hasClients = values.attachedBuyers.length > 0;
     const showDealBreakdown = stepIndex >= 2 && hasPrice;
     const coBrokerPercent = values.deal.coBrokerSharePercent ?? 0;
     const coBrokerShare = (result.brokerRealIncome * coBrokerPercent) / 100;
@@ -260,7 +278,13 @@ export function LiveSummaryPanel({
             className="flex flex-col gap-4 min-inline-0"
             aria-label="Property preview and deal summary"
         >
-            <article className="overflow-hidden rounded-card bg-surface shadow-md min-inline-0">
+            <article
+                className={cn(
+                    "overflow-hidden rounded-card bg-surface shadow-md min-inline-0",
+                    cardStyles.ownedCard,
+                    styles.previewCard,
+                )}
+            >
                 <h2 className="sr-only">Listing preview</h2>
                 {photoFilesRef ? (
                     <input
@@ -299,15 +323,16 @@ export function LiveSummaryPanel({
                             </Badge>
                         ) : null}
                     </div>
-                    {cover && photoFilesRef ? (
+                    {cover?.url && photoFilesRef ? (
                         <div className="absolute inset-e-3 inset-bs-3 z-20">
                             <DropdownMenu>
                                 <DropdownMenuTrigger
                                     render={
                                         <IconButton
                                             type="button"
-                                            size="md"
-
+                                            size="sm"
+                                            appearance="inverse"
+                                            style={OVERLAY_ICON_BUTTON_COLORS}
                                             aria-label="Cover photo options"
                                         />
                                     }
@@ -347,7 +372,10 @@ export function LiveSummaryPanel({
                                     />
                                 </span>
                                 <p className="text-sm/5 font-semibold text-ink">
-                                    Your property, at a glance
+                                    Add a cover photo
+                                </p>
+                                <p className="body-xs text-ink-muted">
+                                    Help people recognise your property.
                                 </p>
                             </div>
                             {photoFilesRef || onGoToMedia ? (
@@ -369,25 +397,16 @@ export function LiveSummaryPanel({
                         </div>
                     )}
                 </div>
-                <div className="flex flex-col gap-3.5 p-4">
+                <div className={cn("flex flex-col", cardStyles.panel)}>
                     <div className="flex items-center gap-2">
                         <span className="body-sm text-ink-muted">Status</span>
                         <Badge color="stone">Draft</Badge>
                     </div>
                     <div className="flex flex-col gap-2 min-inline-0">
-                        {hasPrice ? (
-                            <PriceWithCommission
-                                amountInr={price!}
-                                isRent={!isSale}
-                                audience={audience}
-                                commissionPercent={
-                                    isSale && "commissionAsPercent" in result
-                                        ? result.commissionAsPercent
-                                        : undefined
-                                }
-                                commissionAmountInr={result.gross || undefined}
-                                size="lg"
-                            />
+                        {hasPreviewPrice ? (
+                            <div className={cardStyles.prices}>
+                                <ListingAskPrices listing={previewPricing} audience={audience} />
+                            </div>
                         ) : (
                             <p className="h5 font-semibold tracking-wide text-brand">
                                 Price not set
@@ -402,20 +421,80 @@ export function LiveSummaryPanel({
                         </p>
                     </div>
                     {audience === "broker" ? (
-                        <>
-                            {values.owner.name?.trim() ? (
-                                <OverlayPersonLine label="Owner" name={values.owner.name.trim()} />
-                            ) : (
-                                <p className="body-sm flex gap-2 text-ink-muted">
-                                    <span className="shrink-0 inline-14">Owner</span>
-                                    <span>Not attached</span>
-                                </p>
-                            )}
-                            <AttachedBuyersRow
-                                buyers={values.attachedBuyers}
-                                emptyLabel="None attached"
-                            />
-                        </>
+                        <div className="flex flex-col gap-2 border-bs border-border-warm pbs-3 min-inline-0">
+                            <div
+                                className={cn(
+                                    "body-sm rounded-control border border-dashed border-brand/40 font-semibold text-brand-text",
+                                    cardStyles.ownerRow,
+                                    styles.peopleRow,
+                                )}
+                            >
+                                <span className="shrink-0 text-ink-muted">Owner</span>
+                                {ownerName ? (
+                                    <span className={cardStyles.person}>
+                                        <UserAvatar name={ownerName} size="2xs" framed={false} />
+                                        <span className={cn(cardStyles.personName, styles.name)}>
+                                            {ownerName}
+                                        </span>
+                                    </span>
+                                ) : (
+                                    <span className="font-normal text-ink-muted">Not attached</span>
+                                )}
+                            </div>
+                            <div
+                                className={cn(
+                                    "rounded-control border border-dashed border-brand/40",
+                                    cardStyles.clientsRow,
+                                )}
+                            >
+                                {hasClients ? (
+                                    <span
+                                        aria-hidden
+                                        className={cn(
+                                            "flex items-center justify-center text-brand-text",
+                                            cardStyles.pipelineButton,
+                                        )}
+                                    >
+                                        <List className="block-4 inline-4" />
+                                    </span>
+                                ) : null}
+                                <div
+                                    className={cn(
+                                        "body-sm",
+                                        cardStyles.clientButton,
+                                        styles.peopleRow,
+                                        !hasClients && styles.emptyClients,
+                                    )}
+                                >
+                                    <span className="shrink-0 font-semibold text-ink-muted">
+                                        Clients
+                                    </span>
+                                    {hasClients ? (
+                                        <AttachedClientsSummary
+                                            clients={values.attachedBuyers}
+                                            maxAvatars={3}
+                                            className={cn(cardStyles.clientSummary, styles.summary)}
+                                            labelClassName={cn(
+                                                "text-brand-text",
+                                                cardStyles.clientName,
+                                                styles.name,
+                                            )}
+                                            interactive={false}
+                                        />
+                                    ) : (
+                                        <span className="text-ink-muted">None attached</span>
+                                    )}
+                                </div>
+                            </div>
+                            {ownerName ? (
+                                <TooltipProvider>
+                                    <PropertyOwnerContactActions
+                                        ownerName={ownerName}
+                                        ownerPhoneDigits={values.owner.phone}
+                                    />
+                                </TooltipProvider>
+                            ) : null}
+                        </div>
                     ) : null}
                 </div>
             </article>

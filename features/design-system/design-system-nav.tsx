@@ -39,6 +39,8 @@ const THEME_LINKS = [
     { href: "/design-system/components/tooltip", label: "Tooltip" },
     { href: "/design-system/components/tabs", label: "Tabs" },
     { href: "/design-system/components/dialog", label: "Dialog" },
+    { href: "/design-system/components/people-picker", label: "People picker" },
+    { href: "/design-system/components/property-picker", label: "Property picker" },
     { href: "/design-system/components/avatar", label: "Avatar" },
     { href: "/design-system/components/badge", label: "Badges" },
     { href: "/design-system/components/card", label: "Card" },

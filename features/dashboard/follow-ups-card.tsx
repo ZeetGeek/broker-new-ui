@@ -101,7 +101,7 @@ function ChannelAction({ item }: { item: FollowUp }) {
     );
 }
 
-function FollowUpRow({ item }: { item: FollowUp }) {
+export function FollowUpRow({ item }: { item: FollowUp }) {
     return (
         <motion.li
             data-linked-card

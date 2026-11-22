@@ -18,14 +18,9 @@ import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
+import { mapLabeledPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
+import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
 import { Button } from "@/components/ui/button";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 import { brokerDisplayName } from "@/features/owner-brokers/browse-brokers-filters";
@@ -171,32 +166,19 @@ export function InviteBrokerDialog({
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-1.5">
-                        <span className="body-sm font-semibold text-ink">Property</span>
-                        <Select
-                            value={propertyId}
-                            onValueChange={setPropertyId}
-                            disabled={propertiesLoading || submitting || properties.length === 0}
-                        >
-                            <SelectTrigger
-                                loading={propertiesLoading}
-                                errorText={
-                                    formError && !propertyId
-                                        ? "Choose a property to continue"
-                                        : undefined
-                                }
-                            >
-                                <SelectValue placeholder="Select a property" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {properties.map((property) => (
-                                    <SelectItem key={property.id} value={property.id}>
-                                        {property.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <PropertyInlineSelect
+                        label="Property"
+                        properties={properties.map(mapLabeledPropertyToPicker)}
+                        value={propertyId}
+                        onValueChange={setPropertyId}
+                        disabled={propertiesLoading || submitting || properties.length === 0}
+                        loading={propertiesLoading}
+                        placeholder="Select a property"
+                        errorText={
+                            formError && !propertyId ? "Choose a property to continue" : undefined
+                        }
+                        size="lg"
+                    />
                 )}
 
                 <div className="flex flex-col gap-1.5">

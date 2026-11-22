@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useMemo } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -8,7 +8,8 @@ import { myListingsApi } from "@/lib/api/my-listings";
 import { pipelineApi } from "@/lib/api/pipeline";
 import type { PeopleFilters, PeopleFilterScope } from "@/lib/properties/people-filters";
 
-import { OptionCombobox } from "@/components/shared/option-combobox";
+import { mapFilterPersonToPicker } from "@/components/shared/map-to-people-picker-person";
+import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
 import { Button } from "@/components/ui/button";
 
 import { useAppSelector } from "@/store/hooks";
@@ -33,6 +34,17 @@ export function PeopleFilterFields({
                 : pipelineApi.peopleOptions(signal),
         staleTime: 30_000,
     });
+
+    const ownerPeople = useMemo(
+        () => (query.data?.owners ?? []).map((person) => mapFilterPersonToPicker(person, "owner")),
+        [query.data?.owners],
+    );
+    const clientPeople = useMemo(
+        () =>
+            (query.data?.clients ?? []).map((person) => mapFilterPersonToPicker(person, "client")),
+        [query.data?.clients],
+    );
+
     return (
         <section
             aria-labelledby={`${id}-heading`}
@@ -50,37 +62,42 @@ export function PeopleFilterFields({
                 </div>
             ) : null}
             <div className="grid gap-4 sm:grid-cols-2">
-                {(["owner", "client"] as const).map((kind) => {
-                    const key = kind === "owner" ? "ownerId" : "clientId";
-                    const label = kind === "owner" ? "Owner" : "Client";
-                    const options = kind === "owner" ? query.data?.owners : query.data?.clients;
-                    return (
-                        <div key={kind} className="flex flex-col gap-2 min-inline-0">
-                            <label
-                                htmlFor={`${id}-${kind}`}
-                                className="body-sm font-medium text-ink"
-                            >
-                                {label}
-                            </label>
-                            <OptionCombobox
-                                id={`${id}-${kind}`}
-                                value={value[key] ?? ""}
-                                onValueChange={(next) => onChange({ ...value, [key]: next })}
-                                options={[
-                                    { value: "", label: `Any ${kind}` },
-                                    ...(options ?? []).map((person) => ({
-                                        value: person.id,
-                                        label: person.name,
-                                    })),
-                                ]}
-                                placeholder={`Any ${kind}`}
-                                loading={query.isPending}
-                                disabled={query.isError}
-                                emptyText={`No matching ${kind}s`}
-                            />
-                        </div>
-                    );
-                })}
+                <div className="flex flex-col gap-2 min-inline-0">
+                    <label htmlFor={`${id}-owner`} className="body-sm font-medium text-ink">
+                        Owner
+                    </label>
+                    <PeopleInlineSelect
+                        id={`${id}-owner`}
+                        lockedScope="owner"
+                        people={ownerPeople}
+                        value={value.ownerId ?? null}
+                        onValueChange={(next) => onChange({ ...value, ownerId: next ?? undefined })}
+                        placeholder="Any owner"
+                        allowClear
+                        clearLabel="Any owner"
+                        loading={query.isPending}
+                        disabled={query.isError}
+                    />
+                </div>
+                <div className="flex flex-col gap-2 min-inline-0">
+                    <label htmlFor={`${id}-client`} className="body-sm font-medium text-ink">
+                        Client
+                    </label>
+                    <PeopleInlineSelect
+                        id={`${id}-client`}
+                        lockedScope="client"
+                        people={clientPeople}
+                        value={value.clientId ?? null}
+                        onValueChange={(next) =>
+                            onChange({ ...value, clientId: next ?? undefined })
+                        }
+                        placeholder="Any client"
+                        allowClear
+                        clearLabel="Any client"
+                        loading={query.isPending}
+                        disabled={query.isError}
+                    />
+                </div>
             </div>
         </section>
     );

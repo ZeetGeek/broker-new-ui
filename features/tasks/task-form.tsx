@@ -9,25 +9,16 @@ import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { AppTimePicker } from "@/components/shared/app-time-picker";
 import { CharacterCount } from "@/components/shared/character-count";
 import { revealDrawerSections } from "@/components/shared/drawer-section";
-import { Bell, Building2, LockKeyhole, Pencil, UserRound } from "@/components/shared/icons";
+import { Bell, LockKeyhole, Pencil } from "@/components/shared/icons";
 import { ListToolbarSelect } from "@/components/shared/list-toolbar";
-import { PropertyCoverImage } from "@/components/shared/property-cover-image";
-import { UserAvatar } from "@/components/shared/user-avatar";
-import { Button } from "@/components/ui/button";
 import {
-    Combobox,
-    ComboboxChip,
-    ComboboxChips,
-    ComboboxChipsInput,
-    ComboboxContent,
-    ComboboxEmpty,
-    ComboboxInput,
-    ComboboxItem,
-    ComboboxList,
-    ComboboxTrigger,
-    ComboboxValue,
-    useComboboxAnchor,
-} from "@/components/ui/combobox";
+    mapTaskClientToPicker,
+    mapTaskOwnerToPicker,
+} from "@/components/shared/map-to-people-picker-person";
+import { mapTaskPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
+import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
+import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -57,11 +48,9 @@ import {
 } from "./model";
 import { bareTaskDraftTitle } from "./quick-add-draft";
 import { type TaskRepeat, taskRepeatLabel, taskWeekday, WEEKDAYS } from "./recurrence";
-import { type TaskCatalogs, useTaskCatalogs } from "./task-catalogs";
+import { useTaskCatalogs } from "./task-catalogs";
 import { TaskPanel } from "./task-panel";
 import { TaskReminderPicker } from "./task-reminder-picker";
-
-import styles from "./task-form.module.css";
 
 export function TaskSelect({
     label,
@@ -70,7 +59,6 @@ export function TaskSelect({
     onChange,
     disabled = false,
     toolbar = false,
-    entity,
 }: {
     label: string;
     value: string;
@@ -78,10 +66,8 @@ export function TaskSelect({
     onChange: (value: string) => void;
     disabled?: boolean;
     toolbar?: boolean;
-    entity?: "client" | "owner" | "property";
 }) {
     const id = useId();
-    const catalogs = useTaskCatalogs();
     if (toolbar) {
         return (
             <ListToolbarSelect
@@ -92,67 +78,6 @@ export function TaskSelect({
                 active
                 disabled={disabled}
             />
-        );
-    }
-    if (entity) {
-        const labelFor = (item: string) =>
-            options.find((option) => option.value === item)?.label ?? "";
-        return (
-            <FormField label={label} htmlFor={id}>
-                <Combobox
-                    items={options.map((option) => option.value)}
-                    value={value || null}
-                    disabled={disabled}
-                    itemToStringLabel={labelFor}
-                    onValueChange={(next: string | null) => onChange(next ?? "")}
-                >
-                    <ComboboxInput
-                        id={id}
-                        size="lg"
-                        className="font-normal"
-                        startIcon={entity === "property" ? Building2 : UserRound}
-                        placeholder={`Select ${entity === "owner" ? "an" : "a"} ${entity}`}
-                        disabled={disabled}
-                    />
-                    <ComboboxContent
-                        align="center"
-                        className="inline-[min(26rem,calc(100dvw-2rem))]"
-                    >
-                        <ComboboxEmpty>No matching records. Try another search.</ComboboxEmpty>
-                        <ComboboxList className="py-2 max-block-[min(20rem,var(--available-height))]">
-                            {(item: string) => {
-                                const property =
-                                    entity === "property"
-                                        ? catalogs.properties.find((p) => p.id === item)
-                                        : undefined;
-                                return (
-                                    <ComboboxItem key={item || "none"} value={item}>
-                                        <span className={styles.entityOption}>
-                                            {item && entity !== "property" ? (
-                                                <UserAvatar name={labelFor(item)} size="sm" />
-                                            ) : (
-                                                <PropertyCoverImage
-                                                    src={property?.imageUrl}
-                                                    alt=""
-                                                    size={40}
-                                                />
-                                            )}
-                                            <span>
-                                                {labelFor(item)}
-                                                {property && (
-                                                    <small>
-                                                        {property.configLabel} · {property.city}
-                                                    </small>
-                                                )}
-                                            </span>
-                                        </span>
-                                    </ComboboxItem>
-                                );
-                            }}
-                        </ComboboxList>
-                    </ComboboxContent>
-                </Combobox>
-            </FormField>
         );
     }
     return (
@@ -178,31 +103,7 @@ export function TaskSelect({
     );
 }
 
-type ContactOption = {
-    key: string;
-    kind: "client" | "owner";
-    id: string;
-    label: string;
-};
-
-function contactOptions(catalogs: TaskCatalogs): ContactOption[] {
-    return [
-        ...catalogs.clients.map((client) => ({
-            key: `client:${client.id}`,
-            kind: "client" as const,
-            id: client.id,
-            label: client.name,
-        })),
-        ...catalogs.owners.map((owner) => ({
-            key: `owner:${owner.id}`,
-            kind: "owner" as const,
-            id: owner.id,
-            label: owner.name,
-        })),
-    ];
-}
-
-/** One Contacts picker for Client and owner — chips show who is linked. */
+/** Client + owner pickers — at most one of each, same as the old chips field. */
 function TaskContactsField({
     clientId,
     ownerId,
@@ -215,96 +116,38 @@ function TaskContactsField({
     onChange: (next: { clientId: string; ownerId: string }) => void;
 }) {
     const id = useId();
-    const anchor = useComboboxAnchor();
-    const options = contactOptions(useTaskCatalogs());
-    const [search, setSearch] = useState("");
-    const selected = [
-        clientId ? `client:${clientId}` : null,
-        ownerId ? `owner:${ownerId}` : null,
-    ].filter((value): value is string => !!value);
-    const labelFor = (key: string) => options.find((option) => option.key === key)?.label ?? key;
-    const detailFor = (key: string) =>
-        options.find((option) => option.key === key)?.kind === "owner" ? "Owner" : "Client";
-    const update = (values: string[]) => {
-        if (disabled) return;
-        let nextClient = "";
-        let nextOwner = "";
-        for (const key of values) {
-            const option = options.find((item) => item.key === key);
-            if (!option) continue;
-            if (option.kind === "client") nextClient = option.id;
-            else nextOwner = option.id;
-        }
-        onChange({ clientId: nextClient, ownerId: nextOwner });
-        setSearch("");
-    };
+    const catalogs = useTaskCatalogs();
+    const clients = catalogs.clients.map(mapTaskClientToPicker);
+    const owners = catalogs.owners.map(mapTaskOwnerToPicker);
+
     return (
         <FormField label="Contacts" htmlFor={id} hint="Link a Client, an owner, or both.">
-            <Combobox
-                multiple
-                items={options.map((option) => option.key)}
-                value={selected}
-                disabled={disabled}
-                inputValue={search}
-                onInputValueChange={setSearch}
-                itemToStringLabel={labelFor}
-                onValueChange={(values) => update(values ?? [])}
-            >
-                <ComboboxChips ref={anchor} className={styles.contactChips}>
-                    <ComboboxValue>
-                        {(values: string[]) => (
-                            <>
-                                {values.map((key) => (
-                                    <ComboboxChip key={key} className={styles.contactChip}>
-                                        <UserAvatar
-                                            name={labelFor(key)}
-                                            size="2xs"
-                                            framed={false}
-                                        />
-                                        <span>{labelFor(key)}</span>
-                                        <small>{detailFor(key)}</small>
-                                    </ComboboxChip>
-                                ))}
-                                <ComboboxChipsInput
-                                    id={id}
-                                    disabled={disabled}
-                                    placeholder={
-                                        values.length
-                                            ? "Add another contact…"
-                                            : "Select a Client or owner"
-                                    }
-                                    className={styles.contactInput}
-                                />
-                            </>
-                        )}
-                    </ComboboxValue>
-                    <ComboboxTrigger
-                        aria-label="Choose contacts"
-                        disabled={disabled}
-                        className="ms-auto"
-                    />
-                </ComboboxChips>
-                <ComboboxContent
-                    anchor={anchor}
-                    align="center"
-                    className="inline-[min(26rem,calc(100dvw-2rem))]"
-                >
-                    <ComboboxEmpty>No matching contacts. Try another search.</ComboboxEmpty>
-                    <ComboboxList className="py-2 max-block-[min(20rem,var(--available-height))]">
-                        {(key: string) => (
-                            <ComboboxItem key={key} value={key}>
-                                <span className={styles.entityOption}>
-                                    <UserAvatar name={labelFor(key)} size="sm" />
-                                    <span>
-                                        {labelFor(key)}
-                                        <small>{detailFor(key)}</small>
-                                    </span>
-                                </span>
-                            </ComboboxItem>
-                        )}
-                    </ComboboxList>
-                </ComboboxContent>
-            </Combobox>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <PeopleInlineSelect
+                    id={`${id}-client`}
+                    lockedScope="client"
+                    people={clients}
+                    value={clientId || null}
+                    onValueChange={(next) => onChange({ clientId: next ?? "", ownerId })}
+                    placeholder="Any client"
+                    allowClear
+                    clearLabel="No client"
+                    disabled={disabled}
+                    size="lg"
+                />
+                <PeopleInlineSelect
+                    id={`${id}-owner`}
+                    lockedScope="owner"
+                    people={owners}
+                    value={ownerId || null}
+                    onValueChange={(next) => onChange({ clientId, ownerId: next ?? "" })}
+                    placeholder="Any owner"
+                    allowClear
+                    clearLabel="No owner"
+                    disabled={disabled}
+                    size="lg"
+                />
+            </div>
         </FormField>
     );
 }
@@ -739,19 +582,20 @@ export function TaskForm({
                                         disabled={busy}
                                         onChange={(next) => patch(next)}
                                     />
-                                    <TaskSelect
+                                    <PropertyInlineSelect
                                         label="Property"
-                                        entity="property"
-                                        value={draft.propertyId}
+                                        properties={catalogs.properties.map(
+                                            mapTaskPropertyToPicker,
+                                        )}
+                                        value={draft.propertyId || null}
+                                        onValueChange={(propertyId) =>
+                                            patch({ propertyId: propertyId ?? "" })
+                                        }
                                         disabled={busy}
-                                        onChange={(propertyId) => patch({ propertyId })}
-                                        options={[
-                                            { value: "", label: "No linked property" },
-                                            ...catalogs.properties.map((property) => ({
-                                                value: property.id,
-                                                label: `${property.title} · ${property.locality}`,
-                                            })),
-                                        ]}
+                                        placeholder="No linked property"
+                                        allowClear
+                                        clearLabel="No linked property"
+                                        size="lg"
                                     />
                                 </div>
                             </WizardSection>

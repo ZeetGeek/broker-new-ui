@@ -59,10 +59,10 @@ export function OwnerCard({
                 : "Property owner";
 
     return (
-        <div className="@container/contact-card inline-full min-inline-0">
+        <div className="@container/contact-card flex flex-1 flex-col inline-full min-inline-0">
             <article
                 data-linked-card
-                className="contact-card flex cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-3 shadow-md transition-[box-shadow,border-color] duration-160 min-inline-0 hover:shadow-lg @[17rem]/contact-card:p-4 @[22rem]/contact-card:p-5"
+                className="contact-card flex flex-1 cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-3 shadow-md transition-[box-shadow,border-color] duration-160 min-inline-0 hover:shadow-lg @[17rem]/contact-card:p-4 @[22rem]/contact-card:p-5"
             >
                 <CardLink
                     href={`/broker/contacts?tab=owners&contact=${encodeURIComponent(owner.id)}`}

@@ -1,0 +1,21 @@
+.withHelp [data-slot="input"] {
+    padding-inline-end: 4.5rem;
+}
+.withHelp :global(.t-clear-btn) {
+    margin-inline-end: 2rem;
+}
+.helpButton {
+    position: absolute;
+    inset-inline-end: 0.125rem;
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+}
+@media (pointer: coarse) {
+    .withHelp [data-slot="input"] {
+        padding-inline-end: 5.75rem;
+    }
+    .withHelp :global(.t-clear-btn) {
+        margin-inline-end: 2.75rem;
+    }
+}

@@ -85,3 +85,25 @@ test("an incumbent local panel also takes precedence over shared person panels",
     );
     assert.deepEqual(actions, ["prevent"]);
 });
+
+test("property card and title links navigate without opening workflow or person panels", () => {
+    for (const portal of ["broker", "owner"] as const) {
+        for (const href of [
+            "/broker/properties/property-1",
+            "/broker/properties/property-1?from=my-listings#photos",
+            "/broker/owner-listings/property-1",
+            "/owner/properties/property-1",
+            "/property/property-1",
+        ]) {
+            let prevented = false;
+            navigateWorkflow(
+                { preventDefault: () => (prevented = true) },
+                undefined,
+                (destination) => Boolean(workflowTarget(destination, portal)),
+                href,
+                (destination) => Boolean(personDetailsTarget(destination, "Property", portal)),
+            );
+            assert.equal(prevented, false, `${portal}: ${href}`);
+        }
+    }
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import { ResponsiveListStatus } from "@/components/shared/responsive-list-toolbar";
 import { StatusTabs } from "@/components/shared/status-tabs";
 
 import type { DealsView } from "@/features/pipeline/types";
@@ -32,21 +33,35 @@ export function PipelineOutcomeTabs({
     counts,
     view,
     isLoading = false,
+    onChange,
 }: {
     counts: Record<DealsView, number | null>;
     view: DealsView;
     isLoading?: boolean;
+    onChange: (value: string) => void;
 }) {
     return (
-        <StatusTabs
-            label="Pipeline views"
+        <ResponsiveListStatus
+            label="Status"
             value={view}
+            onChange={onChange}
             isLoading={isLoading}
-            tabs={PIPELINE_TABS.map((tab) => ({
+            options={PIPELINE_TABS.map((tab) => ({
                 ...tab,
                 value: tab.view,
                 count: counts[tab.view],
             }))}
-        />
+        >
+            <StatusTabs
+                label="Pipeline views"
+                value={view}
+                isLoading={isLoading}
+                tabs={PIPELINE_TABS.map((tab) => ({
+                    ...tab,
+                    value: tab.view,
+                    count: counts[tab.view],
+                }))}
+            />
+        </ResponsiveListStatus>
     );
 }

@@ -269,11 +269,6 @@ export function PropertyActionRail({
                     />
                 </section>
             ) : null}
-            {!isOwner ? (
-                <Button variant="outline" render={<Link href="/broker/pipeline" />}>
-                    Manage clients in Pipeline
-                </Button>
-            ) : null}
             <section className={styles.management} aria-label="Listing management">
                 <div className={styles.managementRow}>
                     <span>Added</span>

@@ -21,6 +21,7 @@ import {
     ListToolbarSelect,
 } from "@/components/shared/list-toolbar";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
+import { ListStatusSelect } from "@/components/shared/responsive-list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { StatusTabs } from "@/components/shared/status-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -220,7 +221,7 @@ export function VisitList({
             </PortalSectionNav>
             {!firstRun && (
                 <div className={styles.listToolbar}>
-                    <div className="flex flex-wrap items-center gap-3 max-inline-full min-inline-0">
+                    <div className={styles.toolbarFilters}>
                         <FilterChip
                             label="Filters"
                             icon={SlidersHorizontal}
@@ -230,6 +231,8 @@ export function VisitList({
                             onClick={onFilters}
                             onClear={onClear}
                         />
+                    </div>
+                    <div className={styles.statusTabs}>
                         <StatusTabs
                             label="Visit status"
                             value={tab}
@@ -240,38 +243,61 @@ export function VisitList({
                             }))}
                         />
                     </div>
-                    <div className={styles.searchRow}>
-                        <label className={styles.searchField}>
-                            <span className="sr-only">Search visits</span>
-                            <ListSearchField
-                                placeholder="Search client, phone or property"
-                                aria-label="Search visits"
-                                value={search}
-                                onChange={onSearch}
-                                debounceMs={0}
-                                fullWidth
-                            />
-                        </label>
-                        <ListToolbarSelect
-                            active
-                            label="Visit dates"
-                            value={range}
-                            options={DATE_RANGES}
-                            onChange={onRange}
+                    <div className={styles.statusSelect}>
+                        <ListStatusSelect
+                            label="Status"
+                            value={tab}
+                            options={VISIT_TABS.map((t) => ({
+                                ...t,
+                                count: counts[t.value],
+                                dotClassName: VISIT_STATUS_COLORS[t.value].dotClassName,
+                            }))}
+                            onChange={(value) => {
+                                const selected = VISIT_TABS.find((t) => t.value === value);
+                                if (selected) onTab(selected.value);
+                            }}
                         />
-                        <ListToolbarSelect
-                            label="Sort visits"
-                            value={sort}
-                            options={SORT_OPTIONS}
-                            onChange={onSort}
-                        />
-                        <ListAddButton label="Schedule visit" onClick={onSchedule} />
-                        {filtered && (
-                            <Button variant="ghost" size="sm" onClick={onClear}>
-                                Clear filters
-                            </Button>
-                        )}
                     </div>
+                    <div className={styles.toolbarSearch}>
+                        <ListSearchField
+                            searchHelp="Search visits by client name, phone number or property."
+                            aria-label="Search visits"
+                            value={search}
+                            onChange={onSearch}
+                            debounceMs={0}
+                            fullWidth
+                        />
+                    </div>
+                    <ListToolbarSelect
+                        active
+                        className={styles.toolbarDates}
+                        label="Visit dates"
+                        value={range}
+                        options={DATE_RANGES}
+                        onChange={onRange}
+                    />
+                    <ListToolbarSelect
+                        className={styles.toolbarSort}
+                        label="Sort visits"
+                        value={sort}
+                        options={SORT_OPTIONS}
+                        onChange={onSort}
+                    />
+                    <ListAddButton
+                        label="Schedule visit"
+                        onClick={onSchedule}
+                        className={styles.toolbarSchedule}
+                    />
+                    {filtered && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className={styles.toolbarClear}
+                            onClick={onClear}
+                        >
+                            Clear filters
+                        </Button>
+                    )}
                 </div>
             )}
             <TabsContent value={tab} aria-label={LIST_COPY[tab]}>

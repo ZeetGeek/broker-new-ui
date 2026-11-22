@@ -127,19 +127,40 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const urlStage = pipelineStageFromQuery(searchParams.get("stage"));
+    const activeOverview = searchParams.get("view") === "active";
     const [prefs, setPrefs] = usePersistedJson<PipelinePrefs>(
         PREF_KEYS.broker.pipeline.prefs,
         DEFAULT_PIPELINE_PREFS,
         { isValid: isPipelinePrefs },
     );
     const filters = useMemo(
-        () => (urlStage ? { ...prefs.filters, stage: urlStage } : prefs.filters),
-        [prefs.filters, urlStage],
+        () =>
+            activeOverview
+                ? DEFAULT_PIPELINE_PREFS.filters
+                : urlStage
+                  ? { ...prefs.filters, stage: urlStage }
+                  : prefs.filters,
+        [prefs.filters, urlStage, activeOverview],
     );
     // "done" is the old combined Finished tab, still in some saved prefs.
-    const view: DealsView = urlStage || (prefs.view as string) === "done" ? "board" : prefs.view;
+    const view: DealsView =
+        activeOverview || urlStage || (prefs.view as string) === "done" ? "board" : prefs.view;
     const mobileStage = urlStage ?? prefs.mobileStage;
     const { pinnedDealIds } = prefs;
+    useEffect(() => {
+        if (!activeOverview) return;
+        const timer = window.setTimeout(() => {
+            setPrefs((previous) => ({
+                ...previous,
+                filters: { ...DEFAULT_PIPELINE_PREFS.filters },
+                view: "board",
+            }));
+            const query = new URLSearchParams(searchParams.toString());
+            query.delete("view");
+            router.replace(`${pathname}${query.size ? `?${query}` : ""}`, { scroll: false });
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, [activeOverview, setPrefs, searchParams, router, pathname]);
     const [stageLimits, setStageLimits] = useState<Record<DealStage, number>>({
         new: PIPELINE_BATCH_SIZE,
         contacted: PIPELINE_BATCH_SIZE,
@@ -747,25 +768,23 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         );
     }
 
+    const selectView = (value: string) => {
+        if (value !== "board" && value !== "sold" && value !== "lost") return;
+        const active = value !== "board";
+        if (active && searchParams.has("stage")) {
+            const query = new URLSearchParams(searchParams.toString());
+            query.delete("stage");
+            router.replace(`${pathname}${query.size ? `?${query}` : ""}`);
+        }
+        setPrefs((prev) => ({
+            ...prev,
+            view: value,
+            filters: active ? { ...prev.filters, stage: "" } : prev.filters,
+        }));
+    };
+
     return (
-        <Tabs
-            value={view}
-            className="gap-5"
-            onValueChange={(value) => {
-                if (value !== "board" && value !== "sold" && value !== "lost") return;
-                const active = value !== "board";
-                if (active && searchParams.has("stage")) {
-                    const query = new URLSearchParams(searchParams.toString());
-                    query.delete("stage");
-                    router.replace(`${pathname}${query.size ? `?${query}` : ""}`);
-                }
-                setPrefs((prev) => ({
-                    ...prev,
-                    view: value,
-                    filters: active ? { ...prev.filters, stage: "" } : prev.filters,
-                }));
-            }}
-        >
+        <Tabs value={view} className="gap-5" onValueChange={selectView}>
             {isFirstLoad && isFetching ? (
                 <PipelineHeaderSkeleton />
             ) : (
@@ -793,8 +812,9 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         filters={filters}
                         onPatch={handlePatch}
                         leading={
-                            <div className="max-inline-full min-inline-0">
+                            <>
                                 <PipelineOutcomeTabs
+                                    onChange={selectView}
                                     view={view}
                                     isLoading={isFirstLoad && isFetching}
                                     counts={{
@@ -803,7 +823,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                         lost: summary?.lostCount ?? null,
                                     }}
                                 />
-                            </div>
+                            </>
                         }
                     />
                 </>

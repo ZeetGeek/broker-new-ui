@@ -11,6 +11,7 @@ import {
 import { FilterChip } from "@/components/shared/filter-chip";
 import { SlidersHorizontal } from "@/components/shared/icons";
 import { ListSearchField, ListToolbarSelect } from "@/components/shared/list-toolbar";
+import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
 
 import type { DealsFilters, DealSort } from "@/features/pipeline/types";
 import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
@@ -57,35 +58,43 @@ export function PipelineToolbar({
 
     return (
         <>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <FilterChip
-                    label="Filters"
-                    icon={SlidersHorizontal}
-                    count={filterCount}
-                    isActive={filterCount > 0}
-                    clearable={filterCount > 0}
-                    onClick={() => setSheetOpen(true)}
-                    onClear={() =>
-                        onPatch({
-                            propertyFilters: { ...EMPTY_PROPERTY_CRITERIA },
-                            dealType: "",
-                            locality: "",
-                            ownerName: "",
-                            ownerId: "",
-                            clientId: "",
-                        })
-                    }
-                    description="Location, budget and property filters"
-                />
-                {leading}
-                <div className="ms-auto flex items-center gap-2">
+            <ResponsiveListToolbar
+                selection={
+                    <>
+                        <FilterChip
+                            label="Filters"
+                            icon={SlidersHorizontal}
+                            count={filterCount}
+                            isActive={filterCount > 0}
+                            clearable={filterCount > 0}
+                            onClick={() => setSheetOpen(true)}
+                            onClear={() =>
+                                onPatch({
+                                    propertyFilters: { ...EMPTY_PROPERTY_CRITERIA },
+                                    dealType: "",
+                                    locality: "",
+                                    ownerName: "",
+                                    ownerId: "",
+                                    clientId: "",
+                                })
+                            }
+                            description="Location, budget and property filters"
+                        />
+
+                        {leading}
+                    </>
+                }
+                search={
                     <ListSearchField
-                        placeholder="Search client, owner or area"
+                        fullWidth
+                        searchHelp="Search deals by client name, owner name or area."
                         aria-label="Search your deals"
                         debounceMs={0}
                         value={filters.q}
                         onChange={(q) => onPatch({ q })}
                     />
+                }
+                actions={
                     <ListToolbarSelect
                         label="Sort deals"
                         value={filters.sort}
@@ -95,8 +104,8 @@ export function PipelineToolbar({
                         tooltip="Change the order of the cards."
                         onChange={(sort) => onPatch({ sort })}
                     />
-                </div>
-            </div>
+                }
+            />
             <OwnerListingsFilterSheet
                 open={sheetOpen}
                 onOpenChange={setSheetOpen}

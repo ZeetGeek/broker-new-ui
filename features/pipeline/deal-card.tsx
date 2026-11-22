@@ -12,7 +12,6 @@ import { IconButton } from "@/components/shared/icon-button";
 import {
     CallIcon,
     CircleCheck,
-    GripVertical,
     LostIcon,
     MapPin,
     Pin,
@@ -24,6 +23,7 @@ import { OverlayCardActions } from "@/components/shared/overlay-card";
 import { Price } from "@/components/shared/price";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +50,8 @@ import {
     type DealStatus,
     isLiveStage,
 } from "@/features/pipeline/types";
+
+import styles from "./deal-card.module.css";
 
 export type DealCardHandlers = {
     onView: (dealId: string) => void;
@@ -114,69 +116,18 @@ const DEAL_MENU_ITEM_CLASS = `
 const DEAL_MENU_ICON_CLASS = "menu-stroke-icon shrink-0 text-ink! block-4.5! inline-4.5!";
 const DEAL_MENU_SEPARATOR_CLASS = "my-1";
 
-/** Single cover thumb — leads the card row so the eye hits photo, then price. */
-function DealCoverImage({ property, muted = false }: { property: DealProperty; muted?: boolean }) {
+/** Small square property thumbnail keeps the pipeline card compact. */
+function DealCoverImage({ property }: { property: DealProperty }) {
     const src = property.imageSrc || property.imageSrcs?.[0] || null;
-    const extraCount =
-        property.photoCount != null && property.photoCount > 1 ? property.photoCount - 1 : 0;
 
     return (
         <PropertyCoverImage
             src={src}
             alt={property.title}
             size={80}
-            imageClassName={muted ? "grayscale-60" : undefined}
-        >
-            {extraCount > 0 ? (
-                <span
-                    className="
-                      body-xs absolute inset-e-1 inset-be-1 rounded-full bg-ink/65 px-1.5 py-0.5
-                      font-semibold text-surface tabular-nums
-                    "
-                >
-                    +{extraCount}
-                </span>
-            ) : null}
-        </PropertyCoverImage>
-    );
-}
-
-/**
- * The grip that starts a drag. Only this starts one — the card face stays a
- * link to the deal, and call / WhatsApp keep working.
- *
- * `touch-none` is required: without it the browser claims the gesture for
- * scrolling and the drag never begins on a phone.
- */
-function DragHandle({
-    ref,
-    label,
-    ...props
-}: {
-    ref?: (element: HTMLElement | null) => void;
-    label: string;
-} & Record<string, unknown>) {
-    return (
-        <Tooltip>
-            <TooltipTrigger
-                render={
-                    <button
-                        ref={ref}
-                        type="button"
-                        aria-label={label}
-                        onClick={stopCard}
-                        className={cn(
-                            CHROME_ICON_BUTTON_CLASS,
-                            "cursor-grab touch-none active:cursor-grabbing",
-                        )}
-                        {...props}
-                    />
-                }
-            >
-                <GripVertical aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Drag to move</TooltipContent>
-        </Tooltip>
+            className={styles.photo}
+            draggable={false}
+        />
     );
 }
 
@@ -369,7 +320,7 @@ function StageMiddle({ deal, onMakeOffer }: { deal: DealItem; onMakeOffer?: () =
 /**
  * Board deal card — same photo → price → people → CTA rhythm as owned
  * property cards (`OverlayCard`), so Pipeline and My Listings feel like
- * one product. Field actions are labeled Call / WhatsApp; overflow + drag
+ * one product. Field actions are labeled Call / WhatsApp; pin and overflow
  * sit on the photo like the property-card menu.
  */
 export function DealCard({
@@ -378,18 +329,12 @@ export function DealCard({
     isBusy = false,
     isDragging = false,
     isPinned = false,
-    dragHandleRef,
-    dragHandleProps,
 }: {
     deal: DealItem;
     handlers: DealCardHandlers;
     isBusy?: boolean;
     isDragging?: boolean;
     isPinned?: boolean;
-    /** dnd-kit's activator ref. Marks the handle as what starts a drag. */
-    dragHandleRef?: (element: HTMLElement | null) => void;
-    /** Listeners + a11y attributes for the handle. Absent on a static card. */
-    dragHandleProps?: Record<string, unknown>;
 }) {
     const live = isLiveStage(deal.status);
     const resolved = deal.resolvedAt ? new Date(deal.resolvedAt) : null;
@@ -428,6 +373,7 @@ export function DealCard({
                   transition-[box-shadow,border-color] duration-160 inline-full
                   hover:shadow-lg
                 `,
+                styles.card,
                 "border-border-warm",
                 isBusy && "pointer-events-none opacity-60",
                 isDragging && "cursor-grabbing opacity-40",
@@ -442,13 +388,12 @@ export function DealCard({
                 />
             ) : null}
             <div
-                className="
-                  pointer-events-none relative z-10 flex flex-1 flex-col gap-2.5 p-4 text-ink
-                  [&_a]:pointer-events-auto
-                  [&_button]:pointer-events-auto
-                "
+                className={cn(
+                    "pointer-events-none relative z-10 flex flex-1 flex-col gap-3 text-ink [&_a]:pointer-events-auto [&_button]:pointer-events-auto",
+                    styles.panel,
+                )}
             >
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5 min-inline-0">
                         <Badge color={deal.property.isRent ? "orange" : "emerald"}>
                             {deal.property.isRent ? "For rent" : "For sale"}
@@ -509,51 +454,51 @@ export function DealCard({
                             isBusy={isBusy}
                             onMenuAction={guardMenuAction}
                         />
-                        {dragHandleProps ? (
-                            <DragHandle
-                                ref={dragHandleRef}
-                                label={`Reorder or move ${deal.buyer.name} on ${deal.property.title}`}
-                                {...dragHandleProps}
-                            />
-                        ) : null}
                     </div>
                 </div>
-
-                <div className="flex items-center gap-3 min-inline-0">
+                <div className={styles.summary}>
                     <DealCoverImage property={deal.property} />
-
-                    <div className="flex flex-1 flex-col gap-1 min-inline-0">
+                    <div className="flex flex-col gap-2 min-inline-0">
                         <PriceWithCommission
                             amountInr={deal.property.amountInr}
                             isRent={deal.property.isRent}
                             commissionPercent={deal.property.commissionPercent}
                             commissionAmountInr={deal.property.commissionAmountInr}
                             audience="broker"
-                            size="lg"
+                            size="md"
                             showEmptyTip
                         />
-                        <h3
-                            data-card-title
-                            className={cn(
-                                "body font-semibold tracking-wide text-ink capitalize underline-offset-4 group-hover/marquee:underline",
-                                "truncate",
-                            )}
-                        >
-                            {headline || deal.property.title}
+                        <h3 className="body-sm font-semibold wrap-anywhere whitespace-normal text-ink capitalize">
+                            <Link
+                                data-card-title
+                                href={`/broker/pipeline/${encodeURIComponent(deal.id)}`}
+                                prefetch={false}
+                                draggable={false}
+                                className={styles.titleLink}
+                                onClick={stopCard}
+                                onNavigate={(event) => {
+                                    event.preventDefault();
+                                    openCard();
+                                }}
+                            >
+                                {headline || deal.property.title}
+                            </Link>
                         </h3>
                         {locationLabel ? (
                             <p
                                 className="
-                              body-sm flex items-center gap-1.5 tracking-wide text-ink-muted
+                              body-xs flex items-start gap-1.5 tracking-wide text-ink-muted
                               min-inline-0
                             "
                             >
                                 <MapPin
                                     aria-hidden
-                                    className="shrink-0 block-3.5 inline-3.5"
+                                    className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
                                     strokeWidth={1.75}
                                 />
-                                <span className="truncate capitalize">{locationLabel}</span>
+                                <span className="wrap-anywhere capitalize min-inline-0">
+                                    {locationLabel}
+                                </span>
                             </p>
                         ) : null}
                     </div>
@@ -571,67 +516,68 @@ export function DealCard({
                 {!live ? (
                     <div
                         className={cn(
-                            "flex items-center gap-2.5 rounded-inner border px-3 py-1 min-block-10",
+                            styles.outcome,
+                            "rounded-inner border",
                             deal.status === "closed"
                                 ? "border-stage-4-soft/70 bg-stage-4-soft/15 text-brand-text"
                                 : "border-danger/20 bg-danger-soft/40 text-danger",
                         )}
                     >
-                        {deal.status === "closed" ? (
-                            <CircleCheck
-                                aria-hidden
-                                className="shrink-0 block-4.5 inline-4.5"
-                                strokeWidth={1.75}
-                            />
-                        ) : (
-                            <LostIcon
-                                aria-hidden
-                                className="shrink-0 block-4.5 inline-4.5"
-                                strokeWidth={1.75}
-                            />
-                        )}
-                        <div className="flex flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1 py-1 min-inline-0">
-                            <p
-                                className={cn(
-                                    "body-xs leading-snug whitespace-nowrap",
-                                    deal.status === "closed"
-                                        ? "font-semibold text-brand-text"
-                                        : "font-medium text-ink",
+                        <div className={styles.outcomeHeader}>
+                            <p className="body-xs flex items-center gap-1.5 font-semibold min-inline-0">
+                                {deal.status === "closed" ? (
+                                    <CircleCheck
+                                        aria-hidden
+                                        className="shrink-0 block-4 inline-4"
+                                        strokeWidth={1.75}
+                                    />
+                                ) : (
+                                    <LostIcon
+                                        aria-hidden
+                                        className="shrink-0 block-4 inline-4"
+                                        strokeWidth={1.75}
+                                    />
                                 )}
-                            >
+                                {deal.status === "closed" ? "Completed" : "Lost"}
+                            </p>
+                            <p className="body-xs shrink-0 whitespace-nowrap text-inherit tabular-nums">
                                 {hasResolvedDate ? (
                                     <time dateTime={deal.resolvedAt!}>
-                                        {deal.status === "closed" ? "Completed on" : "Lost on"}{" "}
                                         {formatDateIn(resolved)}
                                     </time>
-                                ) : deal.status === "closed" ? (
-                                    "Completion date unavailable"
                                 ) : (
-                                    "Lost date unavailable"
+                                    "Date unavailable"
                                 )}
                             </p>
-                            {deal.status === "closed" &&
-                            deal.closedAmountInr != null &&
-                            deal.closedAmountInr > 0 ? (
-                                <p className="body-xs flex shrink-0 items-baseline gap-x-1 font-semibold whitespace-nowrap text-brand-text">
-                                    <span className="body-xs font-medium">Closed at</span>
+                        </div>
+                        {deal.status === "closed" ? (
+                            deal.closedAmountInr != null && deal.closedAmountInr > 0 ? (
+                                <p className={styles.outcomeAmount}>
+                                    <span className="body-xs text-brand-text">Closed at</span>
                                     <Price
                                         amountInr={deal.closedAmountInr}
                                         isRent={deal.property.isRent}
-                                        className="text-brand-text"
+                                        className="body-sm font-semibold text-brand-text"
                                     />
                                 </p>
-                            ) : null}
-                            {deal.status === "lost" && deal.lostReason ? (
-                                <p className="body-xs leading-relaxed text-danger inline-full">
-                                    {lostReasonLabel(deal.lostReason)}
+                            ) : (
+                                <p className="body-xs text-brand-text">
+                                    Closing amount not recorded
                                 </p>
-                            ) : null}
-                        </div>
+                            )
+                        ) : (
+                            <p className="body-xs leading-relaxed wrap-anywhere text-danger">
+                                <span className="sr-only">Reason: </span>
+                                {deal.lostReason
+                                    ? lostReasonLabel(deal.lostReason)
+                                    : "No reason recorded"}
+                            </p>
+                        )}
                     </div>
                 ) : null}
 
                 <DealPartiesPanel
+                    textSize={live ? "xs" : "sm"}
                     buyer={deal.buyer}
                     owner={deal.owner}
                     onOpenBuyer={openCard}
@@ -642,7 +588,7 @@ export function DealCard({
                     {/* The owner's phone does not depend on the client's: a
                         client with no number must not hide "Call owner". */}
                     {canCall || ownerPhone ? (
-                        <div className="flex gap-2">
+                        <div className={styles.contactActions}>
                             {canCall ? (
                                 <Tooltip>
                                     <TooltipTrigger
@@ -651,7 +597,10 @@ export function DealCard({
                                                 size="md"
                                                 variant="outline"
                                                 nativeButton={false}
-                                                className="flex-1 min-inline-0"
+                                                className={cn(
+                                                    live ? "text-xs" : "text-sm",
+                                                    styles.contactButton,
+                                                )}
                                                 render={
                                                     <a
                                                         href={formatWhatsAppUrl(
@@ -687,7 +636,10 @@ export function DealCard({
                                             variant="accent"
                                             nativeButton={!ownerPhone}
                                             disabled={!ownerPhone}
-                                            className="flex-1 min-inline-0"
+                                            className={cn(
+                                                live ? "text-xs" : "text-sm",
+                                                styles.contactButton,
+                                            )}
                                             render={
                                                 ownerPhone ? (
                                                     <a

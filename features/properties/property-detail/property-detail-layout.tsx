@@ -175,7 +175,11 @@ export function PropertyDetailLayout({
                             <span className={styles.locationIcon}>
                                 <MapPin size={18} strokeWidth={1.75} aria-hidden />
                             </span>
-                            {[item.locality, item.city, item.country].filter(Boolean).join(", ")}
+                            <span>
+                                {[item.locality, item.city, item.country]
+                                    .filter(Boolean)
+                                    .join(", ")}
+                            </span>
                         </span>
                         <Badge color={statusColor}>{status}</Badge>
                         <span className={styles.listed}>
@@ -188,7 +192,6 @@ export function PropertyDetailLayout({
                     <PropertySharePopover
                         iconOnly
                         disabled={isDraft}
-                        className={styles.circleButton}
                         listing={{
                             id: item.id,
                             title: item.title,
@@ -209,7 +212,6 @@ export function PropertyDetailLayout({
                                 <IconButton
                                     type="button"
                                     size="md"
-                                    className={styles.circleButton}
                                     aria-label="Save property"
                                     disabled
                                 >
@@ -224,7 +226,6 @@ export function PropertyDetailLayout({
                         <IconButton
                             type="button"
                             size="md"
-                            className={styles.circleButton}
                             aria-label={saved ? "Unsave property" : "Save property"}
                             aria-pressed={saved}
                             disabled={saving}
@@ -369,12 +370,7 @@ export function PropertyDetailContent({
                           : "Available for sale"}
                     {item.society ? ` · ${item.society}` : ""}
                 </p>
-                <div
-                    className={styles.highlights}
-                    style={{
-                        gridTemplateColumns: `repeat(${Math.max(1, highlights.length)}, minmax(0, 1fr))`,
-                    }}
-                >
+                <div className={styles.highlights}>
                     {highlights.map(({ key, value, caption, icon: Icon }) => (
                         <div key={key} className={styles.highlight}>
                             <Icon size={24} strokeWidth={1.5} aria-hidden />

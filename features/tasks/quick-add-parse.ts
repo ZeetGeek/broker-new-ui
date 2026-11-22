@@ -62,8 +62,14 @@ export type QuickAddParseOptions = {
 };
 
 export type QuickAddCatalogs = {
-    clients: { id: string; name: string }[];
-    owners: { id: string; name: string }[];
+    clients: {
+        id: string;
+        name: string;
+        type?: string;
+        requirement?: string;
+        phoneDigits?: string;
+    }[];
+    owners: { id: string; name: string; type?: string; phoneDigits?: string }[];
     properties: {
         id: string;
         title: string;
@@ -79,6 +85,9 @@ export type QuickAddOption = {
     kind: QuickAddEntityKind;
     label: string;
     detail: string;
+    /** Present on client / owner options — drives the shared people row. */
+    type?: string;
+    phoneDigits?: string;
 };
 
 export const QUICK_ADD_PRIORITY_TOKENS: Record<TaskPriority, string> = {
@@ -881,15 +890,22 @@ export function quickAddContactOptions(
             id: client.id,
             kind: "client" as const,
             label: client.name,
-            detail: "Client",
+            detail: "",
+            type: client.type,
+            phoneDigits: client.phoneDigits,
         })),
         ...catalogs.owners.map((owner) => ({
             id: owner.id,
             kind: "owner" as const,
             label: owner.name,
-            detail: "Owner",
+            detail: "",
+            type: owner.type,
+            phoneDigits: owner.phoneDigits,
         })),
     ]
-        .filter((contact) => !needle || contact.label.toLowerCase().includes(needle))
+        .filter((contact) => {
+            if (!needle) return true;
+            return `${contact.label} ${contact.phoneDigits ?? ""}`.toLowerCase().includes(needle);
+        })
         .slice(0, OPTION_LIMIT);
 }

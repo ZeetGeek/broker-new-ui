@@ -35,6 +35,21 @@ test("creation links reuse explicit action targets", () => {
     assert.equal(workflowTarget("/broker/contacts?flow=add-deal", "broker"), null);
     assert.equal(workflowTarget("/broker/tasks?view=edit", "broker"), null);
 });
+test("property details stay full pages across both portals and listing sources", () => {
+    for (const portal of ["broker", "owner"] as const) {
+        for (const href of [
+            "/broker/properties/property-1",
+            "/broker/properties/property-1/",
+            "/broker/properties/property-1?from=saved#photos",
+            "/broker/properties/person%2F1%3Fextra%3Dtrue",
+            "/broker/owner-listings/property-1",
+            "/owner/properties/property-1",
+            "/property/property-1",
+        ]) {
+            assert.equal(workflowTarget(href, portal), null, `${portal}: ${href}`);
+        }
+    }
+});
 test("record identities are decoded once without query injection", () => {
     const id = "person/1?extra=true&other=value";
     const task = workflowTarget(

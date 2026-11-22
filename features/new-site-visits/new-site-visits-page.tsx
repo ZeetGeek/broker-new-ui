@@ -68,14 +68,25 @@ export function NewSiteVisitsPage() {
         return () => clearInterval(timer);
     }, []);
 
-    const [tab, setTab] = useState<VisitTab>("upcoming");
+    const [tab, setTab] = useState<VisitTab>(() => {
+        const requested = searchParams.get("tab");
+        return requested &&
+            ["upcoming", "running", "needs_update", ...FINISHED_TABS].includes(
+                requested as VisitTab,
+            )
+            ? (requested as VisitTab)
+            : "upcoming";
+    });
     const [searchInput, setSearchInput] = useState("");
     const [search, setSearch] = useState("");
     useEffect(() => {
         const timer = window.setTimeout(() => setSearch(searchInput.trim()), SEARCH_DEBOUNCE_MS);
         return () => window.clearTimeout(timer);
     }, [searchInput]);
-    const [filters, setFilters] = useState<VisitFilters>({ ...EMPTY_FILTERS });
+    const [filters, setFilters] = useState<VisitFilters>(() => ({
+        ...EMPTY_FILTERS,
+        range: searchParams.get("range") === "today" ? "today" : "",
+    }));
     const [sort, setSort] = useState<VisitSort | undefined>(undefined);
     const [dialog, setDialog] = useState<"filters" | "dates" | null>(null);
     // The shell's "Schedule visit" action links here with ?view=schedule.

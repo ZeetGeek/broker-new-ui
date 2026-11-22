@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 
 import type { UseEmblaCarouselType } from "embla-carousel-react";
 
+import { IconButton } from "@/components/shared/icon-button";
 import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
 import styles from "./property-detail.module.css";
@@ -49,28 +49,22 @@ export function PropertyGalleryControls({
         <div className={`${styles.carouselFooter} ${compact ? styles.compactCarouselFooter : ""}`}>
             <div className={styles.carouselControls}>
                 <div className={styles.headerActions}>
-                    <Button
-                        type="button"
-                        variant="surface"
-                        size="icon"
-                        className={styles.circleButton}
+                    <IconButton
+                        size={compact ? "sm" : "md"}
                         disabled={!canPrev}
                         onClick={() => api?.scrollPrev()}
                         aria-label="Previous photos"
                     >
                         <ChevronLeft size={20} aria-hidden />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="surface"
-                        size="icon"
-                        className={styles.circleButton}
+                    </IconButton>
+                    <IconButton
+                        size={compact ? "sm" : "md"}
                         disabled={!canNext}
                         onClick={() => api?.scrollNext()}
                         aria-label="Next photos"
                     >
                         <ChevronRight size={20} aria-hidden />
-                    </Button>
+                    </IconButton>
                 </div>
             </div>
             <Slider
@@ -95,7 +89,7 @@ export function PropertyGalleryControls({
             />
             <span
                 className={`${styles.carouselCounter}
-                  rounded-full border border-border-warm bg-surface shadow-sm
+                  rounded-control border border-border-warm bg-surface shadow-sm
                 `}
                 aria-live="polite"
             >
