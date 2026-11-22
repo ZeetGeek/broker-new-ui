@@ -18,6 +18,8 @@ export type BrokerVisit = {
     clientId: string;
     clientName: string;
     clientPhone: string | null;
+    /** Keep the owner's identity for contact links; never resolve a live visit by name. */
+    ownerId?: string | null;
     /** Property owner; null when the API did not send one. */
     ownerName: string | null;
     ownerAvatarUrl: string | null;
@@ -140,6 +142,7 @@ export function mapShowing(api: ApiShowing): BrokerVisit {
         clientId: api.client?.id ?? "",
         clientName: api.client?.name?.trim() || "Client",
         clientPhone: api.client?.phone || null,
+        ownerId: api.owner?.id || null,
         ownerName: api.owner?.fullName?.trim() || null,
         ownerAvatarUrl: api.owner?.avatarUrl || null,
         propertyId: api.propertyId,
@@ -167,9 +170,10 @@ function json(method: "POST" | "PATCH", body: unknown) {
 }
 
 export const siteVisitsApi = {
-    async list(q: VisitListQuery): Promise<VisitListPage> {
+    async list(q: VisitListQuery, signal?: AbortSignal): Promise<VisitListPage> {
         const response = await apiFetch<ApiVisitListPage>(
             `/slots/broker/bookings?${visitListParams(q)}`,
+            { signal },
         );
         return {
             items: (response.items ?? []).map(mapShowing),
@@ -181,6 +185,40 @@ export const siteVisitsApi = {
             propertyOptions: response.propertyOptions ?? [],
             nextChangeAt: response.nextChangeAt ?? null,
         };
+    },
+
+    /** Resolve a real visit without depending on the current list's tab or loaded pages. */
+    async get(id: string, signal?: AbortSignal): Promise<BrokerVisit | null> {
+        if (!id.trim()) return null;
+        // No single-showing read endpoint is assumed. The existing list supports
+        // all six tabs, and omitting date bounds includes the complete history.
+        const tabs: VisitTab[] = [
+            "upcoming",
+            "running",
+            "needs_update",
+            "completed",
+            "not_attended",
+            "cancelled",
+        ];
+        for (const tab of tabs) {
+            let requestedPage = 1;
+            while (true) {
+                signal?.throwIfAborted();
+                const page = await siteVisitsApi.list(
+                    { tab, page: requestedPage, limit: 100, sort: "booked_desc" },
+                    signal,
+                );
+                signal?.throwIfAborted();
+                if (page.page !== requestedPage) {
+                    throw new Error("Could not load the requested visit page. Please try again.");
+                }
+                const found = page.items.find((visit) => visit.id === id);
+                if (found) return found;
+                if (requestedPage >= page.totalPages) break;
+                requestedPage += 1;
+            }
+        }
+        return null;
     },
 
     /** The deal's earliest visit that is not yet marked or cancelled. */

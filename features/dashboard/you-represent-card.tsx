@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { formatAreaSqft } from "@/lib/format/area";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
@@ -11,6 +9,7 @@ import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

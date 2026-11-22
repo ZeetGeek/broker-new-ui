@@ -85,3 +85,13 @@ test("deleted tab counts deleted listings and never nudges to publish drafts", (
         ["No deleted listings match your filters", "Try changing or clearing a filter"],
     );
 });
+
+test("sold heading describes sold properties without draft prompts", () => {
+    assert.deepEqual(buildMyListingsSummaryLines({ ...base, status: "sold", resultTotal: 2 }), [
+        "2 properties are marked as sold",
+    ]);
+    assert.equal(
+        buildMyListingsSummaryLines({ ...base, status: "sold", resultTotal: 0 })[0],
+        "No sold properties yet",
+    );
+});

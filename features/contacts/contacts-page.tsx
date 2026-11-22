@@ -7,8 +7,10 @@ import { useQuery } from "@tanstack/react-query";
 import { tinykeys } from "tinykeys";
 
 import { ApiError } from "@/lib/api/client";
-import { clientsApi, type NewBuyerInput } from "@/lib/api/clients";
+import { clientsApi } from "@/lib/api/clients";
 import { contactsApi, sortBuyerRows } from "@/lib/api/contacts";
+import { updateBuyerContact, updateOwnerContact } from "@/lib/contacts/contact-actions";
+import { AmbiguousContactNameError, findContactByName } from "@/lib/contacts/find-contact-by-name";
 import { PREF_KEYS } from "@/lib/prefs/keys";
 import { getShortcut } from "@/lib/shortcuts";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
@@ -36,7 +38,6 @@ import type { ContactPropertyCardItem } from "@/features/contacts/contact-card-m
 import { ContactDetailPanel } from "@/features/contacts/contact-detail-panel";
 import {
     type BuyerContactForm,
-    emptyOwnerForm,
     type OwnerContactForm,
 } from "@/features/contacts/contact-form-model";
 import { ContactsHeader } from "@/features/contacts/contacts-header";
@@ -93,9 +94,11 @@ function isEditable(el: EventTarget | null): boolean {
 
 export function ContactsPage({
     initialAddBuyer = false,
+    initialAddOwner = false,
     addDealFlow = false,
 }: {
     initialAddBuyer?: boolean;
+    initialAddOwner?: boolean;
     addDealFlow?: boolean;
 }) {
     const [filters, setFilters] = usePersistedJson<ContactsFilters>(
@@ -105,14 +108,19 @@ export function ContactsPage({
     );
     const [isAddOpen, setIsAddOpen] = useState(initialAddBuyer);
     useEffect(() => {
-        if (!initialAddBuyer && !addDealFlow) return;
+        if (!initialAddBuyer && !initialAddOwner && !addDealFlow) return;
         const timer = window.setTimeout(
-            () => setFilters((previous) => ({ ...previous, tab: "buyers", q: "" })),
+            () =>
+                setFilters((previous) => ({
+                    ...previous,
+                    tab: initialAddOwner ? "owners" : "buyers",
+                    q: "",
+                })),
             0,
         );
         return () => window.clearTimeout(timer);
-    }, [initialAddBuyer, addDealFlow, setFilters]);
-    const [isOwnerAddOpen, setIsOwnerAddOpen] = useState(false);
+    }, [initialAddBuyer, initialAddOwner, addDealFlow, setFilters]);
+    const [isOwnerAddOpen, setIsOwnerAddOpen] = useState(initialAddOwner);
     const [editingBuyer, setEditingBuyer] = useState<BuyerRow | null>(null);
     const [editingOwner, setEditingOwner] = useState<OwnerRow | null>(null);
     const [attachingBuyer, setAttachingBuyer] = useState<AttachBuyerTarget | null>(null);
@@ -126,20 +134,38 @@ export function ContactsPage({
     const [detailSection, setDetailSection] = useState<"properties" | undefined>();
     const [hasContactQuery, setHasContactQuery] = useState(false);
     const [requestedContact, setRequestedContact] = useState<{
-        id: string;
+        id?: string;
+        name?: string;
         type?: "buyer" | "owner";
     } | null>(null);
     const contactLookup = useQuery({
-        queryKey: ["contact-deep-link", requestedContact?.id, requestedContact?.type],
+        queryKey: [
+            "contact-deep-link",
+            requestedContact?.id,
+            requestedContact?.name,
+            requestedContact?.type,
+        ],
         queryFn: ({ signal }) =>
-            contactsApi.findContact(requestedContact!.id, requestedContact!.type, signal),
+            requestedContact?.id
+                ? contactsApi.findContact(requestedContact.id, requestedContact.type, signal)
+                : findContactByName(
+                      requestedContact!.name!,
+                      requestedContact!.type ?? "buyer",
+                      signal,
+                  ),
+        retry: (count, error) => !(error instanceof AmbiguousContactNameError) && count < 2,
         enabled: requestedContact != null,
     });
     useEffect(() => {
         const contact = contactLookup.data;
         if (!requestedContact || !contact) return;
         const timer = window.setTimeout(() => {
-            if (new URL(window.location.href).searchParams.get("contact") !== requestedContact.id)
+            const query = new URL(window.location.href).searchParams;
+            if (
+                requestedContact.id
+                    ? query.get("contact") !== requestedContact.id
+                    : query.get("contactName") !== requestedContact.name
+            )
                 return;
             setSelectedContact(contact);
             setFilters((previous) => ({
@@ -342,6 +368,7 @@ export function ContactsPage({
             );
             const url = new URL(window.location.href);
             url.searchParams.set("contact", row.id);
+            url.searchParams.delete("contactName");
             url.searchParams.set("tab", type === "buyer" ? "buyers" : "owners");
             window.history.pushState({ ...window.history.state, contactPanel: true }, "", url);
         },
@@ -354,10 +381,11 @@ export function ContactsPage({
         setHasContactQuery(false);
         setRequestedContact(null);
         setDetailSection(undefined);
-        if (url.searchParams.has("contact")) {
+        if (url.searchParams.has("contact") || url.searchParams.has("contactName")) {
             if (window.history.state?.contactPanel) window.history.back();
             else {
                 url.searchParams.delete("contact");
+                url.searchParams.delete("contactName");
                 window.history.replaceState(window.history.state, "", url);
             }
         }
@@ -368,8 +396,17 @@ export function ContactsPage({
         const syncFromUrl = () => {
             const query = new URL(window.location.href).searchParams;
             const id = query.get("contact");
-            setHasContactQuery(Boolean(id));
-            if (!id) {
+            const name = id ? null : query.get("contactName");
+            const tab = query.get("tab");
+            if (tab === "buyers" || tab === "owners") {
+                setFilters((previous) =>
+                    previous.tab === tab && (!name || previous.q === name)
+                        ? previous
+                        : { ...previous, tab, ...(name ? { q: name } : {}) },
+                );
+            }
+            setHasContactQuery(Boolean(id || name));
+            if (!id && !name) {
                 setRequestedContact(null);
                 setSelectedContact(null);
                 restoreCardFocus();
@@ -377,9 +414,15 @@ export function ContactsPage({
             }
             const buyer = buyers.find((item) => item.id === id);
             const owner = ownersQuery.items.find((item) => item.id === id);
-            if (buyer) setSelectedContact({ type: "buyer", row: buyer });
-            else if (owner) setSelectedContact({ type: "owner", row: owner });
-            else if (contactLookup.data?.row.id === id) setSelectedContact(contactLookup.data);
+            if (buyer && tab !== "owners") setSelectedContact({ type: "buyer", row: buyer });
+            else if (owner && tab !== "buyers") setSelectedContact({ type: "owner", row: owner });
+            else if (
+                contactLookup.data &&
+                (tab !== "owners" || contactLookup.data.type === "owner") &&
+                (tab !== "buyers" || contactLookup.data.type === "buyer") &&
+                (id ? contactLookup.data.row.id === id : requestedContact?.name === name)
+            )
+                setSelectedContact(contactLookup.data);
             else {
                 const type =
                     query.get("tab") === "owners"
@@ -389,46 +432,30 @@ export function ContactsPage({
                           : undefined;
                 setSelectedContact(null);
                 setRequestedContact((previous) =>
-                    previous?.id === id && previous.type === type ? previous : { id, type },
+                    previous?.id === (id ?? undefined) &&
+                    previous?.name === (name ?? undefined) &&
+                    previous?.type === type
+                        ? previous
+                        : { id: id ?? undefined, name: name ?? undefined, type },
                 );
             }
         };
         syncFromUrl();
         window.addEventListener("popstate", syncFromUrl);
         return () => window.removeEventListener("popstate", syncFromUrl);
-    }, [buyers, ownersQuery.items, restoreCardFocus, contactLookup.data]);
+    }, [
+        buyers,
+        ownersQuery.items,
+        restoreCardFocus,
+        contactLookup.data,
+        requestedContact?.name,
+        setFilters,
+    ]);
 
     const quickUpdateBuyer = useCallback(
         async (buyer: BuyerRow, patch: Partial<BuyerContactForm>) => {
-            const notes = patch.notes ?? buyer.notes ?? null;
-            const input: NewBuyerInput = {
-                name: buyer.name,
-                phoneDigits: buyer.phoneDigits,
-                email: buyer.email,
-                lookingFor: buyer.lookingFor,
-                propertyKind: buyer.propertyKind,
-                preferredLocalities: buyer.preferredLocalities,
-                country: buyer.country,
-                state: buyer.state,
-                city: buyer.city,
-                budgetMinInr: buyer.budgetMinInr,
-                budgetMaxInr: buyer.budgetMaxInr,
-                rentBudgetMinInr: buyer.rentBudgetMinInr ?? null,
-                rentBudgetMaxInr: buyer.rentBudgetMaxInr ?? null,
-                bhk: buyer.bhk,
-                source: buyer.source ?? "walk_in",
-                notes,
-            };
-            await contactsApi.saveBuyer(input, buyer.id);
-            setSelectedContact({
-                type: "buyer",
-                row: {
-                    ...buyer,
-                    notes,
-                    lastContactedAt: patch.lastSpokeAt || buyer.lastContactedAt,
-                    details: buyer.details ? { ...buyer.details, ...patch } : buyer.details,
-                },
-            });
+            const row = await updateBuyerContact(buyer, patch);
+            setSelectedContact({ type: "buyer", row });
             setRevision((value) => value + 1);
         },
         [],
@@ -436,19 +463,8 @@ export function ContactsPage({
 
     const quickUpdateOwner = useCallback(
         async (owner: OwnerRow, patch: Partial<OwnerContactForm>) => {
-            const values: OwnerContactForm = {
-                ...emptyOwnerForm(),
-                name: owner.name,
-                phone: owner.phoneDigits ?? "",
-                status: owner.status ?? "active",
-                lastSpokeAt: owner.lastSpokeAt?.slice(0, 10) ?? "",
-                tags: owner.tags ?? [],
-                notes: owner.notes ?? "",
-                ...owner.details,
-                ...patch,
-            };
-            const saved = await contactsApi.saveOwner(values, owner.id, owner.origin);
-            setSelectedContact({ type: "owner", row: saved });
+            const row = await updateOwnerContact(owner, patch);
+            setSelectedContact({ type: "owner", row });
             setRevision((value) => value + 1);
         },
         [],
@@ -480,7 +496,7 @@ export function ContactsPage({
                         <Button variant="outline" onClick={() => setIsAddOpen(true)}>
                             Add client
                         </Button>
-                        <a href="/broker/your-listings" className="body-sm font-medium underline">
+                        <a href="/broker/my-listings" className="body-sm font-medium underline">
                             My Listings
                         </a>
                     </div>
@@ -721,13 +737,19 @@ export function ContactsPage({
                 ) : null}
 
                 <ContactDetailPanel
+                    manageBrowserHistory={false}
+                    contactType={
+                        requestedContact?.type ?? (filters.tab === "owners" ? "owner" : "buyer")
+                    }
                     contact={selectedContact}
                     open={selectedContact != null || hasContactQuery}
                     loadError={
                         contactLookup.isError
-                            ? "Could not load this client. Check your connection and try again."
+                            ? contactLookup.error instanceof AmbiguousContactNameError
+                                ? contactLookup.error.message
+                                : "Could not load this contact. Check your connection and try again."
                             : requestedContact && contactLookup.isSuccess && !contactLookup.data
-                              ? "This client could not be found in your account."
+                              ? "This name is not linked to a saved contact in your account."
                               : undefined
                     }
                     onRetryLoad={

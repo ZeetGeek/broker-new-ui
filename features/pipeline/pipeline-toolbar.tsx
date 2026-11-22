@@ -50,7 +50,10 @@ export function PipelineToolbar({
         () => ({ ...DEFAULT_OWNER_LISTINGS_FILTERS, ...discoveryFilters }),
         [discoveryFilters],
     );
-    const filterCount = propertyCriteriaCount(discoveryFilters);
+    const filterCount =
+        propertyCriteriaCount(discoveryFilters) +
+        Number(Boolean(filters.ownerId)) +
+        Number(Boolean(filters.clientId));
 
     return (
         <>
@@ -68,6 +71,8 @@ export function PipelineToolbar({
                             dealType: "",
                             locality: "",
                             ownerName: "",
+                            ownerId: "",
+                            clientId: "",
                         })
                     }
                     description="Location, budget and property filters"
@@ -98,7 +103,9 @@ export function PipelineToolbar({
                 appliedFilters={appliedFilters}
                 discoveryFilters={discoveryFilters}
                 showDiscoveryFilters
-                onApply={(patch, discovery) => {
+                peopleFilterScope="pipeline"
+                peopleFilters={filters}
+                onApply={(patch, discovery, people) => {
                     const criteriaPatch = Object.fromEntries(
                         Object.keys(EMPTY_PROPERTY_CRITERIA)
                             .filter((key) => key in patch)
@@ -110,6 +117,8 @@ export function PipelineToolbar({
                         dealType: next.type,
                         locality: "",
                         ownerName: "",
+                        ownerId: people?.ownerId ?? "",
+                        clientId: people?.clientId ?? "",
                     });
                 }}
             />

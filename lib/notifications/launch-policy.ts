@@ -55,7 +55,7 @@ export function isLaunchDestinationAllowed(
             path,
         ) &&
         !(
-            /^\/broker\/(?:your-listings|my-properties)(?:\/|$)/.test(path) &&
+            /^\/broker\/(?:my-listings|your-listings|my-properties)(?:\/|$)/.test(path) &&
             url.searchParams.get("tab") === "requests"
         )
     );

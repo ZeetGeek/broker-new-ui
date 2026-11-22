@@ -4,6 +4,7 @@ import type { BrokerVisit, VisitSort, VisitTab } from "@/lib/api/site-visits";
 import { addVisitDays, formatVisitDate, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { ContactName } from "@/components/shared/contact-name";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
 import { IconButton } from "@/components/shared/icon-button";
@@ -423,7 +424,15 @@ function VisitRow({
                     <div>
                         <small>Owner</small>
                         <strong data-missing={!visit.ownerName || undefined}>
-                            {visit.ownerName ?? "Not added"}
+                            {visit.ownerName ? (
+                                <ContactName
+                                    name={visit.ownerName}
+                                    contactId={visit.ownerId}
+                                    contactType="owner"
+                                />
+                            ) : (
+                                "Not added"
+                            )}
                         </strong>
                     </div>
                 </div>
@@ -435,7 +444,13 @@ function VisitRow({
                     />
                     <div>
                         <small>Client</small>
-                        <strong>{visit.clientName}</strong>
+                        <strong>
+                            <ContactName
+                                name={visit.clientName}
+                                contactId={visit.clientId}
+                                contactType="buyer"
+                            />
+                        </strong>
                     </div>
                 </div>
             </div>

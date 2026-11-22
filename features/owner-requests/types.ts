@@ -65,6 +65,7 @@ export type OwnerRequestCardItem = OwnerDealListing & {
     message: string | null;
     createdAt: string;
     brokerName: string;
+    brokerId?: string;
     brokerAvatarUrl?: string;
     brokerPhoneDigits?: string;
     brokerOrgName?: string | null;

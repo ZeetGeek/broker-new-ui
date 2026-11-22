@@ -1,11 +1,12 @@
 "use client";
 
 import { type RefObject, useEffect, useRef } from "react";
-import Link from "next/link";
 
+import { formatPersonName } from "@/lib/format/person-name";
 import { cn } from "@/lib/utils";
 
 import { CircleCheck, MapPin, Phone } from "@/components/shared/icons";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { TodayItem } from "./mock-data";
@@ -138,7 +139,9 @@ function TimelineRow({ item }: { item: TodayItem }) {
                             >
                                 {item.clientName ? (
                                     <>
-                                        <span className="capitalize">{item.clientName}</span>
+                                        <span className="capitalize">
+                                            {formatPersonName(item.clientName)}
+                                        </span>
                                         {item.subtitle ? <span aria-hidden> · </span> : null}
                                     </>
                                 ) : null}

@@ -1,7 +1,6 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
-import Link from "next/link";
 
 import { formatDateShort, formatShowingWhen } from "@/lib/format/date";
 import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
@@ -9,9 +8,11 @@ import { plural } from "@/lib/format/plural";
 import { brokerPipelineDealHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { ContactName } from "@/components/shared/contact-name";
 import { ArrowRight, CallIcon, StickyNote, WhatsAppIcon } from "@/components/shared/icons";
 import { type StatusTab, StatusTabs } from "@/components/shared/status-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 
@@ -105,12 +106,12 @@ function ClientCard({
                 <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <h3 className="body font-semibold text-ink capitalize">
-                            <Link
-                                href={dealHref}
+                            <ContactName
+                                name={client.name}
+                                contactId={client.clientId}
+                                contactType="buyer"
                                 className="hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                            >
-                                {client.name}
-                            </Link>
+                            />
                         </h3>
                         <StagePill client={client} closedWord={closedWord} />
                     </div>

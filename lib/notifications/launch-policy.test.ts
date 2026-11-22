@@ -40,6 +40,7 @@ test("broker launch hides deferred event types and owner destinations while reta
         "/broker/owners/old",
         "/broker/my-deals",
         "/broker/referrals",
+        "/broker/my-listings?tab=requests",
         "/broker/your-listings?tab=requests",
         "/broker/my-properties?tab=requests",
         "https://example.com",

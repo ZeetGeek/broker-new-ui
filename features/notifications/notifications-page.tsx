@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 
 import { notificationsApi } from "@/lib/api/notifications";
 import { toApiInstant } from "@/lib/datetime/api";
@@ -11,6 +10,7 @@ import { useInfiniteItems } from "@/hooks/use-infinite-items";
 import { CardLink } from "@/components/shared/card-link";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

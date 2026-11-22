@@ -1,7 +1,6 @@
-import Link from "next/link";
-
 import { EmptyState } from "@/components/shared/empty-state";
 import { CalendarCheck, CalendarPlus, CircleCheck, Search } from "@/components/shared/icons";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import type { VisitViewer } from "@/features/site-visits/types";

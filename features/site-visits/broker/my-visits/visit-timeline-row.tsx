@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { VISIT_STATUS, visitPrimaryAction } from "@/lib/visits/status";
 import { formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
 
+import { ContactName } from "@/components/shared/contact-name";
 import { CallIcon, Navigation, WhatsAppIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
@@ -78,8 +79,28 @@ export const VisitTimelineRow = memo(function VisitTimelineRow({
                     </p>
                     <p className="body-xs mbs-0.5 truncate text-ink-muted">
                         {visit.property.locality}
-                        {buyer?.name ? ` · ${buyer.name}` : ""}
-                        {visit.owner.name ? ` · ${visit.owner.name}` : ""}
+                        {buyer?.name ? (
+                            <>
+                                {" "}
+                                ·{" "}
+                                <ContactName
+                                    name={buyer.name}
+                                    contactId={buyer.id}
+                                    contactType="buyer"
+                                />
+                            </>
+                        ) : null}
+                        {visit.owner.name ? (
+                            <>
+                                {" "}
+                                ·{" "}
+                                <ContactName
+                                    name={visit.owner.name}
+                                    contactId={visit.owner.id}
+                                    contactType="owner"
+                                />
+                            </>
+                        ) : null}
                     </p>
 
                     <div className="relative z-10 mbs-2 flex flex-wrap gap-1">

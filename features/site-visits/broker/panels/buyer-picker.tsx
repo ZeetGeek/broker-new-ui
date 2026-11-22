@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useState } from "react";
 
+import { formatPersonName } from "@/lib/format/person-name";
 import { cn } from "@/lib/utils";
 
 import { Check, Plus, Search } from "@/components/shared/icons";
@@ -31,7 +32,9 @@ export function BuyerPicker({
     const [created, setCreated] = useState<PersonSummary[]>([]);
     const allBuyers = useMemo(() => [...created, ...buyers], [buyers, created]);
     const shown = allBuyers.filter((buyer) =>
-        `${buyer.name} ${buyer.requirement ?? ""}`.toLowerCase().includes(query.toLowerCase()),
+        `${formatPersonName(buyer.name)} ${buyer.requirement ?? ""}`
+            .toLowerCase()
+            .includes(query.toLowerCase()),
     );
 
     const searchId = useId();
@@ -84,10 +87,14 @@ export function BuyerPicker({
                                     : `border-border-warm bg-surface hover:bg-surface-muted`,
                             )}
                         >
-                            <UserAvatar name={buyer.name} imageUrl={buyer.avatarUrl} size="sm" />
+                            <UserAvatar
+                                name={formatPersonName(buyer.name)}
+                                imageUrl={buyer.avatarUrl}
+                                size="sm"
+                            />
                             <span className="flex-1 min-inline-0">
                                 <span className="body-sm block truncate font-semibold text-ink">
-                                    {buyer.name}
+                                    {formatPersonName(buyer.name)}
                                 </span>
                                 <span className="body-xs block truncate text-ink-muted">
                                     {buyer.requirement ?? "Client"}

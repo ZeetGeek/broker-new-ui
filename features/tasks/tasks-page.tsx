@@ -39,10 +39,10 @@ import { taskListId } from "./notebook-model";
 import { useTaskNotebook } from "./notebook-store";
 import { createPlannerTask, movePlannerTask, setTaskDeleted } from "./planner-model";
 import { changeTaskQuickly, type TaskQuickChange } from "./quick-actions";
-import { encodeTaskDraftTitle } from "./quick-add-draft";
 import { useTaskCatalogs } from "./task-catalogs";
 import { TaskDeleteDialog, TaskDetail, TaskReminders } from "./task-detail";
 import { TaskForm } from "./task-form";
+import { type TaskDraftMode, taskFromDraft } from "./task-from-draft";
 import { TaskArchive } from "./task-list";
 import { TaskPanel } from "./task-panel";
 import { TaskPlanner } from "./task-planner";
@@ -340,47 +340,14 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         return saved;
     };
     const saveDraft = async (draft: TaskDraft) => {
-        const at = new Date().toISOString();
         const editing = view !== "create" ? selected : undefined;
-        const sameSchedule =
-            editing &&
-            editing.startDate === (draft.startDate || null) &&
-            editing.dueDate === (draft.dueDate || null) &&
-            JSON.stringify(editing.repeat) === JSON.stringify(draft.repeat);
-        // Create / edit modal: put field values as end-of-title chips (same as quick-add).
-        const title =
-            view === "create" || view === "edit"
-                ? encodeTaskDraftTitle(draft, catalogs, Date.now())
-                : draft.title.trim();
-        const next: Task = {
+        const next = taskFromDraft(draft, {
+            editing,
+            mode: view as TaskDraftMode,
+            catalogs,
+            now: Date.now(),
             id: editing?.id ?? crypto.randomUUID(),
-            title,
-            details: draft.details.trim(),
-            startDate: draft.startDate || null,
-            startTime: draft.startDate && draft.startTime ? draft.startTime : null,
-            startReminderEnabledAt: editing?.startReminderEnabledAt,
-            repeat: draft.repeat,
-            repeatAnchor: draft.repeat
-                ? sameSchedule
-                    ? editing.repeatAnchor
-                    : draft.dueDate || draft.startDate || null
-                : null,
-            repeatFromId: editing?.repeatFromId ?? null,
-            dueDate: draft.dueDate || null,
-            dueTime: draft.dueDate && draft.dueTime ? draft.dueTime : null,
-            reminders: draft.dueDate && draft.dueTime ? [...draft.reminders] : [],
-            clientId: draft.clientId || null,
-            ownerId: draft.ownerId || null,
-            propertyId: draft.propertyId || null,
-            priority: draft.priority,
-            completedAt: editing?.completedAt ?? null,
-            deletedAt: editing?.deletedAt ?? null,
-            plannerOrder: sameSchedule ? editing?.plannerOrder : undefined,
-            listId: editing?.listId,
-            createdAt: editing?.createdAt ?? at,
-            updatedAt: at,
-            deliveredReminderKeys: editing?.deliveredReminderKeys ?? [],
-        };
+        });
         await commit(
             editing ? tasks.map((t) => (t.id === editing.id ? next : t)) : [next, ...tasks],
             editing

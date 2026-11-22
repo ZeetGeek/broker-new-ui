@@ -668,3 +668,34 @@
         transparent
     );
 }
+
+/* Person links retain their surface's colour, including dark visit cards. */
+.person-name[data-person-link] {
+    position: relative;
+    pointer-events: auto;
+    cursor: pointer;
+    text-align: start;
+    text-decoration-line: none;
+    text-underline-offset: 0.2em;
+    border-radius: 2px;
+}
+
+.person-name[data-person-link]:hover,
+.person-name[data-person-link]:focus-visible {
+    text-decoration-line: underline;
+}
+
+.person-name[data-person-link]:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+}
+
+@media (pointer: coarse) {
+    .person-name[data-person-link] {
+        display: inline-block;
+        min-block-size: 44px;
+        min-inline-size: 44px;
+        align-content: center;
+        vertical-align: middle;
+    }
+}

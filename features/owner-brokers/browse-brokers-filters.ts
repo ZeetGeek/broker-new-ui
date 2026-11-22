@@ -1,4 +1,5 @@
 import type { BrokerProfile, OwnerBrokersSort } from "@/lib/api/representative";
+import { formatPersonName } from "@/lib/format/person-name";
 
 /** Sorting runs server-side so the scrolled pages stay in one order. */
 export type BrowseBrokersSort = OwnerBrokersSort;
@@ -25,7 +26,7 @@ export function hasActiveBrowseFilters(filters: BrowseBrokersFilters): boolean {
 }
 
 export function brokerDisplayName(broker: BrokerProfile): string {
-    return (
-        broker.displayName?.trim() || broker.fullName?.trim() || broker.orgName?.trim() || "Broker"
+    return formatPersonName(
+        broker.displayName?.trim() || broker.fullName?.trim() || broker.orgName?.trim() || "Broker",
     );
 }

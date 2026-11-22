@@ -23,6 +23,7 @@ import {
     usePortalSectionNav,
 } from "@/components/layout/portal-section-nav";
 import { OWNER_SEARCH_HINTS } from "@/components/layout/search-placeholder-loop";
+import { PersonDetailsProvider } from "@/components/shared/person-details-provider";
 
 import { OWNER_MOBILE_PRIMARY_HREFS, OWNER_NAV_ITEMS } from "@/config/nav";
 import { ChatProvider } from "@/features/chat/chat-provider";
@@ -49,7 +50,9 @@ const OWNER_SHORTCUT_ROUTES = {
 export function OwnerPortalShell({ children }: { children: ReactNode }) {
     return (
         <PortalSectionNavProvider>
-            <OwnerPortalShellInner>{children}</OwnerPortalShellInner>
+            <PersonDetailsProvider portal="owner">
+                <OwnerPortalShellInner>{children}</OwnerPortalShellInner>
+            </PersonDetailsProvider>
         </PortalSectionNavProvider>
     );
 }

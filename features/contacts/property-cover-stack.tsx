@@ -2,11 +2,13 @@
 
 import type { KeyboardEvent } from "react";
 
+import { useRouter } from "@/lib/navigation";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
 import { Plus } from "@/components/shared/icons";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
+import { useWorkflow } from "@/components/shared/workflow-context";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { ContactPropertyCardItem } from "@/features/contacts/contact-card-model";
@@ -58,6 +60,8 @@ export function PropertyCoverStack({
     onOpenProperty,
     className,
 }: PropertyCoverStackProps) {
+    const openWorkflow = useWorkflow();
+    const router = useRouter();
     const visible = properties.slice(0, MAX_VISIBLE);
     const overflow = properties.slice(MAX_VISIBLE);
 
@@ -85,10 +89,10 @@ export function PropertyCoverStack({
                                     onClick={(event) => {
                                         event.stopPropagation();
                                         if (onOpenProperty) onOpenProperty(property);
-                                        else
-                                            window.location.assign(
-                                                brokerPropertyDetailHref(property.id),
-                                            );
+                                        else {
+                                            const href = brokerPropertyDetailHref(property.id);
+                                            if (!openWorkflow?.(href)) router.push(href);
+                                        }
                                     }}
                                     className={cn(
                                         `

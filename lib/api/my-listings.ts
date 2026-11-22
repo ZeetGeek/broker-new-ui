@@ -13,6 +13,7 @@ import {
     matchesPropertyCriteria,
     propertyCriteriaCount,
 } from "@/lib/properties/list-criteria";
+import { collectPeopleFilterOptions, matchesPeopleFilters } from "@/lib/properties/people-filters";
 
 import type { OwnerContactForm } from "@/features/contacts/contact-form-model";
 import { moneyToRupees } from "@/features/contacts/contact-form-model";
@@ -53,9 +54,12 @@ let mockMyListings: MyListingItem[] = MOCK_MY_LISTINGS_SEED.map((item) => ({
     ceilingHeightFt: item.ceilingHeightFt ?? null,
 }));
 
-function filterMockMyListings(filters: MyListingsFilters): MyListingItem[] {
+function filterMockMyListings(
+    filters: MyListingsFilters,
+    source = mockMyListings,
+): MyListingItem[] {
     const needle = filters.q.trim().toLowerCase();
-    let items = mockMyListings.filter((item) => {
+    let items = source.filter((item) => {
         if (needle) {
             const hay = [item.title, item.locality, item.city, item.configLabel]
                 .join(" ")
@@ -75,8 +79,21 @@ function filterMockMyListings(filters: MyListingsFilters): MyListingItem[] {
         if (filters.status === "deleted") {
             if (!item.deletedAt) return false;
         } else {
-            if (item.deletedAt || (filters.status && item.status !== filters.status)) return false;
+            if (item.deletedAt) return false;
+            if (filters.status === "sold") {
+                if (!item.isSold) return false;
+            } else if (filters.status) {
+                if (item.isSold || item.status !== filters.status) return false;
+            }
         }
+        if (
+            !matchesPeopleFilters(
+                item.exclusiveOwnerId ?? item.ownerId,
+                item.attachedClients ?? [],
+                filters,
+            )
+        )
+            return false;
         if (!matchesListingCriteria(item, filters)) return false;
         return true;
     });
@@ -110,8 +127,8 @@ function mockMyListingsSummary(): MyListingsSummary {
     const live = mockMyListings.filter((item) => !item.deletedAt);
     return {
         total: live.length,
-        published: live.filter((item) => item.status === "published").length,
-        draft: live.filter((item) => item.status === "draft").length,
+        published: live.filter((item) => item.status === "published" && !item.isSold).length,
+        draft: live.filter((item) => item.status === "draft" && !item.isSold).length,
         unpublished: live.filter((item) => item.status === "unpublished").length,
         sold: live.filter((item) => item.isSold).length,
         deleted: mockMyListings.length - live.length,
@@ -125,7 +142,6 @@ export type MyListingsSummary = {
     published: number;
     draft: number;
     unpublished: number;
-    /** Legacy availability count; inventory tabs do not use it. */
     sold: number;
     deleted?: number;
     sale: number;
@@ -143,6 +159,9 @@ function filtersToQuery(filters: MyListingsFilters): PropertyListQuery | null {
             filters.status === "draft" || filters.status === "published"
                 ? filters.status
                 : undefined,
+        status: filters.status === "sold" ? "sold" : undefined,
+        excludeSold:
+            filters.status === "published" || filters.status === "draft" ? true : undefined,
         deleted: filters.status === "deleted" ? "only" : undefined,
         sort: filters.sort,
         page: filters.page,
@@ -155,19 +174,20 @@ export const myListingsApi = {
         if (isMockMode()) {
             return mockMyListingsSummary();
         }
-        const [published, draft, deleted, salePage, rentPage] = await Promise.all([
-            propertiesApi.list({ publishStatus: "published", limit: 1 }),
-            propertiesApi.list({ publishStatus: "draft", limit: 1 }),
+        const [published, draft, sold, deleted, salePage, rentPage] = await Promise.all([
+            propertiesApi.list({ publishStatus: "published", excludeSold: true, limit: 1 }),
+            propertiesApi.list({ publishStatus: "draft", excludeSold: true, limit: 1 }),
+            propertiesApi.list({ status: "sold", limit: 1 }),
             propertiesApi.list({ deleted: "only", limit: 1 }),
             propertiesApi.list({ transactionType: "sale", limit: 1 }),
             propertiesApi.list({ transactionType: "rent", limit: 1 }),
         ]);
         return {
-            total: published.total + draft.total,
+            total: published.total + draft.total + sold.total,
             published: published.total,
             draft: draft.total,
             unpublished: 0,
-            sold: 0,
+            sold: sold.total,
             deleted: deleted.total,
             sale: salePage.total,
             rent: rentPage.total,
@@ -186,8 +206,23 @@ export const myListingsApi = {
     ): Promise<MyListingsResult> {
         const { withAttachedClients = true } = options;
         const merged: MyListingsFilters = { ...DEFAULT_MY_LISTINGS_FILTERS, ...filters };
+        const attachedPromise =
+            withAttachedClients || merged.clientId
+                ? (options.attachedClients ?? attachedClientsByProperty)()
+                : Promise.resolve(new Map<string, AttachedClientRef[]>());
+        const attach = (
+            item: MyListingItem,
+            attached: Map<string, AttachedClientRef[]>,
+        ): MyListingItem => ({
+            ...item,
+            attachedClients: (attached.get(item.id) ?? []).map((client) => ({ ...client })),
+        });
         if (isMockMode()) {
-            const matched = filterMockMyListings(merged);
+            const attached = await attachedPromise;
+            const matched = filterMockMyListings(
+                merged,
+                mockMyListings.map((item) => attach(item, attached)),
+            );
             const paged = paginateItems(matched, merged.page, PAGE_SIZE);
             return {
                 items: paged.items,
@@ -196,50 +231,75 @@ export const myListingsApi = {
                 totalPages: paged.totalPages,
             };
         }
-        const query = filtersToQuery(merged);
-        if (!query) {
-            return { items: [], total: 0, page: 1, totalPages: 1 };
-        }
-
-        const [page, attachedByProperty] = await Promise.all([
-            propertyCriteriaCount(merged.propertyFilters)
+        const query = filtersToQuery(merged)!;
+        const filterLocally =
+            propertyCriteriaCount(merged.propertyFilters) > 0 ||
+            Boolean(merged.ownerId || merged.clientId);
+        const [source, attached] = await Promise.all([
+            filterLocally
                 ? (options.propertyCollection
                       ? options.propertyCollection({ ...query, page: 1 })
                       : collectPropertyPages((page) =>
                             propertiesApi.list({ ...query, page }, signal),
                         )
-                  ).then((listings) =>
-                      paginateItems(
-                          listings
-                              .map(mapPropertyListingToMyItem)
-                              .filter((item) => matchesListingCriteria(item, merged)),
-                          merged.page,
-                          PAGE_SIZE,
-                      ),
-                  )
-                : propertiesApi.list(query, signal).then((page) => ({
-                      ...page,
-                      items: page.items.map(mapPropertyListingToMyItem),
-                  })),
-            withAttachedClients
-                ? (options.attachedClients ?? attachedClientsByProperty)()
-                : Promise.resolve(new Map<string, AttachedClientRef[]>()),
+                  ).then((items) => ({
+                      items,
+                      total: items.length,
+                      page: merged.page,
+                      totalPages: 1,
+                  }))
+                : propertiesApi.list(query, signal),
+            attachedPromise,
         ]);
+        const items = source.items
+            .map(mapPropertyListingToMyItem)
+            .map((item) => attach(item, attached));
+        if (filterLocally) {
+            // Join people before filtering and paginate only after every API page has been checked.
+            const matched = items.filter(
+                (item) =>
+                    matchesListingCriteria(item, merged) &&
+                    matchesPeopleFilters(
+                        item.exclusiveOwnerId ?? item.ownerId,
+                        item.attachedClients ?? [],
+                        merged,
+                    ),
+            );
+            return paginateItems(matched, merged.page, PAGE_SIZE);
+        }
         return {
-            items: page.items.map((item) => {
-                const attached = attachedByProperty.get(item.id) ?? [];
+            items,
+            total: source.total,
+            page: source.page,
+            totalPages: Math.max(1, source.totalPages),
+        };
+    },
+
+    async peopleOptions(signal?: AbortSignal) {
+        const attached = await attachedClientsByProperty(signal);
+        const listings = isMockMode()
+            ? mockMyListings
+            : (
+                  await Promise.all([
+                      collectPropertyPages((page) =>
+                          propertiesApi.list({ page, limit: 100 }, signal),
+                      ),
+                      collectPropertyPages((page) =>
+                          propertiesApi.list({ deleted: "only", page, limit: 100 }, signal),
+                      ),
+                  ])
+              )
+                  .flat()
+                  .map(mapPropertyListingToMyItem);
+        return collectPeopleFilterOptions(
+            listings.map((item) => {
+                const id = item.exclusiveOwnerId ?? item.ownerId;
                 return {
-                    ...item,
-                    attachedClients: attached.map((client) => ({
-                        id: client.id,
-                        name: client.name,
-                    })),
+                    owner: id && item.ownerName ? { id, name: item.ownerName } : null,
+                    clients: attached.get(item.id) ?? [],
                 };
             }),
-            total: page.total,
-            page: page.page,
-            totalPages: Math.max(1, page.totalPages),
-        };
+        );
     },
 
     async get(propertyId: string): Promise<MyListingItem | null> {

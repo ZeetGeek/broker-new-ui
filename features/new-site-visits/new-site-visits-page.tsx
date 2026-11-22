@@ -13,8 +13,11 @@ import {
     type VisitSort,
     type VisitTab,
 } from "@/lib/api/site-visits";
+import { closeDirectVisitHref, directVisitWorkflow } from "@/lib/visits/direct-workflow";
 
 import { Button } from "@/components/ui/button";
+
+import { VisitWorkflow } from "@/features/workflows/visit-workflow";
 
 import {
     matchIntent,
@@ -54,6 +57,8 @@ type View =
 export function NewSiteVisitsPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const directTarget = directVisitWorkflow(new URLSearchParams(searchParams.toString()));
+    const hasDirectTarget = directTarget !== null;
     const queryClient = useQueryClient();
     const mutations = useVisitMutations();
 
@@ -102,7 +107,7 @@ export function NewSiteVisitsPage() {
     // book a new one with the client and property filled in.
     const intentHandled = useRef(false);
     useEffect(() => {
-        if (intentHandled.current) return;
+        if (intentHandled.current || hasDirectTarget) return;
         const intent = parseScheduleIntent(new URLSearchParams(searchParams.toString()));
         if (!intent) return;
         intentHandled.current = true;
@@ -120,7 +125,7 @@ export function NewSiteVisitsPage() {
                 setView({ kind: "schedule", intent: null, intentMissed: false });
             }
         })();
-    }, [searchParams, router, queryClient]);
+    }, [searchParams, router, queryClient, hasDirectTarget]);
 
     const clearFilters = () => {
         setFilters({ ...EMPTY_FILTERS });
@@ -221,7 +226,20 @@ export function NewSiteVisitsPage() {
                 />
             )}
 
-            {view?.kind === "schedule" && (
+            {directTarget && (
+                <VisitWorkflow
+                    key={`${directTarget.mode}:${directTarget.id}:${directTarget.preview}`}
+                    target={directTarget}
+                    onClose={() => {
+                        close();
+                        router.replace(
+                            closeDirectVisitHref(new URLSearchParams(searchParams.toString())),
+                            { scroll: false },
+                        );
+                    }}
+                />
+            )}
+            {!directTarget && view?.kind === "schedule" && (
                 <ScheduleForm
                     intent={view.intent}
                     intentMissed={view.intentMissed}
@@ -229,7 +247,7 @@ export function NewSiteVisitsPage() {
                     onBack={close}
                 />
             )}
-            {view?.kind === "reschedule" && (
+            {!directTarget && view?.kind === "reschedule" && (
                 <ScheduleForm
                     key={view.visit.id}
                     visit={view.visit}
@@ -237,7 +255,7 @@ export function NewSiteVisitsPage() {
                     onBack={close}
                 />
             )}
-            {view?.kind === "detail" && (
+            {!directTarget && view?.kind === "detail" && (
                 <VisitDetail
                     visit={fresh(view.visit)}
                     now={now}
@@ -261,7 +279,7 @@ export function NewSiteVisitsPage() {
                     onConfirm={(intent) => confirm(fresh(view.visit), intent, "detail")}
                 />
             )}
-            {view?.kind === "confirm" && (
+            {!directTarget && view?.kind === "confirm" && (
                 <AttendanceConfirmation
                     key={`${view.visit.id}-${view.intent}`}
                     visit={fresh(view.visit)}

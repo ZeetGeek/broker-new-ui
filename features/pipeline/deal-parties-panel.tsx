@@ -41,12 +41,16 @@ export function DealPartiesPanel({
             <PartyMeetRow
                 highlightOnHover={false}
                 left={{
+                    id: owner.id,
+                    contactType: "owner",
                     name: owner.name,
                     avatarUrl: owner.avatarUrl,
                     role: "Owner",
                     onOpen: onOpenOwner,
                 }}
                 right={{
+                    id: buyer.id,
+                    contactType: "buyer",
                     name: buyer.name,
                     avatarUrl: buyer.avatarUrl,
                     role: "Client",

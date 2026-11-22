@@ -7,6 +7,7 @@ import SimpleBar from "simplebar-react";
 import { cn } from "@/lib/utils";
 
 import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { useWorkflowDismiss } from "@/components/shared/workflow-context";
 import { Dialog, DialogDescription, DialogPopup } from "@/components/ui/dialog";
 
 import "simplebar-react/dist/simplebar.min.css";
@@ -55,6 +56,8 @@ function hasVisibleDescription(description: ReactNode | undefined): boolean {
 
 export type AppModalProps = {
     open: boolean;
+    /** Existing URL-owned drawers can retain their own Back behavior. */
+    manageBrowserHistory?: boolean;
     nativeScroll?: boolean;
     /** Temporarily release modal focus when a nested external lightbox owns it. */
     modal?: boolean;
@@ -85,6 +88,7 @@ export type AppModalProps = {
  */
 export function AppModal({
     open,
+    manageBrowserHistory = true,
     nativeScroll = false,
     modal = true,
     onOpenChange,
@@ -103,6 +107,7 @@ export function AppModal({
     titleClassName,
     descriptionClassName,
 }: AppModalProps) {
+    useWorkflowDismiss(open && manageBrowserHistory, () => onOpenChange(false));
     const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const [hasMoreBelow, setHasMoreBelow] = useState(false);

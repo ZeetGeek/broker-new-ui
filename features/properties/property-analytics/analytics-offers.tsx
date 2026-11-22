@@ -1,8 +1,6 @@
-import Link from "next/link";
-
-import { brokerPipelineDealHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { ContactName } from "@/components/shared/contact-name";
 import { type AppIcon, CircleCheck, CircleSlash, Clock } from "@/components/shared/icons";
 
 import { OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
@@ -97,12 +95,12 @@ function OfferRow({
         <li className="flex flex-col gap-2">
             <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-0.5 min-inline-0">
-                    <Link
-                        href={brokerPipelineDealHref(client.id)}
-                        className="body-sm truncate font-semibold text-ink capitalize hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                    >
-                        {client.name}
-                    </Link>
+                    <ContactName
+                        name={client.name}
+                        contactId={client.clientId}
+                        contactType="buyer"
+                        className="body-sm truncate font-semibold text-ink hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    />
                     <p className="body-sm flex flex-wrap items-baseline gap-x-2 text-ink-muted">
                         <span className="font-semibold text-ink tabular-nums">
                             {formatSideAmount(offer.amountInr, offer.side)}

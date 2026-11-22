@@ -1,6 +1,6 @@
 "use client";
+
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 
 import { Label, PolarAngleAxis, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
 
@@ -13,6 +13,7 @@ import {
     portalProfileMenuSurfaceClass,
 } from "@/components/layout/portal-profile-menu";
 import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     ArrowRight,
@@ -30,6 +31,7 @@ import {
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import {
@@ -67,7 +69,6 @@ const CARD =
     "flex min-inline-0 flex-col rounded-card bg-surface p-4 shadow-sm ring-1 ring-border-warm/50 sm:p-5";
 const LINK =
     "body-sm inline-flex min-block-11 items-center gap-2 rounded-control font-semibold text-brand outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring";
-const TAG = "inline-flex shrink-0 items-center rounded-full px-2.5 py-1 caption font-medium";
 /** Track remaining content so fixed footers only cast a shadow over a scrollable list. */
 function useScrollFooter() {
     const viewportRef = useRef<HTMLDivElement>(null);
@@ -232,47 +233,6 @@ function PipelineOverview() {
     );
 }
 
-function VisitDetails({ visit, children }: { visit: PreviewVisit; children: React.ReactElement }) {
-    return (
-        <Popover>
-            <PopoverTrigger render={children} />
-            <PopoverContent align="end" className="max-inline-[calc(100vw-2rem)]">
-                <PopoverTitle>{visit.client}</PopoverTitle>
-                <p className="body-sm font-medium text-ink">
-                    {visit.time}–{visit.end}
-                </p>
-                <p className="body-sm text-ink-muted">{visit.property}</p>
-                <p className="body-sm flex items-center gap-1.5 text-ink-muted">
-                    <MapPin aria-hidden className="shrink-0 block-4 inline-4" />
-                    {visit.location}
-                </p>
-                <span
-                    className={cn(
-                        TAG,
-                        "self-start",
-                        visit.phase === "needs_update"
-                            ? "bg-urgent-soft text-urgent"
-                            : visit.phase === "running"
-                              ? "bg-sky-100 text-sky-800"
-                              : "bg-brand-soft text-brand-text",
-                    )}
-                >
-                    {visit.outcome
-                        ? visit.outcome === "attended"
-                            ? "Attended"
-                            : "Not attended"
-                        : visit.phase === "needs_update"
-                          ? "Needs update"
-                          : visit.phase === "running"
-                            ? "Running"
-                            : "Upcoming"}
-                </span>
-            </PopoverContent>
-        </Popover>
-    );
-}
-
-/** `12:30–1:15 PM` — drops the first AM/PM when both ends share it. */
 function visitTimeRange(visit: PreviewVisit) {
     const start = visit.time.endsWith(visit.end.slice(-2)) ? visit.time.slice(0, -3) : visit.time;
     return `${start}–${visit.end}`;
@@ -299,6 +259,8 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
     const s = featured ? nextVisitStyles : visitStyles;
     const titleId = `visit-card-${featured ? "next" : visit.id}`;
     const needsUpdate = visit.phase === "needs_update";
+    const visitHref = `/broker/visits?${new URLSearchParams({ view: "detail", visit: visit.id, preview: "true" })}`;
+    const rescheduleHref = `/broker/visits?${new URLSearchParams({ view: "reschedule", visit: visit.id, preview: "true" })}`;
 
     const menu = (
         <DropdownMenu>
@@ -318,10 +280,10 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
                 align="end"
                 className={cn(portalProfileMenuSurfaceClass, "inline-auto min-inline-44")}
             >
-                {/* Preview visits are local; rescheduling happens on the Visits page. */}
+                {/* Preview IDs only open read-only sample details, never live visit mutations. */}
                 <DropdownMenuItem
                     className={portalProfileMenuItemClass}
-                    render={<Link href="/broker/visits" />}
+                    render={<Link href={rescheduleHref} />}
                 >
                     <CalendarClock aria-hidden />
                     Reschedule
@@ -345,7 +307,7 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
 
     return (
         <article data-linked-card className={s.card} aria-labelledby={titleId}>
-            <CardLink href="/broker/visits" label={`Open visits for ${visit.property}`} />
+            <CardLink href={visitHref} label={`View visit for ${visit.property}`} />
             {featured ? (
                 <div className={s.header}>
                     <h2 className="body-sm font-semibold">Your next visit</h2>
@@ -384,11 +346,19 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
                     <div className={s.people}>
                         <p className={s.person}>
                             <span className={s.personRole}>Client</span>
-                            <span className={s.personName}>{visit.client}</span>
+                            <ContactName
+                                name={visit.client}
+                                contactType="buyer"
+                                className={s.personName}
+                            />
                         </p>
                         <p className={s.person}>
                             <span className={s.personRole}>Owner</span>
-                            <span className={s.personName}>{visit.owner}</span>
+                            <ContactName
+                                name={visit.owner}
+                                contactType="owner"
+                                className={s.personName}
+                            />
                         </p>
                     </div>
                 </div>
@@ -430,15 +400,15 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
                     </>
                 ) : (
                     <>
-                        <VisitDetails visit={visit}>
-                            <Button
-                                variant={featured ? "highlight" : "accent"}
-                                className={s.action}
-                            >
-                                View visit
-                                <ArrowRight aria-hidden />
-                            </Button>
-                        </VisitDetails>
+                        <Button
+                            variant={featured ? "highlight" : "accent"}
+                            className={s.action}
+                            nativeButton={false}
+                            render={<Link href={visitHref} />}
+                        >
+                            View visit
+                            <ArrowRight aria-hidden />
+                        </Button>
                         <Popover>
                             <PopoverTrigger
                                 render={
@@ -454,7 +424,9 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
                                 <span className={s.actionLabel}>Call client</span>
                             </PopoverTrigger>
                             <PopoverContent className="max-inline-[calc(100vw-2rem)]">
-                                <PopoverTitle>{visit.client}</PopoverTitle>
+                                <PopoverTitle>
+                                    <ContactName name={visit.client} contactType="buyer" />
+                                </PopoverTitle>
                                 <p className="body-sm text-ink-muted">
                                     No phone number on this Client yet. Open the Client record to
                                     add one, then you can call from here.
@@ -517,7 +489,7 @@ function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
                         variant="outline"
                         size="sm"
                         nativeButton={false}
-                        render={<Link href="/broker/visits?tab=slots" />}
+                        render={<Link href="/broker/visits?view=schedule" />}
                     >
                         <CalendarPlus aria-hidden />
                         Schedule visit

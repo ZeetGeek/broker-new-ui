@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 
 import { formatDateShort, formatShowingWhen, isSameCalendarDay } from "@/lib/format/date";
 import { formatTelUrl } from "@/lib/format/phone";
@@ -9,6 +8,7 @@ import { plural } from "@/lib/format/plural";
 import { brokerPipelineDealHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { ContactName } from "@/components/shared/contact-name";
 import {
     type AppIcon,
     ArrowRight,
@@ -20,6 +20,7 @@ import {
     HandCoins,
     PhoneCall,
 } from "@/components/shared/icons";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import { AnalyticsCard } from "@/features/properties/property-analytics/analytics-card";
@@ -136,12 +137,12 @@ function AttentionRow({
             <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
                 <p className="body-sm font-semibold text-ink">{row.title}</p>
                 <p className="body-sm text-ink-muted">
-                    <Link
-                        href={dealHref}
-                        className="font-medium text-ink capitalize hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                    >
-                        {client.name}
-                    </Link>
+                    <ContactName
+                        name={client.name}
+                        contactId={client.clientId}
+                        contactType="buyer"
+                        className="font-medium text-ink hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    />
                     {" · "}
                     {row.detail}
                 </p>

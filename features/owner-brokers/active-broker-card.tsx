@@ -1,13 +1,16 @@
 "use client";
+
 import { useState } from "react";
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
+import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { IconButton } from "@/components/shared/icon-button";
 import { MapPin, MoreHorizontal, Phone, UserMinus } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
@@ -68,7 +71,14 @@ export function ActiveBrokerCard({
                 <div className="flex-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">
                         <h2 data-card-title className="body truncate font-bold text-ink capitalize">
-                            {item.brokerName}
+                            <ContactName
+                                name={item.brokerName}
+                                href={
+                                    item.brokerId
+                                        ? ownerBrokerProfileHref(item.brokerId)
+                                        : undefined
+                                }
+                            />
                         </h2>
                         {/* Verification badge temporarily hidden. */}
                         {FEATURE_RERA_VERIFICATION && item.brokerVerified ? (

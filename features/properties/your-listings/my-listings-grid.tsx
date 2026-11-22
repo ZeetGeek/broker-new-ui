@@ -12,7 +12,10 @@ import { ownerPropertyDetailHref, ownerPropertyEditHref } from "@/lib/routes/own
 import { PropertyCard } from "@/components/shared/property-card";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
-import { MY_LISTINGS_GRID_CLASS } from "@/features/properties/your-listings/my-listings-grid-class";
+import {
+    BROKER_MY_LISTINGS_GRID_CLASS,
+    MY_LISTINGS_GRID_CLASS,
+} from "@/features/properties/your-listings/my-listings-grid-class";
 import { toOwnedPropertyCardListing } from "@/features/properties/your-listings/to-owned-property-card";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
@@ -24,6 +27,7 @@ export type MyListingsGridProps = {
     onEditListing?: (listing: MyListingItem) => void;
     /** When set, each card offers "Attach owner" for that listing. */
     onAttachOwner?: (listing: MyListingItem) => void;
+    onAttachClients?: (listing: MyListingItem) => void;
     /** When set, each card offers delete (caller shows confirm). */
     onDeleteListing?: (listing: MyListingItem) => void;
     onInviteBroker?: (listing: MyListingItem) => void;
@@ -48,14 +52,18 @@ const GRID_BREAKPOINTS = [
     { minWidth: 1280, columns: 5 },
 ];
 
-const IMAGE_SIZES =
-    "(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw";
+const BROKER_GRID_BREAKPOINTS = GRID_BREAKPOINTS.filter(({ columns }) => columns <= 4);
+
+const BROKER_IMAGE_SIZES =
+    "(min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw";
+const IMAGE_SIZES = `(min-width: 1280px) 20vw, ${BROKER_IMAGE_SIZES}`;
 
 export function MyListingsGrid({
     items,
     portal = "broker",
     onEditListing,
     onAttachOwner,
+    onAttachClients,
     onDeleteListing,
     onInviteBroker,
     brokersByProperty,
@@ -74,9 +82,11 @@ export function MyListingsGrid({
             getKey={(item) => item.id}
             estimateRowHeight={520}
             gap="card-grid"
-            breakpoints={GRID_BREAKPOINTS}
+            breakpoints={portal === "broker" ? BROKER_GRID_BREAKPOINTS : GRID_BREAKPOINTS}
             ariaLabel="My Listings"
-            gridClassName={MY_LISTINGS_GRID_CLASS}
+            gridClassName={
+                portal === "broker" ? BROKER_MY_LISTINGS_GRID_CLASS : MY_LISTINGS_GRID_CLASS
+            }
             renderItem={(item, index) => {
                 const listing = toOwnedPropertyCardListing(item);
 
@@ -84,6 +94,8 @@ export function MyListingsGrid({
                     return (
                         <PropertyCard
                             variant="owned"
+                            showStatus={portal !== "broker"}
+                            ownerRowStyle={portal === "broker" ? "linked" : "inline"}
                             listing={listing}
                             audience={portal}
                             detailsHref={detailHref(item.id)}
@@ -95,7 +107,7 @@ export function MyListingsGrid({
                                     deletedActions.disabled || deletedActions.restoringId != null,
                             }}
                             priority={index === 0}
-                            imageSizes={IMAGE_SIZES}
+                            imageSizes={portal === "broker" ? BROKER_IMAGE_SIZES : IMAGE_SIZES}
                         />
                     );
                 }
@@ -103,12 +115,15 @@ export function MyListingsGrid({
                 return (
                     <PropertyCard
                         variant="owned"
+                        showStatus={portal !== "broker"}
+                        ownerRowStyle={portal === "broker" ? "linked" : "inline"}
                         listing={listing}
                         audience={portal}
                         detailsHref={detailHref(item.id)}
                         editHref={editHref(item.id)}
                         onEdit={onEditListing ? () => onEditListing(item) : undefined}
                         onAttachOwner={onAttachOwner ? () => onAttachOwner(item) : undefined}
+                        onAddBuyer={onAttachClients ? () => onAttachClients(item) : undefined}
                         onAnalytics={
                             portal === "broker"
                                 ? () => router.push(brokerPropertyAnalyticsHref(item.id))
@@ -125,7 +140,7 @@ export function MyListingsGrid({
                         isSaved={isSaved?.(item) ?? false}
                         onToggleSave={onToggleSave ? () => onToggleSave(item) : undefined}
                         priority={index === 0}
-                        imageSizes={IMAGE_SIZES}
+                        imageSizes={portal === "broker" ? BROKER_IMAGE_SIZES : IMAGE_SIZES}
                     />
                 );
             }}

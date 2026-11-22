@@ -7,7 +7,10 @@ import { cn } from "@/lib/utils";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { Skeleton } from "@/components/shared/skeleton";
 
-import { MY_LISTINGS_GRID_CLASS } from "@/features/properties/your-listings/my-listings-grid-class";
+import {
+    BROKER_MY_LISTINGS_GRID_CLASS,
+    MY_LISTINGS_GRID_CLASS,
+} from "@/features/properties/your-listings/my-listings-grid-class";
 import { MyListingsToolbarSkeleton } from "@/features/properties/your-listings/my-listings-header";
 import { MyListingsIntro } from "@/features/properties/your-listings/my-listings-intro";
 import { DEFAULT_MY_LISTINGS_FILTERS } from "@/features/properties/your-listings/types";
@@ -113,7 +116,11 @@ export function MyListingsResultsSkeleton({
     return (
         <div role="status" aria-busy="true">
             <span className="sr-only">{label}</span>
-            <div className={MY_LISTINGS_GRID_CLASS}>
+            <div
+                className={
+                    portal === "broker" ? BROKER_MY_LISTINGS_GRID_CLASS : MY_LISTINGS_GRID_CLASS
+                }
+            >
                 {Array.from({ length: count }, (_, index) => (
                     <ListingCardSkeleton key={index} portal={portal} />
                 ))}

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 import { brokerRequestsApi } from "@/lib/api/broker-requests";
 import { PREF_KEYS } from "@/lib/prefs/keys";
@@ -14,6 +13,7 @@ import { Check, Clock, Send, X } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";

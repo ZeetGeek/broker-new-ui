@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import { clientsApi } from "@/lib/api/clients";
+import { formatPersonName } from "@/lib/format/person-name";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
@@ -100,15 +101,17 @@ function BuyerRow({
                 <Checkbox
                     checked={isSelected}
                     onCheckedChange={onToggle}
-                    aria-label={`Add ${client.name}`}
+                    aria-label={`Add ${formatPersonName(client.name)}`}
                     className="mbs-0.5 shrink-0"
                 />
 
-                <UserAvatar name={client.name} size="sm" />
+                <UserAvatar name={formatPersonName(client.name)} size="sm" />
 
                 <div className="flex flex-1 flex-col gap-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="body-sm font-semibold text-ink">{client.name}</span>
+                        <span className="body-sm font-semibold text-ink">
+                            {formatPersonName(client.name)}
+                        </span>
                         {mismatch ? <Badge color="amber">{mismatch}</Badge> : null}
                     </div>
 

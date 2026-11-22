@@ -56,6 +56,7 @@ import { IconButton } from "@/components/shared/icon-button";
 import { ArrowRight, Check, ChevronDown, RotateCcw, X } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
+import { useWorkflowDismiss } from "@/components/shared/workflow-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -919,6 +920,8 @@ export function PropertyForm({
         if (!isDialog && !onCancel)
             router.push(portal === "owner" ? OWNER_PROPERTIES_HREF : BROKER_YOUR_LISTINGS_HREF);
     }
+
+    useWorkflowDismiss(isDialog && open, () => void requestClose());
 
     const formActions = (
         <PropertyFormActions

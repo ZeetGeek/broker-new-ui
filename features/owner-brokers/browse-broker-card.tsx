@@ -3,9 +3,11 @@
 import type { ReactNode } from "react";
 
 import type { BrokerProfile } from "@/lib/api/representative";
+import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { BadgeCheck, MapPin, Send } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -149,7 +151,11 @@ export function BrowseBrokerCard({
                 <div className="flex-1 min-inline-0">
                     <div className="flex flex-wrap items-center gap-1.5">
                         <h2 data-card-title className="body truncate font-bold text-ink capitalize">
-                            {name}
+                            <ContactName
+                                name={name}
+                                href={ownerBrokerProfileHref(broker.id)}
+                                onOpen={open}
+                            />
                         </h2>
                         {/* Verification badge temporarily hidden. */}
                         {FEATURE_RERA_VERIFICATION && broker.verified ? (

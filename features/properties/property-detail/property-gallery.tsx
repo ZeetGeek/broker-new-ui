@@ -2,7 +2,6 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -11,6 +10,7 @@ import { measuredPxToRem } from "@/lib/styles/rem";
 import { AppImage } from "@/components/shared/app-image";
 import { Camera } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 
 import { PropertyGalleryControls } from "./property-gallery-controls";
 

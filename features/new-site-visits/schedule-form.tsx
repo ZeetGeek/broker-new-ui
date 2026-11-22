@@ -4,6 +4,7 @@ import { type FormEvent, useEffect, useId, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import type { BookableLead, BrokerVisit } from "@/lib/api/site-visits";
+import { formatPersonName } from "@/lib/format/person-name";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { formatVisitDate, formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
@@ -224,7 +225,7 @@ export function ScheduleForm({
                                             aria-hidden
                                             className="shrink-0 block-4 inline-4"
                                         />
-                                        {visit.clientName}
+                                        {formatPersonName(visit.clientName)}
                                     </p>
                                     <p className="body-sm flex items-center gap-2 text-ink">
                                         <Building2

@@ -340,7 +340,14 @@ export function DealOverlayStats({
     /** Owner-side cards pass "Broker". */
     personLabel?: string;
 }) {
-    return <OverlayPersonLine label={personLabel} name={ownerName} avatarUrl={ownerAvatarUrl} />;
+    return (
+        <OverlayPersonLine
+            label={personLabel}
+            name={ownerName}
+            contactType={personLabel === "Owner" ? "owner" : undefined}
+            avatarUrl={ownerAvatarUrl}
+        />
+    );
 }
 
 function ChatUnreadBadge({ count }: { count: number }) {

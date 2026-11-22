@@ -7,11 +7,13 @@ import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
 import { parseMoney } from "@/lib/format/money";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
+import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import {
     Building2,
     Check,
@@ -41,13 +43,17 @@ import {
     StagePill,
 } from "@/features/owner-leads/owner-lead-meta";
 
-function PartyCell({ name, role }: { name: string; role: string }) {
+function PartyCell({ name, role, href }: { name: string; role: string; href?: string }) {
     return (
         <div className="flex items-center gap-2.5 min-inline-0">
             <UserAvatar name={name} size="xs" className="shrink-0" />
             <div className="flex flex-col min-inline-0">
                 <span className="body-xs text-ink-subtle">{role}</span>
-                <span className="body-sm truncate font-semibold text-ink">{name}</span>
+                <ContactName
+                    name={name}
+                    href={href}
+                    className="body-sm truncate font-semibold text-ink"
+                />
             </div>
         </div>
     );
@@ -265,7 +271,15 @@ export function OwnerLeadCard({
                       bg-surface-muted p-3
                     "
                 >
-                    <PartyCell name={brokerName} role="Broker" />
+                    <PartyCell
+                        name={brokerName}
+                        role="Broker"
+                        href={
+                            lead.brokerId || lead.broker?.id
+                                ? ownerBrokerProfileHref((lead.brokerId || lead.broker?.id)!)
+                                : undefined
+                        }
+                    />
                     <div className="ps-3 min-inline-0">
                         <PartyCell name={clientName} role="Buyer" />
                     </div>

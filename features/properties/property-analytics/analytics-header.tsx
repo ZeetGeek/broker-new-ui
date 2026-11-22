@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import type { PropertyAnalytics } from "@/lib/api/property-analytics";
 import { formatDateShort } from "@/lib/format/date";
 import { plural } from "@/lib/format/plural";
@@ -8,6 +6,7 @@ import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/route
 import { ArrowLeft, MapPin } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge, type BadgeColor } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

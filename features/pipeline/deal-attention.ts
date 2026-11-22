@@ -9,6 +9,7 @@ export type AttentionTone = "healthy" | "slow" | "quiet" | "unknown";
 
 export type OtherBuyer = {
     dealId: string;
+    clientId?: string;
     name: string;
     stage: DealStage;
 };
@@ -59,7 +60,9 @@ export function otherBuyersOnProperty(deal: DealItem, all: DealItem[]): OtherBuy
     return all.flatMap((item) => {
         if (item.id === deal.id || item.property.id !== deal.property.id) return [];
         if (!isLiveStage(item.status)) return [];
-        return [{ dealId: item.id, name: item.buyer.name, stage: item.status }];
+        return [
+            { dealId: item.id, clientId: item.buyer.id, name: item.buyer.name, stage: item.status },
+        ];
     });
 }
 

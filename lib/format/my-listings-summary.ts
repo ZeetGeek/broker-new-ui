@@ -20,10 +20,22 @@ export function buildMyListingsSummaryLines({
     const isDraft = status === "draft";
     const isDeleted = status === "deleted";
     if (hasActiveFilters) {
-        const noun = isDraft ? "draft" : isDeleted ? "deleted listing" : "listing";
+        const noun = isDraft
+            ? "draft"
+            : isDeleted
+              ? "deleted listing"
+              : status === "sold"
+                ? "sold listing"
+                : "listing";
         return resultTotal === 0
             ? [`No ${noun}s match your filters`, "Try changing or clearing a filter"]
             : [`${countLabel(resultTotal, `${noun} matches`, `${noun}s match`)} your filters`];
+    }
+
+    if (status === "sold") {
+        return resultTotal === 0
+            ? ["No sold properties yet", "Properties you mark as sold will appear here"]
+            : [`${countLabel(resultTotal, "property is", "properties are")} marked as sold`];
     }
 
     if (isDraft) {

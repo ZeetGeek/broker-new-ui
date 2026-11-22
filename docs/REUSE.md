@@ -16,6 +16,29 @@ rows, form fields, and card-internal controls on their own spacing scales.
 
 ## Cards that navigate
 
+### Same-page workflows
+
+Use `WorkflowLink` from `components/shared/workflow-link.tsx` for explicit create
+actions and record links that should open over the current broker page.
+`CardLink` and `PropertyTitleLink` already support it. Keep real destinations:
+Ctrl/Cmd-click, new tabs, direct links, and full collection navigation still work.
+Pass an existing local `onOpen` to `CardLink` when the page already owns a panel;
+it takes precedence. Do not intercept document-wide clicks or collection tabs.
+
+`WorkflowProvider` owns selection, route/account cleanup, focus restoration, and
+browser Back dismissal. `WorkflowHost` loads only the requested workflow family.
+Reuse the original forms and mutations; call `useWorkflowWorking` during local
+edit/busy states and `notifyWorkflowSaved` after a successful mutation. Refresh
+query families without resetting page filters, scroll, or the selected tab.
+New `AppModal` surfaces register their existing close/dirty guard automatically;
+raw dialog forms use `useWorkflowDismiss`. Contacts' existing URL-owned detail
+drawer opts out with `manageBrowserHistory={false}`.
+
+Keep property creation/editing in `PropertyFormDialog`, task edits in `TaskForm`,
+and visit scheduling in `ScheduleForm`. Do not invent API endpoints for overlays.
+Sample visit IDs must stay explicitly marked preview and must never reach live
+visit mutations. Owner editing retains the API's existing availability limits.
+
 Use `CardLink` from `components/shared/card-link.tsx` inside a card marked
 `data-linked-card`. Pass a real `href` and an accessible `label`. Keep the link
 beside the card content so buttons, menus, other links, and tooltips remain

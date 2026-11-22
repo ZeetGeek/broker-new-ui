@@ -32,7 +32,7 @@ import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/o
 import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
 import type { MyListingsFilters, MyListingSort } from "@/features/properties/your-listings/types";
 
-type StatusTab = "published" | "draft" | "deleted";
+type StatusTab = "published" | "draft" | "sold" | "deleted";
 
 const SEARCH_WIDTH_CLASS = cn(
     LIST_SEARCH_WIDTH_CLASS,
@@ -58,6 +58,12 @@ const STATUS_TABS: {
         dotClassName: "bg-yellow-300",
     },
     {
+        key: "sold",
+        label: "Sold",
+        description: "Properties marked as sold",
+        dotClassName: "bg-amber-500",
+    },
+    {
         key: "deleted",
         label: "Deleted",
         description: "Restore a property or delete it permanently",
@@ -81,10 +87,13 @@ function countSheetFilters(filters: MyListingsFilters): number {
     if (filters.propertyType) count += 1;
     if (filters.bhk.length > 0) count += 1;
     if (filters.type) count += 1;
+    if (filters.ownerId) count += 1;
+    if (filters.clientId) count += 1;
     return count;
 }
 
 function MyListingsFilterDialog({
+    showPeopleFilters,
     open,
     onOpenChange,
     filters,
@@ -94,6 +103,7 @@ function MyListingsFilterDialog({
     onOpenChange: (open: boolean) => void;
     filters: MyListingsFilters;
     onApply: (next: MyListingsFilters) => void;
+    showPeopleFilters: boolean;
 }) {
     const discoveryFilters = useMemo(
         () =>
@@ -117,8 +127,10 @@ function MyListingsFilterDialog({
             appliedFilters={appliedFilters}
             discoveryFilters={discoveryFilters}
             showDiscoveryFilters
+            peopleFilterScope={showPeopleFilters ? "my-listings" : undefined}
+            peopleFilters={showPeopleFilters ? filters : undefined}
             discoveryDescription="Narrow your listings by location, budget and property type."
-            onApply={(patch, discovery) => {
+            onApply={(patch, discovery, people) => {
                 const criteriaPatch = Object.fromEntries(
                     Object.keys(EMPTY_PROPERTY_CRITERIA)
                         .filter((key) => key in patch)
@@ -127,6 +139,9 @@ function MyListingsFilterDialog({
                 const next = normalizePropertyCriteria({ ...discovery, ...criteriaPatch });
                 onApply({
                     ...filters,
+                    ...(showPeopleFilters
+                        ? { ownerId: people?.ownerId ?? "", clientId: people?.clientId ?? "" }
+                        : {}),
                     type: next.type,
                     propertyType: "",
                     bhk: [],
@@ -139,6 +154,7 @@ function MyListingsFilterDialog({
 }
 
 export type MyListingsHeaderProps = {
+    showPeopleFilters?: boolean;
     filters: MyListingsFilters;
     onFiltersChange: (next: MyListingsFilters) => void;
     summary: MyListingsSummary | null;
@@ -252,6 +268,7 @@ export function MyListingsToolbarSkeleton({
 }
 
 export function MyListingsHeader({
+    showPeopleFilters = false,
     filters,
     onFiltersChange,
     summary,
@@ -291,6 +308,8 @@ export function MyListingsHeader({
                                     onClear={() =>
                                         onFiltersChange({
                                             ...filters,
+                                            ownerId: "",
+                                            clientId: "",
                                             propertyType: "",
                                             propertyFilters: { ...EMPTY_PROPERTY_CRITERIA },
                                             bhk: [],
@@ -320,7 +339,8 @@ export function MyListingsHeader({
                                                     {tab.label}
                                                 </span>
                                             }
-                                            count={count != null && count > 0 ? count : undefined}
+                                            count={count}
+                                            showZero
                                             isLoading={isLoading}
                                             isActive={active}
                                             onClick={() => selectStatusTab(tab.key)}
@@ -361,6 +381,7 @@ export function MyListingsHeader({
             </div>
 
             <MyListingsFilterDialog
+                showPeopleFilters={showPeopleFilters}
                 open={sheetOpen}
                 onOpenChange={setSheetOpen}
                 filters={filters}

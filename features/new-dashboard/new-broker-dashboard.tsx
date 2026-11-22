@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
 import { useQuery } from "@tanstack/react-query";
 import { tinykeys } from "tinykeys";
@@ -14,6 +13,7 @@ import { useRouter } from "@/lib/navigation";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { areaColorClassName } from "@/lib/styles/area-color";
 import { cn } from "@/lib/utils";
+import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 
 import {
     portalProfileMenuItemClass,
@@ -35,6 +35,8 @@ import {
 } from "@/components/shared/icons";
 import { ListAddButton } from "@/components/shared/list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
+import { useWorkflow } from "@/components/shared/workflow-context";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -151,7 +153,15 @@ function WorkingAreas({ areas }: { areas: string[] }) {
 
 export function NewBrokerDashboard() {
     const router = useRouter();
+    const openWorkflow = useWorkflow();
     const dispatch = useAppDispatch();
+    useEffect(() => {
+        const refresh = () => {
+            void dispatch(fetchBrokerDashboard({ background: true }));
+        };
+        window.addEventListener(WORKFLOW_SAVED_EVENT, refresh);
+        return () => window.removeEventListener(WORKFLOW_SAVED_EVENT, refresh);
+    }, [dispatch]);
     const hydrated = useAppSelector((state) => state.auth.hydrated);
     const { data, profile, status, error } = useAppSelector((state) => state.dashboard);
     const [now, setNow] = useState<Date | null>(null);
@@ -180,9 +190,27 @@ export function NewBrokerDashboard() {
         if (!hydrated || status !== "succeeded") return;
         const actions: [ShortcutId, () => void][] = [
             ["add_contact", () => setAddClientOpen(true)],
-            ["dashboard_add_listing", () => router.push("/broker/properties/new")],
-            ["dashboard_schedule_visit", () => router.push("/broker/visits?tab=slots")],
-            ["dashboard_add_task", () => router.push("/broker/tasks?view=create")],
+            [
+                "dashboard_add_listing",
+                () => {
+                    if (!openWorkflow?.("/broker/properties/new"))
+                        router.push("/broker/properties/new");
+                },
+            ],
+            [
+                "dashboard_schedule_visit",
+                () => {
+                    if (!openWorkflow?.("/broker/visits?tab=slots"))
+                        router.push("/broker/visits?tab=slots");
+                },
+            ],
+            [
+                "dashboard_add_task",
+                () => {
+                    if (!openWorkflow?.("/broker/tasks?view=create"))
+                        router.push("/broker/tasks?view=create");
+                },
+            ],
         ];
         return tinykeys(
             window,
@@ -214,7 +242,7 @@ export function NewBrokerDashboard() {
                 }),
             ),
         );
-    }, [hydrated, status, addClientOpen, router]);
+    }, [hydrated, status, addClientOpen, router, openWorkflow]);
 
     if (status === "failed") {
         return (
@@ -291,7 +319,7 @@ export function NewBrokerDashboard() {
                 : listings.data
                   ? "Published in your inventory"
                   : "Loading listings…",
-            href: "/broker/your-listings",
+            href: "/broker/my-listings",
         },
     ];
 

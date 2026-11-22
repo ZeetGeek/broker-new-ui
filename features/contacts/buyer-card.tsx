@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { parsePhoneNumberFromString } from "libphonenumber-js/max";
 
@@ -7,6 +7,7 @@ import { formatBudgetAmount } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
 import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { CallIcon, Link2, MapPin, WhatsAppIcon } from "@/components/shared/icons";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -132,19 +133,15 @@ export function BuyerCard({
                         />
                         <div className="min-inline-0">
                             <h2 className="body font-semibold text-ink">
-                                <button
-                                    type="button"
+                                <ContactName
+                                    name={buyer.name}
+                                    contactId={buyer.id}
+                                    contactType="buyer"
+                                    onOpen={open}
                                     data-card-title
                                     data-contact-id={buyer.id}
-                                    aria-label={`Open ${buyer.name}`}
-                                    onClick={(event) => {
-                                        event.stopPropagation();
-                                        open();
-                                    }}
-                                    className="relative rounded-sm text-start wrap-anywhere outline-none max-inline-full after:absolute after:inset-x-0 after:inset-y-[-10px] hover:text-brand-text focus-visible:ring-3 focus-visible:ring-ring/30"
-                                >
-                                    {buyer.name}
-                                </button>
+                                    className="wrap-anywhere max-inline-full"
+                                />
                             </h2>
                             {homeLocation ? (
                                 <p className="body-sm mbs-1 flex items-start gap-1 text-ink-muted">
@@ -227,7 +224,7 @@ export function BuyerCard({
                                 if (propertyCount) (onOpenProperties ?? onOpen)(buyer);
                                 else onAttachProperties(buyer);
                             }}
-                            className="flex-wrap gap-2 border-dashed border-brand/40 p-2 font-semibold whitespace-normal text-brand-text shadow-none block-auto inline-full min-block-11 min-inline-0 hover:border-brand hover:bg-brand-soft/30 @[20rem]/contact-card:px-4"
+                            className="flex-wrap gap-2 border-dashed border-brand/40 p-2 font-semibold whitespace-normal text-brand-text shadow-none block-auto inline-full min-block-11 min-inline-0 hover:border-brand hover:bg-brand-soft/30 hover:text-brand-text @[20rem]/contact-card:px-4"
                         >
                             {propertyCount > 0 ? (
                                 <span className="body-sm font-semibold text-ink-muted">

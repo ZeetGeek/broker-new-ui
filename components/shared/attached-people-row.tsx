@@ -2,10 +2,12 @@
 
 import type { ReactNode } from "react";
 
+import { formatPersonName } from "@/lib/format/person-name";
 import { cn } from "@/lib/utils";
 
 import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import { AvatarStack } from "@/components/shared/avatar-stack";
+import { ContactName } from "@/components/shared/contact-name";
 import { UserPlus } from "@/components/shared/icons";
 import {
     OVERLAY_GLASS_BUTTON_CLASS,
@@ -17,6 +19,9 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 type AttachedPerson = { id: string; name: string; avatarUrl?: string };
 
 type PartyMeetSide = {
+    id?: string;
+    href?: string;
+    contactType?: "buyer" | "owner";
     name: string;
     avatarUrl?: string;
     /** Screen-reader role, e.g. "Owner" / "Buyer" / "Broker". */
@@ -85,9 +90,14 @@ function PartyMeetPerson({
                         className="shrink-0"
                     />
                     <span className="flex flex-col gap-0.5 text-start min-inline-0">
-                        <span className="body-sm truncate font-semibold tracking-wide text-ink capitalize">
-                            {side.name}
-                        </span>
+                        <ContactName
+                            name={side.name}
+                            contactId={side.id}
+                            contactType={side.contactType}
+                            href={side.href}
+                            onOpen={side.contactType ? undefined : side.onOpen}
+                            className="body-sm truncate font-semibold tracking-wide text-ink"
+                        />
                         <span className="body-xs truncate text-ink-muted">{side.role}</span>
                     </span>
                 </>
@@ -97,26 +107,16 @@ function PartyMeetPerson({
 
     const className = "flex flex-1 items-center gap-2.5 rounded-[8px] px-2 py-1.5 min-inline-0";
 
-    if (side.onOpen) {
-        return (
-            <button
-                type="button"
-                onClick={side.onOpen}
-                className={cn(
-                    className,
-                    highlightOnHover && "transition-colors duration-160 hover:bg-surface-muted/60",
-                    `
-                      focus-visible:outline-2 focus-visible:-outline-offset-2
-                      focus-visible:outline-ring
-                    `,
-                )}
-            >
-                {content}
-            </button>
-        );
-    }
-
-    return <div className={className}>{content}</div>;
+    return (
+        <div
+            className={cn(
+                className,
+                highlightOnHover && "transition-colors duration-160 hover:bg-surface-muted/60",
+            )}
+        >
+            {content}
+        </div>
+    );
 }
 
 function AttachedPeopleShell({
@@ -128,7 +128,7 @@ function AttachedPeopleShell({
     title: ReactNode;
     onManage?: () => void;
 }) {
-    const names = people.map((person) => person.name).join(", ");
+    const names = people.map((person) => formatPersonName(person.name)).join(", ");
 
     const content = (
         <>

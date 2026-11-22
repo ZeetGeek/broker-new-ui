@@ -1,9 +1,9 @@
 import type { CSSProperties, ReactNode } from "react";
-import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
 import { TrendingDown, TrendingUp } from "@/components/shared/icons";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 
 import { VIZ_CLASS } from "@/features/earnings/earnings-viz";
 import { isSampleDeal } from "@/features/earnings/sample-earnings";

@@ -2,7 +2,6 @@
 
 import { Fragment, type ReactNode, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
 import type { NotificationItem } from "@/lib/api/notifications";
@@ -24,6 +23,7 @@ import { cn } from "@/lib/utils";
 
 import { NotificationIcon } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,

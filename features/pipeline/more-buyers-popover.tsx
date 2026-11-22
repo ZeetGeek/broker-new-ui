@@ -1,5 +1,6 @@
 "use client";
 
+import { ContactName } from "@/components/shared/contact-name";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import type { OtherBuyer } from "@/features/pipeline/deal-attention";
@@ -31,20 +32,25 @@ export function MoreBuyersPopover({
                 <p className="body-xs font-semibold text-ink">Other clients</p>
                 <ul className="flex flex-col gap-1.5">
                     {buyers.map((buyer) => (
-                        <li key={buyer.dealId}>
+                        <li
+                            key={buyer.dealId}
+                            className="body-sm flex items-center justify-between gap-2 p-1 min-inline-0"
+                        >
+                            <ContactName
+                                name={buyer.name}
+                                contactId={buyer.clientId}
+                                contactType="buyer"
+                                className="flex-1 truncate font-medium min-inline-0"
+                            />
                             <button
                                 type="button"
                                 onClick={(event) => {
                                     event.stopPropagation();
                                     onView(buyer.dealId);
                                 }}
-                                className="
-                                  body-sm flex items-center justify-between gap-2 rounded-inner p-1
-                                  text-start text-ink inline-full
-                                  hover:bg-surface-muted
-                                "
+                                aria-label={`View ${buyer.name}'s deal`}
+                                className="body-xs shrink-0 rounded-sm p-1 text-ink-muted hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-ring"
                             >
-                                <span className="truncate font-medium">{buyer.name}</span>
                                 <span className="body-xs shrink-0 text-ink-muted">
                                     {DEAL_STAGE_META[buyer.stage].label}
                                 </span>

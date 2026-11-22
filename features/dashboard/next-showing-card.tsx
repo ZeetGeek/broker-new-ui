@@ -1,11 +1,10 @@
-import Link from "next/link";
-
 import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
 import { BROKER_VISIT_SLOTS_HREF, brokerVisitHref } from "@/lib/routes/broker";
 import { OWNER_VISITS_HREF } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
     CalendarClock,
@@ -20,6 +19,7 @@ import { PhoneNumber } from "@/components/shared/phone-number";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -392,7 +392,7 @@ export function NextShowingCard({
                         <UserAvatar name={showing.clientName} size="md" />
                         <div className="min-inline-0">
                             <p className="body truncate font-medium text-ink capitalize">
-                                {showing.clientName}
+                                <ContactName name={showing.clientName} contactType="buyer" />
                             </p>
                             <p
                                 className="

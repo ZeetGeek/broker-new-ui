@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
@@ -10,6 +11,7 @@ import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPrice } from "@/lib/format/price";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { useRouter } from "@/lib/navigation";
+import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
@@ -374,6 +376,10 @@ export function OwnerLeadBoardCard({
                 <PartyMeetRow
                     left={{
                         name: brokerName,
+                        href:
+                            lead.brokerId || lead.broker?.id
+                                ? ownerBrokerProfileHref((lead.brokerId || lead.broker?.id)!)
+                                : undefined,
                         role: "Broker",
                     }}
                     right={{

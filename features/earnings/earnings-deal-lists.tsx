@@ -9,6 +9,7 @@ import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
 import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { Award } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 
@@ -371,7 +372,11 @@ function RecentSoldRow({ row, isBest }: { row: ValuedDeal; isBest: boolean }) {
                             ) : null}
                         </div>
                         <p className="body-xs flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-ink-muted">
-                            <span>{deal.buyer.name}</span>
+                            <ContactName
+                                name={deal.buyer.name}
+                                contactId={deal.buyer.id}
+                                contactType="buyer"
+                            />
                             <span aria-hidden>·</span>
                             <DealKind isRent={deal.property.isRent} />
                         </p>

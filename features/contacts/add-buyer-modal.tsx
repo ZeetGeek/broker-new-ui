@@ -27,6 +27,7 @@ import { useMarket } from "@/hooks/use-market";
 
 import { CallIcon, Link2, Tag, UserRound } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
+import { WorkflowLink } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
@@ -142,10 +143,10 @@ function DuplicateWarning({
             </p>
             <div className="mbs-2 flex gap-2">
                 <Button
-                    type="button"
                     size="sm"
                     variant="outline"
-                    onClick={() => window.location.assign(brokerContactHref(match.id, match.type))}
+                    nativeButton={false}
+                    render={<WorkflowLink href={brokerContactHref(match.id, match.type)} />}
                 >
                     Open existing
                 </Button>

@@ -3,7 +3,7 @@ import type { PropertyType } from "@/lib/validation/property";
 export type MyListingStatus = "draft" | "published" | "unpublished";
 
 /** Inventory lifecycle is independent of deal outcomes. */
-export type MyListingsStatusTab = "published" | "draft" | "deleted";
+export type MyListingsStatusTab = "published" | "draft" | "sold" | "deleted";
 
 export type MyListingFurnishing = "furnished" | "semi" | "unfurnished";
 
@@ -121,7 +121,12 @@ export type MyListingItem = {
     visibility?: "private" | "marketplace";
     interestedBuyerIds?: string[];
     /** Buyers linked to this listing (for the avatar stack on the card). */
-    attachedClients?: Array<{ id: string; name: string; avatarUrl?: string }>;
+    attachedClients?: Array<{
+        id: string;
+        name: string;
+        avatarUrl?: string;
+        stage?: string | null;
+    }>;
     /**
      * Set only on browse (owner listing) responses. Undefined on the caller's
      * own listing, which cannot be bookmarked — the detail page hides Save then.
@@ -130,6 +135,8 @@ export type MyListingItem = {
 };
 
 export type MyListingsFilters = {
+    ownerId?: string;
+    clientId?: string;
     propertyFilters?: import("@/lib/properties/list-criteria").PropertyListCriteria;
     q: string;
     type: "" | "sale" | "rent";

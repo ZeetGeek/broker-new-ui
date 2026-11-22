@@ -10,6 +10,7 @@ import {
     propertyCriteriaCount,
     type PropertyListCriteria,
 } from "@/lib/properties/list-criteria";
+import type { PeopleFilters, PeopleFilterScope } from "@/lib/properties/people-filters";
 import { cn } from "@/lib/utils";
 import { useMarketCurrency } from "@/hooks/use-market";
 
@@ -44,6 +45,7 @@ import {
     Utensils,
     Warehouse,
 } from "@/components/shared/icons";
+import { PeopleFilterFields } from "@/components/shared/people-filter-fields";
 import { PropertyFilterFields } from "@/components/shared/property-filter-fields";
 import { RangeValuePill } from "@/components/shared/range-value-pill";
 import { Accordion, AccordionContent, AccordionItem } from "@/components/ui/accordion";
@@ -467,7 +469,10 @@ export type OwnerListingsFilterSheetProps = {
     onApply: (
         patch: Partial<OwnerListingsFilters>,
         discoveryFilters?: PropertyListCriteria,
+        peopleFilters?: PeopleFilters,
     ) => void;
+    peopleFilterScope?: PeopleFilterScope;
+    peopleFilters?: PeopleFilters;
     showDiscoveryFilters?: boolean;
     discoveryFilters?: Partial<PropertyListCriteria>;
     discoveryDescription?: string;
@@ -478,10 +483,13 @@ export function OwnerListingsFilterSheet({
     onOpenChange,
     appliedFilters,
     onApply,
+    peopleFilterScope,
+    peopleFilters,
     showDiscoveryFilters = false,
     discoveryFilters,
     discoveryDescription = "Narrow these deals by location, budget and property type.",
 }: OwnerListingsFilterSheetProps) {
+    const [draftPeople, setDraftPeople] = useState<PeopleFilters>(() => ({ ...peopleFilters }));
     const [draft, setDraft] = useState(() => extractSheetFilters(appliedFilters));
     const [draftDiscovery, setDraftDiscovery] = useState(() =>
         normalizePropertyCriteria(discoveryFilters),
@@ -518,6 +526,7 @@ export function OwnerListingsFilterSheet({
             next.propertyConditions = [...next.propertyConditions, "ready_to_move"];
         }
         setDraft(next);
+        setDraftPeople({ ...peopleFilters });
         setDraftDiscovery(normalizePropertyCriteria(discoveryFilters));
     } else if (!open && draftSource.open) {
         setDraftSource({ open: false, appliedFilters });
@@ -556,6 +565,7 @@ export function OwnerListingsFilterSheet({
 
     const hasDraftFilters = useMemo(() => {
         return (
+            (Boolean(peopleFilterScope) && Boolean(draftPeople.ownerId || draftPeople.clientId)) ||
             Boolean(draft.listedWithinDays) ||
             Boolean(draft.minCommissionPercent) ||
             Boolean(draft.maxCommissionPercent) ||
@@ -574,7 +584,7 @@ export function OwnerListingsFilterSheet({
             draft.readyToMove ||
             (showDiscoveryFilters && propertyCriteriaCount(draftDiscovery) > 0)
         );
-    }, [draft, draftDiscovery, showDiscoveryFilters]);
+    }, [draft, draftDiscovery, showDiscoveryFilters, draftPeople, peopleFilterScope]);
 
     const labelSummary = (
         values: string[],
@@ -772,11 +782,13 @@ export function OwnerListingsFilterSheet({
                 cursor: "",
             },
             showDiscoveryFilters ? normalizedDiscovery : undefined,
+            peopleFilterScope ? draftPeople : undefined,
         );
         onOpenChange(false);
     };
 
     const handleClear = () => {
+        setDraftPeople({ ownerId: "", clientId: "" });
         setDraft((prev) => ({
             ...EMPTY_SHEET_FILTERS,
             newToday: prev.listedWithinDays === "7" ? false : prev.newToday,
@@ -812,6 +824,13 @@ export function OwnerListingsFilterSheet({
                     "
                 >
                     <div className="px-5 pbe-3 sm:px-8">
+                        {open && peopleFilterScope ? (
+                            <PeopleFilterFields
+                                scope={peopleFilterScope}
+                                value={draftPeople}
+                                onChange={setDraftPeople}
+                            />
+                        ) : null}
                         <Accordion
                             key={open ? "open" : "closed"}
                             multiple

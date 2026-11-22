@@ -1,9 +1,8 @@
-import Link from "next/link";
-
 import { formatDateShort, formatTimeIn, isSameCalendarDay } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { Calendar, CalendarClock, CalendarPlus, Pencil } from "@/components/shared/icons";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 

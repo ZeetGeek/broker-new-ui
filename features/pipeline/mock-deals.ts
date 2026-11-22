@@ -102,12 +102,32 @@ const PROPERTIES = {
 
 /** Owners, matching the request fixtures. */
 const OWNERS = {
-    rakesh: { name: "Rakesh Mehta", phoneDigits: "9825044556", isRepresentationActive: true },
-    sunita: { name: "Sunita Desai", phoneDigits: "9898033221", isRepresentationActive: true },
-    imran: { name: "Imran Shaikh", phoneDigits: "9727011990", isRepresentationActive: true },
-    bhavesh: { name: "Bhavesh Patel", phoneDigits: "9016022114", isRepresentationActive: true },
+    rakesh: {
+        id: "mock_owner_rakesh",
+        name: "Rakesh Mehta",
+        phoneDigits: "9825044556",
+        isRepresentationActive: true,
+    },
+    sunita: {
+        id: "mock_owner_sunita",
+        name: "Sunita Desai",
+        phoneDigits: "9898033221",
+        isRepresentationActive: true,
+    },
+    imran: {
+        id: "mock_owner_imran",
+        name: "Imran Shaikh",
+        phoneDigits: "9727011990",
+        isRepresentationActive: true,
+    },
+    bhavesh: {
+        id: "mock_owner_bhavesh",
+        name: "Bhavesh Patel",
+        phoneDigits: "9016022114",
+        isRepresentationActive: true,
+    },
     /** Representation lapsed — name stays, the phone number goes. */
-    nilesh: { name: "Nilesh Trivedi", isRepresentationActive: false },
+    nilesh: { id: "mock_owner_nilesh", name: "Nilesh Trivedi", isRepresentationActive: false },
 } as const;
 
 /** Buyers, matching `features/clients/mock-clients.ts`. */

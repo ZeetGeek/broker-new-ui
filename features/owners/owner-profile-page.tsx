@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 
 import { type BrokerOwnerProfile, type OwnerProfileProperty, ownersApi } from "@/lib/api/owners";
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
+import { formatPersonName } from "@/lib/format/person-name";
 import { formatPhoneIn } from "@/lib/format/phone";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
@@ -112,24 +113,32 @@ function NotFoundState() {
     );
 }
 
-function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
-    const name = formatPlaceName(profile.name);
+export function OwnerProfileView({
+    profile,
+    embedded = false,
+}: {
+    profile: BrokerOwnerProfile;
+    embedded?: boolean;
+}) {
+    const name = formatPersonName(profile.name);
     const location = profile.locationLabel ? formatPlaceName(profile.locationLabel) : undefined;
     const areas = profile.localities.map(formatPlaceName).filter(Boolean);
 
     return (
-        <div className="flex flex-col gap-6 pbe-24 lg:pbe-8">
-            <Link
-                href={BROKER_OWNER_LISTINGS_HREF}
-                className="
+        <div className={embedded ? "flex flex-col gap-6" : "flex flex-col gap-6 pbe-24 lg:pbe-8"}>
+            {embedded ? null : (
+                <Link
+                    href={BROKER_OWNER_LISTINGS_HREF}
+                    className="
                   body-sm inline-flex items-center gap-1 font-medium tracking-wide text-ink-muted
                   transition-colors duration-160 inline-fit
                   hover:text-ink
                 "
-            >
-                <ChevronLeft aria-hidden className="block-4 inline-4" strokeWidth={2} />
-                Marketplace
-            </Link>
+                >
+                    <ChevronLeft aria-hidden className="block-4 inline-4" strokeWidth={2} />
+                    Marketplace
+                </Link>
+            )}
 
             <section
                 className="
@@ -262,7 +271,13 @@ function OwnerProfileView({ profile }: { profile: BrokerOwnerProfile }) {
                 {profile.properties.length === 0 ? (
                     <p className="body-sm text-ink-muted">No published listings yet.</p>
                 ) : (
-                    <div className="grid grid-cols-1 gap-card-grid sm:grid-cols-2 xl:grid-cols-3">
+                    <div
+                        className={
+                            embedded
+                                ? "grid grid-cols-1 gap-card-grid sm:grid-cols-2"
+                                : "grid grid-cols-1 gap-card-grid sm:grid-cols-2 xl:grid-cols-3"
+                        }
+                    >
                         {profile.properties.map((property) => (
                             <PropertyCard key={property.id} property={property} />
                         ))}

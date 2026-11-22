@@ -19,6 +19,7 @@ import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { Button } from "@/components/ui/button";
 
+import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
 import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
 import { AttachExclusiveOwnerModal } from "@/features/properties/your-listings/attach-exclusive-owner-modal";
@@ -53,8 +54,10 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
     const queryClient = useQueryClient();
     const userId = useAppSelector((state) => state.auth.user?.id);
     const { filters, setFilters, clearFilters, hasActiveFilters, scopeReady } =
-        useMyListingsFilters();
+        useMyListingsFilters(portal === "broker");
     const [addOpen, setAddOpen] = useState(false);
+    const [clientListing, setClientListing] = useState<MyListingItem | null>(null);
+    const [clientAttachOpen, setClientAttachOpen] = useState(false);
     const [editingListing, setEditingListing] = useState<MyListingItem | null>(null);
     const [deletingListing, setDeletingListing] = useState<MyListingItem | null>(null);
     const [deleteBusy, setDeleteBusy] = useState(false);
@@ -94,7 +97,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 { ...infiniteFilters, page: cursor ? Number(cursor) : 1 },
                 signal,
                 {
-                    withAttachedClients: false,
+                    withAttachedClients: !isOwnerPortal,
                     attachedClients: () =>
                         queryClient.fetchQuery({
                             queryKey: ["inventory-lead-summary", userId],
@@ -130,6 +133,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
     });
     const summary = summaryQuery.data ?? null;
     const refreshListings = useCallback(() => {
+        void queryClient.invalidateQueries({ queryKey: ["people-filter-options", "my-listings"] });
         void queryClient.invalidateQueries({ queryKey: ["inventory-lead-summary"] });
         void queryClient.invalidateQueries({ queryKey: ["inventory-filter-collection"] });
         void queryClient.invalidateQueries({ queryKey: ["my-listings"] });
@@ -145,13 +149,20 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 if (isEditable(event.target)) return;
                 if (event.repeat) return;
                 if (addOpen || editingListing != null || deletingListing != null) return;
-                if (isOwnerAttachOpen || isBrokerInviteOpen) return;
+                if (isOwnerAttachOpen || isBrokerInviteOpen || clientAttachOpen) return;
                 setAddOpen(true);
             },
         });
 
         return () => unsubscribe();
-    }, [addOpen, editingListing, deletingListing, isOwnerAttachOpen, isBrokerInviteOpen]);
+    }, [
+        addOpen,
+        editingListing,
+        deletingListing,
+        isOwnerAttachOpen,
+        isBrokerInviteOpen,
+        clientAttachOpen,
+    ]);
 
     const confirmDelete = useCallback(async () => {
         if (!deletingListing) return;
@@ -200,6 +211,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         if (isDeletedView) return "no_deleted" as const;
         // True inventory empty always teaches Add — tab labels come second.
         if (summary != null && inventoryTotal === 0) return "first_run" as const;
+        if (filters.status === "sold") return "no_sold" as const;
         if (filters.status === "draft") return "no_draft" as const;
         if (filters.status === "published") return "no_published" as const;
         return "first_run" as const;
@@ -219,6 +231,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             </PortalSectionNav>
 
             <MyListingsHeader
+                showPeopleFilters={!isOwnerPortal}
                 filters={filters}
                 onFiltersChange={setFilters}
                 summary={summary}
@@ -301,6 +314,14 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                                           }
                                         : undefined
                                 }
+                                onAttachClients={
+                                    isOwnerPortal
+                                        ? undefined
+                                        : (listing) => {
+                                              setClientListing(listing);
+                                              setClientAttachOpen(true);
+                                          }
+                                }
                                 onEditListing={setEditingListing}
                                 onDeleteListing={setDeletingListing}
                                 onAttachOwner={
@@ -379,6 +400,23 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 permanent={isDeletedView}
                 onConfirm={() => void confirmDelete()}
             />
+            {!isOwnerPortal && clientListing ? (
+                <AttachBuyersModal
+                    open={clientAttachOpen}
+                    onOpenChange={setClientAttachOpen}
+                    request={{
+                        propertyId: clientListing.id,
+                        title: clientListing.title,
+                        isRent: clientListing.transactionType === "rent",
+                        amountInr:
+                            (clientListing.transactionType === "rent"
+                                ? clientListing.rentAmountInr
+                                : clientListing.saleAmountInr) ?? 0,
+                        bhk: clientListing.bhk,
+                    }}
+                    onSaved={refreshListings}
+                />
+            ) : null}
             <AttachExclusiveOwnerModal
                 open={isOwnerAttachOpen}
                 onOpenChange={setIsOwnerAttachOpen}

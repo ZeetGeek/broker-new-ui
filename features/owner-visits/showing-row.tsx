@@ -2,12 +2,14 @@
 
 import type { ShowingStatus, VisitShowing } from "@/lib/api/owner-slots";
 import { formatDateIn, formatTimeIn, parseApiInstant } from "@/lib/format/date";
+import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 import { visitAge } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
 import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { Clock3 } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -84,7 +86,15 @@ export function ShowingRow({
                             size="xs"
                         />
                         <p className="body-xs text-ink">
-                            <span className="body-sm font-semibold">{brokerName}</span>
+                            <ContactName
+                                name={brokerName}
+                                href={
+                                    showing.broker?.id
+                                        ? ownerBrokerProfileHref(showing.broker.id)
+                                        : undefined
+                                }
+                                className="body-sm font-semibold"
+                            />
                             {place ? <span className="text-ink-muted"> · {place}</span> : null}
                         </p>
                     </div>

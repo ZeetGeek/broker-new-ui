@@ -12,6 +12,8 @@ export type TaskCatalogs = {
     owners: TaskLinkOptionsDto["owners"];
     properties: TaskLinkOptionsDto["properties"];
     ready: boolean;
+    /** A sidebar must offer retry rather than waiting forever for linked records. */
+    loadError?: Error | null;
 };
 
 const EMPTY_CATALOGS: TaskCatalogs = { clients: [], owners: [], properties: [], ready: false };
@@ -42,5 +44,7 @@ export function useTaskCatalogs(): TaskCatalogs {
         staleTime: 60_000,
     });
     if (mock) return MOCK_CATALOGS;
-    return query.data ? { ...query.data, ready: true } : EMPTY_CATALOGS;
+    return query.data
+        ? { ...query.data, ready: true }
+        : { ...EMPTY_CATALOGS, loadError: query.error };
 }

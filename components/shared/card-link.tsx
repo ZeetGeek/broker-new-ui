@@ -1,7 +1,8 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import Link from "next/link";
+
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 
 type CardLinkProps = Omit<ComponentProps<typeof Link>, "children"> & {
     label: string;

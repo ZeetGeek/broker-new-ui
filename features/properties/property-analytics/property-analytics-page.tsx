@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -12,6 +11,7 @@ import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/route
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { AlertCircle, Building2, Users } from "@/components/shared/icons";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import { AnalyticsAttention } from "@/features/properties/property-analytics/analytics-attention";

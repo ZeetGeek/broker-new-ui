@@ -6,6 +6,7 @@ import {
     normalizePropertyCriteria,
     type PropertyFilterRecord,
 } from "@/lib/properties/list-criteria";
+import { collectPeopleFilterOptions, matchesPeopleFilters } from "@/lib/properties/people-filters";
 
 import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
 import {
@@ -362,6 +363,7 @@ function mapLeadToDeal(lead: ApiLead): DealItem | null {
                 Boolean(property.isBrokerInventory),
         },
         owner: {
+            id: lead.owner?.id ?? lead.exclusiveOwner?.id ?? property.exclusiveOwnerId ?? undefined,
             name: ownerName,
             avatarUrl: lead.owner?.avatarUrl ?? undefined,
             phoneDigits:
@@ -624,6 +626,7 @@ function mockList(filters: DealsFilters): DealsResult {
     const all = getMockStore()
         .deals.filter(
             (deal) =>
+                matchesPeopleFilters(deal.owner.id, [deal.buyer], filters) &&
                 matchesQuery(deal, filters.q) &&
                 (!filters.dealType || (filters.dealType === "rent") === deal.property.isRent) &&
                 matchesPropertyCriteria(deal.property.filterFacts ?? {}, criteria),
@@ -689,13 +692,31 @@ function mockCloseProperty(sold: DealItem) {
 }
 
 export const pipelineApi = {
+    async peopleOptions(signal?: AbortSignal) {
+        const deals = isMockMode()
+            ? getMockStore().deals
+            : (await fetchAllLeads(undefined, signal))
+                  .map(mapLeadToDeal)
+                  .filter((deal): deal is DealItem => deal != null);
+        return collectPeopleFilterOptions(
+            deals.map((deal) => ({
+                owner: deal.owner.id ? { id: deal.owner.id, name: deal.owner.name } : null,
+                clients: [deal.buyer],
+            })),
+        );
+    },
     async list(filters: DealsFilters, signal?: AbortSignal): Promise<DealsResult> {
         if (isMockMode()) return mockList(filters);
         const leads = await fetchAllLeads(leadFilterParams(filters), signal);
         // Stage counts follow the search, as they did when the API filtered it.
         const all = leads
             .map(mapLeadToDeal)
-            .filter((deal): deal is DealItem => deal != null && matchesQuery(deal, filters.q));
+            .filter(
+                (deal): deal is DealItem =>
+                    deal != null &&
+                    matchesQuery(deal, filters.q) &&
+                    matchesPeopleFilters(deal.owner.id, [deal.buyer], filters),
+            );
 
         const items = filters.stage ? all.filter((deal) => deal.status === filters.stage) : all;
 

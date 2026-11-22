@@ -10,6 +10,7 @@ import { EMPTY_PROPERTY_CRITERIA } from "@/lib/properties/list-criteria";
 import { pipelineStageFromQuery } from "@/lib/properties/pipeline-stage-query";
 import { StageOperationGate } from "@/lib/properties/stage-operation-gate";
 import { cn } from "@/lib/utils";
+import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 import { useDebouncedValue } from "@/hooks/use-locations";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
@@ -211,6 +212,8 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         filters.dealType,
         filters.locality,
         filters.propertyFilters ?? null,
+        filters.ownerId,
+        filters.clientId,
     ]);
     // A new search or filter starts every column at its first batch again.
     const [limitsKey, setLimitsKey] = useState(requestKey);
@@ -274,6 +277,8 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 dealType: filters.dealType,
                 locality: filters.locality,
                 ownerName: "",
+                ownerId: filters.ownerId,
+                clientId: filters.clientId,
                 propertyFilters: filters.propertyFilters,
             };
 
@@ -308,6 +313,8 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         filters.dealType,
         filters.locality,
         filters.propertyFilters,
+        filters.ownerId,
+        filters.clientId,
         requestKey,
         revision,
         stageGate,
@@ -362,6 +369,20 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         const timer = window.setTimeout(() => openLeadView(initialLeadId), 0);
         return () => window.clearTimeout(timer);
     }, [initialLeadId, openLeadView]);
+
+    useEffect(() => {
+        const refresh = (event: Event) => {
+            if (
+                !(event instanceof CustomEvent) ||
+                !["contact", "visit", "property", "deal"].includes(event.detail?.kind)
+            )
+                return;
+            setRevision((value) => value + 1);
+            if (viewDealId) openLeadView(viewDealId);
+        };
+        window.addEventListener(WORKFLOW_SAVED_EVENT, refresh);
+        return () => window.removeEventListener(WORKFLOW_SAVED_EVENT, refresh);
+    }, [openLeadView, viewDealId]);
 
     const applyLocalStage = useCallback((dealId: string, status: DealStatus) => {
         setDeals((prev) =>
@@ -651,6 +672,8 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             dealType: "",
             locality: "",
             ownerName: "",
+            ownerId: "",
+            clientId: "",
             stage: "",
             propertyFilters: { ...EMPTY_PROPERTY_CRITERIA },
         }));

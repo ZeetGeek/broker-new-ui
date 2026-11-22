@@ -26,6 +26,7 @@ export type DealLostReason = "price" | "bought_elsewhere" | "not_responding" | "
  * representation. See AGENTS.md, "the core loop".
  */
 export type DealOwner = {
+    id?: string;
     name: string;
     avatarUrl?: string;
     /**
@@ -174,6 +175,8 @@ export type DealDetail = DealItem & {
 };
 
 export type DealsFilters = {
+    ownerId?: string;
+    clientId?: string;
     propertyFilters?: import("@/lib/properties/list-criteria").PropertyListCriteria;
     q: string;
     /** "" means every live stage. Terminal states use the `done` view. */
@@ -248,9 +251,13 @@ export function nextStage(stage: DealStage): DealStage | null {
 
 /** True when search, stage, or the filter sheet narrows the deals. */
 export function hasActiveDealsFilters(
-    filters: Pick<DealsFilters, "q" | "stage" | "dealType" | "locality" | "propertyFilters">,
+    filters: Pick<
+        DealsFilters,
+        "q" | "stage" | "dealType" | "locality" | "propertyFilters" | "ownerId" | "clientId"
+    >,
 ): boolean {
     return (
+        Boolean(filters.ownerId || filters.clientId) ||
         filters.q.trim().length > 0 ||
         filters.stage !== "" ||
         filters.dealType !== "" ||

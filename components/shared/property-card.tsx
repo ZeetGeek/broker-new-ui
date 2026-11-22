@@ -1,7 +1,6 @@
 "use client";
 
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
@@ -15,12 +14,15 @@ import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
+import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import {
     AttachedBrokersRow,
     AttachedBuyersRow,
     InvitedBrokersRow,
 } from "@/components/shared/attached-people-row";
 import { CardLink } from "@/components/shared/card-link";
+import { ClientPipelineInfo } from "@/components/shared/client-pipeline-info";
+import { ContactName } from "@/components/shared/contact-name";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import {
     Building2,
@@ -57,6 +59,7 @@ import { PropertyCardMenu } from "@/components/shared/property-card-menu";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -330,6 +333,7 @@ function BrowseRequestAction({
 }
 
 export type PropertyCardOwner = {
+    id?: string;
     name: string;
     avatarUrl?: string;
     phoneDigits?: string;
@@ -407,12 +411,18 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     commissionPercent?: number | null;
     /** Fixed rent brokerage in INR. Null or 0 when unset. */
     commissionAmount?: number | null;
+    ownerId?: string | null;
     ownerName?: string | null;
     /** Exclusive owner mobile — enables WhatsApp / Call on the card footer. */
     ownerPhoneDigits?: string | null;
     visibility?: "private" | "marketplace";
     /** Buyers linked to this listing — shown as the Requests & Invitations avatar stack. */
-    attachedClients?: Array<{ id: string; name: string; avatarUrl?: string }>;
+    attachedClients?: Array<{
+        id: string;
+        name: string;
+        avatarUrl?: string;
+        stage?: string | null;
+    }>;
 };
 
 export type PropertyCardProps = {
@@ -455,6 +465,10 @@ export type PropertyCardProps = {
     onAttachOwner?: () => void;
     /** Owner cards: invite a broker to this specific property. */
     onInviteBroker?: () => void;
+    /** Hide redundant status when the inventory tab already identifies it. */
+    showStatus?: boolean;
+    /** Inventory owner attachment styled like the contact property link row. */
+    ownerRowStyle?: "inline" | "linked";
     brokerSummary?: PropertyBrokersSummary;
     brokerSummaryState?: "loading" | "error" | "ready";
     /** Owned cards: open lead analytics for this listing. */
@@ -594,6 +608,9 @@ function BrowseOverlayPropertyCard({
                 <OverlayPersonLine
                     label="Owner"
                     name={listing.owner.name}
+                    contactId={listing.owner.id}
+                    contactType="owner"
+                    href={listing.owner.profileHref}
                     avatarUrl={listing.owner.avatarUrl}
                 />
             </div>
@@ -697,7 +714,14 @@ function PropertyCardOwnerBlock({
         return (
             <div className="flex items-center gap-2.5">
                 <UserAvatar name={owner.name} imageUrl={owner.avatarUrl} size="sm" />
-                <p className="body-sm font-medium text-ink">{owner.name}</p>
+                <p className="body-sm font-medium text-ink">
+                    <ContactName
+                        name={owner.name}
+                        contactId={owner.id}
+                        contactType="owner"
+                        href={owner.profileHref}
+                    />
+                </p>
             </div>
         );
     }
@@ -707,7 +731,14 @@ function PropertyCardOwnerBlock({
             <div className="flex items-center gap-2.5 min-inline-0">
                 <UserAvatar name={owner.name} imageUrl={owner.avatarUrl} size="sm" />
                 <div className="min-inline-0">
-                    <p className="body-sm font-medium text-ink">{owner.name}</p>
+                    <p className="body-sm font-medium text-ink">
+                        <ContactName
+                            name={owner.name}
+                            contactId={owner.id}
+                            contactType="owner"
+                            href={owner.profileHref}
+                        />
+                    </p>
                     <PhoneNumber
                         phoneDigits={owner.phoneDigits}
                         className="body-xs text-ink-muted"
@@ -1052,12 +1083,15 @@ function OwnedOverlayPropertyCard({
     audience = "broker",
     className,
     deleted,
+    showStatus = true,
+    ownerRowStyle = "inline",
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
     if (deleted) {
         return (
             <DeletedOwnedPropertyCard
                 listing={listing}
                 deleted={deleted}
+                showStatus={showStatus}
                 priority={priority}
                 imageSizes={imageSizes}
                 audience={audience}
@@ -1176,20 +1210,22 @@ function OwnedOverlayPropertyCard({
                 }
             >
                 <div className="flex flex-col gap-3.5 min-inline-0">
-                    <div className="flex items-center gap-2">
-                        <span className="body-sm text-ink-muted">Status</span>
-                        <Badge
-                            color={
-                                isSold || listing.status === "unpublished"
-                                    ? "red"
-                                    : listing.status === "published"
-                                      ? "emerald"
-                                      : "amber"
-                            }
-                        >
-                            {isSold ? "Sold" : OWNED_STATUS_LABEL[listing.status]}
-                        </Badge>
-                    </div>
+                    {showStatus ? (
+                        <div className="flex items-center gap-2">
+                            <span className="body-sm text-ink-muted">Status</span>
+                            <Badge
+                                color={
+                                    isSold || listing.status === "unpublished"
+                                        ? "red"
+                                        : listing.status === "published"
+                                          ? "emerald"
+                                          : "amber"
+                                }
+                            >
+                                {isSold ? "Sold" : OWNED_STATUS_LABEL[listing.status]}
+                            </Badge>
+                        </div>
+                    ) : null}
 
                     <OverlayCardSummary
                         href={detailsHref}
@@ -1198,8 +1234,13 @@ function OwnedOverlayPropertyCard({
                         locationLabel={`${listing.locality}, ${listing.city}`}
                     />
 
-                    {hasOwner ? (
-                        <OverlayPersonLine label="Owner" name={ownerName} />
+                    {ownerRowStyle === "linked" ? null : hasOwner ? (
+                        <OverlayPersonLine
+                            label="Owner"
+                            name={ownerName}
+                            contactId={listing.ownerId}
+                            contactType={audience === "broker" ? "owner" : undefined}
+                        />
                     ) : !isSold && onAttachOwner ? (
                         <OverlayPersonAttachLine
                             label="Owner"
@@ -1208,7 +1249,7 @@ function OwnedOverlayPropertyCard({
                         />
                     ) : null}
 
-                    {hasBuyers || handleAddBuyer ? (
+                    {ownerRowStyle !== "linked" && (hasBuyers || handleAddBuyer) ? (
                         <AttachedBuyersRow
                             buyers={buyers}
                             onAttach={handleAddBuyer}
@@ -1218,6 +1259,92 @@ function OwnedOverlayPropertyCard({
                 </div>
 
                 <OverlayCardActions className="flex-col gap-2">
+                    {ownerRowStyle === "linked" && (hasOwner || (!isSold && onAttachOwner)) ? (
+                        <div className="border-bs border-border-warm pbs-3 inline-full">
+                            {hasOwner ? (
+                                <div className="body-sm relative flex items-center justify-center gap-2 rounded-control border border-dashed border-brand/40 px-12 py-2 font-semibold text-brand-text min-block-11 min-inline-0">
+                                    <span className="text-ink-muted">Owner</span>
+                                    <UserAvatar name={ownerName} size="2xs" framed={false} />
+                                    <ContactName
+                                        name={ownerName}
+                                        contactId={listing.ownerId}
+                                        contactType={audience === "broker" ? "owner" : undefined}
+                                        className="wrap-anywhere min-inline-0"
+                                    />
+                                    {!isSold && onAttachOwner ? (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            aria-label={`Change owner: ${ownerName}`}
+                                            className="absolute inset-e-1.5 inset-bs-1/2 -translate-y-1/2"
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                onAttachOwner();
+                                            }}
+                                        >
+                                            <UserPlus aria-hidden />
+                                        </Button>
+                                    ) : null}
+                                </div>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    type="button"
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        onAttachOwner?.();
+                                    }}
+                                    className="gap-2 border-dashed border-brand/40 font-semibold text-brand-text inline-full min-block-11"
+                                >
+                                    <UserPlus aria-hidden />
+                                    {OWNED_ATTACH_OWNER_LABEL}
+                                </Button>
+                            )}
+                        </div>
+                    ) : null}
+                    {ownerRowStyle === "linked" && audience === "broker" ? (
+                        <div className="relative inline-full">
+                            {hasBuyers ? (
+                                <div className="body-sm flex flex-wrap items-center justify-center gap-2 rounded-control border border-dashed border-brand/40 px-12 py-2 min-block-11 min-inline-0">
+                                    <ClientPipelineInfo clients={buyers} />
+                                    <span className="font-semibold text-ink-muted">Clients</span>
+                                    <AttachedClientsSummary
+                                        clients={buyers}
+                                        maxAvatars={3}
+                                        labelClassName="text-brand-text"
+                                    />
+                                    {handleAddBuyer ? (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon-sm"
+                                            aria-label="Attach more clients"
+                                            className="absolute inset-e-1.5 inset-bs-1/2 -translate-y-1/2"
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                handleAddBuyer();
+                                            }}
+                                        >
+                                            <UserPlus aria-hidden />
+                                        </Button>
+                                    ) : null}
+                                </div>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    type="button"
+                                    disabled={!handleAddBuyer}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        handleAddBuyer?.();
+                                    }}
+                                    className="gap-2 border-dashed border-brand/40 font-semibold text-brand-text inline-full min-block-11"
+                                >
+                                    <UserPlus aria-hidden />
+                                    Attach clients
+                                </Button>
+                            )}
+                        </div>
+                    ) : null}
                     {isSold ? (
                         <p
                             className="
@@ -1285,9 +1412,9 @@ function OwnedOverlayPropertyCard({
                     ) : audience === "broker" && !hasOwner && canManagePeople ? (
                         <p
                             className="
-                              body-xs flex items-center justify-center rounded-control
-                              bg-surface-muted px-3 py-2 text-center font-medium text-ink/70
-                              inline-full min-block-11
+                              body-xs flex items-center justify-center rounded-control border
+                              border-dashed border-danger/40 bg-danger-soft px-3 py-2 text-center
+                              font-medium text-danger inline-full min-block-11
                             "
                         >
                             Attach an owner to enable calls and WhatsApp.
@@ -1306,11 +1433,13 @@ function OwnedOverlayPropertyCard({
 function DeletedOwnedPropertyCard({
     listing,
     deleted,
+    showStatus = true,
     priority = false,
     imageSizes = "(max-width: 768px) 100vw, 50vw",
     audience = "broker",
     className,
 }: {
+    showStatus?: boolean;
     listing: OwnedPropertyCardListing;
     deleted: NonNullable<PropertyCardProps["deleted"]>;
     priority?: boolean;
@@ -1353,10 +1482,12 @@ function DeletedOwnedPropertyCard({
             }
         >
             <div className="flex flex-col gap-3.5 min-inline-0">
-                <div className="flex items-center gap-2">
-                    <span className="body-sm text-ink-muted">Status</span>
-                    <Badge color="red">Deleted</Badge>
-                </div>
+                {showStatus ? (
+                    <div className="flex items-center gap-2">
+                        <span className="body-sm text-ink-muted">Status</span>
+                        <Badge color="red">Deleted</Badge>
+                    </div>
+                ) : null}
 
                 <OverlayCardSummary
                     price={<ListingAskPrices listing={browse} audience={audience} />}
@@ -1364,7 +1495,14 @@ function DeletedOwnedPropertyCard({
                     locationLabel={[listing.locality, listing.city].filter(Boolean).join(", ")}
                 />
 
-                {ownerName ? <OverlayPersonLine label="Owner" name={ownerName} /> : null}
+                {ownerName ? (
+                    <OverlayPersonLine
+                        label="Owner"
+                        name={ownerName}
+                        contactId={listing.ownerId}
+                        contactType={audience === "broker" ? "owner" : undefined}
+                    />
+                ) : null}
                 {buyers.length ? <AttachedBuyersRow buyers={buyers} /> : null}
             </div>
 

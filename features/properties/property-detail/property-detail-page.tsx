@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -22,6 +21,7 @@ import {
     ownerPropertyEditHref,
 } from "@/lib/routes/owner";
 
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";

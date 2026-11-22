@@ -1,8 +1,8 @@
 "use client";
 
 import { memo } from "react";
-import Link from "next/link";
 
+import { formatPersonName } from "@/lib/format/person-name";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
@@ -23,6 +23,7 @@ import {
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -184,7 +185,13 @@ export const VisitCard = memo(function VisitCard({
 
             <PartyMeetRow
                 highlightOnHover={false}
-                left={{ name: visit.owner.name, avatarUrl: visit.owner.avatarUrl, role: "Owner" }}
+                left={{
+                    id: visit.owner.id,
+                    contactType: "owner",
+                    name: visit.owner.name,
+                    avatarUrl: visit.owner.avatarUrl,
+                    role: "Owner",
+                }}
                 right={{
                     name: buyer?.name ?? "No client linked",
                     avatarUrl: buyer?.avatarUrl,
@@ -242,7 +249,7 @@ export const VisitCard = memo(function VisitCard({
                                                 {actionLabel} {label.toLowerCase()}
                                             </span>
                                             <span className="body-xs truncate text-ink-muted">
-                                                {person.name}
+                                                {formatPersonName(person.name)}
                                                 {!person.phoneDigits ? " ? No phone number" : ""}
                                             </span>
                                         </span>

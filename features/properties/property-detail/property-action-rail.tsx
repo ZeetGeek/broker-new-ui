@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import type { PropertyBroker } from "@/lib/format/property-brokers";
 
 import { AttachedBrokersRow } from "@/components/shared/attached-people-row";
+import { ContactName } from "@/components/shared/contact-name";
 import {
     CallIcon,
     ChartBar,
@@ -19,6 +19,7 @@ import {
     WhatsAppIcon,
 } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import { AttachExclusiveOwnerModal } from "../your-listings/attach-exclusive-owner-modal";
@@ -203,7 +204,17 @@ export function PropertyActionRail({
                     <div className={styles.contactIdentity}>
                         <UserAvatar name={item.ownerName || "Owner"} size="md" />
                         <div>
-                            <strong>{item.ownerName || "No owner linked yet"}</strong>
+                            <strong>
+                                {item.ownerName ? (
+                                    <ContactName
+                                        name={item.ownerName}
+                                        contactId={item.ownerId}
+                                        contactType="owner"
+                                    />
+                                ) : (
+                                    "No owner linked yet"
+                                )}
+                            </strong>
                             <p>
                                 {phone
                                     ? formatPhoneIn(phone)

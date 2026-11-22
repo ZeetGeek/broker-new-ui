@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { type AppIcon, MapPin, Maximize2, UserPlus } from "@/components/shared/icons";
 import { MarqueeText } from "@/components/shared/marquee-text";
 import { OverlayCardPhotos } from "@/components/shared/overlay-card-photos";
@@ -172,6 +173,9 @@ export function OverlayPersonLine({
     hint,
     avatarUrl,
     action,
+    contactId,
+    contactType,
+    href,
 }: {
     label: string;
     name: string;
@@ -179,13 +183,22 @@ export function OverlayPersonLine({
     avatarUrl?: string;
     /** Optional control pinned to the reading end (e.g. Call). */
     action?: ReactNode;
+    contactId?: string | null;
+    contactType?: "buyer" | "owner";
+    href?: string;
 }) {
     return (
         <div className={cn(PERSON_CLASS, "inline-full")}>
             <span className={OVERLAY_PERSON_LABEL_CLASS}>{label}</span>
             <span className="flex flex-1 items-center gap-1.5 min-inline-0">
                 <UserAvatar name={name} imageUrl={avatarUrl} size="2xs" className="shrink-0" />
-                <span className="truncate font-semibold text-ink capitalize">{name}</span>
+                <ContactName
+                    name={name}
+                    contactId={contactId}
+                    contactType={contactType}
+                    href={href}
+                    className="truncate font-semibold text-ink"
+                />
                 {hint ? (
                     <>
                         <span className="shrink-0 text-ink-subtle/60" aria-hidden>

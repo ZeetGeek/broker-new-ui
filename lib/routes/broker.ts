@@ -1,7 +1,7 @@
 import { FEATURE_PLATFORM_OWNER } from "@/config";
 
 export const BROKER_OWNER_LISTINGS_HREF = "/broker/owner-listings";
-export const BROKER_YOUR_LISTINGS_HREF = "/broker/your-listings";
+export const BROKER_YOUR_LISTINGS_HREF = "/broker/my-listings";
 export const BROKER_MY_DEALS_HREF = "/broker/my-deals";
 export const BROKER_PIPELINE_HREF = "/broker/pipeline";
 export const BROKER_EARNINGS_HREF = "/broker/earnings";
@@ -13,6 +13,11 @@ export const BROKER_VISIT_SLOTS_HREF = "/broker/visits?tab=slots";
 
 export function brokerContactHref(id: string, type: "buyer" | "owner"): string {
     return `/broker/contacts?tab=${type === "buyer" ? "buyers" : "owners"}&contact=${encodeURIComponent(id)}`;
+}
+
+/** Legacy/preview surfaces may only have a name. Resolve only an exact, unique contact. */
+export function brokerContactNameHref(name: string, type: "buyer" | "owner"): string {
+    return `/broker/contacts?tab=${type === "buyer" ? "buyers" : "owners"}&contactName=${encodeURIComponent(name.trim())}`;
 }
 
 export function brokerVisitHref(visitId: string): string {

@@ -8,6 +8,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { exclusiveOwnerPhoneDigits } from "@/lib/api/exclusive-owners";
 import { propertiesApi } from "@/lib/api/properties";
 import { exclusiveOwnerPickerOptions } from "@/lib/contacts/exclusive-owner-picker-query";
+import { formatPersonName } from "@/lib/format/person-name";
 import { uniqueInfiniteItems } from "@/lib/pagination/infinite-page";
 import { cn } from "@/lib/utils";
 
@@ -131,7 +132,9 @@ export function AttachExclusiveOwnerModal({
                             "
                         >
                             Current owner:{" "}
-                            <span className="font-semibold text-ink">{listing.ownerName}</span>
+                            <span className="font-semibold text-ink">
+                                {formatPersonName(listing.ownerName)}
+                            </span>
                         </p>
                     ) : null}
                     <Input
@@ -233,14 +236,14 @@ export function AttachExclusiveOwnerModal({
                                 >
                                     <RadioGroupItem
                                         value={owner.id}
-                                        aria-label={`${isCurrent ? "Keep" : "Select"} ${owner.fullName}`}
+                                        aria-label={`${isCurrent ? "Keep" : "Select"} ${formatPersonName(owner.fullName)}`}
                                         className="mbs-1 shrink-0"
                                     />
-                                    <UserAvatar name={owner.fullName} size="sm" />
+                                    <UserAvatar name={formatPersonName(owner.fullName)} size="sm" />
                                     <div className="flex flex-1 flex-col gap-1 min-inline-0">
                                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                             <span className="body-sm font-semibold text-ink">
-                                                {owner.fullName}
+                                                {formatPersonName(owner.fullName)}
                                             </span>
                                             <Badge color="sky" className="capitalize">
                                                 {owner.ownerType}

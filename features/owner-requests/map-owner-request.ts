@@ -142,6 +142,7 @@ export function mapRepresentationToOwnerCard(rep: RepresentationItem): OwnerRequ
         message: rep.message?.trim() || null,
         createdAt: rep.createdAt ?? new Date().toISOString(),
         brokerName,
+        brokerId: rep.brokerId,
         brokerAvatarUrl: rep.brokerAvatarUrl ?? undefined,
         brokerPhoneDigits: status === "accepted" ? digitsOnly(rep.brokerPhone) : undefined,
         brokerOrgName: rep.brokerOrgName,
