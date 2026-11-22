@@ -10,6 +10,9 @@ import { contactsApi } from "@/lib/api/contacts";
 import { updateBuyerContact, updateOwnerContact } from "@/lib/contacts/contact-actions";
 import { AmbiguousContactNameError, findContactByName } from "@/lib/contacts/find-contact-by-name";
 import type { PersonDetailsTarget } from "@/lib/contacts/person-details-target";
+import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
+
+import { usePersonDetailsWorking } from "@/components/shared/person-details-context";
 
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
 import { AddOwnerModal } from "@/features/contacts/add-owner-modal";
@@ -28,6 +31,7 @@ export function ContactDetailsOverlay({
     const client = useQueryClient();
     const accountId = useAppSelector((state) => state.auth.user?.id);
     const [action, setAction] = useState<"edit" | "attach" | null>(null);
+    usePersonDetailsWorking(action !== null);
     const key = ["person-details", accountId, target.type, target.id, target.name];
     const query = useQuery({
         queryKey: key,
@@ -41,10 +45,11 @@ export function ContactDetailsOverlay({
     const changed = () => {
         void client.invalidateQueries({
             predicate: (item) =>
-                /^(person-details|contact|pipeline|my-listings|dashboard-listings|property-attached-buyers|site-visits)/.test(
+                /^(person-details|contact|pipeline|my-listings|dashboard-listings|property-attached-buyers|property-analytics|site-visits|broker-visits|inventory|task-link|people-filter|property-form|exclusive-owner-picker|workflow-property|workflow-deal)/.test(
                     String(item.queryKey[0]),
                 ),
         });
+        notifyWorkflowSaved("contact");
     };
     const saved = () => {
         setAction(null);

@@ -1,0 +1,295 @@
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { attachedClientsFor } from "@/lib/api/clients";
+import { myListingsApi } from "@/lib/api/my-listings";
+import { toLegacyAmountFields } from "@/lib/format/listing-availability";
+import { formatPlaceName } from "@/lib/format/owner-listings-labels";
+import { brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
+import type { WorkflowTarget } from "@/lib/workflows/target";
+
+import { AppModal } from "@/components/shared/app-modal";
+import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
+import { ContactName } from "@/components/shared/contact-name";
+import { DrawerSection } from "@/components/shared/drawer-section";
+import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
+import { useWorkflowWorking } from "@/components/shared/workflow-context";
+import { Button } from "@/components/ui/button";
+
+import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
+import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
+import { AttachExclusiveOwnerModal } from "@/features/properties/your-listings/attach-exclusive-owner-modal";
+import { useAppSelector } from "@/store/hooks";
+
+export function PropertyWorkflow({
+    target,
+    onClose,
+}: {
+    target: Extract<WorkflowTarget, { kind: "property" }>;
+    onClose: () => void;
+}) {
+    const client = useQueryClient();
+    const accountId = useAppSelector((state) => state.auth.user?.id);
+    const [mode, setMode] = useState<"detail" | "edit" | "owner" | "clients">(
+        target.mode === "edit" ? "edit" : "detail",
+    );
+    useWorkflowWorking(target.mode === "create" || mode !== "detail");
+    const query = useQuery({
+        queryKey: ["workflow-property", accountId, target.id],
+        queryFn: () => myListingsApi.get(target.id!),
+        enabled: Boolean(target.id),
+        staleTime: 0,
+    });
+    const listing = query.data;
+    const clients = useQuery({
+        queryKey: ["property-attached-buyers", target.id],
+        queryFn: () => attachedClientsFor(target.id!),
+        enabled: Boolean(target.id && listing && !listing.deletedAt),
+    });
+    const refresh = () => {
+        void client.invalidateQueries({
+            predicate: (item) =>
+                /^(workflow-property|inventory|my-listings|dashboard-listings|owned-property|property-attached|property-analytics|people-filter|pipeline|task-link|broker-visits|edit-property)/.test(
+                    String(item.queryKey[0]),
+                ),
+        });
+        notifyWorkflowSaved("property");
+    };
+    const saved = () => {
+        refresh();
+        onClose();
+    };
+    const back = (open: boolean) => {
+        if (!open) {
+            if (target.mode === "detail") setMode("detail");
+            else onClose();
+        }
+    };
+    if (target.mode === "create")
+        return (
+            <PropertyFormDialog
+                open
+                portal="broker"
+                onOpenChange={(open) => {
+                    if (!open) onClose();
+                }}
+                onSaved={saved}
+            />
+        );
+    if (listing && mode === "edit" && !listing.deletedAt)
+        return (
+            <PropertyFormDialog
+                open
+                portal="broker"
+                listing={listing}
+                onOpenChange={back}
+                onSaved={saved}
+            />
+        );
+    const amount = listing ? toLegacyAmountFields(listing) : { amountInr: 0, isRent: false };
+    return (
+        <>
+            <AppModal
+                open={mode === "detail" || !listing || Boolean(listing.deletedAt)}
+                onOpenChange={(open) => {
+                    if (!open) onClose();
+                }}
+                title={listing?.title || "Property details"}
+                size="md"
+                className="contacts-detail-drawer"
+                footer={
+                    listing && !listing.deletedAt ? (
+                        <Button variant="accent" onClick={() => setMode("edit")}>
+                            Edit property
+                        </Button>
+                    ) : undefined
+                }
+            >
+                {query.isPending ? (
+                    <p role="status" className="body-sm text-ink-muted">
+                        Loading property…
+                    </p>
+                ) : query.isError ? (
+                    <div role="alert" className="flex flex-col items-start gap-3">
+                        <p>Could not load this property. Check your connection and try again.</p>
+                        <Button variant="outline" onClick={() => void query.refetch()}>
+                            Retry
+                        </Button>
+                    </div>
+                ) : !listing ? (
+                    <p>This property could not be found in your account.</p>
+                ) : listing.deletedAt ? (
+                    <p>
+                        This property has been deleted. Restore it from My Listings before editing.
+                    </p>
+                ) : (
+                    <>
+                        <div className="mbe-5 flex items-start gap-3 min-inline-0">
+                            <PropertyCoverImage
+                                src={listing.imageSrc}
+                                alt=""
+                                size={80}
+                                sizes="80px"
+                            />
+                            <div className="flex flex-col gap-1 min-inline-0">
+                                <p className="body font-semibold wrap-anywhere">{listing.title}</p>
+                                <p className="body-sm text-ink-muted">
+                                    {[listing.locality, listing.city]
+                                        .filter(Boolean)
+                                        .map(formatPlaceName)
+                                        .join(", ")}
+                                </p>
+                                {listing.saleAmountInr != null && listing.saleAmountInr > 0 ? (
+                                    <PriceWithCommission
+                                        amountInr={listing.saleAmountInr}
+                                        audience="broker"
+                                        commissionPercent={listing.commissionPercent}
+                                        size="lg"
+                                    />
+                                ) : null}
+                                {listing.rentAmountInr != null && listing.rentAmountInr > 0 ? (
+                                    <PriceWithCommission
+                                        amountInr={listing.rentAmountInr}
+                                        isRent
+                                        audience="broker"
+                                        commissionAmountInr={listing.commissionAmount}
+                                        size="lg"
+                                    />
+                                ) : null}
+                                {!listing.saleAmountInr && !listing.rentAmountInr ? (
+                                    <span className="body-sm text-ink-muted">Price on request</span>
+                                ) : null}
+                            </div>
+                        </div>
+                        <DrawerSection
+                            title="Property"
+                            description="Review the property and its location."
+                        >
+                            <p className="body-sm">
+                                {listing.configLabel || listing.propertyTypeLabel}
+                            </p>
+                            {listing.address ? (
+                                <p className="body-sm mbs-2 text-ink-muted">{listing.address}</p>
+                            ) : null}
+                            {listing.description ? (
+                                <p className="body-sm mbs-3 whitespace-pre-line">
+                                    {listing.description}
+                                </p>
+                            ) : null}
+                        </DrawerSection>
+                        <DrawerSection
+                            title="Owner"
+                            description="Open the linked owner or change the contact."
+                        >
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="body-sm font-semibold">
+                                    {listing.ownerName ? (
+                                        <ContactName
+                                            name={listing.ownerName}
+                                            contactId={listing.ownerId}
+                                            contactType="owner"
+                                        />
+                                    ) : (
+                                        "No owner linked"
+                                    )}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setMode("owner")}
+                                >
+                                    {listing.ownerName ? "Change owner" : "Attach owner"}
+                                </Button>
+                            </div>
+                        </DrawerSection>
+                        <DrawerSection
+                            title="Clients"
+                            description="See the clients working on this property."
+                        >
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                {clients.isPending ? (
+                                    <p role="status" className="body-sm text-ink-muted">
+                                        Loading clients…
+                                    </p>
+                                ) : clients.isError ? (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => void clients.refetch()}
+                                    >
+                                        Retry clients
+                                    </Button>
+                                ) : clients.data?.length ? (
+                                    <AttachedClientsSummary clients={clients.data} />
+                                ) : (
+                                    <p className="body-sm text-ink-muted">No clients linked yet.</p>
+                                )}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setMode("clients")}
+                                >
+                                    Attach clients
+                                </Button>
+                            </div>
+                        </DrawerSection>
+                        {listing.imageSrcs.length > 1 ? (
+                            <DrawerSection title="Photos" description="Review the listing photos.">
+                                <div className="flex flex-wrap gap-3">
+                                    {listing.imageSrcs.map((src, index) => (
+                                        <PropertyCoverImage
+                                            key={`${index}-${src}`}
+                                            src={src}
+                                            alt={`Property photo ${index + 1}`}
+                                            size={80}
+                                            sizes="80px"
+                                        />
+                                    ))}
+                                </div>
+                            </DrawerSection>
+                        ) : null}
+                        <Link
+                            href={brokerPropertyDetailHref(listing.id)}
+                            className="body-sm mbs-4 inline-block font-semibold text-brand-text underline underline-offset-4"
+                            onNavigate={onClose}
+                        >
+                            Open full property page
+                        </Link>
+                    </>
+                )}
+            </AppModal>
+            {listing && mode === "owner" ? (
+                <AttachExclusiveOwnerModal
+                    open
+                    listing={listing}
+                    onOpenChange={back}
+                    onAttached={() => {
+                        refresh();
+                        setMode("detail");
+                    }}
+                />
+            ) : null}
+            {listing && mode === "clients" ? (
+                <AttachBuyersModal
+                    open
+                    request={{
+                        propertyId: listing.id,
+                        title: listing.title,
+                        bhk: listing.bhk,
+                        ...amount,
+                    }}
+                    onOpenChange={back}
+                    onSaved={() => {
+                        refresh();
+                        setMode("detail");
+                    }}
+                />
+            ) : null}
+        </>
+    );
+}

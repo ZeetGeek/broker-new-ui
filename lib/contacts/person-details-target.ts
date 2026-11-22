@@ -8,10 +8,16 @@ export function personDetailsTarget(
     name: string,
     portal: "broker" | "owner",
 ): PersonDetailsTarget | null {
-    const url = new URL(href, "https://app.local");
+    let url: URL;
+    try {
+        url = new URL(href, "https://app.local");
+    } catch {
+        return null;
+    }
     if (url.origin !== "https://app.local") return null;
     if (portal === "broker" && url.pathname === "/broker/contacts") {
         const id = url.searchParams.get("contact") || undefined;
+        if (!id && !url.searchParams.get("contactName")?.trim()) return null;
         const contactName = url.searchParams.get("contactName") || name;
         if (!id && !contactName.trim()) return null;
         return {

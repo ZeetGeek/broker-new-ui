@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useCallback, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 
@@ -9,7 +10,10 @@ import {
     personDetailsTarget,
 } from "@/lib/contacts/person-details-target";
 
-import { PersonDetailsContext } from "@/components/shared/person-details-context";
+import {
+    PersonDetailsContext,
+    PersonDetailsWorkingContext,
+} from "@/components/shared/person-details-context";
 
 import { useAppSelector } from "@/store/hooks";
 
@@ -37,6 +41,10 @@ export function PersonDetailsProvider({
         version: number;
     } | null>(null);
     const opener = useRef<HTMLElement | null>(null);
+    const working = useRef(false);
+    const setWorking = useCallback((value: boolean) => {
+        working.current = value;
+    }, []);
     const version = useRef(0);
     // A deliberate page change closes the overlay; opening/closing it never changes the route.
     if (route !== location) {
@@ -47,15 +55,24 @@ export function PersonDetailsProvider({
         (href: string, name: string) => {
             const target = personDetailsTarget(href, name, portal);
             if (!target) return false;
-            opener.current =
-                document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            if (selection && working.current) {
+                toast("Finish or close this form before opening another contact.", {
+                    id: "person-form-active",
+                });
+                return true;
+            }
+            if (!selection || !opener.current?.isConnected)
+                opener.current =
+                    document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            working.current = false;
             setSelection({ target, version: ++version.current });
             return true;
         },
-        [portal],
+        [portal, selection],
     );
     const close = useCallback(() => {
         setSelection(null);
+        working.current = false;
         const element = opener.current;
         window.requestAnimationFrame(() => {
             if (element?.isConnected) element.focus({ preventScroll: true });
@@ -63,14 +80,16 @@ export function PersonDetailsProvider({
     }, []);
     return (
         <PersonDetailsContext value={open}>
-            {children}
-            {selection ? (
-                <PersonDetailsOverlay
-                    key={selection.version}
-                    target={selection.target}
-                    onClose={close}
-                />
-            ) : null}
+            <PersonDetailsWorkingContext value={setWorking}>
+                {children}
+                {selection ? (
+                    <PersonDetailsOverlay
+                        key={selection.version}
+                        target={selection.target}
+                        onClose={close}
+                    />
+                ) : null}
+            </PersonDetailsWorkingContext>
         </PersonDetailsContext>
     );
 }

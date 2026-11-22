@@ -80,3 +80,16 @@ test("ordinary name clicks open the shared panel while Contacts' local panel kee
         false,
     );
 });
+
+test("contact collections, creation actions and malformed URLs never open a person panel", () => {
+    for (const href of [
+        "/broker/contacts",
+        "/broker/contacts?tab=owners",
+        "/broker/contacts?add=buyer",
+        "/broker/contacts?contactName=+",
+        "/owner/brokers",
+        "http://[invalid",
+    ]) {
+        assert.equal(personDetailsTarget(href, "Contacts", "broker"), null, href);
+    }
+});
