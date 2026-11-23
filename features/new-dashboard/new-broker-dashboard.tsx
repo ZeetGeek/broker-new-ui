@@ -7,7 +7,6 @@ import { tinykeys } from "tinykeys";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 import { myListingsApi } from "@/lib/api/my-listings";
-import { siteVisitsApi } from "@/lib/api/site-visits";
 import { formatWeekdayDate } from "@/lib/format/date";
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { useRouter } from "@/lib/navigation";
@@ -54,15 +53,17 @@ import {
     mapBrokerDashboardViewFromMock,
 } from "@/features/dashboard/map-dashboard";
 import { dashboardMock } from "@/features/dashboard/mock-data";
-import { visitDateBounds } from "@/features/new-site-visits/model";
-import { useVisitsLive, VISITS_KEY } from "@/features/new-site-visits/use-visits";
 import { taskGroup } from "@/features/tasks/model";
 import { useTasks } from "@/features/tasks/task-store";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
 import { CommissionEarned } from "./commission-earned";
+import { DASHBOARD_DEFAULT_MONTHS } from "./commission-window";
+import { refreshDashboardQueries } from "./dashboard-refresh";
 import { InventoryAndUpdates } from "./inventory-and-updates";
+import { useDashboardEarnings } from "./use-dashboard-earnings";
+import { useDashboardVisits } from "./use-dashboard-visits";
 import { WorkOverview } from "./work-overview";
 
 import styles from "./dashboard.module.css";
@@ -164,8 +165,7 @@ export function NewBrokerDashboard() {
     useEffect(() => {
         const refresh = () => {
             void dispatch(fetchBrokerDashboard({ background: true }));
-            void queryClient.invalidateQueries({ queryKey: ["my-listings-summary", "broker"] });
-            void queryClient.invalidateQueries({ queryKey: [...VISITS_KEY, "list"] });
+            void refreshDashboardQueries(queryClient);
         };
         window.addEventListener(WORKFLOW_SAVED_EVENT, refresh);
         return () => window.removeEventListener(WORKFLOW_SAVED_EVENT, refresh);
@@ -182,15 +182,9 @@ export function NewBrokerDashboard() {
         queryFn: () => myListingsApi.summary(),
         enabled: hydrated,
     });
-    const todayBounds = now ? visitDateBounds("today", now.getTime()) : { from: "", to: "" };
-    const todayVisits = useQuery({
-        queryKey: [...VISITS_KEY, "list", "dashboard-today", todayBounds.from],
-        queryFn: ({ signal }) =>
-            siteVisitsApi.list({ tab: "upcoming", ...todayBounds, limit: 1 }, signal),
-        enabled: hydrated && now !== null && !isMockMode(),
-        refetchInterval: 30_000,
-    });
-    useVisitsLive(todayVisits.data?.nextChangeAt ?? null, todayVisits.dataUpdatedAt);
+    const visits = useDashboardVisits(now);
+    const todayVisits = visits.today;
+    const earnings = useDashboardEarnings(DASHBOARD_DEFAULT_MONTHS, 0, now);
 
     useEffect(() => {
         const initialTimer = window.setTimeout(() => setNow(new Date()), 0);
@@ -276,6 +270,10 @@ export function NewBrokerDashboard() {
     const view = isMockMode()
         ? mapBrokerDashboardViewFromMock(dashboardMock, profile, now)
         : mapBrokerDashboardView(data, profile, now);
+    // Same source as the pipeline card, so the two never disagree.
+    const activeDeals = isMockMode()
+        ? view.pipelineCard.activeTotal
+        : (earnings.data?.live.count ?? null);
     const overdue = tasks.tasks.filter(
         (task) =>
             !task.completedAt && !task.deletedAt && taskGroup(task, now.getTime()) === "overdue",
@@ -297,7 +295,8 @@ export function NewBrokerDashboard() {
             counts.completed +
             counts.not_attended
           : null;
-    const visitNeedsUpdate = counts?.needs_update ?? (isMockMode() ? needsUpdate : 0);
+    // Every unmarked visit, any day — the same number as the Visits page tab.
+    const visitNeedsUpdate = isMockMode() ? needsUpdate : (visits.needsUpdate.data?.total ?? 0);
     const taskCountKnown = !tasks.isLoading && !tasks.error;
     const lines = [
         visitTotal === null
@@ -312,9 +311,13 @@ export function NewBrokerDashboard() {
                       : "You're all caught up on overdue tasks",
               ]
             : []),
-        view.pipelineCard.activeTotal
-            ? `You're working on ${plural(view.pipelineCard.activeTotal, "active deal")}`
-            : "Add your first client to start building your pipeline",
+        ...(activeDeals === null
+            ? []
+            : [
+                  activeDeals
+                      ? `You're working on ${plural(activeDeals, "active deal")}`
+                      : "Add your first client to start building your pipeline",
+              ]),
         ...(visitNeedsUpdate ? [`${plural(visitNeedsUpdate, "visit")} need an update`] : []),
         ...(listings.data
             ? [`${plural(listings.data.published, "published listing")} in your inventory`]
@@ -352,9 +355,11 @@ export function NewBrokerDashboard() {
             label: "Active deals",
             icon: Briefcase,
             urgent: false,
-            value:
-                isMockMode() || data?.charts?.pipelineFunnel ? view.pipelineCard.activeTotal : null,
-            detail: "In your pipeline",
+            value: activeDeals,
+            detail:
+                activeDeals === null && earnings.isError
+                    ? "Couldn't load deals · open to retry"
+                    : "In your pipeline",
             href: "/broker/pipeline?view=active",
         },
         {
@@ -514,15 +519,16 @@ export function NewBrokerDashboard() {
                     </li>
                 ))}
             </ul>
-            <WorkOverview />
-            <CommissionEarned />
-            <InventoryAndUpdates activity={view.activity} now={now} preview />
+            <WorkOverview now={now} onAddClient={() => setAddClientOpen(true)} />
+            <CommissionEarned now={now} />
+            <InventoryAndUpdates activity={view.activity} now={now} />
             <AddBuyerModal
                 open={addClientOpen}
                 onOpenChange={setAddClientOpen}
                 onCreated={() => {
                     setAddClientOpen(false);
                     void dispatch(fetchBrokerDashboard());
+                    void refreshDashboardQueries(queryClient);
                 }}
             />
         </section>

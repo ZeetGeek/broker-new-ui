@@ -4,7 +4,6 @@ import Link from "next/link";
 
 import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
 
-import { type CommissionPeriodMonths, getCommissionWindow } from "@/lib/commission-period";
 import {
     formatCommission,
     formatCommissionMonth,
@@ -13,7 +12,8 @@ import {
 import { BROKER_EARNINGS_HREF } from "@/lib/routes/broker";
 
 import { IconButton } from "@/components/shared/icon-button";
-import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
+import { ChevronLeft, ChevronRight, HandCoins } from "@/components/shared/icons";
+import { Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
 import {
     type ChartConfig,
@@ -31,7 +31,15 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-import { MOCK_COMMISSION } from "./mock-commission";
+import { CardEmpty, CardError } from "./card-states";
+import {
+    closedDealsLabel,
+    type CommissionMonths,
+    commissionMonths,
+    DASHBOARD_DEFAULT_MONTHS,
+    maxCommissionPage,
+} from "./commission-window";
+import { useDashboardEarnings } from "./use-dashboard-earnings";
 
 import styles from "./commission-earned.module.css";
 
@@ -46,18 +54,81 @@ const PERIOD_OPTIONS = [
     { value: 12, label: "1 Year" },
 ];
 
-export function CommissionEarned() {
-    const [months, setMonths] = useState<CommissionPeriodMonths>(6);
+function CommissionShell({ children }: { children: React.ReactNode }) {
+    return (
+        <section aria-labelledby="commission-earned-heading" className={styles.section}>
+            <div className={styles.summary}>
+                <h2 id="commission-earned-heading" className="h6">
+                    Commission earned
+                </h2>
+                {children}
+            </div>
+        </section>
+    );
+}
+
+export function CommissionEarned({ now }: { now: Date }) {
+    const [months, setMonths] = useState<CommissionMonths>(DASHBOARD_DEFAULT_MONTHS);
     const [page, setPage] = useState(0);
-    const window = getCommissionWindow(MOCK_COMMISSION, months, page);
-    const selectedMonths = window.data;
-    const latest = selectedMonths[selectedMonths.length - 1];
+    const report = useDashboardEarnings(months, page, now);
+    const lastPage = maxCommissionPage(months);
+
+    if (report.isPending) {
+        return (
+            <CommissionShell>
+                <div aria-busy="true" aria-label="Loading your commission" className="grid gap-3">
+                    <Skeleton className="block-12 inline-48" />
+                    <Skeleton className="block-9 inline-40" />
+                    <Skeleton className="block-48 inline-full" />
+                </div>
+            </CommissionShell>
+        );
+    }
+    if (report.isError && !report.data) {
+        return (
+            <CommissionShell>
+                <CardError
+                    what="your commission"
+                    retrying={report.isFetching}
+                    onRetry={() => void report.refetch()}
+                />
+            </CommissionShell>
+        );
+    }
+    if (!report.data.hasResolvedDeals) {
+        return (
+            <CommissionShell>
+                <CardEmpty
+                    icon={HandCoins}
+                    title="No commission earned yet"
+                    description="Mark a deal as sold in your pipeline and your commission shows here, month by month."
+                    action={
+                        <Link
+                            href="/broker/pipeline"
+                            className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
+                        >
+                            Open pipeline
+                        </Link>
+                    }
+                />
+            </CommissionShell>
+        );
+    }
+
+    const selectedMonths = commissionMonths(report.data.buckets);
+    if (!selectedMonths.length) return null;
+    const latest = selectedMonths[selectedMonths.length - 1]!;
+    const window = { hasPrevious: page < lastPage, hasNext: page > 0 };
     const total = selectedMonths.reduce((sum, month) => sum + month.total, 0);
-    const period = formatCommissionPeriod(selectedMonths[0].monthKey, latest.monthKey);
+    const period = formatCommissionPeriod(selectedMonths[0]!.monthKey, latest.monthKey);
     const monthLabel = `${formatCommissionMonth(latest.monthKey)}${latest.isToDate ? " to date" : ""}`;
 
     return (
-        <section aria-labelledby="commission-earned-heading" className={styles.section}>
+        <section
+            aria-labelledby="commission-earned-heading"
+            aria-busy={report.isPlaceholderData}
+            className={styles.section}
+        >
             <div className={styles.summary}>
                 <div>
                     <h2 id="commission-earned-heading" className="h6">
@@ -72,7 +143,7 @@ export function CommissionEarned() {
                             size="sm"
                             aria-label={`Previous ${months} months`}
                             disabled={!window.hasPrevious}
-                            onClick={() => setPage(window.pageIndex + 1)}
+                            onClick={() => setPage(page + 1)}
                         >
                             <ChevronLeft aria-hidden />
                         </IconButton>
@@ -83,7 +154,7 @@ export function CommissionEarned() {
                             aria-label={period}
                         >
                             {formatCommissionPeriod(
-                                selectedMonths[0].monthKey,
+                                selectedMonths[0]!.monthKey,
                                 latest.monthKey,
                                 "short",
                             )}
@@ -93,7 +164,7 @@ export function CommissionEarned() {
                             size="sm"
                             aria-label={`Next ${months} months`}
                             disabled={!window.hasNext}
-                            onClick={() => setPage(window.pageIndex - 1)}
+                            onClick={() => setPage(page - 1)}
                         >
                             <ChevronRight aria-hidden />
                         </IconButton>
@@ -102,10 +173,7 @@ export function CommissionEarned() {
                 <div className={styles.monthSnapshot}>
                     <div className={styles.snapshotHeader}>
                         <p>{monthLabel}</p>
-                        <p className={styles.deals}>
-                            <strong>{latest.deals}</strong>{" "}
-                            {latest.deals === 1 ? "deal closed" : "deals closed"}
-                        </p>
+                        <p className={styles.deals}>{closedDealsLabel(latest.deals)}</p>
                     </div>
                     <p className={`h4 ${styles.monthAmount}`}>{formatCommission(latest.total)}</p>
                     <dl className={styles.breakdown}>
@@ -175,7 +243,7 @@ export function CommissionEarned() {
                     <ChartContainer
                         key={`${months}-${page}`}
                         config={CHART_CONFIG}
-                        className={`${styles.chart} ${months === 12 ? styles.yearChart : ""}`}
+                        className={`${styles.chart} ${months === 12 ? styles.yearChart : ""} ${report.isPlaceholderData ? "opacity-60" : ""}`}
                         aria-label={`Monthly sale and rent commission, ${period}`}
                     >
                         <BarChart
@@ -259,15 +327,27 @@ export function CommissionEarned() {
                         </BarChart>
                     </ChartContainer>
                 </div>
-                <footer className={styles.footer}>
-                    <span>Illustrative analytics</span>
-                    {latest.isToDate ? <span>* {monthLabel}</span> : null}
-                </footer>
+                {report.isError ? (
+                    <p role="alert" className="body-sm text-ink-muted">
+                        Couldn&apos;t refresh this period.{" "}
+                        <button
+                            type="button"
+                            className="font-semibold text-brand underline-offset-4 hover:underline"
+                            onClick={() => void report.refetch()}
+                        >
+                            Try again
+                        </button>
+                    </p>
+                ) : null}
+                {latest.isToDate ? (
+                    <footer className={styles.footer}>
+                        <span />
+                        <span>* {monthLabel}</span>
+                    </footer>
+                ) : null}
                 <div className="sr-only">
                     <table>
-                        <caption>
-                            Illustrative commission earned, {period}, in Indian rupees
-                        </caption>
+                        <caption>Commission earned, {period}, in Indian rupees</caption>
                         <thead>
                             <tr>
                                 <th scope="col">Month</th>

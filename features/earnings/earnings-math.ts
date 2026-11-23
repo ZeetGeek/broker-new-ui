@@ -587,6 +587,12 @@ export type EarningsReport = {
         stageCounts: Record<DealStage, number>;
         /** Commission on live deals in each stage (deals with no commission add 0). */
         stageCommissionInr: Record<DealStage, number>;
+        /** Asking price of open sale deals in each stage. */
+        stageSaleValueInr: Record<DealStage, number>;
+        /** Monthly rent of open rent deals in each stage. */
+        stageMonthlyRentInr: Record<DealStage, number>;
+        /** Monthly rent across open rent deals. */
+        rentValueInr: number;
         stalledCount: number;
         /** Commission on every live deal that has one set. */
         potentialInr: number;
@@ -769,6 +775,15 @@ export function buildEarningsReport(
                 .reduce((sum, v) => sum + (v.commissionInr ?? 0), 0),
         ]),
     ) as Record<DealStage, number>;
+    const stageAskInr = (isRent: boolean) =>
+        Object.fromEntries(
+            DEAL_STAGE_ORDER.map((stage) => [
+                stage,
+                liveDeals
+                    .filter((d) => d.status === stage && d.property.isRent === isRent)
+                    .reduce((sum, d) => sum + d.property.amountInr, 0),
+            ]),
+        ) as Record<DealStage, number>;
     const likely = valuedLive.filter(
         (v) => v.deal.status === "negotiation" || v.deal.offerStatus === "accepted",
     );
@@ -820,6 +835,11 @@ export function buildEarningsReport(
             saleCount: liveDeals.filter((d) => !d.property.isRent).length,
             stageCounts,
             stageCommissionInr,
+            stageSaleValueInr: stageAskInr(false),
+            stageMonthlyRentInr: stageAskInr(true),
+            rentValueInr: liveDeals
+                .filter((d) => d.property.isRent)
+                .reduce((sum, d) => sum + d.property.amountInr, 0),
             stalledCount: liveDeals.filter(isStalled).length,
             potentialInr: valuedLive.reduce((sum, v) => sum + (v.commissionInr ?? 0), 0),
             valuedCount: valuedLive.filter((v) => v.commissionInr != null).length,

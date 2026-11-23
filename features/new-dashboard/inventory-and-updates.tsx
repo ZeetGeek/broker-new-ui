@@ -49,6 +49,8 @@ import { PropertyDeleteDialog } from "@/features/properties/property-detail/prop
 import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-my-listings";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
+import { activityIcon } from "./activity-icon";
+
 import styles from "./inventory-and-updates.module.css";
 
 type InventoryTab = "published" | "draft";
@@ -481,15 +483,9 @@ function previewListings(now: Date): MyListingItem[] {
     }));
 }
 
-export function InventoryAndUpdates({
-    activity,
-    now,
-    preview = false,
-}: {
-    activity: ActivityData;
-    now: Date;
-    preview?: boolean;
-}) {
+export function InventoryAndUpdates({ activity, now }: { activity: ActivityData; now: Date }) {
+    // Demo mode has no API data, so it shows the sample listings and updates.
+    const preview = isMockMode();
     const [selectedTab, setSelectedTab] = useState<InventoryTab>("published");
     const queryClient = useQueryClient();
     const [deletingListing, setDeletingListing] = useState<MyListingItem | null>(null);
@@ -596,14 +592,13 @@ export function InventoryAndUpdates({
                   removedPreviews.filter((item) => item.status === "draft").length,
           }
         : summary.data;
-    const updates =
-        preview || isMockMode()
-            ? previewUpdates(now)
-            : [...activity.items]
-                  .filter((item) => Number.isFinite(new Date(item.occurredAt).getTime()))
-                  .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt))
-                  .slice(0, 4)
-                  .map((item) => ({ ...item, icon: Activity }));
+    const updates = preview
+        ? previewUpdates(now)
+        : [...activity.items]
+              .filter((item) => Number.isFinite(new Date(item.occurredAt).getTime()))
+              .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt))
+              .slice(0, 4)
+              .map((item) => ({ ...item, icon: activityIcon(item.category) }));
 
     return (
         <div className={styles.layout}>

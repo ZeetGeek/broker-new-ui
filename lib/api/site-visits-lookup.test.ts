@@ -6,7 +6,6 @@ import {
     siteVisitsApi,
     type VisitListPage,
     type VisitListQuery,
-    type VisitTab,
 } from "@/lib/api/site-visits";
 
 const counts: VisitListPage["counts"] = {
@@ -33,7 +32,7 @@ test("visit lookup finds an exact ID on a later page of complete finished histor
     t.after(() => {
         siteVisitsApi.list = previous;
     });
-    const requests: Array<[VisitTab, number]> = [];
+    const requests: Array<[VisitListQuery["tab"], number]> = [];
     const controller = new AbortController();
     siteVisitsApi.list = async (query, signal) => {
         assert.equal(signal, controller.signal);
@@ -65,7 +64,7 @@ test("missing visits inspect every supported tab once and never return another r
     t.after(() => {
         siteVisitsApi.list = previous;
     });
-    const visited: VisitTab[] = [];
+    const visited: VisitListQuery["tab"][] = [];
     siteVisitsApi.list = async (query) => {
         visited.push(query.tab);
         return page([{ id: "similar" } as BrokerVisit]);

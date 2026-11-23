@@ -212,6 +212,8 @@ export type ActivityEventType =
 export type ActivityItem = {
     id: string;
     type: ActivityEventType;
+    /** Backend activity category (calendar, clients, …). Picks the dashboard icon. */
+    category?: string;
     /** ISO timestamp. */
     occurredAt: string;
     href: string;

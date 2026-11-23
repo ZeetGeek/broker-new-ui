@@ -156,6 +156,25 @@ function commissionFromSource(source: {
     };
 }
 
+/** Cover photo, ask and commission of a showing's property, for visit cards. */
+export function showingListingFacts(showing: Pick<ApiShowing, "property">): {
+    coverImage?: string;
+    amountInr?: number;
+    isRent?: boolean;
+    commissionPercent?: number | null;
+    commissionAmountInr?: number | null;
+} {
+    const p = showing.property;
+    if (!p) return {};
+    const isRent = purposeFromTransaction(p.transactionType) === "rent";
+    const amount = isRent ? moneyNumber(p.monthlyRent) : moneyNumber(p.salePrice);
+    return {
+        ...(p.photos?.[0] ? { coverImage: p.photos[0] } : {}),
+        ...(amount > 0 ? { amountInr: amount, isRent } : {}),
+        ...commissionFromSource(p),
+    };
+}
+
 const BHK_CONFIG_LABEL: Record<string, string> = {
     one_rk: "1 RK",
     one_bhk: "1 BHK",

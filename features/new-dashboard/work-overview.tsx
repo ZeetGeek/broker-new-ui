@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { Label, PolarAngleAxis, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
 
-import { formatDurationUntil } from "@/lib/format/date";
+import type { BrokerVisit } from "@/lib/api/site-visits";
 import { formatBudgetAmount } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
@@ -13,10 +15,12 @@ import {
     portalProfileMenuSurfaceClass,
 } from "@/components/layout/portal-profile-menu";
 import { CardLink } from "@/components/shared/card-link";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ContactName } from "@/components/shared/contact-name";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     ArrowRight,
+    Briefcase,
     CalendarClock,
     CalendarPlus,
     CallIcon,
@@ -30,6 +34,7 @@ import {
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
+import { Skeleton } from "@/components/shared/skeleton";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
@@ -41,25 +46,35 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 
-import { columnValue } from "@/features/pipeline/deal-attention";
-import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
+import { getVisitActions, visitErrorMessage } from "@/features/new-site-visits/model";
+import { useVisitMutations } from "@/features/new-site-visits/use-visits";
 import { DashboardTasksCard } from "@/features/tasks/dashboard-tasks-card";
+import { useAppDispatch } from "@/store/hooks";
+import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
+import { CardEmpty, CardError } from "./card-states";
+import { DASHBOARD_DEFAULT_MONTHS } from "./commission-window";
+import { refreshDashboardQueries } from "./dashboard-refresh";
 import {
-    MOCK_PIPELINE,
-    MOCK_VISITS,
-    type PreviewVisit,
-    type PreviewVisitPhase,
-} from "./mock-work-overview";
+    type DashboardVisitPhase,
+    dashboardVisitPhase,
+    groupDashboardVisits,
+    needsUpdateCount,
+    visitStatusLabel,
+    visitWhenLabel,
+    withBusy,
+} from "./dashboard-visit";
+import { pipelineView } from "./pipeline-view";
+import { useDashboardEarnings } from "./use-dashboard-earnings";
+import { useDashboardVisits } from "./use-dashboard-visits";
 
 import styles from "./dashboard.module.css";
 import nextVisitStyles from "./next-visit.module.css";
 import taskStyles from "./task-card.module.css";
 import visitStyles from "./visit-card.module.css";
 
-const VISIT_FILTER_TABS: { value: PreviewVisitPhase; label: string }[] = [
+const VISIT_FILTER_TABS: { value: DashboardVisitPhase; label: string }[] = [
     { value: "upcoming", label: "Upcoming" },
     { value: "running", label: "Running" },
     { value: "needs_update", label: "Needs update" },
@@ -91,43 +106,104 @@ function useScrollFooter() {
     return { viewportRef, contentRef, hasMore, scrolled, measure };
 }
 
-function PipelineOverview() {
-    const total = MOCK_PIPELINE.reduce((sum, stage) => sum + stage.count, 0);
-    const pipelineValue = columnValue(
-        MOCK_DEALS.filter((deal) => deal.status !== "closed" && deal.status !== "lost"),
-    );
-    const monthlyRent = MOCK_DEALS.filter(
-        (deal) => deal.status !== "closed" && deal.status !== "lost" && deal.property.isRent,
-    ).reduce((sum, deal) => sum + deal.property.amountInr, 0);
-    const chartData = [Object.fromEntries(MOCK_PIPELINE.map((stage) => [stage.id, stage.count]))];
-    const chartConfig = Object.fromEntries(
-        MOCK_PIPELINE.map((stage, index) => [
-            stage.id,
-            { label: stage.label, color: `var(--color-stage-${index + 1})` },
-        ]),
-    );
+function PipelineHeader() {
     return (
-        <section className={cn(CARD, "block-full")} aria-labelledby="preview-pipeline-title">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h2 id="preview-pipeline-title" className="h5 text-ink">
-                        Pipeline overview
-                    </h2>
-                </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    nativeButton={false}
-                    render={<Link href="/broker/pipeline" />}
-                >
-                    <ChartBar aria-hidden />
-                    Open pipeline
-                </Button>
-            </div>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+            <h2 id="dashboard-pipeline-title" className="h5 text-ink">
+                Pipeline overview
+            </h2>
+            <Button
+                variant="outline"
+                size="sm"
+                nativeButton={false}
+                render={<Link href="/broker/pipeline" />}
+            >
+                <ChartBar aria-hidden />
+                Open pipeline
+            </Button>
+        </div>
+    );
+}
+
+function PipelineOverview({ now, onAddClient }: { now: Date; onAddClient?: () => void }) {
+    const report = useDashboardEarnings(DASHBOARD_DEFAULT_MONTHS, 0, now);
+
+    if (report.isPending || (report.isError && !report.data)) {
+        return (
+            <section className={cn(CARD, "block-full")} aria-labelledby="dashboard-pipeline-title">
+                <PipelineHeader />
+                {report.isPending ? (
+                    <div
+                        aria-busy="true"
+                        aria-label="Loading your pipeline"
+                        className="grid gap-4 pbs-4"
+                    >
+                        <Skeleton className="mx-auto block-36 inline-64" />
+                        <Skeleton className="mx-auto block-10 inline-56" />
+                        <Skeleton className="block-10 inline-full" />
+                    </div>
+                ) : (
+                    <CardError
+                        what="your pipeline"
+                        retrying={report.isFetching}
+                        onRetry={() => void report.refetch()}
+                    />
+                )}
+            </section>
+        );
+    }
+
+    const view = pipelineView(report.data.live);
+    if (view.total === 0) {
+        return (
+            <section className={cn(CARD, "block-full")} aria-labelledby="dashboard-pipeline-title">
+                <PipelineHeader />
+                <CardEmpty
+                    icon={Briefcase}
+                    title="No active deals yet"
+                    description="Add a client and attach a property to start a deal. It shows here stage by stage."
+                    action={
+                        onAddClient ? (
+                            <button
+                                type="button"
+                                className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
+                                onClick={onAddClient}
+                            >
+                                Add client
+                            </button>
+                        ) : null
+                    }
+                />
+            </section>
+        );
+    }
+
+    const chartData = [Object.fromEntries(view.stages.map((stage) => [stage.id, stage.count]))];
+    const chartConfig = Object.fromEntries(
+        view.stages.map((stage) => [stage.id, { label: stage.label, color: stage.chartColor }]),
+    );
+    const stageSum = view.stages.reduce((sum, stage) => sum + stage.count, 0);
+    const totals = [
+        ...(view.saleValueInr > 0
+            ? [{ label: "Total sale value", value: formatBudgetAmount(view.saleValueInr) }]
+            : []),
+        ...(view.rentValueInr > 0
+            ? [
+                  {
+                      label: "Total monthly rent",
+                      value: `${formatBudgetAmount(view.rentValueInr)}/mo`,
+                  },
+              ]
+            : []),
+    ];
+    const dealWord = (count: number) => (count === 1 ? "deal" : "deals");
+    return (
+        <section className={cn(CARD, "block-full")} aria-labelledby="dashboard-pipeline-title">
+            <PipelineHeader />
             <ChartContainer
                 config={chartConfig}
                 className="mx-auto mbs-2 aspect-auto block-44 inline-full max-inline-72"
-                aria-label={`Pipeline: ${total} active clients. ${MOCK_PIPELINE.map((stage) => `${stage.label}: ${stage.count}`).join(", ")}`}
+                aria-label={`Pipeline: ${view.total} active ${dealWord(view.total)}. ${view.stages.map((stage) => `${stage.label}: ${stage.count}`).join(", ")}`}
             >
                 <RadialBarChart
                     data={chartData}
@@ -140,15 +216,15 @@ function PipelineOverview() {
                 >
                     <PolarAngleAxis
                         type="number"
-                        domain={[0, total || 1]}
+                        domain={[0, stageSum || 1]}
                         tick={false}
                         axisLine={false}
                     />
-                    {MOCK_PIPELINE.map((stage) => (
+                    {view.stages.map((stage) => (
                         <RadialBar
                             key={stage.id}
                             dataKey={stage.id}
-                            fill={chartConfig[stage.id].color}
+                            fill={stage.chartColor}
                             stackId="pipeline"
                             cornerRadius={5}
                             className="stroke-surface stroke-2"
@@ -168,14 +244,14 @@ function PipelineOverview() {
                                             y={(viewBox.cy ?? 0) - 22}
                                             className="fill-ink text-3xl font-semibold tabular-nums"
                                         >
-                                            {total.toLocaleString("en-IN")}
+                                            {view.total.toLocaleString("en-IN")}
                                         </tspan>
                                         <tspan
                                             x={viewBox.cx}
                                             y={(viewBox.cy ?? 0) + 1}
                                             className="fill-ink-muted text-sm font-semibold"
                                         >
-                                            Active clients
+                                            {view.total === 1 ? "Active deal" : "Active deals"}
                                         </tspan>
                                     </text>
                                 );
@@ -184,130 +260,139 @@ function PipelineOverview() {
                     </PolarRadiusAxis>
                 </RadialBarChart>
             </ChartContainer>
-            <dl className="mx-auto mbs-2 grid grid-cols-2 text-center inline-full max-inline-80">
-                <div className="px-3">
-                    <dt className="text-xs font-semibold text-ink-muted">Total sale value</dt>
-                    <dd className="h5 mbs-1 text-ink tabular-nums">{pipelineValue.sale ?? "—"}</dd>
-                </div>
-                <div className="border-s border-border-warm px-3">
-                    <dt className="text-xs font-semibold text-ink-muted">Total monthly rent</dt>
-                    <dd className="h5 mbs-1 text-ink tabular-nums">
-                        {formatBudgetAmount(monthlyRent)}/mo
-                    </dd>
-                </div>
-            </dl>
-            <dl className="mbs-auto grid grid-cols-2 gap-x-3 gap-y-4 pbs-5 sm:grid-cols-4">
-                {MOCK_PIPELINE.map((stage) => {
-                    const status = stage.id === "site_visit" ? "visit" : stage.id;
-                    const deals = MOCK_DEALS.filter((deal) => deal.status === status);
-                    const value = columnValue(deals);
-                    const rent = deals
-                        .filter((deal) => deal.property.isRent)
-                        .reduce((sum, deal) => sum + deal.property.amountInr, 0);
-                    return (
-                        <div key={stage.id} className="text-center">
-                            <dt className="flex items-center justify-center gap-1.5 text-xs font-semibold text-ink-muted">
-                                <span
-                                    aria-hidden
-                                    className={cn(
-                                        "shrink-0 rounded-xs block-2 inline-2",
-                                        stage.color,
-                                    )}
-                                />
-                                {stage.label}
-                            </dt>
-                            <dd className="mbs-1 flex flex-wrap items-baseline justify-center gap-x-1.5 gap-y-0.5 text-sm font-semibold text-ink tabular-nums">
-                                {value.sale && <span>{value.sale}</span>}
-                                {value.rent && (
-                                    <span className="text-xs text-ink-muted">
-                                        {formatBudgetAmount(rent)}/mo
-                                    </span>
-                                )}
-                                {!value.sale && !value.rent && <span>—</span>}
-                            </dd>
+            {totals.length ? (
+                <dl
+                    className={cn(
+                        "mx-auto mbs-2 grid text-center inline-full max-inline-80",
+                        totals.length === 2 ? "grid-cols-2" : "grid-cols-1",
+                    )}
+                >
+                    {totals.map((total, index) => (
+                        <div
+                            key={total.label}
+                            className={cn("px-3", index > 0 && "border-s border-border-warm")}
+                        >
+                            <dt className="text-xs font-semibold text-ink-muted">{total.label}</dt>
+                            <dd className="h5 mbs-1 text-ink tabular-nums">{total.value}</dd>
                         </div>
-                    );
-                })}
+                    ))}
+                </dl>
+            ) : null}
+            <dl className="mbs-auto grid grid-cols-2 gap-x-3 gap-y-4 pbs-5 sm:grid-cols-4">
+                {view.stages.map((stage) => (
+                    <div key={stage.id} className="text-center">
+                        <dt className="flex items-center justify-center gap-1.5 text-xs font-semibold text-ink-muted">
+                            <span
+                                aria-hidden
+                                className={cn("shrink-0 rounded-xs block-2 inline-2", stage.color)}
+                            />
+                            {stage.label}
+                        </dt>
+                        <dd className="mbs-1 flex flex-wrap items-baseline justify-center gap-x-1.5 gap-y-0.5 text-sm font-semibold text-ink tabular-nums">
+                            {stage.saleValueInr > 0 && (
+                                <span>{formatBudgetAmount(stage.saleValueInr)}</span>
+                            )}
+                            {stage.rentValueInr > 0 && (
+                                <span className="text-xs text-ink-muted">
+                                    {formatBudgetAmount(stage.rentValueInr)}/mo
+                                </span>
+                            )}
+                            {stage.saleValueInr === 0 && stage.rentValueInr === 0 && (
+                                <span className="text-ink-muted">
+                                    {stage.count ? `${stage.count} ${dealWord(stage.count)}` : "—"}
+                                </span>
+                            )}
+                        </dd>
+                    </div>
+                ))}
             </dl>
         </section>
     );
 }
 
-function visitTimeRange(visit: PreviewVisit) {
-    const start = visit.time.endsWith(visit.end.slice(-2)) ? visit.time.slice(0, -3) : visit.time;
-    return `${start}–${visit.end}`;
-}
-
-function visitStatus(visit: PreviewVisit) {
-    if (visit.phase === "needs_update") return "Ended · needs update";
-    if (visit.phase === "running") return "Happening now";
-    if (visit.startsInMinutes == null) return "Upcoming";
-    // Preview data stores an offset, so measure it from a fixed origin.
-    return `Starts ${formatDurationUntil(new Date(visit.startsInMinutes * 60_000), new Date(0)).label}`;
-}
+const visitHref = (visit: BrokerVisit, view: "detail" | "reschedule" = "detail") =>
+    `/broker/visits?${new URLSearchParams({ view, visit: visit.id })}`;
 
 type VisitCardProps = {
-    visit: PreviewVisit;
+    visit: BrokerVisit;
+    phase: DashboardVisitPhase;
+    now: Date;
     /** Dark green "Your next visit" card; list rows use the same layout on white. */
     featured?: boolean;
-    onMarkOutcome?: (outcome: "attended" | "notAttended") => void;
-    onDelete?: () => void;
+    busy?: boolean;
+    error?: string;
+    onMarkOutcome?: (status: "completed" | "no_show") => void;
+    onCancel?: () => void;
 };
 
 /** One visit, same anatomy everywhere: time + status → property + people → two actions. */
-function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCardProps) {
+function VisitCard({
+    visit,
+    phase,
+    now,
+    featured = false,
+    busy = false,
+    error,
+    onMarkOutcome,
+    onCancel,
+}: VisitCardProps) {
     const s = featured ? nextVisitStyles : visitStyles;
     const titleId = `visit-card-${featured ? "next" : visit.id}`;
-    const needsUpdate = visit.phase === "needs_update";
-    const visitHref = `/broker/visits?${new URLSearchParams({ view: "detail", visit: visit.id, preview: "true" })}`;
-    const rescheduleHref = `/broker/visits?${new URLSearchParams({ view: "reschedule", visit: visit.id, preview: "true" })}`;
+    const needsUpdate = phase === "needs_update";
+    const actions = getVisitActions(visit, now.getTime());
+    const location = [visit.locality, visit.city].filter(Boolean).join(", ");
+    const canReschedule = actions.includes("reschedule");
+    const canCancel = actions.includes("cancelled") && onCancel;
 
-    const menu = (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <IconButton
-                        size="sm"
-                        appearance={featured ? "inverse" : "outline"}
-                        className={s.menuTrigger}
-                        aria-label={`More actions for visit with ${visit.client}`}
-                    />
-                }
-            >
-                <MoreHorizontal aria-hidden />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-                align="end"
-                className={cn(portalProfileMenuSurfaceClass, "inline-auto min-inline-44")}
-            >
-                {/* Preview IDs only open read-only sample details, never live visit mutations. */}
-                <DropdownMenuItem
-                    className={portalProfileMenuItemClass}
-                    render={<Link href={rescheduleHref} />}
+    const menu =
+        canReschedule || canCancel ? (
+            <DropdownMenu>
+                <DropdownMenuTrigger
+                    render={
+                        <IconButton
+                            size="sm"
+                            appearance={featured ? "inverse" : "outline"}
+                            className={s.menuTrigger}
+                            aria-label={`More actions for visit with ${visit.clientName}`}
+                            disabled={busy}
+                        />
+                    }
                 >
-                    <CalendarClock aria-hidden />
-                    Reschedule
-                </DropdownMenuItem>
-                {onDelete ? (
-                    <>
-                        <DropdownMenuSeparator className="my-1" />
+                    <MoreHorizontal aria-hidden />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                    align="end"
+                    className={cn(portalProfileMenuSurfaceClass, "inline-auto min-inline-44")}
+                >
+                    {canReschedule ? (
                         <DropdownMenuItem
-                            variant="destructive"
                             className={portalProfileMenuItemClass}
-                            onClick={onDelete}
+                            render={<Link href={visitHref(visit, "reschedule")} />}
                         >
-                            <Trash2 aria-hidden />
-                            Delete visit
+                            <CalendarClock aria-hidden />
+                            Reschedule
                         </DropdownMenuItem>
-                    </>
-                ) : null}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
+                    ) : null}
+                    {canCancel ? (
+                        <>
+                            {canReschedule ? <DropdownMenuSeparator className="my-1" /> : null}
+                            <DropdownMenuItem
+                                variant="destructive"
+                                className={portalProfileMenuItemClass}
+                                onClick={onCancel}
+                            >
+                                <Trash2 aria-hidden />
+                                Cancel visit
+                            </DropdownMenuItem>
+                        </>
+                    ) : null}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        ) : null;
 
     return (
-        <article data-linked-card className={s.card} aria-labelledby={titleId}>
-            <CardLink href={visitHref} label={`View visit for ${visit.property}`} />
+        <article data-linked-card className={s.card} aria-labelledby={titleId} aria-busy={busy}>
+            <CardLink href={visitHref(visit)} label={`View visit for ${visit.propertyTitle}`} />
             {featured ? (
                 <div className={s.header}>
                     <h2 className="body-sm font-semibold">Your next visit</h2>
@@ -317,12 +402,12 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
 
             <div className={s.schedule}>
                 <p className={cn(s.time, needsUpdate && s.timeNeedsUpdate)}>
-                    {visitTimeRange(visit)}
+                    {visitWhenLabel(visit, now)}
                 </p>
                 <div className={s.scheduleMeta}>
-                    <p className={s.status} data-phase={visit.phase}>
+                    <p className={s.status} data-phase={phase}>
                         <Clock aria-hidden />
-                        {visitStatus(visit)}
+                        {visitStatusLabel(visit, now)}
                     </p>
                     {featured ? null : menu}
                 </div>
@@ -337,44 +422,59 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
                 />
                 <div className={s.property}>
                     <p data-card-title id={titleId} className={s.propertyName}>
-                        {visit.property}
+                        {visit.propertyTitle}
                     </p>
-                    <p className={s.location}>
-                        <MapPin aria-hidden />
-                        {visit.location}
-                    </p>
+                    {location ? (
+                        <p className={s.location}>
+                            <MapPin aria-hidden />
+                            {location}
+                        </p>
+                    ) : null}
                     <div className={s.people}>
                         <p className={s.person}>
                             <span className={s.personRole}>Client</span>
                             <ContactName
-                                name={visit.client}
+                                name={visit.clientName}
                                 contactType="buyer"
                                 className={s.personName}
                             />
                         </p>
-                        <p className={s.person}>
-                            <span className={s.personRole}>Owner</span>
-                            <ContactName
-                                name={visit.owner}
-                                contactType="owner"
-                                className={s.personName}
-                            />
-                        </p>
+                        {visit.ownerName ? (
+                            <p className={s.person}>
+                                <span className={s.personRole}>Owner</span>
+                                <ContactName
+                                    name={visit.ownerName}
+                                    contactType="owner"
+                                    className={s.personName}
+                                />
+                            </p>
+                        ) : null}
                     </div>
                 </div>
-                <div className={s.price}>
-                    <PriceWithCommission
-                        amountInr={visit.amountInr}
-                        isRent={visit.isRent}
-                        commissionPercent={visit.commissionPercent}
-                        commissionAmountInr={visit.commissionAmountInr}
-                        audience="broker"
-                        size={featured ? "lg" : "md"}
-                        className={featured ? "text-surface" : undefined}
-                        underlineClassName={featured ? "decoration-surface/50" : undefined}
-                    />
-                </div>
+                {visit.amountInr ? (
+                    <div className={s.price}>
+                        <PriceWithCommission
+                            amountInr={visit.amountInr}
+                            isRent={visit.isRent ?? false}
+                            commissionPercent={visit.commissionPercent ?? null}
+                            commissionAmountInr={visit.commissionAmountInr ?? null}
+                            audience="broker"
+                            size={featured ? "lg" : "md"}
+                            className={featured ? "text-surface" : undefined}
+                            underlineClassName={featured ? "decoration-surface/50" : undefined}
+                        />
+                    </div>
+                ) : null}
             </div>
+
+            {error ? (
+                <p
+                    role="alert"
+                    className={cn("body-sm", featured ? "text-surface" : "text-urgent")}
+                >
+                    {error}
+                </p>
+            ) : null}
 
             <div className={s.actions}>
                 {needsUpdate && onMarkOutcome ? (
@@ -382,17 +482,19 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
                         <Button
                             variant={featured ? "highlight" : "accent"}
                             className={s.action}
-                            aria-label={`Mark visit with ${visit.client} as attended`}
-                            onClick={() => onMarkOutcome("attended")}
+                            disabled={busy}
+                            aria-label={`Mark visit with ${visit.clientName} as attended`}
+                            onClick={() => onMarkOutcome("completed")}
                         >
                             <Check aria-hidden />
-                            Attended
+                            {busy ? "Saving…" : "Attended"}
                         </Button>
                         <Button
                             variant={featured ? "ghost" : "outline"}
                             className={cn(s.action, s.secondaryAction)}
-                            aria-label={`Mark visit with ${visit.client} as not attended`}
-                            onClick={() => onMarkOutcome("notAttended")}
+                            disabled={busy}
+                            aria-label={`Mark visit with ${visit.clientName} as not attended`}
+                            onClick={() => onMarkOutcome("no_show")}
                         >
                             <X aria-hidden />
                             Not attended
@@ -404,35 +506,24 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
                             variant={featured ? "highlight" : "accent"}
                             className={s.action}
                             nativeButton={false}
-                            render={<Link href={visitHref} />}
+                            render={<Link href={visitHref(visit)} />}
                         >
                             View visit
                             <ArrowRight aria-hidden />
                         </Button>
-                        <Popover>
-                            <PopoverTrigger
-                                render={
-                                    <Button
-                                        variant={featured ? "ghost" : "outline"}
-                                        className={cn(s.action, s.secondaryAction)}
-                                        aria-label={`Call ${visit.client}`}
-                                    />
-                                }
+                        {visit.clientPhone ? (
+                            <Button
+                                variant={featured ? "ghost" : "outline"}
+                                className={cn(s.action, s.secondaryAction)}
+                                nativeButton={false}
+                                aria-label={`Call ${visit.clientName}`}
+                                render={<a href={`tel:${visit.clientPhone}`} />}
                             >
                                 <CallIcon aria-hidden />
                                 {/* Visually hidden on narrow cards; aria-label keeps the name. */}
                                 <span className={s.actionLabel}>Call client</span>
-                            </PopoverTrigger>
-                            <PopoverContent className="max-inline-[calc(100vw-2rem)]">
-                                <PopoverTitle>
-                                    <ContactName name={visit.client} contactType="buyer" />
-                                </PopoverTitle>
-                                <p className="body-sm text-ink-muted">
-                                    No phone number on this Client yet. Open the Client record to
-                                    add one, then you can call from here.
-                                </p>
-                            </PopoverContent>
-                        </Popover>
+                            </Button>
+                        ) : null}
                     </>
                 )}
             </div>
@@ -441,20 +532,105 @@ function VisitCard({ visit, featured = false, onMarkOutcome, onDelete }: VisitCa
 }
 
 type VisitActions = {
-    visits: PreviewVisit[];
-    markOutcome: (visitId: string, client: string, outcome: "attended" | "notAttended") => void;
-    removeVisit: (visitId: string, client: string) => void;
+    now: Date;
+    busyIds: ReadonlySet<string>;
+    error: { id: string; message: string } | null;
+    markOutcome: (visit: BrokerVisit, status: "completed" | "no_show") => void;
+    askCancel: (visit: BrokerVisit) => void;
 };
 
-function NextVisit({ visits, removeVisit }: Pick<VisitActions, "visits" | "removeVisit">) {
-    const visit = visits.find((item) => item.phase === "upcoming" && !item.outcome);
-    if (!visit) return null;
+type VisitQuery = {
+    isPending: boolean;
+    isError: boolean;
+    isFetching: boolean;
+    refetch: () => unknown;
+};
+
+function NextVisitShell({ children }: { children: React.ReactNode }) {
     return (
-        <VisitCard visit={visit} featured onDelete={() => removeVisit(visit.id, visit.client)} />
+        <section className={cn(CARD, "block-full")} aria-labelledby="dashboard-next-visit-title">
+            <h2 id="dashboard-next-visit-title" className="h5 text-ink">
+                Your next visit
+            </h2>
+            {children}
+        </section>
     );
 }
 
-function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
+function NextVisit({
+    visit,
+    query,
+    ...actions
+}: VisitActions & { visit: BrokerVisit | undefined; query: VisitQuery }) {
+    if (query.isPending) {
+        return (
+            <NextVisitShell>
+                <div
+                    aria-busy="true"
+                    aria-label="Loading your next visit"
+                    className="grid gap-3 pbs-3"
+                >
+                    <Skeleton className="block-8 inline-40" />
+                    <Skeleton className="block-16 inline-full" />
+                    <Skeleton className="block-11 inline-full" />
+                </div>
+            </NextVisitShell>
+        );
+    }
+    if (query.isError && !visit) {
+        return (
+            <NextVisitShell>
+                <CardError
+                    what="your next visit"
+                    retrying={query.isFetching}
+                    onRetry={() => void query.refetch()}
+                />
+            </NextVisitShell>
+        );
+    }
+    if (!visit) {
+        return (
+            <NextVisitShell>
+                <CardEmpty
+                    icon={CalendarPlus}
+                    title="No upcoming visits"
+                    description="Book a site visit for a client and it shows here."
+                    action={
+                        <Link
+                            href="/broker/visits?tab=slots"
+                            className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
+                        >
+                            Schedule visit
+                        </Link>
+                    }
+                />
+            </NextVisitShell>
+        );
+    }
+    return (
+        <VisitCard
+            visit={visit}
+            phase={dashboardVisitPhase(visit, actions.now.getTime()) ?? "upcoming"}
+            now={actions.now}
+            featured
+            busy={actions.busyIds.has(visit.id)}
+            error={actions.error?.id === visit.id ? actions.error.message : undefined}
+            onCancel={() => actions.askCancel(visit)}
+        />
+    );
+}
+
+function TodayVisits({
+    groups,
+    needsUpdateTotal,
+    query,
+    ...actions
+}: VisitActions & {
+    groups: Record<DashboardVisitPhase, BrokerVisit[]>;
+    /** Every unmarked past visit, from the API (the list itself is capped). */
+    needsUpdateTotal: number | undefined;
+    query: VisitQuery;
+}) {
     const {
         viewportRef: visitViewportRef,
         contentRef: visitContentRef,
@@ -462,10 +638,9 @@ function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
         scrolled: visitsScrolled,
         measure: measureVisits,
     } = useScrollFooter();
-    const [filter, setFilter] = useState<PreviewVisitPhase>("upcoming");
-    const activeVisits = visits.filter((visit) => !visit.outcome);
-    const needsUpdate = activeVisits.filter((visit) => visit.phase === "needs_update").length;
-    const visible = activeVisits.filter((visit) => visit.phase === filter);
+    const [filter, setFilter] = useState<DashboardVisitPhase>("upcoming");
+    const needsUpdate = needsUpdateCount(groups.needs_update.length, needsUpdateTotal);
+    const visible = groups[filter];
 
     useEffect(() => {
         const viewport = visitViewportRef.current;
@@ -476,11 +651,11 @@ function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
     return (
         <section
             className={cn(CARD, taskStyles.card, taskStyles.fixedCard)}
-            aria-labelledby="preview-today-visits-title"
+            aria-labelledby="dashboard-today-visits-title"
         >
             <header className={visitStyles.header}>
                 <div className={visitStyles.heading}>
-                    <h2 id="preview-today-visits-title" className="h5 text-ink">
+                    <h2 id="dashboard-today-visits-title" className="h5 text-ink">
                         Today&apos;s visits
                     </h2>
                 </div>
@@ -499,17 +674,16 @@ function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
             <div className={visitStyles.tabsBar} data-scrolled={visitsScrolled ? "true" : "false"}>
                 <SlidingTabs
                     value={filter}
-                    options={VISIT_FILTER_TABS.map((tab) => {
-                        const count = activeVisits.filter(
-                            (visit) => visit.phase === tab.value,
-                        ).length;
-                        return {
-                            id: `dashboard-visits-tab-${tab.value}`,
-                            value: tab.value,
-                            label: tab.label,
-                            count,
-                        };
-                    })}
+                    options={VISIT_FILTER_TABS.map((tab) => ({
+                        id: `dashboard-visits-tab-${tab.value}`,
+                        value: tab.value,
+                        label: tab.label,
+                        count: query.isPending
+                            ? undefined
+                            : tab.value === "needs_update"
+                              ? needsUpdate
+                              : groups[tab.value].length,
+                    }))}
                     onValueChange={setFilter}
                     label="Filter visits"
                     panelId="visit-list-panel"
@@ -532,26 +706,50 @@ function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
                         role="tabpanel"
                         aria-labelledby={`dashboard-visits-tab-${filter}`}
                     >
-                        <ul className={visitStyles.list}>
-                            {visible.map((visit) => (
-                                <li key={visit.id}>
-                                    <VisitCard
-                                        visit={visit}
-                                        onMarkOutcome={(outcome) =>
-                                            markOutcome(visit.id, visit.client, outcome)
-                                        }
-                                        onDelete={() => removeVisit(visit.id, visit.client)}
-                                    />
-                                </li>
-                            ))}
-                        </ul>
-                        {!visible.length && (
+                        {query.isPending ? (
+                            <div
+                                aria-busy="true"
+                                aria-label="Loading today's visits"
+                                className="grid gap-3 py-3"
+                            >
+                                <Skeleton className="block-40 inline-full" />
+                                <Skeleton className="block-40 inline-full" />
+                            </div>
+                        ) : query.isError && !visible.length ? (
+                            <CardError
+                                what="today's visits"
+                                retrying={query.isFetching}
+                                onRetry={() => void query.refetch()}
+                            />
+                        ) : visible.length ? (
+                            <ul className={visitStyles.list}>
+                                {visible.map((visit) => (
+                                    <li key={visit.id}>
+                                        <VisitCard
+                                            visit={visit}
+                                            phase={filter}
+                                            now={actions.now}
+                                            busy={actions.busyIds.has(visit.id)}
+                                            error={
+                                                actions.error?.id === visit.id
+                                                    ? actions.error.message
+                                                    : undefined
+                                            }
+                                            onMarkOutcome={(status) =>
+                                                actions.markOutcome(visit, status)
+                                            }
+                                            onCancel={() => actions.askCancel(visit)}
+                                        />
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
                             <p className="body-sm py-8 text-center text-ink-muted">
                                 {filter === "needs_update"
-                                    ? "No visits are waiting for an attendance update."
+                                    ? "All visits are marked. Nothing waiting for an update."
                                     : filter === "running"
-                                      ? "No visits are running right now."
-                                      : "No upcoming visits yet. Select Schedule visit to book one."}
+                                      ? "No visit is happening right now."
+                                      : "No more visits today. Select Schedule visit to book one."}
                             </p>
                         )}
                     </div>
@@ -576,7 +774,7 @@ function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
                             ? "1 visit needs an update"
                             : `${needsUpdate} visits need an update`}
                     </p>
-                ) : (
+                ) : query.isPending ? null : (
                     <p className="caption text-ink-muted">No attendance updates pending</p>
                 )}
             </footer>
@@ -584,43 +782,118 @@ function TodayVisits({ visits, markOutcome, removeVisit }: VisitActions) {
     );
 }
 
-/** Local preview only: this section does not read or write API data. */
-export function WorkOverview() {
-    // Shared so deleting from either card updates both.
-    const [visits, setVisits] = useState(MOCK_VISITS);
-    const [visitAnnouncement, setVisitAnnouncement] = useState("");
+export function WorkOverview({ now, onAddClient }: { now: Date; onAddClient?: () => void }) {
+    const dispatch = useAppDispatch();
+    const queryClient = useQueryClient();
+    const visits = useDashboardVisits(now);
+    const mutations = useVisitMutations();
+    const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(new Set());
+    const [error, setError] = useState<{ id: string; message: string } | null>(null);
+    const [cancelling, setCancelling] = useState<BrokerVisit | null>(null);
+    const [cancelError, setCancelError] = useState("");
+    const [announcement, setAnnouncement] = useState("");
 
-    const markOutcome = (visitId: string, client: string, outcome: "attended" | "notAttended") => {
-        setVisits((current) =>
-            current.map((item) => (item.id === visitId ? { ...item, outcome } : item)),
-        );
-        setVisitAnnouncement(
-            `Visit with ${client} marked as ${outcome === "attended" ? "attended" : "not attended"} in this preview.`,
-        );
+    const groups = groupDashboardVisits(
+        visits.today.data?.items ?? [],
+        visits.needsUpdate.data?.items ?? [],
+        now.getTime(),
+    );
+    const todayQuery = {
+        isPending: visits.today.isPending || visits.needsUpdate.isPending,
+        isError: visits.today.isError || visits.needsUpdate.isError,
+        isFetching: visits.today.isFetching || visits.needsUpdate.isFetching,
+        refetch: () => Promise.all([visits.today.refetch(), visits.needsUpdate.refetch()]),
     };
 
-    const removeVisit = (visitId: string, client: string) => {
-        setVisits((current) => current.filter((item) => item.id !== visitId));
-        setVisitAnnouncement(`Visit with ${client} deleted from this preview.`);
+    const settled = (message: string) => {
+        toast.success(message);
+        setAnnouncement(message);
+        void dispatch(fetchBrokerDashboard({ background: true }));
+        void refreshDashboardQueries(queryClient);
+    };
+
+    const markOutcome = async (visit: BrokerVisit, status: "completed" | "no_show") => {
+        setBusyIds((ids) => withBusy(ids, visit.id, true));
+        setError(null);
+        try {
+            await mutations.setOutcome.mutateAsync({ id: visit.id, status });
+            settled(
+                `Visit with ${visit.clientName} marked ${status === "completed" ? "attended" : "not attended"}`,
+            );
+        } catch (caught) {
+            setError({ id: visit.id, message: visitErrorMessage(caught) });
+        } finally {
+            setBusyIds((ids) => withBusy(ids, visit.id, false));
+        }
+    };
+
+    const confirmCancel = async () => {
+        if (!cancelling) return;
+        setCancelError("");
+        try {
+            await mutations.cancel.mutateAsync(cancelling.id);
+            settled(`Visit with ${cancelling.clientName} cancelled`);
+            setCancelling(null);
+        } catch (caught) {
+            setCancelError(visitErrorMessage(caught));
+        }
+    };
+
+    const actions: VisitActions = {
+        now,
+        busyIds,
+        error,
+        markOutcome: (visit, status) => void markOutcome(visit, status),
+        askCancel: (visit) => {
+            setCancelError("");
+            setCancelling(visit);
+        },
     };
 
     return (
         <div className={styles.workGrid}>
             <p className="sr-only" role="status">
-                {visitAnnouncement}
+                {announcement}
             </p>
             <div className={styles.nextVisit}>
-                <NextVisit visits={visits} removeVisit={removeVisit} />
+                <NextVisit visit={visits.next.data?.items[0]} query={visits.next} {...actions} />
             </div>
             <div className={styles.visits}>
-                <TodayVisits visits={visits} markOutcome={markOutcome} removeVisit={removeVisit} />
+                <TodayVisits
+                    groups={groups}
+                    needsUpdateTotal={visits.needsUpdate.data?.total}
+                    query={todayQuery}
+                    {...actions}
+                />
             </div>
             <div className={styles.tasks}>
                 <DashboardTasksCard />
             </div>
             <div className={styles.pipeline}>
-                <PipelineOverview />
+                <PipelineOverview now={now} onAddClient={onAddClient} />
             </div>
+            <ConfirmDialog
+                open={cancelling !== null}
+                onOpenChange={(open) => {
+                    if (!open) setCancelling(null);
+                }}
+                title="Cancel this visit?"
+                description={
+                    cancelling
+                        ? `${cancelling.propertyTitle} with ${cancelling.clientName}, ${visitWhenLabel(cancelling, now)}.`
+                        : undefined
+                }
+                confirmLabel="Cancel visit"
+                cancelLabel="Keep visit"
+                busy={mutations.cancel.isPending}
+                onConfirm={() => void confirmCancel()}
+            >
+                {cancelError ? (
+                    <p role="alert" className="body-sm text-urgent">
+                        {cancelError}
+                    </p>
+                ) : null}
+            </ConfirmDialog>
         </div>
     );
 }

@@ -92,3 +92,56 @@ test("mapShowing falls back to the city when there is no address", () => {
     assert.equal(visit.locality, "Pune");
     assert.equal(visit.propertyTitle, "Property");
 });
+
+test("mapShowing carries the sale listing's cover, ask and commission", () => {
+    const visit = mapShowing(
+        showing({
+            property: {
+                id: "p1",
+                title: "Green Meadows",
+                city: "Surat",
+                address: "Althan",
+                photos: ["a.jpg", "b.jpg"],
+                transactionType: "sale",
+                salePrice: "9500000",
+                commissionPercent: "1",
+            } as ApiShowing["property"],
+        }),
+    );
+    assert.equal(visit.coverImage, "a.jpg");
+    assert.equal(visit.amountInr, 95_00_000);
+    assert.equal(visit.isRent, false);
+    assert.equal(visit.commissionPercent, 1);
+});
+
+test("mapShowing carries a rent listing's monthly rent and fixed commission", () => {
+    const visit = mapShowing(
+        showing({
+            property: {
+                id: "p1",
+                title: "River View",
+                city: "Surat",
+                address: "Jahangirpura",
+                transactionType: "rent",
+                salePrice: null,
+                monthlyRent: "22000",
+                commissionAmount: "11000",
+            } as ApiShowing["property"],
+        }),
+    );
+    assert.equal(visit.amountInr, 22_000);
+    assert.equal(visit.isRent, true);
+    assert.equal(visit.commissionAmountInr, 11_000);
+});
+
+test("mapShowing leaves price and cover unset when the property is gone", () => {
+    const visit = mapShowing(showing({ property: null }));
+    assert.equal(visit.coverImage, undefined);
+    assert.equal(visit.amountInr, undefined);
+    assert.equal(visit.propertyTitle, "Property");
+});
+
+test("visitListParams sends the active tab with an India-time day", () => {
+    const params = visitListParams({ tab: "active", from: "2026-11-23", to: "2026-11-23" });
+    assert.equal(params.toString(), "tab=active&from=2026-11-23&to=2026-11-23");
+});

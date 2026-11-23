@@ -1,4 +1,9 @@
-import type { ApiLeadOption, ApiShowing, Paged } from "@/lib/api/broker-visits-map";
+import {
+    type ApiLeadOption,
+    type ApiShowing,
+    type Paged,
+    showingListingFacts,
+} from "@/lib/api/broker-visits-map";
 import { apiFetch } from "@/lib/api/client";
 
 /**
@@ -37,10 +42,18 @@ export type BrokerVisit = {
     bookedAt: string;
     updatedAt: string;
     reminders: number[];
+    /** First listing photo, when the property has one. */
+    coverImage?: string;
+    /** Listing ask: sale price, or monthly rent when `isRent`. Unset when unknown. */
+    amountInr?: number;
+    isRent?: boolean;
+    commissionPercent?: number | null;
+    commissionAmountInr?: number | null;
 };
 
 export type VisitListQuery = {
-    tab: VisitTab;
+    /** `active` = not yet marked or cancelled, any time. */
+    tab: VisitTab | "active";
     search?: string;
     clientId?: string;
     propertyId?: string;
@@ -158,6 +171,7 @@ export function mapShowing(api: ApiShowing): BrokerVisit {
         bookedAt: api.createdAt ?? startsAt,
         updatedAt: api.updatedAt ?? api.createdAt ?? startsAt,
         reminders: api.reminders?.length ? [...api.reminders] : [30],
+        ...showingListingFacts(api),
     };
 }
 

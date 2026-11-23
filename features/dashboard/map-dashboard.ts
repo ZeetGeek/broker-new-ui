@@ -406,6 +406,7 @@ function mapActivity(activity: DashboardActivity | undefined): ActivityData {
             .map((item) => ({
                 id: item.id,
                 type: mapActivityEventType(item.category, item.action),
+                category: item.category,
                 occurredAt: item.createdAt,
                 href: item.href,
                 title: item.title,

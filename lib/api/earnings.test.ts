@@ -119,6 +119,9 @@ function rawReport(overrides: Partial<EarningsReportApi> = {}): EarningsReportAp
             saleCount: 2,
             stageCounts: { new: 1, contacted: 0, visit: 0, negotiation: 1 },
             stageCommissionInr: { new: 0, contacted: 0, visit: 0, negotiation: 1_00_000 },
+            stageSaleValueInr: { new: 0, contacted: 0, visit: 0, negotiation: 1_00_00_000 },
+            stageMonthlyRentInr: { new: 0, contacted: 0, visit: 0, negotiation: 0 },
+            rentValueInr: 0,
             stalledCount: 0,
             potentialInr: 1_00_000,
             valuedCount: 1,
@@ -250,4 +253,44 @@ test("earnings query keeps the previous report while a new period loads", () => 
     const window = resolveEarningsWindow({ preset: "last_6_months" }, NOW);
     assert.ok(a.queryKey.includes(window.from!.toISOString()));
     assert.ok(a.queryKey.includes(window.to.toISOString()));
+});
+
+test("demo report splits live asking value per stage into sale and monthly rent", async () => {
+    const { MOCK_DEALS } = await import("@/features/pipeline/mock-deals");
+    const { buildEarningsReport } = await import("@/features/earnings/earnings-math");
+    const base = MOCK_DEALS[0]!;
+    const deals = [
+        {
+            ...base,
+            id: "sale-new",
+            status: "new" as const,
+            property: { ...base.property, isRent: false, amountInr: 95_00_000 },
+        },
+        {
+            ...base,
+            id: "rent-visit",
+            status: "visit" as const,
+            property: { ...base.property, isRent: true, amountInr: 28_000 },
+        },
+    ];
+    const r = buildEarningsReport(deals, { preset: "last_6_months" }, String, NOW);
+    assert.equal(r.live.stageSaleValueInr.new, 95_00_000);
+    assert.equal(r.live.stageSaleValueInr.visit, 0);
+    assert.equal(r.live.stageMonthlyRentInr.visit, 28_000);
+    assert.equal(r.live.rentValueInr, 28_000);
+});
+
+test("report mapping keeps the per-stage asking values from the API", () => {
+    const raw = rawReport();
+    const live = {
+        ...raw.live,
+        stageSaleValueInr: { new: 1, contacted: 2, visit: 3, negotiation: 4 },
+        stageMonthlyRentInr: { new: 5, contacted: 0, visit: 0, negotiation: 0 },
+        rentValueInr: 5,
+    };
+    const window = resolveEarningsWindow({ preset: "this_month" }, NOW);
+    const r = mapEarningsReport({ ...raw, live }, { window, comparison: null });
+    assert.deepEqual(r.live.stageSaleValueInr, live.stageSaleValueInr);
+    assert.deepEqual(r.live.stageMonthlyRentInr, live.stageMonthlyRentInr);
+    assert.equal(r.live.rentValueInr, 5);
 });

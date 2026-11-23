@@ -1,13 +1,4 @@
-import { PIPELINE_STAGES } from "@/config/constants";
-
-const COUNTS = [10, 7, 4, 3];
-const COLORS = ["bg-stage-1", "bg-stage-2", "bg-stage-3", "bg-stage-4"];
-export const MOCK_PIPELINE = PIPELINE_STAGES.slice(0, 4).map((stage, index) => ({
-    ...stage,
-    count: COUNTS[index],
-    color: COLORS[index],
-}));
-
+/** Sample visits for the visit workflow's read-only "Sample visit" view. */
 export type PreviewVisitPhase = "upcoming" | "running" | "needs_update";
 
 export type PreviewVisit = {
