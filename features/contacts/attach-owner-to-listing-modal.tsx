@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { propertiesApi } from "@/lib/api/properties";
@@ -9,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Building2, Search } from "@/components/shared/icons";
 import { VirtualListBox } from "@/components/shared/virtual-list-box";

@@ -1,13 +1,13 @@
 "use client";
 
 import { type FormEvent, useEffect, useId, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import type { BookableLead, BrokerVisit } from "@/lib/api/site-visits";
 import { formatPersonName } from "@/lib/format/person-name";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { formatVisitDate, formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
+import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import { revealDrawerSections } from "@/components/shared/drawer-section";
 import { Bell, Building2, UserRound } from "@/components/shared/icons";

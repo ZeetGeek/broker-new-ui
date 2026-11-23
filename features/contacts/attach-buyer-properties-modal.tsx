@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { type AttachableProperty, listAttachableProperties } from "@/lib/api/attachable-properties";
 import { clientsApi } from "@/lib/api/clients";
 
+import toast from "@/components/shared/app-toast";
 import { mapAttachablePropertyToPicker } from "@/components/shared/map-to-property-picker-property";
 import { PropertyPicker } from "@/components/shared/property-picker";
 

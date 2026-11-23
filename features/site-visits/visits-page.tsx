@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { visitsApi } from "@/lib/api/visits";
 import { formatDateIso } from "@/lib/format/date";
 import { PREF_KEYS } from "@/lib/prefs/keys";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
+
+import toast from "@/components/shared/app-toast";
 
 import {
     DEFAULT_VISITS_FILTERS,

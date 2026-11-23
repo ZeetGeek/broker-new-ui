@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import { myListingsApi } from "@/lib/api/my-listings";
 
 import { AppModal } from "@/components/shared/app-modal";
+import toast from "@/components/shared/app-toast";
 import { Info } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 

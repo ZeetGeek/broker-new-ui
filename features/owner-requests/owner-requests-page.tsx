@@ -1,7 +1,6 @@
 "use client";
 
 import { type ReactNode, useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
@@ -10,6 +9,7 @@ import { ownerBrokersHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import toast from "@/components/shared/app-toast";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";

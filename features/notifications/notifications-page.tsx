@@ -7,6 +7,7 @@ import { toApiInstant } from "@/lib/datetime/api";
 import { formatDateIn, formatTimeIn } from "@/lib/format/date";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
+import toast from "@/components/shared/app-toast";
 import { CardLink } from "@/components/shared/card-link";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -19,6 +20,7 @@ import { useNotifications } from "@/providers/notification-provider";
 export function NotificationsPage() {
     const { unreadCount, markRead, markAllRead } = useNotifications();
     const [readOverrides, setReadOverrides] = useState<Set<string>>(() => new Set());
+    const [markingAllRead, setMarkingAllRead] = useState(false);
     const query = useInfiniteItems({
         queryKey: ["notifications"],
         queryFn: async ({ cursor, signal }) => {
@@ -41,12 +43,44 @@ export function NotificationsPage() {
 
     const handleMarkRead = async (id: string) => {
         setReadOverrides((previous) => new Set(previous).add(id));
-        await markRead(id);
+        try {
+            await markRead(id);
+        } catch {
+            setReadOverrides((previous) => {
+                const next = new Set(previous);
+                next.delete(id);
+                return next;
+            });
+            toast.error("Couldn't mark this notification as read. Try again.", {
+                id: "notification-mark-read-error",
+            });
+        }
     };
 
     const handleMarkAllRead = async () => {
+        if (markingAllRead) return;
+        const previous = readOverrides;
         setReadOverrides(new Set(items.map((item) => item.id)));
-        await markAllRead();
+        setMarkingAllRead(true);
+        try {
+            await markAllRead();
+        } catch {
+            setReadOverrides(previous);
+            toast.error("Couldn't mark all notifications as read. Try again.", {
+                id: "notifications-mark-all-read-error",
+            });
+        } finally {
+            setMarkingAllRead(false);
+        }
+    };
+
+    const handleRefresh = async () => {
+        const result = await query.refetch();
+        if (result.isError) {
+            toast.error("Couldn't refresh notifications. Check your connection and try again.", {
+                id: "notifications-refresh-error",
+            });
+        }
     };
 
     return (
@@ -63,12 +97,18 @@ export function NotificationsPage() {
                     </h1>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    <Button type="button" variant="outline" onClick={() => void query.refetch()}>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        loading={query.isRefetching}
+                        onClick={() => void handleRefresh()}
+                    >
                         Refresh
                     </Button>
                     <Button
                         type="button"
-                        disabled={unreadCount === 0}
+                        disabled={unreadCount === 0 || markingAllRead}
+                        loading={markingAllRead}
                         onClick={() => void handleMarkAllRead()}
                     >
                         Mark all read

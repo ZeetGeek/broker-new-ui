@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useId, useState } from "react";
-import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
@@ -17,6 +16,7 @@ import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import { mapLabeledPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
 import { PropertyInlineSelect } from "@/components/shared/property-inline-select";

@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { REQUEST_GROUPS, requestIsCollapsed } from "@/lib/visits/status";
 import { addVisitDays as addDays, addVisitMonths as addMonths } from "@/lib/visits/time";
 import { formatVisitTime, istDateKey } from "@/lib/visits/time";
 import { useRequestActions } from "@/hooks/use-time-requests";
+
+import toast from "@/components/shared/app-toast";
 
 import type { TimeRequest } from "@/features/site-visits/broker/model";
 import type { SlotDateRange } from "@/features/site-visits/broker/open-slots/slot-filters";

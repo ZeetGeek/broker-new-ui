@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,6 +14,7 @@ import {
 } from "@/lib/api/site-visits";
 import { closeDirectVisitHref, directVisitWorkflow } from "@/lib/visits/direct-workflow";
 
+import toast from "@/components/shared/app-toast";
 import { Button } from "@/components/ui/button";
 
 import { VisitWorkflow } from "@/features/workflows/visit-workflow";

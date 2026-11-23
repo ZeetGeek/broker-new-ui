@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { useQueryClient } from "@tanstack/react-query";
 
 import { clientsApi } from "@/lib/api/clients";
 import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 
+import toast from "@/components/shared/app-toast";
 import type { PeoplePickerPerson } from "@/components/shared/people-picker";
 import { PeoplePicker } from "@/components/shared/people-picker";
 

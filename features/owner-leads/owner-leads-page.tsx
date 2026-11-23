@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import { ownerLeadsApi, type PropertyLead } from "@/lib/api/owner-leads";
 import { cn } from "@/lib/utils";
 
+import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
 import { HandCoins } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";

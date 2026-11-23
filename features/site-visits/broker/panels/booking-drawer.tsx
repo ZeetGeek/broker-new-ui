@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +14,7 @@ import { useBookSlot } from "@/hooks/use-book-slot";
 
 import { AppImage } from "@/components/shared/app-image";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
+import toast from "@/components/shared/app-toast";
 import { DrawerSection, revealDrawerSections } from "@/components/shared/drawer-section";
 import { CalendarClock, MapPin } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";

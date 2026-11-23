@@ -1,13 +1,13 @@
 "use client";
 
 import { useId, useState } from "react";
-import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
+import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import { TriangleAlert } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";

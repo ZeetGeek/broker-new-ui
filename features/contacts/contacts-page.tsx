@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import toast from "react-hot-toast";
 
 import { useQuery } from "@tanstack/react-query";
 import { tinykeys } from "tinykeys";
@@ -17,6 +16,7 @@ import { useInfiniteItems } from "@/hooks/use-infinite-items";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { AddFab } from "@/components/shared/add-fab";
+import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ClientsTabIcon, OwnersTabIcon, Search } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import toast, { Toaster, type ToastOptions } from "react-hot-toast";
+import toast, { Toaster, type ToastOptions, useToasterStore } from "react-hot-toast";
 
 import { cn } from "@/lib/utils";
 
@@ -21,6 +21,15 @@ export type AppToastContent = {
     detail?: string;
     action?: { label: string; onClick: () => void };
 };
+
+export type AppToastOptions = ToastOptions & {
+    toasterId?: string;
+    description?: string;
+    detail?: string;
+    action?: AppToastContent["action"];
+};
+
+export const APP_TOASTER_ID = "app-toasts";
 
 const ICONS = {
     success: "checkmark-circle-20",
@@ -99,10 +108,12 @@ export function AppToast({
 function AnimatedToast({
     content,
     id,
+    toasterId,
     visible,
 }: {
     content: AppToastContent;
     id: string;
+    toasterId: string;
     visible: boolean;
 }) {
     const [entered, setEntered] = useState(false);
@@ -131,12 +142,12 @@ function AnimatedToast({
                     content.action && {
                         ...content.action,
                         onClick: () => {
-                            toast.dismiss(id);
+                            toast.dismiss(id, toasterId);
                             content.action?.onClick();
                         },
                     }
                 }
-                onDismiss={() => toast.dismiss(id)}
+                onDismiss={() => toast.dismiss(id, toasterId)}
             />
         </div>
     );
@@ -145,8 +156,9 @@ function AnimatedToast({
 /** Actions and failures stay until dismissed; routine confirmations expire. */
 export function showAppToast(
     content: AppToastContent,
-    options: ToastOptions & { toasterId: string },
+    options: ToastOptions & { toasterId?: string } = {},
 ) {
+    const toasterId = options.toasterId ?? APP_TOASTER_ID;
     const duration =
         content.action ||
         content.variant === "loading" ||
@@ -159,14 +171,67 @@ export function showAppToast(
 
     return toast.custom(
         (notification) => (
-            <AnimatedToast content={content} id={notification.id} visible={notification.visible} />
+            <AnimatedToast
+                content={content}
+                id={notification.id}
+                toasterId={toasterId}
+                visible={notification.visible}
+            />
         ),
-        { duration, removeDelay: 350, ...options },
+        { duration, removeDelay: 350, ...options, toasterId },
     );
 }
 
-/** An explicit id isolates this viewport from the app's existing notifications. */
-export function AppToaster({ toasterId }: { toasterId: string }) {
+function notify(title: string, variant: AppToastVariant, options: AppToastOptions = {}) {
+    const { toasterId = APP_TOASTER_ID, description, detail, action, ...toastOptions } = options;
+    return showAppToast(
+        { variant, title, description, detail, action },
+        { ...toastOptions, toasterId },
+    );
+}
+
+type AppToastApi = {
+    (title: string, options?: AppToastOptions): string;
+    success: (title: string, options?: AppToastOptions) => string;
+    error: (title: string, options?: AppToastOptions) => string;
+    warning: (title: string, options?: AppToastOptions) => string;
+    info: (title: string, options?: AppToastOptions) => string;
+    loading: (title: string, options?: AppToastOptions) => string;
+    reminder: (title: string, options?: AppToastOptions) => string;
+    dismiss: (toastId?: string, toasterId?: string) => void;
+    remove: (toastId?: string, toasterId?: string) => void;
+};
+
+/** Drop-in app API so feature code cannot bypass the shared toast design. */
+const appToast = Object.assign(
+    (title: string, options?: AppToastOptions) => notify(title, "info", options),
+    {
+        success: (title: string, options?: AppToastOptions) => notify(title, "success", options),
+        error: (title: string, options?: AppToastOptions) => notify(title, "error", options),
+        warning: (title: string, options?: AppToastOptions) => notify(title, "warning", options),
+        info: (title: string, options?: AppToastOptions) => notify(title, "info", options),
+        loading: (title: string, options?: AppToastOptions) => notify(title, "loading", options),
+        reminder: (title: string, options?: AppToastOptions) => notify(title, "reminder", options),
+        dismiss: (toastId?: string, toasterId = APP_TOASTER_ID) =>
+            toast.dismiss(toastId, toasterId),
+        remove: (toastId?: string, toasterId = APP_TOASTER_ID) => toast.remove(toastId, toasterId),
+    },
+) as AppToastApi;
+
+export function dismissAppToast(toastId?: string, toasterId = APP_TOASTER_ID) {
+    toast.dismiss(toastId, toasterId);
+}
+
+export function removeAppToast(toastId?: string, toasterId = APP_TOASTER_ID) {
+    toast.remove(toastId, toasterId);
+}
+
+export function useAppToastStore(toasterId = APP_TOASTER_ID) {
+    return useToasterStore(undefined, toasterId);
+}
+
+/** An explicit id can isolate a preview viewport from app notifications. */
+export function AppToaster({ toasterId = APP_TOASTER_ID }: { toasterId?: string }) {
     return (
         <Toaster
             toasterId={toasterId}
@@ -182,3 +247,5 @@ export function AppToaster({ toasterId }: { toasterId: string }) {
         />
     );
 }
+
+export default appToast;

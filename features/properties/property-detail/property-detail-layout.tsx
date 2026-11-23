@@ -1,6 +1,5 @@
 "use client";
 import { type ReactNode, useState } from "react";
-import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,6 +12,7 @@ import { parseTourEmbed, parseVideoEmbed } from "@/lib/media/embed-url";
 import { cn } from "@/lib/utils";
 import { amenityLabel } from "@/lib/validation/property";
 
+import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     type AppIcon,

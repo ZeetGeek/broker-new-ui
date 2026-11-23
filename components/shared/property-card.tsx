@@ -1,7 +1,5 @@
 "use client";
 
-import toast from "react-hot-toast";
-
 import { addCollection, Icon } from "@iconify/react/offline";
 
 import { formatAreaSqft } from "@/lib/format/area";
@@ -14,6 +12,7 @@ import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
+import toast from "@/components/shared/app-toast";
 import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import {
     AttachedBrokersRow,

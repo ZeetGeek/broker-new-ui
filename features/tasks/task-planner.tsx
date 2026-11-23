@@ -1,6 +1,5 @@
 "use client";
 import { type CSSProperties, type ReactNode, useId, useRef, useState } from "react";
-import toast from "react-hot-toast";
 
 import {
     closestCenter,
@@ -28,6 +27,7 @@ import { plannerColumnLabel } from "@/lib/tasks/planner-column-options";
 import { cn } from "@/lib/utils";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
+import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";

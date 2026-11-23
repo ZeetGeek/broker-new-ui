@@ -2,7 +2,6 @@
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -14,6 +13,7 @@ import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { AppModal } from "@/components/shared/app-modal";
+import toast from "@/components/shared/app-toast";
 import { Check, ChevronDown, UserRound, Users, X } from "@/components/shared/icons";
 import {
     mapClientItemToPicker,

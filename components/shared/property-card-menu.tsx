@@ -15,6 +15,7 @@ import {
 } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
 
+import toast from "@/components/shared/app-toast";
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import { IconButton } from "@/components/shared/icon-button";
 import { PropertyMenuIcon } from "@/components/shared/icons";
@@ -104,16 +105,23 @@ export type PropertyCardMenuProps = {
     className?: string;
 };
 
-async function copyText(value: string) {
+async function copyText(value: string): Promise<boolean> {
     try {
         await navigator.clipboard.writeText(value);
+        return true;
     } catch {
-        const input = document.createElement("input");
-        input.value = value;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand("copy");
-        document.body.removeChild(input);
+        let input: HTMLInputElement | null = null;
+        try {
+            input = document.createElement("input");
+            input.value = value;
+            document.body.appendChild(input);
+            input.select();
+            return document.execCommand("copy");
+        } catch {
+            return false;
+        } finally {
+            input?.remove();
+        }
     }
 }
 
@@ -207,7 +215,13 @@ export function PropertyCardMenu({
     }, []);
 
     const handleCopyLink = useCallback(async () => {
-        await copyText(shareUrl);
+        const copied = await copyText(shareUrl);
+        if (!copied) {
+            toast.error("Couldn't copy the property link. Try again.", {
+                id: "property-link-copy-error",
+            });
+            return;
+        }
         setCopiedAt(performance.now());
     }, [shareUrl]);
 

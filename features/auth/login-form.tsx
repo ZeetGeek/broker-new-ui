@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +12,7 @@ import { destinationForRole } from "@/lib/auth/session";
 import { useRouter, useSearchParams } from "@/lib/navigation";
 import { loginSchema, type LoginValues } from "@/lib/validation/auth";
 
+import toast from "@/components/shared/app-toast";
 import { EmailFieldIcon, PasswordIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +11,7 @@ import { ApiError } from "@/lib/api/client";
 import { useRouter } from "@/lib/navigation";
 import { resetPasswordSchema, type ResetPasswordValues } from "@/lib/validation/auth";
 
+import toast from "@/components/shared/app-toast";
 import { PasswordIcon } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

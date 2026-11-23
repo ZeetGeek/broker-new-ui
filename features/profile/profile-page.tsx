@@ -9,7 +9,6 @@ import {
     useState,
 } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -25,6 +24,7 @@ import {
 } from "@/lib/validation/profile";
 import { useLocationOptions } from "@/hooks/use-locations";
 
+import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import {
     type AppIcon,

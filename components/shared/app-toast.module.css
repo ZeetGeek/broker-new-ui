@@ -29,7 +29,7 @@
 }
 
 .icon .spinner {
-    --spinner-size: 1.75rem;
+    --spinner-size: 1.5rem;
 }
 
 .content {
@@ -59,14 +59,15 @@
 }
 
 .dismiss {
+    --icon-button-color: var(--color-ink-subtle);
+    --icon-button-hover: var(--color-surface-muted);
     flex-shrink: 0;
     margin-inline-end: -6px;
-    color: var(--color-ink-subtle);
 }
 
 .dismiss svg {
-    inline-size: 28px;
-    block-size: 28px;
+    inline-size: 18px;
+    block-size: 18px;
 }
 
 .animated {

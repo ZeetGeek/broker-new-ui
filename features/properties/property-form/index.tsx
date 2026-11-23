@@ -10,7 +10,6 @@ import {
     useState,
 } from "react";
 import { type FieldPath, FormProvider, useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { clientsApi } from "@/lib/api/clients";
 import { myListingsApi } from "@/lib/api/my-listings";
@@ -52,6 +51,7 @@ import {
 } from "@/lib/visibility/rules";
 import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 
+import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import { ArrowRight, Check, ChevronDown, RotateCcw, X } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";

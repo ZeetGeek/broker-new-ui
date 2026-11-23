@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -25,6 +24,7 @@ import {
 import { useLocationOptions } from "@/hooks/use-locations";
 import { useMarket } from "@/hooks/use-market";
 
+import toast from "@/components/shared/app-toast";
 import { CallIcon, Link2, Tag, UserRound } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { WorkflowLink } from "@/components/shared/workflow-link";

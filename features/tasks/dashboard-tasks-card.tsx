@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
 import { formatInTimeZone } from "date-fns-tz";
 
 import { cn } from "@/lib/utils";
 
+import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     ArrowRight,

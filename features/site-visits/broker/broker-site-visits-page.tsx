@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +19,7 @@ import { useVisitActions } from "@/hooks/use-visit-actions";
 import { useVisitSummary } from "@/hooks/use-visit-summary";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import toast from "@/components/shared/app-toast";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";

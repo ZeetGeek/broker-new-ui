@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -10,6 +9,7 @@ import { myListingsApi } from "@/lib/api/my-listings";
 import { formatRelativePast } from "@/lib/format/date";
 import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
 
+import toast from "@/components/shared/app-toast";
 import { AvatarStack } from "@/components/shared/avatar-stack";
 import { CardLink } from "@/components/shared/card-link";
 import { ContactName } from "@/components/shared/contact-name";

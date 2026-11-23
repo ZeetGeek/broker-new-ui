@@ -1,7 +1,6 @@
 "use client";
 
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import {
@@ -19,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { AppPagination } from "@/components/shared/app-pagination";
+import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
 import { CalendarDays } from "@/components/shared/icons";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";

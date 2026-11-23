@@ -1,17 +1,13 @@
 "use client";
 import { useCallback, useEffect, useRef } from "react";
-import toast from "react-hot-toast";
-import Link from "next/link";
 
 import { useQueryClient } from "@tanstack/react-query";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 import type { NotificationItem } from "@/lib/api/notifications";
 import { getNotificationSocket } from "@/lib/socket/notifications";
-import { navigateWorkflow } from "@/lib/workflows/navigation";
 
-import { IconButton } from "@/components/shared/icon-button";
-import { Bell, X } from "@/components/shared/icons";
+import { dismissAppToast, showAppToast } from "@/components/shared/app-toast";
 import { useWorkflow } from "@/components/shared/workflow-context";
 
 import { useAppSelector } from "@/store/hooks";
@@ -46,41 +42,19 @@ function showReminderToast(
     content: ReminderToastContent,
     open: (href: string) => boolean,
 ) {
-    toast.custom(
-        (notification) => (
-            <div
-                role="status"
-                className="flex items-start gap-3 rounded-card border border-border-warm bg-surface p-4 text-ink shadow-lg inline-[min(24rem,calc(100vw-2rem))]"
-            >
-                <span className="flex shrink-0 items-center justify-center rounded-control bg-brand-soft text-brand-text block-9 inline-9">
-                    <Bell className="block-5 inline-5" aria-hidden />
-                </span>
-                <div className="min-inline-0">
-                    <p className="body-xs font-semibold text-brand-text">{content.title}</p>
-                    <p className="body-sm mbs-1 font-semibold wrap-anywhere">{content.line}</p>
-                    {content.detail && (
-                        <p className="body-xs mbs-1 text-ink-subtle">{content.detail}</p>
-                    )}
-                    <Link
-                        className="body-sm mbs-2 inline-flex items-center font-semibold text-brand-text underline-offset-4 min-block-9 hover:underline"
-                        href={content.href}
-                        onClick={() => toast.dismiss(notification.id)}
-                        onNavigate={(event) =>
-                            navigateWorkflow(event, undefined, open, content.href)
-                        }
-                    >
-                        {content.action}
-                    </Link>
-                </div>
-                <IconButton
-                    size="sm"
-                    aria-label="Dismiss reminder"
-                    onClick={() => toast.dismiss(notification.id)}
-                >
-                    <X aria-hidden />
-                </IconButton>
-            </div>
-        ),
+    showAppToast(
+        {
+            variant: "reminder",
+            title: content.title,
+            description: content.line,
+            detail: content.detail,
+            action: {
+                label: content.action,
+                onClick: () => {
+                    if (!open(content.href)) window.location.assign(content.href);
+                },
+            },
+        },
         { id, duration: 12_000 },
     );
 }
@@ -104,7 +78,7 @@ function LiveReminders({ accountId, accessToken }: { accountId: string; accessTo
         socket.on("notification.created", onCreated);
         return () => {
             socket.off("notification.created", onCreated);
-            shown.forEach((id) => toast.dismiss(id));
+            shown.forEach((id) => dismissAppToast(id));
         };
     }, [accessToken, accountId, queryClient, open]);
     return null;
@@ -121,7 +95,7 @@ function AccountTaskReminders({ accountId }: { accountId: string }) {
         const notifications = activeToasts.current;
         return () => {
             mounted.current = false;
-            notifications.forEach((id) => toast.dismiss(id));
+            notifications.forEach((id) => dismissAppToast(id));
         };
     }, []);
     useEffect(() => {

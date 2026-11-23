@@ -1,7 +1,6 @@
 "use client";
 import { type MutableRefObject, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { calculateRentCommission, calculateSaleCommission } from "@/lib/calc/commission";
 import { formatMoney, formatMoneyCompact } from "@/lib/format/money";
@@ -13,6 +12,7 @@ import { derive } from "@/lib/visibility/derive";
 import { FIELD_RULES } from "@/lib/visibility/rules";
 
 import { AppImage } from "@/components/shared/app-image";
+import toast from "@/components/shared/app-toast";
 import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import { IconButton } from "@/components/shared/icon-button";
 import {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import toast from "react-hot-toast";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -12,6 +11,7 @@ import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 import type { WorkflowTarget } from "@/lib/workflows/target";
 
 import { AppModal } from "@/components/shared/app-modal";
+import toast from "@/components/shared/app-toast";
 import { useWorkflowWorking } from "@/components/shared/workflow-context";
 import { Button } from "@/components/ui/button";
 

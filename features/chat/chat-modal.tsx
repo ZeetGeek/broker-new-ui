@@ -1,7 +1,6 @@
 "use client";
 
 import { Fragment, type UIEvent, useCallback, useEffect, useRef, useState } from "react";
-import toast from "react-hot-toast";
 
 import SimpleBar from "simplebar-react";
 
@@ -13,6 +12,7 @@ import { getNotificationSocket } from "@/lib/socket/notifications";
 
 import { AppImage } from "@/components/shared/app-image";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
+import toast from "@/components/shared/app-toast";
 import { ChevronDown } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";

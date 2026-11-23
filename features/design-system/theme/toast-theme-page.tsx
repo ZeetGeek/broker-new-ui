@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import toast, { useToasterStore } from "react-hot-toast";
 
 import {
     AppToast,
     type AppToastContent,
     AppToaster,
+    dismissAppToast,
+    removeAppToast,
     showAppToast,
+    useAppToastStore,
 } from "@/components/shared/app-toast";
 import { ChevronRight, Layers, Play } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
@@ -72,13 +74,13 @@ export function ToastThemePage() {
         "Interactive examples only. No live records are changed.",
     );
     const flowTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const { toasts } = useToasterStore(undefined, TOASTER_ID);
+    const { toasts } = useAppToastStore(TOASTER_ID);
     const activeCount = toasts.filter((item) => item.visible).length;
 
     useEffect(
         () => () => {
             if (flowTimer.current) clearTimeout(flowTimer.current);
-            toast.remove(undefined, TOASTER_ID);
+            removeAppToast(undefined, TOASTER_ID);
         },
         [],
     );
@@ -87,7 +89,7 @@ export function ToastThemePage() {
         toasts
             .filter((item) => item.visible)
             .slice(2)
-            .forEach((item) => toast.remove(item.id, TOASTER_ID));
+            .forEach((item) => removeAppToast(item.id, TOASTER_ID));
     }
 
     function runAction(example: ToastExample) {
@@ -141,7 +143,7 @@ export function ToastThemePage() {
     function clearPreviews() {
         if (flowTimer.current) clearTimeout(flowTimer.current);
         flowTimer.current = null;
-        toast.dismiss(undefined, TOASTER_ID);
+        dismissAppToast(undefined, TOASTER_ID);
         setFeedback("Live previews cleared.");
     }
 
@@ -195,7 +197,7 @@ export function ToastThemePage() {
 
     function showStack() {
         clearPreviews();
-        toast.remove(undefined, TOASTER_ID);
+        removeAppToast(undefined, TOASTER_ID);
         ["property-updated", "client-added", "task-reminder"].forEach((id) => {
             const example = TOAST_EXAMPLES.find((item) => item.id === id)!;
             showAppToast(contentFor(example), { toasterId: TOASTER_ID, id: `stack-${id}` });

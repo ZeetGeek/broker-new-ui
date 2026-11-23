@@ -18,7 +18,8 @@ import {
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";
 
-export type NotificationTab = "all" | "requests" | "visits" | "updates";
+/** `updates` is a catch-all bucket: those rows show under All only, never as their own tab. */
+export type NotificationTab = "all" | "requests" | "visits" | "tasks" | "updates";
 
 export type NotificationActor = {
     name: string;
@@ -39,7 +40,16 @@ export type NotificationVisual = {
     tone: NotificationTone;
 };
 
-const TAB_ORDER: NotificationTab[] = ["all", "requests", "visits", "updates"];
+/** Tabs shown in the UI. `requests` is still gated by FEATURE_PLATFORM_OWNER at the call site. */
+const TAB_ORDER: NotificationTab[] = ["all", "requests", "visits", "tasks"];
+
+const TAB_LABELS: Record<NotificationTab, string> = {
+    all: "All",
+    requests: "Requests",
+    visits: "Visits",
+    tasks: "Tasks",
+    updates: "Updates",
+};
 
 const REQUEST_TYPES = new Set<NotificationType>([
     "representation_request",
@@ -120,6 +130,7 @@ export function getNotificationTab(item: NotificationItem): Exclude<Notification
     if (isKnownNotificationType(item.type)) {
         if (REQUEST_TYPES.has(item.type)) return FEATURE_PLATFORM_OWNER ? "requests" : "updates";
         if (VISIT_TYPES.has(item.type)) return "visits";
+        if (item.type === "task_reminder") return "tasks";
         return "updates";
     }
 
@@ -149,6 +160,7 @@ export function countByTab(items: NotificationItem[]): Record<NotificationTab, n
         all: items.length,
         requests: 0,
         visits: 0,
+        tasks: 0,
         updates: 0,
     };
 
@@ -204,17 +216,7 @@ export function groupNotificationsByDay(
 }
 
 export const NOTIFICATION_TABS: { value: NotificationTab; label: string }[] = TAB_ORDER.map(
-    (value) => ({
-        value,
-        label:
-            value === "all"
-                ? "All"
-                : value === "requests"
-                  ? "Requests"
-                  : value === "visits"
-                    ? "Visits"
-                    : "Updates",
-    }),
+    (value) => ({ value, label: TAB_LABELS[value] }),
 );
 
 function parseNameFromTitle(title: string): string | null {

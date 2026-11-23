@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import toast from "react-hot-toast";
 
 import { pipelineApi } from "@/lib/api/pipeline";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
@@ -14,6 +13,7 @@ import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 import { useDebouncedValue } from "@/hooks/use-locations";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
+import toast, { showAppToast } from "@/components/shared/app-toast";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -460,53 +460,43 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 .setStage(dealId, status)
                 .then(() => {
                     if (!mounted.current) return;
-                    toast(
-                        (t) => (
-                            <span className="flex items-center gap-3">
-                                <span>Moved to {DEAL_STAGE_META[status].label.toLowerCase()}</span>
-                                <button
-                                    type="button"
-                                    className="shrink-0 px-2 font-semibold text-brand underline min-block-(--touch-target-min)"
-                                    onClick={() => {
-                                        if (!mounted.current) {
-                                            toast.dismiss(t.id);
-                                            return;
-                                        }
-                                        if (stageGate.begin(dealId, version) == null) {
-                                            toast.dismiss(t.id);
-                                            setActionError(
-                                                "Could not undo: this deal changed or is still saving. Check its current stage.",
-                                            );
-                                            return;
-                                        }
-                                        setBusyId(dealId);
-                                        // Keep the confirmed stage visible until Undo actually saves.
-                                        void pipelineApi
-                                            .setStage(dealId, previous)
-                                            .then(() => {
-                                                if (mounted.current)
-                                                    applyLocalStage(dealId, previous);
-                                            })
-                                            .catch(() => {
-                                                if (mounted.current)
-                                                    setActionError(
-                                                        "Could not undo the move. The board now shows the saved stage.",
-                                                    );
-                                            })
-                                            .finally(() => {
-                                                stageGate.end();
-                                                if (mounted.current) {
-                                                    setBusyId(null);
-                                                    setRevision((value) => value + 1);
-                                                }
-                                            });
-                                        toast.dismiss(t.id);
-                                    }}
-                                >
-                                    Undo
-                                </button>
-                            </span>
-                        ),
+                    showAppToast(
+                        {
+                            variant: "success",
+                            title: `Moved to ${DEAL_STAGE_META[status].label.toLowerCase()}`,
+                            action: {
+                                label: "Undo",
+                                onClick: () => {
+                                    if (!mounted.current) return;
+                                    if (stageGate.begin(dealId, version) == null) {
+                                        setActionError(
+                                            "Could not undo: this deal changed or is still saving. Check its current stage.",
+                                        );
+                                        return;
+                                    }
+                                    setBusyId(dealId);
+                                    // Keep the confirmed stage visible until Undo actually saves.
+                                    void pipelineApi
+                                        .setStage(dealId, previous)
+                                        .then(() => {
+                                            if (mounted.current) applyLocalStage(dealId, previous);
+                                        })
+                                        .catch(() => {
+                                            if (mounted.current)
+                                                setActionError(
+                                                    "Could not undo the move. The board now shows the saved stage.",
+                                                );
+                                        })
+                                        .finally(() => {
+                                            stageGate.end();
+                                            if (mounted.current) {
+                                                setBusyId(null);
+                                                setRevision((value) => value + 1);
+                                            }
+                                        });
+                                },
+                            },
+                        },
                         { duration: 5_000 },
                     );
                 })

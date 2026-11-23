@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import * as React from "react";
 
 // Apple sign-in disabled for now — re-enable with the button below.
-// import toast from "react-hot-toast";
+// import toast from "@/components/shared/app-toast";
 import { addCollection, Icon } from "@iconify/react/offline";
 
 import { authApi } from "@/lib/api/auth";

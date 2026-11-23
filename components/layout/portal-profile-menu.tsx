@@ -1,13 +1,13 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
-import toast from "react-hot-toast";
 
 import { useRouter } from "@/lib/navigation";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { LogoutMenuItem } from "@/components/layout/logout-menu-item";
+import toast from "@/components/shared/app-toast";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";

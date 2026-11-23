@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 import { brokerRequestsApi } from "@/lib/api/broker-requests";
 import { PREF_KEYS } from "@/lib/prefs/keys";
@@ -9,6 +8,7 @@ import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
+import toast from "@/components/shared/app-toast";
 import { Check, Clock, Send, X } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";

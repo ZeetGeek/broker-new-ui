@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import { dashboardApi, type DashboardResponse } from "@/lib/api/dashboard";
 import { profileApi } from "@/lib/api/profile";
 import { representativeApi } from "@/lib/api/representative";
+
+import toast from "@/components/shared/app-toast";
 
 import { ActivityCard } from "@/features/dashboard/activity-card";
 import {
