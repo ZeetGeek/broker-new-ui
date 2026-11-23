@@ -9,7 +9,7 @@ import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { formatVisitDate, formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
 import { CharacterCount } from "@/components/shared/character-count";
-import { DrawerSection, revealDrawerSections } from "@/components/shared/drawer-section";
+import { revealDrawerSections } from "@/components/shared/drawer-section";
 import { Bell, Building2, UserRound } from "@/components/shared/icons";
 import { mapFilterPersonToPicker } from "@/components/shared/map-to-people-picker-person";
 import { mapVisitLeadPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
@@ -17,6 +17,11 @@ import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
 import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+
+import {
+    FORM_SECTIONS_CLASS,
+    WizardSection,
+} from "@/features/properties/property-form/form-fields";
 
 import {
     bookableDates,
@@ -210,14 +215,14 @@ export function ScheduleForm({
         >
             <form id={formId} onSubmit={submit} noValidate>
                 <fieldset disabled={busy} className="m-0 border-0 p-0 min-inline-0">
-                    <div className="flex flex-col">
+                    <div className={FORM_SECTIONS_CLASS}>
                         {intentMissed && (
-                            <p role="alert" className={`${styles.conflict} mbe-6`}>
+                            <p role="alert" className={styles.conflict}>
                                 This deal can&apos;t be booked here. Visits can be booked for open
                                 deals on your own listings. Choose a client below.
                             </p>
                         )}
-                        <DrawerSection
+                        <WizardSection
                             title="Client and property"
                             description={
                                 visit
@@ -254,8 +259,17 @@ export function ScheduleForm({
                             ) : (
                                 <div className="flex flex-col gap-4">
                                     <div className={styles.field}>
-                                        <label htmlFor={`${formId}-client`}>
-                                            Client <span className={styles.required}>*</span>
+                                        <label
+                                            htmlFor={`${formId}-client`}
+                                            className="text-sm font-semibold text-ink"
+                                        >
+                                            Client
+                                            <span
+                                                aria-label="required"
+                                                className="ms-1 text-danger"
+                                            >
+                                                *
+                                            </span>
                                         </label>
                                         <PeopleInlineSelect
                                             id={`${formId}-client`}
@@ -266,12 +280,21 @@ export function ScheduleForm({
                                             disabled={busy || leadsQuery.isPending}
                                             errorText={show("clientId")}
                                             placeholder="Select a client"
-                                            size="lg"
+                                            size="md"
                                         />
                                     </div>
                                     <div className={styles.field}>
-                                        <label htmlFor={`${formId}-property`}>
-                                            Property <span className={styles.required}>*</span>
+                                        <label
+                                            htmlFor={`${formId}-property`}
+                                            className="text-sm font-semibold text-ink"
+                                        >
+                                            Property
+                                            <span
+                                                aria-label="required"
+                                                className="ms-1 text-danger"
+                                            >
+                                                *
+                                            </span>
                                         </label>
                                         <PropertyInlineSelect
                                             id={`${formId}-property`}
@@ -286,22 +309,31 @@ export function ScheduleForm({
                                                     : undefined
                                             }
                                             placeholder="Select a property"
-                                            size="lg"
+                                            size="md"
                                         />
                                     </div>
                                 </div>
                             )}
-                        </DrawerSection>
+                        </WizardSection>
 
                         {!noLeads && (
-                            <DrawerSection
+                            <WizardSection
                                 title="Visit date and time"
                                 description="Choose how long, the date and a free start time. All times are in India time (IST)."
                             >
                                 <div className="flex flex-col gap-4">
                                     <div className={styles.field}>
-                                        <span id={`${formId}-length`}>
-                                            How long <span className={styles.required}>*</span>
+                                        <span
+                                            id={`${formId}-length`}
+                                            className="text-sm font-semibold text-ink"
+                                        >
+                                            How long
+                                            <span
+                                                aria-label="required"
+                                                className="ms-1 text-danger"
+                                            >
+                                                *
+                                            </span>
                                         </span>
                                         <div
                                             role="group"
@@ -312,7 +344,7 @@ export function ScheduleForm({
                                                 <Button
                                                     key={chip.value}
                                                     type="button"
-                                                    size="sm"
+                                                    size="md"
                                                     variant={
                                                         draft.durationMinutes === chip.value
                                                             ? "accent"
@@ -343,8 +375,17 @@ export function ScheduleForm({
                                         )}
                                     </div>
                                     <div className={styles.field}>
-                                        <label htmlFor={`${formId}-date`}>
-                                            Visit date <span className={styles.required}>*</span>
+                                        <label
+                                            htmlFor={`${formId}-date`}
+                                            className="text-sm font-semibold text-ink"
+                                        >
+                                            Visit date
+                                            <span
+                                                aria-label="required"
+                                                className="ms-1 text-danger"
+                                            >
+                                                *
+                                            </span>
                                         </label>
                                         <VisitDatePicker
                                             id={`${formId}-date`}
@@ -357,9 +398,17 @@ export function ScheduleForm({
                                         />
                                     </div>
                                     <div className={styles.field}>
-                                        <span id={`${formId}-start`}>
-                                            Start time (IST){" "}
-                                            <span className={styles.required}>*</span>
+                                        <span
+                                            id={`${formId}-start`}
+                                            className="text-sm font-semibold text-ink"
+                                        >
+                                            Start time (IST)
+                                            <span
+                                                aria-label="required"
+                                                className="ms-1 text-danger"
+                                            >
+                                                *
+                                            </span>
                                         </span>
                                         <TimeChips
                                             labelledBy={`${formId}-start`}
@@ -380,11 +429,11 @@ export function ScheduleForm({
                                         )}
                                     </div>
                                 </div>
-                            </DrawerSection>
+                            </WizardSection>
                         )}
 
                         {!noLeads && (
-                            <DrawerSection
+                            <WizardSection
                                 title="Reminders"
                                 description="Choose when you want to be reminded before the visit starts."
                             >
@@ -413,16 +462,21 @@ export function ScheduleForm({
                                         </p>
                                     )}
                                 </div>
-                            </DrawerSection>
+                            </WizardSection>
                         )}
 
                         {!noLeads && (
-                            <DrawerSection
+                            <WizardSection
                                 title="Visit notes"
                                 description="Add a meeting point or anything to remember for this visit."
                             >
                                 <div className={styles.field}>
-                                    <label htmlFor={`${formId}-notes`}>Notes (optional)</label>
+                                    <label
+                                        htmlFor={`${formId}-notes`}
+                                        className="text-sm font-semibold text-ink"
+                                    >
+                                        Notes (optional)
+                                    </label>
                                     <Textarea
                                         id={`${formId}-notes`}
                                         className={styles.notesInput}
@@ -445,7 +499,7 @@ export function ScheduleForm({
                                         </p>
                                     )}
                                 </div>
-                            </DrawerSection>
+                            </WizardSection>
                         )}
                     </div>
                 </fieldset>

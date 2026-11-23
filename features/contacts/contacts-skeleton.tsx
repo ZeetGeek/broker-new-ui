@@ -148,7 +148,7 @@ function FieldSkeleton() {
     return (
         <div className="flex flex-col gap-2 min-inline-0">
             <Bone className="block-4 inline-24 max-inline-full" />
-            <Bone className="border-2 border-border-warm block-control-xl inline-full" />
+            <Bone className="border-2 border-border-warm block-control-lg inline-full" />
         </div>
     );
 }

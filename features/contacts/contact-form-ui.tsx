@@ -34,10 +34,10 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { ContactFormSkeleton } from "@/features/contacts/contacts-skeleton";
 
-/** Same control height as Add property (`size="lg"` → 48px). */
+/** Same control height and type as Add property fields (44px, text-sm). */
 export const nativeControlClass = `
-  rounded-control border-2 border-border-warm bg-surface px-4 text-base text-ink outline-none
-  block-control-xl inline-full
+  rounded-control border-2 border-border-warm bg-surface px-4 text-sm text-ink outline-none
+  block-control-lg inline-full
   hover:border-ink-subtle focus:border-ring focus:ring-3 focus:ring-ring/30
   disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-60
 `;
@@ -69,7 +69,11 @@ export function FormField({
                 className="text-sm font-semibold text-ink"
             >
                 {label}
-                {required ? <span className="text-danger"> *</span> : null}
+                {required ? (
+                    <span aria-label="required" className="ms-1 text-danger">
+                        *
+                    </span>
+                ) : null}
             </label>
             {children}
             {error ? (
@@ -99,6 +103,7 @@ export function TextField({
                 {...props}
                 id={id}
                 size={size}
+                className={cn("text-sm block-control-lg", props.className)}
                 errorText={error}
                 helperText={!error ? hintText : undefined}
             />
@@ -204,7 +209,7 @@ export function ComboboxField({
         <FormField label={label} htmlFor={id} required={required} hint={hint}>
             {loading ? (
                 <span role="status" aria-label={`Loading ${label.toLowerCase()}`} aria-busy="true">
-                    <Skeleton className="border-2 border-border-warm block-control-xl inline-full" />
+                    <Skeleton className="border-2 border-border-warm block-control-lg inline-full" />
                 </span>
             ) : (
                 <Combobox
@@ -216,8 +221,9 @@ export function ComboboxField({
                 >
                     <ComboboxInput
                         id={id}
+                        className="text-sm"
                         startIcon={startIcon}
-                        size="lg"
+                        size="md"
                         placeholder={placeholder}
                         disabled={disabled}
                         errorText={error}
@@ -291,7 +297,7 @@ export function Segmented<T extends string>({
                                 `
                                   rounded-control px-3 text-sm font-medium
                                   transition-[background-color,color,box-shadow] duration-160
-                                  block-control-xl
+                                  block-control-lg
                                 `,
                                 active
                                     ? tone === "brand"
@@ -355,10 +361,10 @@ export function ChoiceRadioField<T extends string>({
                             htmlFor={itemId}
                             className={cn(
                                 `
-                                  flex cursor-pointer gap-3 rounded-control border-2 px-4 py-3.5
+                                  flex cursor-pointer gap-3 rounded-control border-2 px-4 py-3
                                   text-start leading-normal font-normal
                                   transition-[background-color,border-color,color,box-shadow]
-                                  duration-160 min-block-12
+                                  duration-160 min-block-11
                                   has-focus-visible:ring-3 has-focus-visible:ring-ring/30
                                 `,
                                 hasDescription ? "items-start" : "items-center",
@@ -526,6 +532,7 @@ function ContactCurrencyInput({
     return (
         <SmartPriceInput
             id={id}
+            className="text-sm block-control-lg"
             size="lg"
             kind={kind}
             value={amount}
@@ -709,6 +716,7 @@ function TokenInput({
 
             <Input
                 size="lg"
+                className="text-sm block-control-lg"
                 value={draft}
                 onValueChange={setDraft}
                 onKeyDown={(event) => {
@@ -778,7 +786,8 @@ export function NotesField({
                 className={cn(
                     `
                       field-sizing-fixed resize-y rounded-control border-2 border-border-warm
-                      bg-surface px-4 py-3 text-base text-ink shadow-none
+                      bg-surface px-4 py-2.5 text-sm/6 text-ink shadow-none min-block-27
+                      placeholder:text-ink-subtle
                       hover:border-ink-subtle
                       focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
                       aria-invalid:border-danger-mid

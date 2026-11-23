@@ -484,7 +484,8 @@ export function AddBuyerModal({
                             <LocalityCombobox
                                 id="buyer-preferred-area"
                                 multiple
-                                size="lg"
+                                size="md"
+                                className="text-sm"
                                 cityId={selectedCity?.id}
                                 value={localityList}
                                 placeholder="Search an area, e.g. Green Park"

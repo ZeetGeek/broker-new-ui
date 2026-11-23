@@ -339,7 +339,8 @@ export function AddOwnerModal({
                         <FormField label="Area" htmlFor="owner-area">
                             <LocalityCombobox
                                 id="owner-area"
-                                size="lg"
+                                size="md"
+                                className="text-sm"
                                 cityId={selectedCity?.id}
                                 value={values.area ?? ""}
                                 placeholder="Search an area, e.g. Green Park"

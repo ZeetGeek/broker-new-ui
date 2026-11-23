@@ -58,7 +58,7 @@ export function DrawerSection({
             }}
         >
             <details open={defaultOpen} data-drawer-section className="group/drawer-section">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-sm outline-none [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/30 [&::-webkit-details-marker]:hidden">
                     <span className="min-inline-0">
                         <span
                             role="heading"
@@ -76,7 +76,7 @@ export function DrawerSection({
                     <IconButtonFace>
                         <ChevronDown
                             aria-hidden
-                            className="block-4 inline-4 group-open/drawer-section:rotate-180"
+                            className="transition-transform duration-160 block-4 inline-4 group-open/drawer-section:rotate-180"
                             strokeWidth={1.75}
                         />
                     </IconButtonFace>

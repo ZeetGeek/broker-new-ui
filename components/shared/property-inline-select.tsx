@@ -134,7 +134,7 @@ export function PropertyInlineSelect({
     return (
         <div className={cn("flex flex-col gap-2 min-inline-0", className)}>
             {label ? (
-                <label htmlFor={fieldId} className="body-sm font-medium text-ink">
+                <label htmlFor={fieldId} className="text-sm font-semibold text-ink">
                     {label}
                 </label>
             ) : null}
@@ -163,6 +163,8 @@ export function PropertyInlineSelect({
                 <ComboboxInput
                     id={fieldId}
                     size={size}
+                    // Form size: same 14px text as the property and contact forms.
+                    className={size === "md" ? "text-sm" : undefined}
                     startIcon={Building2}
                     placeholder={placeholder}
                     loading={loading}

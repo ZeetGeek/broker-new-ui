@@ -302,9 +302,9 @@ export function BookingDrawer({
                     ) : null}
                     <DrawerSection
                         title="Clients for this visit"
+                        contentClassName="flex flex-col gap-4"
                         description="Choose up to three clients to bring to the property."
                     >
-                        {" "}
                         <BuyerPicker
                             buyers={allBuyers}
                             selected={buyerIds}
@@ -323,7 +323,7 @@ export function BookingDrawer({
                             }
                         />
                         {form.formState.errors.buyerIds ? (
-                            <p className="body-xs text-danger">
+                            <p role="alert" className="mbs-2 text-sm text-danger">
                                 {form.formState.errors.buyerIds.message}
                             </p>
                         ) : null}
@@ -331,9 +331,9 @@ export function BookingDrawer({
                     {buyerIds.length > 0 || apiConflict || inlineError ? (
                         <DrawerSection
                             title="Timing and availability"
+                            contentClassName="flex flex-col gap-4"
                             description="Check for overlapping visits and review other available times."
                         >
-                            {" "}
                             {buyerIds.length || apiConflict ? (
                                 <ConflictPanel result={conflict} onOpenVisit={onOpenVisit} />
                             ) : null}
@@ -400,7 +400,7 @@ export function BookingDrawer({
                                 </div>
                             ) : null}
                         </DrawerSection>
-                    ) : null}{" "}
+                    ) : null}
                 </form>
 
                 <footer

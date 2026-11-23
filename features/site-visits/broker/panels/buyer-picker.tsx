@@ -57,14 +57,14 @@ export function BuyerPicker({
                         onCreate={() => setAddOpen(true)}
                         createLabel="Add new client"
                         helperText={allBuyers.length === 0 ? emptyMessage : undefined}
-                        size="lg"
+                        size="md"
                     />
                 </div>
                 <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
-                    className="mbe-0.5 shrink-0"
+                    size="md"
+                    className="shrink-0"
                     onClick={() => setAddOpen(true)}
                 >
                     <Plus aria-hidden /> Add new

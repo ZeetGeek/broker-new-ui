@@ -53,8 +53,9 @@
     gap: 0.5rem;
     min-width: 0;
     color: var(--color-ink);
+    /* Controls inherit text-sm like the contact and property forms; labels set their own weight. */
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 400;
 }
 
 .field [aria-invalid="true"],
@@ -707,16 +708,14 @@
     font-weight: 600;
     line-height: 1.4;
 }
-.required {
-    color: var(--color-danger);
-}
 .dateTrigger {
     inline-size: 100%;
     justify-content: flex-start;
     font-weight: 400;
     padding-inline: 1rem;
     border-width: 2px;
-    font-size: 1rem;
+    font-size: 0.875rem;
+    block-size: var(--size-control-lg);
 }
 .dateTrigger span {
     flex: 1;
@@ -747,8 +746,10 @@
     resize: vertical;
     border: 2px solid var(--color-border-warm);
     background: var(--color-surface);
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
+    min-block-size: 6.75rem;
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.5rem;
     font-weight: 400;
     color: var(--color-ink);
 }

@@ -88,7 +88,7 @@ export function TaskSelect({
                 disabled={disabled}
                 onValueChange={(next) => next !== null && onChange(next)}
             >
-                <SelectTrigger id={id} size="lg" className="inline-full">
+                <SelectTrigger id={id} size="md" className="text-sm inline-full">
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -133,7 +133,7 @@ function TaskContactsField({
                     allowClear
                     clearLabel="No client"
                     disabled={disabled}
-                    size="lg"
+                    size="md"
                 />
                 <PeopleInlineSelect
                     id={`${id}-owner`}
@@ -145,7 +145,7 @@ function TaskContactsField({
                     allowClear
                     clearLabel="No owner"
                     disabled={disabled}
-                    size="lg"
+                    size="md"
                 />
             </div>
         </FormField>
@@ -305,6 +305,7 @@ export function TaskForm({
                                         name="title"
                                         startIcon={Pencil}
                                         size="lg"
+                                        className="text-sm block-control-lg"
                                         value={draft.title}
                                         onValueChange={(next) => patch({ title: next })}
                                         placeholder="e.g. Call Aarav about the Vesu shortlist"
@@ -348,8 +349,9 @@ export function TaskForm({
                                         className={cn(
                                             `
                                               field-sizing-fixed resize-y rounded-control border-2
-                                              border-border-warm bg-surface px-4 py-3 text-base
-                                              text-ink shadow-none
+                                              border-border-warm bg-surface px-4 py-2.5 text-sm/6
+                                              text-ink shadow-none min-block-27
+                                              placeholder:text-ink-subtle
                                               hover:border-ink-subtle
                                               focus-visible:border-ring focus-visible:ring-3
                                               focus-visible:ring-ring/30
@@ -385,6 +387,7 @@ export function TaskForm({
                                 >
                                     <AppDatePicker
                                         id={`${formId}-start-date`}
+                                        className="border-2 text-sm block-control-lg inline-full"
                                         value={draft.startDate || null}
                                         onChange={(startDate) =>
                                             patch({ startDate: startDate ?? "" })
@@ -402,6 +405,7 @@ export function TaskForm({
                                 >
                                     <AppTimePicker
                                         id={`${formId}-start-time`}
+                                        className="**:data-[slot=time-picker-trigger]:text-sm **:data-[slot=time-picker-trigger]:block-control-lg"
                                         aria-label="Task start time (IST)"
                                         value={draft.startTime}
                                         onChange={(startTime) => patch({ startTime })}
@@ -420,6 +424,7 @@ export function TaskForm({
                                 >
                                     <AppDatePicker
                                         id={`${formId}-due-date`}
+                                        className="border-2 text-sm block-control-lg inline-full"
                                         value={draft.dueDate || null}
                                         onChange={(dueDate) =>
                                             patch(
@@ -449,6 +454,7 @@ export function TaskForm({
                                 >
                                     <AppTimePicker
                                         id={`${formId}-due-time`}
+                                        className="**:data-[slot=time-picker-trigger]:text-sm **:data-[slot=time-picker-trigger]:block-control-lg"
                                         aria-label="Task due time (IST)"
                                         value={draft.dueTime}
                                         onChange={(dueTime) =>
@@ -474,7 +480,7 @@ export function TaskForm({
                             <div className="flex flex-wrap items-center gap-2">
                                 <Button
                                     variant="outline"
-                                    size="sm"
+                                    size="md"
                                     type="button"
                                     disabled={busy}
                                     onClick={() => setDate(taskDateKey())}
@@ -483,7 +489,7 @@ export function TaskForm({
                                 </Button>
                                 <Button
                                     variant="outline"
-                                    size="sm"
+                                    size="md"
                                     type="button"
                                     disabled={busy}
                                     onClick={() => setDate(taskDateKey(Date.now() + 86_400_000))}
@@ -493,7 +499,7 @@ export function TaskForm({
                                 {draft.dueDate ? (
                                     <Button
                                         variant="ghost"
-                                        size="sm"
+                                        size="md"
                                         type="button"
                                         disabled={busy}
                                         onClick={() => setDate(null)}
@@ -595,7 +601,7 @@ export function TaskForm({
                                         placeholder="No linked property"
                                         allowClear
                                         clearLabel="No linked property"
-                                        size="lg"
+                                        size="md"
                                     />
                                 </div>
                             </WizardSection>
@@ -724,6 +730,7 @@ function TaskRepeatFields({
                                 max={365}
                                 step={1}
                                 size="lg"
+                                className="text-sm block-control-lg"
                                 value={value.interval || ""}
                                 disabled={disabled}
                                 onValueChange={(interval) =>
@@ -768,7 +775,7 @@ function TaskRepeatFields({
                                     <Button
                                         key={day.value}
                                         type="button"
-                                        size="sm"
+                                        size="md"
                                         variant="outline"
                                         className={
                                             value.weekdays.includes(day.value)
@@ -813,11 +820,11 @@ function TaskRepeatFields({
                         <FormField label="Last repeat date" htmlFor={`${dateId}-end`}>
                             <AppDatePicker
                                 id={`${dateId}-end`}
+                                className="border-2 text-sm block-control-lg inline-full"
                                 value={value.until}
                                 onChange={(until) => onChange({ ...value, until })}
                                 disabled={disabled}
                                 allowPast
-                                size="lg"
                             />
                         </FormField>
                     )}
