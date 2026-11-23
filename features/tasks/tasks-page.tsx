@@ -15,10 +15,7 @@ import {
     ListSearchField,
     ListToolbarSelect,
 } from "@/components/shared/list-toolbar";
-import {
-    ResponsiveListStatus,
-    ResponsiveListToolbar,
-} from "@/components/shared/responsive-list-toolbar";
+import { ResponsiveListStatus } from "@/components/shared/responsive-list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Skeleton } from "@/components/shared/skeleton";
 import { StatusTabs } from "@/components/shared/status-tabs";
@@ -403,87 +400,87 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                 }
                 className={styles.workspace}
             >
-                <ResponsiveListToolbar
-                    selection={
-                        <>
-                            <FilterChip
-                                label="Filters"
-                                icon={SlidersHorizontal}
-                                count={Number(!!due) + Number(!!linked)}
-                                isActive={!!(due || linked)}
-                                clearable={!!(due || linked)}
-                                onClick={() =>
-                                    updateWorkspace({ view: "filters", task: undefined })
-                                }
-                                onClear={() =>
-                                    updateWorkspace({ due: undefined, linked: undefined })
-                                }
-                            />
+                <div className={styles.toolbar}>
+                    <div className={styles.filterTabs}>
+                        <FilterChip
+                            className={styles.filterButton}
+                            label="Filters"
+                            icon={SlidersHorizontal}
+                            count={Number(!!due) + Number(!!linked)}
+                            isActive={!!(due || linked)}
+                            clearable={!!(due || linked)}
+                            onClick={() => updateWorkspace({ view: "filters", task: undefined })}
+                            onClear={() => updateWorkspace({ due: undefined, linked: undefined })}
+                        />
 
-                            <ResponsiveListStatus
+                        <ResponsiveListStatus
+                            value={tab}
+                            options={tabs}
+                            label="Status"
+                            isLoading={isLoading}
+                            onChange={(value) =>
+                                updateWorkspace({
+                                    tab: value === "all" ? undefined : value,
+                                    due: undefined,
+                                })
+                            }
+                        >
+                            <StatusTabs
+                                tabs={tabs}
                                 value={tab}
-                                options={tabs}
-                                label="Status"
+                                label="Task views"
                                 isLoading={isLoading}
-                                onChange={(value) =>
-                                    updateWorkspace({
-                                        tab: value === "all" ? undefined : value,
-                                        due: undefined,
-                                    })
-                                }
-                            >
-                                <StatusTabs
-                                    tabs={tabs}
-                                    value={tab}
-                                    label="Task views"
-                                    isLoading={isLoading}
-                                />
-                            </ResponsiveListStatus>
-                        </>
-                    }
-                    search={
+                            />
+                        </ResponsiveListStatus>
+                    </div>
+                    <div className={styles.searchField}>
                         <ListSearchField
                             searchHelp="Search by task name, notes, or a linked client, owner or property."
                             aria-label="Search tasks"
+                            placeholder="Search"
                             value={search}
                             onChange={(q) => updateWorkspace({ q: q || undefined })}
                             debounceMs={0}
                             fullWidth
                         />
-                    }
-                    actions={
-                        <>
-                            <ListToolbarSelect
-                                active
-                                label="Sort tasks"
-                                value={sort}
-                                options={[
-                                    ...(tab === "all"
-                                        ? [{ value: "manual", label: "Default order" }]
-                                        : []),
-                                    {
-                                        value: "due",
-                                        label:
-                                            tab === "completed"
-                                                ? "Completion date"
-                                                : tab === "deleted"
-                                                  ? "Deletion date"
-                                                  : "Due date",
-                                    },
-                                    { value: "priority", label: "Priority" },
-                                    { value: "newest", label: "Newest first" },
-                                    { value: "title", label: "Task name" },
-                                ]}
-                                onChange={(value) =>
-                                    updateWorkspace({
-                                        sort: value === defaultSort ? undefined : value,
-                                    })
-                                }
-                            />
-                            <ListAddButton label="Add task" onClick={create} />
-                        </>
-                    }
-                />
+                    </div>
+                    <div className={styles.tools}>
+                        <ListToolbarSelect
+                            active
+                            label="Sort tasks"
+                            mobileLabel="Sort"
+                            className={styles.sortButton}
+                            value={sort}
+                            options={[
+                                ...(tab === "all"
+                                    ? [{ value: "manual", label: "Default order" }]
+                                    : []),
+                                {
+                                    value: "due",
+                                    label:
+                                        tab === "completed"
+                                            ? "Completion date"
+                                            : tab === "deleted"
+                                              ? "Deletion date"
+                                              : "Due date",
+                                },
+                                { value: "priority", label: "Priority" },
+                                { value: "newest", label: "Newest first" },
+                                { value: "title", label: "Task name" },
+                            ]}
+                            onChange={(value) =>
+                                updateWorkspace({
+                                    sort: value === defaultSort ? undefined : value,
+                                })
+                            }
+                        />
+                        <ListAddButton
+                            className={styles.addButton}
+                            label="Add task"
+                            onClick={create}
+                        />
+                    </div>
+                </div>
                 <div className={styles.board}>
                     {(due || linked) && (
                         <div className={styles.activeFilters}>

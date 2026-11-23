@@ -76,9 +76,9 @@ function Section({
     children: ReactNode;
 }) {
     return (
-        <section className="border-be border-border-warm/80 pbe-8 last:border-be-0 last:pbe-0">
+        <section className="border-be border-border-warm/80 pbe-6 min-inline-0 last:border-be-0 last:pbe-0 sm:pbe-8">
             <div className="mbe-4 flex items-start justify-between gap-4">
-                <div>
+                <div className="min-inline-0">
                     <h2
                         className="
                           flex items-center gap-2.5 font-display text-xl font-semibold
@@ -451,9 +451,12 @@ export function ProfilePage() {
     const ownerAccount = isOwnerProfile(profile);
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 lg:gap-5">
+        <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4 min-inline-0 lg:gap-5"
+        >
             <header className="flex flex-wrap items-center justify-between gap-3 text-start">
-                <h1 className="h3 min-inline-0">
+                <h1 className="h3 wrap-anywhere min-inline-0 max-sm:text-xl">
                     <span className="text-ink">{profile?.fullName?.trim() || "Your profile"}.</span>{" "}
                     <span className="text-ink-muted">
                         {ownerAccount ? "This is what brokers see." : "This is what owners see."}
@@ -476,17 +479,16 @@ export function ProfilePage() {
             {/* Property-form layout: elevated form panel + sticky glance rail. */}
             <div
                 className="
-                  grid items-start gap-5
+                  grid grid-cols-1 items-start gap-5 min-inline-0
                   lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-6
                   xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-8
                 "
             >
                 <div
                     className="
-                      order-2 flex flex-col gap-0 rounded-card border border-border-warm bg-surface
-                      p-5 shadow-sm
-                      sm:p-6
-                      lg:order-1
+                      flex flex-col gap-6 rounded-card border border-border-warm bg-surface
+                      p-3 shadow-sm min-inline-0
+                      sm:gap-8 sm:p-6
                       xl:p-7
                     "
                 >
@@ -1072,7 +1074,7 @@ export function ProfilePage() {
                     <NotificationPreferences profile={profile} onSaved={handleProfileReplaced} />
                 </div>
 
-                <aside className="order-1 lg:sticky lg:inset-bs-24 lg:order-2">
+                <aside className="min-inline-0 lg:sticky lg:inset-bs-24">
                     <ProfileStats profile={profile} layout="stack" />
                 </aside>
             </div>

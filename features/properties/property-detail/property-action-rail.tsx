@@ -9,7 +9,6 @@ import { AttachedBrokersRow } from "@/components/shared/attached-people-row";
 import { ContactName } from "@/components/shared/contact-name";
 import {
     CallIcon,
-    ChartBar,
     Eye,
     EyeOff,
     Inbox,
@@ -37,8 +36,6 @@ export type PropertyActionRailProps = {
     onTogglePublish: () => void;
     onRequestDelete: () => void;
     editHref: string;
-    /** Broker inventory: lead analytics for this listing. */
-    analyticsHref?: string;
     requestsHref?: string;
     brokers?: PropertyBroker[];
     brokersState?: "loading" | "ready" | "error";
@@ -53,7 +50,6 @@ export function PropertyActionRail({
     onTogglePublish,
     onRequestDelete,
     editHref,
-    analyticsHref,
     requestsHref,
     brokers = [],
     brokersState = "ready",
@@ -152,23 +148,7 @@ export function PropertyActionRail({
                                     Edit property
                                 </Button>
                             ) : null}
-                            {analyticsHref ? (
-                                <Button
-                                    size="lg"
-                                    variant="outline"
-                                    render={<Link href={analyticsHref} />}
-                                >
-                                    <ChartBar size={18} aria-hidden />
-                                    Analytics
-                                </Button>
-                            ) : null}
                         </div>
-                        <p className={styles.railNote}>
-                            <Lock size={14} aria-hidden />
-                            {item.visibility === "marketplace"
-                                ? "Marketplace listing"
-                                : "Private inventory"}
-                        </p>
                     </>
                 )}
             </section>

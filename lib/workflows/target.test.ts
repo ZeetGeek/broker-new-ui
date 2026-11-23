@@ -12,6 +12,7 @@ test("collection navigation and unsupported destinations remain full pages", () 
         "/broker/tasks",
         "/broker/pipeline",
         "/broker/my-listings/one/analytics",
+        "/broker/properties/one?tab=analytics",
         "/broker/properties",
         "https://external.test/broker/properties/new",
     ]) {

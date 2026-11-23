@@ -2,17 +2,17 @@
 
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
+import dynamic from "next/dynamic";
 
 import { useQuery } from "@tanstack/react-query";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { representativeApi } from "@/lib/api/representative";
 import { summarizePropertyBrokers } from "@/lib/format/property-brokers";
-import { useParams, useRouter } from "@/lib/navigation";
+import { useParams, useRouter, useSearchParams } from "@/lib/navigation";
 import {
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_YOUR_LISTINGS_HREF,
-    brokerPropertyAnalyticsHref,
     brokerPropertyEditHref,
 } from "@/lib/routes/broker";
 import {
@@ -21,10 +21,12 @@ import {
     ownerPropertyEditHref,
 } from "@/lib/routes/owner";
 
+import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";
+import { AnalyticsSkeleton } from "@/features/properties/property-analytics/analytics-skeleton";
 import { PropertyActionRail } from "@/features/properties/property-detail/property-action-rail";
 import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyDetailLayout } from "@/features/properties/property-detail/property-detail-layout";
@@ -38,6 +40,19 @@ const STATUS_LABEL: Record<MyListingStatus, string> = {
     unpublished: "Unpublished",
 };
 
+const PropertyAnalyticsContent = dynamic(
+    () =>
+        import("../property-analytics/property-analytics-content").then(
+            (module) => module.PropertyAnalyticsContent,
+        ),
+    { loading: () => <AnalyticsSkeleton /> },
+);
+
+const PROPERTY_TABS = [
+    { value: "info", label: "Property info", id: "property-info-tab" },
+    { value: "analytics", label: "Analytics", id: "property-analytics-tab" },
+] as const;
+
 function OwnedPropertyDetail({
     listing,
     portal,
@@ -46,6 +61,9 @@ function OwnedPropertyDetail({
     portal: "broker" | "owner";
 }) {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const activeTab =
+        portal === "broker" && searchParams.get("tab") === "analytics" ? "analytics" : "info";
     const [item, setItem] = useState(listing);
     const [busy, setBusy] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -64,6 +82,16 @@ function OwnedPropertyDetail({
     const requestsHref =
         portal === "owner" ? OWNER_REQUESTS_HREF : `${BROKER_YOUR_LISTINGS_HREF}?tab=requests`;
     const backLabel = portal === "owner" ? "Properties" : "My Listings";
+
+    const changeTab = (tab: "info" | "analytics") => {
+        if (tab === activeTab) return;
+        const url = new URL(window.location.href);
+        if (tab === "analytics") url.searchParams.set("tab", "analytics");
+        else url.searchParams.delete("tab");
+        // Next synchronizes native history with useSearchParams. Keep the gallery,
+        // local property state and scroll position while adding a Back/Forward entry.
+        window.history.pushState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    };
 
     const togglePublish = useCallback(async () => {
         if (busy || item.isSold) return;
@@ -118,6 +146,24 @@ function OwnedPropertyDetail({
                           : STATUS_LABEL[item.status]
                 }
                 editHref={editHref}
+                navigation={
+                    portal === "broker" ? (
+                        <SlidingTabs
+                            value={activeTab}
+                            options={PROPERTY_TABS}
+                            onValueChange={changeTab}
+                            label="Property sections"
+                            panelId="property-detail-panel"
+                            height="var(--size-control-md)"
+                        />
+                    ) : undefined
+                }
+                panelLabelId={portal === "broker" ? `property-${activeTab}-tab` : undefined}
+                analytics={
+                    activeTab === "analytics" ? (
+                        <PropertyAnalyticsContent propertyId={item.id} listing={item} />
+                    ) : undefined
+                }
                 rail={
                     <PropertyActionRail
                         item={item}
@@ -126,9 +172,6 @@ function OwnedPropertyDetail({
                         onTogglePublish={() => void togglePublish()}
                         onRequestDelete={() => setIsDeleteOpen(true)}
                         editHref={editHref}
-                        analyticsHref={
-                            portal === "broker" ? brokerPropertyAnalyticsHref(item.id) : undefined
-                        }
                         requestsHref={portal === "owner" ? requestsHref : undefined}
                         brokers={brokerSummary?.brokers}
                         brokersState={

@@ -104,7 +104,7 @@ export function PortalHeader({
 
             <div
                 data-portal-content
-                className="mx-auto overflow-x-hidden px-4 max-inline-(--portal-max-inline) md:px-8"
+                className="mx-auto overflow-x-clip px-4 max-inline-(--portal-max-inline) md:px-8"
             >
                 {sectionNav ? <div className="py-6">{sectionNav}</div> : null}
 

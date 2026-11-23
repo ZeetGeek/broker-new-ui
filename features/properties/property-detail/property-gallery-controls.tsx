@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import type { UseEmblaCarouselType } from "embla-carousel-react";
 
@@ -15,10 +15,12 @@ export function PropertyGalleryControls({
     api,
     count,
     compact = false,
+    navigation,
 }: {
     api: UseEmblaCarouselType[1];
     count: number;
     compact?: boolean;
+    navigation?: ReactNode;
 }) {
     const [selected, setSelected] = useState(0);
     const [progress, setProgress] = useState(0);
@@ -67,26 +69,30 @@ export function PropertyGalleryControls({
                     </IconButton>
                 </div>
             </div>
-            <Slider
-                className={styles.galleryProgress}
-                indicatorClassName="t-resize"
-                min={0}
-                max={1}
-                step={count > 1 ? 1 / (count - 1) : 1}
-                label="Scroll property photos"
-                value={progress}
-                disabled={count < 2}
-                onValueChange={(value) => {
-                    if (!api) return;
-                    const photoIndex = Math.min(
-                        count - 1,
-                        Math.max(0, Math.round(value * (count - 1))),
-                    );
-                    const current = api.selectedScrollSnap();
-                    const cycleStart = current - (current % count);
-                    api.scrollTo(cycleStart + photoIndex);
-                }}
-            />
+            {navigation ? (
+                <div className={styles.galleryNavigation}>{navigation}</div>
+            ) : (
+                <Slider
+                    className={styles.galleryProgress}
+                    indicatorClassName="t-resize"
+                    min={0}
+                    max={1}
+                    step={count > 1 ? 1 / (count - 1) : 1}
+                    label="Scroll property photos"
+                    value={progress}
+                    disabled={count < 2}
+                    onValueChange={(value) => {
+                        if (!api) return;
+                        const photoIndex = Math.min(
+                            count - 1,
+                            Math.max(0, Math.round(value * (count - 1))),
+                        );
+                        const current = api.selectedScrollSnap();
+                        const cycleStart = current - (current % count);
+                        api.scrollTo(cycleStart + photoIndex);
+                    }}
+                />
+            )}
             <span
                 className={`${styles.carouselCounter}
                   rounded-control border border-border-warm bg-surface shadow-sm

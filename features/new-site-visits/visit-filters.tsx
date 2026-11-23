@@ -11,6 +11,8 @@ import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
 import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
 import { Dialog, DialogPopup } from "@/components/ui/dialog";
 
+import styles from "./visits.module.css";
+
 export type VisitFilters = {
     client: string;
     property: string;
@@ -59,7 +61,7 @@ export function VisitFiltersDialog({
         >
             <DialogPopup
                 showCloseButton={false}
-                className="flex flex-col gap-0 overflow-hidden p-0 inline-[min(32rem,calc(100vw-1rem))]"
+                className={`flex flex-col gap-0 overflow-hidden p-0 inline-[min(32rem,calc(100vw-1rem))] ${styles.filtersDialog}`}
             >
                 <AppModalHeader title="Filter visits" />
                 <div className="flex flex-col gap-5 p-5 sm:p-8">
@@ -94,7 +96,7 @@ export function VisitFiltersDialog({
                     />
                 </div>
                 <AppModalFooter
-                    className="justify-between border-bs border-border-warm p-5 sm:px-8"
+                    className={`justify-between border-bs border-border-warm p-5 sm:px-8 ${styles.filtersFooter}`}
                     secondaryLabel="Clear"
                     onSecondary={() => onApply({ ...draft, client: "", property: "" })}
                     primaryLabel="Show visits"

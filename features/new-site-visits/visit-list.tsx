@@ -34,7 +34,6 @@ import {
     getVisitActions,
     VISIT_TABS,
     type VisitActionKind,
-    visitDurationLabel,
     visitState,
 } from "./model";
 import { VISIT_ACTIONS } from "./visit-actions";
@@ -63,7 +62,6 @@ function VisitAction({
                             size="sm"
                             type="button"
                             aria-label={label}
-                            className={`${styles.circleAction} ${danger ? styles.dangerAction : ""}`}
                             onClick={onClick}
                         />
                     }
@@ -115,8 +113,7 @@ export const SORT_OPTIONS: { value: VisitSort; label: string }[] = [
     { value: "booked_desc", label: "Recently booked" },
 ];
 
-const EMPTY_FRAME =
-    "min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]";
+const EMPTY_FRAME = `${styles.emptyFrame} min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]`;
 
 export function VisitList({
     visits,
@@ -200,7 +197,7 @@ export function VisitList({
 
     return (
         <Tabs
-            className="gap-6"
+            className={styles.pageTabs}
             value={tab}
             onValueChange={(value) => {
                 if (VISIT_TABS.some((t) => t.value === value)) onTab(value as VisitTab);
@@ -208,13 +205,17 @@ export function VisitList({
         >
             <PortalSectionNav>
                 <header className={styles.pageHeader}>
-                    <h1 className="h3 text-start min-inline-0">
+                    <h1 className={`h3 text-start min-inline-0 ${styles.pageTitle}`}>
                         <span className="text-ink">Site visits.</span>{" "}
-                        <RotatingHeaderSummary
-                            key={summaryLines.join("|")}
-                            lines={summaryLines.length ? summaryLines : ["Your visits at a glance"]}
-                            loadingPlaceholder="Your visits at a glance"
-                        />
+                        <span className={styles.headerSummary}>
+                            <RotatingHeaderSummary
+                                key={summaryLines.join("|")}
+                                lines={
+                                    summaryLines.length ? summaryLines : ["Your visits at a glance"]
+                                }
+                                loadingPlaceholder="Your visits at a glance"
+                            />
+                        </span>
                     </h1>
                     {firstRun && <ListAddButton label="Schedule visit" onClick={onSchedule} />}
                 </header>
@@ -279,6 +280,7 @@ export function VisitList({
                     <ListToolbarSelect
                         className={styles.toolbarSort}
                         label="Sort visits"
+                        mobileLabel="Sort"
                         value={sort}
                         options={SORT_OPTIONS}
                         onChange={onSort}
@@ -406,101 +408,120 @@ function VisitRow({
     const state = visitState(visit, now);
     const waitingForOwner = visit.status === "scheduled" && !visit.isExclusive;
     return (
-        <article className={styles.visitRow}>
-            <div className={styles.rowProperty}>
-                <PropertyCoverImage src={null} alt="" size={64} />
-                <div>
-                    <button
-                        type="button"
-                        className={styles.propertyLink}
-                        aria-label={`Visit details for ${visit.propertyTitle} with ${visit.clientName}`}
-                        onClick={() => onOpen(visit)}
-                    >
-                        {visit.propertyTitle}
-                    </button>
-                    <div className={styles.propertyMeta}>
-                        <span className={styles.propertyLocation}>
-                            <MapPin aria-hidden />
-                            {visit.locality}
-                        </span>
-                        <span aria-hidden>·</span>
-                        <p>{visitDurationLabel(visit.durationMinutes)}</p>
-                    </div>
-                </div>
-            </div>
-            <div className={styles.rowTime}>
-                <span className={styles.detailIcon} aria-hidden>
-                    <CalendarClock />
-                </span>
-                <div>
-                    <small>{formatVisitDate(visit.startsAt)}</small>
-                    <time dateTime={visit.startsAt}>
-                        {formatVisitTime(visit.startsAt)} {"–"} {formatVisitTime(visit.endsAt)}
-                    </time>
-                </div>
-            </div>
-            <div className={styles.rowProfiles}>
-                <div className={styles.rowClient}>
-                    <UserAvatar
-                        name={visit.ownerName ?? "Owner"}
-                        imageUrl={visit.ownerAvatarUrl ?? undefined}
-                        size="sm"
-                        className="shadow-sm ring-2 ring-surface"
+        <div className={styles.visitCard}>
+            <article className={styles.visitRow}>
+                <div className={styles.rowProperty}>
+                    <PropertyCoverImage
+                        src={null}
+                        alt=""
+                        size={64}
+                        className={styles.propertyCover}
                     />
                     <div>
-                        <small>Owner</small>
-                        <strong data-missing={!visit.ownerName || undefined}>
-                            {visit.ownerName ? (
+                        <button
+                            type="button"
+                            className={`font-semibold text-ink capitalize ${styles.propertyLink}`}
+                            aria-label={`Visit details for ${visit.propertyTitle} with ${visit.clientName}`}
+                            onClick={() => onOpen(visit)}
+                        >
+                            {visit.propertyTitle}
+                        </button>
+                        <div className={styles.propertyMeta}>
+                            <span
+                                className={`body-sm tracking-wide text-ink-muted capitalize ${styles.propertyLocation}`}
+                            >
+                                <MapPin aria-hidden strokeWidth={1.75} />
+                                <span className={styles.locationText}>
+                                    {[visit.locality, visit.city]
+                                        .filter(
+                                            (place, index, places) =>
+                                                Boolean(place?.trim()) &&
+                                                places.findIndex(
+                                                    (value) =>
+                                                        value?.trim().toLowerCase() ===
+                                                        place.trim().toLowerCase(),
+                                                ) === index,
+                                        )
+                                        .join(", ")}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div className={styles.rowTime}>
+                    <span className={styles.detailIcon} aria-hidden>
+                        <CalendarClock />
+                    </span>
+                    <div>
+                        <small>{formatVisitDate(visit.startsAt)}</small>
+                        <time dateTime={visit.startsAt}>
+                            {formatVisitTime(visit.startsAt)} {"–"} {formatVisitTime(visit.endsAt)}
+                        </time>
+                    </div>
+                </div>
+                <div className={styles.rowProfiles}>
+                    <div className={styles.rowClient}>
+                        <UserAvatar
+                            name={visit.ownerName ?? "Owner"}
+                            imageUrl={visit.ownerAvatarUrl ?? undefined}
+                            size="sm"
+                            className="shadow-sm ring-2 ring-surface"
+                        />
+                        <div>
+                            <small>Owner</small>
+                            <strong data-missing={!visit.ownerName || undefined}>
+                                {visit.ownerName ? (
+                                    <ContactName
+                                        name={visit.ownerName}
+                                        contactId={visit.ownerId}
+                                        contactType="owner"
+                                    />
+                                ) : (
+                                    "Not added"
+                                )}
+                            </strong>
+                        </div>
+                    </div>
+                    <div className={styles.rowClient}>
+                        <UserAvatar
+                            name={visit.clientName}
+                            size="sm"
+                            className="shadow-sm ring-2 ring-surface"
+                        />
+                        <div>
+                            <small>Client</small>
+                            <strong>
                                 <ContactName
-                                    name={visit.ownerName}
-                                    contactId={visit.ownerId}
-                                    contactType="owner"
+                                    name={visit.clientName}
+                                    contactId={visit.clientId}
+                                    contactType="buyer"
                                 />
-                            ) : (
-                                "Not added"
-                            )}
-                        </strong>
+                            </strong>
+                        </div>
                     </div>
                 </div>
-                <div className={styles.rowClient}>
-                    <UserAvatar
-                        name={visit.clientName}
-                        size="sm"
-                        className="shadow-sm ring-2 ring-surface"
-                    />
-                    <div>
-                        <small>Client</small>
-                        <strong>
-                            <ContactName
-                                name={visit.clientName}
-                                contactId={visit.clientId}
-                                contactType="buyer"
-                            />
-                        </strong>
-                    </div>
+                <div className={styles.rowStatus}>
+                    <VisitStatusBadge state={state} />
+                    {waitingForOwner && state === "upcoming" && (
+                        <small className="body-xs text-ink-muted">Waiting for owner</small>
+                    )}
                 </div>
-            </div>
-            <div className={styles.rowStatus}>
-                <VisitStatusBadge state={state} />
-                {waitingForOwner && state === "upcoming" && (
-                    <small className="body-xs text-ink-muted">Waiting for owner</small>
-                )}
-            </div>
-            <div
-                className={styles.rowActions}
-                role="group"
-                aria-label={`Actions for ${visit.propertyTitle} with ${visit.clientName}`}
-            >
-                {getVisitActions(visit, now).map((action) => (
-                    <VisitAction
-                        key={action}
-                        {...VISIT_ACTIONS[action]}
-                        onClick={() =>
-                            action === "view" ? onOpen(visit) : onAction(visit, action)
-                        }
-                    />
-                ))}
-            </div>
-        </article>
+                <div
+                    className={styles.rowActions}
+                    role="group"
+                    aria-label={`Actions for ${visit.propertyTitle} with ${visit.clientName}`}
+                >
+                    {getVisitActions(visit, now).map((action) => (
+                        <VisitAction
+                            key={action}
+                            {...VISIT_ACTIONS[action]}
+                            onClick={() =>
+                                action === "view" ? onOpen(visit) : onAction(visit, action)
+                            }
+                        />
+                    ))}
+                </div>
+            </article>
+        </div>
     );
 }

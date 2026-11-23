@@ -95,15 +95,17 @@ export function PipelineIntro({
     return (
         <h1 className="h3 text-start min-inline-0">
             <span className="text-ink">Pipeline.</span>{" "}
-            <RotatingHeaderSummary
-                key={`${view}:${lines.join("|")}`}
-                lines={lines}
-                isLoading={isLoading}
-                loadingLabel="Loading your pipeline summary"
-                loadingPlaceholder="Your deals, from first contact to close"
-                errorMessage={hasError ? "Could not load your pipeline summary." : undefined}
-                reservePlaceholder
-            />
+            <span className="hidden md:inline">
+                <RotatingHeaderSummary
+                    key={`${view}:${lines.join("|")}`}
+                    lines={lines}
+                    isLoading={isLoading}
+                    loadingLabel="Loading your pipeline summary"
+                    loadingPlaceholder="Your deals, from first contact to close"
+                    errorMessage={hasError ? "Could not load your pipeline summary." : undefined}
+                    reservePlaceholder
+                />
+            </span>
         </h1>
     );
 }

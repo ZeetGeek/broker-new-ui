@@ -27,20 +27,14 @@ export function AnalyticsSkeleton() {
         <div
             role="status"
             aria-label="Loading this listing's clients, visits and offers"
-            className="flex flex-col gap-5 pbe-6 sm:gap-6"
+            className="flex flex-col gap-card-grid pbe-6"
         >
-            <div className="flex flex-col gap-4">
-                <Skeleton className="block-control-md inline-32" />
-                <div className="flex items-start gap-4">
-                    <Skeleton className="hidden shrink-0 rounded-[8px] sm:block sm:block-18 sm:inline-22" />
-                    <div className="flex flex-1 flex-col gap-2">
-                        <Skeleton className="block-7 inline-full max-inline-xl" />
-                        <Skeleton className="block-5 inline-full max-inline-md" />
-                    </div>
-                </div>
+            <div className="flex flex-col gap-2 pbe-1">
+                <Skeleton className="block-8 inline-96 max-inline-full" />
+                <Skeleton className="block-4 inline-80 max-inline-full" />
             </div>
 
-            <div className="grid grid-cols-1 gap-px overflow-hidden rounded-card bg-surface shadow-sm ring-1 ring-border-warm/50 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card bg-surface shadow-sm ring-1 ring-border-warm/50 lg:grid-cols-4">
                 {Array.from({ length: 4 }, (_, index) => (
                     <div key={index} className="flex items-center gap-3 p-4">
                         <Skeleton className="shrink-0 block-6 inline-6" />
@@ -53,12 +47,20 @@ export function AnalyticsSkeleton() {
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 gap-card-grid lg:grid-cols-12">
-                <CardSkeleton rows={3} className="lg:col-span-7" />
-                <CardSkeleton rows={4} className="lg:col-span-5" />
+            <div className="grid grid-cols-1 gap-card-grid md:grid-cols-2 lg:grid-cols-12">
+                <CardSkeleton rows={4} className="order-1 md:col-span-2 lg:order-3 lg:col-span-7" />
+                <CardSkeleton rows={3} className="order-2 lg:order-4 lg:col-span-5" />
+                <Skeleton className="order-3 rounded-card block-80 lg:order-1 lg:col-span-4 lg:block-full" />
+                <CardSkeleton rows={4} className="order-4 md:col-span-2 lg:order-2 lg:col-span-8" />
+                <CardSkeleton rows={4} className="order-5 md:col-span-2 lg:col-span-7" />
+                <CardSkeleton rows={3} className="order-6 md:col-span-2 lg:col-span-5" />
             </div>
 
             <div className={CARD}>
+                <div className="flex flex-col gap-2">
+                    <Skeleton className="block-6 inline-48" />
+                    <Skeleton className="block-4 inline-80 max-inline-full" />
+                </div>
                 {Array.from({ length: 2 }, (_, index) => (
                     <div key={index} className="flex items-start gap-3">
                         <Skeleton className="shrink-0 rounded-full block-10 inline-10" />

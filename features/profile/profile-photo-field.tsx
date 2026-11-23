@@ -139,15 +139,15 @@ export function ProfilePhotoField({ profile, isOwner, onUploaded }: ProfilePhoto
 
     return (
         <section
-            className="border-be border-border-warm/80 pbe-8 last:border-be-0"
+            className="border-be border-border-warm/80 pbe-6 min-inline-0 last:border-be-0 sm:pbe-8"
             aria-labelledby="profile-photo-heading"
         >
             <div
                 className={cn(
                     `
                       flex flex-col gap-3 rounded-card border-2 border-dashed border-brand/35
-                      bg-brand-soft/40 p-4
-                      sm:flex-row sm:items-center sm:gap-4
+                      bg-brand-soft/40 p-3 min-inline-0
+                      sm:flex-row sm:items-center sm:gap-4 sm:p-4
                     `,
                     busy && "opacity-80",
                 )}
@@ -198,7 +198,7 @@ export function ProfilePhotoField({ profile, isOwner, onUploaded }: ProfilePhoto
                         }}
                     />
 
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-col items-stretch gap-3 min-inline-0 sm:flex-row sm:flex-wrap sm:items-center">
                         <Button
                             variant="surface"
                             size="sm"

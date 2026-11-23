@@ -134,13 +134,14 @@ export function TaskLine({
                 className={styles.lineTitle}
                 title={`${rowTitle}\n${taskDueLabel(task, now)}\nDouble-click to edit`}
                 disabled={busy}
-                onClick={() => {
+                onClick={(event) => {
                     if (archive || task.deletedAt) {
                         onOpen(task);
                         return;
                     }
-                    // Phones: one tap edits. Desktop: double-click edits (chips in place).
-                    if (window.matchMedia("(pointer: coarse)").matches) setEditing(true);
+                    // Touch and keyboard activate editing; mouse retains double-click editing.
+                    if (event.detail === 0 || window.matchMedia("(pointer: coarse)").matches)
+                        setEditing(true);
                 }}
                 onDoubleClick={() => {
                     if (archive || task.deletedAt || busy) return;

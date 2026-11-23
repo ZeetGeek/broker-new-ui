@@ -97,6 +97,9 @@ export function PropertyDetailLayout({
     mobileAction,
     audience,
     revealAddress = true,
+    navigation,
+    analytics,
+    panelLabelId,
 }: {
     item: MyListingItem;
     backHref: string;
@@ -109,6 +112,9 @@ export function PropertyDetailLayout({
     mobileAction: ReactNode;
     audience: "broker" | "owner";
     revealAddress?: boolean;
+    navigation?: ReactNode;
+    analytics?: ReactNode;
+    panelLabelId?: string;
 }) {
     const { amountInr, isRent } = toLegacyAmountFields(item);
     const hasPrice = (isRent ? item.rentAmountInr : item.saleAmountInr) != null;
@@ -150,7 +156,11 @@ export function PropertyDetailLayout({
         }
     }
     return (
-        <div className={styles.page} data-property-detail>
+        <div
+            className={styles.page}
+            data-property-detail
+            data-view={analytics ? "analytics" : "info"}
+        >
             <header className={styles.header}>
                 <div className={styles.headerContent}>
                     <Button
@@ -246,32 +256,45 @@ export function PropertyDetailLayout({
                     title={item.title}
                     imageSrcs={item.imageSrcs}
                     editHref={editHref}
+                    navigation={navigation}
                 />
             </div>
-            <div className={styles.bodyGrid}>
-                <PropertyDetailContent item={item} revealAddress={revealAddress} />
-                <aside className={styles.rail} aria-label="Property actions">
-                    {rail}
-                </aside>
+            <div
+                id={navigation ? "property-detail-panel" : undefined}
+                role={navigation ? "tabpanel" : undefined}
+                aria-labelledby={panelLabelId}
+                tabIndex={navigation ? 0 : undefined}
+                className={styles.tabPanel}
+            >
+                {analytics ?? (
+                    <div className={styles.bodyGrid}>
+                        <PropertyDetailContent item={item} revealAddress={revealAddress} />
+                        <aside className={styles.rail} aria-label="Property actions">
+                            {rail}
+                        </aside>
+                    </div>
+                )}
             </div>
-            <div className={styles.mobileBar}>
-                <div className={styles.mobilePrice}>
-                    {hasPrice ? (
-                        <PriceWithCommission
-                            amountInr={amountInr}
-                            isRent={isRent}
-                            commissionPercent={item.commissionPercent}
-                            commissionAmountInr={item.commissionAmount}
-                            audience={audience}
-                            size="lg"
-                        />
-                    ) : (
-                        <strong>Price on request</strong>
-                    )}
-                    <span>{isRent ? "Monthly rent" : "Asking price"}</span>
+            {!analytics ? (
+                <div className={styles.mobileBar}>
+                    <div className={styles.mobilePrice}>
+                        {hasPrice ? (
+                            <PriceWithCommission
+                                amountInr={amountInr}
+                                isRent={isRent}
+                                commissionPercent={item.commissionPercent}
+                                commissionAmountInr={item.commissionAmount}
+                                audience={audience}
+                                size="lg"
+                            />
+                        ) : (
+                            <strong>Price on request</strong>
+                        )}
+                        <span>{isRent ? "Monthly rent" : "Asking price"}</span>
+                    </div>
+                    {mobileAction}
                 </div>
-                {mobileAction}
-            </div>
+            ) : null}
         </div>
     );
 }

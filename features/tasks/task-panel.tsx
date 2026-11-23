@@ -2,8 +2,12 @@
 
 import { type ReactNode, useState } from "react";
 
+import { cn } from "@/lib/utils";
+
 import { AppModal } from "@/components/shared/app-modal";
 import { Button } from "@/components/ui/button";
+
+import styles from "./task-panel.module.css";
 
 /** A focused working surface: docked on desktop, full screen on a phone. */
 export function TaskPanel({
@@ -41,16 +45,18 @@ export function TaskPanel({
                 description={description}
                 size={compact ? "md" : "lg"}
                 padding="md"
-                className={
+                bodyClassName={styles.body}
+                className={cn(
+                    styles.panel,
                     compact
                         ? undefined
                         : `
                           contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0!
                           rounded-none! block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
                           sm:inline-[min(var(--drawer-width),100vw)]!
-                          sm:max-inline-[var(--drawer-width)]!
-                        `
-                }
+                          sm:max-inline-(--drawer-width)!
+                        `,
+                )}
                 headerClassName={
                     compact
                         ? undefined
@@ -59,13 +65,14 @@ export function TaskPanel({
                           border-border-warm
                         `
                 }
-                footerClassName={
+                footerClassName={cn(
+                    styles.footer,
                     compact
                         ? undefined
                         : `
-                          !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
-                        `
-                }
+                          border-bs border-border-warm pbs-(--dialog-pad)! pbe-(--dialog-pad)!
+                        `,
+                )}
                 footer={typeof footer === "function" ? footer(close) : footer}
             >
                 {children}

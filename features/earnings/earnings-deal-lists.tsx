@@ -24,6 +24,8 @@ import { isSampleDeal } from "@/features/earnings/sample-earnings";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { DEAL_STAGE_ORDER, type DealStage, isLiveStage } from "@/features/pipeline/types";
 
+import styles from "./earnings.module.css";
+
 /**
  * Soft same-hue fade per stage: full colour where the title sits, ~85% at the
  * bar's end. Same hue keeps colour = stage; written out so Tailwind sees them.
@@ -104,9 +106,9 @@ export function EarningsOpenDeals({
                     </ul>
                 ) : null
             }
-            // Phone: fixed height, list scrolls. md+: height follows the pipeline
+            // Phone/tablet: fixed height, list scrolls. lg+: follows the pipeline
             // card beside it (block-0 + min-block-full), so more deals never stretch the row.
-            className={cn(deals.length > 0 && "block-120 md:block-0 md:min-block-full", className)}
+            className={cn(deals.length > 0 && "block-120 lg:block-0 lg:min-block-full", className)}
         >
             {deals.length === 0 ? (
                 <p className="body-sm text-ink-muted">
@@ -163,22 +165,21 @@ export function EarningsOpenDeals({
                                                     ) : null}
                                                 </EarningsDealLink>
                                             </div>
-                                            {/* Amounts sit just past the bar's end in ink. The
-                                                pe-36 reserve keeps room for them, so the longest
-                                                bar plus its label still fits and bar lengths stay
-                                                true to scale (bar % is of the track minus reserve). */}
-                                            <div className="flex items-center gap-2 pe-36">
-                                                <span
-                                                    aria-hidden
-                                                    className={cn(
-                                                        "shrink-0 rounded-control block-8 min-inline-2",
-                                                        isLiveStage(deal.status)
-                                                            ? STAGE_BAR_CLASS[deal.status]
-                                                            : "bg-chart-2",
-                                                    )}
-                                                    style={{ inlineSize: `${pct}%` }}
-                                                />
-                                                <span className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
+                                            {/* On narrow cards, values sit below the full-width
+                                                track. Every bar shares the same scale. */}
+                                            <div className={styles.openDealAmounts}>
+                                                <span aria-hidden className={styles.openDealBar}>
+                                                    <span
+                                                        className={cn(
+                                                            "block rounded-control block-8 min-inline-2",
+                                                            isLiveStage(deal.status)
+                                                                ? STAGE_BAR_CLASS[deal.status]
+                                                                : "bg-chart-2",
+                                                        )}
+                                                        style={{ inlineSize: `${pct}%` }}
+                                                    />
+                                                </span>
+                                                <span className={styles.openDealValues}>
                                                     <span className="body-sm font-semibold text-ink tabular-nums">
                                                         {formatCommission(commissionInr ?? 0, true)}
                                                     </span>
@@ -259,7 +260,7 @@ export function EarningsRecentSold({
             {showBest && !bestInList ? (
                 <div
                     data-linked-card={!isSampleDeal(best.deal.id) ? "" : undefined}
-                    className="flex items-center gap-3 rounded-inner bg-chart-4/10 p-3"
+                    className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-inner bg-chart-4/10 p-3 @sm:flex"
                 >
                     {!isSampleDeal(best.deal.id) ? (
                         <CardLink
@@ -284,7 +285,7 @@ export function EarningsRecentSold({
                             {best.deal.property.title}
                         </EarningsDealLink>
                     </div>
-                    <span className="h6 ms-auto shrink-0 text-ink tabular-nums">
+                    <span className="h6 col-start-2 wrap-anywhere text-ink tabular-nums @sm:ms-auto @sm:shrink-0">
                         {formatCommission(best.commissionInr ?? 0)}
                     </span>
                 </div>
@@ -335,7 +336,7 @@ function RecentSoldRow({ row, isBest }: { row: ValuedDeal; isBest: boolean }) {
         // thumb never has to hit the 20px title.
         <li
             data-linked-card={!isSampleDeal(deal.id) ? "" : undefined}
-            className="relative flex items-center gap-3 rounded-inner border border-border-warm bg-surface p-3.5 transition-colors duration-160 has-[a:hover]:bg-surface-muted/40"
+            className="relative flex items-start gap-3 rounded-inner border border-border-warm bg-surface p-3 transition-colors duration-160 has-[a:hover]:bg-surface-muted/40 @sm:items-center @sm:p-3.5"
         >
             {!isSampleDeal(deal.id) ? (
                 <CardLink
@@ -356,7 +357,7 @@ function RecentSoldRow({ row, isBest }: { row: ValuedDeal; isBest: boolean }) {
             )}
 
             <div className="flex flex-1 flex-col min-inline-0">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col items-start gap-3 @sm:flex-row @sm:items-center @sm:gap-4">
                     <div className="flex flex-1 flex-col gap-1 min-inline-0">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <EarningsDealLink
@@ -396,9 +397,9 @@ function RecentSoldRow({ row, isBest }: { row: ValuedDeal; isBest: boolean }) {
                     </p>
                     {/* Earned amount on the title line, deal amount on the meta line.
                             Left-aligned behind a divider, like the days column. */}
-                    <p className="flex shrink-0 flex-col justify-center gap-1 self-stretch border-s border-border-warm ps-4 whitespace-nowrap @md:inline-36">
+                    <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 border-border-warm tabular-nums min-inline-0 @sm:shrink-0 @sm:flex-col @sm:justify-center @sm:self-stretch @sm:border-s @sm:ps-4 @sm:whitespace-nowrap @md:inline-36">
                         {commissionInr != null ? (
-                            <span className="body-sm font-semibold text-ink tabular-nums">
+                            <span className="body-sm font-semibold wrap-anywhere text-ink tabular-nums">
                                 {formatCommission(commissionInr)}
                             </span>
                         ) : (
@@ -406,7 +407,7 @@ function RecentSoldRow({ row, isBest }: { row: ValuedDeal; isBest: boolean }) {
                                 No commission
                             </span>
                         )}
-                        <span className="body-xs font-semibold text-ink-muted tabular-nums">
+                        <span className="body-xs font-semibold wrap-anywhere text-ink-muted tabular-nums">
                             on {deal.property.isRent ? formatRent(baseInr) : formatPrice(baseInr)}
                         </span>
                     </p>

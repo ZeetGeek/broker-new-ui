@@ -3,12 +3,16 @@ import { Skeleton } from "@/components/shared/skeleton";
 /** Mirrors the loaded earnings layout so nothing jumps when data arrives. */
 export function EarningsPageSkeleton() {
     return (
-        <div role="status" aria-live="polite" className="flex flex-col gap-card-grid pbe-6">
+        <div
+            role="status"
+            aria-live="polite"
+            className="flex flex-col gap-card-grid pbe-6 min-inline-0"
+        >
             <span className="sr-only">Loading your earnings…</span>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 min-inline-0">
                     <Skeleton className="block-8 inline-80 max-sm:inline-full" />
-                    <Skeleton className="block-4 inline-64" />
+                    <Skeleton className="block-4 inline-64 max-inline-full" />
                 </div>
                 <Skeleton className="rounded-control block-control-md inline-72 max-sm:inline-full" />
             </div>

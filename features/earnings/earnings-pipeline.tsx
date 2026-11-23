@@ -42,7 +42,7 @@ function StageGauge({ report }: { report: EarningsReport }) {
     return (
         <ChartContainer
             config={CHART_CONFIG}
-            className="mx-auto aspect-auto block-44 inline-full max-inline-80"
+            className="mx-auto aspect-20/11 inline-full max-inline-80 min-inline-0"
             aria-label={`${plural(live.count, "open deal")}. ${DEAL_STAGE_ORDER.map(
                 (stage) => `${DEAL_STAGE_META[stage].label}: ${live.stageCounts[stage]}`,
             ).join(", ")}`}
@@ -51,9 +51,9 @@ function StageGauge({ report }: { report: EarningsReport }) {
                 data={data}
                 startAngle={180}
                 endAngle={0}
-                cy={164}
-                innerRadius={114}
-                outerRadius={150}
+                cy="93%"
+                innerRadius="130%"
+                outerRadius="170%"
                 accessibilityLayer
             >
                 <PolarAngleAxis
@@ -212,13 +212,16 @@ export function EarningsPipeline({
                     {live.stalledCount > 0 || live.acceptedOfferCount > 0 ? (
                         <ul
                             className="
-                              -mbe-4 flex flex-wrap justify-center gap-2 border-bs
+                              mbs-6 -mbe-4 flex flex-wrap justify-center gap-2 border-bs
                               border-border-warm py-4 sm:-mbe-5 sm:py-5
                             "
                         >
                             {live.acceptedOfferCount > 0 ? (
                                 <li className="body-xs inline-flex items-center gap-1.5 rounded-full bg-chart-4/12 px-3 py-1.5 font-semibold text-brand-text">
-                                    <Handshake aria-hidden className="block-3.5 inline-3.5" />
+                                    <Handshake
+                                        aria-hidden
+                                        className="shrink-0 block-3.5 inline-3.5"
+                                    />
                                     {plural(live.acceptedOfferCount, "offer")} accepted, ready to
                                     close
                                 </li>

@@ -220,9 +220,16 @@ export function AnalyticsClientList({
                 className="flex flex-col gap-3"
             >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 id="analytics-clients-heading" className="h5 text-ink">
-                        Clients <span className="text-ink-muted tabular-nums">{counts.total}</span>
-                    </h2>
+                    <div className="flex flex-col gap-1">
+                        <h2 id="analytics-clients-heading" className="h5 text-ink">
+                            Client details{" "}
+                            <span className="text-ink-muted tabular-nums">{counts.total}</span>
+                        </h2>
+                        <p className="body-sm text-ink-muted">
+                            Contact details, visits, offers, notes and the next action for every
+                            client
+                        </p>
+                    </div>
                     {showTabs ? (
                         <StatusTabs label="Show clients" value={filter} tabs={tabs} />
                     ) : null}

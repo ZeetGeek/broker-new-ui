@@ -10,6 +10,7 @@ import { CardLink } from "@/components/shared/card-link";
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import { IconButton } from "@/components/shared/icon-button";
 import {
+    ArrowRight,
     CallIcon,
     CircleCheck,
     LostIcon,
@@ -50,12 +51,14 @@ import {
     type DealStatus,
     isLiveStage,
 } from "@/features/pipeline/types";
+import { canScheduleVisit, scheduleVisitHref } from "@/features/pipeline/visit-link";
 
 import styles from "./deal-card.module.css";
 
 export type DealCardHandlers = {
     onView: (dealId: string) => void;
     onAdvance: (dealId: string, stage: DealStage) => void;
+    onQuickAdvance?: (dealId: string, stage: DealStage) => void;
     onLogContact: (dealId: string, currentStatus: DealStatus) => void;
     onClose: (dealId: string) => void;
     onLose: (dealId: string) => void;
@@ -329,15 +332,22 @@ export function DealCard({
     isBusy = false,
     isDragging = false,
     isPinned = false,
+    showStageAction = false,
 }: {
     deal: DealItem;
     handlers: DealCardHandlers;
     isBusy?: boolean;
     isDragging?: boolean;
     isPinned?: boolean;
+    /** The single-stage list needs a visible move action; board cards retain drag and menu actions. */
+    showStageAction?: boolean;
 }) {
     const live = isLiveStage(deal.status);
     const resolved = deal.resolvedAt ? new Date(deal.resolvedAt) : null;
+    const nextStage = live
+        ? DEAL_STAGE_ORDER[DEAL_STAGE_ORDER.indexOf(deal.status as DealStage) + 1]
+        : undefined;
+    const scheduleNext = nextStage === "visit" && canScheduleVisit(deal);
     const hasResolvedDate = resolved != null && Number.isFinite(resolved.getTime());
     const stageMeta = live ? DEAL_STAGE_META[deal.status as DealStage] : null;
     const canCall = Boolean(deal.buyer.phoneDigits);
@@ -395,7 +405,10 @@ export function DealCard({
             >
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5 min-inline-0">
-                        <Badge color={deal.property.isRent ? "orange" : "emerald"}>
+                        <Badge
+                            color={deal.property.isRent ? "orange" : "emerald"}
+                            className="px-2 py-0.75"
+                        >
                             {deal.property.isRent ? "For rent" : "For sale"}
                         </Badge>
                     </div>
@@ -458,7 +471,7 @@ export function DealCard({
                 </div>
                 <div className={styles.summary}>
                     <DealCoverImage property={deal.property} />
-                    <div className="flex flex-col gap-2 min-inline-0">
+                    <div className={styles.summaryDetails}>
                         <PriceWithCommission
                             amountInr={deal.property.amountInr}
                             isRent={deal.property.isRent}
@@ -466,6 +479,7 @@ export function DealCard({
                             commissionAmountInr={deal.property.commissionAmountInr}
                             audience="broker"
                             size="md"
+                            className={styles.askPrice}
                             showEmptyTip
                         />
                         <h3 className="body-sm font-semibold wrap-anywhere whitespace-normal text-ink capitalize">
@@ -585,6 +599,39 @@ export function DealCard({
                 />
 
                 <OverlayCardActions className="flex-col gap-2">
+                    {live && showStageAction ? (
+                        <Button
+                            size="lg"
+                            className={styles.stageAction}
+                            disabled={isBusy}
+                            nativeButton={!scheduleNext}
+                            render={
+                                scheduleNext ? (
+                                    <Link href={scheduleVisitHref(deal)} onClick={stopCard} />
+                                ) : undefined
+                            }
+                            onClick={
+                                scheduleNext
+                                    ? undefined
+                                    : (event) => {
+                                          event.stopPropagation();
+                                          if (nextStage)
+                                              (handlers.onQuickAdvance ?? handlers.onAdvance)(
+                                                  deal.id,
+                                                  nextStage,
+                                              );
+                                          else handlers.onClose(deal.id);
+                                      }
+                            }
+                        >
+                            {scheduleNext
+                                ? "Schedule visit"
+                                : nextStage
+                                  ? `Move to ${DEAL_STAGE_META[nextStage].label.toLowerCase()}`
+                                  : "Close deal"}
+                            <ArrowRight aria-hidden className="shrink-0 block-4 inline-4" />
+                        </Button>
+                    ) : null}
                     {/* The owner's phone does not depend on the client's: a
                         client with no number must not hide "Call owner". */}
                     {canCall || ownerPhone ? (

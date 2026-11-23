@@ -1,5 +1,7 @@
 "use client";
 
+import { type KeyboardEvent, useEffect, useId, useRef } from "react";
+
 import { cn } from "@/lib/utils";
 
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
@@ -15,16 +17,55 @@ export function StageTabs({
     counts,
     onChange,
     className,
+    panelId,
+    idPrefix,
 }: {
     active: DealStage;
     counts: StageCounts;
     onChange: (stage: DealStage) => void;
     className?: string;
+    panelId?: string;
+    idPrefix?: string;
 }) {
+    const generatedId = useId();
+    const prefix = idPrefix ?? generatedId;
+    const listRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const list = listRef.current;
+        const selected = list?.querySelector<HTMLElement>('[aria-selected="true"]');
+        if (!list || !selected) return;
+        // Scroll only the tab strip; scrollIntoView can also move the whole page.
+        const bounds = list.getBoundingClientRect();
+        const tab = selected.getBoundingClientRect();
+        if (tab.left < bounds.left) list.scrollLeft += tab.left - bounds.left;
+        else if (tab.right > bounds.right) list.scrollLeft += tab.right - bounds.right;
+    }, [active]);
+
+    function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+        const index = DEAL_STAGE_ORDER.indexOf(active);
+        const next =
+            event.key === "ArrowRight"
+                ? (index + 1) % DEAL_STAGE_ORDER.length
+                : event.key === "ArrowLeft"
+                  ? (index + DEAL_STAGE_ORDER.length - 1) % DEAL_STAGE_ORDER.length
+                  : event.key === "Home"
+                    ? 0
+                    : event.key === "End"
+                      ? DEAL_STAGE_ORDER.length - 1
+                      : null;
+        if (next == null) return;
+        event.preventDefault();
+        onChange(DEAL_STAGE_ORDER[next]);
+        listRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+    }
+
     return (
         <div
+            ref={listRef}
             role="tablist"
             aria-label="Deal stages"
+            onKeyDown={onKeyDown}
             className={cn(
                 `
                   -mx-4 flex scrollbar-none gap-2 overflow-x-auto px-4 pbe-1
@@ -41,14 +82,20 @@ export function StageTabs({
                 return (
                     <button
                         key={stage}
+                        id={`${prefix}-${stage}`}
                         type="button"
                         role="tab"
                         aria-selected={isActive}
+                        aria-controls={panelId}
+                        tabIndex={isActive ? 0 : -1}
                         onClick={() => onChange(stage)}
                         className={cn(
                             `
                               body-sm flex shrink-0 items-center gap-2 rounded-control px-4
                               transition-colors duration-160 block-control-lg
+                              min-block-(--touch-target-min)
+                              focus-visible:outline-2 focus-visible:-outline-offset-2
+                              focus-visible:outline-ring
                             `,
                             isActive
                                 ? "bg-ink font-semibold text-surface"
@@ -60,11 +107,9 @@ export function StageTabs({
                             className={cn("shrink-0 rounded-full block-2 inline-2", meta.dotClass)}
                         />
                         {meta.label}
-                        {counts[stage] > 0 ? (
-                            <span className={cn("tabular", !isActive && "text-ink-subtle")}>
-                                {counts[stage]}
-                            </span>
-                        ) : null}
+                        <span className={cn("tabular", !isActive && "text-ink-muted")}>
+                            {counts[stage]}
+                        </span>
                     </button>
                 );
             })}

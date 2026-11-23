@@ -47,8 +47,12 @@ export function DealPartiesPanel({
                 { person: buyer, label: "Client", type: "buyer" as const, onOpen: onOpenBuyer },
             ].map(({ person, label, type, onOpen }) => (
                 <div key={type} className={styles.personRow}>
-                    <span className={`${textClass} text-ink-muted`}>{label}</span>
-                    <UserAvatar name={person.name} imageUrl={person.avatarUrl} size="2xs" />
+                    <span className={`${textClass} text-ink-muted ${styles.personLabel}`}>
+                        {label}
+                    </span>
+                    <span className={styles.personAvatar}>
+                        <UserAvatar name={person.name} imageUrl={person.avatarUrl} size="2xs" />
+                    </span>
                     <ContactName
                         name={person.name}
                         contactId={person.id}
@@ -60,7 +64,7 @@ export function DealPartiesPanel({
             ))}
 
             {showHandledBy && assignedAgent ? (
-                <div className="flex items-center gap-2 px-1">
+                <div className={`flex items-center gap-2 px-1 ${styles.handledBy}`}>
                     <span className="body-xs text-ink-subtle">Handled by</span>
                     <UserAvatar
                         name={assignedAgent.name}

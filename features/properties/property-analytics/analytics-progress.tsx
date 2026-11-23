@@ -31,23 +31,9 @@ function biggestDrop(steps: FunnelStep[], total: number): string | null {
     return DROP_COPY[worst.key];
 }
 
-function Bar({ share, className }: { share: number; className: string }) {
-    return (
-        <span aria-hidden className="block overflow-hidden rounded-full bg-surface-muted block-2">
-            {share > 0 ? (
-                <span
-                    className={cn("block rounded-full block-full min-inline-2", className)}
-                    style={{ inlineSize: `${Math.min(100, share * 100)}%` }}
-                />
-            ) : null}
-        </span>
-    );
-}
-
 /**
  * How far clients got — added, booked a visit, made an offer, closed. A lost
- * client still counts for the steps they reached, so this shows where
- * interest turns into deals, not today's workload.
+ * client still counts for the steps they reached.
  */
 export function AnalyticsFunnel({
     report,
@@ -61,42 +47,52 @@ export function AnalyticsFunnel({
 
     return (
         <AnalyticsCard
-            title="How far clients got"
+            title="Client journey"
             titleId="analytics-funnel-heading"
-            description="Counts every client who reached a step, including those lost later"
+            description="How interest moved from a new client to a closed deal"
             className={className}
         >
-            <ol className="flex flex-col gap-4">
+            <ol className="grid grid-cols-4 items-end gap-3 block-52 sm:gap-4">
                 {funnel.map((step) => {
                     const label = funnelStepLabel(step.key, closedWord);
                     const percent = Math.round(step.share * 100);
                     return (
-                        <li key={step.key} className="flex flex-col gap-1.5">
-                            <div className="flex items-baseline justify-between gap-3">
-                                <span className="body-sm font-semibold text-ink">{label}</span>
-                                {step.count > 0 ? (
-                                    <span className="body-sm text-ink-muted tabular-nums">
-                                        <span className="font-semibold text-ink">{step.count}</span>
-                                        {step.key === "added" ? null : ` · ${percent}%`}
-                                    </span>
-                                ) : (
-                                    <span className="body-sm text-ink-muted">None yet</span>
-                                )}
+                        <li key={step.key} className="flex flex-col gap-2 block-full min-inline-0">
+                            <div className="flex flex-1 items-end overflow-hidden rounded-inner bg-surface-muted px-2 pbs-2">
+                                {step.share > 0 ? (
+                                    <span
+                                        aria-hidden
+                                        className={cn(
+                                            "block inline-full min-block-3",
+                                            step.key === "won" ? "bg-brand" : "bg-brand/55",
+                                        )}
+                                        style={{ blockSize: `${Math.max(8, percent)}%` }}
+                                    />
+                                ) : null}
                             </div>
-                            <Bar
-                                share={step.share}
-                                className={step.key === "won" ? "bg-brand" : "bg-brand/70"}
-                            />
+                            <div className="flex flex-col gap-0.5">
+                                <span className="h5 text-ink tabular-nums">{step.count}</span>
+                                <span className="body-xs font-semibold text-ink">{label}</span>
+                                <span className="body-xs text-ink-muted tabular-nums">
+                                    {step.key === "added"
+                                        ? "Starting point"
+                                        : `${percent}% of clients`}
+                                </span>
+                            </div>
                         </li>
                     );
                 })}
             </ol>
-            {drop ? <p className="body-sm text-ink-muted">{drop}</p> : null}
+            {drop ? (
+                <p className="body-sm rounded-inner bg-surface-muted px-3 py-2.5 text-ink-muted">
+                    {drop}
+                </p>
+            ) : null}
         </AnalyticsCard>
     );
 }
 
-/** Today's spread across the pipeline stages, in board order. Empty stages are left out. */
+/** Current spread across the pipeline stages, including completed outcomes. */
 export function AnalyticsStages({
     report,
     className,
@@ -106,41 +102,66 @@ export function AnalyticsStages({
 }) {
     const { statusCounts, closedWord, counts } = report;
     const rows = STATUS_ORDER.filter((status) => statusCounts[status] > 0);
-    const max = Math.max(1, ...rows.map((status) => statusCounts[status]));
 
     return (
         <AnalyticsCard
-            title="Where clients are now"
+            title="Current pipeline"
             titleId="analytics-stages-heading"
-            description={`${plural(counts.total, "client")}, same stages as your pipeline`}
-            className={className}
+            description="Where every client is right now"
+            className={cn("gap-5", className)}
         >
-            <dl className="flex flex-col gap-3.5">
+            <div className="flex items-end justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                    <p className="h3 text-ink tabular-nums">{counts.active}</p>
+                    <p className="body-sm text-ink-muted">Active clients still in play</p>
+                </div>
+                <p className="body-sm text-end text-ink-muted">
+                    <strong className="font-semibold text-ink tabular-nums">{counts.total}</strong>{" "}
+                    total
+                </p>
+            </div>
+
+            <div
+                aria-label={`${plural(counts.total, "client")} across ${plural(rows.length, "stage")}`}
+                className="flex overflow-hidden rounded-full bg-surface-muted block-4"
+                role="img"
+            >
                 {rows.map((status) => (
-                    <div key={status} className="flex items-center gap-3">
-                        <dt className="body-sm flex shrink-0 items-center gap-2 font-medium text-ink inline-28">
+                    <span
+                        key={status}
+                        className={cn("block block-full", statusDotClass(status))}
+                        style={{ inlineSize: `${(statusCounts[status] / counts.total) * 100}%` }}
+                        title={`${statusLabel(status, closedWord)}: ${statusCounts[status]}`}
+                    />
+                ))}
+            </div>
+
+            <dl className="grid grid-cols-2 gap-4">
+                {rows.map((status) => {
+                    const share = Math.round((statusCounts[status] / counts.total) * 100);
+                    return (
+                        <div key={status} className="flex items-center gap-2 min-inline-0">
                             <span
                                 aria-hidden
                                 className={cn(
-                                    "shrink-0 rounded-full block-2 inline-2",
+                                    "shrink-0 rounded-xs block-2 inline-2",
                                     statusDotClass(status),
                                 )}
                             />
-                            <span className="truncate">{statusLabel(status, closedWord)}</span>
-                        </dt>
-                        <dd className="flex flex-1 items-center gap-3 min-inline-0">
-                            <span className="flex-1 min-inline-0">
-                                <Bar
-                                    share={statusCounts[status] / max}
-                                    className={statusDotClass(status)}
-                                />
-                            </span>
-                            <span className="body-sm text-end font-semibold text-ink tabular-nums min-inline-6">
-                                {statusCounts[status]}
-                            </span>
-                        </dd>
-                    </div>
-                ))}
+                            <div className="flex flex-1 items-baseline justify-between gap-2 min-inline-0">
+                                <dt className="body-sm truncate font-medium text-ink">
+                                    {statusLabel(status, closedWord)}
+                                </dt>
+                                <dd className="body-sm shrink-0 text-ink-muted tabular-nums">
+                                    <strong className="font-semibold text-ink">
+                                        {statusCounts[status]}
+                                    </strong>{" "}
+                                    · {share}%
+                                </dd>
+                            </div>
+                        </div>
+                    );
+                })}
             </dl>
         </AnalyticsCard>
     );

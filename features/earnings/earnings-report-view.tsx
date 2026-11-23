@@ -38,10 +38,10 @@ export function EarningsReportView({
     const headlineKey = `${selection.preset}:${formatWindow(report.window)}:${headlineLines.join("|")}`;
 
     return (
-        <div className="flex flex-col gap-card-grid">
+        <div className="flex flex-col gap-card-grid min-inline-0">
             <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
                 <div className="flex flex-col gap-2 min-inline-0">
-                    <h1 className="h3 flex items-baseline gap-x-1.5 text-ink">
+                    <h1 className="h3 flex flex-col gap-x-1.5 gap-y-1 text-ink sm:flex-row sm:items-baseline">
                         <span className="shrink-0">Earnings.</span>
                         <span className="flex-1 min-inline-0">
                             <RotatingHeaderSummary
@@ -51,8 +51,8 @@ export function EarningsReportView({
                             />
                         </span>
                     </h1>
-                    <p className="body-sm flex items-center gap-1.5 text-ink-muted">
-                        <Info aria-hidden className="shrink-0 block-4 inline-4" />
+                    <p className="body-sm flex items-start gap-1.5 text-ink-muted">
+                        <Info aria-hidden className="mbs-0.5 shrink-0 block-4 inline-4" />
                         Estimated from the commission each owner set
                     </p>
                 </div>

@@ -28,13 +28,13 @@ export function EarningsCard({
         <section
             aria-labelledby={titleId}
             className={cn(
-                "flex flex-col gap-4 rounded-card bg-surface p-4 shadow-sm ring-1 ring-border-warm/50 min-inline-0 sm:p-5",
+                "@container flex flex-col gap-4 rounded-card bg-surface p-4 shadow-sm ring-1 ring-border-warm/50 min-inline-0 sm:p-5",
                 className,
             )}
         >
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-col gap-1 min-inline-0">
-                    <h2 id={titleId} className="h5 text-ink">
+                    <h2 id={titleId} className="h5 wrap-anywhere text-ink">
                         {title}
                     </h2>
                     {description ? <p className="body-sm text-ink-muted">{description}</p> : null}

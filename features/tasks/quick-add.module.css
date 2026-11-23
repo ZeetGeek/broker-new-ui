@@ -13,7 +13,7 @@
     min-inline-size: 0;
     min-block-size: var(--qa-line);
     padding-inline: 0.5rem;
-    font-size: 12px;
+    font-size: inherit;
     cursor: auto;
 }
 .root[data-editing] {
@@ -412,13 +412,29 @@
     }
 }
 
-@media (pointer: coarse) {
+@media (pointer: coarse), (max-width: 767px) {
+    .root {
+        font-size: var(--input-font-min);
+        --qa-line: max(var(--line-height, 3rem), var(--touch-target-min));
+    }
+    .mirror,
+    .input {
+        font-size: var(--input-font-min);
+        font-weight: 500;
+    }
+    .options,
+    .peopleOptions {
+        inline-size: 100cqi;
+        min-inline-size: 0;
+        max-inline-size: 100cqi;
+        max-block-size: min(18rem, 40dvh);
+    }
     .option,
     .peopleOption {
-        min-block-size: 44px;
+        min-block-size: var(--touch-target-min);
     }
     .helpButton {
-        min-block-size: 32px;
+        min-block-size: var(--touch-target-min);
         padding-block: 0.25rem;
         font-size: 0.8125rem;
     }
@@ -430,9 +446,9 @@
         padding-block-end: 0.4rem;
     }
     .submit {
-        inline-size: 32px;
-        block-size: 32px;
-        margin-block-start: calc((var(--qa-line) - 32px) / 2);
+        inline-size: var(--touch-target-min);
+        block-size: var(--touch-target-min);
+        margin-block-start: calc((var(--qa-line) - var(--touch-target-min)) / 2);
     }
 }
 @media (prefers-reduced-motion: reduce) {

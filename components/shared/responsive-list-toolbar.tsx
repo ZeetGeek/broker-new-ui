@@ -29,12 +29,14 @@ export function ListStatusSelect({
     onChange,
     label = "Status",
     isLoading = false,
+    hideLabel = false,
 }: {
     options: ListStatusOption[];
     value: string;
     onChange: (value: string) => void;
     label?: string;
     isLoading?: boolean;
+    hideLabel?: boolean;
 }) {
     const selected = options.find((option) => option.value === value);
     return (
@@ -60,7 +62,7 @@ export function ListStatusSelect({
                     styles.trigger,
                 )}
             >
-                <span className={styles.label}>{label}:</span>
+                {!hideLabel ? <span className={styles.label}>{label}:</span> : null}
                 <span
                     aria-hidden
                     className={cn(

@@ -44,7 +44,7 @@ export function brokerPipelineDealHref(leadId: string): string {
 
 /** Lead analytics for one of the broker's own listings. */
 export function brokerPropertyAnalyticsHref(propertyId: string): string {
-    return `${BROKER_YOUR_LISTINGS_HREF}/${propertyId}/analytics`;
+    return `${brokerPropertyDetailHref(propertyId)}?tab=analytics`;
 }
 
 export function brokerYourListingsHref(tab?: "representing" | "requests"): string {

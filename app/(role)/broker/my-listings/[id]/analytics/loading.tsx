@@ -1,5 +1,5 @@
-import { AnalyticsSkeleton } from "@/features/properties/property-analytics/analytics-skeleton";
+import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
 
 export default function Loading() {
-    return <AnalyticsSkeleton />;
+    return <PropertyDetailSkeleton />;
 }

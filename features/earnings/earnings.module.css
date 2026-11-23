@@ -1,0 +1,87 @@
+.stat {
+    container-type: inline-size;
+    min-inline-size: 0;
+}
+
+/* Each metric adapts to its own width, including the four-column desktop strip. */
+.statContent {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    align-items: start;
+    gap: 8px;
+}
+
+.statIcon {
+    grid-area: 1 / 1;
+}
+
+.statLabel {
+    grid-area: 1 / 2;
+}
+
+.statValue {
+    grid-area: 2 / 1 / auto / -1;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+
+.statDetail {
+    grid-area: 3 / 1 / auto / -1;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+
+@container (min-width: 260px) {
+    .statContent {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-rows: auto 1fr;
+        column-gap: 12px;
+        row-gap: 4px;
+    }
+
+    .statIcon {
+        grid-row: 1 / 3;
+        align-self: center;
+        inline-size: 24px;
+        block-size: 24px;
+    }
+
+    .statValue {
+        grid-area: 1 / 3 / 3 / 4;
+        align-self: center;
+    }
+
+    .statDetail {
+        grid-area: 2 / 2;
+    }
+}
+
+/* Keep the amount and listing price below the bar until the card has room. */
+.openDealAmounts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-inline-size: 0;
+}
+
+.openDealBar {
+    inline-size: 100%;
+    min-inline-size: 0;
+}
+
+.openDealValues {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    min-inline-size: 0;
+}
+
+@container (min-width: 400px) {
+    .openDealAmounts {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 144px;
+        align-items: center;
+    }
+}

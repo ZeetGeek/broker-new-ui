@@ -34,11 +34,13 @@ export function PipelineOutcomeTabs({
     view,
     isLoading = false,
     onChange,
+    compact = false,
 }: {
     counts: Record<DealsView, number | null>;
     view: DealsView;
     isLoading?: boolean;
     onChange: (value: string) => void;
+    compact?: boolean;
 }) {
     return (
         <ResponsiveListStatus
@@ -46,8 +48,10 @@ export function PipelineOutcomeTabs({
             value={view}
             onChange={onChange}
             isLoading={isLoading}
+            hideLabel={compact}
             options={PIPELINE_TABS.map((tab) => ({
                 ...tab,
+                label: compact ? tab.compactLabel : tab.label,
                 value: tab.view,
                 count: counts[tab.view],
             }))}

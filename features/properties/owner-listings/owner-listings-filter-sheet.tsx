@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 
 import { formatMoney } from "@/lib/format/money";
 import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
@@ -463,6 +463,13 @@ function ChipGroup({
 }
 
 export type OwnerListingsFilterSheetProps = {
+    title?: ReactNode;
+    additionalFields?: {
+        content: ReactNode;
+        active: boolean;
+        onClear: () => void;
+    };
+    applyLabel?: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     appliedFilters: OwnerListingsFilters;
@@ -479,6 +486,9 @@ export type OwnerListingsFilterSheetProps = {
 };
 
 export function OwnerListingsFilterSheet({
+    title = "Filters",
+    additionalFields,
+    applyLabel = "Show properties",
     open,
     onOpenChange,
     appliedFilters,
@@ -788,6 +798,7 @@ export function OwnerListingsFilterSheet({
     };
 
     const handleClear = () => {
+        additionalFields?.onClear();
         setDraftPeople({ ownerId: "", clientId: "" });
         setDraft((prev) => ({
             ...EMPTY_SHEET_FILTERS,
@@ -813,7 +824,7 @@ export function OwnerListingsFilterSheet({
                     `,
                 )}
             >
-                <AppModalHeader title="Filters" className="px-5 sm:px-8 sm:py-4" />
+                <AppModalHeader title={title} className="px-5 sm:px-8 sm:py-4" />
 
                 <ScrollArea
                     viewportRef={scrollRef}
@@ -824,6 +835,7 @@ export function OwnerListingsFilterSheet({
                     "
                 >
                     <div className="px-5 pbe-3 sm:px-8">
+                        {additionalFields?.content}
                         {open && peopleFilterScope ? (
                             <PeopleFilterFields
                                 scope={peopleFilterScope}
@@ -1170,9 +1182,9 @@ export function OwnerListingsFilterSheet({
                           [&_button]:rounded-inner [&_button]:px-5 [&_button]:min-block-11
                         "
                         secondaryLabel="Clear all"
-                        secondaryDisabled={!hasDraftFilters}
+                        secondaryDisabled={!hasDraftFilters && !additionalFields?.active}
                         onSecondary={handleClear}
-                        primaryLabel="Show properties"
+                        primaryLabel={applyLabel}
                         onPrimary={handleApply}
                     />
                 </div>

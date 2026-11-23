@@ -135,19 +135,17 @@ export function AnalyticsStatStrip({ report, now }: { report: PropertyReport; no
             <h2 id="analytics-stats-heading" className="sr-only">
                 This listing in numbers
             </h2>
-            {/* Phone: one column, hairlines between rows. sm+: the earnings strip's
-                vertical dividers. */}
-            <ul className="grid grid-cols-1 divide-y divide-border-warm overflow-hidden rounded-card bg-surface shadow-sm ring-1 ring-border-warm/50 sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4">
+            <ul className="grid grid-cols-2 overflow-hidden rounded-card bg-surface shadow-sm ring-1 ring-border-warm/50 lg:grid-cols-4">
                 {stats.map((stat) => (
                     <li
                         key={stat.key}
-                        className="relative p-2 sm:after:absolute sm:after:inset-y-4 sm:after:inset-e-0 sm:after:bg-border-warm sm:after:inline-px sm:even:after:hidden lg:last:after:hidden lg:even:after:block"
+                        className="relative p-2 after:absolute after:inset-y-4 after:inset-e-0 after:bg-border-warm after:inline-px even:after:hidden lg:last:after:hidden lg:even:after:block"
                     >
                         <div className="flex items-center gap-3 rounded-control px-3 py-2.5 block-full min-block-11 min-inline-0">
                             <stat.icon
                                 aria-hidden
                                 className={cn(
-                                    "shrink-0 block-6 inline-6",
+                                    "hidden shrink-0 block-6 inline-6 sm:block",
                                     stat.hasValue ? "text-brand" : "text-ink-muted",
                                 )}
                                 strokeWidth={1.75}

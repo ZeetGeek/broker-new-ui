@@ -109,7 +109,7 @@ export function NotificationPreferences({ profile, onSaved }: NotificationPrefer
                 </p>
             </div>
 
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,13rem),1fr))] gap-3 min-inline-0 sm:gap-4">
                 {CHANNELS.map((channel) => {
                     const on = prefs[channel.id];
                     const isPending = pendingChannel !== null;
@@ -121,7 +121,7 @@ export function NotificationPreferences({ profile, onSaved }: NotificationPrefer
                                 htmlFor={`notify-${channel.id}`}
                                 className={cn(
                                     `
-                                      flex cursor-pointer items-start gap-3 rounded-control border-2
+                                      flex flex-1 cursor-pointer items-start gap-3 rounded-control border-2
                                       px-4 py-3.5 text-start leading-normal
                                       transition-[background-color,border-color,color,box-shadow]
                                       duration-160 min-block-12
