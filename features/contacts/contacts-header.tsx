@@ -135,7 +135,7 @@ export function ContactsHeader({
                             {onAdd ? (
                                 <ListAddButton
                                     label={addLabel}
-                                    shortcutId="add_contact"
+                                    shortcutId={isBuyers ? "add_contact" : "add_owner"}
                                     onClick={onAdd}
                                     className="hidden md:inline-flex"
                                 />

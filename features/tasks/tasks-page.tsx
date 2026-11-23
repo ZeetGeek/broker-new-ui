@@ -22,6 +22,7 @@ import { StatusTabs } from "@/components/shared/status-tabs";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 
+import { useShortcut } from "@/features/shortcuts/use-shortcut";
 import { useAppSelector } from "@/store/hooks";
 
 import { nextTaskDates, setTaskCompleted } from "./lifecycle";
@@ -223,6 +224,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             visitTitle: undefined,
         });
     };
+    useShortcut("add_task", create);
     const clear = () => updateWorkspace({ q: undefined, due: undefined, linked: undefined });
     const commit = async (next: Task[], message: string, after?: () => void) => {
         setError("");
@@ -477,6 +479,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                         <ListAddButton
                             className={styles.addButton}
                             label="Add task"
+                            shortcutId="add_task"
                             onClick={create}
                         />
                     </div>

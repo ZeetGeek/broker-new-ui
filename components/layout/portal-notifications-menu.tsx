@@ -26,7 +26,8 @@ import { cn } from "@/lib/utils";
 
 import { buildDemoNotifications } from "@/components/layout/notification-demo-items";
 import toast from "@/components/shared/app-toast";
-import { NotificationIcon } from "@/components/shared/icons";
+import { IconButton } from "@/components/shared/icon-button";
+import { CheckCheck, NotificationIcon, Trash2 } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
@@ -119,26 +120,62 @@ function NotificationTile({ item }: { item: NotificationItem }) {
         <span
             aria-hidden
             className={cn(
-                "flex shrink-0 items-center justify-center rounded-inner block-10 inline-10",
+                "flex shrink-0 items-center justify-center rounded-inner block-8 inline-8",
                 TONE_TILE_CLASS[tone],
             )}
         >
-            <NotificationIcon name={iconName} className="block-5! inline-5!" />
+            <NotificationIcon name={iconName} className="block-4! inline-4!" />
         </span>
+    );
+}
+
+/** Icon-only header action with a tooltip, so the title row stays on one line. */
+function HeaderAction({
+    label,
+    tone,
+    onClick,
+    children,
+}: {
+    label: string;
+    tone: "neutral" | "danger";
+    onClick: () => void;
+    children: ReactNode;
+}) {
+    return (
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <IconButton
+                        type="button"
+                        size="sm"
+                        tone={tone}
+                        aria-label={label}
+                        onClick={onClick}
+                    />
+                }
+            >
+                {children}
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{label}</TooltipContent>
+        </Tooltip>
     );
 }
 
 function NotificationsHeader({
     unreadCount,
+    hasItems,
     activeTab,
     tabCounts,
     onMarkAllRead,
+    onClearAll,
     onTabChange,
 }: {
     unreadCount: number;
+    hasItems: boolean;
     activeTab: NotificationTab;
     tabCounts: Record<NotificationTab, number>;
     onMarkAllRead: () => void;
+    onClearAll: () => void;
     onTabChange: (tab: NotificationTab) => void;
 }) {
     return (
@@ -152,17 +189,23 @@ function NotificationsHeader({
                         </span>
                     ) : null}
                 </div>
-                {unreadCount > 0 ? (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={onMarkAllRead}
-                        className="-me-2 font-medium text-ink-muted hover:bg-surface-muted hover:text-ink"
-                    >
-                        <NotificationIcon name="checks" aria-hidden data-icon="inline-start" />
-                        Mark all read
-                    </Button>
+                {unreadCount > 0 || hasItems ? (
+                    <div className="flex items-center gap-2">
+                        {unreadCount > 0 ? (
+                            <HeaderAction
+                                label="Mark all read"
+                                tone="neutral"
+                                onClick={onMarkAllRead}
+                            >
+                                <CheckCheck aria-hidden className="block-4 inline-4" />
+                            </HeaderAction>
+                        ) : null}
+                        {hasItems ? (
+                            <HeaderAction label="Clear all" tone="danger" onClick={onClearAll}>
+                                <Trash2 aria-hidden className="block-4 inline-4" />
+                            </HeaderAction>
+                        ) : null}
+                    </div>
                 ) : null}
             </div>
             <SlidingTabs
@@ -221,7 +264,7 @@ function NotificationsSkeleton() {
             <span className="sr-only">Loading notifications…</span>
             {[0, 1, 2].map((key) => (
                 <div key={key} aria-hidden className="flex items-start gap-3 p-3">
-                    <span className="shrink-0 animate-pulse rounded-inner bg-surface-muted block-10 inline-10" />
+                    <span className="shrink-0 animate-pulse rounded-inner bg-surface-muted block-8 inline-8" />
                     <span className="flex flex-1 flex-col gap-2 pbs-1">
                         <span className="animate-pulse rounded-full bg-surface-muted block-3 inline-3/4" />
                         <span className="animate-pulse rounded-full bg-surface-muted block-3 inline-1/2" />
@@ -312,6 +355,9 @@ function NotificationRowContent({
     const propertyLabel = getPropertyLabel(item);
     const showActions = isActionableRequest(item, userRole);
     const decisionLabel = getRepresentationDecisionLabel(item);
+    // Reminders drop the generic "Task / Visit reminder" title: the icon and tab
+    // already say what it is, so the task or visit itself leads the row.
+    const headline = reminder?.line || title;
 
     return (
         <>
@@ -327,7 +373,8 @@ function NotificationRowContent({
                         )}
                     >
                         {!item.isRead ? <span className="sr-only">Unread: </span> : null}
-                        {title}
+                        {reminder?.line ? <span className="sr-only">{title}: </span> : null}
+                        {headline}
                     </span>
                     <span className="flex shrink-0 items-center gap-1.5 pbs-0.5">
                         {occurredAt ? (
@@ -346,19 +393,9 @@ function NotificationRowContent({
                 </div>
 
                 {reminder ? (
-                    <>
-                        {reminder.line ? (
-                            <p
-                                data-notification-body
-                                className="body-sm line-clamp-2 wrap-anywhere text-ink!"
-                            >
-                                {reminder.line}
-                            </p>
-                        ) : null}
-                        {reminder.detail ? (
-                            <p className="tabular body-xs text-ink-muted!">{reminder.detail}</p>
-                        ) : null}
-                    </>
+                    reminder.detail ? (
+                        <p className="tabular body-xs text-ink-muted!">{reminder.detail}</p>
+                    ) : null
                 ) : body ? (
                     <p
                         data-notification-body
@@ -528,8 +565,21 @@ export function PortalNotificationsMenu({
 }: PortalNotificationsMenuProps) {
     const live = useNotifications();
     const demo = useDemoNotifications();
-    const { items, unreadCount, loading, markRead, markAllRead, respondToRepresentation } =
-        USE_DEMO_NOTIFICATIONS ? demo : live;
+    const {
+        items: feedItems,
+        unreadCount,
+        loading,
+        markRead,
+        markAllRead,
+        respondToRepresentation,
+    } = USE_DEMO_NOTIFICATIONS ? demo : live;
+    // "Clear all" hides what is in the list for this session only — there is no
+    // delete endpoint yet. Anything that arrives afterwards still shows.
+    const [clearedIds, setClearedIds] = useState<ReadonlySet<string>>(() => new Set());
+    const items = useMemo(
+        () => feedItems.filter((item) => !clearedIds.has(item.id)),
+        [feedItems, clearedIds],
+    );
     const userRole = useAppSelector((state) => state.auth.user?.role);
     const [activeTab, setActiveTab] = useState<NotificationTab>("all");
     const now = new Date();
@@ -559,6 +609,12 @@ export function PortalNotificationsMenu({
                 id: "notifications-mark-all-read-error",
             });
         });
+    };
+
+    const handleClearAll = () => {
+        setClearedIds((prev) => new Set([...prev, ...items.map((item) => item.id)]));
+        // Cleared items should not keep the bell badge lit.
+        if (unreadCount > 0) handleMarkAllRead();
     };
 
     const trigger = (
@@ -634,9 +690,11 @@ export function PortalNotificationsMenu({
             <DropdownMenuContent align="end" sideOffset={12} className={menuSurfaceClass}>
                 <NotificationsHeader
                     unreadCount={unreadCount}
+                    hasItems={items.length > 0}
                     activeTab={activeTab}
                     tabCounts={tabCounts}
                     onMarkAllRead={handleMarkAllRead}
+                    onClearAll={handleClearAll}
                     onTabChange={setActiveTab}
                 />
 

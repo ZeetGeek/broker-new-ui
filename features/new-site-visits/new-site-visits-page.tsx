@@ -17,6 +17,7 @@ import { closeDirectVisitHref, directVisitWorkflow } from "@/lib/visits/direct-w
 import toast from "@/components/shared/app-toast";
 import { Button } from "@/components/ui/button";
 
+import { useShortcut } from "@/features/shortcuts/use-shortcut";
 import { VisitWorkflow } from "@/features/workflows/visit-workflow";
 
 import {
@@ -96,6 +97,8 @@ export function NewSiteVisitsPage() {
             : null,
     );
     const [actionError, setActionError] = useState("");
+    const scheduleVisit = () => setView({ kind: "schedule", intent: null, intentMissed: false });
+    useShortcut("schedule_visit", scheduleVisit);
 
     const range = filters.range || defaultRange(tab);
     const bounds = range === "custom" ? filters : visitDateBounds(range, now);
@@ -229,9 +232,7 @@ export function NewSiteVisitsPage() {
                     onFilters={() => setDialog("filters")}
                     onClear={clearFilters}
                     onMore={() => void list.fetchNextPage()}
-                    onSchedule={() =>
-                        setView({ kind: "schedule", intent: null, intentMissed: false })
-                    }
+                    onSchedule={scheduleVisit}
                     onOpen={(visit) => setView({ kind: "detail", visit })}
                     onAction={handleAction}
                 />

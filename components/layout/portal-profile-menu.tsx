@@ -3,7 +3,7 @@
 import { type ReactNode, useState } from "react";
 
 import { useRouter } from "@/lib/navigation";
-import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
+import { getShortcut, type ShortcutId, type ShortcutPortal } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { LogoutMenuItem } from "@/components/layout/logout-menu-item";
@@ -22,6 +22,7 @@ import {
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { useShortcutDisplayKeys } from "@/features/shortcuts/use-shortcut-display-keys";
 import { useAppDispatch } from "@/store/hooks";
 import { logout } from "@/store/slices/auth-slice";
 import { resetDashboard } from "@/store/slices/dashboard-slice";
@@ -59,18 +60,21 @@ export function PortalProfileShortcutHint({
      * Pass true for other shared menus (e.g. nav More) that should show any bound shortcut.
      */
     showWhenAvailable = false,
+    portal = "broker",
 }: {
     shortcutId: ShortcutId;
     destructive?: boolean;
     showWhenAvailable?: boolean;
+    portal?: ShortcutPortal;
 }) {
-    const shortcut = getShortcut(shortcutId);
+    const shortcut = getShortcut(shortcutId, portal);
+    const displayKeys = useShortcutDisplayKeys(shortcut);
     if (!shortcut) return null;
     if (!showWhenAvailable && !shortcut.showInProfileMenu) return null;
 
     return (
-        <KbdGroup className="ms-auto hidden gap-0.5 sm:inline-flex">
-            {shortcut.displayKeys.map((key) => (
+        <KbdGroup className="ms-auto hidden gap-0.5 sm:inline-flex pointer-coarse:hidden">
+            {displayKeys.map((key) => (
                 <Kbd
                     variant="surface"
                     key={key}

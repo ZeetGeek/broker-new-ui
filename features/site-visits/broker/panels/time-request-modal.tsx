@@ -23,7 +23,7 @@ import { CharacterCount } from "@/components/shared/character-count";
 import { IconButton } from "@/components/shared/icon-button";
 import { Clock3, Plus, Trash2 } from "@/components/shared/icons";
 import { mapNestedVisitPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
-import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
+import { PropertyPickerField } from "@/components/shared/property-picker";
 import { Button } from "@/components/ui/button";
 
 import type { PersonSummary, PropertyWithSlots } from "@/features/site-visits/broker/model";
@@ -221,16 +221,17 @@ export function TimeRequestModal({
                         {requestError}
                     </p>
                 ) : null}
-                <PropertyInlineSelect
+                <PropertyPickerField
                     label="Property"
                     properties={properties.map(mapNestedVisitPropertyToPicker)}
                     value={selectedPropertyId || null}
-                    onValueChange={(id) =>
+                    onConfirm={(id) =>
                         form.setValue("propertyId", id ?? "", { shouldValidate: true })
                     }
                     placeholder="Choose a property"
+                    required
                     errorText={form.formState.errors.propertyId?.message}
-                    size="lg"
+                    triggerSize="lg"
                 />
                 <BuyerPicker
                     buyers={allBuyers}

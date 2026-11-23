@@ -5,87 +5,54 @@ import { useEffect } from "react";
 import { tinykeys } from "tinykeys";
 
 import { useRouter } from "@/lib/navigation";
+import { getShortcut, type ShortcutId, type ShortcutPortal } from "@/lib/shortcuts";
 
-function isEditable(el: EventTarget | null): boolean {
-    if (!(el instanceof HTMLElement)) return false;
-    const tag = el.tagName;
-    return (
-        tag === "INPUT" ||
-        tag === "TEXTAREA" ||
-        tag === "SELECT" ||
-        el.isContentEditable ||
-        el.getAttribute("role") === "textbox" ||
-        el.closest("[contenteditable='true']") !== null
-    );
-}
+import { isShortcutEventBlocked } from "@/features/shortcuts/shortcut-event";
 
-function guarded(handler: (event: KeyboardEvent) => void) {
-    return (event: KeyboardEvent) => {
-        if (isEditable(event.target)) return;
-        handler(event);
-    };
-}
-
-export type GlobalShortcutRoutes = {
-    dashboard: string;
-    /** Omitted when the broker marketplace is turned off. */
-    ownerListings?: string;
-    /** Broker-only — the owner portal has no deal tracker. */
-    deals?: string;
-    yourListings: string;
-    pipeline: string;
-    contacts: string;
-    visits: string;
-    referrals?: string;
-    notifications: string;
-    profile: string;
-    settings?: string;
-};
+export type GlobalShortcutRoutes = Partial<Record<ShortcutId, string>>;
 
 export type UseGlobalShortcutsOptions = {
     routes: GlobalShortcutRoutes;
     onShortcutsOpen: () => void;
-    /** Opens the account menu so the user picks Log out (which then confirms). */
-    onLogoutFocus?: () => void;
+    portal?: ShortcutPortal;
 };
 
 /**
- * Global keyboard shortcuts for the broker/owner portals. See
- * docs/SHORTCUTS.md for the map, reserved keys, and the guard rules this
- * hook must follow.
+ * Registry-backed navigation for a portal. Global shortcuts pause while the
+ * user types or a modal owns focus; Escape remains owned by the topmost layer.
  */
 export function useGlobalShortcuts({
     routes,
     onShortcutsOpen,
-    onLogoutFocus,
+    portal = "broker",
 }: UseGlobalShortcutsOptions) {
     const router = useRouter();
 
     useEffect(() => {
-        const unsubscribe = tinykeys(window, {
-            "g d": guarded(() => router.push(routes.dashboard)),
-            "g o": guarded(() => {
-                if (routes.ownerListings) router.push(routes.ownerListings);
-            }),
-            "g q": guarded(() => {
-                if (routes.deals) router.push(routes.deals);
-            }),
-            "g p": guarded(() => router.push(routes.yourListings)),
-            "g c": guarded(() => router.push(routes.pipeline)),
-            "g b": guarded(() => router.push(routes.contacts)),
-            "g v": guarded(() => router.push(routes.visits)),
-            "g r": guarded(() => {
-                if (routes.referrals) router.push(routes.referrals);
-            }),
-            "g n": guarded(() => router.push(routes.notifications)),
-            "g m": guarded(() => router.push(routes.profile)),
-            "g s": guarded(() => {
-                if (routes.settings) router.push(routes.settings);
-            }),
-            "Shift+Slash": guarded(() => onShortcutsOpen()),
-            "Shift+KeyQ": guarded(() => onLogoutFocus?.()),
-        });
+        const bindings: Record<string, (event: KeyboardEvent) => void> = {};
 
-        return () => unsubscribe();
-    }, [router, routes, onShortcutsOpen, onLogoutFocus]);
+        for (const [rawId, href] of Object.entries(routes)) {
+            if (!href) continue;
+            const id = rawId as ShortcutId;
+            const shortcut = getShortcut(id, portal);
+            if (!shortcut || shortcut.scope !== "global") continue;
+
+            bindings[shortcut.keys] = (event) => {
+                if (isShortcutEventBlocked(event)) return;
+                event.preventDefault();
+                router.push(href);
+            };
+        }
+
+        const helpShortcut = getShortcut("shortcuts_cheatsheet", portal);
+        if (helpShortcut) {
+            bindings[helpShortcut.keys] = (event) => {
+                if (isShortcutEventBlocked(event)) return;
+                event.preventDefault();
+                onShortcutsOpen();
+            };
+        }
+
+        return tinykeys(window, bindings);
+    }, [onShortcutsOpen, portal, router, routes]);
 }

@@ -43,6 +43,7 @@ import {
     STEP_ROOT_FIELDS,
     stepSchemas,
 } from "@/lib/schemas/property";
+import { getShortcut, shortcutMatchesEvent } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 import {
     isStepVisible as ruleStepIsVisible,
@@ -54,6 +55,7 @@ import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import { ArrowRight, Check, ChevronDown, RotateCcw, X } from "@/components/shared/icons";
+import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Skeleton } from "@/components/shared/skeleton";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { useWorkflowDismiss } from "@/components/shared/workflow-context";
@@ -67,7 +69,6 @@ import {
     DialogPopup,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress, ProgressLabel } from "@/components/ui/progress";
 
@@ -372,33 +373,6 @@ export function PropertyForm({
         };
     }, []);
 
-    useEffect(() => {
-        function onKeyDown(event: KeyboardEvent) {
-            if (isDialog && !open) return;
-            if ((event.target as HTMLElement | null)?.closest(".contacts-form-drawer")) return;
-            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
-                event.preventDefault();
-                void saveDraftLocally();
-                return;
-            }
-            const target = event.target as HTMLElement | null;
-            const isEditing =
-                target?.matches("input, textarea, select, [contenteditable='true']") ?? false;
-            if (isEditing) return;
-            if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[1-9]$/.test(event.key)) {
-                const index = Number(event.key) - 1;
-                const targetStep = activeSteps[index];
-                if (targetStep) changeStep(targetStep.id);
-            }
-            if (!event.ctrlKey && !event.metaKey && event.key === "0") {
-                const targetStep = activeSteps[activeSteps.length - 1];
-                if (targetStep) changeStep(targetStep.id);
-            }
-        }
-        window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
-    });
-
     // After a step jump (e.g. Publish), focus the first invalid field once it mounts.
     useEffect(() => {
         const path = pendingFocusPathRef.current;
@@ -408,18 +382,6 @@ export function PropertyForm({
         });
         return () => cancelAnimationFrame(frame);
     }, [entryMode, step]);
-
-    async function saveDraftLocally() {
-        if (!keepsLocalDraft) return;
-        try {
-            await writeLocalDraft(methods.getValues());
-            setSavedAt(new Date());
-            setStorageError(null);
-            toast.success("Draft saved on this device.");
-        } catch {
-            toast.error("Couldn't save the local draft.");
-        }
-    }
 
     async function startFreshListing() {
         if (
@@ -878,13 +840,11 @@ export function PropertyForm({
         )
             return;
         // Bare Enter must not advance (inputs use it for tags / search / custom add).
-        // Ctrl/Cmd+Enter continues or publishes — same as the footer primary action.
         event.preventDefault();
-        if (!event.ctrlKey && !event.metaKey) return;
-        if (entryMode === "quick" || isLastStep) {
-            void persistProperty("publish");
-            return;
-        }
+        const shortcut = getShortcut("form_primary");
+        if (!shortcut || !shortcutMatchesEvent(event.nativeEvent, shortcut.keys)) return;
+        // Publishing is public and consequential, so it remains button-only.
+        if (entryMode === "quick" || isLastStep) return;
         goNext();
     }
 
@@ -1486,6 +1446,21 @@ function PropertyFormActions({
         );
     }
 
+    const primaryAction = (
+        <Button
+            type="button"
+            variant="accent"
+            size="md"
+            loading={isSubmitting}
+            disabled={isSubmitting}
+            onClick={onNext}
+            className="inline-full"
+        >
+            {primaryLabel}
+            {isLastStep ? <Check aria-hidden /> : <ArrowRight aria-hidden />}
+        </Button>
+    );
+
     return (
         <div className="flex flex-col gap-4 pbe-[env(safe-area-inset-bottom)] text-center">
             <div className="flex flex-col gap-4 min-inline-0">
@@ -1518,21 +1493,6 @@ function PropertyFormActions({
                                 Step {stepIndex + 1} of {stepCount}
                             </ProgressLabel>
                         </Progress>
-                        <p
-                            className="
-                              body-xs hidden flex-wrap items-center justify-center gap-1.5
-                              text-ink-muted
-                              xl:flex
-                            "
-                        >
-                            Press
-                            <KbdGroup className="gap-1">
-                                <Kbd className="px-1.5 text-[10px] min-inline-4">1</Kbd>
-                                <span aria-hidden>–</span>
-                                <Kbd className="px-1.5 text-[10px] min-inline-4">5</Kbd>
-                            </KbdGroup>
-                            to jump steps
-                        </p>
                     </div>
                 ) : null}
             </div>
@@ -1559,18 +1519,13 @@ function PropertyFormActions({
                     </Button>
                 ) : null}
                 {showPrimary ? (
-                    <Button
-                        type="button"
-                        variant="accent"
-                        size="md"
-                        loading={isSubmitting}
-                        disabled={isSubmitting}
-                        onClick={onNext}
-                        className="inline-full"
-                    >
-                        {primaryLabel}
-                        {isLastStep ? <Check aria-hidden /> : <ArrowRight aria-hidden />}
-                    </Button>
+                    isLastStep ? (
+                        primaryAction
+                    ) : (
+                        <ShortcutTooltip shortcutId="form_primary" label="Continue">
+                            {primaryAction}
+                        </ShortcutTooltip>
+                    )
                 ) : null}
             </div>
         </div>

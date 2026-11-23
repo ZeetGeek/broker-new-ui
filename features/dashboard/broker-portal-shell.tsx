@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -8,12 +9,13 @@ import { profileApi } from "@/lib/api/profile";
 import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
 import {
     BROKER_ADD_BUYER_HREF,
+    BROKER_EARNINGS_HREF,
     BROKER_MY_DEALS_HREF,
     BROKER_OWNER_LISTINGS_HREF,
     BROKER_PROPERTIES_NEW_HREF,
     BROKER_YOUR_LISTINGS_HREF,
 } from "@/lib/routes/broker";
-import type { ShortcutId } from "@/lib/shortcuts";
+import { getBrokerContextShortcutIds, type ShortcutId } from "@/lib/shortcuts";
 
 import { PortalHeader } from "@/components/layout/portal-header";
 import { PortalMobileNav } from "@/components/layout/portal-mobile-nav";
@@ -43,20 +45,23 @@ const BROKER_NOTIFICATIONS_HREF = "/broker/notifications";
 const BROKER_SHORTCUT_ROUTES = {
     dashboard: "/broker/dashboard",
     ...(FEATURE_PLATFORM_OWNER
-        ? { ownerListings: BROKER_OWNER_LISTINGS_HREF, deals: BROKER_MY_DEALS_HREF }
+        ? { owner_listings: BROKER_OWNER_LISTINGS_HREF, my_deals: BROKER_MY_DEALS_HREF }
         : {}),
-    yourListings: BROKER_YOUR_LISTINGS_HREF,
+    your_listings: BROKER_YOUR_LISTINGS_HREF,
     pipeline: "/broker/pipeline",
     contacts: "/broker/contacts",
     visits: "/broker/visits",
+    tasks: "/broker/tasks",
+    earnings: BROKER_EARNINGS_HREF,
     ...(FEATURE_PLATFORM_OWNER ? { referrals: "/broker/referrals" } : {}),
     notifications: BROKER_NOTIFICATIONS_HREF,
+    saved_properties: "/broker/saved-properties",
     profile: "/broker/profile",
 };
 
 const BROKER_HIDDEN_SHORTCUTS: ShortcutId[] = FEATURE_PLATFORM_OWNER
-    ? ["settings"]
-    : ["owner_listings", "my_deals", "referrals", "settings"];
+    ? []
+    : ["owner_listings", "my_deals", "referrals"];
 
 export function BrokerPortalShell({ children }: { children: ReactNode }) {
     return (
@@ -72,6 +77,7 @@ export function BrokerPortalShell({ children }: { children: ReactNode }) {
 }
 
 function BrokerPortalShellInner({ children }: { children: ReactNode }) {
+    const pathname = usePathname();
     const sectionNav = usePortalSectionNav();
     const dispatch = useAppDispatch();
     const user = useAppSelector((state) => state.auth.user);
@@ -95,12 +101,10 @@ function BrokerPortalShellInner({ children }: { children: ReactNode }) {
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
     const handleShortcutsOpen = useCallback(() => setIsShortcutsOpen(true), []);
-    const handleLogoutFocus = useCallback(() => setIsProfileMenuOpen(true), []);
 
     useGlobalShortcuts({
         routes: BROKER_SHORTCUT_ROUTES,
         onShortcutsOpen: handleShortcutsOpen,
-        onLogoutFocus: handleLogoutFocus,
     });
 
     const userName = profile?.fullName?.trim() || user?.fullName?.trim() || user?.email || "Broker";
@@ -182,6 +186,7 @@ function BrokerPortalShellInner({ children }: { children: ReactNode }) {
                     open={isShortcutsOpen}
                     onOpenChange={setIsShortcutsOpen}
                     hiddenIds={BROKER_HIDDEN_SHORTCUTS}
+                    contextIds={getBrokerContextShortcutIds(pathname)}
                 />
             </ChatProvider>
         </NotificationProvider>

@@ -18,12 +18,16 @@ import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
-import { mapLabeledPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
-import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
+import { mapMyListingToPicker } from "@/components/shared/map-to-property-picker-property";
+import {
+    PropertyPickerField,
+    type PropertyPickerProperty,
+} from "@/components/shared/property-picker";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 import { brokerDisplayName } from "@/features/owner-brokers/browse-brokers-filters";
+import { mapPropertyListingToMyItem } from "@/features/properties/your-listings/map-my-listing";
 
 function apiMessage(error: unknown, fallback: string): string {
     return error instanceof ApiError ? error.message : fallback;
@@ -42,7 +46,7 @@ export function InviteBrokerDialog({
     const [propertyId, setPropertyId] = useState<string | null>(null);
     const messageId = useId();
     const [message, setMessage] = useState("");
-    const [properties, setProperties] = useState<{ id: string; label: string }[]>([]);
+    const [properties, setProperties] = useState<PropertyPickerProperty[]>([]);
     const [propertiesLoading, setPropertiesLoading] = useState(false);
     const [propertiesError, setPropertiesError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
@@ -63,10 +67,9 @@ export function InviteBrokerDialog({
             .list({ limit: 100, publishStatus: "published" })
             .then((page) => {
                 setProperties(
-                    page.items.map((item) => ({
-                        id: item.id,
-                        label: item.title?.trim() || item.city || "Untitled listing",
-                    })),
+                    page.items.map((item) =>
+                        mapMyListingToPicker(mapPropertyListingToMyItem(item)),
+                    ),
                 );
             })
             .catch((err) => {
@@ -166,18 +169,20 @@ export function InviteBrokerDialog({
                         </div>
                     </div>
                 ) : (
-                    <PropertyInlineSelect
+                    <PropertyPickerField
                         label="Property"
-                        properties={properties.map(mapLabeledPropertyToPicker)}
+                        properties={properties}
                         value={propertyId}
-                        onValueChange={setPropertyId}
+                        onConfirm={setPropertyId}
+                        audience="owner"
+                        required
                         disabled={propertiesLoading || submitting || properties.length === 0}
                         loading={propertiesLoading}
                         placeholder="Select a property"
                         errorText={
                             formError && !propertyId ? "Choose a property to continue" : undefined
                         }
-                        size="lg"
+                        triggerSize="lg"
                     />
                 )}
 

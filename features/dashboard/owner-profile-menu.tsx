@@ -53,7 +53,7 @@ export function OwnerProfileMenu({
                         className="shrink-0 text-ink! block-4.5! inline-4.5!"
                     />
                     <span className="flex-1 min-inline-0">My profile</span>
-                    <PortalProfileShortcutHint shortcutId="profile" />
+                    <PortalProfileShortcutHint shortcutId="profile" portal="owner" />
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
@@ -66,7 +66,7 @@ export function OwnerProfileMenu({
                         className="shrink-0 text-ink! block-4.5! inline-4.5!"
                     />
                     <span className="flex-1 min-inline-0">Referrals</span>
-                    <PortalProfileShortcutHint shortcutId="referrals" />
+                    <PortalProfileShortcutHint shortcutId="referrals" portal="owner" />
                 </DropdownMenuItem>
             </DropdownMenuGroup>
 
@@ -83,7 +83,7 @@ export function OwnerProfileMenu({
                         className="shrink-0 text-ink! block-4.5! inline-4.5!"
                     />
                     <span className="flex-1 min-inline-0">Keyboard shortcuts</span>
-                    <PortalProfileShortcutHint shortcutId="shortcuts_cheatsheet" />
+                    <PortalProfileShortcutHint shortcutId="shortcuts_cheatsheet" portal="owner" />
                 </DropdownMenuItem>
 
                 {SUPPORT_WHATSAPP_URL ? (

@@ -56,6 +56,7 @@ import {
 import { dashboardMock } from "@/features/dashboard/mock-data";
 import { visitDateBounds } from "@/features/new-site-visits/model";
 import { useVisitsLive, VISITS_KEY } from "@/features/new-site-visits/use-visits";
+import { isShortcutEventBlocked } from "@/features/shortcuts/shortcut-event";
 import { taskGroup } from "@/features/tasks/model";
 import { useTasks } from "@/features/tasks/task-store";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -210,21 +211,21 @@ export function NewBrokerDashboard() {
         const actions: [ShortcutId, () => void][] = [
             ["add_contact", () => setAddClientOpen(true)],
             [
-                "dashboard_add_listing",
+                "add_property",
                 () => {
                     if (!openWorkflow?.("/broker/properties/new"))
                         router.push("/broker/properties/new");
                 },
             ],
             [
-                "dashboard_schedule_visit",
+                "schedule_visit",
                 () => {
-                    if (!openWorkflow?.("/broker/visits?tab=slots"))
-                        router.push("/broker/visits?tab=slots");
+                    if (!openWorkflow?.("/broker/visits?view=schedule"))
+                        router.push("/broker/visits?view=schedule");
                 },
             ],
             [
-                "dashboard_add_task",
+                "add_task",
                 () => {
                     if (!openWorkflow?.("/broker/tasks?view=create"))
                         router.push("/broker/tasks?view=create");
@@ -241,17 +242,7 @@ export function NewBrokerDashboard() {
                         [
                             shortcut.keys,
                             (event: KeyboardEvent) => {
-                                if (event.repeat || event.defaultPrevented || addClientOpen) return;
-                                const target = event.target;
-                                if (
-                                    target instanceof HTMLElement &&
-                                    target.closest(
-                                        'input, textarea, select, [contenteditable="true"], [role="textbox"]',
-                                    )
-                                )
-                                    return;
-                                if (document.querySelector('[role="dialog"], [role="alertdialog"]'))
-                                    return;
+                                if (addClientOpen || isShortcutEventBlocked(event)) return;
                                 event.preventDefault();
                                 setAddMenuOpen(false);
                                 action();
@@ -456,18 +447,18 @@ export function NewBrokerDashboard() {
                                 <Building2 aria-hidden />
                                 Add listing
                                 <PortalProfileShortcutHint
-                                    shortcutId="dashboard_add_listing"
+                                    shortcutId="add_property"
                                     showWhenAvailable
                                 />
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 className={portalProfileMenuItemClass}
-                                render={<Link href="/broker/visits?tab=slots" />}
+                                render={<Link href="/broker/visits?view=schedule" />}
                             >
                                 <CalendarPlus aria-hidden />
                                 Schedule visit
                                 <PortalProfileShortcutHint
-                                    shortcutId="dashboard_schedule_visit"
+                                    shortcutId="schedule_visit"
                                     showWhenAvailable
                                 />
                             </DropdownMenuItem>
@@ -478,7 +469,7 @@ export function NewBrokerDashboard() {
                                 <Plus aria-hidden />
                                 Add task
                                 <PortalProfileShortcutHint
-                                    shortcutId="dashboard_add_task"
+                                    shortcutId="add_task"
                                     showWhenAvailable
                                 />
                             </DropdownMenuItem>

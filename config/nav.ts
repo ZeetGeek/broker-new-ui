@@ -78,7 +78,7 @@ const BROKER_MARKETPLACE_NAV_ITEMS: NavItem[] = [
  */
 export const BROKER_NAV_ITEMS: NavItem[] = [
     { label: "Dashboard", href: "/broker/dashboard", shortcutId: "dashboard" },
-    { label: "Contacts", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
+    { label: "Clients", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
     {
         label: "My Listings",
         mobileLabel: "My Listings",
@@ -89,8 +89,8 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
     { label: "Pipeline", href: BROKER_PIPELINE_HREF, shortcutId: "pipeline" },
     { label: "Visits", href: "/broker/visits", shortcutId: "visits" },
     ...(FEATURE_PLATFORM_OWNER ? BROKER_MARKETPLACE_NAV_ITEMS : []),
-    { label: "Tasks", href: "/broker/tasks" },
-    { label: "Earnings", href: BROKER_EARNINGS_HREF },
+    { label: "Tasks", href: "/broker/tasks", shortcutId: "tasks" },
+    { label: "Earnings", href: BROKER_EARNINGS_HREF, shortcutId: "earnings" },
 ];
 
 /**

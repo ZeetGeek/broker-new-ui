@@ -8,6 +8,7 @@ export const BROKER_EARNINGS_HREF = "/broker/earnings";
 export const BROKER_CONTACTS_HREF = "/broker/contacts";
 export const BROKER_PROPERTIES_NEW_HREF = "/broker/properties/new";
 export const BROKER_ADD_BUYER_HREF = "/broker/contacts?add=buyer";
+export const BROKER_ADD_OWNER_HREF = "/broker/contacts?add=owner";
 export const BROKER_ADD_DEAL_HREF = "/broker/contacts?flow=add-deal";
 export const BROKER_VISIT_SLOTS_HREF = "/broker/visits?tab=slots";
 

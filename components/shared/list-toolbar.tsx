@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { useShortcutDisplayKeys } from "@/features/shortcuts/use-shortcut-display-keys";
+
 import searchStyles from "./list-search-field.module.css";
 
 export const LIST_SEARCH_WIDTH_CLASS =
@@ -247,7 +249,7 @@ type ListAddButtonProps = Omit<ComponentProps<typeof Button>, "children" | "size
     shortcutId?: ShortcutId;
 };
 
-/** Shared add action. Shortcut handling stays with the page. */
+/** Shared add action. Shortcut handling stays with the page or portal shell. */
 export function ListAddButton({
     label,
     icon: Icon = Plus,
@@ -258,6 +260,7 @@ export function ListAddButton({
     ...props
 }: ListAddButtonProps) {
     const shortcut = shortcutId ? getShortcut(shortcutId) : undefined;
+    const displayKeys = useShortcutDisplayKeys(shortcut);
     return (
         <Button
             type="button"
@@ -269,8 +272,8 @@ export function ListAddButton({
             <Icon aria-hidden strokeWidth={1.75} />
             {label}
             {shortcut ? (
-                <KbdGroup className="gap-0.5">
-                    {shortcut.displayKeys.map((key) => (
+                <KbdGroup className="gap-0.5 pointer-coarse:hidden">
+                    {displayKeys.map((key) => (
                         <Kbd
                             key={key}
                             className="border-surface/25 bg-surface/15 px-1.5 text-[10px] text-surface [box-shadow:none] min-inline-4"

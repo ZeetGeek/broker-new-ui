@@ -133,8 +133,8 @@
     color: color-mix(in srgb, var(--color-ink-subtle) 70%, var(--color-surface));
 }
 
-/* # / @ search results, anchored under the text. */
-.options,
+/* Property and contact suggestions stay anchored to the task input. */
+.propertyOptions,
 .peopleOptions {
     position: absolute;
     inset-block-start: calc(100% + 2px);
@@ -150,13 +150,8 @@
     box-shadow: var(--shadow-md);
     animation: qa-pop-in var(--duration-quick, 150ms) var(--ease-smooth-out, ease-out);
 }
-.options {
-    gap: 2px;
-    inline-size: max-content;
-    min-inline-size: min(100cqi, 15rem);
-    max-inline-size: min(22rem, calc(100vw - 2rem));
-    max-block-size: 15rem;
-    padding: 0.375rem;
+.propertyOptions {
+    inline-size: min(28rem, 100cqi);
 }
 /* Match PeopleInlineSelect popup: tabs + full-width rows, canvas hover. */
 .peopleOptions {
@@ -184,21 +179,6 @@
     overscroll-behavior: contain;
     padding: 0.5rem;
 }
-.option {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    inline-size: 100%;
-    min-block-size: 40px;
-    padding: 0.5rem 0.625rem;
-    border-radius: 8px;
-    color: var(--color-ink);
-    text-align: start;
-    cursor: pointer;
-}
-.option[data-active] {
-    background: var(--color-surface-muted);
-}
 .peopleOption {
     display: flex;
     align-items: center;
@@ -214,31 +194,6 @@
 }
 .peopleOption[data-active] {
     background: var(--color-canvas);
-}
-.option svg {
-    flex-shrink: 0;
-    inline-size: 14px;
-    block-size: 14px;
-    margin-block-start: 2px;
-    color: var(--color-ink-subtle);
-}
-.option > span {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-    min-inline-size: 0;
-}
-.option strong {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1.35;
-    overflow-wrap: anywhere;
-}
-.option small {
-    color: var(--color-ink-muted);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    line-height: 1.35;
 }
 .optionsEmpty {
     margin: 0;
@@ -422,14 +377,13 @@
         font-size: var(--input-font-min);
         font-weight: 500;
     }
-    .options,
+    .propertyOptions,
     .peopleOptions {
         inline-size: 100cqi;
         min-inline-size: 0;
         max-inline-size: 100cqi;
         max-block-size: min(18rem, 40dvh);
     }
-    .option,
     .peopleOption {
         min-block-size: var(--touch-target-min);
     }
@@ -453,7 +407,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
     .mark,
-    .options,
+    .propertyOptions,
     .peopleOptions,
     .root[data-active] .submit {
         animation: none;

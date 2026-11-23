@@ -1,8 +1,30 @@
 import type { PropertyPickerProperty } from "@/components/shared/property-picker-meta";
 
+import type { MyListingItem } from "@/features/properties/your-listings/types";
+
 function positiveAmount(value: number | null | undefined): number | null {
     if (value == null || !Number.isFinite(value) || value <= 0) return null;
     return value;
+}
+
+/** Broker-owned inventory, including both ask prices and their commissions. */
+export function mapMyListingToPicker(property: MyListingItem): PropertyPickerProperty {
+    return {
+        id: property.id,
+        title: property.title,
+        locality: property.locality || undefined,
+        city: property.city || undefined,
+        state: property.state || undefined,
+        imageUrl: property.imageSrc || undefined,
+        propertyTypeLabel: property.propertyTypeLabel,
+        areaSqft: property.areaSqft,
+        bhk: property.bhk,
+        bathrooms: property.bathrooms,
+        saleAmountInr: positiveAmount(property.saleAmountInr),
+        rentAmountInr: positiveAmount(property.rentAmountInr),
+        commissionPercent: property.commissionPercent,
+        commissionAmountInr: property.commissionAmount,
+    };
 }
 
 /**

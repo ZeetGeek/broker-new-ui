@@ -205,7 +205,7 @@ export function OwnerDashboardHeader({
             }
             actions={
                 <>
-                    <ShortcutTooltip shortcutId="visits">
+                    <ShortcutTooltip shortcutId="visits" portal="owner">
                         <Button
                             variant="outline-dark"
                             size="md"
@@ -217,7 +217,7 @@ export function OwnerDashboardHeader({
                             <span className="hidden md:inline">Manage visits</span>
                         </Button>
                     </ShortcutTooltip>
-                    <ShortcutTooltip shortcutId="add_property">
+                    <ShortcutTooltip shortcutId="add_property" portal="owner">
                         <Button
                             variant="accent"
                             size="md"

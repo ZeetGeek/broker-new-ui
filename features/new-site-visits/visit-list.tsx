@@ -217,7 +217,13 @@ export function VisitList({
                             />
                         </span>
                     </h1>
-                    {firstRun && <ListAddButton label="Schedule visit" onClick={onSchedule} />}
+                    {firstRun && (
+                        <ListAddButton
+                            label="Schedule visit"
+                            shortcutId="schedule_visit"
+                            onClick={onSchedule}
+                        />
+                    )}
                 </header>
             </PortalSectionNav>
             {!firstRun && (
@@ -287,6 +293,7 @@ export function VisitList({
                     />
                     <ListAddButton
                         label="Schedule visit"
+                        shortcutId="schedule_visit"
                         onClick={onSchedule}
                         className={styles.toolbarSchedule}
                     />

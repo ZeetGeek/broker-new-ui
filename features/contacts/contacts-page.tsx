@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useQuery } from "@tanstack/react-query";
-import { tinykeys } from "tinykeys";
 
 import { ApiError } from "@/lib/api/client";
 import { clientsApi } from "@/lib/api/clients";
@@ -11,7 +10,6 @@ import { contactsApi, sortBuyerRows } from "@/lib/api/contacts";
 import { updateBuyerContact, updateOwnerContact } from "@/lib/contacts/contact-actions";
 import { AmbiguousContactNameError, findContactByName } from "@/lib/contacts/find-contact-by-name";
 import { PREF_KEYS } from "@/lib/prefs/keys";
-import { getShortcut } from "@/lib/shortcuts";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
@@ -56,6 +54,7 @@ import {
     DEFAULT_CONTACTS_FILTERS,
     type OwnerRow,
 } from "@/features/contacts/types";
+import { useShortcut } from "@/features/shortcuts/use-shortcut";
 
 /** Contacts grid: 1 → 2 → 3 → 4 columns, capped at four on desktop. */
 const CONTACT_GRID_BREAKPOINTS = [
@@ -76,19 +75,6 @@ function isContactsFilters(value: unknown): value is ContactsFilters {
         (v.tab === "buyers" || v.tab === "owners") &&
         (v.sort === "recent" || v.sort === "name" || v.sort === "most_active") &&
         (v.ownerOrigin === "all" || v.ownerOrigin === "platform" || v.ownerOrigin === "custom")
-    );
-}
-
-function isEditable(el: EventTarget | null): boolean {
-    if (!(el instanceof HTMLElement)) return false;
-    const tag = el.tagName;
-    return (
-        tag === "INPUT" ||
-        tag === "TEXTAREA" ||
-        tag === "SELECT" ||
-        el.isContentEditable ||
-        el.getAttribute("role") === "textbox" ||
-        el.closest("[contenteditable='true']") !== null
     );
 }
 
@@ -322,33 +308,8 @@ export function ContactsPage({
         else setIsOwnerAddOpen(true);
     }, [isBuyers]);
 
-    useEffect(() => {
-        const shortcut = getShortcut("add_contact");
-        if (!shortcut) return undefined;
-
-        const unsubscribe = tinykeys(window, {
-            [shortcut.keys]: (event) => {
-                if (isEditable(event.target)) return;
-                if (event.repeat) return;
-                if (isAddOpen || isOwnerAddOpen) return;
-                if (editingBuyer != null || editingOwner != null) return;
-                if (attachingBuyer != null || attachingOwner != null) return;
-                if (selectedContact != null) return;
-                openAdd();
-            },
-        });
-
-        return () => unsubscribe();
-    }, [
-        isAddOpen,
-        isOwnerAddOpen,
-        editingBuyer,
-        editingOwner,
-        attachingBuyer,
-        attachingOwner,
-        selectedContact,
-        openAdd,
-    ]);
+    useShortcut("add_contact", () => setIsAddOpen(true));
+    useShortcut("add_owner", () => setIsOwnerAddOpen(true));
 
     const restoreCardFocus = useCallback(() => {
         const id = openerIdRef.current;

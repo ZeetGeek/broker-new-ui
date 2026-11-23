@@ -17,7 +17,7 @@ import {
 } from "@/components/shared/map-to-people-picker-person";
 import { mapTaskPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
 import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
-import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
+import { PropertyPickerField } from "@/components/shared/property-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -588,20 +588,21 @@ export function TaskForm({
                                         disabled={busy}
                                         onChange={(next) => patch(next)}
                                     />
-                                    <PropertyInlineSelect
+                                    <PropertyPickerField
                                         label="Property"
+                                        manageBrowserHistory={false}
                                         properties={catalogs.properties.map(
                                             mapTaskPropertyToPicker,
                                         )}
                                         value={draft.propertyId || null}
-                                        onValueChange={(propertyId) =>
+                                        onConfirm={(propertyId) =>
                                             patch({ propertyId: propertyId ?? "" })
                                         }
                                         disabled={busy}
                                         placeholder="No linked property"
                                         allowClear
                                         clearLabel="No linked property"
-                                        size="md"
+                                        triggerSize="default"
                                     />
                                 </div>
                             </WizardSection>

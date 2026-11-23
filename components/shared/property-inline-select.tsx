@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { type Ref, useId, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -40,9 +40,95 @@ const INLINE_ITEM_CLASS = `
   [&>span.absolute]:hidden
 `;
 
+/** Inline select results for an existing text input, such as task # mentions.
+ * The caller keeps focus and owns Arrow/Enter/Escape handling on that input.
+ */
+export function PropertyInlineSuggestions({
+    properties,
+    scope,
+    onScopeChange,
+    listId,
+    listRef,
+    activeIndex,
+    onActiveIndexChange,
+    selectedId,
+    onSelect,
+    className,
+}: {
+    properties: readonly PropertyPickerProperty[];
+    scope: PropertyInlineScope;
+    onScopeChange: (scope: PropertyInlineScope) => void;
+    listId: string;
+    listRef?: Ref<HTMLDivElement>;
+    activeIndex: number;
+    onActiveIndexChange: (index: number) => void;
+    selectedId: string | null;
+    onSelect: (id: string) => void;
+    className?: string;
+}) {
+    return (
+        <div
+            className={cn(
+                "flex flex-col overflow-hidden rounded-control border border-border-warm bg-surface shadow-md",
+                className,
+            )}
+            onPointerDown={(event) => event.preventDefault()}
+        >
+            <div className="shrink-0 border-be border-border-warm px-3 py-2.5">
+                <SlidingTabs
+                    label="Filter properties by sale or rent"
+                    value={scope}
+                    onValueChange={onScopeChange}
+                    className="self-start"
+                    height={32}
+                    options={[
+                        { value: "all", label: "All" },
+                        { value: "sale", label: "Sale" },
+                        { value: "rent", label: "Rent" },
+                    ]}
+                />
+            </div>
+            <div
+                id={listId}
+                ref={listRef}
+                role="listbox"
+                aria-label="Properties"
+                className="flex flex-col gap-1 overflow-y-auto overscroll-contain p-2 max-block-[min(20rem,45dvh)] min-block-0"
+            >
+                {properties.length ? (
+                    properties.map((property, index) => (
+                        <div
+                            key={property.id}
+                            id={`${listId}-${index}`}
+                            role="option"
+                            aria-selected={selectedId === property.id}
+                            data-option-index={index}
+                            data-highlighted={index === activeIndex ? "" : undefined}
+                            data-selected={selectedId === property.id ? "" : undefined}
+                            className={cn(
+                                "flex cursor-pointer items-center rounded-control outline-none",
+                                INLINE_ITEM_CLASS,
+                            )}
+                            onPointerEnter={() => onActiveIndexChange(index)}
+                            onClick={() => onSelect(property.id)}
+                        >
+                            <PropertyOptionRow property={property} />
+                        </div>
+                    ))
+                ) : (
+                    <p role="status" className="body-sm px-3 py-4 text-ink-muted">
+                        No matching properties
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+}
+
 export type PropertyInlineSelectProps = {
     id?: string;
     label?: string;
+    ariaLabel?: string;
     properties: readonly PropertyPickerProperty[];
     value: string | null;
     onValueChange: (id: string | null) => void;
@@ -76,6 +162,7 @@ export type PropertyInlineSelectProps = {
 export function PropertyInlineSelect({
     id,
     label,
+    ariaLabel,
     properties,
     value,
     onValueChange,
@@ -167,6 +254,7 @@ export function PropertyInlineSelect({
                     className={size === "md" ? "text-sm" : undefined}
                     startIcon={Building2}
                     placeholder={placeholder}
+                    aria-label={ariaLabel ?? label ?? placeholder}
                     loading={loading}
                     disabled={disabled}
                     errorText={errorText}

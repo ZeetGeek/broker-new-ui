@@ -222,6 +222,12 @@ id(s) via `onConfirm`.
   `<PriceWithCommission>`, property info (`formatPropertyCardName`), location
   with pin (area, city, state), and Sale / Rent badges — never a street address.
 - `PropertyPickerField` is the form / filter face that opens the modal.
+- Use field triggers for task links, visit scheduling, and broker invitations;
+  use the modal directly for client/owner attachments. Task `#` mentions use
+  `PropertyInlineSuggestions` from the inline select module, keeping focus in
+  the task input with shared property rows and scope tabs.
+- Field validation uses `errorText`; picker loading failures use `pickerErrorText`.
+  Task pickers pass `manageBrowserHistory={false}` to keep task edits local.
 - Optional `onCreate`, `allowClear`, loading / empty / error states match other
   AppModal pickers.
 

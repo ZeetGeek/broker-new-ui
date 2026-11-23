@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { tinykeys } from "tinykeys";
 
 import { attachedClientsByProperty } from "@/lib/api/clients";
 import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
@@ -11,7 +10,6 @@ import { propertiesApi } from "@/lib/api/properties";
 import { representativeApi } from "@/lib/api/representative";
 import { summarizePropertyBrokers } from "@/lib/format/property-brokers";
 import { collectPropertyPages } from "@/lib/properties/list-criteria";
-import { getShortcut } from "@/lib/shortcuts";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
@@ -35,20 +33,8 @@ import {
 import { MyListingsResultsSkeleton } from "@/features/properties/your-listings/my-listings-skeleton";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 import { useMyListingsFilters } from "@/features/properties/your-listings/use-my-listings-filters";
+import { useShortcut } from "@/features/shortcuts/use-shortcut";
 import { useAppSelector } from "@/store/hooks";
-
-function isEditable(el: EventTarget | null): boolean {
-    if (!(el instanceof HTMLElement)) return false;
-    const tag = el.tagName;
-    return (
-        tag === "INPUT" ||
-        tag === "TEXTAREA" ||
-        tag === "SELECT" ||
-        el.isContentEditable ||
-        el.getAttribute("role") === "textbox" ||
-        el.closest("[contenteditable='true']") !== null
-    );
-}
 
 export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const queryClient = useQueryClient();
@@ -140,29 +126,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         void queryClient.invalidateQueries({ queryKey: ["my-listings-summary"] });
     }, [queryClient]);
 
-    useEffect(() => {
-        const shortcut = getShortcut("add_property");
-        if (!shortcut) return undefined;
-
-        const unsubscribe = tinykeys(window, {
-            [shortcut.keys]: (event) => {
-                if (isEditable(event.target)) return;
-                if (event.repeat) return;
-                if (addOpen || editingListing != null || deletingListing != null) return;
-                if (isOwnerAttachOpen || isBrokerInviteOpen || clientAttachOpen) return;
-                setAddOpen(true);
-            },
-        });
-
-        return () => unsubscribe();
-    }, [
-        addOpen,
-        editingListing,
-        deletingListing,
-        isOwnerAttachOpen,
-        isBrokerInviteOpen,
-        clientAttachOpen,
-    ]);
+    useShortcut("add_property", () => setAddOpen(true), { portal });
 
     const confirmDelete = useCallback(async () => {
         if (!deletingListing) return;
