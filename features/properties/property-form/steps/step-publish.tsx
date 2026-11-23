@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -10,18 +10,22 @@ import { clientsApi } from "@/lib/api/clients";
 import { contactsApi } from "@/lib/api/contacts";
 import { formatPhoneIn } from "@/lib/format/phone";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
-import { cn } from "@/lib/utils";
+import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { Check, Search, X } from "@/components/shared/icons";
-import { Skeleton } from "@/components/shared/skeleton";
+import { Check, ChevronDown, UserRound, Users, X } from "@/components/shared/icons";
+import {
+    mapClientItemToPicker,
+    mapNamedPersonToPicker,
+} from "@/components/shared/map-to-people-picker-person";
+import type { PeoplePickerPerson } from "@/components/shared/people-picker";
+import { PeoplePicker } from "@/components/shared/people-picker";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 
-import { CreateContactButton } from "@/features/contacts/create-contact-button";
+import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
+import { AddOwnerModal } from "@/features/contacts/add-owner-modal";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
 import { DEFAULT_CONTACTS_FILTERS } from "@/features/contacts/types";
 import {
@@ -34,74 +38,6 @@ type AttachedBuyer = PropertyDraftValues["attachedBuyers"][number];
 function formatPhone(digits?: string): string {
     if (!digits) return "Phone hidden";
     return formatPhoneIn(digits);
-}
-
-function ContactOption({
-    name,
-    phone,
-    imageUrl,
-    detail,
-    active,
-    multiple,
-    locked = false,
-    busy = false,
-    onSelect,
-}: {
-    name: string;
-    phone?: string;
-    imageUrl?: string;
-    detail?: string;
-    active: boolean;
-    multiple: boolean;
-    locked?: boolean;
-    busy?: boolean;
-    onSelect: () => void;
-}) {
-    return (
-        <label
-            className={cn(
-                `
-                  flex items-center gap-3 rounded-control px-3 py-2.5 text-start inline-full
-                  min-block-16
-                  hover:bg-surface-muted/35
-                  has-focus-visible:outline-2 has-focus-visible:-outline-offset-2
-                  has-focus-visible:outline-brand
-                `,
-                busy ? "cursor-default" : "cursor-pointer",
-            )}
-        >
-            <span aria-hidden>
-                <UserAvatar name={name} imageUrl={imageUrl} size="md" />
-            </span>
-            <span className="flex-1 space-y-1 min-inline-0">
-                <span className="block truncate text-sm font-bold text-ink">{name}</span>
-                <span
-                    className="
-                      flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-medium
-                      text-ink-muted
-                    "
-                >
-                    <span className="tabular">{formatPhone(phone)}</span>
-                    {detail ? (
-                        <>
-                            <span aria-hidden className="text-ink-subtle">
-                                ·
-                            </span>
-                            <span>{detail}</span>
-                        </>
-                    ) : null}
-                </span>
-            </span>
-            <Checkbox
-                checked={active}
-                disabled={busy}
-                onCheckedChange={() => onSelect()}
-                aria-label={
-                    locked ? `Detach ${name}` : multiple ? `Select ${name}` : `Choose ${name}`
-                }
-            />
-        </label>
-    );
 }
 
 export function StepPublish({ propertyId }: { propertyId?: string }) {
@@ -164,28 +100,6 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
         setValue("owner.name", "", { shouldDirty: true, shouldValidate: true });
         setValue("owner.phone", "", { shouldDirty: true, shouldValidate: true });
         setValue("owner.phoneVerified", false, { shouldDirty: true });
-    }
-
-    function toggleBuyer(buyer: BuyerRow) {
-        const existing = existingBuyers.find((item) => item.id === buyer.id);
-        if (existing) {
-            setBuyerToDetach(existing);
-            return;
-        }
-        const current = getValues("attachedBuyers") ?? [];
-        const exists = current.some((item) => item.id === buyer.id);
-        const next: AttachedBuyer[] = exists
-            ? current.filter((item) => item.id !== buyer.id)
-            : [
-                  ...current,
-                  {
-                      id: buyer.id,
-                      name: buyer.name,
-                      phoneDigits: buyer.phoneDigits,
-                      avatarUrl: buyer.avatarUrl,
-                  },
-              ];
-        setValue("attachedBuyers", next, { shouldDirty: true, shouldValidate: true });
     }
 
     function removeBuyer(id: string) {
@@ -366,9 +280,15 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                         ...attachedBuyers.map((buyer) => buyer.id),
                     ]}
                     lockedIds={existingBuyers.map((buyer) => buyer.id)}
+                    draftBuyers={attachedBuyers}
                     busy={detaching}
                     selectedLabel={null}
-                    onSelectBuyer={toggleBuyer}
+                    onApplyNewBuyers={(buyers) =>
+                        setValue("attachedBuyers", buyers, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                        })
+                    }
                     onClear={() => undefined}
                 />
             </WizardSection>
@@ -416,10 +336,11 @@ function ContactSearchPanel({
     selectedId,
     selectedIds = [],
     lockedIds = [],
+    draftBuyers = [],
     busy = false,
     selectedLabel,
     onSelectOwner,
-    onSelectBuyer,
+    onApplyNewBuyers,
     onClear,
 }: {
     mode: "owner" | "buyer";
@@ -427,14 +348,23 @@ function ContactSearchPanel({
     selectedId: string | null;
     selectedIds?: string[];
     lockedIds?: string[];
+    /** Already-chosen new clients — used when confirm spans pages not currently loaded. */
+    draftBuyers?: AttachedBuyer[];
     busy?: boolean;
     selectedLabel: { name: string; phone: string } | null;
     onSelectOwner?: (owner: OwnerRow) => void;
-    onSelectBuyer?: (buyer: BuyerRow) => void;
+    /** Replaces the draft “new” attached clients (locked existing stay separate). */
+    onApplyNewBuyers?: (buyers: AttachedBuyer[]) => void;
     onClear: () => void;
 }) {
+    const queryClient = useQueryClient();
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const [createOpen, setCreateOpen] = useState(false);
     const [query, setQuery] = useState("");
     const deferredQuery = useDeferredValue(query.trim());
+    const knownOwnersRef = useRef(new Map<string, OwnerRow>());
+    const knownBuyersRef = useRef(new Map<string, BuyerRow>());
+
     const filters = useMemo(
         () => ({
             ...DEFAULT_CONTACTS_FILTERS,
@@ -447,17 +377,85 @@ function ContactSearchPanel({
     const ownersQuery = useInfiniteItems({
         queryKey: ["property-form", "contacts", "owners", filters.q],
         queryFn: ({ cursor, signal }) => contactsApi.listOwnersPage(filters, cursor, signal),
-        enabled: mode === "owner",
+        enabled: mode === "owner" && pickerOpen,
     });
     const buyersQuery = useInfiniteItems({
         queryKey: ["property-form", "contacts", "buyers", filters.q],
         queryFn: ({ cursor, signal }) => contactsApi.listBuyersPage(filters, cursor, signal),
-        enabled: mode === "buyer",
+        enabled: mode === "buyer" && pickerOpen,
     });
 
     const activeQuery = mode === "owner" ? ownersQuery : buyersQuery;
-    const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-    const selectedOwner = ownersQuery.items.find((owner) => owner.id === selectedId);
+
+    useEffect(() => {
+        for (const owner of ownersQuery.items as OwnerRow[]) {
+            knownOwnersRef.current.set(owner.id, owner);
+        }
+    }, [ownersQuery.items]);
+
+    useEffect(() => {
+        for (const buyer of buyersQuery.items as BuyerRow[]) {
+            knownBuyersRef.current.set(buyer.id, buyer);
+        }
+    }, [buyersQuery.items]);
+
+    const people = useMemo<PeoplePickerPerson[]>(() => {
+        if (mode === "owner") {
+            return (ownersQuery.items as OwnerRow[]).map((owner) =>
+                mapNamedPersonToPicker(
+                    {
+                        id: owner.id,
+                        name: owner.name,
+                        phoneDigits: owner.phoneDigits,
+                        imageUrl: owner.avatarUrl,
+                    },
+                    "owner",
+                ),
+            );
+        }
+        return (buyersQuery.items as BuyerRow[]).map((buyer) =>
+            mapClientItemToPicker({
+                id: buyer.id,
+                name: buyer.name,
+                phoneDigits: buyer.phoneDigits,
+                lookingFor: buyer.lookingFor,
+                avatarUrl: buyer.avatarUrl,
+            }),
+        );
+    }, [buyersQuery.items, mode, ownersQuery.items]);
+
+    const selectedOwner = useMemo(() => {
+        if (!selectedId) return undefined;
+        return (ownersQuery.items as OwnerRow[]).find((owner) => owner.id === selectedId);
+    }, [ownersQuery.items, selectedId]);
+    const lockedSet = useMemo(() => new Set(lockedIds), [lockedIds]);
+
+    function openPicker() {
+        setQuery("");
+        setPickerOpen(true);
+    }
+
+    function invalidateContactQueries() {
+        for (const queryKey of [["contacts"], ["property-form", "contacts"]]) {
+            void queryClient.invalidateQueries({ queryKey });
+        }
+        notifyWorkflowSaved("contact");
+    }
+
+    const listFooter =
+        pickerOpen && !activeQuery.isLoading && people.length > 0 && activeQuery.hasNextPage ? (
+            <div className="pbs-3">
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="inline-full"
+                    loading={activeQuery.isFetchingNextPage}
+                    onClick={() => void activeQuery.fetchNextPage()}
+                >
+                    Load more
+                </Button>
+            </div>
+        ) : null;
 
     return (
         <div className="space-y-4">
@@ -496,7 +494,10 @@ function ContactSearchPanel({
                         type="button"
                         variant="outline"
                         size="default"
-                        onClick={onClear}
+                        onClick={() => {
+                            onClear();
+                            openPicker();
+                        }}
                         className="shrink-0"
                     >
                         Change
@@ -504,159 +505,193 @@ function ContactSearchPanel({
                 </div>
             ) : null}
 
-            {mode === "owner" && selectedId ? null : (
-                <>
-                    <Input
-                        id={mode === "owner" ? "owner-contactId" : "attachedBuyers"}
-                        errorText={error}
-                        size="lg"
-                        value={query}
-                        onValueChange={setQuery}
-                        startIcon={Search}
-                        placeholder={
-                            mode === "owner"
-                                ? "Search owners by name or phone"
-                                : "Search clients by name or phone"
-                        }
-                        aria-label={mode === "owner" ? "Search owners" : "Search clients"}
-                        clearable
-                    />
-
-                    <div className="flex items-center justify-between gap-3 text-xs text-ink-muted">
-                        <span>
-                            {deferredQuery
-                                ? "Search results"
-                                : mode === "owner"
-                                  ? "Owners"
-                                  : "Clients"}
-                            {!activeQuery.isLoading && !activeQuery.isError
-                                ? ` · ${activeQuery.total}`
-                                : ""}
-                        </span>
-                        <CreateContactButton
-                            kind={mode === "owner" ? "owner" : "contact"}
-                            disabled={busy}
-                            onCreated={(name) => setQuery(name)}
-                        />
-                    </div>
-                    <div
+            {mode === "owner" && !selectedId ? (
+                <div className="flex flex-col gap-2">
+                    <button
+                        id="owner-contactId"
+                        type="button"
+                        disabled={busy}
+                        aria-haspopup="dialog"
+                        aria-expanded={pickerOpen}
+                        data-invalid={error ? "" : undefined}
+                        onClick={openPicker}
                         className="
-                          space-y-1 overflow-y-auto overscroll-contain rounded-control border
-                          border-border-warm bg-surface p-1.5 max-block-80
+                          flex items-center gap-2.5 rounded-control border-2 border-border-warm
+                          bg-surface px-4 text-start transition-[border-color,box-shadow]
+                          duration-160 outline-none block-control-xl inline-full
+                          hover:border-ring/50
+                          focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
+                          disabled:cursor-not-allowed disabled:opacity-50
+                          data-invalid:border-danger-mid
                         "
-                        role="group"
-                        aria-label={mode === "owner" ? "Owners" : "Clients"}
                     >
-                        {activeQuery.isLoading ? (
-                            <div role="status" className="space-y-1">
-                                <span className="sr-only">Loading clients…</span>
-                                {[0, 1, 2].map((item) => (
-                                    <div key={item} className="flex items-center gap-3 p-3">
-                                        <Skeleton
-                                            className="
-                                          shrink-0 rounded-full block-10 inline-10
-                                        "
-                                        />
-                                        <div className="flex-1 space-y-2">
-                                            <Skeleton className="block-3 inline-28" />
-                                            <Skeleton
-                                                className="
-                                              block-2.5 inline-40 max-inline-full
-                                            "
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : activeQuery.isError ? (
-                            <div role="alert" className="space-y-2 px-3 py-5 text-center">
-                                <p className="text-sm text-danger">Couldn’t load clients.</p>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => void activeQuery.refetch()}
-                                >
-                                    Try again
-                                </Button>
-                            </div>
-                        ) : activeQuery.items.length === 0 ? (
-                            <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-                                <Search
-                                    className="mbe-1 text-ink-subtle block-6 inline-6"
-                                    aria-hidden
-                                />
-                                <p className="text-sm font-semibold text-ink">
-                                    {deferredQuery
-                                        ? "No matches in your clients."
-                                        : mode === "owner"
-                                          ? "No owners yet."
-                                          : "No clients yet."}
-                                </p>
-                                <p className="text-xs text-ink-muted">
-                                    {deferredQuery
-                                        ? "Try a different name or phone number."
-                                        : mode === "owner"
-                                          ? "Create an owner above, then select them here."
-                                          : "Create a client above, then select them here."}
-                                </p>
-                            </div>
-                        ) : mode === "owner" ? (
-                            (ownersQuery.items as OwnerRow[]).map((owner) => {
-                                const active = owner.id === selectedId;
-                                return (
-                                    <ContactOption
-                                        key={owner.id}
-                                        name={owner.name}
-                                        phone={owner.phoneDigits}
-                                        imageUrl={owner.avatarUrl}
-                                        detail={
-                                            owner.propertyCount
-                                                ? `${owner.propertyCount} propert${owner.propertyCount === 1 ? "y" : "ies"}`
-                                                : undefined
-                                        }
-                                        active={active}
-                                        multiple={false}
-                                        onSelect={() => onSelectOwner?.(owner)}
-                                    />
-                                );
-                            })
-                        ) : (
-                            (buyersQuery.items as BuyerRow[]).map((buyer) => {
-                                const active = selectedSet.has(buyer.id);
-                                return (
-                                    <ContactOption
-                                        key={buyer.id}
-                                        name={buyer.name}
-                                        phone={buyer.phoneDigits}
-                                        detail={
-                                            buyer.lookingFor
-                                                ? `Looking to ${buyer.lookingFor}`
-                                                : undefined
-                                        }
-                                        active={active}
-                                        multiple
-                                        locked={lockedIds.includes(buyer.id)}
-                                        busy={busy}
-                                        onSelect={() => onSelectBuyer?.(buyer)}
-                                    />
-                                );
-                            })
-                        )}
-                        {activeQuery.hasNextPage ? (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="inline-full"
-                                loading={activeQuery.isFetchingNextPage}
-                                onClick={() => void activeQuery.fetchNextPage()}
-                            >
-                                Load more
-                            </Button>
-                        ) : null}
-                    </div>
-                </>
+                        <UserRound
+                            className="shrink-0 text-ink-subtle block-4.5 inline-4.5"
+                            aria-hidden
+                            strokeWidth={1.75}
+                        />
+                        <span className="body flex-1 truncate text-ink-subtle">
+                            Select an owner
+                        </span>
+                        <ChevronDown
+                            className="shrink-0 text-ink-subtle block-4.5 inline-4.5"
+                            aria-hidden
+                        />
+                    </button>
+                    {error ? (
+                        <p role="alert" className="body-sm text-danger">
+                            {error}
+                        </p>
+                    ) : null}
+                </div>
+            ) : null}
+
+            {mode === "buyer" ? (
+                <div className="flex flex-col gap-2">
+                    <button
+                        id="attachedBuyers"
+                        type="button"
+                        disabled={busy}
+                        aria-haspopup="dialog"
+                        aria-expanded={pickerOpen}
+                        data-invalid={error ? "" : undefined}
+                        onClick={openPicker}
+                        className="
+                          flex items-center gap-2.5 rounded-control border-2 border-border-warm
+                          bg-surface px-4 text-start transition-[border-color,box-shadow]
+                          duration-160 outline-none block-control-xl inline-full
+                          hover:border-ring/50
+                          focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
+                          disabled:cursor-not-allowed disabled:opacity-50
+                          data-invalid:border-danger-mid
+                        "
+                    >
+                        <Users
+                            className="shrink-0 text-ink-subtle block-4.5 inline-4.5"
+                            aria-hidden
+                            strokeWidth={1.75}
+                        />
+                        <span className="body flex-1 truncate text-ink-subtle">
+                            {selectedIds.length > lockedIds.length
+                                ? `${selectedIds.length - lockedIds.length} new client${selectedIds.length - lockedIds.length === 1 ? "" : "s"} selected`
+                                : "Add clients"}
+                        </span>
+                        <ChevronDown
+                            className="shrink-0 text-ink-subtle block-4.5 inline-4.5"
+                            aria-hidden
+                        />
+                    </button>
+                    {error ? (
+                        <p role="alert" className="body-sm text-danger">
+                            {error}
+                        </p>
+                    ) : null}
+                </div>
+            ) : null}
+
+            {mode === "owner" ? (
+                <PeoplePicker
+                    open={pickerOpen}
+                    onOpenChange={setPickerOpen}
+                    kinds="owner"
+                    people={people}
+                    value={selectedId}
+                    onConfirm={(id) => {
+                        if (!id) return;
+                        const owner =
+                            knownOwnersRef.current.get(id) ??
+                            (ownersQuery.items as OwnerRow[]).find((item) => item.id === id);
+                        if (owner) onSelectOwner?.(owner);
+                    }}
+                    searchValue={query}
+                    onSearchChange={setQuery}
+                    skipLocalFilter
+                    loading={activeQuery.isLoading || query.trim() !== deferredQuery}
+                    errorText={
+                        activeQuery.isError && people.length === 0
+                            ? "Couldn’t load owners."
+                            : undefined
+                    }
+                    onRetry={() => void activeQuery.refetch()}
+                    listFooter={listFooter}
+                    onCreate={() => setCreateOpen(true)}
+                    createLabel="Create owner"
+                    size="lg"
+                />
+            ) : (
+                <PeoplePicker
+                    open={pickerOpen}
+                    onOpenChange={setPickerOpen}
+                    kinds="client"
+                    multiple
+                    people={people}
+                    value={selectedIds}
+                    onConfirm={(ids) => {
+                        const nextNewIds = ids.filter((id) => !lockedSet.has(id));
+                        const byPerson = new Map(people.map((person) => [person.id, person]));
+                        const byDraft = new Map(draftBuyers.map((buyer) => [buyer.id, buyer]));
+                        onApplyNewBuyers?.(
+                            nextNewIds.map((id) => {
+                                const known = knownBuyersRef.current.get(id);
+                                const person = byPerson.get(id);
+                                const draft = byDraft.get(id);
+                                return {
+                                    id,
+                                    name: known?.name ?? person?.name ?? draft?.name ?? "Client",
+                                    phoneDigits:
+                                        known?.phoneDigits ??
+                                        person?.phoneDigits ??
+                                        draft?.phoneDigits ??
+                                        "",
+                                    avatarUrl:
+                                        known?.avatarUrl ?? person?.imageUrl ?? draft?.avatarUrl,
+                                };
+                            }),
+                        );
+                    }}
+                    searchValue={query}
+                    onSearchChange={setQuery}
+                    skipLocalFilter
+                    loading={activeQuery.isLoading || query.trim() !== deferredQuery}
+                    errorText={
+                        activeQuery.isError && people.length === 0
+                            ? "Couldn’t load clients."
+                            : undefined
+                    }
+                    onRetry={() => void activeQuery.refetch()}
+                    listFooter={listFooter}
+                    onCreate={() => setCreateOpen(true)}
+                    createLabel="Create client"
+                    emptyHeading="No clients yet"
+                    emptyDescription="Create a client above, then select them here."
+                    size="lg"
+                />
+            )}
+
+            {mode === "owner" ? (
+                <AddOwnerModal
+                    open={createOpen}
+                    onOpenChange={setCreateOpen}
+                    onSaved={(name, _mode, id) => {
+                        toast.success("Owner added");
+                        invalidateContactQueries();
+                        setQuery(name);
+                        setCreateOpen(false);
+                        if (id) void ownersQuery.refetch();
+                    }}
+                />
+            ) : (
+                <AddBuyerModal
+                    open={createOpen}
+                    onOpenChange={setCreateOpen}
+                    onCreated={(name, id) => {
+                        toast.success("Client added");
+                        invalidateContactQueries();
+                        setQuery(name);
+                        setCreateOpen(false);
+                        if (id) void buyersQuery.refetch();
+                    }}
+                />
             )}
         </div>
     );

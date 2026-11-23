@@ -609,5 +609,9 @@ function canStartTaskDrag(target: EventTarget) {
     const control = target.closest(
         'button, input, textarea, select, a, [role="checkbox"], [role="menuitem"], [contenteditable="true"], [data-quick-add]',
     );
-    return !control || control.hasAttribute("data-task-title");
+    return (
+        !control ||
+        control.hasAttribute("data-task-title") ||
+        control.hasAttribute("data-card-link")
+    );
 }

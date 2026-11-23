@@ -1,13 +1,14 @@
-import { Icon } from "@iconify/react";
-
 import { formatPrice } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
+import { CircleCheck, CircleX, Clock, Handshake } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
 import type { DealItem } from "@/features/pipeline/types";
+
+import styles from "../deal-card.module.css";
 
 function offerGap(askInr: number, offerInr: number): string {
     const delta = offerInr - askInr;
@@ -34,21 +35,19 @@ export function NegotiationStageBlock({
             : null;
 
     const compactStatus = OFFER_STATUS_LABEL[deal.offerStatus ?? "pending"];
+    const StatusIcon = accepted ? CircleCheck : rejected ? CircleX : Clock;
 
     return (
         <div
             className={cn(
+                styles.negotiationBlock,
                 "flex items-center gap-2.5 rounded-inner border px-3 py-1 min-block-10",
                 rejected
                     ? "border-danger/15 bg-danger-soft/40 text-danger"
                     : "border-stage-4-soft/70 bg-stage-4-soft/15 text-brand-text",
             )}
         >
-            <Icon
-                icon="tabler:heart-handshake"
-                aria-hidden
-                className="shrink-0 block-4.5 inline-4.5"
-            />
+            <Handshake aria-hidden className="shrink-0 block-4.5 inline-4.5" />
             {offer == null ? (
                 <p className="body-xs flex-1 font-medium text-ink min-inline-0">No offer yet</p>
             ) : (
@@ -82,21 +81,11 @@ export function NegotiationStageBlock({
             ) : null}
             {offer != null && status ? (
                 <span
-                    className="body-xs flex shrink-0 items-center gap-1.5 whitespace-nowrap"
+                    className={cn("body-xs flex shrink-0 items-center gap-1.5", styles.offerStatus)}
                     title={status}
                     aria-label={status}
                 >
-                    <Icon
-                        icon={
-                            accepted
-                                ? "tabler:circle-check"
-                                : rejected
-                                  ? "tabler:circle-x"
-                                  : "tabler:clock-hour-4"
-                        }
-                        aria-hidden
-                        className="block-3.5 inline-3.5"
-                    />
+                    <StatusIcon aria-hidden className="block-3.5 inline-3.5" />
                     {compactStatus}
                 </span>
             ) : null}

@@ -8,9 +8,7 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 export default function Page() {
     return (
         <Suspense fallback={<p role="status">Loading site visits…</p>}>
-                        
             <NewSiteVisitsPage />
-                    
         </Suspense>
     );
 }

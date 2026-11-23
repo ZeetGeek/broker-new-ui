@@ -26,7 +26,8 @@ export function WindowVirtualGrid<T>({
     getKey,
     renderItem,
     estimateRowHeight,
-    gap = 24,
+    gap = "card-grid",
+    singleColumnGap,
     breakpoints = NO_BREAKPOINTS,
     overscan = 3,
     virtualizeAfter = 40,
@@ -37,7 +38,10 @@ export function WindowVirtualGrid<T>({
     getKey: (item: T) => string;
     renderItem: (item: T, index: number) => ReactNode;
     estimateRowHeight: number;
-    gap?: number;
+    /** Numeric rendered pixels, or the shared responsive card-grid spacing token. */
+    gap?: number | "card-grid";
+    /** Tighter spacing for narrow, single-column lists, including virtual rows. */
+    singleColumnGap?: number;
     breakpoints?: ColumnBreakpoint[];
     overscan?: number;
     virtualizeAfter?: number;
@@ -47,6 +51,13 @@ export function WindowVirtualGrid<T>({
 }) {
     const parentRef = useRef<HTMLDivElement>(null);
     const [columnCount, setColumnCount] = useState(1);
+    const useCardGridGap = gap === "card-grid";
+    const [tokenGap, setTokenGap] = useState(0);
+    const effectiveGap = useCardGridGap
+        ? tokenGap
+        : columnCount === 1
+          ? (singleColumnGap ?? gap)
+          : gap;
     const [scrollMargin, setScrollMargin] = useState(0);
     const measuredRowHeight = useRef(estimateRowHeight);
 
@@ -54,7 +65,13 @@ export function WindowVirtualGrid<T>({
         const measure = () => {
             setColumnCount(columnCountAt(window.innerWidth, breakpoints));
             const node = parentRef.current;
-            if (node) setScrollMargin(node.getBoundingClientRect().top + window.scrollY);
+            if (node) {
+                setScrollMargin(node.getBoundingClientRect().top + window.scrollY);
+                if (useCardGridGap) {
+                    const renderedGap = Number.parseFloat(window.getComputedStyle(node).rowGap);
+                    if (Number.isFinite(renderedGap)) setTokenGap(renderedGap);
+                }
+            }
         };
 
         measure();
@@ -66,7 +83,7 @@ export function WindowVirtualGrid<T>({
             window.removeEventListener("resize", measure);
             observer.disconnect();
         };
-    }, [breakpoints]);
+    }, [breakpoints, useCardGridGap]);
 
     const rows = useMemo(() => {
         const next: Array<Array<{ item: T; index: number }>> = [];
@@ -97,10 +114,15 @@ export function WindowVirtualGrid<T>({
 
     const virtualizer = useWindowVirtualizer({
         count: shouldVirtualize ? rows.length : 0,
-        estimateSize: () => (gridClassName ? measuredRowHeight.current : estimateRowHeight) + gap,
+        estimateSize: () =>
+            (gridClassName ? measuredRowHeight.current : estimateRowHeight) + effectiveGap,
         overscan,
         scrollMargin,
     });
+
+    useLayoutEffect(() => {
+        if (shouldVirtualize) virtualizer.measure();
+    }, [columnCount, effectiveGap, shouldVirtualize, virtualizer]);
 
     if (!shouldVirtualize) {
         return (
@@ -113,7 +135,7 @@ export function WindowVirtualGrid<T>({
                     gridTemplateColumns: gridClassName
                         ? undefined
                         : `repeat(${columnCount}, minmax(0, 1fr))`,
-                    gap: measuredPxToRem(gap),
+                    gap: useCardGridGap ? "var(--card-grid-gap)" : measuredPxToRem(effectiveGap),
                 }}
             >
                 {items.map((item, index) => (
@@ -131,7 +153,10 @@ export function WindowVirtualGrid<T>({
             role="list"
             aria-label={ariaLabel}
             className="relative inline-full"
-            style={{ height: measuredPxToRem(Math.max(0, virtualizer.getTotalSize() - gap)) }}
+            style={{
+                rowGap: useCardGridGap ? "var(--card-grid-gap)" : undefined,
+                height: measuredPxToRem(Math.max(0, virtualizer.getTotalSize() - effectiveGap)),
+            }}
         >
             {virtualizer.getVirtualItems().map((virtualRow) => {
                 const row = rows[virtualRow.index] ?? [];
@@ -143,14 +168,14 @@ export function WindowVirtualGrid<T>({
                         className="absolute inset-s-0 inset-bs-0 inline-full"
                         style={{
                             transform: `translateY(${measuredPxToRem(virtualRow.start - scrollMargin)})`,
-                            paddingBlockEnd: measuredPxToRem(gap),
+                            paddingBlockEnd: measuredPxToRem(effectiveGap),
                         }}
                     >
                         <div
                             className="grid"
                             style={{
                                 gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
-                                columnGap: measuredPxToRem(gap),
+                                columnGap: measuredPxToRem(effectiveGap),
                             }}
                         >
                             {row.map(({ item, index }) => (

@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { AppDateRangeFields } from "@/components/shared/app-date-range-fields";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { mapFilterPersonToPicker } from "@/components/shared/map-to-people-picker-person";
+import { mapFilterPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
+import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
+import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
 import { Dialog, DialogPopup } from "@/components/ui/dialog";
 
-import { VisitSelect } from "./visit-select";
+import styles from "./visits.module.css";
 
 export type VisitFilters = {
     client: string;
@@ -25,8 +29,6 @@ export const EMPTY_FILTERS: VisitFilters = {
     range: "",
 };
 
-const ANY = "__any";
-
 /** Visits needs only who and where; dates live on the toolbar. */
 export function VisitFiltersDialog({
     value,
@@ -42,6 +44,14 @@ export function VisitFiltersDialog({
     onClose: () => void;
 }) {
     const [draft, setDraft] = useState(value);
+    const clientPeople = useMemo(
+        () => clientOptions.map((client) => mapFilterPersonToPicker(client, "client")),
+        [clientOptions],
+    );
+    const propertyRows = useMemo(
+        () => propertyOptions.map(mapFilterPropertyToPicker),
+        [propertyOptions],
+    );
     return (
         <Dialog
             open
@@ -51,41 +61,42 @@ export function VisitFiltersDialog({
         >
             <DialogPopup
                 showCloseButton={false}
-                className="flex flex-col gap-0 overflow-hidden p-0 inline-[min(32rem,calc(100vw-1rem))]"
+                className={`flex flex-col gap-0 overflow-hidden p-0 inline-[min(32rem,calc(100vw-1rem))] ${styles.filtersDialog}`}
             >
                 <AppModalHeader title="Filter visits" />
                 <div className="flex flex-col gap-5 p-5 sm:p-8">
-                    <VisitSelect
+                    <PeopleInlineSelect
                         label="Client"
-                        value={draft.client || ANY}
-                        options={[
-                            { value: ANY, label: "Any client" },
-                            ...clientOptions.map((c) => ({ value: c.id, label: c.name })),
-                        ]}
-                        onChange={(client) =>
+                        lockedScope="client"
+                        people={clientPeople}
+                        value={draft.client || null}
+                        onValueChange={(client) =>
                             setDraft((current) => ({
                                 ...current,
-                                client: client === ANY ? "" : client,
+                                client: client ?? "",
                             }))
                         }
+                        placeholder="Any client"
+                        allowClear
+                        clearLabel="Any client"
                     />
-                    <VisitSelect
+                    <PropertyInlineSelect
                         label="Property"
-                        value={draft.property || ANY}
-                        options={[
-                            { value: ANY, label: "Any property" },
-                            ...propertyOptions.map((p) => ({ value: p.id, label: p.title })),
-                        ]}
-                        onChange={(property) =>
+                        properties={propertyRows}
+                        value={draft.property || null}
+                        onValueChange={(property) =>
                             setDraft((current) => ({
                                 ...current,
-                                property: property === ANY ? "" : property,
+                                property: property ?? "",
                             }))
                         }
+                        placeholder="Any property"
+                        allowClear
+                        clearLabel="Any property"
                     />
                 </div>
                 <AppModalFooter
-                    className="justify-between border-bs border-border-warm p-5 sm:px-8"
+                    className={`justify-between border-bs border-border-warm p-5 sm:px-8 ${styles.filtersFooter}`}
                     secondaryLabel="Clear"
                     onSecondary={() => onApply({ ...draft, client: "", property: "" })}
                     primaryLabel="Show visits"

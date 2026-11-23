@@ -38,7 +38,7 @@ export function LeadsSkeleton({ layout = "board" }: { layout?: "board" | "list" 
     if (layout === "list") {
         return (
             <div
-                className="flex flex-col gap-4 motion-safe:animate-pulse lg:grid lg:grid-cols-2"
+                className="flex flex-col gap-card-grid motion-safe:animate-pulse lg:grid lg:grid-cols-2"
                 aria-busy="true"
                 aria-label="Loading your leads"
             >
@@ -55,7 +55,7 @@ export function LeadsSkeleton({ layout = "board" }: { layout?: "board" | "list" 
                 className="
                   hidden items-start gap-3 overflow-hidden
                   md:flex
-                  lg:grid lg:grid-cols-4 lg:gap-4
+                  lg:grid lg:grid-cols-4 lg:gap-card-grid
                 "
             >
                 {Array.from({ length: 4 }).map((_, column) => (

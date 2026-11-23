@@ -1,10 +1,10 @@
 "use client";
 
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
+import { formatPersonName } from "@/lib/format/person-name";
 import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatListingPrice } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
@@ -34,6 +34,7 @@ import {
 } from "@/components/shared/icons";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import { FEATURE_RERA_VERIFICATION } from "@/config/index";
@@ -852,6 +853,8 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
 }
 
 export type ContactDetailPanelProps = {
+    manageBrowserHistory?: boolean;
+    contactType?: "buyer" | "owner";
     loadError?: string;
     onRetryLoad?: () => void;
     contact: { type: "buyer"; row: BuyerRow } | { type: "owner"; row: OwnerRow } | null;
@@ -895,6 +898,8 @@ function ContactPanelSkeleton() {
 }
 
 export function ContactDetailPanel({
+    manageBrowserHistory = true,
+    contactType = "buyer",
     loadError,
     onRetryLoad,
     contact,
@@ -928,9 +933,14 @@ export function ContactDetailPanel({
         if (!open) return null;
         return (
             <AppModal
+                manageBrowserHistory={manageBrowserHistory}
                 open
                 onOpenChange={onOpenChange}
-                title={loadError ? "Client unavailable" : "Loading client"}
+                title={
+                    loadError
+                        ? `${contactType === "owner" ? "Owner" : "Client"} unavailable`
+                        : `Loading ${contactType === "owner" ? "owner" : "client"}`
+                }
                 size="md"
                 padding="md"
                 className="contacts-detail-drawer"
@@ -988,9 +998,10 @@ export function ContactDetailPanel({
 
     return (
         <AppModal
+            manageBrowserHistory={manageBrowserHistory}
             open={open}
             onOpenChange={onOpenChange}
-            title={`${row.name} contact details`}
+            title={`${formatPersonName(row.name)} contact details`}
             size="md"
             padding="md"
             className="contacts-detail-drawer"
@@ -1002,7 +1013,7 @@ export function ContactDetailPanel({
             "
             header={
                 <PanelHeader
-                    name={row.name}
+                    name={formatPersonName(row.name)}
                     phone={phone}
                     avatarUrl={owner?.avatarUrl}
                     badge={badge}

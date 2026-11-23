@@ -2,7 +2,6 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -11,6 +10,7 @@ import { measuredPxToRem } from "@/lib/styles/rem";
 import { AppImage } from "@/components/shared/app-image";
 import { Camera } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 
 import { PropertyGalleryControls } from "./property-gallery-controls";
 
@@ -33,6 +33,7 @@ export type PropertyGalleryProps = {
     imageSrcs: string[];
     overlay?: ReactNode;
     editHref?: string;
+    navigation?: ReactNode;
 };
 
 function GalleryPhoto({
@@ -81,7 +82,13 @@ function GalleryPhoto({
     );
 }
 
-export function PropertyGallery({ title, imageSrcs, editHref, overlay }: PropertyGalleryProps) {
+export function PropertyGallery({
+    title,
+    imageSrcs,
+    editHref,
+    overlay,
+    navigation,
+}: PropertyGalleryProps) {
     // Small sets need extra instances of their real photos to fill a looping track.
     const carouselPhotos =
         imageSrcs.length > 1 && imageSrcs.length <= 4
@@ -143,11 +150,16 @@ export function PropertyGallery({ title, imageSrcs, editHref, overlay }: Propert
 
     if (imageSrcs.length === 0)
         return (
-            <div className={styles.noPhotos}>
-                <Camera size={32} strokeWidth={1.5} aria-hidden />
-                <h2>No property photos yet</h2>
-                <p>Photos will appear here when they are added.</p>
-                {editHref ? <Link href={editHref}>Add property photos</Link> : null}
+            <div>
+                <div className={styles.noPhotos}>
+                    <Camera size={32} strokeWidth={1.5} aria-hidden />
+                    <h2>No property photos yet</h2>
+                    <p>Photos will appear here when they are added.</p>
+                    {editHref ? <Link href={editHref}>Add property photos</Link> : null}
+                </div>
+                {navigation ? (
+                    <div className={styles.emptyGalleryNavigation}>{navigation}</div>
+                ) : null}
             </div>
         );
 
@@ -180,7 +192,11 @@ export function PropertyGallery({ title, imageSrcs, editHref, overlay }: Propert
                     {overlay}
                 </div>
             ) : null}
-            <PropertyGalleryControls api={emblaApi} count={imageSrcs.length} />
+            <PropertyGalleryControls
+                api={emblaApi}
+                count={imageSrcs.length}
+                navigation={navigation}
+            />
             {index != null ? (
                 <PropertyLightbox
                     title={title}

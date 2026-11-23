@@ -74,7 +74,6 @@ function PublicPropertyView({ listing }: { listing: PublicPropertyListing }) {
                 <div className={styles.headerActions}>
                     <PropertySharePopover
                         iconOnly
-                        className={styles.circleButton}
                         listing={{
                             id: item.id,
                             title: item.title,

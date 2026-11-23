@@ -107,6 +107,7 @@ export function StepArea() {
                         </Label>
                         <Input
                             id="area-converter-value"
+                            className="text-sm block-control-lg"
                             type="number"
                             min={0}
                             step="0.01"
@@ -135,6 +136,7 @@ export function StepArea() {
                         >
                             <ComboboxInput
                                 id="area-converter-unit"
+                                className="text-sm block-control-lg"
                                 size="lg"
                                 placeholder="Choose a unit"
                                 startIcon={Ruler}

@@ -97,7 +97,7 @@ const CASES: { label: string; note: string; deal: DealItem }[] = [
     },
     {
         label: "Rent, long names",
-        note: "Width stress: /mo price plus names that must truncate.",
+        note: "Width stress: rent, full names and location wrap without cutting off.",
         deal: makeDeal("rent-1", "contacted", {
             buyer: {
                 id: "b-long",
@@ -161,7 +161,7 @@ export function PipelineCardPreview() {
                 <h1 className="h2 text-ink">Pipeline card</h1>
                 <p className="body-sm text-ink-muted">
                     Every state the deal card has to survive. Column width below matches a real
-                    board column, so truncation here is truncation in production.
+                    board column, with full property details and names wrapping to fit.
                 </p>
             </header>
 

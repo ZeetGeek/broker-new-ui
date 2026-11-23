@@ -30,6 +30,8 @@ import {
 
 import { MAX_VISIT_REMINDERS, VISIT_REMINDERS, visitReminderAt, visitReminderLabel } from "./model";
 
+import styles from "./visits.module.css";
+
 const UNITS = [
     { value: "1", label: "Minutes before" },
     { value: "60", label: "Hours before" },
@@ -198,7 +200,9 @@ export function VisitReminderPicker({
                         <label htmlFor={`${id}-custom`} className="text-sm font-semibold">
                             Custom reminder
                         </label>
-                        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] gap-2">
+                        <div
+                            className={`grid grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] gap-2 ${styles.reminderCustomFields}`}
+                        >
                             <Input
                                 id={`${id}-custom`}
                                 type="number"

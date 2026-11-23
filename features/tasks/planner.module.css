@@ -764,43 +764,85 @@
     .plannerNav {
         display: flex;
         justify-content: space-between;
-        padding-inline: 1rem;
+        padding-inline: 0.75rem;
         flex-wrap: wrap;
-        gap: 0;
+        gap: 0.25rem 0.5rem;
     }
     .navButton,
     .todayButton,
     .dateJump,
     .dateJump button {
-        min-inline-size: 44px;
-        inline-size: 44px;
-        min-block-size: 44px;
+        min-inline-size: var(--touch-target-min);
+        inline-size: var(--touch-target-min);
+        min-block-size: var(--touch-target-min);
+    }
+    .todayButton {
+        inline-size: auto;
+        font-size: 0.875rem;
+    }
+    .dateControls {
+        gap: 0.25rem;
+        margin-inline-start: auto;
+    }
+    .plannerNav :global(button[data-icon-button]) {
+        --icon-button-size: var(--touch-target-min);
     }
     .dateControls > button:nth-child(2),
     .dateControls > button:nth-child(5) {
         display: none;
     }
     .dateRange {
-        font-size: 0.75rem;
+        font-size: 0.875rem;
         padding-inline-start: 0;
+        overflow-wrap: anywhere;
     }
     .dayGrid,
     .somedayGrid {
-        padding-inline: 2.75rem 3.5rem;
+        padding-inline: 0.75rem;
         padding-block-start: 0.75rem;
     }
     .dayColumn {
-        --line-height: 44px;
+        --line-height: calc(3rem / var(--layout-font-scale));
     }
     .taskLine {
         --task-action-size: 44px;
         --task-action-gutter: 48px;
     }
     .ruledList {
-        min-block-size: calc(8 * var(--line-height));
+        min-block-size: calc(4 * var(--line-height));
     }
-    .ruledList > .blankLine:nth-child(n + 9) {
+    .ruledList > .blankLine:nth-child(n + 5) {
         display: none;
+    }
+    .dayGrid .taskLine,
+    .somedayGrid .taskLine {
+        gap: 0;
+        padding-inline: 0;
+    }
+    .dayGrid .lineCheck,
+    .somedayGrid .lineCheck {
+        position: relative;
+        inset: auto;
+        transform: none;
+        flex-shrink: 0;
+        inline-size: 1.25rem;
+        block-size: 1.25rem;
+        margin-inline: calc((var(--touch-target-min) - 1.25rem) / 2);
+    }
+    .dayGrid .lineCheck::after,
+    .somedayGrid .lineCheck::after {
+        inset: calc((1.25rem - var(--touch-target-min)) / 2);
+    }
+    .dayGrid .taskLine .lineAction,
+    .somedayGrid .taskLine .lineAction,
+    .dayGrid .taskLine .restoreAction,
+    .somedayGrid .taskLine .restoreAction {
+        --icon-button-size: var(--touch-target-min);
+        position: relative;
+        inset: auto;
+        transform: none;
+        inline-size: var(--touch-target-min);
+        block-size: var(--touch-target-min);
     }
     .lineCheck {
         inset-inline-start: -23px;
@@ -815,11 +857,46 @@
         block-size: 44px;
         opacity: 1;
     }
-    .lineTitle {
-        font-size: 12px;
+    .dayGrid .lineTitle,
+    .somedayGrid .lineTitle {
+        font-size: var(--input-font-min);
+        font-weight: 500;
+        padding-inline: 0.25rem;
+    }
+    .dayGrid .overdueMark,
+    .somedayGrid .overdueMark {
+        margin-inline: 0.25rem;
+    }
+    .somedayGrid {
+        min-block-size: 0;
+    }
+    .somedayGrid .ruledList {
+        min-block-size: calc(4 * var(--line-height));
+    }
+    .somedayGrid .ruledList > .blankLine:nth-child(n + 5) {
+        display: none;
     }
     .somedayBar {
-        padding-inline: 1.25rem;
+        padding-inline: 0.5rem;
+        gap: 0.25rem;
+    }
+    .somedayBarStart {
+        gap: 0.25rem;
+    }
+    .somedayBar :global(button[data-icon-button]),
+    .listHeadingTools :global(button[data-icon-button]) {
+        --icon-button-size: var(--touch-target-min);
+    }
+    .notebookTabPicker {
+        flex: 1;
+        overscroll-behavior-inline: contain;
+    }
+    .slidingTabName {
+        max-inline-size: 7rem;
+    }
+    .notebookTabMenu {
+        min-inline-size: var(--touch-target-min);
+        min-block-size: var(--touch-target-min);
     }
     .listTabs {
         gap: 0.5rem;
@@ -845,13 +922,31 @@
     }
     .customList::before {
         inset-block-start: -0.75rem;
-        inset-inline: -2.75rem -3.5rem;
+        inset-inline: -0.75rem;
     }
     .customList:first-child::before {
-        inset-inline-start: -2.75rem;
+        inset-inline-start: -0.75rem;
     }
     .customList > .dayColumn > .dayHeading {
-        padding-block-start: 0.25rem;
+        padding-block-start: 1.75rem;
+    }
+    .listHeadingRow {
+        flex-wrap: wrap;
+    }
+    .listHeadingRow > h2 {
+        flex-basis: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+    .listHeadingTools {
+        flex: 1 1 100%;
+        justify-content: flex-end;
+    }
+    .listHeadingNewList {
+        margin-inline-end: auto;
+    }
+    .listHeadingNewList button {
+        min-block-size: var(--touch-target-min);
     }
     .newListColumn > .dayHeading {
         padding-block: 0.85rem 0.5rem;
@@ -876,9 +971,23 @@
         display: none;
     }
 }
+@container (max-width: 359px) {
+    .plannerNav {
+        padding-block: 0.625rem;
+    }
+    .dateRange {
+        flex-basis: 100%;
+        padding-inline: 0.5rem;
+    }
+    .dateControls {
+        inline-size: 100%;
+        justify-content: space-between;
+        margin-inline-start: 0;
+    }
+}
 @media (max-width: 640px) {
     .archive {
-        padding: 1.5rem 3.5rem 1.5rem 2.75rem;
+        padding: 1.25rem 0.75rem;
     }
     .archive .taskLine {
         --line-height: 44px;
@@ -890,15 +999,32 @@
         opacity: 1;
     }
     .archive .lineCheck {
-        inset-inline-start: -23px;
+        position: relative;
+        inset: auto;
+        transform: none;
+        inline-size: 1.25rem;
+        block-size: 1.25rem;
+        margin-inline: calc((var(--touch-target-min) - 1.25rem) / 2);
     }
     .archive .lineCheck::after {
-        inset: -15px;
+        inset: calc((1.25rem - var(--touch-target-min)) / 2);
     }
     .archive .lineAction,
     .archive .restoreAction {
-        inline-size: 44px;
-        block-size: 44px;
+        --icon-button-size: var(--touch-target-min);
+        position: relative;
+        inset: auto;
+        transform: none;
+        inline-size: var(--touch-target-min);
+        block-size: var(--touch-target-min);
+    }
+    .archive .taskLine {
+        gap: 0;
+        padding-inline: 0;
+    }
+    .archive .lineTitle {
+        font-size: var(--input-font-min);
+        font-weight: 500;
     }
 }
 @media (hover: none) {
@@ -914,6 +1040,11 @@
     .listDragHandle {
         opacity: 1;
         pointer-events: auto;
+    }
+}
+@media (pointer: coarse), (max-width: 767px) {
+    .dragPreview {
+        font-size: var(--input-font-min);
     }
 }
 

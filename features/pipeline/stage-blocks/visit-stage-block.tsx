@@ -1,14 +1,15 @@
-import Link from "next/link";
-
 import { formatDateShort, formatTimeIn, isSameCalendarDay } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { Calendar, CalendarClock, CalendarPlus, Pencil } from "@/components/shared/icons";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { DealItem } from "@/features/pipeline/types";
 import { canScheduleVisit, scheduleVisitHref } from "@/features/pipeline/visit-link";
+
+import styles from "../deal-card.module.css";
 
 /**
  * Site visit stage: the booked visit, or a prompt to book one. On exclusive
@@ -25,6 +26,7 @@ export function VisitStageBlock({ deal }: { deal: DealItem }) {
     return (
         <div
             className={cn(
+                styles.visitBlock,
                 "flex items-center gap-2.5 rounded-inner border border-stage-3-soft/70 px-3 py-1",
                 isToday ? "bg-stage-3-soft/30" : "bg-stage-3-soft/15",
             )}
@@ -72,7 +74,7 @@ export function VisitStageBlock({ deal }: { deal: DealItem }) {
                     variant="outline"
                     size="sm"
                     nativeButton={false}
-                    className="shrink-0"
+                    className={cn("shrink-0 text-xs", styles.scheduleAction)}
                     render={<Link href={href} onClick={(event) => event.stopPropagation()} />}
                 >
                     <CalendarPlus aria-hidden strokeWidth={1.75} />

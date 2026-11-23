@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
@@ -8,9 +8,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { isMockMode } from "@/lib/api/mock-mode";
 import type { NotificationItem } from "@/lib/api/notifications";
 import { getNotificationSocket } from "@/lib/socket/notifications";
+import { navigateWorkflow } from "@/lib/workflows/navigation";
 
 import { IconButton } from "@/components/shared/icon-button";
 import { Bell, X } from "@/components/shared/icons";
+import { useWorkflow } from "@/components/shared/workflow-context";
 
 import { useAppSelector } from "@/store/hooks";
 
@@ -28,7 +30,22 @@ export function TaskReminderListener() {
     ) : null;
 }
 
-function showReminderToast(id: string, content: ReminderToastContent) {
+// Toasts render outside the portal provider. Capture its current opener here,
+// without reconnecting the notification socket whenever a panel opens or closes.
+function useReminderOpener() {
+    const open = useWorkflow();
+    const latest = useRef(open);
+    useEffect(() => {
+        latest.current = open;
+    }, [open]);
+    return useCallback((href: string) => latest.current?.(href) ?? false, []);
+}
+
+function showReminderToast(
+    id: string,
+    content: ReminderToastContent,
+    open: (href: string) => boolean,
+) {
     toast.custom(
         (notification) => (
             <div
@@ -48,6 +65,9 @@ function showReminderToast(id: string, content: ReminderToastContent) {
                         className="body-sm mbs-2 inline-flex items-center font-semibold text-brand-text underline-offset-4 min-block-9 hover:underline"
                         href={content.href}
                         onClick={() => toast.dismiss(notification.id)}
+                        onNavigate={(event) =>
+                            navigateWorkflow(event, undefined, open, content.href)
+                        }
                     >
                         {content.action}
                     </Link>
@@ -67,6 +87,7 @@ function showReminderToast(id: string, content: ReminderToastContent) {
 
 function LiveReminders({ accountId, accessToken }: { accountId: string; accessToken: string }) {
     const queryClient = useQueryClient();
+    const open = useReminderOpener();
     useEffect(() => {
         const socket = getNotificationSocket(accessToken);
         const shown = new Set<string>();
@@ -75,7 +96,7 @@ function LiveReminders({ accountId, accessToken }: { accountId: string; accessTo
             if (!content) return;
             const id = `reminder-${item.id}`;
             shown.add(id);
-            showReminderToast(id, content);
+            showReminderToast(id, content, open);
             if (content.kind === "task") {
                 void queryClient.invalidateQueries({ queryKey: ["tasks", accountId] });
             }
@@ -85,12 +106,13 @@ function LiveReminders({ accountId, accessToken }: { accountId: string; accessTo
             socket.off("notification.created", onCreated);
             shown.forEach((id) => toast.dismiss(id));
         };
-    }, [accessToken, accountId, queryClient]);
+    }, [accessToken, accountId, queryClient, open]);
     return null;
 }
 
 function AccountTaskReminders({ accountId }: { accountId: string }) {
     const { tasks, update, busy } = useTasks(accountId);
+    const open = useReminderOpener();
     const processing = useRef(false);
     const mounted = useRef(false);
     const activeToasts = useRef(new Set<string>());
@@ -139,14 +161,18 @@ function AccountTaskReminders({ accountId }: { accountId: string }) {
                 for (const { task, reminder } of delivered) {
                     const id = `task-reminder-${accountId}-${task.id}-${reminder.key}`;
                     activeToasts.current.add(id);
-                    showReminderToast(id, {
-                        kind: "task",
-                        title: "Task reminder",
-                        line: task.title,
-                        detail: `${taskReminderDescription(reminder)} · ${taskDueLabel(task)}`,
-                        href: `/broker/tasks?view=detail&task=${encodeURIComponent(task.id)}`,
-                        action: "View task",
-                    });
+                    showReminderToast(
+                        id,
+                        {
+                            kind: "task",
+                            title: "Task reminder",
+                            line: task.title,
+                            detail: `${taskReminderDescription(reminder)} · ${taskDueLabel(task)}`,
+                            href: `/broker/tasks?view=detail&task=${encodeURIComponent(task.id)}`,
+                            action: "View task",
+                        },
+                        open,
+                    );
                 }
             } catch {
                 return;
@@ -164,6 +190,6 @@ function AccountTaskReminders({ accountId }: { accountId: string }) {
             window.clearInterval(timer);
             document.removeEventListener("visibilitychange", onVisible);
         };
-    }, [tasks, update, busy, accountId]);
+    }, [tasks, update, busy, accountId, open]);
     return null;
 }

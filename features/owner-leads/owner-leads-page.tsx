@@ -310,7 +310,7 @@ export function OwnerLeadsPage() {
                                 items={finishedItems}
                                 getKey={(lead) => lead.id}
                                 estimateRowHeight={470}
-                                gap={12}
+                                gap="card-grid"
                                 breakpoints={DONE_GRID_BREAKPOINTS}
                                 ariaLabel="Finished leads"
                                 renderItem={renderLeadCard}

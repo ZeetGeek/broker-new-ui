@@ -1,10 +1,10 @@
-import Link from "next/link";
-
 import { formatDurationUntil, formatShowingWhen } from "@/lib/format/date";
 import { BROKER_VISIT_SLOTS_HREF, brokerVisitHref } from "@/lib/routes/broker";
 import { OWNER_VISITS_HREF } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
     CalendarClock,
@@ -19,6 +19,7 @@ import { PhoneNumber } from "@/components/shared/phone-number";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { TextLinkButton } from "@/components/shared/text-link-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -258,9 +259,11 @@ export function NextShowingCard({
 
     return (
         <section
+            data-linked-card
             className={cn(DASHBOARD_CARD_SHELL, className)}
             aria-labelledby={`next-showing-${showing.id}`}
         >
+            <CardLink href={secondaryHref} label={`Open visit for ${showing.configLabel}`} />
             <div className="flex shrink-0 items-start justify-between gap-3">
                 <CardLabel info={isOwner ? OWNER_NEXT_SHOWING_INFO : BROKER_NEXT_SHOWING_INFO}>
                     Next showing
@@ -277,7 +280,11 @@ export function NextShowingCard({
                 <div className="flex flex-1 items-start justify-between gap-4 min-block-0">
                     <div className="flex flex-1 flex-col justify-center gap-3 min-inline-0">
                         <div className="shrink-0">
-                            <h2 id={`next-showing-${showing.id}`} className="h2 text-ink">
+                            <h2
+                                data-card-title
+                                id={`next-showing-${showing.id}`}
+                                className="h2 text-ink"
+                            >
                                 <time dateTime={showing.scheduledAt.toISOString()}>
                                     {whenLabel}
                                 </time>
@@ -385,7 +392,7 @@ export function NextShowingCard({
                         <UserAvatar name={showing.clientName} size="md" />
                         <div className="min-inline-0">
                             <p className="body truncate font-medium text-ink capitalize">
-                                {showing.clientName}
+                                <ContactName name={showing.clientName} contactType="buyer" />
                             </p>
                             <p
                                 className="

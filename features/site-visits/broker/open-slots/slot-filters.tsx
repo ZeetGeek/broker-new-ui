@@ -1,9 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
+
 import type { ApiLeadOption, ApiOwnerOption } from "@/lib/api/broker-visits-map";
 
 import type { AppIcon } from "@/components/shared/icons";
-import { Building2, Home, UserRound } from "@/components/shared/icons";
+import { Building2 } from "@/components/shared/icons";
+import { mapFilterPersonToPicker } from "@/components/shared/map-to-people-picker-person";
+import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
 import {
     Select,
     SelectContent,
@@ -133,6 +137,15 @@ export function SlotFilters({
     const shownLeads = leadOptions.filter((option) => leadMatches(option, buyerId, ownerId));
     const shownOwners = ownersForBuyer(ownerOptions, leadOptions, buyerId);
 
+    const clientPeople = useMemo(
+        () => buyers.map((buyer) => mapFilterPersonToPicker(buyer, "client")),
+        [buyers],
+    );
+    const ownerPeople = useMemo(
+        () => shownOwners.map((owner) => mapFilterPersonToPicker(owner, "owner")),
+        [shownOwners],
+    );
+
     // Drop the chosen lead when a new buyer / owner no longer includes it.
     const keepLeadIfMatches = (nextBuyerId?: string, nextOwner?: string) => {
         if (!leadId) return;
@@ -151,35 +164,42 @@ export function SlotFilters({
 
     return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <FilterSelect
+            <PeopleInlineSelect
                 label="Client"
-                icon={UserRound}
-                value={buyerId}
-                placeholder="All clients"
-                options={buyers.map((buyer) => ({ value: buyer.id, label: buyer.name }))}
-                onChange={(next) => {
-                    onBuyerChange?.(next);
+                lockedScope="client"
+                people={clientPeople}
+                value={buyerId ?? null}
+                onValueChange={(next) => {
+                    const id = next ?? undefined;
+                    onBuyerChange?.(id);
                     const ownerStays =
                         !ownerId ||
-                        ownersForBuyer(ownerOptions, leadOptions, next).some(
+                        ownersForBuyer(ownerOptions, leadOptions, id).some(
                             (owner) => owner.id === ownerId,
                         );
                     if (!ownerStays) onOwnerChange?.(undefined);
-                    keepLeadIfMatches(next, ownerStays ? ownerId : undefined);
+                    keepLeadIfMatches(id, ownerStays ? ownerId : undefined);
                 }}
+                placeholder="All clients"
+                allowClear
+                clearLabel="All clients"
+                size="default"
             />
             {ownerOptions.length > 0 ? (
-                <FilterSelect
+                <PeopleInlineSelect
                     label="Owner"
-                    icon={Home}
-                    value={ownerId}
-                    placeholder="All owners"
-                    options={shownOwners.map((owner) => ({ value: owner.id, label: owner.name }))}
-                    emptyLabel="This client has no leads on an owner's property"
-                    onChange={(next) => {
-                        onOwnerChange?.(next);
-                        keepLeadIfMatches(buyerId, next);
+                    lockedScope="owner"
+                    people={ownerPeople}
+                    value={ownerId ?? null}
+                    onValueChange={(next) => {
+                        const id = next ?? undefined;
+                        onOwnerChange?.(id);
+                        keepLeadIfMatches(buyerId, id);
                     }}
+                    placeholder="All owners"
+                    allowClear
+                    clearLabel="All owners"
+                    size="default"
                 />
             ) : null}
             <FilterSelect

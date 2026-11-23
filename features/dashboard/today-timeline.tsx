@@ -1,11 +1,12 @@
 "use client";
 
 import { type RefObject, useEffect, useRef } from "react";
-import Link from "next/link";
 
+import { formatPersonName } from "@/lib/format/person-name";
 import { cn } from "@/lib/utils";
 
 import { CircleCheck, MapPin, Phone } from "@/components/shared/icons";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { TodayItem } from "./mock-data";
@@ -92,6 +93,7 @@ function TimelineRow({ item }: { item: TodayItem }) {
                 <TooltipTrigger
                     render={
                         <Link
+                            data-linked-card
                             href={item.href}
                             className={`
                               grid grid-cols-[auto_auto_1fr] items-start gap-x-4 py-3.5 outline-none
@@ -116,6 +118,7 @@ function TimelineRow({ item }: { item: TodayItem }) {
                         </span>
                         <div className="min-inline-0">
                             <p
+                                data-card-title
                                 className={cn(
                                     "body font-semibold",
                                     isDone && "text-ink-subtle line-through",
@@ -136,7 +139,9 @@ function TimelineRow({ item }: { item: TodayItem }) {
                             >
                                 {item.clientName ? (
                                     <>
-                                        <span className="capitalize">{item.clientName}</span>
+                                        <span className="capitalize">
+                                            {formatPersonName(item.clientName)}
+                                        </span>
                                         {item.subtitle ? <span aria-hidden> · </span> : null}
                                     </>
                                 ) : null}

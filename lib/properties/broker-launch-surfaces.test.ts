@@ -41,7 +41,7 @@ const [
 ] = await Promise.all([
     import("@/app/(role)/broker/my-properties/page"),
     import("@/app/(role)/broker/owners/layout"),
-    import("@/app/(role)/broker/your-listings/page"),
+    import("@/app/(role)/broker/my-listings/page"),
     import("@/features/properties/saved-properties/saved-properties-empty"),
     import("@/features/properties/saved-properties/saved-properties-grid"),
     import("@/features/properties/saved-properties/saved-properties-page"),
@@ -143,7 +143,7 @@ test(
         propertyCard.props.onToggleSave();
         assert.equal(unsavedId, ownBookmark.id);
         const empty = renderToStaticMarkup(createElement(SavedPropertiesEmpty));
-        assert.ok(empty.includes('href="/broker/your-listings"'));
+        assert.ok(empty.includes('href="/broker/my-listings"'));
         assert.ok(!empty.includes('href="/broker/owner-listings"'));
     },
 );

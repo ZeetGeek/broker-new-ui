@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { IconButton } from "@/components/shared/icon-button";
 import { AlertCircle, Calendar, MoreHorizontal, RotateCcw } from "@/components/shared/icons";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -101,6 +102,7 @@ export function TaskLine({
 
     return (
         <div
+            data-linked-card
             className={cn(styles.taskLine, task.completedAt && styles.completedLine)}
             data-priority={task.priority}
             onContextMenu={(event) => {
@@ -109,6 +111,13 @@ export function TaskLine({
                 setMenuOpen(true);
             }}
         >
+            {!busy ? (
+                <CardLink
+                    href={`/broker/tasks?view=detail&task=${encodeURIComponent(task.id)}`}
+                    label={`Open ${rowTitle}`}
+                    onOpen={() => onOpen(task)}
+                />
+            ) : null}
             {!task.deletedAt && (
                 <Checkbox
                     className={styles.lineCheck}
@@ -125,20 +134,21 @@ export function TaskLine({
                 className={styles.lineTitle}
                 title={`${rowTitle}\n${taskDueLabel(task, now)}\nDouble-click to edit`}
                 disabled={busy}
-                onClick={() => {
+                onClick={(event) => {
                     if (archive || task.deletedAt) {
                         onOpen(task);
                         return;
                     }
-                    // Phones: one tap edits. Desktop: double-click edits (chips in place).
-                    if (window.matchMedia("(pointer: coarse)").matches) setEditing(true);
+                    // Touch and keyboard activate editing; mouse retains double-click editing.
+                    if (event.detail === 0 || window.matchMedia("(pointer: coarse)").matches)
+                        setEditing(true);
                 }}
                 onDoubleClick={() => {
                     if (archive || task.deletedAt || busy) return;
                     setEditing(true);
                 }}
             >
-                {rowTitle}
+                <span data-card-title>{rowTitle}</span>
                 {date && (
                     <small className={styles.listTaskDate}>
                         <Calendar aria-hidden size={12} />

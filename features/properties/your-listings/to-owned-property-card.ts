@@ -44,6 +44,7 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
         rentAmountInr: item.rentAmountInr,
         commissionPercent: item.commissionPercent,
         commissionAmount: item.commissionAmount,
+        ownerId: item.ownerId,
         ownerName: item.ownerName,
         ownerPhoneDigits: item.ownerPhoneDigits,
         visibility: item.visibility,

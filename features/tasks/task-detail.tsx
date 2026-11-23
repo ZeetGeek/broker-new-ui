@@ -3,6 +3,7 @@
 import { isMockMode } from "@/lib/api/mock-mode";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
+import { ContactName } from "@/components/shared/contact-name";
 import { DrawerSection } from "@/components/shared/drawer-section";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
@@ -20,6 +21,7 @@ import {
     Trash2,
     User,
 } from "@/components/shared/icons";
+import { useWorkflowDismiss } from "@/components/shared/workflow-context";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogDescription, DialogPopup, DialogTitle } from "@/components/ui/dialog";
 
@@ -268,7 +270,11 @@ export function TaskDetail({
                             <summary>
                                 <User aria-hidden />
                                 <span>
-                                    {client.name}
+                                    <ContactName
+                                        name={client.name}
+                                        contactId={client.id}
+                                        contactType="buyer"
+                                    />
                                     <small>Client{client.type ? ` · ${client.type}` : ""}</small>
                                 </span>
                                 <ChevronDown aria-hidden />
@@ -282,7 +288,11 @@ export function TaskDetail({
                             <summary>
                                 <User aria-hidden />
                                 <span>
-                                    {owner.name}
+                                    <ContactName
+                                        name={owner.name}
+                                        contactId={owner.id}
+                                        contactType="owner"
+                                    />
                                     <small>Owner{isMockMode() ? " · Sample CRM record" : ""}</small>
                                 </span>
                                 <ChevronDown aria-hidden />
@@ -350,6 +360,9 @@ export function TaskDeleteDialog({
     onClose: () => void;
     onConfirm: () => void;
 }) {
+    useWorkflowDismiss(true, () => {
+        if (!busy) onClose();
+    });
     return (
         <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
             <DialogPopup showCloseButton={false} className={styles.deleteDialog}>

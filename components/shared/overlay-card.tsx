@@ -1,9 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { type AppIcon, MapPin, Maximize2, UserPlus } from "@/components/shared/icons";
 import { MarqueeText } from "@/components/shared/marquee-text";
 import { OverlayCardPhotos } from "@/components/shared/overlay-card-photos";
@@ -49,6 +51,13 @@ export const OVERLAY_ICON_BUTTON_CLASS = `
   hover:bg-ink/45 hover:text-surface
   aria-expanded:bg-ink/45 aria-expanded:text-surface
 `;
+
+/** Photo controls share their colours without changing IconButton geometry. */
+export const OVERLAY_ICON_BUTTON_COLORS = {
+    "--icon-button-color": "var(--color-surface)",
+    "--icon-button-fill": "color-mix(in oklab, var(--color-ink) 30%, transparent)",
+    "--icon-button-hover": "color-mix(in oklab, var(--color-ink) 45%, transparent)",
+} as CSSProperties;
 
 /** Secondary outline button on the light panel (primary stays `accent`). */
 export const OVERLAY_GLASS_BUTTON_CLASS = `
@@ -106,6 +115,7 @@ export function OverlayCardSummary({
     headline,
     locationLabel,
     specsLabel,
+    wrapText = false,
 }: {
     /** Omit to show the headline as plain text (no detail page). */
     href?: string;
@@ -117,6 +127,8 @@ export function OverlayCardSummary({
     locationLabel: string;
     /** Optional quieter specs under the location. */
     specsLabel?: string;
+    /** Inventory cards keep the full property details readable in narrow columns. */
+    wrapText?: boolean;
 }) {
     return (
         <div className="flex flex-col gap-2 min-inline-0">
@@ -124,14 +136,28 @@ export function OverlayCardSummary({
             <div className="flex flex-col gap-1 min-inline-0">
                 <h3 className="max-inline-full min-inline-0">
                     {href ? (
-                        <PropertyTitleLink href={href} className={HEADLINE_CLASS}>
-                            <MarqueeText text={headline} />
+                        <PropertyTitleLink
+                            href={href}
+                            className={cn(
+                                HEADLINE_CLASS,
+                                wrapText && "overflow-visible text-start whitespace-normal",
+                            )}
+                        >
+                            {wrapText ? (
+                                <span className="wrap-anywhere min-inline-0">{headline}</span>
+                            ) : (
+                                <MarqueeText text={headline} />
+                            )}
                         </PropertyTitleLink>
                     ) : (
                         <span
-                            className={cn("block truncate font-semibold text-ink", HEADLINE_CLASS)}
+                            className={cn(
+                                "block font-semibold text-ink",
+                                HEADLINE_CLASS,
+                                wrapText ? "wrap-anywhere" : "truncate",
+                            )}
                         >
-                            <MarqueeText text={headline} />
+                            {wrapText ? headline : <MarqueeText text={headline} />}
                         </span>
                     )}
                 </h3>
@@ -141,7 +167,13 @@ export function OverlayCardSummary({
                         className="shrink-0 block-3.5 inline-3.5"
                         strokeWidth={1.75}
                     />
-                    <MarqueeText text={locationLabel} className="capitalize" />
+                    {wrapText ? (
+                        <span className="wrap-anywhere capitalize min-inline-0">
+                            {locationLabel}
+                        </span>
+                    ) : (
+                        <MarqueeText text={locationLabel} className="capitalize" />
+                    )}
                 </p>
                 {specsLabel ? (
                     <p className={META_LINE_CLASS}>
@@ -150,7 +182,11 @@ export function OverlayCardSummary({
                             className="shrink-0 block-3.5 inline-3.5"
                             strokeWidth={1.75}
                         />
-                        <MarqueeText text={specsLabel} />
+                        {wrapText ? (
+                            <span className="wrap-anywhere min-inline-0">{specsLabel}</span>
+                        ) : (
+                            <MarqueeText text={specsLabel} />
+                        )}
                     </p>
                 ) : null}
             </div>
@@ -171,6 +207,9 @@ export function OverlayPersonLine({
     hint,
     avatarUrl,
     action,
+    contactId,
+    contactType,
+    href,
 }: {
     label: string;
     name: string;
@@ -178,13 +217,22 @@ export function OverlayPersonLine({
     avatarUrl?: string;
     /** Optional control pinned to the reading end (e.g. Call). */
     action?: ReactNode;
+    contactId?: string | null;
+    contactType?: "buyer" | "owner";
+    href?: string;
 }) {
     return (
         <div className={cn(PERSON_CLASS, "inline-full")}>
             <span className={OVERLAY_PERSON_LABEL_CLASS}>{label}</span>
             <span className="flex flex-1 items-center gap-1.5 min-inline-0">
                 <UserAvatar name={name} imageUrl={avatarUrl} size="2xs" className="shrink-0" />
-                <span className="truncate font-semibold text-ink capitalize">{name}</span>
+                <ContactName
+                    name={name}
+                    contactId={contactId}
+                    contactType={contactType}
+                    href={href}
+                    className="truncate font-semibold text-ink"
+                />
                 {hint ? (
                     <>
                         <span className="shrink-0 text-ink-subtle/60" aria-hidden>
@@ -274,6 +322,7 @@ export type OverlayCardProps = {
     /** Icon buttons for the top-right of the photo (use OVERLAY_ICON_BUTTON_CLASS). */
     actions?: ReactNode;
     className?: string;
+    panelClassName?: string;
     /** Panel content, top to bottom. */
     children: ReactNode;
 };
@@ -290,13 +339,15 @@ export function OverlayCard({
     chips,
     actions,
     className,
+    panelClassName,
     children,
 }: OverlayCardProps) {
     const photos = images && images.length > 0 ? images : imageSrc ? [imageSrc] : [];
 
     return (
-        <article className={cn(CARD_CLASS, className)}>
-            <div className={PHOTO_CLASS}>
+        <article data-linked-card={href ? "" : undefined} className={cn(CARD_CLASS, className)}>
+            {href ? <CardLink href={href} label={`Open ${imageAlt}`} /> : null}
+            <div data-card-control={photos.length > 0 ? "" : undefined} className={PHOTO_CLASS}>
                 <OverlayCardPhotos
                     href={href}
                     images={photos}
@@ -327,7 +378,7 @@ export function OverlayCard({
                 ) : null}
             </div>
 
-            <div className={PANEL_CLASS}>{children}</div>
+            <div className={cn(PANEL_CLASS, panelClassName)}>{children}</div>
         </article>
     );
 }

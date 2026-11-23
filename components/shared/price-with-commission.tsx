@@ -305,12 +305,17 @@ export function ListingAskPrices({
     listing,
     audience = "broker",
     showEmptyTip = true,
+    size = "lg",
 }: {
     listing: ListingAskPricesListing;
     audience?: CommissionAudience;
     showEmptyTip?: boolean;
+    /** Dense pickers use `xs` / `sm`; cards keep the default `lg`. */
+    size?: PriceWithCommissionSize;
 }) {
     const isRentOnly = offersRent(listing) && !offersSale(listing);
+    const alsoSize: PriceWithCommissionSize =
+        size === "lg" || size === "xl" || size === "2xl" ? "sm" : "xs";
 
     if (isRentOnly) {
         return (
@@ -320,7 +325,7 @@ export function ListingAskPrices({
                 commissionAmountInr={listing.commissionAmount}
                 audience={audience}
                 showEmptyTip={showEmptyTip}
-                size="lg"
+                size={size}
             />
         );
     }
@@ -337,12 +342,17 @@ export function ListingAskPrices({
                     commissionPercent={listing.commissionPercent}
                     audience={audience}
                     showEmptyTip={showEmptyTip}
-                    size="lg"
+                    size={size}
                 />
                 <span className="font-medium text-ink-subtle" aria-hidden>
                     /
                 </span>
-                <span className="body-sm font-medium tracking-wide text-ink-muted">
+                <span
+                    className={cn(
+                        "font-medium tracking-wide text-ink-muted",
+                        alsoSize === "xs" ? "body-xs" : "body-sm",
+                    )}
+                >
                     Also{" "}
                     <PriceWithCommission
                         amountInr={listing.rentAmountInr ?? 0}
@@ -350,7 +360,7 @@ export function ListingAskPrices({
                         commissionAmountInr={listing.commissionAmount}
                         audience={audience}
                         showEmptyTip={showEmptyTip}
-                        size="sm"
+                        size={alsoSize}
                         className="text-ink"
                     />
                 </span>
@@ -364,7 +374,7 @@ export function ListingAskPrices({
             commissionPercent={listing.commissionPercent}
             audience={audience}
             showEmptyTip={showEmptyTip}
-            size="lg"
+            size={size}
         />
     );
 }

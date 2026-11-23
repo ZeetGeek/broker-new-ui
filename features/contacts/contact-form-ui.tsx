@@ -34,10 +34,10 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { ContactFormSkeleton } from "@/features/contacts/contacts-skeleton";
 
-/** Same control height as Add property (`size="lg"` → 48px). */
+/** Same control height and type as Add property fields (44px, text-sm). */
 export const nativeControlClass = `
-  rounded-control border-2 border-border-warm bg-surface px-4 text-base text-ink outline-none
-  block-control-xl inline-full
+  rounded-control border-2 border-border-warm bg-surface px-4 text-sm text-ink outline-none
+  block-control-lg inline-full
   hover:border-ink-subtle focus:border-ring focus:ring-3 focus:ring-ring/30
   disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-60
 `;
@@ -69,7 +69,11 @@ export function FormField({
                 className="text-sm font-semibold text-ink"
             >
                 {label}
-                {required ? <span className="text-danger"> *</span> : null}
+                {required ? (
+                    <span aria-label="required" className="ms-1 text-danger">
+                        *
+                    </span>
+                ) : null}
             </label>
             {children}
             {error ? (
@@ -99,6 +103,7 @@ export function TextField({
                 {...props}
                 id={id}
                 size={size}
+                className={cn("text-sm block-control-lg", props.className)}
                 errorText={error}
                 helperText={!error ? hintText : undefined}
             />
@@ -204,7 +209,7 @@ export function ComboboxField({
         <FormField label={label} htmlFor={id} required={required} hint={hint}>
             {loading ? (
                 <span role="status" aria-label={`Loading ${label.toLowerCase()}`} aria-busy="true">
-                    <Skeleton className="border-2 border-border-warm block-control-xl inline-full" />
+                    <Skeleton className="border-2 border-border-warm block-control-lg inline-full" />
                 </span>
             ) : (
                 <Combobox
@@ -216,8 +221,9 @@ export function ComboboxField({
                 >
                     <ComboboxInput
                         id={id}
+                        className="text-sm"
                         startIcon={startIcon}
-                        size="lg"
+                        size="md"
                         placeholder={placeholder}
                         disabled={disabled}
                         errorText={error}
@@ -291,7 +297,7 @@ export function Segmented<T extends string>({
                                 `
                                   rounded-control px-3 text-sm font-medium
                                   transition-[background-color,color,box-shadow] duration-160
-                                  block-control-xl
+                                  block-control-lg
                                 `,
                                 active
                                     ? tone === "brand"
@@ -355,10 +361,10 @@ export function ChoiceRadioField<T extends string>({
                             htmlFor={itemId}
                             className={cn(
                                 `
-                                  flex cursor-pointer gap-3 rounded-control border-2 px-4 py-3.5
+                                  flex cursor-pointer gap-3 rounded-control border-2 px-4 py-3
                                   text-start leading-normal font-normal
                                   transition-[background-color,border-color,color,box-shadow]
-                                  duration-160 min-block-12
+                                  duration-160 min-block-11
                                   has-focus-visible:ring-3 has-focus-visible:ring-ring/30
                                 `,
                                 hasDescription ? "items-start" : "items-center",
@@ -526,6 +532,7 @@ function ContactCurrencyInput({
     return (
         <SmartPriceInput
             id={id}
+            className="text-sm block-control-lg"
             size="lg"
             kind={kind}
             value={amount}
@@ -709,6 +716,7 @@ function TokenInput({
 
             <Input
                 size="lg"
+                className="text-sm block-control-lg"
                 value={draft}
                 onValueChange={setDraft}
                 onKeyDown={(event) => {
@@ -778,7 +786,8 @@ export function NotesField({
                 className={cn(
                     `
                       field-sizing-fixed resize-y rounded-control border-2 border-border-warm
-                      bg-surface px-4 py-3 text-base text-ink shadow-none
+                      bg-surface px-4 py-2.5 text-sm/6 text-ink shadow-none min-block-27
+                      placeholder:text-ink-subtle
                       hover:border-ink-subtle
                       focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
                       aria-invalid:border-danger-mid
@@ -858,6 +867,18 @@ export function MoreDetails({
     );
 }
 
+export type EmbeddedContactForm = {
+    active: boolean;
+    onStateChange: (state: { isDirty: boolean; busy: boolean }) => void;
+};
+
+export const CONTACT_FORM_DRAWER_CLASS = `
+    contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0!
+    rounded-none! block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
+    sm:inline-[min(var(--drawer-width),100vw)]!
+    sm:max-inline-[var(--drawer-width)]!
+`;
+
 export function ContactFormDrawer({
     open,
     onOpenChange,
@@ -875,6 +896,7 @@ export function ContactFormDrawer({
     loading = false,
     skeletonVariant = "buyer",
     bothBudgets = false,
+    embedded,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -893,11 +915,18 @@ export function ContactFormDrawer({
     loading?: boolean;
     skeletonVariant?: "buyer" | "owner";
     bothBudgets?: boolean;
+    embedded?: EmbeddedContactForm;
 }) {
     const bodyRef = useRef<HTMLDivElement>(null);
     const [discardOpen, setDiscardOpen] = useState(false);
 
+    const onStateChange = embedded?.onStateChange;
+    useEffect(() => {
+        onStateChange?.({ isDirty, busy });
+    }, [onStateChange, isDirty, busy]);
+
     const requestClose = (next: boolean) => {
+        if (!next && busy) return;
         if (!next && isDirty && !busy) {
             setDiscardOpen(true);
             return;
@@ -917,7 +946,7 @@ export function ContactFormDrawer({
     }
 
     useEffect(() => {
-        if (!open || busy || loading) return;
+        if (!open || busy || loading || embedded?.active === false) return;
         const unsubscribe = tinykeys(window, {
             "$mod+Enter": (event) => {
                 event.preventDefault();
@@ -933,11 +962,12 @@ export function ContactFormDrawer({
                 : {}),
         });
         return () => unsubscribe();
-    }, [busy, loading, open, onPrimary, onSaveAnother]);
+    }, [busy, loading, open, onPrimary, onSaveAnother, embedded?.active]);
 
     useEffect(() => {
-        if (!footerError || !open) return;
+        if (!footerError || !open || embedded?.active === false) return;
         const scrollRoot =
+            (embedded?.active ? bodyRef.current : null) ??
             bodyRef.current?.closest(".simplebar-content-wrapper") ??
             bodyRef.current?.closest("[data-simplebar]") ??
             bodyRef.current?.parentElement;
@@ -946,7 +976,76 @@ export function ContactFormDrawer({
         } else {
             bodyRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
         }
-    }, [footerError, open]);
+    }, [footerError, open, embedded?.active]);
+
+    const footer = (
+        <div className="flex flex-col gap-3 inline-full">
+            {footerError ? (
+                <p
+                    role="alert"
+                    className="body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold text-danger"
+                >
+                    {footerError}
+                </p>
+            ) : null}
+            <div className="flex flex-wrap items-center justify-end gap-2">
+                {loading ? (
+                    <div
+                        role="status"
+                        aria-label="Loading form actions"
+                        aria-busy="true"
+                        className="flex gap-2"
+                    >
+                        {onSaveAnother ? <Skeleton className="block-control-md inline-40" /> : null}
+                        <Skeleton className="block-control-md inline-28" />
+                    </div>
+                ) : (
+                    <>
+                        {onSaveAnother ? (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={onSaveAnother}
+                                disabled={busy}
+                            >
+                                {saveAnotherLabel}
+                            </Button>
+                        ) : null}
+                        <Button
+                            type="button"
+                            variant="accent"
+                            onClick={onPrimary}
+                            disabled={busy}
+                            loading={busy}
+                        >
+                            {primaryLabel}
+                        </Button>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+
+    if (embedded) {
+        if (!embedded.active) return null;
+        return (
+            <div className="flex flex-col block-full min-block-0">
+                <div
+                    ref={bodyRef}
+                    className="flex-1 overflow-y-auto overscroll-contain p-(--dialog-pad) min-block-0"
+                >
+                    {loading ? (
+                        <ContactFormSkeleton variant={skeletonVariant} bothBudgets={bothBudgets} />
+                    ) : (
+                        children
+                    )}
+                </div>
+                <div className="shrink-0 border-bs border-border-warm p-(--dialog-pad)">
+                    {footer}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
@@ -958,11 +1057,7 @@ export function ContactFormDrawer({
                 description={description}
                 size="lg"
                 padding="md"
-                className="
-                  contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0!
-                  rounded-none! block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
-                  sm:inline-[min(46rem,100vw)]! sm:max-inline-184!
-                "
+                className={CONTACT_FORM_DRAWER_CLASS}
                 headerClassName="
                   !space-y-0 !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-b border-border-warm
                 "
@@ -970,58 +1065,7 @@ export function ContactFormDrawer({
                   !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
                 "
                 header={header}
-                footer={
-                    <div className="flex flex-col gap-3 inline-full">
-                        {footerError ? (
-                            <p
-                                role="alert"
-                                className="
-                                  body-sm rounded-inner bg-danger-soft px-3 py-2 font-semibold
-                                  text-danger
-                                "
-                            >
-                                {footerError}
-                            </p>
-                        ) : null}
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                            {loading ? (
-                                <div
-                                    role="status"
-                                    aria-label="Loading form actions"
-                                    aria-busy="true"
-                                    className="flex gap-2"
-                                >
-                                    {onSaveAnother ? (
-                                        <Skeleton className="block-control-md inline-40" />
-                                    ) : null}
-                                    <Skeleton className="block-control-md inline-28" />
-                                </div>
-                            ) : (
-                                <>
-                                    {onSaveAnother ? (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={onSaveAnother}
-                                            disabled={busy}
-                                        >
-                                            {saveAnotherLabel}
-                                        </Button>
-                                    ) : null}
-                                    <Button
-                                        type="button"
-                                        variant="accent"
-                                        onClick={onPrimary}
-                                        disabled={busy}
-                                        loading={busy}
-                                    >
-                                        {primaryLabel}
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                }
+                footer={footer}
             >
                 <div ref={bodyRef} className="inline-full">
                     {loading ? (

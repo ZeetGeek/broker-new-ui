@@ -1,12 +1,11 @@
 "use client";
 
-import { Fragment, type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
 import type { NotificationItem } from "@/lib/api/notifications";
-import { formatNotificationDayTime } from "@/lib/format/date";
+import { formatCompactRelative, formatNotificationDayTime } from "@/lib/format/date";
 import {
     countByTab,
     filterNotificationsByTab,
@@ -18,12 +17,14 @@ import {
     NOTIFICATION_TABS,
     type NotificationDaySection,
     type NotificationTab,
+    type NotificationTone,
 } from "@/lib/notifications/classify";
 import { getNotificationDisplayContent } from "@/lib/notifications/display-content";
 import { cn } from "@/lib/utils";
 
 import { NotificationIcon } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -44,80 +45,55 @@ export type PortalNotificationsMenuProps = {
     tooltipLabel?: string;
 };
 
+type RespondHandler = (
+    notificationId: string,
+    representationId: string,
+    status: "accepted" | "rejected",
+) => Promise<void>;
+
+/* Floating panel: card radius, hairline, dropdown elevation (shadow-lg per DESIGN §3.3). */
 const menuSurfaceClass = `
   t-dropdown t-profile-menu t-notifications-panel animate-none! flex flex-col overflow-hidden! rounded-card border
-  border-border-warm bg-surface p-0 text-ink shadow-xl ring-0
+  border-border-warm bg-surface p-0 text-ink shadow-lg ring-0
   before:backdrop-blur-none
   data-closed:animate-none!
   data-open:animate-none!
-  min-inline-0 inline-[min(23rem,calc(100vw-1.5rem))] max-block-[min(44rem,var(--available-height),calc(100dvh-6rem))]
-  **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
-  **:data-[slot$=-item]:focus:bg-surface-muted!
+  min-inline-0 inline-[min(24rem,calc(100vw-1.5rem))] max-block-[min(40rem,var(--available-height),calc(100dvh-6rem))]
 `;
 
+/* Sized to content, capped. Never reserves height for rows that are not there. */
 const notificationsListClass = `
-  relative overflow-y-auto overscroll-contain touch-pan-y
-  block-[min(30rem,calc(100dvh-17rem))] min-block-0
+  relative min-block-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y
+  max-block-[min(28rem,calc(100dvh-16rem))]
   [scrollbar-width:thin] [scrollbar-color:var(--color-border-warm)_transparent]
 `;
 
-const itemClass = `
-  group/notification relative flex inline-full cursor-pointer items-start gap-3.5 rounded-inner
-  px-3 py-4 body-sm font-normal text-ink transition-colors duration-160
-  hover:bg-surface-muted!
-  focus:text-ink!
-  not-data-[variant=destructive]:focus:**:text-inherit
-  data-highlighted:text-ink!
-  data-highlighted:[&_[data-notification-actions]_button:first-child]:border-border-warm!
-  data-highlighted:[&_[data-notification-actions]_button:first-child]:bg-surface!
-  data-highlighted:[&_[data-notification-actions]_button:first-child]:text-ink!
-  data-highlighted:[&_[data-notification-actions]_button:last-child]:bg-primary!
-  data-highlighted:[&_[data-notification-actions]_button:last-child]:text-primary-foreground!
-  focus:[&_[data-notification-actions]_button:first-child]:border-border-warm!
-  focus:[&_[data-notification-actions]_button:first-child]:bg-surface!
-  focus:[&_[data-notification-actions]_button:first-child]:text-ink!
-  focus:[&_[data-notification-actions]_button:last-child]:bg-primary!
-  focus:[&_[data-notification-actions]_button:last-child]:text-primary-foreground!
+const rowClass = `
+  group/notification relative flex inline-full cursor-pointer items-start gap-3 rounded-inner
+  px-3 py-3 font-normal text-ink transition-colors duration-160
+  hover:bg-surface-muted! data-highlighted:bg-surface-muted! focus:bg-surface-muted!
+  data-[unread=true]:bg-brand-soft/45
 `;
 
-const listDividerClass = "mx-3 my-1.5 border-be border-border-warm/60";
-const headerSectionDividerClass = "shrink-0 border-be border-border-warm/70";
-
+/* The menu item forces descendants to ink on focus; these keep the action faces intact. */
 const declineActionClass = `
-  rounded-inner! font-medium
+  font-medium
   border-border-warm! bg-surface! text-ink!
-  hover:border-border-warm! hover:bg-surface-muted! hover:text-ink!
-  focus-visible:border-border-warm! focus-visible:bg-surface! focus-visible:text-ink!
+  hover:bg-surface-muted!
 `;
 
 const acceptActionClass = `
-  rounded-inner! font-medium
+  font-medium
   bg-primary! text-primary-foreground!
-  hover:bg-primary! hover:text-primary-foreground!
-  focus-visible:bg-primary! focus-visible:text-primary-foreground!
+  hover:bg-primary/85!
 `;
 
-const notificationLeadClass = "flex shrink-0 items-start justify-center pbs-0.5 inline-5";
-
-function NotificationLeadMedia({ children }: { children: ReactNode }) {
-    return <span className={notificationLeadClass}>{children}</span>;
-}
-
-function NotificationsFooter({ viewAllHref }: { viewAllHref: string }) {
-    return (
-        <div className="shrink-0 border-bs border-border-warm/70 px-4 py-2">
-            <Button
-                variant="link"
-                nativeButton={false}
-                render={<Link href={viewAllHref} />}
-                className="body-sm gap-2 font-semibold text-ink inline-full min-block-11 hover:text-ink"
-            >
-                View all notifications
-                <NotificationIcon name="arrow" aria-hidden className="block-4 inline-4" />
-            </Button>
-        </div>
-    );
-}
+const TONE_TILE_CLASS: Record<NotificationTone, string> = {
+    brand: "bg-brand-soft text-brand-text!",
+    urgent: "bg-urgent-soft text-urgent!",
+    danger: "bg-danger-soft text-danger!",
+    neutral: "bg-surface-muted text-ink-muted!",
+};
 
 function UnreadBadge({ count }: { count: number }) {
     return (
@@ -126,52 +102,25 @@ function UnreadBadge({ count }: { count: number }) {
             data-open={count > 0 ? "true" : "false"}
             aria-hidden
         >
-            <span className="t-badge-dot tabular body-xs flex! items-center justify-center rounded-md bg-brand px-1 font-semibold text-canvas ring-2 ring-surface-muted block-5 min-inline-5">
+            <span className="t-badge-dot tabular body-xs flex! items-center justify-center rounded-full bg-brand px-1 font-semibold text-canvas ring-2 ring-surface block-5 min-inline-5">
                 {count > 9 ? "9+" : count}
             </span>
         </span>
     );
 }
 
-function NotificationTypeIcon({ item }: { item: NotificationItem }) {
-    const { iconName } = getNotificationVisual(item);
+function NotificationTile({ item }: { item: NotificationItem }) {
+    const { iconName, tone } = getNotificationVisual(item);
     return (
-        <NotificationIcon
-            name={iconName}
+        <span
             aria-hidden
-            className="shrink-0 text-ink! block-5! inline-5!"
-        />
-    );
-}
-
-function NotificationDayHeader({ label }: { label: string }) {
-    return (
-        <div className="px-3 pbs-5 pbe-1.5" role="presentation">
-            <p className="body-xs font-semibold text-brand-text">{label}</p>
-        </div>
-    );
-}
-
-function NotificationFilterTabs({
-    activeTab,
-    tabCounts,
-    onTabChange,
-}: {
-    activeTab: NotificationTab;
-    tabCounts: Record<NotificationTab, number>;
-    onTabChange: (tab: NotificationTab) => void;
-}) {
-    return (
-        <SlidingTabs
-            value={activeTab}
-            onValueChange={onTabChange}
-            label="Filter notifications"
-            height={36}
-            stretch
-            options={NOTIFICATION_TABS.filter(
-                (tab) => FEATURE_PLATFORM_OWNER || tab.value !== "requests",
-            ).map((tab) => ({ ...tab, count: tabCounts[tab.value] }))}
-        />
+            className={cn(
+                "flex shrink-0 items-center justify-center rounded-inner block-10 inline-10",
+                TONE_TILE_CLASS[tone],
+            )}
+        >
+            <NotificationIcon name={iconName} className="block-5! inline-5!" />
+        </span>
     );
 }
 
@@ -189,50 +138,92 @@ function NotificationsHeader({
     onTabChange: (tab: NotificationTab) => void;
 }) {
     return (
-        <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold tracking-tight text-ink">Notifications</h2>
-                <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    disabled={unreadCount === 0}
-                    onClick={onMarkAllRead}
-                    className="
-                      body-xs shrink-0 gap-1.5 p-0 font-medium text-ink min-block-11
-                      hover:text-ink hover:underline
-                      disabled:text-ink-subtle disabled:no-underline
-                    "
-                >
-                    Mark all read
-                    <NotificationIcon name="checks" aria-hidden className="block-4 inline-4" />
-                </Button>
+        <div className="flex shrink-0 flex-col gap-3 px-4 pbs-4 pbe-3">
+            <div className="flex items-center justify-between gap-3 min-block-8">
+                <div className="flex items-baseline gap-2">
+                    <h2 className="h6 text-ink">Notifications</h2>
+                    {unreadCount > 0 ? (
+                        <span className="tabular body-xs font-semibold text-brand-text">
+                            {unreadCount} new
+                        </span>
+                    ) : null}
+                </div>
+                {unreadCount > 0 ? (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={onMarkAllRead}
+                        className="-me-2 font-medium text-ink-muted hover:bg-surface-muted hover:text-ink"
+                    >
+                        <NotificationIcon name="checks" aria-hidden data-icon="inline-start" />
+                        Mark all read
+                    </Button>
+                ) : null}
             </div>
-            <NotificationFilterTabs
-                activeTab={activeTab}
-                tabCounts={tabCounts}
-                onTabChange={onTabChange}
+            <SlidingTabs
+                value={activeTab}
+                onValueChange={onTabChange}
+                label="Filter notifications"
+                height={36}
+                stretch
+                options={NOTIFICATION_TABS.filter(
+                    (tab) => FEATURE_PLATFORM_OWNER || tab.value !== "requests",
+                ).map((tab) => ({ ...tab, count: tabCounts[tab.value] || null }))}
             />
         </div>
     );
 }
 
-function NotificationsEmpty({ filtered = false }: { filtered?: boolean }) {
+function NotificationsEmpty({ onShowAll }: { onShowAll?: () => void }) {
+    const filtered = Boolean(onShowAll);
     return (
-        <div className="flex flex-col items-center gap-3 px-6 py-12 text-center" role="status">
-            <NotificationIcon
-                name="bell"
+        <div className="flex flex-col items-center gap-1 px-6 py-10 text-center" role="status">
+            <span
                 aria-hidden
-                className="mbe-1 text-ink-subtle block-7 inline-7"
-            />
+                className="mbe-3 flex items-center justify-center rounded-inner bg-surface-muted text-ink-muted block-10 inline-10"
+            >
+                <NotificationIcon
+                    name={filtered ? "checks" : "bell"}
+                    className="block-5 inline-5"
+                />
+            </span>
             <p className="body-sm font-semibold text-ink">
-                {filtered ? "Nothing in this tab" : "You're up to date"}
+                {filtered ? "Nothing new here" : "You're up to date"}
             </p>
-            <p className="body-sm text-pretty text-ink-muted">
+            <p className="body-sm text-pretty text-ink-muted max-inline-64">
                 {filtered
-                    ? "Try another filter or view all notifications."
+                    ? "Other tabs may still have updates."
                     : "When something needs your attention, it shows up here."}
             </p>
+            {onShowAll ? (
+                <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    onClick={onShowAll}
+                    className="mbs-1 font-semibold text-brand-text"
+                >
+                    Show all
+                </Button>
+            ) : null}
+        </div>
+    );
+}
+
+function NotificationsSkeleton() {
+    return (
+        <div className="flex flex-col gap-1 p-2" role="status" aria-live="polite">
+            <span className="sr-only">Loading notifications…</span>
+            {[0, 1, 2].map((key) => (
+                <div key={key} aria-hidden className="flex items-start gap-3 p-3">
+                    <span className="shrink-0 animate-pulse rounded-inner bg-surface-muted block-10 inline-10" />
+                    <span className="flex flex-1 flex-col gap-2 pbs-1">
+                        <span className="animate-pulse rounded-full bg-surface-muted block-3 inline-3/4" />
+                        <span className="animate-pulse rounded-full bg-surface-muted block-3 inline-1/2" />
+                    </span>
+                </div>
+            ))}
         </div>
     );
 }
@@ -242,11 +233,7 @@ function RequestActions({
     onRespond,
 }: {
     item: NotificationItem;
-    onRespond: (
-        notificationId: string,
-        representationId: string,
-        status: "accepted" | "rejected",
-    ) => Promise<void>;
+    onRespond: RespondHandler;
 }) {
     const [saving, setSaving] = useState<"accepted" | "rejected" | null>(null);
     const representationId = item.relatedRepresentationId;
@@ -266,7 +253,7 @@ function RequestActions({
                     ? error.message
                     : error instanceof Error
                       ? error.message
-                      : "Failed to respond";
+                      : "Couldn't send your answer. Check your connection and try again.";
             toast.error(message);
         } finally {
             setSaving(null);
@@ -276,13 +263,13 @@ function RequestActions({
     return (
         <div
             data-notification-actions
-            className="mbs-1 flex flex-wrap items-center gap-2"
+            className="mbs-2 flex flex-wrap items-center gap-2"
             onClick={(event) => event.stopPropagation()}
         >
             <Button
                 type="button"
                 variant="outline"
-                size="xs"
+                size="sm"
                 className={declineActionClass}
                 disabled={Boolean(saving)}
                 loading={saving === "rejected"}
@@ -292,7 +279,7 @@ function RequestActions({
             </Button>
             <Button
                 type="button"
-                size="xs"
+                size="sm"
                 className={acceptActionClass}
                 disabled={Boolean(saving)}
                 loading={saving === "accepted"}
@@ -304,29 +291,16 @@ function RequestActions({
     );
 }
 
-function NotificationDescription({ text }: { text: string }) {
-    return (
-        <span
-            data-notification-body
-            className="body-sm wrap-anywhere whitespace-normal text-ink-muted!"
-        >
-            {text}
-        </span>
-    );
-}
-
 function NotificationRowContent({
     item,
     userRole,
+    now,
     onRespond,
 }: {
     item: NotificationItem;
     userRole: string | null | undefined;
-    onRespond: (
-        notificationId: string,
-        representationId: string,
-        status: "accepted" | "rejected",
-    ) => Promise<void>;
+    now: Date;
+    onRespond: RespondHandler;
 }) {
     const occurredAt = item.createdAt ? new Date(item.createdAt) : null;
     const { title, body } = getNotificationDisplayContent(item);
@@ -335,36 +309,52 @@ function NotificationRowContent({
     const decisionLabel = getRepresentationDecisionLabel(item);
 
     return (
-        <div
-            className="flex items-start gap-3 inline-full min-inline-0"
-            title={occurredAt ? `Received ${formatNotificationDayTime(occurredAt)}` : undefined}
-        >
-            <NotificationLeadMedia>
-                <NotificationTypeIcon item={item} />
-            </NotificationLeadMedia>
+        <>
+            <NotificationTile item={item} />
 
-            <div className="pie-4 flex flex-1 flex-col gap-1.5 min-inline-0">
-                <span
-                    data-notification-title
-                    className="body-sm line-clamp-2 font-semibold text-pretty text-ink"
-                >
-                    {!item.isRead ? <span className="sr-only">Unread: </span> : null}
-                    {title}
-                </span>
+            <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
+                <div className="flex items-start gap-2">
+                    <span
+                        data-notification-title
+                        className={cn(
+                            "body-sm line-clamp-2 flex-1 text-pretty text-ink",
+                            item.isRead ? "font-medium" : "font-semibold",
+                        )}
+                    >
+                        {!item.isRead ? <span className="sr-only">Unread: </span> : null}
+                        {title}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1.5 pbs-0.5">
+                        {occurredAt ? (
+                            <time
+                                dateTime={occurredAt.toISOString()}
+                                title={formatNotificationDayTime(occurredAt)}
+                                className="tabular body-xs text-ink-subtle!"
+                            >
+                                {formatCompactRelative(occurredAt, now)}
+                            </time>
+                        ) : null}
+                        {!item.isRead ? (
+                            <span aria-hidden className="rounded-full bg-brand block-2 inline-2" />
+                        ) : null}
+                    </span>
+                </div>
 
-                {body ? <NotificationDescription text={body} /> : null}
+                {body ? (
+                    <p
+                        data-notification-body
+                        className="body-sm line-clamp-2 wrap-anywhere text-ink-muted!"
+                    >
+                        {body}
+                    </p>
+                ) : null}
 
                 {propertyLabel ? (
-                    <span
-                        data-notification-body
-                        className="
-                          body-xs inline-flex items-center gap-1.5 text-ink-muted! max-inline-full
-                        "
-                    >
+                    <span className="body-xs mbs-1 inline-flex items-center gap-1.5 text-ink-muted! max-inline-full">
                         <NotificationIcon
                             name="building"
                             aria-hidden
-                            className="shrink-0 text-ink-muted! block-3 inline-3"
+                            className="shrink-0 text-ink-subtle! block-3.5 inline-3.5"
                         />
                         <span className="truncate">{propertyLabel}</span>
                     </span>
@@ -375,72 +365,13 @@ function NotificationRowContent({
                 {decisionLabel ? (
                     <span
                         data-notification-status
-                        className="
-                          body-xs rounded-md border border-border-warm bg-surface-muted/80 px-2
-                          py-0.5 font-medium text-ink-muted! inline-fit
-                        "
+                        className="body-xs mbs-1.5 rounded-full bg-surface-muted px-2.5 py-1 font-semibold text-ink-muted! inline-fit"
                     >
                         {decisionLabel}
                     </span>
                 ) : null}
             </div>
-
-            {!item.isRead ? (
-                <span
-                    aria-hidden
-                    className="
-                      absolute inset-e-3 inset-bs-5 rounded-full bg-brand block-1.5 inline-1.5
-                    "
-                />
-            ) : null}
-        </div>
-    );
-}
-
-function NotificationDayBlock({
-    section,
-    viewAllHref,
-    userRole,
-    onMarkRead,
-    onRespond,
-    showHeader,
-    isLastSection,
-}: {
-    section: NotificationDaySection;
-    viewAllHref: string;
-    userRole: string | null | undefined;
-    onMarkRead: (id: string) => void;
-    onRespond: (
-        notificationId: string,
-        representationId: string,
-        status: "accepted" | "rejected",
-    ) => Promise<void>;
-    showHeader: boolean;
-    isLastSection: boolean;
-}) {
-    return (
-        <div className="flex flex-col">
-            {showHeader ? <NotificationDayHeader label={section.label} /> : null}
-            {section.items.map((item, index) => {
-                const isLastItem = index === section.items.length - 1;
-                const showDivider = !(isLastItem && isLastSection);
-
-                return (
-                    <Fragment key={item.id}>
-                        <NotificationRow
-                            item={item}
-                            viewAllHref={viewAllHref}
-                            userRole={userRole}
-                            onMarkRead={onMarkRead}
-                            onRespond={onRespond}
-                        />
-                        {showDivider ? (
-                            <div aria-hidden className={listDividerClass} role="separator" />
-                        ) : null}
-                    </Fragment>
-                );
-            })}
-        </div>
+        </>
     );
 }
 
@@ -448,28 +379,25 @@ function NotificationRow({
     item,
     viewAllHref,
     userRole,
+    now,
     onMarkRead,
     onRespond,
 }: {
     item: NotificationItem;
     viewAllHref: string;
     userRole: string | null | undefined;
+    now: Date;
     onMarkRead: (id: string) => void;
-    onRespond: (
-        notificationId: string,
-        representationId: string,
-        status: "accepted" | "rejected",
-    ) => Promise<void>;
+    onRespond: RespondHandler;
 }) {
-    const href = item.href || viewAllHref;
-    const actionable = isActionableRequest(item, userRole);
+    const content = (
+        <NotificationRowContent item={item} userRole={userRole} now={now} onRespond={onRespond} />
+    );
 
-    const rowClass = itemClass;
-
-    if (actionable) {
+    if (isActionableRequest(item, userRole)) {
         return (
-            <DropdownMenuItem closeOnClick={false} className={rowClass}>
-                <NotificationRowContent item={item} userRole={userRole} onRespond={onRespond} />
+            <DropdownMenuItem closeOnClick={false} className={rowClass} data-unread={!item.isRead}>
+                {content}
             </DropdownMenuItem>
         );
     }
@@ -477,13 +405,31 @@ function NotificationRow({
     return (
         <DropdownMenuItem
             className={rowClass}
-            render={<Link href={href} />}
+            data-unread={!item.isRead}
+            render={<Link href={item.href || viewAllHref} />}
             onClick={() => {
                 if (!item.isRead) onMarkRead(item.id);
             }}
         >
-            <NotificationRowContent item={item} userRole={userRole} onRespond={onRespond} />
+            {content}
         </DropdownMenuItem>
+    );
+}
+
+function NotificationDayBlock({
+    section,
+    children,
+}: {
+    section: NotificationDaySection;
+    children: ReactNode;
+}) {
+    return (
+        <div className="flex flex-col gap-0.5" role="presentation">
+            <p className="body-xs sticky inset-bs-0 z-1 bg-surface px-3 pbs-3 pbe-1.5 font-semibold text-ink-subtle">
+                {section.label}
+            </p>
+            {children}
+        </div>
     );
 }
 
@@ -499,7 +445,8 @@ export function PortalNotificationsMenu({
     const now = new Date();
     const hasUnread = unreadCount > 0;
     const label = hasUnread ? `Notifications, ${unreadCount} unread` : "Notifications";
-    const tabCounts = useMemo(() => countByTab(items), [items]);
+    // Tab badges count what is new, so "All 1 · Visits 1" means the same thing everywhere.
+    const tabCounts = useMemo(() => countByTab(items.filter((item) => !item.isRead)), [items]);
     const filteredItems = useMemo(
         () => filterNotificationsByTab(items, activeTab),
         [items, activeTab],
@@ -527,6 +474,43 @@ export function PortalNotificationsMenu({
         </DropdownMenuTrigger>
     );
 
+    let list: ReactNode;
+    if (loading && items.length === 0) {
+        list = <NotificationsSkeleton />;
+    } else if (items.length === 0) {
+        list = <NotificationsEmpty />;
+    } else if (filteredItems.length === 0) {
+        list = <NotificationsEmpty onShowAll={() => setActiveTab("all")} />;
+    } else {
+        list = (
+            <div
+                key={activeTab}
+                className={notificationsListClass}
+                role="region"
+                aria-label="Notification list"
+                tabIndex={0}
+            >
+                <DropdownMenuGroup className="t-tabs-panel flex flex-col gap-1 px-2 pbe-2">
+                    {daySections.map((section) => (
+                        <NotificationDayBlock key={section.dayKey} section={section}>
+                            {section.items.map((item) => (
+                                <NotificationRow
+                                    key={item.id}
+                                    item={item}
+                                    viewAllHref={viewAllHref}
+                                    userRole={userRole}
+                                    now={now}
+                                    onMarkRead={(id) => void markRead(id)}
+                                    onRespond={respondToRepresentation}
+                                />
+                            ))}
+                        </NotificationDayBlock>
+                    ))}
+                </DropdownMenuGroup>
+            </div>
+        );
+    }
+
     return (
         <DropdownMenu>
             {tooltipLabel ? (
@@ -538,56 +522,36 @@ export function PortalNotificationsMenu({
                 trigger
             )}
 
-            <DropdownMenuContent align="end" sideOffset={14} className={cn(menuSurfaceClass)}>
-                <div className="shrink-0 p-4">
-                    <NotificationsHeader
-                        unreadCount={unreadCount}
-                        activeTab={activeTab}
-                        tabCounts={tabCounts}
-                        onMarkAllRead={() => void markAllRead()}
-                        onTabChange={setActiveTab}
-                    />
-                </div>
+            <DropdownMenuContent align="end" sideOffset={12} className={menuSurfaceClass}>
+                <NotificationsHeader
+                    unreadCount={unreadCount}
+                    activeTab={activeTab}
+                    tabCounts={tabCounts}
+                    onMarkAllRead={() => void markAllRead()}
+                    onTabChange={setActiveTab}
+                />
 
-                <div aria-hidden className={headerSectionDividerClass} role="separator" />
+                <div aria-hidden className="shrink-0 border-be border-border-warm" />
 
-                {loading && items.length === 0 ? (
-                    <p className="body-sm shrink-0 px-4 py-12 text-center text-ink-muted">
-                        Loading notifications…
-                    </p>
-                ) : items.length === 0 ? (
-                    <div className="mx-auto px-4 max-inline-80">
-                        <NotificationsEmpty />
-                    </div>
-                ) : filteredItems.length === 0 ? (
-                    <div className="mx-auto px-4 max-inline-80">
-                        <NotificationsEmpty filtered />
-                    </div>
-                ) : (
-                    <div
-                        key={activeTab}
-                        className={notificationsListClass}
-                        role="region"
-                        aria-label="Notification list"
-                        tabIndex={0}
+                {list}
+
+                <div className="shrink-0 border-bs border-border-warm p-2">
+                    <Button
+                        variant="ghost"
+                        size="md"
+                        nativeButton={false}
+                        render={<Link href={viewAllHref} />}
+                        className="font-semibold text-ink inline-full hover:bg-surface-muted hover:text-ink"
                     >
-                        <DropdownMenuGroup className="t-tabs-panel flex flex-col px-4 py-2">
-                            {daySections.map((section, sectionIndex) => (
-                                <NotificationDayBlock
-                                    key={section.dayKey}
-                                    section={section}
-                                    viewAllHref={viewAllHref}
-                                    userRole={userRole}
-                                    onMarkRead={(id) => void markRead(id)}
-                                    onRespond={respondToRepresentation}
-                                    showHeader={true}
-                                    isLastSection={sectionIndex === daySections.length - 1}
-                                />
-                            ))}
-                        </DropdownMenuGroup>
-                    </div>
-                )}
-                <NotificationsFooter viewAllHref={viewAllHref} />
+                        View all notifications
+                        <NotificationIcon
+                            name="arrow"
+                            aria-hidden
+                            data-icon="inline-end"
+                            className="block-4 inline-4"
+                        />
+                    </Button>
+                </div>
             </DropdownMenuContent>
         </DropdownMenu>
     );

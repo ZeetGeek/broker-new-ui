@@ -351,18 +351,19 @@ export function AppDateRangePicker({
                 className={cn(
                     // PopoverContent defaults to inline-72 — override so two months + presets fit.
                     `
-                      gap-0 overflow-x-auto overflow-y-visible rounded-card border border-border-warm
+                      gap-0 overflow-hidden rounded-card border border-border-warm
                       bg-surface p-0 shadow-lg ring-0
-                      inline-auto max-inline-[calc(100vw-1.5rem)]
+                      inline-auto max-block-[min(var(--available-height),calc(100dvh-2rem))] max-inline-[calc(100vw-1.5rem)]
+                      max-sm:inline-[calc(100vw-1.5rem)]
                     `,
                     className,
                 )}
             >
-                <div className="flex flex-col md:flex-row md:items-start">
-                    <div className="flex flex-col min-inline-0">
+                <div className="flex flex-col overflow-auto overscroll-contain min-block-0 md:flex-row md:items-start">
+                    <div className="flex flex-col min-inline-0 max-sm:inline-full">
                         <div
                             className={cn(
-                                "flex flex-wrap items-center gap-3 px-5 pbs-4 pbe-3",
+                                "flex flex-wrap items-center gap-3 px-3 pbs-4 pbe-3 sm:px-5",
                                 showCompare ? "justify-between" : "justify-start",
                             )}
                         >
@@ -396,8 +397,8 @@ export function AppDateRangePicker({
                                     </Label>
                                 </div>
                             ) : null}
-                            <div className="flex flex-col gap-2.5">
-                                <div className="flex flex-wrap items-center gap-2.5">
+                            <div className="flex flex-col gap-2.5 min-inline-0">
+                                <div className="flex flex-col items-start gap-2.5 min-[400px]:flex-row min-[400px]:flex-wrap min-[400px]:items-center">
                                     <DateInput
                                         value={range.from}
                                         onChange={(date) => {
@@ -407,7 +408,7 @@ export function AppDateRangePicker({
                                         }}
                                     />
                                     <span className="body-sm text-ink-muted" aria-hidden>
-                                        –
+                                        to
                                     </span>
                                     <DateInput
                                         value={range.to}
@@ -418,7 +419,7 @@ export function AppDateRangePicker({
                                     />
                                 </div>
                                 {rangeCompare ? (
-                                    <div className="flex flex-wrap items-center gap-2.5">
+                                    <div className="flex flex-col items-start gap-2.5 min-[400px]:flex-row min-[400px]:flex-wrap min-[400px]:items-center">
                                         <DateInput
                                             value={rangeCompare.from}
                                             onChange={(date) => {
@@ -430,7 +431,7 @@ export function AppDateRangePicker({
                                             }}
                                         />
                                         <span className="body-sm text-ink-muted" aria-hidden>
-                                            –
+                                            to
                                         </span>
                                         <DateInput
                                             value={rangeCompare.to}
@@ -448,7 +449,7 @@ export function AppDateRangePicker({
                         </div>
 
                         {hasSidebar && isSmallScreen && presets && !sidebar ? (
-                            <div className="px-5 pbe-3">
+                            <div className="px-3 pbe-3 sm:px-5">
                                 <Select
                                     items={presetSelectItems}
                                     value={selectedPreset ?? null}
@@ -491,17 +492,19 @@ export function AppDateRangePicker({
                             endMonth={upperBound ?? undefined}
                             startMonth={minDate ?? undefined}
                             className="
-                              bg-transparent px-5 pbs-1 pbe-3
-                              [--cell-size:--spacing(11)]
+                              bg-transparent px-3 pbs-1 pbe-3 [--cell-size:min(--spacing(11),calc((100vw-3rem)/7))]
+                              inline-full
+                              max-sm:**:data-[slot=button]:min-inline-0 sm:px-5
                               sm:[--cell-size:--spacing(12)]
-                              [&_table]:flex [&_table]:flex-col
-                              [&_tbody]:flex [&_tbody]:flex-col [&_tbody]:gap-3
-                              [&_tbody_tr]:flex [&_tbody_tr]:inline-full [&_thead]:block
-                              [&_thead_tr]:flex [&_thead_tr]:inline-full
+                              sm:inline-fit [&_table]:flex
+                              [&_table]:flex-col [&_tbody]:flex [&_tbody]:flex-col
+                              [&_tbody]:gap-3 [&_tbody_tr]:flex [&_tbody_tr]:inline-full
+                              [&_thead]:block [&_thead_tr]:flex
+                              [&_thead_tr]:inline-full
                             "
                             classNames={{
                                 months: "relative flex flex-col gap-6 sm:flex-row sm:gap-8",
-                                month: "flex w-fit flex-col gap-3.5",
+                                month: "flex flex-col gap-3.5 inline-full sm:inline-fit",
                                 month_caption:
                                     "flex items-center justify-center px-(--cell-size) block-10 inline-full",
                                 caption_label: "text-[15px] font-semibold text-ink",

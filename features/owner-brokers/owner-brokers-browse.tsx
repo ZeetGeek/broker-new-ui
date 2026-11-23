@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
@@ -42,10 +43,33 @@ export function OwnerBrokersBrowse({
     onSearchChange?: (q: string) => void;
     onTotalChange?: (total: number | null) => void;
 }) {
+    const linkedBrokerId = useSearchParams().get("broker");
+    const [profileLinkError, setProfileLinkError] = useState("");
     const [filters, setFilters] = useState<BrowseBrokersFilters>(DEFAULT_BROWSE_BROKERS_FILTERS);
 
     const [profileBroker, setProfileBroker] = useState<BrokerProfile | null>(null);
     const [profileOpen, setProfileOpen] = useState(false);
+    useEffect(() => {
+        if (!linkedBrokerId) return;
+        let cancelled = false;
+        void representativeApi
+            .ownerBrokerProfile(linkedBrokerId)
+            .then((broker) => {
+                if (cancelled) return;
+                setProfileLinkError("");
+                setProfileBroker(broker);
+                setProfileOpen(true);
+            })
+            .catch(() => {
+                if (!cancelled)
+                    setProfileLinkError(
+                        "This broker's profile couldn't be opened. Please try again from their card.",
+                    );
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [linkedBrokerId]);
     const [inviteBroker, setInviteBroker] = useState<BrokerProfile | null>(null);
     const [inviteOpen, setInviteOpen] = useState(false);
 
@@ -173,7 +197,7 @@ export function OwnerBrokersBrowse({
                     items={brokers}
                     getKey={(broker) => broker.id}
                     estimateRowHeight={320}
-                    gap={24}
+                    gap="card-grid"
                     breakpoints={OWNER_BROKERS_GRID_BREAKPOINTS}
                     ariaLabel="Brokers"
                     renderItem={(broker) => (
@@ -207,6 +231,11 @@ export function OwnerBrokersBrowse({
 
             {results}
 
+            {profileLinkError ? (
+                <p role="alert" className="body-sm text-danger">
+                    {profileLinkError}
+                </p>
+            ) : null}
             <BrokerProfileDialog
                 broker={profileBroker}
                 open={profileOpen}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
+import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { Check, X } from "@/components/shared/icons";
@@ -68,6 +69,7 @@ function BrokerOverlayStats({ item }: { item: OwnerRequestCardItem }) {
             <OverlayPersonLine
                 label="Broker"
                 name={item.brokerName}
+                href={item.brokerId ? ownerBrokerProfileHref(item.brokerId) : undefined}
                 avatarUrl={item.brokerAvatarUrl}
                 hint={phoneHint}
             />

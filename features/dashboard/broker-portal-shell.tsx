@@ -23,6 +23,8 @@ import {
 } from "@/components/layout/portal-section-nav";
 import { BROKER_SEARCH_HINTS } from "@/components/layout/search-placeholder-loop";
 import { Building2, Calendar, CheckCircle2, UserPlus } from "@/components/shared/icons";
+import { PersonDetailsProvider } from "@/components/shared/person-details-provider";
+import { WorkflowHost, WorkflowProvider } from "@/components/shared/workflow-provider";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { BROKER_MOBILE_PRIMARY_HREFS, BROKER_NAV_ITEMS } from "@/config/nav";
@@ -59,7 +61,12 @@ const BROKER_HIDDEN_SHORTCUTS: ShortcutId[] = FEATURE_PLATFORM_OWNER
 export function BrokerPortalShell({ children }: { children: ReactNode }) {
     return (
         <PortalSectionNavProvider>
-            <BrokerPortalShellInner>{children}</BrokerPortalShellInner>
+            <WorkflowProvider portal="broker">
+                <PersonDetailsProvider portal="broker">
+                    <BrokerPortalShellInner>{children}</BrokerPortalShellInner>
+                    <WorkflowHost />
+                </PersonDetailsProvider>
+            </WorkflowProvider>
         </PortalSectionNavProvider>
     );
 }

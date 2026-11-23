@@ -22,6 +22,8 @@ import { AppModal } from "@/components/shared/app-modal";
 import { CharacterCount } from "@/components/shared/character-count";
 import { IconButton } from "@/components/shared/icon-button";
 import { Clock3, Plus, Trash2 } from "@/components/shared/icons";
+import { mapNestedVisitPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
+import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
 import { Button } from "@/components/ui/button";
 
 import type { PersonSummary, PropertyWithSlots } from "@/features/site-visits/broker/model";
@@ -219,29 +221,17 @@ export function TimeRequestModal({
                         {requestError}
                     </p>
                 ) : null}
-                <label className="block">
-                    <span className="body-sm font-bold text-ink">Property</span>
-                    <select
-                        {...form.register("propertyId")}
-                        className="
-                          body-sm mbs-2 rounded-control border border-border-warm bg-surface px-3
-                          text-ink outline-none inline-full min-block-11
-                          focus:border-brand focus:ring-3 focus:ring-brand/15
-                        "
-                    >
-                        <option value="">Choose a property</option>
-                        {properties.map((item) => (
-                            <option key={item.property.id} value={item.property.id}>
-                                {item.property.title} · {item.property.locality}
-                            </option>
-                        ))}
-                    </select>
-                    {form.formState.errors.propertyId ? (
-                        <span className="body-xs mbs-1 block text-danger">
-                            {form.formState.errors.propertyId.message}
-                        </span>
-                    ) : null}
-                </label>
+                <PropertyInlineSelect
+                    label="Property"
+                    properties={properties.map(mapNestedVisitPropertyToPicker)}
+                    value={selectedPropertyId || null}
+                    onValueChange={(id) =>
+                        form.setValue("propertyId", id ?? "", { shouldValidate: true })
+                    }
+                    placeholder="Choose a property"
+                    errorText={form.formState.errors.propertyId?.message}
+                    size="lg"
+                />
                 <BuyerPicker
                     buyers={allBuyers}
                     selected={selectedBuyerIds}

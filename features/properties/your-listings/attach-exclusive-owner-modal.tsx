@@ -3,27 +3,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
 import { exclusiveOwnerPhoneDigits } from "@/lib/api/exclusive-owners";
 import { propertiesApi } from "@/lib/api/properties";
 import { exclusiveOwnerPickerOptions } from "@/lib/contacts/exclusive-owner-picker-query";
+import { formatPersonName } from "@/lib/format/person-name";
 import { uniqueInfiniteItems } from "@/lib/pagination/infinite-page";
-import { cn } from "@/lib/utils";
+import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 
-import { AppModal } from "@/components/shared/app-modal";
-import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { EmptyState } from "@/components/shared/empty-state";
-import { Search, UserRound } from "@/components/shared/icons";
-import { PhoneNumber } from "@/components/shared/phone-number";
-import { UserAvatar } from "@/components/shared/user-avatar";
-import { VirtualListBox } from "@/components/shared/virtual-list-box";
-import { Badge } from "@/components/ui/badge";
+import type { PeoplePickerPerson } from "@/components/shared/people-picker";
+import { PeoplePicker } from "@/components/shared/people-picker";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-import { CreateContactButton } from "@/features/contacts/create-contact-button";
+import { AddOwnerModal } from "@/features/contacts/add-owner-modal";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
 export function AttachExclusiveOwnerModal({
@@ -37,10 +30,12 @@ export function AttachExclusiveOwnerModal({
     listing: MyListingItem | null;
     onAttached?: () => void;
 }) {
+    const queryClient = useQueryClient();
     const [query, setQuery] = useState("");
     const [search, setSearch] = useState("");
-    const [selectedId, setSelectedId] = useState<string>("");
+    const [selectedId, setSelectedId] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
+    const [createOpen, setCreateOpen] = useState(false);
 
     const currentOwnerId = listing?.exclusiveOwnerId ?? null;
     const isReplace = Boolean(currentOwnerId);
@@ -56,6 +51,33 @@ export function AttachExclusiveOwnerModal({
     );
     const loading = ownersQuery.isLoading || query.trim() !== search;
 
+    const people = useMemo<PeoplePickerPerson[]>(
+        () =>
+            filtered.map((owner) => {
+                const digits = exclusiveOwnerPhoneDigits(owner.phone);
+                const isCurrent = owner.id === currentOwnerId;
+                return {
+                    id: owner.id,
+                    name: owner.fullName,
+                    role: "owner" as const,
+                    phoneDigits: digits || undefined,
+                    ownerType: owner.ownerType,
+                    statusChips: [
+                        ...(isCurrent ? [{ label: "Current", color: "emerald" as const }] : []),
+                        ...(owner.propertyCount > 0
+                            ? [
+                                  {
+                                      label: `${owner.propertyCount} ${owner.propertyCount === 1 ? "listing" : "listings"}`,
+                                      color: "stone" as const,
+                                  },
+                              ]
+                            : []),
+                    ],
+                };
+            }),
+        [currentOwnerId, filtered],
+    );
+
     useEffect(() => {
         const timer = window.setTimeout(() => setSearch(query.trim()), 300);
         return () => window.clearTimeout(timer);
@@ -67,7 +89,7 @@ export function AttachExclusiveOwnerModal({
         const timer = window.setTimeout(() => {
             setQuery("");
             setSearch("");
-            setSelectedId(listing.exclusiveOwnerId ?? "");
+            setSelectedId(listing.exclusiveOwnerId ?? null);
         }, 0);
 
         return () => {
@@ -75,226 +97,148 @@ export function AttachExclusiveOwnerModal({
         };
     }, [open, listing]);
 
-    const attach = useCallback(() => {
-        if (!listing || !selectedId) return;
-        if (selectedId === currentOwnerId) {
-            onOpenChange(false);
-            return;
-        }
-        setBusy(true);
-        void propertiesApi
-            .attachExclusiveOwner(listing.id, selectedId)
-            .then(() => {
-                toast.success(isReplace ? "Exclusive owner updated" : "Exclusive owner attached");
-                onAttached?.();
+    const attach = useCallback(
+        (id: string | null) => {
+            if (!listing || !id) return;
+            if (id === currentOwnerId) {
                 onOpenChange(false);
-            })
-            .catch((error) => {
-                toast.error(
-                    error instanceof Error
-                        ? error.message
-                        : isReplace
-                          ? "Couldn't change exclusive owner"
-                          : "Couldn't attach exclusive owner",
-                );
-            })
-            .finally(() => setBusy(false));
-    }, [currentOwnerId, isReplace, listing, onAttached, onOpenChange, selectedId]);
-
-    const primaryDisabled =
-        !selectedId ||
-        busy ||
-        loading ||
-        (ownersQuery.isError && filtered.length === 0) ||
-        !listing ||
-        selectedId === currentOwnerId;
+                return;
+            }
+            setBusy(true);
+            void propertiesApi
+                .attachExclusiveOwner(listing.id, id)
+                .then(() => {
+                    toast.success(
+                        isReplace ? "Exclusive owner updated" : "Exclusive owner attached",
+                    );
+                    onAttached?.();
+                    onOpenChange(false);
+                })
+                .catch((error) => {
+                    toast.error(
+                        error instanceof Error
+                            ? error.message
+                            : isReplace
+                              ? "Couldn't change exclusive owner"
+                              : "Couldn't attach exclusive owner",
+                    );
+                })
+                .finally(() => setBusy(false));
+        },
+        [currentOwnerId, isReplace, listing, onAttached, onOpenChange],
+    );
 
     return (
-        <AppModal
-            open={open}
-            onOpenChange={onOpenChange}
-            size="lg"
-            title={isReplace ? "Change exclusive owner" : "Attach exclusive owner"}
-            description={
-                listing
-                    ? isReplace
-                        ? `Replace the owner on ${listing.title}. One listing has one owner; the same owner can stay on your other listings.`
-                        : `Choose one exclusive owner for ${listing.title}. You can change them later.`
-                    : "Choose one exclusive owner for this listing."
-            }
-            header={
-                <div className="flex flex-col gap-3">
-                    {isReplace && listing?.ownerName ? (
-                        <p
-                            className="
-                              body-sm rounded-inner bg-surface-muted px-3 py-2 text-ink-muted
-                            "
-                        >
+        <>
+            <PeoplePicker
+                open={open && Boolean(listing)}
+                onOpenChange={(next) => {
+                    if (!next) onOpenChange(false);
+                    else onOpenChange(true);
+                }}
+                kinds="owner"
+                people={people}
+                value={selectedId}
+                onConfirm={(id) => {
+                    setSelectedId(id);
+                    attach(id);
+                }}
+                commitOnSelect={false}
+                closeOnConfirm={false}
+                confirmLabel={
+                    busy
+                        ? isReplace
+                            ? "Updating…"
+                            : "Attaching…"
+                        : isReplace
+                          ? "Replace owner"
+                          : "Attach owner"
+                }
+                confirmDisabled={busy || loading || (ownersQuery.isError && people.length === 0)}
+                title={isReplace ? "Change exclusive owner" : "Attach exclusive owner"}
+                description={
+                    listing
+                        ? isReplace
+                            ? `Replace the owner on ${listing.title}. One listing has one owner; the same owner can stay on your other listings.`
+                            : `Choose one exclusive owner for ${listing.title}. You can change them later.`
+                        : "Choose one exclusive owner for this listing."
+                }
+                searchPlaceholder="Search exclusive owners"
+                searchValue={query}
+                onSearchChange={setQuery}
+                skipLocalFilter
+                loading={loading}
+                errorText={
+                    ownersQuery.isError && people.length === 0
+                        ? "Could not load owners. Please try again."
+                        : undefined
+                }
+                onRetry={() => void ownersQuery.refetch()}
+                onCreate={() => setCreateOpen(true)}
+                createLabel="Create owner"
+                emptyHeading={query ? "No owners match your search" : "No exclusive owners yet"}
+                emptyDescription={
+                    query
+                        ? "Try a different name, phone, or society."
+                        : "Create an owner above, then attach them here."
+                }
+                filteredEmptyHeading="No owners match your search"
+                filteredEmptyDescription="Try a different name, phone, or society."
+                size="lg"
+                headerExtra={
+                    isReplace && listing?.ownerName ? (
+                        <p className="body-sm rounded-inner bg-surface-muted px-3 py-2 text-ink-muted">
                             Current owner:{" "}
-                            <span className="font-semibold text-ink">{listing.ownerName}</span>
+                            <span className="font-semibold text-ink">
+                                {formatPersonName(listing.ownerName)}
+                            </span>
                         </p>
-                    ) : null}
-                    <Input
-                        size="sm"
-                        value={query}
-                        onValueChange={setQuery}
-                        placeholder="Search exclusive owners"
-                        aria-label="Search exclusive owners"
-                        startIcon={Search}
-                        clearable
-                        wrapperClassName="min-inline-56 flex-1"
-                    />
-                    <div>
-                        <CreateContactButton
-                            kind="owner"
-                            disabled={busy}
-                            onCreated={(name, id) => {
-                                setQuery(name);
-                                setSearch(name);
-                                if (id) setSelectedId(id);
-                            }}
-                        />
-                    </div>
-                </div>
-            }
-            footer={
-                <AppModalFooter
-                    primaryLabel={
-                        busy
-                            ? isReplace
-                                ? "Updating…"
-                                : "Attaching…"
-                            : isReplace
-                              ? "Replace owner"
-                              : "Attach owner"
+                    ) : null
+                }
+                listFooter={
+                    !loading &&
+                    people.length > 0 &&
+                    (ownersQuery.hasNextPage || ownersQuery.isFetchNextPageError) ? (
+                        <div className="flex flex-col items-center gap-2 pbs-3" aria-live="polite">
+                            {ownersQuery.isFetchNextPageError ? (
+                                <p role="alert" className="body-sm text-danger">
+                                    Could not load more owners. Please try again.
+                                </p>
+                            ) : null}
+                            <Button
+                                variant="outline"
+                                disabled={ownersQuery.isFetchingNextPage}
+                                onClick={() => void ownersQuery.fetchNextPage()}
+                            >
+                                {ownersQuery.isFetchingNextPage
+                                    ? "Loading owners…"
+                                    : ownersQuery.isFetchNextPageError
+                                      ? "Try again"
+                                      : "Load more owners"}
+                            </Button>
+                        </div>
+                    ) : null
+                }
+            />
+            <AddOwnerModal
+                open={createOpen}
+                onOpenChange={setCreateOpen}
+                onSaved={(name, _mode, id) => {
+                    toast.success("Owner added");
+                    for (const queryKey of [
+                        ["contacts"],
+                        ["exclusive-owner-picker"],
+                        ["people-filter-options"],
+                    ]) {
+                        void queryClient.invalidateQueries({ queryKey });
                     }
-                    primaryIcon={<UserRound aria-hidden strokeWidth={1.75} />}
-                    onPrimary={attach}
-                    primaryDisabled={primaryDisabled}
-                    secondaryLabel="Cancel"
-                    onSecondary={() => onOpenChange(false)}
-                    secondaryDisabled={busy}
-                />
-            }
-        >
-            {loading ? (
-                <div className="flex flex-col gap-2">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                        <div
-                            key={index}
-                            className="animate-pulse rounded-card bg-surface-muted block-20"
-                            aria-hidden
-                        />
-                    ))}
-                </div>
-            ) : ownersQuery.isError && filtered.length === 0 ? (
-                <div role="alert" className="flex flex-col items-start gap-3">
-                    <p className="body-sm text-danger">Could not load owners. Please try again.</p>
-                    <Button variant="outline" onClick={() => void ownersQuery.refetch()}>
-                        Try again
-                    </Button>
-                </div>
-            ) : filtered.length === 0 ? (
-                <EmptyState
-                    icon={UserRound}
-                    heading={query ? "No owners match your search" : "No exclusive owners yet"}
-                    description={
-                        query
-                            ? "Try a different name, phone, or society."
-                            : "Create an owner above, then attach them here."
-                    }
-                />
-            ) : (
-                <RadioGroup value={selectedId} onValueChange={setSelectedId}>
-                    <VirtualListBox
-                        items={filtered}
-                        getKey={(owner) => owner.id}
-                        estimateItemHeight={88}
-                        ariaLabel="Exclusive owners available to attach"
-                        renderItem={(owner) => {
-                            const digits = exclusiveOwnerPhoneDigits(owner.phone);
-                            const selected = selectedId === owner.id;
-                            const isCurrent = owner.id === currentOwnerId;
-                            return (
-                                <label
-                                    className={cn(
-                                        `
-                                          flex cursor-pointer items-start gap-3 rounded-card border
-                                          p-3 transition-[background-color,border-color]
-                                          duration-160
-                                        `,
-                                        selected
-                                            ? "border-brand bg-brand-soft/50"
-                                            : `
-                                              border-border-warm bg-surface
-                                              hover:border-ink/20 hover:bg-surface-muted/50
-                                            `,
-                                    )}
-                                >
-                                    <RadioGroupItem
-                                        value={owner.id}
-                                        aria-label={`${isCurrent ? "Keep" : "Select"} ${owner.fullName}`}
-                                        className="mbs-1 shrink-0"
-                                    />
-                                    <UserAvatar name={owner.fullName} size="sm" />
-                                    <div className="flex flex-1 flex-col gap-1 min-inline-0">
-                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                            <span className="body-sm font-semibold text-ink">
-                                                {owner.fullName}
-                                            </span>
-                                            <Badge color="sky" className="capitalize">
-                                                {owner.ownerType}
-                                            </Badge>
-                                            {isCurrent ? (
-                                                <Badge color="emerald">Current</Badge>
-                                            ) : null}
-                                            {owner.propertyCount > 0 ? (
-                                                <Badge color="stone">
-                                                    {owner.propertyCount}{" "}
-                                                    {owner.propertyCount === 1
-                                                        ? "listing"
-                                                        : "listings"}
-                                                </Badge>
-                                            ) : null}
-                                        </div>
-                                        <PhoneNumber
-                                            phoneDigits={digits}
-                                            className="body-xs text-ink-muted"
-                                        />
-                                        <p className="body-xs text-ink-muted">
-                                            {[owner.society, owner.area, owner.city]
-                                                .filter(Boolean)
-                                                .join(" · ") || "No address details"}
-                                        </p>
-                                    </div>
-                                </label>
-                            );
-                        }}
-                    />
-                </RadioGroup>
-            )}
-            {!loading &&
-            filtered.length > 0 &&
-            (ownersQuery.hasNextPage || ownersQuery.isFetchNextPageError) ? (
-                <div className="flex flex-col items-center gap-2 pbs-3" aria-live="polite">
-                    {ownersQuery.isFetchNextPageError ? (
-                        <p role="alert" className="body-sm text-danger">
-                            Could not load more owners. Please try again.
-                        </p>
-                    ) : null}
-                    <Button
-                        variant="outline"
-                        disabled={ownersQuery.isFetchingNextPage}
-                        onClick={() => void ownersQuery.fetchNextPage()}
-                    >
-                        {ownersQuery.isFetchingNextPage
-                            ? "Loading owners…"
-                            : ownersQuery.isFetchNextPageError
-                              ? "Try again"
-                              : "Load more owners"}
-                    </Button>
-                </div>
-            ) : null}
-        </AppModal>
+                    notifyWorkflowSaved("contact");
+                    setQuery(name);
+                    setSearch(name);
+                    if (id) setSelectedId(id);
+                    setCreateOpen(false);
+                }}
+            />
+        </>
     );
 }

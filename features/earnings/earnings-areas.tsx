@@ -24,7 +24,7 @@ function AreaRow({
 
     return (
         <li className="flex flex-col gap-2 py-3.5 first:pbs-0 last:pbe-0">
-            <div className="flex items-baseline justify-between gap-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                 <p className="body-sm flex items-center gap-2 min-inline-0">
                     <span
                         aria-hidden
@@ -35,7 +35,7 @@ function AreaRow({
                         {row.city ? <span className="text-ink-muted">, {row.city}</span> : null}
                     </span>
                 </p>
-                <p className="body-sm shrink-0 font-semibold text-ink tabular-nums">
+                <p className="body-sm font-semibold wrap-anywhere text-ink tabular-nums min-inline-0">
                     {hasMoney ? formatCommission(row.earnedInr, true) : "No commission set"}
                 </p>
             </div>

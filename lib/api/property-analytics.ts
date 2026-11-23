@@ -1,4 +1,15 @@
 import { apiFetch } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
+import { PREVIEW_PROPERTY_ANALYTICS } from "@/config";
+
+import {
+    getMockListingsAnalytics,
+    getMockPropertyAnalytics,
+} from "@/features/properties/property-analytics/mock-property-analytics";
+
+function usePropertyAnalyticsMock(): boolean {
+    return isMockMode() || PREVIEW_PROPERTY_ANALYTICS;
+}
 
 export const LEAD_STAGES = [
     "new",
@@ -104,11 +115,17 @@ export type ListingsAnalytics = {
 export const propertyAnalyticsApi = {
     /** `GET /properties/analytics` — lead counts for every listing in scope. */
     portfolio(signal?: AbortSignal) {
+        if (usePropertyAnalyticsMock()) {
+            return Promise.resolve(getMockListingsAnalytics());
+        }
         return apiFetch<ListingsAnalytics>("/properties/analytics", { signal });
     },
 
     /** `GET /properties/:id/analytics` — stages and each lead on one listing. */
     property(propertyId: string, signal?: AbortSignal) {
+        if (usePropertyAnalyticsMock()) {
+            return Promise.resolve(getMockPropertyAnalytics(propertyId));
+        }
         return apiFetch<PropertyAnalytics>(`/properties/${propertyId}/analytics`, { signal });
     },
 };

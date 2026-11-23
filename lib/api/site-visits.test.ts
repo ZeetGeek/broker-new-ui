@@ -64,6 +64,13 @@ test("mapShowing names the client and the property's area", () => {
     assert.equal(visit.isExclusive, true);
 });
 
+test("mapShowing preserves the owner's ID for opening the correct contact", () => {
+    const visit = mapShowing(showing({ owner: { id: "owner-42", fullName: "Bhavna Shah" } }));
+    assert.equal(visit.ownerId, "owner-42");
+    assert.equal(visit.ownerName, "Bhavna Shah");
+    assert.equal(mapShowing(showing({ owner: null })).ownerId, null);
+});
+
 test("mapShowing falls back when the client or end time is missing", () => {
     const visit = mapShowing(showing({ client: null, endAt: null, listingSource: "platform" }));
     assert.equal(visit.clientName, "Client");

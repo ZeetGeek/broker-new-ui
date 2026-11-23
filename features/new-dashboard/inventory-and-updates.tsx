@@ -1,7 +1,7 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import Link from "next/link";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -11,6 +11,8 @@ import { formatRelativePast } from "@/lib/format/date";
 import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
 
 import { AvatarStack } from "@/components/shared/avatar-stack";
+import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     Activity,
@@ -38,6 +40,7 @@ import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { Skeleton } from "@/components/shared/skeleton";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 
@@ -143,9 +146,12 @@ function ListingClients({ listing }: { listing: MyListingItem }) {
     const person = (client: (typeof clients)[number]) => (
         <span className={styles.clientPerson}>
             <UserAvatar name={client.name} imageUrl={client.avatarUrl} size="2xs" />
-            <span className={styles.clientName} title={client.name}>
-                {client.name}
-            </span>
+            <ContactName
+                name={client.name}
+                contactId={client.id}
+                contactType="buyer"
+                className={styles.clientName}
+            />
         </span>
     );
     return (
@@ -202,8 +208,9 @@ function ListingRow({
             : brokerPropertyDetailHref(listing.id);
 
     return (
-        <tr className={styles.listingRow}>
+        <tr data-linked-card className={styles.listingRow}>
             <td className={styles.propertyCell}>
+                <CardLink href={href} label={`Open ${listing.title}`} />
                 <Link href={href} className={styles.propertyLink}>
                     <PropertyCoverImage
                         src={listing.imageSrc}
@@ -213,7 +220,9 @@ function ListingRow({
                         className={styles.thumbnail}
                     />
                     <span className={styles.propertyText}>
-                        <span className={styles.propertyTitle}>{listing.title}</span>
+                        <span data-card-title className={styles.propertyTitle}>
+                            {listing.title}
+                        </span>
                         <span className={styles.location}>
                             <MapPin aria-hidden />
                             {[listing.locality, listing.city].filter(Boolean).join(", ")}
@@ -313,7 +322,7 @@ function previewUpdates(now: Date) {
             id: "preview-listing",
             title: "Listing updated",
             subtitle: "Your latest property details were saved",
-            href: "/broker/your-listings",
+            href: "/broker/my-listings",
             minutes: 120,
             icon: Pencil,
         },
@@ -345,7 +354,7 @@ function previewUpdates(now: Date) {
             id: "preview-listing-published",
             title: "Listing published",
             subtitle: "4 BHK · Palm Residency · Pal, Surat",
-            href: "/broker/your-listings",
+            href: "/broker/my-listings",
             minutes: 420,
             icon: Building2,
         },
@@ -369,7 +378,7 @@ function previewUpdates(now: Date) {
             id: "preview-listing-photos",
             title: "Listing photos updated",
             subtitle: "2 BHK · River View Apartments · Jahangirpura",
-            href: "/broker/your-listings",
+            href: "/broker/my-listings",
             minutes: 1800,
             icon: ImagePlus,
         },
@@ -721,7 +730,7 @@ export function InventoryAndUpdates({
                         </div>
                     </div>
                     <footer className={styles.footer} data-scroll-shadow={hasMoreListings}>
-                        <Link href="/broker/your-listings" className={styles.footerLink}>
+                        <Link href="/broker/my-listings" className={styles.footerLink}>
                             Open listings <ArrowRight aria-hidden />
                         </Link>
                         {items.length > 0 &&
@@ -766,6 +775,7 @@ export function InventoryAndUpdates({
                                 {updates.map((item) => (
                                     <li key={item.id}>
                                         <Link
+                                            data-linked-card
                                             href={item.href || "/broker/notifications"}
                                             className={styles.updateLink}
                                         >
@@ -773,7 +783,7 @@ export function InventoryAndUpdates({
                                                 <item.icon aria-hidden strokeWidth={1.75} />
                                             </span>
                                             <span className={styles.updateText}>
-                                                <span className={styles.eventTitle}>
+                                                <span data-card-title className={styles.eventTitle}>
                                                     {item.title}
                                                 </span>
                                                 <span className={styles.secondary}>

@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
+import { formatPersonName } from "@/lib/format/person-name";
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
 import { ownerRequestsHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
@@ -156,7 +157,7 @@ export function InvitePropertyBrokerModal({
                                         className="flex items-center gap-3 min-inline-0"
                                     >
                                         <UserAvatar
-                                            name={broker.name}
+                                            name={formatPersonName(broker.name)}
                                             imageUrl={broker.avatarUrl}
                                             size="xs"
                                         />
@@ -165,7 +166,7 @@ export function InvitePropertyBrokerModal({
                                               body-sm wrap-break-word text-ink min-inline-0
                                             "
                                         >
-                                            {broker.name}
+                                            {formatPersonName(broker.name)}
                                         </span>
                                     </div>
                                 ))}

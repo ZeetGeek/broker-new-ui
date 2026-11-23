@@ -22,6 +22,10 @@ export function ownerBrokersHref(tab?: "browse" | "active"): string {
     return `${OWNER_BROKERS_HREF}?tab=${tab}`;
 }
 
+export function ownerBrokerProfileHref(id: string): string {
+    return `${OWNER_BROKERS_HREF}?broker=${encodeURIComponent(id)}`;
+}
+
 export function ownerRequestsHref(
     tab?: "requests" | "invitations" | "accepted" | "rejected" | "cancelled",
 ): string {

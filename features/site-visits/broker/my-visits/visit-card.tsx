@@ -1,8 +1,8 @@
 "use client";
 
 import { memo } from "react";
-import Link from "next/link";
 
+import { formatPersonName } from "@/lib/format/person-name";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
@@ -11,6 +11,7 @@ import { VISIT_STATUS } from "@/lib/visits/status";
 import { durationMinutes, formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
+import { CardLink } from "@/components/shared/card-link";
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import { IconButton } from "@/components/shared/icon-button";
 import {
@@ -22,6 +23,7 @@ import {
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,12 +69,14 @@ export const VisitCard = memo(function VisitCard({
 
     return (
         <article
+            data-linked-card
             aria-label={`${visit.property.title}, ${when}, ${status.label}`}
             className={cn(
                 "flex flex-col gap-3 rounded-[20px] border border-border-warm bg-surface p-4 shadow-sm block-full min-inline-0",
                 cancelled && "bg-surface-muted",
             )}
         >
+            <CardLink href={propertyHref} label={`Open ${visit.property.title}`} />
             <header className="flex items-center justify-between gap-2">
                 <Badge
                     color={
@@ -130,7 +134,10 @@ export const VisitCard = memo(function VisitCard({
                         audience="broker"
                         size="lg"
                     />
-                    <h3 className="body truncate font-semibold tracking-wide text-ink capitalize">
+                    <h3
+                        data-card-title
+                        className="body truncate font-semibold tracking-wide text-ink capitalize"
+                    >
                         <Link
                             href={propertyHref}
                             prefetch={false}
@@ -178,7 +185,13 @@ export const VisitCard = memo(function VisitCard({
 
             <PartyMeetRow
                 highlightOnHover={false}
-                left={{ name: visit.owner.name, avatarUrl: visit.owner.avatarUrl, role: "Owner" }}
+                left={{
+                    id: visit.owner.id,
+                    contactType: "owner",
+                    name: visit.owner.name,
+                    avatarUrl: visit.owner.avatarUrl,
+                    role: "Owner",
+                }}
                 right={{
                     name: buyer?.name ?? "No client linked",
                     avatarUrl: buyer?.avatarUrl,
@@ -236,7 +249,7 @@ export const VisitCard = memo(function VisitCard({
                                                 {actionLabel} {label.toLowerCase()}
                                             </span>
                                             <span className="body-xs truncate text-ink-muted">
-                                                {person.name}
+                                                {formatPersonName(person.name)}
                                                 {!person.phoneDigits ? " ? No phone number" : ""}
                                             </span>
                                         </span>

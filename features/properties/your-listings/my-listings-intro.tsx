@@ -62,7 +62,7 @@ export function MyListingsIntro({
     );
 
     return (
-        <h1 className="h3 text-start min-inline-0">
+        <h1 className="h3 flex flex-col items-start gap-1 text-start min-inline-0 sm:block">
             {isLoading ? (
                 <span aria-hidden className="relative inline-block align-bottom">
                     <span className="invisible">My Listings.</span>

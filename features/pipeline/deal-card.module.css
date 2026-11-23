@@ -1,0 +1,250 @@
+.card {
+    container: pipeline-card / inline-size;
+    min-inline-size: 0;
+}
+
+.draggable [data-linked-card],
+.draggable [data-card-link] {
+    cursor: grab;
+}
+
+.draggable:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+    border-radius: var(--radius-card);
+}
+
+.draggable:active [data-linked-card],
+.draggable:active [data-card-link],
+.draggable[data-dragging] [data-linked-card],
+.draggable[data-dragging] [data-card-link] {
+    cursor: grabbing;
+}
+
+/* Real controls keep their own click affordance over the draggable background link. */
+.card
+    :is(a:not([data-card-link]), button, [role="button"]):not(:disabled):not(
+        [aria-disabled="true"]
+    ) {
+    cursor: pointer;
+}
+
+.titleLink {
+    display: inline-block;
+    max-inline-size: 100%;
+    text-underline-offset: 0.25em;
+}
+
+.photo {
+    --property-cover-size: 5rem;
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+    min-inline-size: 0;
+}
+
+.summaryDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-inline-size: 0;
+}
+
+.askPrice {
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    text-align: start;
+}
+
+.panel {
+    min-inline-size: 0;
+    padding: clamp(0.75rem, 4cqi, 1rem);
+}
+
+.outcome {
+    display: grid;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    padding: 0.625rem 0.75rem;
+}
+
+.outcomeHeader {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-inline-size: 0;
+}
+
+.outcomeAmount {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0.75rem;
+    min-inline-size: 0;
+}
+
+.outcomeAmount > :last-child {
+    overflow-wrap: anywhere;
+    text-align: end;
+}
+
+.people {
+    display: grid;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    padding-block-start: 0.75rem;
+    border-block-start: 1px solid var(--color-border-warm);
+}
+
+.personRow {
+    display: grid;
+    grid-template-columns: max-content max-content minmax(0, max-content);
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    min-block-size: var(--touch-target-min);
+    padding: 0.5rem 0.75rem;
+    border: 1px dashed color-mix(in oklab, var(--color-brand) 35%, transparent);
+    border-radius: var(--radius-control);
+}
+
+.personName {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    text-align: start;
+}
+
+.personAvatar {
+    display: flex;
+    align-items: center;
+}
+
+.handledBy {
+    flex-wrap: wrap;
+    min-inline-size: 0;
+}
+
+.contactActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    min-inline-size: 0;
+}
+
+.contactButton {
+    min-inline-size: 0;
+    min-block-size: var(--touch-target-min);
+    block-size: auto;
+    padding: 0.625rem 0.75rem;
+    white-space: normal;
+}
+
+.stageAction {
+    inline-size: 100%;
+    min-block-size: calc(3rem / var(--layout-font-scale));
+    block-size: auto;
+    padding: 0.625rem 0.75rem;
+    white-space: normal;
+}
+
+.visitBlock,
+.negotiationBlock {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    min-inline-size: 0;
+}
+
+.scheduleAction {
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    white-space: normal;
+}
+
+.offerStatus {
+    min-inline-size: 0;
+    white-space: normal;
+}
+
+/* Size belongs to the card, whether it lives in a board column or a phone list. */
+@container pipeline-card (max-width: 20rem) {
+    .photo {
+        --property-cover-size: 4rem;
+    }
+
+    .summary {
+        gap: 0.625rem;
+    }
+
+    .personRow {
+        padding-inline: 0.5rem;
+    }
+
+    .contactButton {
+        padding-inline: 0.5rem;
+    }
+
+    .outcomeHeader {
+        gap: 0.25rem 0.5rem;
+    }
+
+    .visitBlock,
+    .negotiationBlock {
+        padding-block: 0.5rem;
+    }
+
+    .scheduleAction,
+    .offerStatus {
+        grid-column: 2 / -1;
+    }
+
+    .negotiationBlock > [tabindex] {
+        overflow: visible;
+        overflow-wrap: anywhere;
+        white-space: normal;
+    }
+}
+
+@container pipeline-card (max-width: 17rem) {
+    .photo {
+        --property-cover-size: 3.5rem;
+    }
+
+    .panel {
+        gap: 0.625rem;
+    }
+
+    .summary,
+    .summaryDetails {
+        gap: 0.5rem;
+    }
+
+    .contactActions {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .stageAction {
+        padding-inline: 0.5rem;
+    }
+}
+
+@container pipeline-card (max-width: 14rem) {
+    .personRow {
+        grid-template-columns: auto minmax(0, 1fr);
+        justify-content: start;
+        gap: 0.25rem 0.5rem;
+    }
+
+    .personLabel {
+        grid-column: 1 / -1;
+    }
+}

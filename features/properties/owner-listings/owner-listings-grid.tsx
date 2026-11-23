@@ -395,7 +395,7 @@ export function OwnerListingsGrid({
                 items={items}
                 getKey={(item) => item.id}
                 estimateRowHeight={520}
-                gap={24}
+                gap="card-grid"
                 breakpoints={GRID_BREAKPOINTS}
                 ariaLabel="Marketplace"
                 renderItem={(item, index) => {

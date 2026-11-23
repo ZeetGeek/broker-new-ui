@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 
+import { amountFormatFor, formatAmountWithSymbol } from "@/lib/format/amount-input";
+import { getActiveCurrency } from "@/lib/format/currency";
+import {
+    type FinalCommissionType,
+    resolveFinalCommission,
+} from "@/lib/validation/final-commission";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
@@ -13,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { ChoiceCard } from "@/features/pipeline/choice-card";
 import { type ClosedAs, dealAsClosed } from "@/features/pipeline/closed-as";
+import { FinalCommissionField } from "@/features/pipeline/final-commission-field";
 import {
     defaultFinalPriceChoice,
     type FinalPriceChoice,
@@ -120,6 +127,9 @@ export function StageNoteModal({
     const [lostError, setLostError] = useState<string | null>(null);
     const [closedAs, setClosedAs] = useState<ClosedAs | null>(null);
     const [closedAsError, setClosedAsError] = useState<string | null>(null);
+    const [commissionType, setCommissionType] = useState<FinalCommissionType>("percent");
+    const [commissionValue, setCommissionValue] = useState<string | null>("");
+    const [commissionError, setCommissionError] = useState<string | null>(null);
 
     // Reset the draft when a new move opens, derived on the open edge so we
     // do not setState inside an effect (cascading render lint).
@@ -130,6 +140,9 @@ export function StageNoteModal({
         if (draftKey) {
             setNote("");
             setPriceError(null);
+            setCommissionType(deal?.property.isRent ? "amount" : "percent");
+            setCommissionValue("");
+            setCommissionError(null);
             // No reason preselected: a default would quietly bias the data.
             setLostReason(null);
             setLostError(null);
@@ -167,8 +180,25 @@ export function StageNoteModal({
             const closing = dealAsClosed(deal, next);
             setPriceChoice(defaultFinalPriceChoice(closing));
             setCustomPrice(seedCustomFinalPrice(closing));
+            setCommissionType(closing.property.isRent ? "amount" : "percent");
+            setCommissionValue("");
+            setCommissionError(null);
         }
     };
+
+    const finalPrice = priceDeal ? resolveFinalPrice(priceDeal, priceChoice, customPrice) : null;
+    const commission = resolveFinalCommission(
+        commissionType,
+        commissionValue,
+        finalPrice?.amountInr ?? 0,
+    );
+    const currency = getActiveCurrency();
+    // Keep commission durable through the existing status-note and offer-notes API.
+    const commissionLine =
+        asksFinalPrice && commission.amount != null && finalPrice?.amountInr != null
+            ? `Final commission: ${commissionType === "percent" ? `${Number(commissionValue)}% (${formatAmountWithSymbol(commission.amount, currency, amountFormatFor(currency))})` : formatAmountWithSymbol(commission.amount, currency, amountFormatFor(currency))}`
+            : "";
+    const noteMax = MAX_CHARS.pipelineStageNote - (commissionLine ? commissionLine.length + 2 : 0);
 
     const confirm = () => {
         if (asksFinalPrice) {
@@ -182,7 +212,18 @@ export function StageNoteModal({
                 return;
             }
             setPriceError(null);
-            onConfirm(note, {
+            if (commission.error) {
+                setCommissionError(commission.error);
+                return;
+            }
+            if (note.length > noteMax) {
+                setCommissionError(
+                    `Shorten the note to ${noteMax} characters to include the commission.`,
+                );
+                return;
+            }
+            setCommissionError(null);
+            onConfirm([commissionLine, note.trim()].filter(Boolean).join("\n\n"), {
                 closedAmountInr: result.amountInr,
                 ...(asksClosedAs && closedAs ? { closedAs } : {}),
             });
@@ -230,7 +271,7 @@ export function StageNoteModal({
                     primaryLabel={primaryLabel}
                     primaryIcon={<PrimaryIcon aria-hidden strokeWidth={1.75} />}
                     onPrimary={confirm}
-                    primaryDisabled={isSaving}
+                    primaryDisabled={isSaving || (asksFinalPrice && commission.error != null)}
                     secondaryLabel="Cancel"
                     onSecondary={onCancel}
                     secondaryDisabled={isSaving}
@@ -291,6 +332,26 @@ export function StageNoteModal({
                     />
                 ) : null}
 
+                {priceDeal ? (
+                    <FinalCommissionField
+                        type={commissionType}
+                        value={commissionValue}
+                        amount={finalPrice?.amountInr != null ? commission.amount : null}
+                        isRent={priceDeal.property.isRent}
+                        error={commissionError}
+                        disabled={isSaving}
+                        onTypeChange={(next) => {
+                            setCommissionType(next);
+                            setCommissionValue("");
+                            setCommissionError(null);
+                        }}
+                        onValueChange={(next) => {
+                            setCommissionValue(next);
+                            setCommissionError(null);
+                        }}
+                    />
+                ) : null}
+
                 {consequence ? (
                     <p className="body-sm flex items-start gap-2 text-ink-muted">
                         <Info
@@ -324,17 +385,13 @@ export function StageNoteModal({
                         value={note}
                         onChange={(event) => setNote(event.target.value)}
                         rows={asksFinalPrice || asksLostReason ? 3 : 4}
-                        maxLength={MAX_CHARS.pipelineStageNote}
+                        maxLength={noteMax}
                         placeholder={notePlaceholder(request.status)}
                         className="rounded-inner"
                         disabled={isSaving}
                         aria-describedby="stage-note-count"
                     />
-                    <CharacterCount
-                        id="stage-note-count"
-                        value={note}
-                        maxChars={MAX_CHARS.pipelineStageNote}
-                    />
+                    <CharacterCount id="stage-note-count" value={note} maxChars={noteMax} />
                     {submitError ? (
                         <p role="alert" className="body-sm text-danger">
                             {submitError}

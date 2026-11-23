@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "./transitions-dev.css";
+@import "./card-links.css";
 /* Contact surfaces inherit their interaction recipes from the import above. */
 @plugin "tailwind-bootstrap-grid" {
     /* Bootstrap gutter steps so gx-3 / gy-4 etc. exist. */
@@ -54,6 +55,11 @@
     --radius: 0.75rem;
     /* Portal content cap — header row + page content share it so edges align. */
     --portal-max-inline: 100rem;
+    /* Shared gap between cards; opt in with gap-card-grid. */
+    --card-grid-gap: 0.75rem;
+    /* Right-side working surfaces: forms and compact record/booking panels. */
+    --drawer-width: 36rem;
+    --drawer-detail-width: 26rem;
     --sidebar: oklch(0.988 0.003 106.5);
     --sidebar-foreground: oklch(0.153 0.006 107.1);
     --sidebar-primary: oklch(0.228 0.013 107.4);
@@ -151,6 +157,11 @@
         0 1px 2px -1px rgb(11 31 23 / 12%),
         0 4px 10px -4px color-mix(in srgb, var(--color-brand) 30%, transparent),
         0 8px 16px -8px color-mix(in srgb, var(--color-brand) 20%, transparent);
+    /* Destructive buttons use the same inline lift in the danger hue. */
+    --shadow-danger-glow-soft:
+        0 1px 2px -1px color-mix(in srgb, var(--color-danger) 12%, transparent),
+        0 4px 10px -4px color-mix(in srgb, var(--color-danger) 30%, transparent),
+        0 8px 16px -8px color-mix(in srgb, var(--color-danger) 20%, transparent);
 }
 
 .dark {
@@ -187,7 +198,14 @@
     --sidebar-ring: oklch(0.58 0.031 107.3);
 }
 
+@media (min-width: 40rem) {
+    :root {
+        --card-grid-gap: 1rem;
+    }
+}
+
 @theme inline {
+    --spacing-card-grid: var(--card-grid-gap);
     --font-sans: var(--font-sans);
     --font-heading: var(--font-heading);
     --font-display: var(--font-heading);
@@ -283,6 +301,7 @@
     --shadow-scroll-edge: var(--shadow-scroll-edge);
     --shadow-brand-glow: var(--shadow-brand-glow);
     --shadow-brand-glow-soft: var(--shadow-brand-glow-soft);
+    --shadow-danger-glow-soft: var(--shadow-danger-glow-soft);
 }
 
 ::-webkit-scrollbar {
@@ -648,4 +667,35 @@
         black calc(100% - var(--scroll-fade-bottom, 0px)),
         transparent
     );
+}
+
+/* Person links retain their surface's colour, including dark visit cards. */
+.person-name[data-person-link] {
+    position: relative;
+    pointer-events: auto;
+    cursor: pointer;
+    text-align: start;
+    text-decoration-line: none;
+    text-underline-offset: 0.2em;
+    border-radius: 2px;
+}
+
+.person-name[data-person-link]:hover,
+.person-name[data-person-link]:focus-visible {
+    text-decoration-line: underline;
+}
+
+.person-name[data-person-link]:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+}
+
+@media (pointer: coarse) {
+    .person-name[data-person-link] {
+        display: inline-block;
+        min-block-size: 44px;
+        min-inline-size: 44px;
+        align-content: center;
+        vertical-align: middle;
+    }
 }

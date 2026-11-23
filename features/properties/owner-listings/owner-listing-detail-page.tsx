@@ -22,6 +22,7 @@ import {
     brokerOwnerProfileHref,
 } from "@/lib/routes/broker";
 
+import { ContactName } from "@/components/shared/contact-name";
 import { CallIcon, Lock, WhatsAppIcon } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -81,13 +82,15 @@ function OwnerContactCard({ detail }: { detail: OwnerListingDetail }) {
             <div className={styles.contactIdentity}>
                 <UserAvatar name={detail.ownerName} imageUrl={detail.ownerAvatarUrl} size="md" />
                 <div>
-                    {detail.ownerUserId ? (
-                        <Link href={brokerOwnerProfileHref(detail.ownerUserId)}>
-                            {detail.ownerName}
-                        </Link>
-                    ) : (
-                        <strong>{detail.ownerName}</strong>
-                    )}
+                    <ContactName
+                        name={detail.ownerName}
+                        href={
+                            detail.ownerUserId
+                                ? brokerOwnerProfileHref(detail.ownerUserId)
+                                : undefined
+                        }
+                        contactType="owner"
+                    />
                     <p>
                         {phone
                             ? formatPhoneIn(phone)

@@ -79,7 +79,7 @@ export function EarningsHero({
             aria-labelledby="earnings-hero-heading"
             className={cn(
                 `
-                  flex flex-col justify-center gap-4 rounded-card bg-linear-to-br from-[#1b7a5a]
+                  @container flex flex-col justify-center gap-4 rounded-card bg-linear-to-br from-[#1b7a5a]
                   to-[#16664d] p-5 text-surface shadow-[0_4px_12px_rgb(16_59_45/0.12)]
                   block-full min-inline-0 sm:gap-5
                   sm:p-6
@@ -92,7 +92,7 @@ export function EarningsHero({
                     Estimated earnings
                 </h2>
 
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 min-inline-0">
+                <div className="flex flex-col items-start gap-y-3 min-inline-0 @sm:flex-row @sm:flex-wrap @sm:items-center @sm:gap-x-4 @sm:gap-y-2">
                     <p
                         className={cn(
                             "leading-none tabular-nums",
@@ -107,8 +107,8 @@ export function EarningsHero({
                             <span
                                 aria-hidden
                                 className="
-                                  self-stretch bg-[color-mix(in_srgb,var(--color-brand-soft)_40%,transparent)] inline-px
-                                  min-block-8
+                                  hidden self-stretch bg-[color-mix(in_srgb,var(--color-brand-soft)_40%,transparent)] inline-px
+                                  min-block-8 @sm:block
                                 "
                             />
                             <div className="flex flex-col gap-1 min-inline-0">

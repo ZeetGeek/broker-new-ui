@@ -27,6 +27,29 @@ import { IconBrandMailgun } from "@tabler/icons-react";
 
 import notificationIcons from "./notification-icons.json";
 import propertyMenuIcons from "./property-menu-icons.json";
+import toastStatusIcons from "./toast-status-icons.json";
+
+export type ToastStatusGlyph = keyof typeof toastStatusIcons.icons;
+
+/** Explicit Fluent Color toast glyphs, bundled locally for offline rendering. */
+export function ToastStatusIcon({
+    name,
+    ...props
+}: Omit<IconifyProps, "icon"> & { name: ToastStatusGlyph }) {
+    return (
+        <OfflineIcon
+            icon={{
+                ...toastStatusIcons.icons[name],
+                width: toastStatusIcons.width,
+                height: toastStatusIcons.height,
+            }}
+            width={24}
+            height={24}
+            data-icon={`fluent-color:${name}`}
+            {...props}
+        />
+    );
+}
 
 export type NotificationGlyph = keyof typeof notificationIcons;
 

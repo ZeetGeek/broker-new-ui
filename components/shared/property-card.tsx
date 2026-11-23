@@ -1,13 +1,12 @@
 "use client";
 
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
 import { formatAreaSqft } from "@/lib/format/area";
 import { offersRent, offersSale } from "@/lib/format/listing-availability";
-import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
+import { formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
@@ -15,16 +14,19 @@ import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
+import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import {
     AttachedBrokersRow,
     AttachedBuyersRow,
     InvitedBrokersRow,
 } from "@/components/shared/attached-people-row";
+import { CardLink } from "@/components/shared/card-link";
+import { ClientPipelineInfo } from "@/components/shared/client-pipeline-info";
+import { ContactName } from "@/components/shared/contact-name";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import {
     Building2,
     Calendar,
-    CallIcon,
     Camera,
     Check,
     CircleCheck,
@@ -53,14 +55,18 @@ import {
     PriceWithCommission,
 } from "@/components/shared/price-with-commission";
 import { PropertyCardMenu } from "@/components/shared/property-card-menu";
+import { PropertyOwnerContactActions } from "@/components/shared/property-owner-contact-actions";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
+
+import styles from "./property-card.module.css";
 
 addCollection(tablerMenuIcons as Parameters<typeof addCollection>[0]);
 
@@ -329,6 +335,7 @@ function BrowseRequestAction({
 }
 
 export type PropertyCardOwner = {
+    id?: string;
     name: string;
     avatarUrl?: string;
     phoneDigits?: string;
@@ -406,12 +413,18 @@ export type OwnedPropertyCardListing = Omit<PropertyCardBase, "owner"> & {
     commissionPercent?: number | null;
     /** Fixed rent brokerage in INR. Null or 0 when unset. */
     commissionAmount?: number | null;
+    ownerId?: string | null;
     ownerName?: string | null;
     /** Exclusive owner mobile — enables WhatsApp / Call on the card footer. */
     ownerPhoneDigits?: string | null;
     visibility?: "private" | "marketplace";
     /** Buyers linked to this listing — shown as the Requests & Invitations avatar stack. */
-    attachedClients?: Array<{ id: string; name: string; avatarUrl?: string }>;
+    attachedClients?: Array<{
+        id: string;
+        name: string;
+        avatarUrl?: string;
+        stage?: string | null;
+    }>;
 };
 
 export type PropertyCardProps = {
@@ -454,6 +467,10 @@ export type PropertyCardProps = {
     onAttachOwner?: () => void;
     /** Owner cards: invite a broker to this specific property. */
     onInviteBroker?: () => void;
+    /** Hide redundant status when the inventory tab already identifies it. */
+    showStatus?: boolean;
+    /** Inventory owner attachment styled like the contact property link row. */
+    ownerRowStyle?: "inline" | "linked";
     brokerSummary?: PropertyBrokersSummary;
     brokerSummaryState?: "loading" | "error" | "ready";
     /** Owned cards: open lead analytics for this listing. */
@@ -593,6 +610,9 @@ function BrowseOverlayPropertyCard({
                 <OverlayPersonLine
                     label="Owner"
                     name={listing.owner.name}
+                    contactId={listing.owner.id}
+                    contactType="owner"
+                    href={listing.owner.profileHref}
                     avatarUrl={listing.owner.avatarUrl}
                 />
             </div>
@@ -696,7 +716,14 @@ function PropertyCardOwnerBlock({
         return (
             <div className="flex items-center gap-2.5">
                 <UserAvatar name={owner.name} imageUrl={owner.avatarUrl} size="sm" />
-                <p className="body-sm font-medium text-ink">{owner.name}</p>
+                <p className="body-sm font-medium text-ink">
+                    <ContactName
+                        name={owner.name}
+                        contactId={owner.id}
+                        contactType="owner"
+                        href={owner.profileHref}
+                    />
+                </p>
             </div>
         );
     }
@@ -706,7 +733,14 @@ function PropertyCardOwnerBlock({
             <div className="flex items-center gap-2.5 min-inline-0">
                 <UserAvatar name={owner.name} imageUrl={owner.avatarUrl} size="sm" />
                 <div className="min-inline-0">
-                    <p className="body-sm font-medium text-ink">{owner.name}</p>
+                    <p className="body-sm font-medium text-ink">
+                        <ContactName
+                            name={owner.name}
+                            contactId={owner.id}
+                            contactType="owner"
+                            href={owner.profileHref}
+                        />
+                    </p>
                     <PhoneNumber
                         phoneDigits={owner.phoneDigits}
                         className="body-xs text-ink-muted"
@@ -797,12 +831,14 @@ function RepresentedPropertyCard({
 
     return (
         <article
+            data-linked-card
             className={cn(
                 "overflow-hidden rounded-card border border-border-warm bg-surface",
                 "flex flex-col",
                 className,
             )}
         >
+            <CardLink href={detailsHref} label={`Open ${titleLine}`} />
             <div className="flex items-center gap-2 bg-brand-deep px-3 py-2 text-surface">
                 <CircleCheck aria-hidden className="shrink-0 block-4 inline-4" strokeWidth={1.75} />
                 <p className="body-xs font-medium">
@@ -927,105 +963,6 @@ function ownedToBrowseListing(listing: OwnedPropertyCardListing): BrowseProperty
     };
 }
 
-/** Bottom bar for broker inventory: WhatsApp (outline) + Call (brand). */
-function OwnedContactSplitBar({
-    ownerName,
-    ownerPhoneDigits,
-}: {
-    ownerName: string;
-    ownerPhoneDigits?: string | null;
-}) {
-    const digits = ownerPhoneDigits?.replace(/\D/g, "") ?? "";
-    const canContact = digits.length >= 10;
-    const phoneLabel = canContact ? formatPhoneIn(digits) : null;
-    const tip = phoneLabel ?? "Attach an owner with a phone number first";
-
-    return (
-        <div
-            className="pointer-events-auto flex gap-2 inline-full"
-            onClick={(event) => event.stopPropagation()}
-        >
-            <Tooltip>
-                <TooltipTrigger
-                    render={
-                        canContact ? (
-                            <Button
-                                variant="outline"
-                                size="md"
-                                nativeButton={false}
-                                className="flex-1 min-inline-0"
-                                render={
-                                    <a
-                                        href={formatWhatsAppUrl(digits)}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label={`WhatsApp ${ownerName} at ${phoneLabel}`}
-                                    />
-                                }
-                            />
-                        ) : (
-                            <Button
-                                variant="outline"
-                                size="md"
-                                type="button"
-                                disabled
-                                className="flex-1 min-inline-0"
-                                aria-label="WhatsApp unavailable — attach an owner first"
-                            />
-                        )
-                    }
-                >
-                    <WhatsAppIcon
-                        aria-hidden
-                        strokeWidth={1.75}
-                        className="shrink-0 block-4.5 inline-4.5"
-                    />
-                    WhatsApp
-                </TooltipTrigger>
-                <TooltipContent side="top">{tip}</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-                <TooltipTrigger
-                    render={
-                        canContact ? (
-                            <Button
-                                variant="accent"
-                                size="md"
-                                nativeButton={false}
-                                className="flex-1 min-inline-0"
-                                render={
-                                    <a
-                                        href={formatTelUrl(digits)}
-                                        aria-label={`Call owner ${ownerName} at ${phoneLabel}`}
-                                    />
-                                }
-                            />
-                        ) : (
-                            <Button
-                                variant="accent"
-                                size="md"
-                                type="button"
-                                disabled
-                                className="flex-1 min-inline-0"
-                                aria-label="Call owner unavailable — attach an owner first"
-                            />
-                        )
-                    }
-                >
-                    <CallIcon
-                        aria-hidden
-                        strokeWidth={1.75}
-                        className="shrink-0 block-4.5 inline-4.5"
-                    />
-                    Call Owner
-                </TooltipTrigger>
-                <TooltipContent side="top">{tip}</TooltipContent>
-            </Tooltip>
-        </div>
-    );
-}
-
 /**
  * Broker/owner inventory card — same overlay chrome as Marketplace and My
  * Deals. Empty Owner / Buyers rows use link "Attach owner" / "Attach buyers";
@@ -1049,12 +986,15 @@ function OwnedOverlayPropertyCard({
     audience = "broker",
     className,
     deleted,
+    showStatus = true,
+    ownerRowStyle = "inline",
 }: Extract<PropertyCardProps, { variant: "owned" }>) {
     if (deleted) {
         return (
             <DeletedOwnedPropertyCard
                 listing={listing}
                 deleted={deleted}
+                showStatus={showStatus}
                 priority={priority}
                 imageSizes={imageSizes}
                 audience={audience}
@@ -1108,7 +1048,8 @@ function OwnedOverlayPropertyCard({
                 priority={priority}
                 // A listing nobody can see yet, or one already sold, reads as inactive.
                 muted={isSold || listing.status !== "published"}
-                className={className}
+                className={cn(styles.ownedCard, className)}
+                panelClassName={styles.panel}
                 chips={
                     <>
                         {!isSold && listing.status === "unpublished" ? (
@@ -1173,30 +1114,42 @@ function OwnedOverlayPropertyCard({
                 }
             >
                 <div className="flex flex-col gap-3.5 min-inline-0">
-                    <div className="flex items-center gap-2">
-                        <span className="body-sm text-ink-muted">Status</span>
-                        <Badge
-                            color={
-                                isSold || listing.status === "unpublished"
-                                    ? "red"
-                                    : listing.status === "published"
-                                      ? "emerald"
-                                      : "amber"
-                            }
-                        >
-                            {isSold ? "Sold" : OWNED_STATUS_LABEL[listing.status]}
-                        </Badge>
-                    </div>
+                    {showStatus ? (
+                        <div className="flex items-center gap-2">
+                            <span className="body-sm text-ink-muted">Status</span>
+                            <Badge
+                                color={
+                                    isSold || listing.status === "unpublished"
+                                        ? "red"
+                                        : listing.status === "published"
+                                          ? "emerald"
+                                          : "amber"
+                                }
+                            >
+                                {isSold ? "Sold" : OWNED_STATUS_LABEL[listing.status]}
+                            </Badge>
+                        </div>
+                    ) : null}
 
                     <OverlayCardSummary
                         href={detailsHref}
-                        price={<ListingAskPrices listing={browse} audience={audience} />}
+                        price={
+                            <div className={styles.prices}>
+                                <ListingAskPrices listing={browse} audience={audience} />
+                            </div>
+                        }
                         headline={headline}
                         locationLabel={`${listing.locality}, ${listing.city}`}
+                        wrapText
                     />
 
-                    {hasOwner ? (
-                        <OverlayPersonLine label="Owner" name={ownerName} />
+                    {ownerRowStyle === "linked" ? null : hasOwner ? (
+                        <OverlayPersonLine
+                            label="Owner"
+                            name={ownerName}
+                            contactId={listing.ownerId}
+                            contactType={audience === "broker" ? "owner" : undefined}
+                        />
                     ) : !isSold && onAttachOwner ? (
                         <OverlayPersonAttachLine
                             label="Owner"
@@ -1205,7 +1158,7 @@ function OwnedOverlayPropertyCard({
                         />
                     ) : null}
 
-                    {hasBuyers || handleAddBuyer ? (
+                    {ownerRowStyle !== "linked" && (hasBuyers || handleAddBuyer) ? (
                         <AttachedBuyersRow
                             buyers={buyers}
                             onAttach={handleAddBuyer}
@@ -1215,6 +1168,102 @@ function OwnedOverlayPropertyCard({
                 </div>
 
                 <OverlayCardActions className="flex-col gap-2">
+                    {ownerRowStyle === "linked" && (hasOwner || (!isSold && onAttachOwner)) ? (
+                        <div className="border-bs border-border-warm pbs-3 inline-full">
+                            {hasOwner ? (
+                                <button
+                                    type="button"
+                                    disabled={isSold || !onAttachOwner}
+                                    aria-label={`Change owner: ${ownerName}`}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        onAttachOwner?.();
+                                    }}
+                                    className={cn(
+                                        "body-sm rounded-control border border-dashed border-brand/40 font-semibold text-brand-text inline-full focus-visible:outline-2 focus-visible:outline-ring enabled:cursor-pointer enabled:hover:bg-brand-soft/30",
+                                        styles.ownerRow,
+                                    )}
+                                >
+                                    <span className="shrink-0 text-ink-muted">Owner</span>
+                                    <span className={styles.person}>
+                                        <UserAvatar name={ownerName} size="2xs" framed={false} />
+                                        <span className={styles.personName}>{ownerName}</span>
+                                    </span>
+                                </button>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    type="button"
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        onAttachOwner?.();
+                                    }}
+                                    className="gap-2 border-dashed border-brand/40 font-semibold text-brand-text inline-full min-block-11"
+                                >
+                                    <UserPlus aria-hidden />
+                                    {OWNED_ATTACH_OWNER_LABEL}
+                                </Button>
+                            )}
+                        </div>
+                    ) : null}
+                    {ownerRowStyle === "linked" && audience === "broker" ? (
+                        <div className="inline-full min-inline-0">
+                            {hasBuyers ? (
+                                <div
+                                    className={cn(
+                                        "rounded-control border border-dashed border-brand/40",
+                                        styles.clientsRow,
+                                    )}
+                                >
+                                    <ClientPipelineInfo
+                                        clients={buyers}
+                                        className={styles.pipelineButton}
+                                    />
+                                    <button
+                                        type="button"
+                                        disabled={!handleAddBuyer}
+                                        aria-label="Manage attached clients"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            handleAddBuyer?.();
+                                        }}
+                                        className={cn(
+                                            "body-sm rounded-control focus-visible:outline-2 focus-visible:outline-ring enabled:cursor-pointer enabled:hover:bg-brand-soft/30",
+                                            styles.clientButton,
+                                        )}
+                                    >
+                                        <span className="shrink-0 font-semibold text-ink-muted">
+                                            Clients
+                                        </span>
+                                        <AttachedClientsSummary
+                                            clients={buyers}
+                                            maxAvatars={3}
+                                            className={styles.clientSummary}
+                                            labelClassName={cn(
+                                                "text-brand-text",
+                                                styles.clientName,
+                                            )}
+                                            interactive={false}
+                                        />
+                                    </button>
+                                </div>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    type="button"
+                                    disabled={!handleAddBuyer}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        handleAddBuyer?.();
+                                    }}
+                                    className="gap-2 border-dashed border-brand/40 font-semibold text-brand-text inline-full min-block-11"
+                                >
+                                    <UserPlus aria-hidden />
+                                    Attach clients
+                                </Button>
+                            )}
+                        </div>
+                    ) : null}
                     {isSold ? (
                         <p
                             className="
@@ -1275,16 +1324,16 @@ function OwnedOverlayPropertyCard({
                     ) : null}
 
                     {showContactBar ? (
-                        <OwnedContactSplitBar
+                        <PropertyOwnerContactActions
                             ownerName={ownerName || "Owner"}
                             ownerPhoneDigits={hasOwnerPhone ? ownerPhoneDigits : null}
                         />
                     ) : audience === "broker" && !hasOwner && canManagePeople ? (
                         <p
                             className="
-                              body-xs flex items-center justify-center rounded-control
-                              bg-surface-muted px-3 py-2 text-center font-medium text-ink/70
-                              inline-full min-block-11
+                              body-xs flex items-center justify-center rounded-control border
+                              border-dashed border-danger/40 bg-danger-soft px-3 py-2 text-center
+                              font-medium text-danger inline-full min-block-11
                             "
                         >
                             Attach an owner to enable calls and WhatsApp.
@@ -1303,11 +1352,13 @@ function OwnedOverlayPropertyCard({
 function DeletedOwnedPropertyCard({
     listing,
     deleted,
+    showStatus = true,
     priority = false,
     imageSizes = "(max-width: 768px) 100vw, 50vw",
     audience = "broker",
     className,
 }: {
+    showStatus?: boolean;
     listing: OwnedPropertyCardListing;
     deleted: NonNullable<PropertyCardProps["deleted"]>;
     priority?: boolean;
@@ -1350,10 +1401,12 @@ function DeletedOwnedPropertyCard({
             }
         >
             <div className="flex flex-col gap-3.5 min-inline-0">
-                <div className="flex items-center gap-2">
-                    <span className="body-sm text-ink-muted">Status</span>
-                    <Badge color="red">Deleted</Badge>
-                </div>
+                {showStatus ? (
+                    <div className="flex items-center gap-2">
+                        <span className="body-sm text-ink-muted">Status</span>
+                        <Badge color="red">Deleted</Badge>
+                    </div>
+                ) : null}
 
                 <OverlayCardSummary
                     price={<ListingAskPrices listing={browse} audience={audience} />}
@@ -1361,7 +1414,14 @@ function DeletedOwnedPropertyCard({
                     locationLabel={[listing.locality, listing.city].filter(Boolean).join(", ")}
                 />
 
-                {ownerName ? <OverlayPersonLine label="Owner" name={ownerName} /> : null}
+                {ownerName ? (
+                    <OverlayPersonLine
+                        label="Owner"
+                        name={ownerName}
+                        contactId={listing.ownerId}
+                        contactType={audience === "broker" ? "owner" : undefined}
+                    />
+                ) : null}
                 {buyers.length ? <AttachedBuyersRow buyers={buyers} /> : null}
             </div>
 

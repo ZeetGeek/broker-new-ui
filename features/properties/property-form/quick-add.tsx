@@ -114,7 +114,7 @@ export function QuickAdd({
                 </p>
             </header>
 
-            <div className={FORM_SECTIONS_CLASS}>
+            <div className={`${FORM_SECTIONS_CLASS} *:border-border-warm *:not-last:border-be`}>
                 <StepBasics />
 
                 <WizardSection
@@ -231,7 +231,7 @@ export function QuickAdd({
                         {showRent ? (
                             <CurrencyField name="rent.monthlyRent" label="Monthly rent" />
                         ) : null}
-                        {isOwner && showSalePrice ? (
+                        {showSalePrice ? (
                             <NumberField
                                 name="commission.sale.value"
                                 label="Sale commission (%)"
@@ -239,19 +239,23 @@ export function QuickAdd({
                                 min={OWNER_SALE_COMMISSION_MIN}
                                 max={OWNER_SALE_COMMISSION_MAX}
                                 placeholder="e.g. 2"
-                                visibility="public"
+                                visibility={isOwner ? "public" : "private"}
                                 startIcon={BadgePercent}
-                                hint={`Required. Between ${OWNER_SALE_COMMISSION_MIN}% and ${OWNER_SALE_COMMISSION_MAX}% of the sale price.`}
+                                hint={`Between ${OWNER_SALE_COMMISSION_MIN}% and ${OWNER_SALE_COMMISSION_MAX}% of the sale price, paid by the owner.`}
                             />
                         ) : null}
-                        {isOwner && derived.isRentLike ? (
+                        {derived.isRentLike ? (
                             <CurrencyField
                                 name="commission.rent.value"
                                 label="Rent commission"
                                 placeholder="e.g. 25,000 (0 for none)"
                                 allowZero
-                                visibility="public"
-                                hint="Required. Fixed amount you pay the broker. For no commission, enter 0."
+                                visibility={isOwner ? "public" : "private"}
+                                hint={
+                                    isOwner
+                                        ? "Fixed amount you pay the broker. For no commission, enter 0."
+                                        : "Fixed amount paid by the owner. For no commission, enter 0."
+                                }
                             />
                         ) : null}
                         <TextField

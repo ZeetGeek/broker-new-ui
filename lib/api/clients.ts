@@ -18,6 +18,7 @@ export type PropertyClientsResult = {
 export type AttachedClientRef = {
     id: string;
     name: string;
+    stage?: string | null;
 };
 
 /** Fields the broker types when adding a buyer. */
@@ -631,6 +632,7 @@ function leadClientRef(lead: ApiPropertyLead): AttachedClientRef | null {
     return {
         id,
         name: lead.client?.name?.trim() || "Client",
+        stage: lead.stage ?? null,
     };
 }
 
@@ -673,6 +675,11 @@ export async function attachedClientsByProperty(
                 MOCK_CLIENTS.filter((client) => ids.includes(client.id)).map((client) => ({
                     id: client.id,
                     name: client.name,
+                    stage:
+                        MOCK_DEALS.find(
+                            (deal) =>
+                                deal.property.id === propertyId && deal.buyer.id === client.id,
+                        )?.status ?? null,
                 })),
             );
         }

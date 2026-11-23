@@ -1,10 +1,13 @@
 "use client";
+
 import type { ReactNode } from "react";
 
 import { formatDurationUntil, formatTimeIn } from "@/lib/format/date";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
+import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { ContactName } from "@/components/shared/contact-name";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     Clock3,
@@ -247,7 +250,18 @@ export function VisitRow({
                     >
                         <span>
                             <span className="text-ink-subtle">{counterpartyRole}</span>{" "}
-                            <span className="font-medium text-ink">{counterparty.name}</span>
+                            <span className="font-medium text-ink">
+                                <ContactName
+                                    name={counterparty.name}
+                                    contactId={counterparty.id}
+                                    contactType={viewer === "broker" ? "owner" : undefined}
+                                    href={
+                                        viewer === "owner"
+                                            ? ownerBrokerProfileHref(counterparty.id)
+                                            : undefined
+                                    }
+                                />
+                            </span>
                         </span>
                     </Hint>
 
@@ -259,7 +273,13 @@ export function VisitRow({
                             <Hint label="Your client being shown this property">
                                 <span>
                                     <span className="text-ink-subtle">Client</span>{" "}
-                                    <span className="font-medium text-ink">{visit.buyer.name}</span>
+                                    <span className="font-medium text-ink">
+                                        <ContactName
+                                            name={visit.buyer.name}
+                                            contactId={visit.buyer.id}
+                                            contactType={viewer === "broker" ? "buyer" : undefined}
+                                        />
+                                    </span>
                                 </span>
                             </Hint>
                         </>

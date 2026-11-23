@@ -299,7 +299,7 @@ p-4 p-5 p-6 p-8 p-10 p-12 p-16` cover all of them. Never write an arbitrary valu
 like `p-[13px]`.
 
 - Card padding: 16px mobile, 20px desktop
-- Gap between cards: 12px mobile, 16px desktop
+- Gap between cards: `gap-card-grid` / `--card-grid-gap` (12px below 640px, 16px from 640px); use `gap="card-grid"` for virtual grids
 - Gap between page sections: 24px mobile, 32px desktop
 - Gap between a label and its value: 4px
 - Gap between related rows: 12px
@@ -378,7 +378,12 @@ It is a brand-green lift (`0 2px 4px -1px ink/18%, 0 8px 16px -4px brand/45%,
 (`0 1px 2px -1px ink/12%, 0 4px 10px -4px brand/30%, 0 8px 16px -8px brand/20%`). Never on cards, outline/ghost
 buttons, or more than one primary action per screen; drop it when disabled.
 
-The focus ring remains the one non-elevation `box-shadow` besides the brand glow:
+**Danger glow** — `<Button variant="destructive">` uses `--shadow-danger-glow-soft`
+(`shadow-danger-glow-soft`), matching the inline brand glow's offsets and blur in
+the danger hue. Pair it with a solid `danger` fill and white text; drop the glow
+when disabled. Danger menu items keep their existing styling.
+
+The focus ring remains the one non-elevation `box-shadow` besides the button glows:
 `0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-brand)`.
 
 Borders are 1px `border`. A card may combine a hairline border with a shadow when it
@@ -428,7 +433,7 @@ Text on dark: headings at `#FFFFFF`, body at `#B8CFC4`, the count or metric in
 | Outline dark      | transparent, 1px `ink-muted`             | `ink`           | On dark / tinted surfaces where a white face would clash                                                                                                              |
 | Secondary         | `secondary` fill                         | secondary fg    | Alternate filled action                                                                                                                                               |
 | Surface           | Polaris white face (`btn-polaris-white`) | `#282828`       | White face on canvas. Quiet contained actions. Same face as Outline.                                                                                                  |
-| Destructive       | transparent, 1px `danger`                | `danger`        | Reject, Delete                                                                                                                                                        |
+| Destructive       | `danger` with soft danger glow           | white           | Reject, Delete                                                                                                                                                        |
 | Ghost             | none                                     | `ink-muted`     | Tertiary, inside cards                                                                                                                                                |
 
 `brand-soft` fills hover to `brand-soft-hover` â€” one step deeper in the same green, never a different hue.

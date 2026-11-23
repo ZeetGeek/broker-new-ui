@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
-
 import type { BrokerVisit } from "@/lib/api/site-visits";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
+import { ContactName } from "@/components/shared/contact-name";
 import { DrawerSection } from "@/components/shared/drawer-section";
 import { CalendarDays, CalendarPlus, Clock, MapPin, Plus } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import { getVisitActions, visitDurationLabel, visitState } from "./model";
@@ -83,7 +83,13 @@ export function AttendanceConfirmation({
             )}
         >
             <div className={styles.confirmSummary}>
-                <strong>{visit.clientName}</strong>
+                <strong>
+                    <ContactName
+                        name={visit.clientName}
+                        contactId={visit.clientId}
+                        contactType="buyer"
+                    />
+                </strong>
                 <span>
                     {visit.propertyTitle} · {visit.locality}
                 </span>
@@ -244,7 +250,13 @@ export function VisitDetail({
                             <UserAvatar name={visit.clientName} size="sm" />
                             <div>
                                 <span>Client</span>
-                                <strong>{visit.clientName}</strong>
+                                <strong>
+                                    <ContactName
+                                        name={visit.clientName}
+                                        contactId={visit.clientId}
+                                        contactType="buyer"
+                                    />
+                                </strong>
                             </div>
                         </div>
                         <div className={`${styles.detailLine} ${styles.detailMeetingPoint}`}>

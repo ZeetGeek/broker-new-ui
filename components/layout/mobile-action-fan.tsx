@@ -1,6 +1,7 @@
-import { useId } from "react";
+import { useId, useRef } from "react";
 
 import { type AppIcon, Plus } from "@/components/shared/icons";
+import { WorkflowLink } from "@/components/shared/workflow-link";
 
 import styles from "./mobile-action-fan.module.css";
 
@@ -16,10 +17,12 @@ export function MobileActionFan({
     actions: readonly [MobileFanAction, MobileFanAction, MobileFanAction, MobileFanAction];
 }) {
     const id = useId();
+    const toggle = useRef<HTMLInputElement>(null);
 
     return (
         <div className={styles.fan}>
             <input
+                ref={toggle}
                 className={styles.toggle}
                 type="checkbox"
                 id={id}
@@ -32,13 +35,18 @@ export function MobileActionFan({
             <ul className={styles.actions} id={`${id}-actions`} aria-label="Quick actions">
                 {actions.map(({ href, label, icon: Icon }) => (
                     <li className={styles.item} key={href}>
-                        {/* Native navigation also resets the checkbox for query-only actions. */}
-                        <a className={styles.action} href={href}>
+                        <WorkflowLink
+                            className={styles.action}
+                            href={href}
+                            onClick={() => {
+                                if (toggle.current) toggle.current.checked = false;
+                            }}
+                        >
                             <span className={styles.actionIcon}>
                                 <Icon aria-hidden strokeWidth={1.75} />
                             </span>
                             <span className={styles.actionLabel}>{label}</span>
-                        </a>
+                        </WorkflowLink>
                     </li>
                 ))}
             </ul>

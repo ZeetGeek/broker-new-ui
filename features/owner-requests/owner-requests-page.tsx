@@ -186,7 +186,7 @@ export function OwnerRequestsPage() {
                     items={queue.items}
                     getKey={(item) => item.id}
                     estimateRowHeight={480}
-                    gap={24}
+                    gap="card-grid"
                     breakpoints={REQUESTS_GRID_BREAKPOINTS}
                     ariaLabel="Broker representation requests"
                     renderItem={(item) => (

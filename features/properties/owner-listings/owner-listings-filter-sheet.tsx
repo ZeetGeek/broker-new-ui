@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 
 import { formatMoney } from "@/lib/format/money";
 import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
@@ -10,6 +10,7 @@ import {
     propertyCriteriaCount,
     type PropertyListCriteria,
 } from "@/lib/properties/list-criteria";
+import type { PeopleFilters, PeopleFilterScope } from "@/lib/properties/people-filters";
 import { cn } from "@/lib/utils";
 import { useMarketCurrency } from "@/hooks/use-market";
 
@@ -44,6 +45,7 @@ import {
     Utensils,
     Warehouse,
 } from "@/components/shared/icons";
+import { PeopleFilterFields } from "@/components/shared/people-filter-fields";
 import { PropertyFilterFields } from "@/components/shared/property-filter-fields";
 import { RangeValuePill } from "@/components/shared/range-value-pill";
 import { Accordion, AccordionContent, AccordionItem } from "@/components/ui/accordion";
@@ -109,8 +111,8 @@ const PARKING_OPTIONS = [
 
 const FLOOR_OPTIONS = [
     { value: "ground", label: "Ground" },
-    { value: "low", label: "1–5" },
-    { value: "mid", label: "6–15" },
+    { value: "low", label: "1â€“5" },
+    { value: "mid", label: "6â€“15" },
     { value: "high", label: "16+" },
 ] as const;
 
@@ -204,8 +206,9 @@ function ChoiceChip({
             onClick={onClick}
             className={cn(
                 `
-                  relative gap-2 rounded-full px-4 py-3 text-sm font-normal shadow-none block-auto
-                  min-block-11
+                  relative gap-1.5 rounded-full px-3 py-2.5 text-sm font-normal shadow-none
+                  block-auto min-block-11
+                  sm:gap-2 sm:px-4 sm:py-3
                 `,
                 SELECT_TRANSITION,
                 active
@@ -219,8 +222,9 @@ function ChoiceChip({
                     `,
                 tile &&
                     `
-                      flex-1 flex-col items-start justify-between gap-4 rounded-inner p-4 text-start
-                      whitespace-normal inline-full min-block-24
+                      flex-1 flex-col items-start justify-between gap-3 rounded-inner p-3 text-start
+                      whitespace-normal inline-full min-block-20
+                      sm:gap-4 sm:p-4 sm:min-block-24
                     `,
             )}
         >
@@ -273,12 +277,12 @@ function CountFilter({
     };
 
     return (
-        <div role="group" aria-label={label} className="flex items-center justify-between gap-3">
-            <span className="flex items-center gap-2.5 text-sm font-medium text-ink min-inline-0">
+        <div role="group" aria-label={label} className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2 text-sm font-medium text-ink min-inline-0 sm:gap-2.5">
                 <Icon className="shrink-0 block-5 inline-5" strokeWidth={1.5} aria-hidden />
-                <span>{label}</span>
+                <span className="min-inline-0">{label}</span>
             </span>
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
                 <Button
                     type="button"
                     variant="outline"
@@ -341,7 +345,7 @@ function CommissionRange({
             <div className="flex items-baseline justify-between gap-3">
                 <span className="text-sm font-medium text-ink">{label}</span>
                 <span className="tabular text-sm font-semibold text-brand-text">
-                    {isAny ? "Any" : `${minLabel} – ${maxLabel}`}
+                    {isAny ? "Any" : `${minLabel} â€“ ${maxLabel}`}
                 </span>
             </div>
             <div className="px-1 py-2">{children}</div>
@@ -461,27 +465,43 @@ function ChipGroup({
 }
 
 export type OwnerListingsFilterSheetProps = {
+    title?: ReactNode;
+    additionalFields?: {
+        content: ReactNode;
+        active: boolean;
+        onClear: () => void;
+    };
+    applyLabel?: string;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     appliedFilters: OwnerListingsFilters;
     onApply: (
         patch: Partial<OwnerListingsFilters>,
         discoveryFilters?: PropertyListCriteria,
+        peopleFilters?: PeopleFilters,
     ) => void;
+    peopleFilterScope?: PeopleFilterScope;
+    peopleFilters?: PeopleFilters;
     showDiscoveryFilters?: boolean;
     discoveryFilters?: Partial<PropertyListCriteria>;
     discoveryDescription?: string;
 };
 
 export function OwnerListingsFilterSheet({
+    title = "Filters",
+    additionalFields,
+    applyLabel = "Show properties",
     open,
     onOpenChange,
     appliedFilters,
     onApply,
+    peopleFilterScope,
+    peopleFilters,
     showDiscoveryFilters = false,
     discoveryFilters,
     discoveryDescription = "Narrow these deals by location, budget and property type.",
 }: OwnerListingsFilterSheetProps) {
+    const [draftPeople, setDraftPeople] = useState<PeopleFilters>(() => ({ ...peopleFilters }));
     const [draft, setDraft] = useState(() => extractSheetFilters(appliedFilters));
     const [draftDiscovery, setDraftDiscovery] = useState(() =>
         normalizePropertyCriteria(discoveryFilters),
@@ -513,11 +533,12 @@ export function OwnerListingsFilterSheet({
     if (open && (!draftSource.open || draftSource.appliedFilters !== appliedFilters)) {
         setDraftSource({ open: true, appliedFilters });
         const next = extractSheetFilters(appliedFilters);
-        // Quick-chip Ready to move → preselect condition chip.
+        // Quick-chip Ready to move â†’ preselect condition chip.
         if (next.readyToMove && !next.propertyConditions.includes("ready_to_move")) {
             next.propertyConditions = [...next.propertyConditions, "ready_to_move"];
         }
         setDraft(next);
+        setDraftPeople({ ...peopleFilters });
         setDraftDiscovery(normalizePropertyCriteria(discoveryFilters));
     } else if (!open && draftSource.open) {
         setDraftSource({ open: false, appliedFilters });
@@ -556,6 +577,7 @@ export function OwnerListingsFilterSheet({
 
     const hasDraftFilters = useMemo(() => {
         return (
+            (Boolean(peopleFilterScope) && Boolean(draftPeople.ownerId || draftPeople.clientId)) ||
             Boolean(draft.listedWithinDays) ||
             Boolean(draft.minCommissionPercent) ||
             Boolean(draft.maxCommissionPercent) ||
@@ -574,7 +596,7 @@ export function OwnerListingsFilterSheet({
             draft.readyToMove ||
             (showDiscoveryFilters && propertyCriteriaCount(draftDiscovery) > 0)
         );
-    }, [draft, draftDiscovery, showDiscoveryFilters]);
+    }, [draft, draftDiscovery, showDiscoveryFilters, draftPeople, peopleFilterScope]);
 
     const labelSummary = (
         values: string[],
@@ -610,7 +632,7 @@ export function OwnerListingsFilterSheet({
         if (draft.balconies.length > 0) parts.push("Balcony");
         if (draft.parking.length > 0) parts.push("Parking");
         if (floors) parts.push(floors);
-        return parts.length > 0 ? parts.join(" · ") : undefined;
+        return parts.length > 0 ? parts.join(" Â· ") : undefined;
     }, [draft.bhk, draft.bathrooms, draft.balconies.length, draft.floors, draft.parking.length]);
 
     const moreSummary = useMemo(() => {
@@ -625,7 +647,7 @@ export function OwnerListingsFilterSheet({
         if (condition) parts.push(condition);
         if (draft.facing.length > 0) parts.push("Facing");
         if (draft.suitableFor.length > 0) parts.push("Use");
-        return parts.length > 0 ? parts.join(" · ") : undefined;
+        return parts.length > 0 ? parts.join(" Â· ") : undefined;
     }, [draft.facing.length, draft.furnishing, draft.propertyConditions, draft.suitableFor.length]);
 
     const dealSummary = useMemo(() => {
@@ -637,16 +659,16 @@ export function OwnerListingsFilterSheet({
             if (listed) parts.push(listed);
         }
         if (showSaleCommission && (draft.minCommissionPercent || draft.maxCommissionPercent)) {
-            parts.push(`${formatPercent(saleRange[0])}–${formatPercent(saleRange[1])} sale`);
+            parts.push(`${formatPercent(saleRange[0])}â€“${formatPercent(saleRange[1])} sale`);
         }
         if (showRentCommission && (draft.minCommissionAmount || draft.maxCommissionAmount)) {
             const maxLabel =
                 rentRange[1] >= rentCommissionBounds.max
                     ? `${formatMoney(rentCommissionBounds.max)}+`
                     : formatMoney(rentRange[1]);
-            parts.push(`${formatMoney(rentRange[0])}–${maxLabel} rent`);
+            parts.push(`${formatMoney(rentRange[0])}â€“${maxLabel} rent`);
         }
-        return parts.length > 0 ? parts.join(" · ") : undefined;
+        return parts.length > 0 ? parts.join(" Â· ") : undefined;
     }, [
         draft.listedWithinDays,
         draft.maxCommissionAmount,
@@ -772,11 +794,14 @@ export function OwnerListingsFilterSheet({
                 cursor: "",
             },
             showDiscoveryFilters ? normalizedDiscovery : undefined,
+            peopleFilterScope ? draftPeople : undefined,
         );
         onOpenChange(false);
     };
 
     const handleClear = () => {
+        additionalFields?.onClear();
+        setDraftPeople({ ownerId: "", clientId: "" });
         setDraft((prev) => ({
             ...EMPTY_SHEET_FILTERS,
             newToday: prev.listedWithinDays === "7" ? false : prev.newToday,
@@ -794,14 +819,18 @@ export function OwnerListingsFilterSheet({
                 className={cn(
                     `
                       flex flex-col gap-0 overflow-hidden border-border-warm bg-surface p-0
-                      block-[min(90dvh,calc(100%-1.5rem))] inline-[min(40rem,calc(100vw-1rem))]
+                      block-[min(92dvh,calc(100%-1rem))] inline-[min(40rem,calc(100vw-1rem))]
                       max-inline-[min(40rem,calc(100vw-1rem))]
-                      sm:inline-[min(40rem,calc(100vw-3rem))]
+                      max-[575px]:rounded-none
+                      max-[575px]:border-0
+                      max-[575px]:shadow-none
+                      max-[575px]:block-dvh max-[575px]:inline-screen max-[575px]:max-inline-screen
+                      sm:block-[min(90dvh,calc(100%-1.5rem))] sm:inline-[min(40rem,calc(100vw-3rem))]
                       sm:max-inline-[min(40rem,calc(100vw-3rem))]
                     `,
                 )}
             >
-                <AppModalHeader title="Filters" className="px-5 sm:px-8 sm:py-4" />
+                <AppModalHeader title={title} className="px-4 sm:px-8 sm:py-4" />
 
                 <ScrollArea
                     viewportRef={scrollRef}
@@ -811,7 +840,15 @@ export function OwnerListingsFilterSheet({
                       **:data-[slot=scroll-area-viewport]:overscroll-contain
                     "
                 >
-                    <div className="px-5 pbe-3 sm:px-8">
+                    <div className="px-4 pbe-3 sm:px-8">
+                        {additionalFields?.content}
+                        {open && peopleFilterScope ? (
+                            <PeopleFilterFields
+                                scope={peopleFilterScope}
+                                value={draftPeople}
+                                onChange={setDraftPeople}
+                            />
+                        ) : null}
                         <Accordion
                             key={open ? "open" : "closed"}
                             multiple
@@ -1067,7 +1104,7 @@ export function OwnerListingsFilterSheet({
                                                     !draft.minCommissionPercent &&
                                                     !draft.maxCommissionPercent
                                                 }
-                                                boundsLabel={`${formatPercent(SALE_COMMISSION_RANGE.min)} – ${formatPercent(SALE_COMMISSION_RANGE.max)}`}
+                                                boundsLabel={`${formatPercent(SALE_COMMISSION_RANGE.min)} â€“ ${formatPercent(SALE_COMMISSION_RANGE.max)}`}
                                             >
                                                 <RangeSlider
                                                     value={saleRange}
@@ -1106,7 +1143,7 @@ export function OwnerListingsFilterSheet({
                                                     !draft.minCommissionAmount &&
                                                     !draft.maxCommissionAmount
                                                 }
-                                                boundsLabel={`${formatMoney(rentCommissionBounds.min)} – ${formatMoney(rentCommissionBounds.max)}+`}
+                                                boundsLabel={`${formatMoney(rentCommissionBounds.min)} â€“ ${formatMoney(rentCommissionBounds.max)}+`}
                                             >
                                                 <RangeSlider
                                                     value={rentRange}
@@ -1141,19 +1178,24 @@ export function OwnerListingsFilterSheet({
 
                 <div
                     className={cn(
-                        "relative z-1 shrink-0 border-bs border-border-warm bg-surface p-5 sm:px-8",
+                        `
+                          relative z-1 shrink-0 border-bs border-border-warm bg-surface px-4 py-3
+                          max-[575px]:pbe-[max(0.75rem,env(safe-area-inset-bottom))]
+                          sm:px-8 sm:py-5
+                        `,
                         hasContentBelow && "shadow-[0_-6px_16px_-8px_rgb(0_0_0/0.2)]",
                     )}
                 >
                     <AppModalFooter
                         className="
-                          justify-between
-                          [&_button]:rounded-inner [&_button]:px-5 [&_button]:min-block-11
+                          flex-nowrap justify-between gap-3
+                          [&_button]:rounded-inner [&_button]:px-4 [&_button]:min-block-11
+                          sm:[&_button]:px-5
                         "
                         secondaryLabel="Clear all"
-                        secondaryDisabled={!hasDraftFilters}
+                        secondaryDisabled={!hasDraftFilters && !additionalFields?.active}
                         onSecondary={handleClear}
-                        primaryLabel="Show properties"
+                        primaryLabel={applyLabel}
                         onPrimary={handleApply}
                     />
                 </div>

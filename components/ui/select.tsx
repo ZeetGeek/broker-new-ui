@@ -349,7 +349,12 @@ function SelectLabel({ className, ...props }: SelectPrimitive.GroupLabel.Props) 
     );
 }
 
-function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Props) {
+function SelectItem({
+    className,
+    children,
+    showIndicator = true,
+    ...props
+}: SelectPrimitive.Item.Props & { showIndicator?: boolean }) {
     return (
         <SelectPrimitive.Item
             data-slot="select-item"
@@ -372,18 +377,20 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
             <SelectPrimitive.ItemText className="flex flex-1 items-center gap-2 truncate min-inline-0">
                 {children}
             </SelectPrimitive.ItemText>
-            <SelectPrimitive.ItemIndicator
-                render={
-                    <span
-                        className="
+            {showIndicator && (
+                <SelectPrimitive.ItemIndicator
+                    render={
+                        <span
+                            className="
                           pointer-events-none absolute inset-e-2 flex items-center justify-center
                           text-brand block-4 inline-4
                         "
-                    />
-                }
-            >
-                <CheckIcon className="pointer-events-none" />
-            </SelectPrimitive.ItemIndicator>
+                        />
+                    }
+                >
+                    <CheckIcon className="pointer-events-none" />
+                </SelectPrimitive.ItemIndicator>
+            )}
         </SelectPrimitive.Item>
     );
 }

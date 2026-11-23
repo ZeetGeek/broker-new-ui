@@ -22,12 +22,14 @@ import { SOURCE_OPTIONS } from "@/features/contacts/buyer-options";
 import {
     ComboboxField,
     ContactFormDrawer,
+    type EmbeddedContactForm,
     FormField,
     NotesField,
     TextField,
 } from "@/features/contacts/contact-form-ui";
 import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
 import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
+import { ContactPhotoField } from "@/features/contacts/contact-photo-field";
 import type { OwnerRow } from "@/features/contacts/types";
 import {
     FORM_SECTIONS_CLASS,
@@ -100,16 +102,19 @@ export function AddOwnerModal({
     onOpenChange,
     onSaved,
     owner = null,
+    embedded,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSaved: (name: string, mode: "created" | "updated", id?: string) => void;
     owner?: OwnerRow | null;
+    embedded?: EmbeddedContactForm;
 }) {
     const isEdit = Boolean(owner);
     const profile = useAppSelector((state) => state.dashboard.profile);
     const locationDefaults = useMemo(() => contactLocationDefaults(profile), [profile]);
     const [busy, setBusy] = useState(false);
+    const [photo, setPhoto] = useState<File | null>(null);
     const [initializedFor, setInitializedFor] = useState<OwnerRow | null | undefined>(undefined);
     const [submitError, setSubmitError] = useState("");
 
@@ -138,6 +143,7 @@ export function AddOwnerModal({
         if (!open) return;
         const timer = window.setTimeout(() => {
             const next = valuesFromOwner(owner, locationDefaults);
+            setPhoto(null);
             reset(next);
             setSubmitError("");
             setBusy(false);
@@ -147,8 +153,12 @@ export function AddOwnerModal({
     }, [locationDefaults, open, owner, reset]);
 
     const onInvalid = () => {
-        document
-            .querySelectorAll<HTMLDetailsElement>(".contacts-form-drawer details")
+        (
+            document.querySelector("[data-contact-create-panel]:not([hidden])") ??
+            document.querySelector(".contacts-form-drawer") ??
+            document
+        )
+            .querySelectorAll<HTMLDetailsElement>("details")
             .forEach((section) => {
                 section.open = true;
             });
@@ -173,6 +183,7 @@ export function AddOwnerModal({
         setSubmitError("");
         try {
             await createOwner(parsed);
+            setPhoto(null);
             reset(emptyValues(locationDefaults));
             onOpenChange(false);
         } catch (error) {
@@ -194,6 +205,7 @@ export function AddOwnerModal({
         setSubmitError("");
         try {
             await createOwner(parsed);
+            setPhoto(null);
             reset(emptyValues(locationDefaults));
         } catch (error) {
             const message =
@@ -210,13 +222,14 @@ export function AddOwnerModal({
 
     return (
         <ContactFormDrawer
+            embedded={embedded}
             loading={initializedFor !== owner}
             skeletonVariant="owner"
             open={open}
             onOpenChange={onOpenChange}
             title={isEdit ? "Edit owner" : "Add owner"}
             description=""
-            isDirty={isDirty}
+            isDirty={isDirty || photo !== null}
             busy={busy}
             primaryLabel={isEdit ? "Save changes" : "Save owner"}
             onPrimary={() => void save()}
@@ -228,6 +241,12 @@ export function AddOwnerModal({
                     title="Owner details"
                     description="Add their name and the number you can reach them on."
                 >
+                    <ContactPhotoField
+                        name={values.fullName ?? ""}
+                        file={photo}
+                        onChange={setPhoto}
+                        disabled={busy}
+                    />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <TextField
                             label="Full name"
@@ -320,7 +339,8 @@ export function AddOwnerModal({
                         <FormField label="Area" htmlFor="owner-area">
                             <LocalityCombobox
                                 id="owner-area"
-                                size="lg"
+                                size="md"
+                                className="text-sm"
                                 cityId={selectedCity?.id}
                                 value={values.area ?? ""}
                                 placeholder="Search an area, e.g. Green Park"

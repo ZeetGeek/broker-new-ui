@@ -1,8 +1,6 @@
-import Link from "next/link";
-
-import { brokerPipelineDealHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { ContactName } from "@/components/shared/contact-name";
 import { type AppIcon, CircleCheck, CircleSlash, Clock } from "@/components/shared/icons";
 
 import { OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
@@ -97,12 +95,12 @@ function OfferRow({
         <li className="flex flex-col gap-2">
             <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-0.5 min-inline-0">
-                    <Link
-                        href={brokerPipelineDealHref(client.id)}
-                        className="body-sm truncate font-semibold text-ink capitalize hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                    >
-                        {client.name}
-                    </Link>
+                    <ContactName
+                        name={client.name}
+                        contactId={client.clientId}
+                        contactType="buyer"
+                        className="body-sm truncate font-semibold text-ink hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    />
                     <p className="body-sm flex flex-wrap items-baseline gap-x-2 text-ink-muted">
                         <span className="font-semibold text-ink tabular-nums">
                             {formatSideAmount(offer.amountInr, offer.side)}
@@ -131,6 +129,8 @@ export function AnalyticsOffers({
     const scaleMax = Math.max(1, ...ratios) * 1.08;
     const amountMax = Math.max(1, ...rows.map((c) => c.offer?.amountInr ?? 0));
     const showSide = report.ask.saleInr != null && report.ask.rentInr != null;
+    const best = report.offers.best;
+    const bestGap = best?.offer ? offerGapLabel(best.offer) : null;
 
     return (
         <AnalyticsCard
@@ -138,7 +138,7 @@ export function AnalyticsOffers({
             titleId="analytics-offers-heading"
             description={
                 rows.length > 0
-                    ? "Best offer first. The dark tick marks the asking price."
+                    ? "Every offer compared with the property's asking price"
                     : undefined
             }
             className={className}
@@ -149,17 +149,58 @@ export function AnalyticsOffers({
                     against the asking price.
                 </p>
             ) : (
-                <ol className="flex flex-col gap-5">
-                    {rows.map((client) => (
-                        <OfferRow
-                            key={client.id}
-                            client={client}
-                            scaleMax={scaleMax}
-                            amountMax={amountMax}
-                            showSide={showSide}
-                        />
-                    ))}
-                </ol>
+                <>
+                    {best?.offer ? (
+                        <div className="flex flex-col gap-4 rounded-inner bg-surface-muted p-4 sm:flex-row sm:items-end sm:justify-between">
+                            <div className="flex flex-col gap-1 min-inline-0">
+                                <span className="body-xs font-semibold text-ink-muted">
+                                    Best standing offer
+                                </span>
+                                <strong className="h3 text-ink tabular-nums">
+                                    {formatSideAmount(best.offer.amountInr, best.offer.side)}
+                                </strong>
+                                <span className="body-sm text-ink-muted">
+                                    From {best.name}
+                                    {bestGap ? ` · ${bestGap}` : ""}
+                                </span>
+                            </div>
+                            <dl className="grid grid-cols-3 divide-x divide-border-warm text-center sm:min-inline-64">
+                                <div className="px-2">
+                                    <dt className="body-xs text-ink-muted">Waiting</dt>
+                                    <dd className="h5 mbs-1 text-ink tabular-nums">
+                                        {report.offers.pending}
+                                    </dd>
+                                </div>
+                                <div className="px-2">
+                                    <dt className="body-xs text-ink-muted">Accepted</dt>
+                                    <dd className="h5 mbs-1 text-brand tabular-nums">
+                                        {report.offers.accepted}
+                                    </dd>
+                                </div>
+                                <div className="px-2">
+                                    <dt className="body-xs text-ink-muted">Declined</dt>
+                                    <dd className="h5 mbs-1 text-ink tabular-nums">
+                                        {report.offers.rejected}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+                    ) : null}
+                    <ol className="flex flex-col gap-5">
+                        {rows.map((client) => (
+                            <OfferRow
+                                key={client.id}
+                                client={client}
+                                scaleMax={scaleMax}
+                                amountMax={amountMax}
+                                showSide={showSide}
+                            />
+                        ))}
+                    </ol>
+                    <p className="body-xs text-ink-muted">
+                        The dark marker on each bar is the asking price.
+                    </p>
+                </>
             )}
         </AnalyticsCard>
     );

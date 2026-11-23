@@ -13,13 +13,15 @@ import { derive } from "@/lib/visibility/derive";
 import { FIELD_RULES } from "@/lib/visibility/rules";
 
 import { AppImage } from "@/components/shared/app-image";
-import { AttachedBuyersRow } from "@/components/shared/attached-people-row";
+import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import { IconButton } from "@/components/shared/icon-button";
 import {
+    BadgePercent,
     Check,
     CircleHelp,
     Copy,
     ImageIcon,
+    List,
     LockKeyhole,
     MapPin,
     MoreHorizontal,
@@ -27,8 +29,10 @@ import {
     Upload,
     X,
 } from "@/components/shared/icons";
-import { OverlayPersonLine } from "@/components/shared/overlay-card";
-import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { OVERLAY_ICON_BUTTON_COLORS } from "@/components/shared/overlay-card";
+import { ListingAskPrices } from "@/components/shared/price-with-commission";
+import { PropertyOwnerContactActions } from "@/components/shared/property-owner-contact-actions";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +42,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { BEDROOM_OPTIONS } from "@/constants/property";
 import {
@@ -45,6 +50,9 @@ import {
     removeCoverPhoto,
     replaceCoverPhoto,
 } from "@/features/properties/property-form/cover-photo";
+
+import styles from "./live-summary-panel.module.css";
+import cardStyles from "@/components/shared/property-card.module.css";
 
 function resolveDeposit(values: PropertyDraftValues): number {
     const rent = values.rent.monthlyRent ?? 0;
@@ -142,6 +150,18 @@ export function LiveSummaryPanel({
     }, [buyerCharges, deposit, isSale, ownerDeductions, values]);
 
     const hasPrice = Boolean(price && price > 0);
+    const previewPricing = {
+        saleAmountInr: isSale ? values.sale.expectedPrice : null,
+        rentAmountInr: values.basics.listingFor !== "sell" ? values.rent.monthlyRent : null,
+        commissionPercent: "commissionAsPercent" in result ? result.commissionAsPercent : null,
+        commissionAmount: values.commission.rent.value,
+    };
+    const hasPreviewPrice = Boolean(
+        (previewPricing.saleAmountInr ?? 0) > 0 || (previewPricing.rentAmountInr ?? 0) > 0,
+    );
+    const ownerName = values.owner.name.trim();
+    const hasClients = values.attachedBuyers.length > 0;
+    const showDealBreakdown = stepIndex >= 2 && hasPrice;
     const coBrokerPercent = values.deal.coBrokerSharePercent ?? 0;
     const coBrokerShare = (result.brokerRealIncome * coBrokerPercent) / 100;
     const brokerAfterSplit = Math.max(0, result.brokerRealIncome - coBrokerShare);
@@ -258,7 +278,13 @@ export function LiveSummaryPanel({
             className="flex flex-col gap-4 min-inline-0"
             aria-label="Property preview and deal summary"
         >
-            <article className="overflow-hidden rounded-card bg-surface shadow-md">
+            <article
+                className={cn(
+                    "overflow-hidden rounded-card bg-surface shadow-md min-inline-0",
+                    cardStyles.ownedCard,
+                    styles.previewCard,
+                )}
+            >
                 <h2 className="sr-only">Listing preview</h2>
                 {photoFilesRef ? (
                     <input
@@ -275,10 +301,10 @@ export function LiveSummaryPanel({
                 ) : null}
                 <div
                     className={cn(
-                        "relative aspect-4/3 overflow-hidden",
+                        "relative overflow-hidden min-inline-0",
                         cover?.url
-                            ? "bg-surface-muted"
-                            : "mx-3 mbs-3 rounded-inner border border-dashed border-brand/30 bg-brand-soft/60",
+                            ? "aspect-4/3 bg-surface-muted"
+                            : "mx-3 mbs-3 rounded-inner border-2 border-dashed border-brand/35 bg-brand-soft/40",
                     )}
                 >
                     <div className="absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap gap-1.5 pe-14">
@@ -297,15 +323,16 @@ export function LiveSummaryPanel({
                             </Badge>
                         ) : null}
                     </div>
-                    {cover && photoFilesRef ? (
+                    {cover?.url && photoFilesRef ? (
                         <div className="absolute inset-e-3 inset-bs-3 z-20">
                             <DropdownMenu>
                                 <DropdownMenuTrigger
                                     render={
                                         <IconButton
                                             type="button"
-                                            size="md"
-
+                                            size="sm"
+                                            appearance="inverse"
+                                            style={OVERLAY_ICON_BUTTON_COLORS}
                                             aria-label="Cover photo options"
                                         />
                                     }
@@ -335,22 +362,28 @@ export function LiveSummaryPanel({
                             unoptimized={/^(blob:|https?:)/.test(cover.url)}
                         />
                     ) : (
-                        <div className="flex flex-col items-center justify-center gap-2 px-4 pbs-12 pbe-4 text-center block-full">
-                            <ImageIcon
-                                className="text-brand block-7 inline-7"
-                                strokeWidth={1.5}
-                                aria-hidden
-                            />
-                            <div>
-                                <p className="text-sm font-semibold text-ink">
-                                    Your property, at a glance
+                        <div className="flex flex-col items-center justify-center gap-4 px-5 pbs-12 pbe-6 text-center min-block-60 min-inline-0">
+                            <div className="flex flex-col items-center gap-3">
+                                <span className="flex items-center justify-center rounded-full border-2 border-dashed border-brand/35 text-brand block-12 inline-12">
+                                    <ImageIcon
+                                        className="block-6 inline-6"
+                                        strokeWidth={1.5}
+                                        aria-hidden
+                                    />
+                                </span>
+                                <p className="text-sm/5 font-semibold text-ink">
+                                    Add a cover photo
+                                </p>
+                                <p className="body-xs text-ink-muted">
+                                    Help people recognise your property.
                                 </p>
                             </div>
                             {photoFilesRef || onGoToMedia ? (
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="gap-2 border-brand/25 bg-surface text-brand-text min-block-11 hover:border-brand/50 hover:bg-surface"
+                                    size="sm"
+                                    className="gap-1.5 border-brand/25 bg-surface text-brand-text hover:border-brand/50 hover:bg-surface"
                                     onClick={() =>
                                         photoFilesRef
                                             ? coverInputRef.current?.click()
@@ -364,25 +397,16 @@ export function LiveSummaryPanel({
                         </div>
                     )}
                 </div>
-                <div className="flex flex-col gap-3.5 p-4">
+                <div className={cn("flex flex-col", cardStyles.panel)}>
                     <div className="flex items-center gap-2">
                         <span className="body-sm text-ink-muted">Status</span>
                         <Badge color="stone">Draft</Badge>
                     </div>
                     <div className="flex flex-col gap-2 min-inline-0">
-                        {hasPrice ? (
-                            <PriceWithCommission
-                                amountInr={price!}
-                                isRent={!isSale}
-                                audience={audience}
-                                commissionPercent={
-                                    isSale && "commissionAsPercent" in result
-                                        ? result.commissionAsPercent
-                                        : undefined
-                                }
-                                commissionAmountInr={result.gross || undefined}
-                                size="lg"
-                            />
+                        {hasPreviewPrice ? (
+                            <div className={cardStyles.prices}>
+                                <ListingAskPrices listing={previewPricing} audience={audience} />
+                            </div>
                         ) : (
                             <p className="h5 font-semibold tracking-wide text-brand">
                                 Price not set
@@ -397,25 +421,90 @@ export function LiveSummaryPanel({
                         </p>
                     </div>
                     {audience === "broker" ? (
-                        <>
-                            {values.owner.name?.trim() ? (
-                                <OverlayPersonLine label="Owner" name={values.owner.name.trim()} />
-                            ) : (
-                                <p className="body-sm flex gap-2 text-ink-muted">
-                                    <span className="shrink-0 inline-14">Owner</span>
-                                    <span>Not attached</span>
-                                </p>
-                            )}
-                            <AttachedBuyersRow
-                                buyers={values.attachedBuyers}
-                                emptyLabel="None attached"
-                            />
-                        </>
+                        <div className="flex flex-col gap-2 border-bs border-border-warm pbs-3 min-inline-0">
+                            <div
+                                className={cn(
+                                    "body-sm rounded-control border border-dashed border-brand/40 font-semibold text-brand-text",
+                                    cardStyles.ownerRow,
+                                    styles.peopleRow,
+                                )}
+                            >
+                                <span className="shrink-0 text-ink-muted">Owner</span>
+                                {ownerName ? (
+                                    <span className={cardStyles.person}>
+                                        <UserAvatar name={ownerName} size="2xs" framed={false} />
+                                        <span className={cn(cardStyles.personName, styles.name)}>
+                                            {ownerName}
+                                        </span>
+                                    </span>
+                                ) : (
+                                    <span className="font-normal text-ink-muted">Not attached</span>
+                                )}
+                            </div>
+                            <div
+                                className={cn(
+                                    "rounded-control border border-dashed border-brand/40",
+                                    cardStyles.clientsRow,
+                                )}
+                            >
+                                {hasClients ? (
+                                    <span
+                                        aria-hidden
+                                        className={cn(
+                                            "flex items-center justify-center text-brand-text",
+                                            cardStyles.pipelineButton,
+                                        )}
+                                    >
+                                        <List className="block-4 inline-4" />
+                                    </span>
+                                ) : null}
+                                <div
+                                    className={cn(
+                                        "body-sm",
+                                        cardStyles.clientButton,
+                                        styles.peopleRow,
+                                        !hasClients && styles.emptyClients,
+                                    )}
+                                >
+                                    <span className="shrink-0 font-semibold text-ink-muted">
+                                        Clients
+                                    </span>
+                                    {hasClients ? (
+                                        <AttachedClientsSummary
+                                            clients={values.attachedBuyers}
+                                            maxAvatars={3}
+                                            className={cn(cardStyles.clientSummary, styles.summary)}
+                                            labelClassName={cn(
+                                                "text-brand-text",
+                                                cardStyles.clientName,
+                                                styles.name,
+                                            )}
+                                            interactive={false}
+                                        />
+                                    ) : (
+                                        <span className="text-ink-muted">None attached</span>
+                                    )}
+                                </div>
+                            </div>
+                            {ownerName ? (
+                                <TooltipProvider>
+                                    <PropertyOwnerContactActions
+                                        ownerName={ownerName}
+                                        ownerPhoneDigits={values.owner.phone}
+                                    />
+                                </TooltipProvider>
+                            ) : null}
+                        </div>
                     ) : null}
                 </div>
             </article>
 
-            <article className="overflow-hidden rounded-card bg-surface shadow-md">
+            <article
+                className={cn(
+                    "overflow-hidden rounded-card bg-surface min-inline-0",
+                    showDealBreakdown ? "shadow-md" : "border border-border-warm",
+                )}
+            >
                 <header className="flex items-start justify-between gap-2 px-4 pbs-4">
                     <div className="min-inline-0">
                         <h2 className="text-sm font-semibold text-ink">
@@ -427,7 +516,7 @@ export function LiveSummaryPanel({
                         <LockKeyhole className="block-3.5 inline-3.5" aria-hidden /> Private
                     </span>
                 </header>
-                {stepIndex >= 2 ? (
+                {showDealBreakdown ? (
                     <>
                         <div className="px-4 py-3">
                             {isSale && "ownerNet" in result ? (
@@ -507,11 +596,25 @@ export function LiveSummaryPanel({
                         </div>
                     </>
                 ) : (
-                    <p className="px-4 pbs-4 pbe-5 text-sm/6 text-ink-muted">
-                        {audience === "owner"
-                            ? "Add the price on Price & deal to see the broker commission."
-                            : "Add the price on Price & deal to see what you earn."}
-                    </p>
+                    <div className="flex flex-col items-center gap-3 px-5 py-6 text-center">
+                        <span className="flex items-center justify-center rounded-full border border-brand/20 bg-brand-soft text-brand-text block-12 inline-12">
+                            <BadgePercent className="block-6 inline-6" aria-hidden />
+                        </span>
+                        <div className="flex flex-col gap-1.5 max-inline-64">
+                            <p className="text-sm font-semibold text-ink">
+                                {audience === "owner"
+                                    ? "Broker commission estimate"
+                                    : "Your commission estimate"}
+                            </p>
+                            <p className="text-xs/5 text-ink-muted">
+                                Add the price and commission in{" "}
+                                <span className="font-semibold text-ink">Price &amp; deal</span>
+                                {audience === "owner"
+                                    ? " to see the broker's estimated fee."
+                                    : " to see your estimated earnings."}
+                            </p>
+                        </div>
+                    </div>
                 )}
             </article>
         </aside>
@@ -569,8 +672,9 @@ function MoneyRow({
                             <IconButton
                                 type="button"
                                 size="sm"
+                                appearance="ghost"
+                                color="var(--color-ink-subtle)"
                                 aria-label={`Explain ${label}`}
-                                className=""
                             />
                         }
                     >

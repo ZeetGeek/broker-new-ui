@@ -4,6 +4,7 @@ import type { BrokerVisit, VisitSort, VisitTab } from "@/lib/api/site-visits";
 import { addVisitDays, formatVisitDate, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { ContactName } from "@/components/shared/contact-name";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
 import { IconButton } from "@/components/shared/icon-button";
@@ -20,6 +21,7 @@ import {
     ListToolbarSelect,
 } from "@/components/shared/list-toolbar";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
+import { ListStatusSelect } from "@/components/shared/responsive-list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { StatusTabs } from "@/components/shared/status-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -32,7 +34,6 @@ import {
     getVisitActions,
     VISIT_TABS,
     type VisitActionKind,
-    visitDurationLabel,
     visitState,
 } from "./model";
 import { VISIT_ACTIONS } from "./visit-actions";
@@ -61,7 +62,6 @@ function VisitAction({
                             size="sm"
                             type="button"
                             aria-label={label}
-                            className={`${styles.circleAction} ${danger ? styles.dangerAction : ""}`}
                             onClick={onClick}
                         />
                     }
@@ -113,8 +113,7 @@ export const SORT_OPTIONS: { value: VisitSort; label: string }[] = [
     { value: "booked_desc", label: "Recently booked" },
 ];
 
-const EMPTY_FRAME =
-    "min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]";
+const EMPTY_FRAME = `${styles.emptyFrame} min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]`;
 
 export function VisitList({
     visits,
@@ -198,7 +197,7 @@ export function VisitList({
 
     return (
         <Tabs
-            className="gap-6"
+            className={styles.pageTabs}
             value={tab}
             onValueChange={(value) => {
                 if (VISIT_TABS.some((t) => t.value === value)) onTab(value as VisitTab);
@@ -206,20 +205,24 @@ export function VisitList({
         >
             <PortalSectionNav>
                 <header className={styles.pageHeader}>
-                    <h1 className="h3 text-start min-inline-0">
+                    <h1 className={`h3 text-start min-inline-0 ${styles.pageTitle}`}>
                         <span className="text-ink">Site visits.</span>{" "}
-                        <RotatingHeaderSummary
-                            key={summaryLines.join("|")}
-                            lines={summaryLines.length ? summaryLines : ["Your visits at a glance"]}
-                            loadingPlaceholder="Your visits at a glance"
-                        />
+                        <span className={styles.headerSummary}>
+                            <RotatingHeaderSummary
+                                key={summaryLines.join("|")}
+                                lines={
+                                    summaryLines.length ? summaryLines : ["Your visits at a glance"]
+                                }
+                                loadingPlaceholder="Your visits at a glance"
+                            />
+                        </span>
                     </h1>
                     {firstRun && <ListAddButton label="Schedule visit" onClick={onSchedule} />}
                 </header>
             </PortalSectionNav>
             {!firstRun && (
                 <div className={styles.listToolbar}>
-                    <div className="flex flex-wrap items-center gap-3 max-inline-full min-inline-0">
+                    <div className={styles.toolbarFilters}>
                         <FilterChip
                             label="Filters"
                             icon={SlidersHorizontal}
@@ -229,6 +232,8 @@ export function VisitList({
                             onClick={onFilters}
                             onClear={onClear}
                         />
+                    </div>
+                    <div className={styles.statusTabs}>
                         <StatusTabs
                             label="Visit status"
                             value={tab}
@@ -239,38 +244,62 @@ export function VisitList({
                             }))}
                         />
                     </div>
-                    <div className={styles.searchRow}>
-                        <label className={styles.searchField}>
-                            <span className="sr-only">Search visits</span>
-                            <ListSearchField
-                                placeholder="Search client, phone or property"
-                                aria-label="Search visits"
-                                value={search}
-                                onChange={onSearch}
-                                debounceMs={0}
-                                fullWidth
-                            />
-                        </label>
-                        <ListToolbarSelect
-                            active
-                            label="Visit dates"
-                            value={range}
-                            options={DATE_RANGES}
-                            onChange={onRange}
+                    <div className={styles.statusSelect}>
+                        <ListStatusSelect
+                            label="Status"
+                            value={tab}
+                            options={VISIT_TABS.map((t) => ({
+                                ...t,
+                                count: counts[t.value],
+                                dotClassName: VISIT_STATUS_COLORS[t.value].dotClassName,
+                            }))}
+                            onChange={(value) => {
+                                const selected = VISIT_TABS.find((t) => t.value === value);
+                                if (selected) onTab(selected.value);
+                            }}
                         />
-                        <ListToolbarSelect
-                            label="Sort visits"
-                            value={sort}
-                            options={SORT_OPTIONS}
-                            onChange={onSort}
-                        />
-                        <ListAddButton label="Schedule visit" onClick={onSchedule} />
-                        {filtered && (
-                            <Button variant="ghost" size="sm" onClick={onClear}>
-                                Clear filters
-                            </Button>
-                        )}
                     </div>
+                    <div className={styles.toolbarSearch}>
+                        <ListSearchField
+                            searchHelp="Search visits by client name, phone number or property."
+                            aria-label="Search visits"
+                            value={search}
+                            onChange={onSearch}
+                            debounceMs={0}
+                            fullWidth
+                        />
+                    </div>
+                    <ListToolbarSelect
+                        active
+                        className={styles.toolbarDates}
+                        label="Visit dates"
+                        value={range}
+                        options={DATE_RANGES}
+                        onChange={onRange}
+                    />
+                    <ListToolbarSelect
+                        className={styles.toolbarSort}
+                        label="Sort visits"
+                        mobileLabel="Sort"
+                        value={sort}
+                        options={SORT_OPTIONS}
+                        onChange={onSort}
+                    />
+                    <ListAddButton
+                        label="Schedule visit"
+                        onClick={onSchedule}
+                        className={styles.toolbarSchedule}
+                    />
+                    {filtered && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className={styles.toolbarClear}
+                            onClick={onClear}
+                        >
+                            Clear filters
+                        </Button>
+                    )}
                 </div>
             )}
             <TabsContent value={tab} aria-label={LIST_COPY[tab]}>
@@ -379,87 +408,120 @@ function VisitRow({
     const state = visitState(visit, now);
     const waitingForOwner = visit.status === "scheduled" && !visit.isExclusive;
     return (
-        <article className={styles.visitRow}>
-            <div className={styles.rowProperty}>
-                <PropertyCoverImage src={null} alt="" size={64} />
-                <div>
-                    <button
-                        type="button"
-                        className={styles.propertyLink}
-                        aria-label={`Visit details for ${visit.propertyTitle} with ${visit.clientName}`}
-                        onClick={() => onOpen(visit)}
-                    >
-                        {visit.propertyTitle}
-                    </button>
-                    <div className={styles.propertyMeta}>
-                        <span className={styles.propertyLocation}>
-                            <MapPin aria-hidden />
-                            {visit.locality}
-                        </span>
-                        <span aria-hidden>·</span>
-                        <p>{visitDurationLabel(visit.durationMinutes)}</p>
-                    </div>
-                </div>
-            </div>
-            <div className={styles.rowTime}>
-                <span className={styles.detailIcon} aria-hidden>
-                    <CalendarClock />
-                </span>
-                <div>
-                    <small>{formatVisitDate(visit.startsAt)}</small>
-                    <time dateTime={visit.startsAt}>
-                        {formatVisitTime(visit.startsAt)} {"–"} {formatVisitTime(visit.endsAt)}
-                    </time>
-                </div>
-            </div>
-            <div className={styles.rowProfiles}>
-                <div className={styles.rowClient}>
-                    <UserAvatar
-                        name={visit.ownerName ?? "Owner"}
-                        imageUrl={visit.ownerAvatarUrl ?? undefined}
-                        size="sm"
-                        className="shadow-sm ring-2 ring-surface"
+        <div className={styles.visitCard}>
+            <article className={styles.visitRow}>
+                <div className={styles.rowProperty}>
+                    <PropertyCoverImage
+                        src={null}
+                        alt=""
+                        size={64}
+                        className={styles.propertyCover}
                     />
                     <div>
-                        <small>Owner</small>
-                        <strong data-missing={!visit.ownerName || undefined}>
-                            {visit.ownerName ?? "Not added"}
-                        </strong>
+                        <button
+                            type="button"
+                            className={`font-semibold text-ink capitalize ${styles.propertyLink}`}
+                            aria-label={`Visit details for ${visit.propertyTitle} with ${visit.clientName}`}
+                            onClick={() => onOpen(visit)}
+                        >
+                            {visit.propertyTitle}
+                        </button>
+                        <div className={styles.propertyMeta}>
+                            <span
+                                className={`body-sm tracking-wide text-ink-muted capitalize ${styles.propertyLocation}`}
+                            >
+                                <MapPin aria-hidden strokeWidth={1.75} />
+                                <span className={styles.locationText}>
+                                    {[visit.locality, visit.city]
+                                        .filter(
+                                            (place, index, places) =>
+                                                Boolean(place?.trim()) &&
+                                                places.findIndex(
+                                                    (value) =>
+                                                        value?.trim().toLowerCase() ===
+                                                        place.trim().toLowerCase(),
+                                                ) === index,
+                                        )
+                                        .join(", ")}
+                                </span>
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <div className={styles.rowClient}>
-                    <UserAvatar
-                        name={visit.clientName}
-                        size="sm"
-                        className="shadow-sm ring-2 ring-surface"
-                    />
+                <div className={styles.rowTime}>
+                    <span className={styles.detailIcon} aria-hidden>
+                        <CalendarClock />
+                    </span>
                     <div>
-                        <small>Client</small>
-                        <strong>{visit.clientName}</strong>
+                        <small>{formatVisitDate(visit.startsAt)}</small>
+                        <time dateTime={visit.startsAt}>
+                            {formatVisitTime(visit.startsAt)} {"–"} {formatVisitTime(visit.endsAt)}
+                        </time>
                     </div>
                 </div>
-            </div>
-            <div className={styles.rowStatus}>
-                <VisitStatusBadge state={state} />
-                {waitingForOwner && state === "upcoming" && (
-                    <small className="body-xs text-ink-muted">Waiting for owner</small>
-                )}
-            </div>
-            <div
-                className={styles.rowActions}
-                role="group"
-                aria-label={`Actions for ${visit.propertyTitle} with ${visit.clientName}`}
-            >
-                {getVisitActions(visit, now).map((action) => (
-                    <VisitAction
-                        key={action}
-                        {...VISIT_ACTIONS[action]}
-                        onClick={() =>
-                            action === "view" ? onOpen(visit) : onAction(visit, action)
-                        }
-                    />
-                ))}
-            </div>
-        </article>
+                <div className={styles.rowProfiles}>
+                    <div className={styles.rowClient}>
+                        <UserAvatar
+                            name={visit.ownerName ?? "Owner"}
+                            imageUrl={visit.ownerAvatarUrl ?? undefined}
+                            size="sm"
+                            className="shadow-sm ring-2 ring-surface"
+                        />
+                        <div>
+                            <small>Owner</small>
+                            <strong data-missing={!visit.ownerName || undefined}>
+                                {visit.ownerName ? (
+                                    <ContactName
+                                        name={visit.ownerName}
+                                        contactId={visit.ownerId}
+                                        contactType="owner"
+                                    />
+                                ) : (
+                                    "Not added"
+                                )}
+                            </strong>
+                        </div>
+                    </div>
+                    <div className={styles.rowClient}>
+                        <UserAvatar
+                            name={visit.clientName}
+                            size="sm"
+                            className="shadow-sm ring-2 ring-surface"
+                        />
+                        <div>
+                            <small>Client</small>
+                            <strong>
+                                <ContactName
+                                    name={visit.clientName}
+                                    contactId={visit.clientId}
+                                    contactType="buyer"
+                                />
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+                <div className={styles.rowStatus}>
+                    <VisitStatusBadge state={state} />
+                    {waitingForOwner && state === "upcoming" && (
+                        <small className="body-xs text-ink-muted">Waiting for owner</small>
+                    )}
+                </div>
+                <div
+                    className={styles.rowActions}
+                    role="group"
+                    aria-label={`Actions for ${visit.propertyTitle} with ${visit.clientName}`}
+                >
+                    {getVisitActions(visit, now).map((action) => (
+                        <VisitAction
+                            key={action}
+                            {...VISIT_ACTIONS[action]}
+                            onClick={() =>
+                                action === "view" ? onOpen(visit) : onAction(visit, action)
+                            }
+                        />
+                    ))}
+                </div>
+            </article>
+        </div>
     );
 }

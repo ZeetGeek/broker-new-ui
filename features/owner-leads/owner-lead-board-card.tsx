@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
@@ -10,10 +11,12 @@ import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPrice } from "@/lib/format/price";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
 import { useRouter } from "@/lib/navigation";
+import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
+import { CardLink } from "@/components/shared/card-link";
 import { IconButton } from "@/components/shared/icon-button";
 import { Check, Eye, MapPin, MoreHorizontal, Phone, X } from "@/components/shared/icons";
 import { OVERLAY_GLASS_BUTTON_CLASS, OverlayCardActions } from "@/components/shared/overlay-card";
@@ -196,6 +199,7 @@ export function OwnerLeadBoardCard({
 
     return (
         <article
+            data-linked-card
             aria-label={`${brokerName} on ${propertyLabel}`}
             className={cn(
                 `
@@ -208,6 +212,7 @@ export function OwnerLeadBoardCard({
                 isFinished && "bg-surface-muted/40",
             )}
         >
+            <CardLink href={detailHref} label={`${brokerName} on ${propertyLabel}`} />
             <div
                 className="
                   pointer-events-none relative z-10 flex flex-1 flex-col gap-2.5 p-4 text-ink
@@ -331,6 +336,7 @@ export function OwnerLeadBoardCard({
                             />
                         ) : null}
                         <h3
+                            data-card-title
                             className="
                           body truncate font-semibold tracking-wide text-ink capitalize
                         "
@@ -370,6 +376,10 @@ export function OwnerLeadBoardCard({
                 <PartyMeetRow
                     left={{
                         name: brokerName,
+                        href:
+                            lead.brokerId || lead.broker?.id
+                                ? ownerBrokerProfileHref((lead.brokerId || lead.broker?.id)!)
+                                : undefined,
                         role: "Broker",
                     }}
                     right={{

@@ -55,6 +55,8 @@ const AVATAR_FILL_CLASS =
 export type UserAvatarProps = {
     name: string;
     imageUrl?: string;
+    /** Browser-created object URL for an unsaved photo preview. Caller owns cleanup. */
+    previewUrl?: string;
     /** Size step from `AVATAR_SIZES`. Defaults to `md` (40px). */
     size?: UserAvatarSize | null;
     /**
@@ -73,8 +75,17 @@ export type UserAvatarProps = {
  * Outer frame carries ring + shadow (no overflow-hidden, or the shadow clips).
  * Inner span clips the photo / generated avatar to a circle.
  */
-export function UserAvatar({ name, imageUrl, size, framed, className }: UserAvatarProps) {
-    const resolvedImageUrl = normalizeAvatarUrl(imageUrl);
+export function UserAvatar({
+    name,
+    imageUrl,
+    previewUrl,
+    size,
+    framed,
+    className,
+}: UserAvatarProps) {
+    const resolvedImageUrl = previewUrl?.startsWith("blob:")
+        ? previewUrl
+        : normalizeAvatarUrl(imageUrl);
     // Track the URL that failed, not a flag, so a new src retries without an effect.
     const [failedImageUrl, setFailedImageUrl] = useState<string>();
 

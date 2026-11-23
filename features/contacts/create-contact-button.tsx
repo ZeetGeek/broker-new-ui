@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 
 import { useQueryClient } from "@tanstack/react-query";
 
+import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
+
 import { UserPlus } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
@@ -29,9 +31,13 @@ export function CreateContactButton({
             ["contacts"],
             ["property-form", "contacts"],
             ["exclusive-owner-picker"],
+            ["people-filter-options"],
+            ["task-link-options"],
+            ["broker-visits"],
         ]) {
             void queryClient.invalidateQueries({ queryKey });
         }
+        notifyWorkflowSaved("contact");
         onCreated?.(name, id);
     };
 

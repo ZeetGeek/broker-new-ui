@@ -8,6 +8,8 @@ import { type AppIcon, Award, CircleCheck, Hourglass, LostIcon } from "@/compone
 import { CountDelta } from "@/features/earnings/earnings-card";
 import type { EarningsReport } from "@/features/earnings/earnings-math";
 
+import styles from "./earnings.module.css";
+
 type StatItem = {
     key: string;
     icon: AppIcon;
@@ -104,24 +106,39 @@ export function EarningsStatStrip({ report }: { report: EarningsReport }) {
                 {stats.map((stat) => (
                     <li
                         key={stat.key}
-                        className="relative p-2 after:absolute after:inset-y-4 after:inset-e-0 after:bg-border-warm after:inline-px even:after:hidden lg:last:after:hidden lg:even:after:block"
+                        className={cn(
+                            styles.stat,
+                            "relative p-2 after:absolute after:inset-y-4 after:inset-e-0 after:bg-border-warm after:inline-px even:after:hidden lg:last:after:hidden lg:even:after:block",
+                        )}
                     >
-                        <div className="flex items-center gap-3 rounded-control px-3 py-2.5 block-full min-block-11 min-inline-0">
+                        <div
+                            className={cn(
+                                styles.statContent,
+                                "rounded-control px-2 py-2.5 block-full min-block-11 sm:px-3",
+                            )}
+                        >
                             <stat.icon
                                 aria-hidden
-                                className={cn("shrink-0 block-6 inline-6", stat.iconClass)}
+                                className={cn(styles.statIcon, "block-5 inline-5", stat.iconClass)}
                                 strokeWidth={1.75}
                             />
-                            <div className="flex flex-col gap-1 min-inline-0">
-                                <span className="body-sm font-semibold text-ink">{stat.label}</span>
-                                <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-ink-muted">
-                                    {stat.detail}
-                                </span>
-                            </div>
                             <span
-                                className={cn("h3 ms-auto shrink-0 tabular-nums", stat.valueClass)}
+                                className={cn(styles.statLabel, "body-sm font-semibold text-ink")}
+                            >
+                                {stat.label}
+                            </span>
+                            <span
+                                className={cn(styles.statValue, "h3 tabular-nums", stat.valueClass)}
                             >
                                 {stat.value}
+                            </span>
+                            <span
+                                className={cn(
+                                    styles.statDetail,
+                                    "body-sm flex flex-wrap items-center gap-x-2 gap-y-1 font-medium text-ink-muted",
+                                )}
+                            >
+                                {stat.detail}
                             </span>
                         </div>
                     </li>

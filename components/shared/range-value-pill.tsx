@@ -3,8 +3,9 @@
 import { cn } from "@/lib/utils";
 
 const PILL_CLASS = `
-  rounded-full border border-border-warm bg-surface px-5 py-2.5 text-sm font-medium text-ink
-  tabular-nums
+  rounded-full border border-border-warm bg-surface px-3 py-2 text-xs font-medium text-ink
+  tabular-nums min-inline-0
+  sm:px-5 sm:py-2.5 sm:text-sm
 `;
 
 export function RangeValuePill({ value, className }: { value: string; className?: string }) {

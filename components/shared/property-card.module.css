@@ -1,0 +1,126 @@
+.ownedCard {
+    container: owned-property-card / inline-size;
+    min-inline-size: 0;
+}
+
+.panel {
+    gap: 1rem;
+    min-inline-size: 0;
+    padding: clamp(0.75rem, 4cqi, 1rem);
+}
+
+.prices {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+
+.ownerRow,
+.clientButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    min-block-size: var(--touch-target-min);
+    padding: 0.5rem 0.75rem;
+}
+
+.person {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-inline-size: 0;
+}
+
+.personName,
+.clientName {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+.clientsRow {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-inline-size: 0;
+}
+
+.pipelineButton {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: var(--touch-target-min);
+    block-size: auto;
+    min-block-size: var(--touch-target-min);
+}
+
+.clientButton {
+    flex-wrap: wrap;
+    /* Match the icon's space on both sides to center content across the full row. */
+    padding-inline: var(--touch-target-min);
+}
+
+.clientSummary {
+    flex-wrap: wrap;
+    justify-content: center;
+    max-inline-size: 100%;
+}
+
+.clientName {
+    overflow: visible;
+    text-align: start;
+    text-overflow: clip;
+}
+
+.contactActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    inline-size: 100%;
+    min-inline-size: 0;
+}
+
+.contactButton {
+    min-inline-size: 0;
+    min-block-size: var(--touch-target-min);
+    block-size: auto;
+    padding: 0.625rem 0.75rem;
+    white-space: normal;
+}
+
+/* A narrow desktop grid card gets the same treatment as a narrow phone card. */
+@container owned-property-card (max-width: 20rem) {
+    .prices > p {
+        flex-direction: column;
+        align-items: flex-start;
+        row-gap: 0.25rem;
+    }
+
+    .prices > p > [aria-hidden] {
+        display: none;
+    }
+
+    .ownerRow {
+        justify-content: flex-start;
+    }
+
+    .clientButton {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+}
+
+/* Keep full action labels and comfortable targets when two buttons stop fitting. */
+@container owned-property-card (max-width: 17rem) {
+    .ownerRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .contactActions {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

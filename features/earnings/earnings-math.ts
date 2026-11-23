@@ -439,7 +439,8 @@ export type EarningsDeal = {
     id: string;
     status: DealStatus;
     resolvedAt: string | null;
-    buyer: { name: string };
+    /** The id is known in mock mode; the API sends only the name. */
+    buyer: { id?: string; name: string };
     property: {
         title: string;
         isRent: boolean;
@@ -461,7 +462,7 @@ export function toEarningsDeal(deal: DealItem): EarningsDeal {
         id: deal.id,
         status: deal.status,
         resolvedAt: deal.resolvedAt ?? null,
-        buyer: { name: deal.buyer.name },
+        buyer: { id: deal.buyer.id, name: deal.buyer.name },
         property: {
             title: deal.property.title,
             isRent: deal.property.isRent,

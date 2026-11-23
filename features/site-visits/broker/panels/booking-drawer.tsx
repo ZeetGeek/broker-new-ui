@@ -240,7 +240,8 @@ export function BookingDrawer({
                   inset-s-0! inset-bs-auto! inset-be-0! flex translate-0! flex-col gap-0
                   overflow-hidden rounded-b-none p-0 inline-full max-block-[94dvh] max-inline-none
                   sm:inset-s-auto! sm:inset-e-0! sm:inset-bs-0! sm:rounded-none sm:block-full
-                  sm:inline-[480px] sm:max-block-none sm:max-inline-[480px]
+                  sm:inline-[var(--drawer-detail-width)] sm:max-block-none
+                  sm:max-inline-[var(--drawer-detail-width)]
                 "
             >
                 <AppModalHeader title="Book this visit" />
@@ -301,9 +302,9 @@ export function BookingDrawer({
                     ) : null}
                     <DrawerSection
                         title="Clients for this visit"
+                        contentClassName="flex flex-col gap-4"
                         description="Choose up to three clients to bring to the property."
                     >
-                        {" "}
                         <BuyerPicker
                             buyers={allBuyers}
                             selected={buyerIds}
@@ -322,7 +323,7 @@ export function BookingDrawer({
                             }
                         />
                         {form.formState.errors.buyerIds ? (
-                            <p className="body-xs text-danger">
+                            <p role="alert" className="mbs-2 text-sm text-danger">
                                 {form.formState.errors.buyerIds.message}
                             </p>
                         ) : null}
@@ -330,9 +331,9 @@ export function BookingDrawer({
                     {buyerIds.length > 0 || apiConflict || inlineError ? (
                         <DrawerSection
                             title="Timing and availability"
+                            contentClassName="flex flex-col gap-4"
                             description="Check for overlapping visits and review other available times."
                         >
-                            {" "}
                             {buyerIds.length || apiConflict ? (
                                 <ConflictPanel result={conflict} onOpenVisit={onOpenVisit} />
                             ) : null}
@@ -399,7 +400,7 @@ export function BookingDrawer({
                                 </div>
                             ) : null}
                         </DrawerSection>
-                    ) : null}{" "}
+                    ) : null}
                 </form>
 
                 <footer

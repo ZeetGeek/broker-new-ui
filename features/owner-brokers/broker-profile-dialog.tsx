@@ -35,11 +35,15 @@ export function BrokerProfileDialog({
     open,
     onOpenChange,
     onInvite,
+    closeOnInvite = true,
+    sidebar = false,
 }: {
     broker: BrokerProfile | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onInvite: (broker: BrokerProfile) => void;
+    closeOnInvite?: boolean;
+    sidebar?: boolean;
 }) {
     const [full, setFull] = useState<BrokerProfile | null>(null);
 
@@ -71,6 +75,7 @@ export function BrokerProfileDialog({
             open={open}
             onOpenChange={onOpenChange}
             size="md"
+            className={sidebar ? "contacts-detail-drawer" : undefined}
             title={<span className="capitalize">{name}</span>}
             description={[profile.orgName, brokerLocationLine(profile)].filter(Boolean).join(" · ")}
             footer={
@@ -81,7 +86,7 @@ export function BrokerProfileDialog({
                     <Button
                         variant="accent"
                         onClick={() => {
-                            onOpenChange(false);
+                            if (closeOnInvite) onOpenChange(false);
                             onInvite(profile);
                         }}
                     >

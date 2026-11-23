@@ -4,105 +4,12 @@ import { useState } from "react";
 
 import { formatVisitDate, istDateKey } from "@/lib/visits/time";
 
-import { Building2, CalendarDays, ChevronDown, UserRound } from "@/components/shared/icons";
-import { PropertyCoverImage } from "@/components/shared/property-cover-image";
-import { UserAvatar } from "@/components/shared/user-avatar";
+import { CalendarDays, ChevronDown } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-    Combobox,
-    ComboboxContent,
-    ComboboxEmpty,
-    ComboboxInput,
-    ComboboxItem,
-    ComboboxList,
-} from "@/components/ui/combobox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import styles from "./visits.module.css";
-
-export type EntityOption = { value: string; label: string; detail?: string; imageUrl?: string };
-
-export function VisitEntityCombobox({
-    kind,
-    id,
-    options,
-    value,
-    onChange,
-    disabled,
-    error,
-    emptyText,
-}: {
-    kind: "client" | "property";
-    id: string;
-    options: EntityOption[];
-    value: string;
-    onChange: (value: string) => void;
-    disabled?: boolean;
-    error?: string;
-    emptyText?: string;
-}) {
-    const labelFor = (item: string) => options.find((option) => option.value === item)?.label ?? "";
-    return (
-        <Combobox
-            items={options.map((option) => option.value)}
-            value={value || null}
-            disabled={disabled}
-            onValueChange={(next: string | null) => onChange(next ?? "")}
-            itemToStringLabel={labelFor}
-            filter={(item, query) => {
-                const option = options.find((candidate) => candidate.value === item);
-                return `${option?.label} ${option?.detail ?? ""}`
-                    .toLowerCase()
-                    .includes(query.trim().toLowerCase());
-            }}
-        >
-            <ComboboxInput
-                id={id}
-                size="lg"
-                className="font-normal"
-                startIcon={kind === "client" ? UserRound : Building2}
-                placeholder={`Select a ${kind}`}
-                errorText={error}
-                disabled={disabled}
-            />
-            <ComboboxContent align="center" className="inline-[min(26rem,calc(100dvw-2rem))]">
-                <ComboboxEmpty>
-                    {emptyText ??
-                        `No ${kind === "client" ? "clients" : "properties"} found. Try another search.`}
-                </ComboboxEmpty>
-                <ComboboxList className="py-2 max-block-[min(20rem,var(--available-height))]">
-                    {(item: string) => {
-                        const option = options.find((candidate) => candidate.value === item);
-                        return (
-                            <ComboboxItem key={item} value={item}>
-                                <span className={styles.entityOption}>
-                                    {kind === "client" ? (
-                                        <UserAvatar name={option?.label ?? "Client"} size="sm" />
-                                    ) : (
-                                        <PropertyCoverImage
-                                            src={option?.imageUrl}
-                                            alt=""
-                                            size={40}
-                                        />
-                                    )}
-                                    <span>
-                                        <span className={styles.entityName}>{option?.label}</span>
-                                        {option?.detail && (
-                                            <span className={styles.entityDetail}>
-                                                {option.detail}
-                                            </span>
-                                        )}
-                                    </span>
-                                </span>
-                            </ComboboxItem>
-                        );
-                    }}
-                </ComboboxList>
-            </ComboboxContent>
-        </Combobox>
-    );
-}
 
 /** IST date picker limited to `[minDate, maxDate]` (YYYY-MM-DD). */
 export function VisitDatePicker({

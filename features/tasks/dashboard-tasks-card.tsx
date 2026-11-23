@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { formatInTimeZone } from "date-fns-tz";
@@ -17,6 +16,8 @@ import {
     Plus,
 } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
+import { useWorkflow } from "@/components/shared/workflow-context";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import { useAppSelector } from "@/store/hooks";
@@ -69,6 +70,7 @@ function dayLabel(day: string, format: string) {
 
 export function DashboardTasksCard() {
     const router = useRouter();
+    const openWorkflow = useWorkflow();
     const accountId = useAppSelector((state) => state.auth.user?.id) ?? "design-preview";
     const { tasks, isLoading, error, busy, update } = useTasks(accountId);
     const catalogs = useTaskCatalogs();
@@ -176,12 +178,12 @@ export function DashboardTasksCard() {
     };
 
     const openTask = (task: Task) => {
-        router.push(`/broker/tasks?view=detail&task=${encodeURIComponent(task.id)}`);
+        const href = `/broker/tasks?view=detail&task=${encodeURIComponent(task.id)}`;
+        if (!openWorkflow?.(href)) router.push(href);
     };
     const intent = (task: Task, nextView: string) => {
-        router.push(
-            `/broker/tasks?view=${encodeURIComponent(nextView)}&task=${encodeURIComponent(task.id)}`,
-        );
+        const href = `/broker/tasks?view=${encodeURIComponent(nextView)}&task=${encodeURIComponent(task.id)}`;
+        if (!openWorkflow?.(href)) router.push(href);
     };
 
     const complete = async (task: Task) => {
@@ -424,6 +426,18 @@ export function DashboardTasksCard() {
                                             />
                                         </li>
                                     ) : null}
+                                    {filter === "today"
+                                        ? Array.from(
+                                              { length: Math.max(0, 10 - visible.length - 1) },
+                                              (_, index) => (
+                                                  <li
+                                                      key={`line-${index}`}
+                                                      className={planner.blankLine}
+                                                      aria-hidden
+                                                  />
+                                              ),
+                                          )
+                                        : null}
                                 </ul>
                                 {!visible.length && filter === "overdue" ? (
                                     <p className="body-sm py-6 text-center text-ink-muted">

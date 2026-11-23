@@ -15,6 +15,7 @@ import {
     ListSearchField,
     ListToolbarSelect,
 } from "@/components/shared/list-toolbar";
+import { ResponsiveListStatus } from "@/components/shared/responsive-list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Skeleton } from "@/components/shared/skeleton";
 import { StatusTabs } from "@/components/shared/status-tabs";
@@ -39,10 +40,10 @@ import { taskListId } from "./notebook-model";
 import { useTaskNotebook } from "./notebook-store";
 import { createPlannerTask, movePlannerTask, setTaskDeleted } from "./planner-model";
 import { changeTaskQuickly, type TaskQuickChange } from "./quick-actions";
-import { encodeTaskDraftTitle } from "./quick-add-draft";
 import { useTaskCatalogs } from "./task-catalogs";
 import { TaskDeleteDialog, TaskDetail, TaskReminders } from "./task-detail";
 import { TaskForm } from "./task-form";
+import { type TaskDraftMode, taskFromDraft } from "./task-from-draft";
 import { TaskArchive } from "./task-list";
 import { TaskPanel } from "./task-panel";
 import { TaskPlanner } from "./task-planner";
@@ -340,47 +341,14 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         return saved;
     };
     const saveDraft = async (draft: TaskDraft) => {
-        const at = new Date().toISOString();
         const editing = view !== "create" ? selected : undefined;
-        const sameSchedule =
-            editing &&
-            editing.startDate === (draft.startDate || null) &&
-            editing.dueDate === (draft.dueDate || null) &&
-            JSON.stringify(editing.repeat) === JSON.stringify(draft.repeat);
-        // Create / edit modal: put field values as end-of-title chips (same as quick-add).
-        const title =
-            view === "create" || view === "edit"
-                ? encodeTaskDraftTitle(draft, catalogs, Date.now())
-                : draft.title.trim();
-        const next: Task = {
+        const next = taskFromDraft(draft, {
+            editing,
+            mode: view as TaskDraftMode,
+            catalogs,
+            now: Date.now(),
             id: editing?.id ?? crypto.randomUUID(),
-            title,
-            details: draft.details.trim(),
-            startDate: draft.startDate || null,
-            startTime: draft.startDate && draft.startTime ? draft.startTime : null,
-            startReminderEnabledAt: editing?.startReminderEnabledAt,
-            repeat: draft.repeat,
-            repeatAnchor: draft.repeat
-                ? sameSchedule
-                    ? editing.repeatAnchor
-                    : draft.dueDate || draft.startDate || null
-                : null,
-            repeatFromId: editing?.repeatFromId ?? null,
-            dueDate: draft.dueDate || null,
-            dueTime: draft.dueDate && draft.dueTime ? draft.dueTime : null,
-            reminders: draft.dueDate && draft.dueTime ? [...draft.reminders] : [],
-            clientId: draft.clientId || null,
-            ownerId: draft.ownerId || null,
-            propertyId: draft.propertyId || null,
-            priority: draft.priority,
-            completedAt: editing?.completedAt ?? null,
-            deletedAt: editing?.deletedAt ?? null,
-            plannerOrder: sameSchedule ? editing?.plannerOrder : undefined,
-            listId: editing?.listId,
-            createdAt: editing?.createdAt ?? at,
-            updatedAt: at,
-            deliveredReminderKeys: editing?.deliveredReminderKeys ?? [],
-        };
+        });
         await commit(
             editing ? tasks.map((t) => (t.id === editing.id ? next : t)) : [next, ...tasks],
             editing
@@ -435,6 +403,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                 <div className={styles.toolbar}>
                     <div className={styles.filterTabs}>
                         <FilterChip
+                            className={styles.filterButton}
                             label="Filters"
                             icon={SlidersHorizontal}
                             count={Number(!!due) + Number(!!linked)}
@@ -443,28 +412,44 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                             onClick={() => updateWorkspace({ view: "filters", task: undefined })}
                             onClear={() => updateWorkspace({ due: undefined, linked: undefined })}
                         />
-                        <StatusTabs
-                            tabs={tabs}
+
+                        <ResponsiveListStatus
                             value={tab}
-                            label="Task views"
+                            options={tabs}
+                            label="Status"
                             isLoading={isLoading}
+                            onChange={(value) =>
+                                updateWorkspace({
+                                    tab: value === "all" ? undefined : value,
+                                    due: undefined,
+                                })
+                            }
+                        >
+                            <StatusTabs
+                                tabs={tabs}
+                                value={tab}
+                                label="Task views"
+                                isLoading={isLoading}
+                            />
+                        </ResponsiveListStatus>
+                    </div>
+                    <div className={styles.searchField}>
+                        <ListSearchField
+                            searchHelp="Search by task name, notes, or a linked client, owner or property."
+                            aria-label="Search tasks"
+                            placeholder="Search"
+                            value={search}
+                            onChange={(q) => updateWorkspace({ q: q || undefined })}
+                            debounceMs={0}
+                            fullWidth
                         />
                     </div>
                     <div className={styles.tools}>
-                        <label className={styles.searchField}>
-                            <span className="sr-only">Search tasks</span>
-                            <ListSearchField
-                                placeholder="Search tasks or linked records"
-                                aria-label="Search tasks"
-                                value={search}
-                                onChange={(q) => updateWorkspace({ q: q || undefined })}
-                                debounceMs={0}
-                                fullWidth
-                            />
-                        </label>
                         <ListToolbarSelect
                             active
                             label="Sort tasks"
+                            mobileLabel="Sort"
+                            className={styles.sortButton}
                             value={sort}
                             options={[
                                 ...(tab === "all"
@@ -484,10 +469,16 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                 { value: "title", label: "Task name" },
                             ]}
                             onChange={(value) =>
-                                updateWorkspace({ sort: value === defaultSort ? undefined : value })
+                                updateWorkspace({
+                                    sort: value === defaultSort ? undefined : value,
+                                })
                             }
                         />
-                        <ListAddButton label="Add task" onClick={create} />
+                        <ListAddButton
+                            className={styles.addButton}
+                            label="Add task"
+                            onClick={create}
+                        />
                     </div>
                 </div>
                 <div className={styles.board}>

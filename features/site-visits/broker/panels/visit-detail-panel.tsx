@@ -6,6 +6,7 @@ import { formatVisitDate, formatVisitDayHeading, formatVisitTime } from "@/lib/v
 import { AppImage } from "@/components/shared/app-image";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
+import { ContactName } from "@/components/shared/contact-name";
 import { DrawerSection } from "@/components/shared/drawer-section";
 import { CalendarCheck, CallIcon, MapPin, Trash2, WhatsAppIcon } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
@@ -35,7 +36,13 @@ function ContactBlock({
             <UserAvatar name={person.name} imageUrl={person.avatarUrl} size="md" />
             <div className="flex-1 min-inline-0">
                 <p className="text-[10px] text-ink-subtle">{label}</p>
-                <p className="body-sm truncate font-bold text-ink">{person.name}</p>
+                <p className="body-sm truncate font-bold text-ink">
+                    <ContactName
+                        name={person.name}
+                        contactId={person.id}
+                        contactType={label === "Owner" ? "owner" : "buyer"}
+                    />
+                </p>
                 {person.requirement ? (
                     <p className="body-xs truncate text-ink-muted">{person.requirement}</p>
                 ) : null}
@@ -101,7 +108,8 @@ export function VisitDetailPanel({
                   inset-s-0! inset-bs-auto! inset-be-0! flex translate-0! flex-col gap-0
                   overflow-hidden rounded-b-none p-0 inline-full max-block-[94dvh] max-inline-none
                   sm:inset-s-auto! sm:inset-e-0! sm:inset-bs-0! sm:rounded-none sm:block-full
-                  sm:inline-[520px] sm:max-block-none sm:max-inline-[520px]
+                  sm:inline-(--drawer-detail-width) sm:max-block-none
+                  sm:max-inline-(--drawer-detail-width)
                 "
             >
                 <AppModalHeader title={status.label} />

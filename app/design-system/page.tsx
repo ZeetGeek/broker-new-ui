@@ -35,6 +35,7 @@ const SECTIONS = [
             { href: "/design-system/components/badge", label: "Badges" },
             { href: "/design-system/components/card", label: "Card" },
             { href: "/design-system/components/attachment", label: "Attachment" },
+            { href: "/design-system/components/toast", label: "Toasts" },
         ],
     },
 ];

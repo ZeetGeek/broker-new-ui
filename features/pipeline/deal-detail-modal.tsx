@@ -1,13 +1,13 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
-import Link from "next/link";
 
 import { formatDateIn, formatDateShort, formatTimeIn } from "@/lib/format/date";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { ContactName } from "@/components/shared/contact-name";
 import {
     type AppIcon,
     ArrowRight,
@@ -26,6 +26,7 @@ import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyPhotoGallery } from "@/components/shared/property-photo-gallery";
 import { Skeleton } from "@/components/shared/skeleton";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -196,6 +197,8 @@ export function DealDetailModal({
     onStageAction,
     onRetry,
     isBusy,
+    onEditNote,
+    onMakeOffer,
 }: {
     open: boolean;
     deal: DealDetail | null;
@@ -205,6 +208,8 @@ export function DealDetailModal({
     onStageAction: (status: DealStatus) => void;
     onRetry: () => void;
     isBusy: boolean;
+    onEditNote?: () => void;
+    onMakeOffer?: () => void;
 }) {
     const deal = detail;
     const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -253,6 +258,18 @@ export function DealDetailModal({
                         >
                             View full property <ExternalLink size={16} aria-hidden />
                         </Button>
+                        {onEditNote ? (
+                            <Button variant="outline" disabled={isBusy} onClick={onEditNote}>
+                                <StickyNote aria-hidden size={18} />
+                                Edit note
+                            </Button>
+                        ) : null}
+                        {onMakeOffer ? (
+                            <Button variant="outline" disabled={isBusy} onClick={onMakeOffer}>
+                                <HandCoins aria-hidden size={18} />
+                                {deal.offerAmountInr != null ? "Update offer" : "Add offer"}
+                            </Button>
+                        ) : null}
                         {target ? (
                             <Button
                                 variant="accent"
@@ -363,7 +380,11 @@ export function DealDetailModal({
                                     <div className="min-inline-0">
                                         <p className="body-xs text-ink-muted">Client</p>
                                         <p className="body-sm font-medium wrap-anywhere text-ink">
-                                            {deal.buyer.name}
+                                            <ContactName
+                                                name={deal.buyer.name}
+                                                contactId={deal.buyer.id}
+                                                contactType="buyer"
+                                            />
                                         </p>
                                         {deal.buyer.phoneDigits ? (
                                             <PhoneNumber
@@ -386,7 +407,11 @@ export function DealDetailModal({
                                     <div className="min-inline-0">
                                         <p className="body-xs text-ink-muted">Owner</p>
                                         <p className="body-sm font-medium wrap-anywhere text-ink">
-                                            {deal.owner.name}
+                                            <ContactName
+                                                name={deal.owner.name}
+                                                contactId={deal.owner.id}
+                                                contactType="owner"
+                                            />
                                         </p>
                                         {deal.owner.isRepresentationActive &&
                                         deal.owner.phoneDigits ? (

@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import type { PropertyBroker } from "@/lib/format/property-brokers";
 
 import { AttachedBrokersRow } from "@/components/shared/attached-people-row";
+import { ContactName } from "@/components/shared/contact-name";
 import {
     CallIcon,
-    ChartBar,
     Eye,
     EyeOff,
     Inbox,
@@ -19,6 +18,7 @@ import {
     WhatsAppIcon,
 } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import { AttachExclusiveOwnerModal } from "../your-listings/attach-exclusive-owner-modal";
@@ -36,8 +36,6 @@ export type PropertyActionRailProps = {
     onTogglePublish: () => void;
     onRequestDelete: () => void;
     editHref: string;
-    /** Broker inventory: lead analytics for this listing. */
-    analyticsHref?: string;
     requestsHref?: string;
     brokers?: PropertyBroker[];
     brokersState?: "loading" | "ready" | "error";
@@ -52,7 +50,6 @@ export function PropertyActionRail({
     onTogglePublish,
     onRequestDelete,
     editHref,
-    analyticsHref,
     requestsHref,
     brokers = [],
     brokersState = "ready",
@@ -151,23 +148,7 @@ export function PropertyActionRail({
                                     Edit property
                                 </Button>
                             ) : null}
-                            {analyticsHref ? (
-                                <Button
-                                    size="lg"
-                                    variant="outline"
-                                    render={<Link href={analyticsHref} />}
-                                >
-                                    <ChartBar size={18} aria-hidden />
-                                    Analytics
-                                </Button>
-                            ) : null}
                         </div>
-                        <p className={styles.railNote}>
-                            <Lock size={14} aria-hidden />
-                            {item.visibility === "marketplace"
-                                ? "Marketplace listing"
-                                : "Private inventory"}
-                        </p>
                     </>
                 )}
             </section>
@@ -203,7 +184,17 @@ export function PropertyActionRail({
                     <div className={styles.contactIdentity}>
                         <UserAvatar name={item.ownerName || "Owner"} size="md" />
                         <div>
-                            <strong>{item.ownerName || "No owner linked yet"}</strong>
+                            <strong>
+                                {item.ownerName ? (
+                                    <ContactName
+                                        name={item.ownerName}
+                                        contactId={item.ownerId}
+                                        contactType="owner"
+                                    />
+                                ) : (
+                                    "No owner linked yet"
+                                )}
+                            </strong>
                             <p>
                                 {phone
                                     ? formatPhoneIn(phone)
@@ -257,11 +248,6 @@ export function PropertyActionRail({
                         onAttached={onOwnerAttached}
                     />
                 </section>
-            ) : null}
-            {!isOwner ? (
-                <Button variant="outline" render={<Link href="/broker/pipeline" />}>
-                    Manage clients in Pipeline
-                </Button>
             ) : null}
             <section className={styles.management} aria-label="Listing management">
                 <div className={styles.managementRow}>

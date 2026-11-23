@@ -1,9 +1,9 @@
 import type { CSSProperties, ReactNode } from "react";
-import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
 import { TrendingDown, TrendingUp } from "@/components/shared/icons";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 
 import { VIZ_CLASS } from "@/features/earnings/earnings-viz";
 
@@ -27,13 +27,13 @@ export function EarningsCard({
         <section
             aria-labelledby={titleId}
             className={cn(
-                "flex flex-col gap-4 rounded-card bg-surface p-4 shadow-sm ring-1 ring-border-warm/50 min-inline-0 sm:p-5",
+                "@container flex flex-col gap-4 rounded-card bg-surface p-4 shadow-sm ring-1 ring-border-warm/50 min-inline-0 sm:p-5",
                 className,
             )}
         >
             <header className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-col gap-1 min-inline-0">
-                    <h2 id={titleId} className="h5 text-ink">
+                    <h2 id={titleId} className="h5 wrap-anywhere text-ink">
                         {title}
                     </h2>
                     {description ? <p className="body-sm text-ink-muted">{description}</p> : null}
@@ -167,7 +167,8 @@ export function EarningsDealLink({
 }) {
     return (
         <Link
-            href={`/broker/pipeline/${dealId}`}
+            data-card-title
+            href={`/broker/pipeline/${encodeURIComponent(dealId)}`}
             className={cn(
                 "rounded-sm hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                 className,

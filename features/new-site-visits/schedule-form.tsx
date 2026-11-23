@@ -4,14 +4,24 @@ import { type FormEvent, useEffect, useId, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import type { BookableLead, BrokerVisit } from "@/lib/api/site-visits";
+import { formatPersonName } from "@/lib/format/person-name";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { formatVisitDate, formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
 import { CharacterCount } from "@/components/shared/character-count";
-import { DrawerSection, revealDrawerSections } from "@/components/shared/drawer-section";
+import { revealDrawerSections } from "@/components/shared/drawer-section";
 import { Bell, Building2, UserRound } from "@/components/shared/icons";
+import { mapFilterPersonToPicker } from "@/components/shared/map-to-people-picker-person";
+import { mapVisitLeadPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
+import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
+import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+
+import {
+    FORM_SECTIONS_CLASS,
+    WizardSection,
+} from "@/features/properties/property-form/form-fields";
 
 import {
     bookableDates,
@@ -26,7 +36,7 @@ import {
 import { TimeChips } from "./time-chips";
 import { useBookableLeads, useFreeTimes, useVisitMutations } from "./use-visits";
 import { VisitOverlay } from "./visit-overlay";
-import { VisitDatePicker, VisitEntityCombobox } from "./visit-pickers";
+import { VisitDatePicker } from "./visit-pickers";
 import { VisitReminderPicker } from "./visit-reminder-picker";
 
 import styles from "./visits.module.css";
@@ -68,18 +78,26 @@ export function ScheduleForm({
     const busy = book.isPending || reschedule.isPending || updateReminders.isPending;
     const leads = useMemo(() => leadsQuery.data ?? [], [leadsQuery.data]);
 
-    const clientOptions = useMemo(
+    const clientPeople = useMemo(
         () =>
             [...new Map(leads.map((lead) => [lead.clientId, lead])).values()]
-                .map((lead) => ({ value: lead.clientId, label: lead.clientName }))
-                .sort((a, b) => a.label.localeCompare(b.label)),
+                .map((lead) =>
+                    mapFilterPersonToPicker({ id: lead.clientId, name: lead.clientName }, "client"),
+                )
+                .sort((a, b) => a.name.localeCompare(b.name)),
         [leads],
     );
     const clientLeads = leads.filter((lead) => lead.clientId === draft.clientId);
-    const propertyOptions = clientLeads.map((lead) => ({
-        value: lead.propertyId,
-        label: lead.propertyTitle,
-    }));
+    const propertyPickerRows = useMemo(
+        () =>
+            clientLeads.map((lead) =>
+                mapVisitLeadPropertyToPicker({
+                    propertyId: lead.propertyId,
+                    propertyTitle: lead.propertyTitle,
+                }),
+            ),
+        [clientLeads],
+    );
 
     const free = useFreeTimes(
         draft.propertyId && draft.leadId && draft.durationMinutes && draft.date
@@ -197,14 +215,14 @@ export function ScheduleForm({
         >
             <form id={formId} onSubmit={submit} noValidate>
                 <fieldset disabled={busy} className="m-0 border-0 p-0 min-inline-0">
-                    <div className="flex flex-col">
+                    <div className={FORM_SECTIONS_CLASS}>
                         {intentMissed && (
-                            <p role="alert" className={`${styles.conflict} mbe-6`}>
+                            <p role="alert" className={styles.conflict}>
                                 This deal can&apos;t be booked here. Visits can be booked for open
                                 deals on your own listings. Choose a client below.
                             </p>
                         )}
-                        <DrawerSection
+                        <WizardSection
                             title="Client and property"
                             description={
                                 visit
@@ -224,7 +242,7 @@ export function ScheduleForm({
                                             aria-hidden
                                             className="shrink-0 block-4 inline-4"
                                         />
-                                        {visit.clientName}
+                                        {formatPersonName(visit.clientName)}
                                     </p>
                                     <p className="body-sm flex items-center gap-2 text-ink">
                                         <Building2
@@ -241,47 +259,81 @@ export function ScheduleForm({
                             ) : (
                                 <div className="flex flex-col gap-4">
                                     <div className={styles.field}>
-                                        <label htmlFor={`${formId}-client`}>
-                                            Client <span className={styles.required}>*</span>
+                                        <label
+                                            htmlFor={`${formId}-client`}
+                                            className="text-sm font-semibold text-ink"
+                                        >
+                                            Client
+                                            <span
+                                                aria-label="required"
+                                                className="ms-1 text-danger"
+                                            >
+                                                *
+                                            </span>
                                         </label>
-                                        <VisitEntityCombobox
+                                        <PeopleInlineSelect
                                             id={`${formId}-client`}
-                                            kind="client"
-                                            options={clientOptions}
-                                            value={draft.clientId}
-                                            onChange={chooseClient}
+                                            lockedScope="client"
+                                            people={clientPeople}
+                                            value={draft.clientId || null}
+                                            onValueChange={(id) => chooseClient(id ?? "")}
                                             disabled={busy || leadsQuery.isPending}
-                                            error={show("clientId")}
+                                            errorText={show("clientId")}
+                                            placeholder="Select a client"
+                                            size="md"
                                         />
                                     </div>
                                     <div className={styles.field}>
-                                        <label htmlFor={`${formId}-property`}>
-                                            Property <span className={styles.required}>*</span>
+                                        <label
+                                            htmlFor={`${formId}-property`}
+                                            className="text-sm font-semibold text-ink"
+                                        >
+                                            Property
+                                            <span
+                                                aria-label="required"
+                                                className="ms-1 text-danger"
+                                            >
+                                                *
+                                            </span>
                                         </label>
-                                        <VisitEntityCombobox
+                                        <PropertyInlineSelect
                                             id={`${formId}-property`}
-                                            kind="property"
-                                            options={propertyOptions}
-                                            value={draft.propertyId}
-                                            onChange={chooseProperty}
+                                            properties={propertyPickerRows}
+                                            value={draft.propertyId || null}
+                                            onValueChange={(id) => chooseProperty(id ?? "")}
                                             disabled={busy || !draft.clientId}
-                                            error={show("propertyId")}
-                                            emptyText="Choose a client first."
+                                            errorText={show("propertyId")}
+                                            helperText={
+                                                !draft.clientId
+                                                    ? "Choose a client first."
+                                                    : undefined
+                                            }
+                                            placeholder="Select a property"
+                                            size="md"
                                         />
                                     </div>
                                 </div>
                             )}
-                        </DrawerSection>
+                        </WizardSection>
 
                         {!noLeads && (
-                            <DrawerSection
+                            <WizardSection
                                 title="Visit date and time"
                                 description="Choose how long, the date and a free start time. All times are in India time (IST)."
                             >
                                 <div className="flex flex-col gap-4">
                                     <div className={styles.field}>
-                                        <span id={`${formId}-length`}>
-                                            How long <span className={styles.required}>*</span>
+                                        <span
+                                            id={`${formId}-length`}
+                                            className="text-sm font-semibold text-ink"
+                                        >
+                                            How long
+                                            <span
+                                                aria-label="required"
+                                                className="ms-1 text-danger"
+                                            >
+                                                *
+                                            </span>
                                         </span>
                                         <div
                                             role="group"
@@ -292,7 +344,7 @@ export function ScheduleForm({
                                                 <Button
                                                     key={chip.value}
                                                     type="button"
-                                                    size="sm"
+                                                    size="md"
                                                     variant={
                                                         draft.durationMinutes === chip.value
                                                             ? "accent"
@@ -323,8 +375,17 @@ export function ScheduleForm({
                                         )}
                                     </div>
                                     <div className={styles.field}>
-                                        <label htmlFor={`${formId}-date`}>
-                                            Visit date <span className={styles.required}>*</span>
+                                        <label
+                                            htmlFor={`${formId}-date`}
+                                            className="text-sm font-semibold text-ink"
+                                        >
+                                            Visit date
+                                            <span
+                                                aria-label="required"
+                                                className="ms-1 text-danger"
+                                            >
+                                                *
+                                            </span>
                                         </label>
                                         <VisitDatePicker
                                             id={`${formId}-date`}
@@ -337,9 +398,17 @@ export function ScheduleForm({
                                         />
                                     </div>
                                     <div className={styles.field}>
-                                        <span id={`${formId}-start`}>
-                                            Start time (IST){" "}
-                                            <span className={styles.required}>*</span>
+                                        <span
+                                            id={`${formId}-start`}
+                                            className="text-sm font-semibold text-ink"
+                                        >
+                                            Start time (IST)
+                                            <span
+                                                aria-label="required"
+                                                className="ms-1 text-danger"
+                                            >
+                                                *
+                                            </span>
                                         </span>
                                         <TimeChips
                                             labelledBy={`${formId}-start`}
@@ -360,11 +429,11 @@ export function ScheduleForm({
                                         )}
                                     </div>
                                 </div>
-                            </DrawerSection>
+                            </WizardSection>
                         )}
 
                         {!noLeads && (
-                            <DrawerSection
+                            <WizardSection
                                 title="Reminders"
                                 description="Choose when you want to be reminded before the visit starts."
                             >
@@ -393,16 +462,21 @@ export function ScheduleForm({
                                         </p>
                                     )}
                                 </div>
-                            </DrawerSection>
+                            </WizardSection>
                         )}
 
                         {!noLeads && (
-                            <DrawerSection
+                            <WizardSection
                                 title="Visit notes"
                                 description="Add a meeting point or anything to remember for this visit."
                             >
                                 <div className={styles.field}>
-                                    <label htmlFor={`${formId}-notes`}>Notes (optional)</label>
+                                    <label
+                                        htmlFor={`${formId}-notes`}
+                                        className="text-sm font-semibold text-ink"
+                                    >
+                                        Notes (optional)
+                                    </label>
                                     <Textarea
                                         id={`${formId}-notes`}
                                         className={styles.notesInput}
@@ -425,7 +499,7 @@ export function ScheduleForm({
                                         </p>
                                     )}
                                 </div>
-                            </DrawerSection>
+                            </WizardSection>
                         )}
                     </div>
                 </fieldset>

@@ -1,19 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { tinykeys } from "tinykeys";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 import { myListingsApi } from "@/lib/api/my-listings";
+import { siteVisitsApi } from "@/lib/api/site-visits";
 import { formatWeekdayDate } from "@/lib/format/date";
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { useRouter } from "@/lib/navigation";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { areaColorClassName } from "@/lib/styles/area-color";
 import { cn } from "@/lib/utils";
+import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 
 import {
     portalProfileMenuItemClass,
@@ -21,20 +22,22 @@ import {
     PortalProfileShortcutHint,
 } from "@/components/layout/portal-profile-menu";
 import {
+    BellRing,
+    Briefcase,
     Building2,
     CalendarCheck,
     CalendarPlus,
-    CheckCheck,
     ChevronDown,
     Clock,
     MapPin,
     Pencil,
     Plus,
     UserRoundPlus,
-    Users,
 } from "@/components/shared/icons";
 import { ListAddButton } from "@/components/shared/list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
+import { useWorkflow } from "@/components/shared/workflow-context";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -51,6 +54,10 @@ import {
     mapBrokerDashboardViewFromMock,
 } from "@/features/dashboard/map-dashboard";
 import { dashboardMock } from "@/features/dashboard/mock-data";
+import { visitDateBounds } from "@/features/new-site-visits/model";
+import { useVisitsLive, VISITS_KEY } from "@/features/new-site-visits/use-visits";
+import { taskGroup } from "@/features/tasks/model";
+import { useTasks } from "@/features/tasks/task-store";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
@@ -151,8 +158,21 @@ function WorkingAreas({ areas }: { areas: string[] }) {
 
 export function NewBrokerDashboard() {
     const router = useRouter();
+    const openWorkflow = useWorkflow();
     const dispatch = useAppDispatch();
+    const queryClient = useQueryClient();
+    useEffect(() => {
+        const refresh = () => {
+            void dispatch(fetchBrokerDashboard({ background: true }));
+            void queryClient.invalidateQueries({ queryKey: ["my-listings-summary", "broker"] });
+            void queryClient.invalidateQueries({ queryKey: [...VISITS_KEY, "list"] });
+        };
+        window.addEventListener(WORKFLOW_SAVED_EVENT, refresh);
+        return () => window.removeEventListener(WORKFLOW_SAVED_EVENT, refresh);
+    }, [dispatch, queryClient]);
     const hydrated = useAppSelector((state) => state.auth.hydrated);
+    const accountId = useAppSelector((state) => state.auth.user?.id) ?? "design-preview";
+    const tasks = useTasks(accountId);
     const { data, profile, status, error } = useAppSelector((state) => state.dashboard);
     const [now, setNow] = useState<Date | null>(null);
     const [addClientOpen, setAddClientOpen] = useState(false);
@@ -162,6 +182,15 @@ export function NewBrokerDashboard() {
         queryFn: () => myListingsApi.summary(),
         enabled: hydrated,
     });
+    const todayBounds = now ? visitDateBounds("today", now.getTime()) : { from: "", to: "" };
+    const todayVisits = useQuery({
+        queryKey: [...VISITS_KEY, "list", "dashboard-today", todayBounds.from],
+        queryFn: ({ signal }) =>
+            siteVisitsApi.list({ tab: "upcoming", ...todayBounds, limit: 1 }, signal),
+        enabled: hydrated && now !== null && !isMockMode(),
+        refetchInterval: 30_000,
+    });
+    useVisitsLive(todayVisits.data?.nextChangeAt ?? null, todayVisits.dataUpdatedAt);
 
     useEffect(() => {
         const initialTimer = window.setTimeout(() => setNow(new Date()), 0);
@@ -180,9 +209,27 @@ export function NewBrokerDashboard() {
         if (!hydrated || status !== "succeeded") return;
         const actions: [ShortcutId, () => void][] = [
             ["add_contact", () => setAddClientOpen(true)],
-            ["dashboard_add_listing", () => router.push("/broker/properties/new")],
-            ["dashboard_schedule_visit", () => router.push("/broker/visits?tab=slots")],
-            ["dashboard_add_task", () => router.push("/broker/tasks?view=create")],
+            [
+                "dashboard_add_listing",
+                () => {
+                    if (!openWorkflow?.("/broker/properties/new"))
+                        router.push("/broker/properties/new");
+                },
+            ],
+            [
+                "dashboard_schedule_visit",
+                () => {
+                    if (!openWorkflow?.("/broker/visits?tab=slots"))
+                        router.push("/broker/visits?tab=slots");
+                },
+            ],
+            [
+                "dashboard_add_task",
+                () => {
+                    if (!openWorkflow?.("/broker/tasks?view=create"))
+                        router.push("/broker/tasks?view=create");
+                },
+            ],
         ];
         return tinykeys(
             window,
@@ -214,7 +261,7 @@ export function NewBrokerDashboard() {
                 }),
             ),
         );
-    }, [hydrated, status, addClientOpen, router]);
+    }, [hydrated, status, addClientOpen, router, openWorkflow]);
 
     if (status === "failed") {
         return (
@@ -229,7 +276,10 @@ export function NewBrokerDashboard() {
     const view = isMockMode()
         ? mapBrokerDashboardViewFromMock(dashboardMock, profile, now)
         : mapBrokerDashboardView(data, profile, now);
-    const overdue = view.followUps.overdueCount;
+    const overdue = tasks.tasks.filter(
+        (task) =>
+            !task.completedAt && !task.deletedAt && taskGroup(task, now.getTime()) === "overdue",
+    ).length;
     const upcoming = view.today.items.filter(
         (item) => item.kind === "site_visit" && item.state === "upcoming",
     ).length;
@@ -237,21 +287,35 @@ export function NewBrokerDashboard() {
         (item) =>
             item.kind === "site_visit" && (item.state === "elapsed" || item.state === "missed"),
     ).length;
-    const followUpTotal = Math.max(
-        overdue,
-        view.followUps.items.length + view.followUps.remainingThisWeek,
-    );
+    const counts = todayVisits.data?.counts;
+    const visitTotal = isMockMode()
+        ? view.siteVisitCount
+        : counts
+          ? counts.upcoming +
+            counts.running +
+            counts.needs_update +
+            counts.completed +
+            counts.not_attended
+          : null;
+    const visitNeedsUpdate = counts?.needs_update ?? (isMockMode() ? needsUpdate : 0);
+    const taskCountKnown = !tasks.isLoading && !tasks.error;
     const lines = [
-        view.siteVisitCount
-            ? `You have ${plural(view.siteVisitCount, "site visit")} today`
-            : "Your calendar is clear today",
-        overdue
-            ? `${plural(overdue, "client")} waiting for your call`
-            : "You're all caught up on overdue client calls",
+        visitTotal === null
+            ? "Your visits, at a glance"
+            : visitTotal
+              ? `You have ${plural(visitTotal, "site visit")} today`
+              : "Your calendar is clear today",
+        ...(taskCountKnown
+            ? [
+                  overdue
+                      ? `${overdue} overdue ${overdue === 1 ? "task needs" : "tasks need"} attention`
+                      : "You're all caught up on overdue tasks",
+              ]
+            : []),
         view.pipelineCard.activeTotal
-            ? `You're working with ${plural(view.pipelineCard.activeTotal, "active client")}`
+            ? `You're working on ${plural(view.pipelineCard.activeTotal, "active deal")}`
             : "Add your first client to start building your pipeline",
-        ...(needsUpdate ? [`${plural(needsUpdate, "visit")} need an update`] : []),
+        ...(visitNeedsUpdate ? [`${plural(visitNeedsUpdate, "visit")} need an update`] : []),
         ...(listings.data
             ? [`${plural(listings.data.published, "published listing")} in your inventory`]
             : []),
@@ -261,37 +325,49 @@ export function NewBrokerDashboard() {
             label: "Visits today",
             icon: CalendarCheck,
             urgent: false,
-            value: view.siteVisitCount,
-            detail: `${upcoming} upcoming · ${needsUpdate} need an update`,
-            href: "/broker/visits",
+            value: visitTotal,
+            detail:
+                !isMockMode() && !counts
+                    ? todayVisits.isError
+                        ? "Couldn't load visits · open to retry"
+                        : "Loading today's visits…"
+                    : `${counts?.upcoming ?? upcoming} upcoming · ${counts?.needs_update ?? needsUpdate} need an update`,
+            href: "/broker/visits?range=today&tab=upcoming",
         },
         {
-            label: "Follow-ups",
-            icon: CheckCheck,
+            label: "Overdue tasks",
+            icon: BellRing,
             urgent: overdue > 0,
-            value: followUpTotal,
-            detail: `${overdue} overdue`,
-            href: "/broker/contacts",
+            value: taskCountKnown ? overdue : null,
+            detail: tasks.isLoading
+                ? "Loading tasks…"
+                : tasks.error
+                  ? "Couldn't load tasks · open to retry"
+                  : overdue
+                    ? "Past due · needs attention"
+                    : "No overdue tasks",
+            href: "/broker/tasks?tab=overdue",
         },
         {
-            label: "Active clients",
-            icon: Users,
+            label: "Active deals",
+            icon: Briefcase,
             urgent: false,
-            value: view.pipelineCard.activeTotal,
+            value:
+                isMockMode() || data?.charts?.pipelineFunnel ? view.pipelineCard.activeTotal : null,
             detail: "In your pipeline",
-            href: "/broker/pipeline",
+            href: "/broker/pipeline?view=active",
         },
         {
-            label: "Active listings",
+            label: "Published listings",
             icon: Building2,
             urgent: false,
-            value: listings.data?.published ?? 0,
+            value: listings.data?.published ?? null,
             detail: listings.isError
-                ? "Couldn't load listings"
+                ? "Couldn't load listings · open to retry"
                 : listings.data
                   ? "Published in your inventory"
                   : "Loading listings…",
-            href: "/broker/your-listings",
+            href: "/broker/my-listings?status=published",
         },
     ];
 
@@ -428,7 +504,11 @@ export function NewBrokerDashboard() {
                             <span
                                 className={`h3 ms-auto shrink-0 tabular-nums ${stat.urgent ? "text-urgent" : "text-brand"}`}
                             >
-                                {stat.value}
+                                {stat.value === null ? (
+                                    <span aria-label="Count unavailable">—</span>
+                                ) : (
+                                    stat.value.toLocaleString("en-IN")
+                                )}
                             </span>
                         </Link>
                     </li>

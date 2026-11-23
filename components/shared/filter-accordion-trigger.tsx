@@ -14,15 +14,26 @@ export function FilterAccordionTrigger({
     return (
         <AccordionTrigger
             className="
-              items-center gap-3 rounded-none border-0 px-0 py-5 text-ink
+              items-start gap-3 rounded-none border-0 px-0 py-4 text-ink
               hover:no-underline
-              focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
-              focus-visible:ring-offset-surface
               data-panel-open:text-ink
+              **:data-[slot=accordion-trigger-icon]:ms-0
+              sm:py-5
             "
         >
-            <span className="flex flex-1 flex-col items-start gap-1.5 min-inline-0">
-                <span className="font-display text-lg font-semibold tracking-tight">{title}</span>
+            {/* Title row matches the chevron face height so the chevron stays
+                pinned beside the title, not centred across the description. */}
+            <span className="flex flex-1 flex-col items-start gap-1 min-inline-0">
+                <span
+                    className="
+                      flex items-center font-display text-base font-semibold tracking-tight
+                      min-block-8
+                      sm:text-lg
+                      pointer-coarse:min-block-(--touch-target-min)
+                    "
+                >
+                    {title}
+                </span>
                 {description ? (
                     <span
                         className="

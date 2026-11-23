@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { duration, ease } from "@/lib/motion/tokens";
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { BellRing, CallIcon, WhatsAppIcon } from "@/components/shared/icons";
 import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
@@ -100,9 +101,10 @@ function ChannelAction({ item }: { item: FollowUp }) {
     );
 }
 
-function FollowUpRow({ item }: { item: FollowUp }) {
+export function FollowUpRow({ item }: { item: FollowUp }) {
     return (
         <motion.li
+            data-linked-card
             layout
             variants={rowVariants}
             initial="hidden"
@@ -110,9 +112,15 @@ function FollowUpRow({ item }: { item: FollowUp }) {
             exit="exit"
             className="flex items-start gap-3 overflow-hidden py-3"
         >
+            <CardLink
+                href={`/broker/contacts?tab=buyers&contact=${encodeURIComponent(item.clientId)}`}
+                label={`Open ${item.title}`}
+            />
             <div className="flex flex-1 items-start gap-2.5 min-inline-0">
                 <div className="flex-1 min-inline-0">
-                    <p className="body truncate font-semibold text-ink">{item.title}</p>
+                    <p data-card-title className="body truncate font-semibold text-ink">
+                        {item.title}
+                    </p>
                     <p className="body-sm mbs-0.5 truncate text-ink-muted">{item.context}</p>
                 </div>
 

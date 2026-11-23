@@ -265,7 +265,7 @@ export function VisitsList({
                     items={groups}
                     getKey={(group) => group.key}
                     estimateRowHeight={520}
-                    gap={24}
+                    gap="card-grid"
                     overscan={2}
                     ariaLabel="Site visits by day"
                     renderItem={(group) => (

@@ -1,4 +1,5 @@
 "use client";
+
 import { memo, useMemo, useState } from "react";
 
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
@@ -6,6 +7,8 @@ import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/ro
 import { cn } from "@/lib/utils";
 import { formatVisitDayHeading, istDateKey } from "@/lib/visits/time";
 
+import { CardLink } from "@/components/shared/card-link";
+import { ContactName } from "@/components/shared/contact-name";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     BadgeCheck,
@@ -90,6 +93,7 @@ export const PropertyRow = memo(function PropertyRow({
 
     return (
         <article
+            data-linked-card
             tabIndex={-1}
             aria-label={item.property.title}
             className={cn(
@@ -97,6 +101,7 @@ export const PropertyRow = memo(function PropertyRow({
                 inlineError && "border-danger/35",
             )}
         >
+            <CardLink href={propertyHref} label={`Open ${item.property.title}`} />
             <div
                 className="
                   grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 p-4
@@ -177,7 +182,11 @@ export const PropertyRow = memo(function PropertyRow({
                             <span className="text-ink-subtle">Owner</span>
                             <span className="text-ink-subtle/60"> </span>
                             <span className="font-semibold text-ink capitalize">
-                                {item.owner.name}
+                                <ContactName
+                                    name={item.owner.name}
+                                    contactId={item.owner.id}
+                                    contactType="owner"
+                                />
                             </span>
                         </span>
                     </p>

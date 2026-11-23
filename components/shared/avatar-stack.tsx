@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPersonName } from "@/lib/format/person-name";
 import { cn } from "@/lib/utils";
 
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -53,7 +54,7 @@ export function AvatarStack({
                     <Tooltip key={person.id}>
                         <TooltipTrigger
                             tabIndex={0}
-                            aria-label={person.name}
+                            aria-label={formatPersonName(person.name)}
                             render={
                                 <span
                                     className={cn(
@@ -69,7 +70,7 @@ export function AvatarStack({
                                     )}
                                 >
                                     <UserAvatar
-                                        name={person.name}
+                                        name={formatPersonName(person.name)}
                                         imageUrl={person.avatarUrl}
                                         size={size}
                                         className={cn(STACK_FACE_CLASS, avatarClassName)}
@@ -78,7 +79,7 @@ export function AvatarStack({
                             }
                         />
                         <TooltipContent side="top" className="capitalize">
-                            {person.name}
+                            {formatPersonName(person.name)}
                         </TooltipContent>
                     </Tooltip>
                 ))}
@@ -125,12 +126,12 @@ export function AvatarStack({
                                 overflow.map((person) => (
                                     <span key={person.id} className="flex items-center gap-2.5">
                                         <UserAvatar
-                                            name={person.name}
+                                            name={formatPersonName(person.name)}
                                             imageUrl={person.avatarUrl}
                                             size="2xs"
                                         />
                                         <span className="wrap-anywhere min-inline-0">
-                                            {person.name}
+                                            {formatPersonName(person.name)}
                                         </span>
                                     </span>
                                 ))}

@@ -7,6 +7,11 @@ import {
     ListSearchField,
     ListToolbarSelect,
 } from "@/components/shared/list-toolbar";
+import { PEOPLE_ROLE_DOT_CLASS } from "@/components/shared/people-role-dot";
+import {
+    ResponsiveListStatus,
+    ResponsiveListToolbar,
+} from "@/components/shared/responsive-list-toolbar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
@@ -48,136 +53,154 @@ export function ContactsHeader({
     };
 
     return (
-        <div className="sticky inset-bs-0 z-10">
+        <div className="sticky inset-bs-0 z-10 bg-canvas pbs-2 lg:pbs-0">
             <TooltipProvider>
-                <div className="flex items-center justify-between gap-3 sm:gap-4">
-                    <OwnerListingsChipsCarousel>
-                        {(
-                            [
+                <ResponsiveListToolbar
+                    selection={
+                        <ResponsiveListStatus
+                            label="Contacts"
+                            value={filters.tab}
+                            options={[
                                 {
-                                    value: "buyers" as const,
+                                    value: "buyers",
                                     label: "Clients",
-                                    mobileLabel: "Clients",
-                                    icon: User,
-                                    count:
-                                        summary != null && summary.buyerCount > 0
-                                            ? summary.buyerCount
-                                            : undefined,
-                                    description: "People you’re helping find a property",
+                                    count: summary?.buyerCount,
+                                    dotClassName: PEOPLE_ROLE_DOT_CLASS.client,
                                 },
                                 {
-                                    value: "owners" as const,
+                                    value: "owners",
                                     label: "Owners",
-                                    mobileLabel: "Owners",
-                                    icon: Home,
-                                    count:
-                                        summary != null && summary.ownerCount > 0
-                                            ? summary.ownerCount
-                                            : undefined,
-                                    description: FEATURE_PLATFORM_OWNER
-                                        ? "Owners you represent or added yourself"
-                                        : "Owners you added yourself",
+                                    count: summary?.ownerCount,
+                                    dotClassName: PEOPLE_ROLE_DOT_CLASS.owner,
                                 },
-                            ] as const
-                        ).map((chip) => {
-                            const active = filters.tab === chip.value;
-                            return (
-                                <OwnerListingsChipsCarouselSlide key={chip.value}>
-                                    <FilterChip
-                                        label={chip.label}
-                                        mobileLabel={chip.mobileLabel}
-                                        icon={chip.icon}
-                                        count={chip.count}
-                                        isLoading={isLoading}
-                                        isActive={active}
-                                        onClick={() => setTab(chip.value)}
-                                        description={chip.description}
-                                    />
-                                </OwnerListingsChipsCarouselSlide>
-                            );
-                        })}
-
-                        {!isBuyers && FEATURE_PLATFORM_OWNER
-                            ? (
-                                  [
-                                      {
-                                          value: "all" as const,
-                                          label: "All",
-                                          count:
-                                              summary != null && summary.ownerCount > 0
-                                                  ? summary.ownerCount
-                                                  : undefined,
-                                      },
-                                      {
-                                          value: "platform" as const,
-                                          label: "Platform",
-                                          count:
-                                              summary != null && summary.platformOwnerCount > 0
-                                                  ? summary.platformOwnerCount
-                                                  : undefined,
-                                      },
-                                      {
-                                          value: "custom" as const,
-                                          label: "Added by you",
-                                          count:
-                                              summary != null && summary.customOwnerCount > 0
-                                                  ? summary.customOwnerCount
-                                                  : undefined,
-                                      },
-                                  ] as const
-                              ).map((chip) => {
-                                  const active = filters.ownerOrigin === chip.value;
-                                  const isDefault = chip.value === "all";
-                                  return (
-                                      <OwnerListingsChipsCarouselSlide key={chip.value}>
-                                          <FilterChip
-                                              label={chip.label}
-                                              count={chip.count}
-                                              isLoading={isLoading}
-                                              isActive={active}
-                                              clearable={!isDefault}
-                                              onClick={() =>
-                                                  onFiltersChange({
-                                                      ...filters,
-                                                      ownerOrigin:
-                                                          active && !isDefault ? "all" : chip.value,
-                                                  })
-                                              }
-                                          />
-                                      </OwnerListingsChipsCarouselSlide>
-                                  );
-                              })
-                            : null}
-                    </OwnerListingsChipsCarousel>
-
-                    <div className="flex shrink-0 items-center gap-2.5">
+                            ]}
+                            isLoading={isLoading}
+                            onChange={(value) => {
+                                if (value === "buyers" || value === "owners") setTab(value);
+                            }}
+                        >
+                            <FilterChip
+                                label="Clients"
+                                icon={User}
+                                count={summary?.buyerCount}
+                                isLoading={isLoading}
+                                isActive={isBuyers}
+                                onClick={() => setTab("buyers")}
+                                description="People you’re helping find a property"
+                            />
+                            <FilterChip
+                                label="Owners"
+                                icon={Home}
+                                count={summary?.ownerCount}
+                                isLoading={isLoading}
+                                isActive={!isBuyers}
+                                onClick={() => setTab("owners")}
+                                description={
+                                    FEATURE_PLATFORM_OWNER
+                                        ? "Owners you represent or added yourself"
+                                        : "Owners you added yourself"
+                                }
+                            />
+                        </ResponsiveListStatus>
+                    }
+                    search={
                         <ListSearchField
-                            placeholder="Search name, number or area"
-                            aria-label="Search your clients"
+                            fullWidth
+                            searchHelp={
+                                isBuyers
+                                    ? "Search clients by name, phone number or area."
+                                    : "Search owners by name, area or linked property title."
+                            }
+                            aria-label={
+                                isBuyers
+                                    ? "Search clients by name, number or area"
+                                    : "Search owners by name, number or area"
+                            }
                             value={filters.q}
                             onChange={(q) => onFiltersChange({ ...filters, q })}
                         />
-
-                        <ListToolbarSelect
-                            label="Sort clients"
-                            value={filters.sort}
-                            options={SORT_OPTIONS}
-                            defaultValue="recent"
-                            mobileLabel="Sort"
-                            tooltip="Change the order of the list."
-                            onChange={(sort) => onFiltersChange({ ...filters, sort })}
-                        />
-
-                        {onAdd ? (
-                            <ListAddButton
-                                label={addLabel}
-                                shortcutId="add_contact"
-                                onClick={onAdd}
-                                className="hidden md:inline-flex"
+                    }
+                    actions={
+                        <>
+                            <ListToolbarSelect
+                                label={isBuyers ? "Sort clients" : "Sort owners"}
+                                value={filters.sort}
+                                options={SORT_OPTIONS}
+                                defaultValue="recent"
+                                mobileLabel="Sort"
+                                tooltip="Change the order of the list."
+                                onChange={(sort) => onFiltersChange({ ...filters, sort })}
                             />
-                        ) : null}
-                    </div>
-                </div>
+
+                            {onAdd ? (
+                                <ListAddButton
+                                    label={addLabel}
+                                    shortcutId="add_contact"
+                                    onClick={onAdd}
+                                    className="hidden md:inline-flex"
+                                />
+                            ) : null}
+                        </>
+                    }
+                >
+                    {!isBuyers && FEATURE_PLATFORM_OWNER ? (
+                        <div className="mbs-3">
+                            <OwnerListingsChipsCarousel>
+                                {(
+                                    [
+                                        {
+                                            value: "all" as const,
+                                            label: "All",
+                                            count:
+                                                summary != null && summary.ownerCount > 0
+                                                    ? summary.ownerCount
+                                                    : undefined,
+                                        },
+                                        {
+                                            value: "platform" as const,
+                                            label: "Platform",
+                                            count:
+                                                summary != null && summary.platformOwnerCount > 0
+                                                    ? summary.platformOwnerCount
+                                                    : undefined,
+                                        },
+                                        {
+                                            value: "custom" as const,
+                                            label: "Added by you",
+                                            count:
+                                                summary != null && summary.customOwnerCount > 0
+                                                    ? summary.customOwnerCount
+                                                    : undefined,
+                                        },
+                                    ] as const
+                                ).map((chip) => {
+                                    const active = filters.ownerOrigin === chip.value;
+                                    const isDefault = chip.value === "all";
+                                    return (
+                                        <OwnerListingsChipsCarouselSlide key={chip.value}>
+                                            <FilterChip
+                                                label={chip.label}
+                                                count={chip.count}
+                                                isLoading={isLoading}
+                                                isActive={active}
+                                                clearable={!isDefault}
+                                                onClick={() =>
+                                                    onFiltersChange({
+                                                        ...filters,
+                                                        ownerOrigin:
+                                                            active && !isDefault
+                                                                ? "all"
+                                                                : chip.value,
+                                                    })
+                                                }
+                                            />
+                                        </OwnerListingsChipsCarouselSlide>
+                                    );
+                                })}
+                            </OwnerListingsChipsCarousel>
+                        </div>
+                    ) : null}
+                </ResponsiveListToolbar>
             </TooltipProvider>
         </div>
     );

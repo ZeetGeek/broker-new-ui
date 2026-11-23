@@ -9,7 +9,6 @@ import {
     useRef,
     useState,
 } from "react";
-import Link from "next/link";
 
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -18,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import { Building2, ChevronLeft, ChevronRight } from "@/components/shared/icons";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 
 /**
  * Same glass circle as the photo menu button. Hidden until the photo is hovered.

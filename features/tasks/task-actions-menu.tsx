@@ -176,7 +176,7 @@ export function TaskActionsMenu({
                                     }
                                 >
                                     <Icon aria-hidden />
-                                    <span className="sr-only">{label}</span>
+                                    <span className={styles.dateOptionLabel}>{label}</span>
                                 </TooltipTrigger>
                                 <TooltipContent>{label}</TooltipContent>
                             </Tooltip>
@@ -208,6 +208,9 @@ export function TaskActionsMenu({
                                 ) : (
                                     <FlagFilled aria-hidden />
                                 )}
+                                <span className={styles.priorityLabel}>
+                                    {TASK_PRIORITY_LABELS[priority]}
+                                </span>
                             </button>
                         ))}
                     </div>

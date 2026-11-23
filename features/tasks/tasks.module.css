@@ -1,4 +1,5 @@
 .page {
+    container: tasks-page / inline-size;
     min-inline-size: 0;
     color: var(--color-ink);
     caret-color: var(--color-brand);
@@ -22,16 +23,16 @@
     gap: 1.5rem;
 }
 .toolbar {
-    display: flex;
+    container: list-toolbar / inline-size;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    flex-wrap: wrap;
     min-inline-size: 0;
 }
 .filterTabs {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem;
     min-inline-size: 0;
@@ -39,7 +40,6 @@
 }
 .tools {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
     margin-inline-start: auto;
@@ -47,8 +47,9 @@
     max-inline-size: 100%;
 }
 .searchField {
-    inline-size: 256px;
-    min-inline-size: 200px;
+    inline-size: min(17.5rem, 100%);
+    min-inline-size: 0;
+    justify-self: end;
 }
 .smallCount {
     display: inline-flex;
@@ -351,17 +352,85 @@
     font-weight: 600;
     margin-block: 1.75rem 0.5rem;
 }
-@media (max-width: 760px) {
-    .tools {
-        inline-size: 100%;
-        flex-wrap: wrap;
+@container tasks-page (max-width: 959px) {
+    .toolbar {
+        grid-template-columns: minmax(0, 1fr) auto;
         gap: 0.75rem;
     }
-    .searchField {
-        flex-basis: 100%;
-        inline-size: 100%;
-        min-inline-size: 0;
+    .filterTabs {
+        grid-column: 1 / -1;
     }
+    .searchField {
+        inline-size: 100%;
+    }
+}
+@container tasks-page (max-width: 639px) {
+    .workspace {
+        gap: 1rem;
+    }
+    .toolbar {
+        gap: 0.5rem;
+    }
+    .filterTabs {
+        grid-row: 1;
+        gap: 0.5rem;
+        padding-inline-end: calc(var(--touch-target-min) + 0.5rem);
+    }
+    .filterTabs .filterButton,
+    .filterTabs :global([data-slot="select-trigger"]) {
+        min-block-size: var(--touch-target-min);
+        block-size: auto;
+    }
+    .filterButton[aria-pressed="true"] {
+        padding-inline-end: calc(var(--touch-target-min) + 0.25rem);
+    }
+    .filterTabs :global(button[data-icon-button]) {
+        --icon-button-size: var(--touch-target-min);
+    }
+    .searchField {
+        grid-column: 1;
+        grid-row: 2;
+    }
+    .tools {
+        display: contents;
+    }
+    .sortButton {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: end;
+        justify-content: center;
+        inline-size: var(--touch-target-min);
+        min-inline-size: var(--touch-target-min);
+        min-block-size: var(--touch-target-min);
+        padding: 0;
+    }
+    .sortButton > span,
+    .sortButton > svg:last-child {
+        display: none;
+    }
+    .addButton {
+        grid-column: 2;
+        grid-row: 2;
+        min-block-size: var(--touch-target-min);
+    }
+    .loading {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 0.75rem;
+    }
+    .detailFooter > button {
+        flex: 1 1 auto;
+        min-block-size: var(--touch-target-min);
+    }
+    .detailLine dd,
+    .record summary > span {
+        overflow-wrap: anywhere;
+    }
+    .empty {
+        padding: 2.5rem 1rem;
+        min-block-size: 20rem;
+    }
+}
+@media (max-width: 760px) {
     .overdueNotice {
         flex-wrap: wrap;
     }

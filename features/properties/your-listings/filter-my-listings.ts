@@ -35,7 +35,10 @@ export function parseMyListingsFilters(
 
     const statusRaw = first(params.status);
     const status: MyListingsStatusTab | "" =
-        statusRaw === "draft" || statusRaw === "published" || statusRaw === "deleted"
+        statusRaw === "draft" ||
+        statusRaw === "published" ||
+        statusRaw === "sold" ||
+        statusRaw === "deleted"
             ? statusRaw
             : DEFAULT_MY_LISTINGS_FILTERS.status;
 
@@ -51,6 +54,8 @@ export function parseMyListingsFilters(
 
     return {
         q: first(params.q),
+        ownerId: first(params.ownerId),
+        clientId: first(params.clientId),
         propertyFilters: parsePropertyCriteria(first(params.propertyFilters)),
         type,
         propertyType,
@@ -65,6 +70,8 @@ export function serializeMyListingsFilters(filters: MyListingsFilters): URLSearc
     const q = new URLSearchParams();
     serializePropertyCriteria(q, filters.propertyFilters);
     if (filters.q.trim()) q.set("q", filters.q.trim());
+    if (filters.ownerId) q.set("ownerId", filters.ownerId);
+    if (filters.clientId) q.set("clientId", filters.clientId);
     if (filters.type) q.set("type", filters.type);
     if (filters.propertyType) q.set("propertyType", filters.propertyType);
     filters.bhk.forEach((value) => q.append("bhk", value));
@@ -77,6 +84,7 @@ export function serializeMyListingsFilters(filters: MyListingsFilters): URLSearc
 export function hasActiveMyListingsFilters(filters: MyListingsFilters): boolean {
     // Status is a page tab (Published / Draft), not a filter chip.
     return (
+        Boolean(filters.ownerId || filters.clientId) ||
         Boolean(filters.q.trim()) ||
         propertyCriteriaCount(filters.propertyFilters) > 0 ||
         Boolean(filters.type) ||
@@ -84,4 +92,18 @@ export function hasActiveMyListingsFilters(filters: MyListingsFilters): boolean 
         filters.bhk.length > 0 ||
         filters.sort !== DEFAULT_MY_LISTINGS_FILTERS.sort
     );
+}
+
+/** Persist tab selection while resetting pagination for the next visit. */
+export function normalizeMyListingsStoredFilters(filters: MyListingsFilters): MyListingsFilters {
+    return {
+        ...filters,
+        ownerId: typeof filters.ownerId === "string" ? filters.ownerId : "",
+        clientId: typeof filters.clientId === "string" ? filters.clientId : "",
+        status:
+            filters.status === "draft" || filters.status === "sold" || filters.status === "deleted"
+                ? filters.status
+                : "published",
+        page: 1,
+    };
 }

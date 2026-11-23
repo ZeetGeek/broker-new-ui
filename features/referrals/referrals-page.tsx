@@ -181,7 +181,7 @@ export function ReferralsPage() {
             {/* The share card leads and the progress card sits beside it on a
                 wide screen. On a phone they stack in that same order: the
                 broker came here to share, and reads how it pays after. */}
-            <div className="grid gap-3 lg:grid-cols-[3fr_2fr] lg:gap-4">
+            <div className="grid gap-card-grid lg:grid-cols-[3fr_2fr]">
                 <ReferralShareCard
                     referralCode={referralCode}
                     inviterName={inviterName}
@@ -241,7 +241,7 @@ export function ReferralsPage() {
 
             {/* Rules and statement side by side: one says how the balance
                 moves, the other shows it moving. */}
-            <div className="grid gap-3 lg:grid-cols-2 lg:gap-4">
+            <div className="grid gap-card-grid lg:grid-cols-2">
                 <HowToEarnCard />
                 {ledgerQuery.isError && ledgerQuery.items.length === 0 ? null : (
                     <CreditsLedger

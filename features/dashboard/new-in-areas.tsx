@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
@@ -11,12 +10,14 @@ import { formatAreaSqft } from "@/lib/format/area";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Bookmark, Clock3, MapPin, Users } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { ShortcutKbdMessage } from "@/components/shared/shortcut-tooltip";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -87,7 +88,11 @@ function PropertyRow({
     const detailsHref = brokerOwnerListingDetailHref(property.id);
 
     return (
-        <li className="flex items-center gap-3 sm:gap-4">
+        <li data-linked-card className="flex items-center gap-3 sm:gap-4">
+            <CardLink
+                href={detailsHref}
+                label={`Open ${property.configLabel} in ${property.locality}`}
+            />
             <Link
                 href={detailsHref}
                 prefetch={false}

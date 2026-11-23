@@ -208,7 +208,7 @@ export function ProfileStats({
     return (
         <aside className="flex flex-col gap-3" aria-label="Account at a glance">
             <article className="overflow-hidden rounded-card border border-border-warm bg-surface">
-                <div className="flex items-center justify-between gap-2 px-3.5 py-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5">
                     <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
                         <Eye className="text-brand block-4 inline-4" aria-hidden />
                         At a glance
@@ -245,7 +245,7 @@ export function ProfileStats({
                                 </p>
                                 <p
                                     className="
-                                      mts-0.5 truncate text-[11px] font-medium text-ink-muted
+                                      mts-0.5 text-xs font-medium text-ink-muted
                                     "
                                 >
                                     {metric.label}

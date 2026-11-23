@@ -91,7 +91,7 @@ export function SavedPropertiesGrid(props: SavedPropertiesGridProps) {
             items={props.items.filter((item) => item.source === "your-listing")}
             getKey={(item) => item.id}
             estimateRowHeight={520}
-            gap={24}
+            gap="card-grid"
             breakpoints={GRID_BREAKPOINTS}
             ariaLabel="Saved properties"
             renderItem={(item, index) => (
@@ -263,7 +263,7 @@ function MarketplaceSavedPropertiesGrid({ items, onUnsave }: SavedPropertiesGrid
                 items={items}
                 getKey={(item) => item.id}
                 estimateRowHeight={520}
-                gap={24}
+                gap="card-grid"
                 breakpoints={GRID_BREAKPOINTS}
                 ariaLabel="Saved properties"
                 renderItem={(item, index) => {

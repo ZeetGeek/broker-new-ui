@@ -16,6 +16,7 @@ export default async function Page({
         <ContactsPage
             key={`${query.add ?? ""}:${query.flow ?? ""}`}
             initialAddBuyer={query.add === "buyer"}
+            initialAddOwner={query.add === "owner"}
             addDealFlow={query.flow === "add-deal"}
         />
     );

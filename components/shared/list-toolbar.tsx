@@ -6,7 +6,15 @@ import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { filterChipClassName } from "@/components/shared/filter-chip";
-import { type AppIcon, ArrowDownUp, ChevronDown, Plus, Search } from "@/components/shared/icons";
+import { IconButton } from "@/components/shared/icon-button";
+import {
+    type AppIcon,
+    ArrowDownUp,
+    ChevronDown,
+    Info,
+    Plus,
+    Search,
+} from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -17,7 +25,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input, type InputProps } from "@/components/ui/input";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import {
+    Popover,
+    PopoverContent,
+    PopoverDescription,
+    PopoverTitle,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+import searchStyles from "./list-search-field.module.css";
 
 export const LIST_SEARCH_WIDTH_CLASS =
     "min-inline-44 inline-44 sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64";
@@ -32,6 +49,8 @@ type ListSearchFieldProps = Omit<
     debounceMs?: number;
     /** Let a page's responsive layout size the search field. */
     fullWidth?: boolean;
+    /** Fields supported by this page’s search, revealed by the info button. */
+    searchHelp?: string;
 };
 
 /** Shared list search face, including clear, focus and external filter resets. */
@@ -40,7 +59,8 @@ export function ListSearchField({
     onChange,
     debounceMs = 300,
     fullWidth = false,
-    placeholder,
+    placeholder = "Search here...",
+    searchHelp,
     className,
     wrapperClassName,
     "aria-label": ariaLabel,
@@ -60,7 +80,7 @@ export function ListSearchField({
         return () => window.clearTimeout(timer);
     }, [debounceMs, draft, onChange, value]);
 
-    return (
+    const field = (
         <Input
             {...props}
             size="sm"
@@ -74,15 +94,56 @@ export function ListSearchField({
             startIcon={Search}
             clearable
             wrapperClassName={cn(
-                fullWidth ? "inline-full min-inline-0" : LIST_SEARCH_WIDTH_CLASS,
+                searchHelp
+                    ? "inline-full min-inline-0"
+                    : fullWidth
+                      ? "inline-full min-inline-0"
+                      : LIST_SEARCH_WIDTH_CLASS,
                 "rounded-control shadow-sm",
-                wrapperClassName,
+                !searchHelp && wrapperClassName,
             )}
             className={cn(
                 "rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20 pointer-coarse:min-block-11",
                 className,
             )}
         />
+    );
+    if (!searchHelp) return field;
+
+    return (
+        <div
+            className={cn(
+                "relative",
+                searchStyles.withHelp,
+                fullWidth ? "inline-full min-inline-0" : LIST_SEARCH_WIDTH_CLASS,
+                wrapperClassName,
+            )}
+        >
+            {field}
+            <Popover>
+                <PopoverTrigger
+                    render={
+                        <IconButton
+                            appearance="ghost"
+                            size="sm"
+                            aria-label="What can I search?"
+                            disabled={props.disabled || props.loading}
+                            className={searchStyles.helpButton}
+                        />
+                    }
+                >
+                    <Info aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                </PopoverTrigger>
+                <PopoverContent align="end" className="gap-1.5 max-inline-[calc(100dvw-2rem)]">
+                    <PopoverTitle className="text-sm font-semibold">
+                        What you can search
+                    </PopoverTitle>
+                    <PopoverDescription className="text-sm text-ink-muted">
+                        {searchHelp}
+                    </PopoverDescription>
+                </PopoverContent>
+            </Popover>
+        </div>
     );
 }
 

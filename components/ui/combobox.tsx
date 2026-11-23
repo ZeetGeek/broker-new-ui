@@ -508,9 +508,13 @@ function ComboboxChip({
     className,
     children,
     showRemove = true,
+    tone = "neutral",
+    removeLabel,
     ...props
 }: ComboboxPrimitive.Chip.Props & {
     showRemove?: boolean;
+    tone?: "neutral" | "mint" | "lemon" | "peach";
+    removeLabel?: string;
 }) {
     return (
         <ComboboxPrimitive.Chip
@@ -524,6 +528,11 @@ function ComboboxChip({
                   has-disabled:opacity-50
                   has-data-[slot=combobox-chip-remove]:pe-0
                 `,
+                tone !== "neutral" &&
+                    "gap-1 rounded-full px-2.5 font-medium block-7 has-data-[slot=combobox-chip-remove]:pe-1",
+                tone === "mint" && "bg-emerald-100 text-emerald-900",
+                tone === "lemon" && "bg-amber-100 text-amber-900",
+                tone === "peach" && "bg-orange-100 text-orange-900",
                 className,
             )}
             {...props}
@@ -531,9 +540,11 @@ function ComboboxChip({
             {children}
             {showRemove && (
                 <ComboboxPrimitive.ChipRemove
+                    aria-label={removeLabel}
                     className="
-                      -ms-1 flex items-center justify-center text-ink-subtle opacity-50
-                      hover:opacity-100
+                      flex items-center justify-center rounded-full text-current opacity-70
+                      outline-none block-5 inline-5 hover:bg-black/5 hover:opacity-100
+                      focus-visible:ring-2 focus-visible:ring-current
                       [&_svg:not([class*='size-'])]:block-3 [&_svg:not([class*='size-'])]:inline-3
                     "
                     data-slot="combobox-chip-remove"

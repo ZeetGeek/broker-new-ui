@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -23,6 +22,7 @@ import {
     UserRoundSearch,
     Users,
 } from "@/components/shared/icons";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -59,7 +59,7 @@ const NAV_ICONS: Record<string, AppIcon> = {
     "/broker/dashboard": LayoutDashboard,
     "/broker/owner-listings": Building2,
     "/broker/my-deals": Send,
-    "/broker/your-listings": Briefcase,
+    "/broker/my-listings": Briefcase,
     "/broker/pipeline": Users,
     "/broker/contacts": Contact,
     "/broker/visits": Calendar,

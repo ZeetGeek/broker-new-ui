@@ -10,7 +10,7 @@ function ContactCardSkeleton({ variant }: { variant: "buyer" | "owner" }) {
     return (
         <div
             className={cn(
-                "flex flex-col rounded-card border border-border-warm bg-surface p-5 shadow-md",
+                "flex flex-col rounded-card border border-border-warm bg-surface p-4 shadow-md sm:p-5",
                 variant === "buyer" ? "min-block-96" : "min-block-80",
             )}
         >
@@ -74,7 +74,7 @@ export function ContactsSkeleton({
             </span>
             <div
                 aria-hidden
-                className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                className="grid grid-cols-1 gap-card-grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             >
                 {Array.from({ length: count }, (_, index) => (
                     <ContactCardSkeleton key={index} variant={variant} />
@@ -103,10 +103,10 @@ export function ContactsHeaderSkeleton() {
         <div
             role="status"
             aria-busy="true"
-            className="flex items-center justify-between gap-3 motion-safe:animate-pulse sm:gap-4"
+            className="flex flex-col gap-3 min-inline-0 motion-safe:animate-pulse lg:flex-row lg:items-center lg:justify-between lg:gap-4"
         >
             <span className="sr-only">Loading client filters</span>
-            <div className="flex flex-1 gap-2 overflow-hidden min-inline-0">
+            <div className="flex gap-2 overflow-hidden inline-full min-inline-0 lg:flex-1 lg:inline-auto">
                 {[0, 1].map((index) => (
                     <div
                         key={index}
@@ -118,12 +118,12 @@ export function ContactsHeaderSkeleton() {
                     </div>
                 ))}
             </div>
-            <div className="flex shrink-0 gap-2.5">
-                <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px] inline-44 sm:inline-52 lg:inline-64">
+            <div className="flex gap-2 inline-full min-inline-0 lg:shrink-0 lg:gap-2.5 lg:inline-auto">
+                <div className="flex flex-1 items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-11 min-inline-0 lg:flex-none lg:block-[38px] lg:inline-64">
                     <Bone className="rounded-full block-3 inline-3" />
                     <Bone className="block-3 inline-3/4" />
                 </div>
-                <div className="flex items-center rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px] inline-24">
+                <div className="flex shrink-0 items-center rounded-control border border-border-warm bg-surface px-3 shadow-sm block-11 inline-24 lg:block-[38px]">
                     <Bone className="block-3 inline-full" />
                 </div>
                 <div className="hidden items-center rounded-control bg-surface px-3 block-[38px] inline-32 md:flex">
@@ -136,7 +136,7 @@ export function ContactsHeaderSkeleton() {
 
 export function ContactsPageSkeleton() {
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-3 sm:gap-6">
             <ContactsIntroSkeleton />
             <ContactsHeaderSkeleton />
             <ContactsSkeleton />
@@ -148,7 +148,7 @@ function FieldSkeleton() {
     return (
         <div className="flex flex-col gap-2 min-inline-0">
             <Bone className="block-4 inline-24 max-inline-full" />
-            <Bone className="border-2 border-border-warm block-control-xl inline-full" />
+            <Bone className="border-2 border-border-warm block-control-lg inline-full" />
         </div>
     );
 }
@@ -178,7 +178,7 @@ export function ContactFormSkeleton({
                             <div className="flex flex-col gap-4 pbs-5">
                                 {section === 2 ? (
                                     <>
-                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                             <FieldSkeleton />
                                             <FieldSkeleton />
                                             <FieldSkeleton />

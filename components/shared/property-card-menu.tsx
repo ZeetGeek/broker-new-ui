@@ -18,7 +18,10 @@ import { cn } from "@/lib/utils";
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import { IconButton } from "@/components/shared/icon-button";
 import { PropertyMenuIcon } from "@/components/shared/icons";
-import { OVERLAY_ICON_BUTTON_CLASS } from "@/components/shared/overlay-card";
+import {
+    OVERLAY_ICON_BUTTON_CLASS,
+    OVERLAY_ICON_BUTTON_COLORS,
+} from "@/components/shared/overlay-card";
 import shareBrands from "@/components/shared/thesvg-color-share.json";
 import {
     DropdownMenu,
@@ -287,6 +290,8 @@ export function PropertyCardMenu({
                     <IconButton
                         type="button"
                         size="sm"
+                        appearance={tone === "overlay" ? "inverse" : "outline"}
+                        style={tone === "overlay" ? OVERLAY_ICON_BUTTON_COLORS : undefined}
                         aria-label="Property actions"
                         aria-haspopup="menu"
                         className={cn(

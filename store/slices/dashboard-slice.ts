@@ -23,7 +23,7 @@ const initialState: DashboardState = {
 
 export const fetchBrokerDashboard = createAsyncThunk(
     "dashboard/fetchBroker",
-    async (_, { rejectWithValue }) => {
+    async (_options: { background?: boolean } | undefined, { rejectWithValue }) => {
         if (isMockMode()) {
             return { data: null, profile: MOCK_PROFILE };
         }
@@ -66,7 +66,8 @@ const dashboardSlice = createSlice({
         builder
             .addCase(fetchBrokerDashboard.pending, (state, action) => {
                 state.requestId = action.meta.requestId;
-                state.status = "loading";
+                if (!action.meta.arg?.background || state.status !== "succeeded")
+                    state.status = "loading";
                 state.error = null;
             })
             .addCase(fetchBrokerDashboard.fulfilled, (state, action) => {
@@ -78,6 +79,7 @@ const dashboardSlice = createSlice({
             })
             .addCase(fetchBrokerDashboard.rejected, (state, action) => {
                 if (state.requestId !== action.meta.requestId) return;
+                if (action.meta.arg?.background && state.status === "succeeded") return;
                 state.status = "failed";
                 state.error =
                     (typeof action.payload === "string" ? action.payload : null) ||

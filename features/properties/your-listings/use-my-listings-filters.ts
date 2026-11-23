@@ -7,6 +7,7 @@ import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
 
 import {
     hasActiveMyListingsFilters,
+    normalizeMyListingsStoredFilters,
     parseMyListingsFilters,
     serializeMyListingsFilters,
 } from "@/features/properties/your-listings/filter-my-listings";
@@ -15,6 +16,8 @@ import { DEFAULT_MY_LISTINGS_FILTERS } from "@/features/properties/your-listings
 
 const MY_LISTINGS_URL_KEYS = [
     "q",
+    "ownerId",
+    "clientId",
     "type",
     "propertyType",
     "bhk",
@@ -27,17 +30,6 @@ function isMyListingsFilters(value: unknown): value is MyListingsFilters {
     if (typeof value !== "object" || value === null) return false;
     const v = value as Partial<MyListingsFilters>;
     return typeof v.q === "string" && Array.isArray(v.bhk) && typeof v.sort === "string";
-}
-
-function forStorage(filters: MyListingsFilters): MyListingsFilters {
-    return {
-        ...filters,
-        status:
-            filters.status === "draft" || filters.status === "deleted"
-                ? filters.status
-                : "published",
-        page: 1,
-    };
 }
 
 function parse(params: URLSearchParams): MyListingsFilters {
@@ -59,10 +51,10 @@ function parse(params: URLSearchParams): MyListingsFilters {
 }
 
 function serialize(filters: MyListingsFilters): URLSearchParams {
-    return serializeMyListingsFilters(forStorage(filters));
+    return serializeMyListingsFilters(normalizeMyListingsStoredFilters(filters));
 }
 
-export function useMyListingsFilters() {
+export function useMyListingsFilters(peopleEnabled = false) {
     const {
         value: filters,
         replace,
@@ -73,7 +65,7 @@ export function useMyListingsFilters() {
         preserveUrlKeys: ["tab"],
         parse,
         serialize,
-        forStorage,
+        forStorage: normalizeMyListingsStoredFilters,
         isValid: isMyListingsFilters,
     });
 
@@ -89,13 +81,20 @@ export function useMyListingsFilters() {
         replace({ ...DEFAULT_MY_LISTINGS_FILTERS });
     }, [replace]);
 
-    const normalizedFilters = useMemo(() => forStorage(filters), [filters]);
+    const normalizedFilters = useMemo(
+        () =>
+            normalizeMyListingsStoredFilters({
+                ...filters,
+                ...(!peopleEnabled ? { ownerId: "", clientId: "" } : {}),
+            }),
+        [filters, peopleEnabled],
+    );
     return {
         filters: normalizedFilters,
         setFilters,
         clearFilters,
-        hasActiveFilters: hasActiveMyListingsFilters(filters),
-        filterSignature: serializeMyListingsFilters(filters).toString(),
+        hasActiveFilters: hasActiveMyListingsFilters(normalizedFilters),
+        filterSignature: serializeMyListingsFilters(normalizedFilters).toString(),
         scopeReady: ready,
     };
 }

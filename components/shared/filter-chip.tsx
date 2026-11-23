@@ -37,6 +37,7 @@ export const ownerListingsChipClassName = filterChipClassName;
 export type FilterChipCountProps = {
     reserveSpace?: boolean;
     count?: number;
+    showZero?: boolean;
     isActive?: boolean;
     isLoading?: boolean;
     warning?: boolean;
@@ -45,10 +46,11 @@ export type FilterChipCountProps = {
 
 /**
  * Compact count badge for filter / tab chips.
- * Hidden when count is 0 (unless loading).
+ * Hidden when count is 0 unless showZero is enabled (or loading).
  */
 export function FilterChipCount({
     count,
+    showZero = false,
     isActive = false,
     isLoading = false,
     warning = false,
@@ -63,7 +65,7 @@ export function FilterChipCount({
             >
                 {isLoading ? (
                     <Skeleton className="block-4 inline-7" />
-                ) : count != null && count > 0 ? (
+                ) : count != null && (count > 0 || (showZero && count === 0)) ? (
                     <span
                         className={cn(
                             `
@@ -82,7 +84,7 @@ export function FilterChipCount({
             </span>
         );
     }
-    if (count == null || (!isLoading && count <= 0)) return null;
+    if (count == null || (!isLoading && (count < 0 || (count === 0 && !showZero)))) return null;
 
     // Loading: bare Tailspin only — no rounded count badge behind it.
     if (isLoading) {
@@ -136,6 +138,7 @@ export type FilterChipProps = {
     label: ReactNode;
     mobileLabel?: ReactNode;
     count?: number;
+    showZero?: boolean;
     isLoading?: boolean;
     isActive?: boolean;
     onClick: () => void;
@@ -154,6 +157,7 @@ export function FilterChip({
     label,
     mobileLabel,
     count,
+    showZero = false,
     isLoading = false,
     reserveCountSpace = false,
     isActive = false,
@@ -205,6 +209,7 @@ export function FilterChip({
             {count != null || reserveCountSpace ? (
                 <FilterChipCount
                     count={count}
+                    showZero={showZero}
                     isActive={isActive}
                     isLoading={isLoading}
                     reserveSpace={reserveCountSpace}

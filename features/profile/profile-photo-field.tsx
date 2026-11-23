@@ -8,10 +8,9 @@ import { resolveUserAvatarImageUrl } from "@/lib/auth/avatar";
 import { cn } from "@/lib/utils";
 
 import { Camera, CropIcon } from "@/components/shared/icons";
+import { PhotoCropModal } from "@/components/shared/photo-crop-modal";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
-
-import { ProfileImageCropper } from "@/features/profile/profile-image-cropper";
 
 /** What the storage bucket accepts. Stated to the user, and enforced here. */
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -27,7 +26,7 @@ type ProfilePhotoFieldProps = {
 /**
  * Profile photo — pick a new image or re-crop the one already saved.
  *
- * Both paths open `ProfileImageCropper`, then upload the square PNG.
+ * Both paths open `PhotoCropModal`, then upload the square PNG.
  */
 export function ProfilePhotoField({ profile, isOwner, onUploaded }: ProfilePhotoFieldProps) {
     const inputRef = useRef<HTMLInputElement>(null);
@@ -140,15 +139,15 @@ export function ProfilePhotoField({ profile, isOwner, onUploaded }: ProfilePhoto
 
     return (
         <section
-            className="border-be border-border-warm/80 pbe-8 last:border-be-0"
+            className="border-be border-border-warm/80 pbe-6 min-inline-0 last:border-be-0 sm:pbe-8"
             aria-labelledby="profile-photo-heading"
         >
             <div
                 className={cn(
                     `
                       flex flex-col gap-3 rounded-card border-2 border-dashed border-brand/35
-                      bg-brand-soft/40 p-4
-                      sm:flex-row sm:items-center sm:gap-4
+                      bg-brand-soft/40 p-3 min-inline-0
+                      sm:flex-row sm:items-center sm:gap-4 sm:p-4
                     `,
                     busy && "opacity-80",
                 )}
@@ -199,7 +198,7 @@ export function ProfilePhotoField({ profile, isOwner, onUploaded }: ProfilePhoto
                         }}
                     />
 
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-col items-stretch gap-3 min-inline-0 sm:flex-row sm:flex-wrap sm:items-center">
                         <Button
                             variant="surface"
                             size="sm"
@@ -237,7 +236,7 @@ export function ProfilePhotoField({ profile, isOwner, onUploaded }: ProfilePhoto
                 </div>
             </div>
 
-            <ProfileImageCropper
+            <PhotoCropModal
                 open={cropOpen}
                 imageUrl={pendingPreviewUrl}
                 fileName={pendingFileName}

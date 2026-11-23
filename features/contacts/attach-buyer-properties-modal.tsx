@@ -5,18 +5,9 @@ import toast from "react-hot-toast";
 
 import { type AttachableProperty, listAttachableProperties } from "@/lib/api/attachable-properties";
 import { clientsApi } from "@/lib/api/clients";
-import { cn } from "@/lib/utils";
 
-import { AppModal } from "@/components/shared/app-modal";
-import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { EmptyState } from "@/components/shared/empty-state";
-import { Building2, Link2, Search } from "@/components/shared/icons";
-import { PriceWithCommission } from "@/components/shared/price-with-commission";
-import { VirtualListBox } from "@/components/shared/virtual-list-box";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { mapAttachablePropertyToPicker } from "@/components/shared/map-to-property-picker-property";
+import { PropertyPicker } from "@/components/shared/property-picker";
 
 import type { BuyerRow } from "@/features/contacts/types";
 
@@ -40,12 +31,11 @@ export function AttachBuyerPropertiesModal({
 }) {
     const [properties, setProperties] = useState<AttachableProperty[]>([]);
     const [attachedIds, setAttachedIds] = useState<string[]>([]);
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [query, setQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [loadError, setLoadError] = useState(false);
     const [retryVersion, setRetryVersion] = useState(0);
+    const [pickerKey, setPickerKey] = useState(0);
 
     useEffect(() => {
         if (!open) return undefined;
@@ -56,16 +46,15 @@ export function AttachBuyerPropertiesModal({
             if (cancelled) return;
             setIsLoading(true);
             setLoadError(false);
-            setQuery("");
             setProperties([]);
             const already = (buyer.attachedProperties ?? []).map((item) => item.id);
             setAttachedIds(already);
-            setSelectedIds(already);
 
             void listAttachableProperties(controller.signal)
                 .then((rows) => {
                     if (cancelled) return;
                     setProperties(rows);
+                    setPickerKey((value) => value + 1);
                 })
                 .catch(() => {
                     if (cancelled) return;
@@ -84,194 +73,80 @@ export function AttachBuyerPropertiesModal({
         };
     }, [buyer.id, buyer.attachedProperties, open, retryVersion]);
 
-    const visible = useMemo(() => {
-        const needle = query.trim().toLowerCase();
-        if (!needle) return properties;
-        return properties.filter(
-            (item) =>
-                item.title.toLowerCase().includes(needle) ||
-                item.city.toLowerCase().includes(needle),
-        );
-    }, [properties, query]);
+    const unlinked = useMemo(
+        () => properties.filter((property) => !attachedIds.includes(property.id)),
+        [properties, attachedIds],
+    );
 
-    const handleToggle = useCallback((propertyId: string) => {
-        setSelectedIds((previous) =>
-            previous.includes(propertyId)
-                ? previous.filter((id) => id !== propertyId)
-                : [...previous, propertyId],
-        );
-    }, []);
+    const pickerProperties = useMemo(() => unlinked.map(mapAttachablePropertyToPicker), [unlinked]);
 
-    const handleSave = useCallback(() => {
-        if (isLoading || isSaving || loadError) return;
-        const toAttach = selectedIds.filter((id) => !attachedIds.includes(id));
-        if (toAttach.length === 0) {
-            onOpenChange(false);
-            return;
-        }
-
-        setIsSaving(true);
-        void clientsApi
-            .attachClientToProperties(buyer.id, toAttach)
-            .then(() => {
-                toast.success(
-                    toAttach.length === 1
-                        ? "Client linked to the property."
-                        : `Client linked to ${toAttach.length} properties.`,
-                );
-                onSaved();
+    const handleSave = useCallback(
+        (ids: string[]) => {
+            if (isLoading || isSaving || loadError) return;
+            const toAttach = ids.filter((id) => !attachedIds.includes(id));
+            if (toAttach.length === 0) {
                 onOpenChange(false);
-            })
-            .catch((error) => {
-                toast.error(
-                    error instanceof Error
-                        ? error.message
-                        : "Could not link properties. Try again.",
-                );
-            })
-            .finally(() => setIsSaving(false));
-    }, [attachedIds, buyer.id, onOpenChange, onSaved, selectedIds, isLoading, isSaving, loadError]);
+                return;
+            }
+
+            setIsSaving(true);
+            void clientsApi
+                .attachClientToProperties(buyer.id, toAttach)
+                .then(() => {
+                    toast.success(
+                        toAttach.length === 1
+                            ? "Client linked to the property."
+                            : `Client linked to ${toAttach.length} properties.`,
+                    );
+                    onSaved();
+                    onOpenChange(false);
+                })
+                .catch((error) => {
+                    toast.error(
+                        error instanceof Error
+                            ? error.message
+                            : "Could not link properties. Try again.",
+                    );
+                })
+                .finally(() => setIsSaving(false));
+        },
+        [attachedIds, buyer.id, onOpenChange, onSaved, isLoading, isSaving, loadError],
+    );
+
+    const linkedCount = attachedIds.length;
+    const description =
+        linkedCount > 0
+            ? `Choose more properties to link to ${buyer.name}. ${linkedCount} already linked — those stay.`
+            : `Choose properties to link to ${buyer.name}.`;
 
     return (
-        <AppModal
+        <PropertyPicker
+            key={pickerKey}
             open={open}
             onOpenChange={(next) => {
                 if (!isSaving) onOpenChange(next);
             }}
-            size="lg"
+            multiple
+            properties={pickerProperties}
+            value={[]}
+            onConfirm={handleSave}
             title="Attach properties"
-            description={`Choose properties to link to ${buyer.name}. Existing links will be kept.`}
-            header={
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <Input
-                        size="sm"
-                        value={query}
-                        onValueChange={setQuery}
-                        placeholder="Search properties"
-                        aria-label="Search properties"
-                        startIcon={Search}
-                        clearable
-                        wrapperClassName="min-inline-56 flex-1"
-                    />
-                    <span className="body-sm shrink-0 font-medium text-ink-muted">
-                        {selectedIds.length} selected
-                    </span>
-                </div>
+            description={description}
+            confirmLabel={isSaving ? "Saving…" : "Save links"}
+            confirmDisabled={isLoading || isSaving || loadError}
+            closeOnConfirm={false}
+            loading={isLoading}
+            errorText={loadError ? "Could not load properties. Try again." : undefined}
+            onRetry={() => setRetryVersion((value) => value + 1)}
+            emptyHeading="No available properties yet"
+            emptyDescription={
+                linkedCount > 0
+                    ? "This client is already linked to every listing you can attach."
+                    : "Add a property to My Listings, then link this client here."
             }
-            footer={
-                <AppModalFooter
-                    primaryLabel={isSaving ? "Saving…" : "Save links"}
-                    primaryIcon={<Link2 aria-hidden strokeWidth={1.75} />}
-                    onPrimary={handleSave}
-                    primaryDisabled={isLoading || isSaving || loadError}
-                    secondaryLabel="Cancel"
-                    onSecondary={() => onOpenChange(false)}
-                    secondaryDisabled={isSaving}
-                />
-            }
-        >
-            {isLoading ? (
-                <p role="status" className="body-sm text-ink-muted">
-                    Loading properties…
-                </p>
-            ) : loadError ? (
-                <div role="alert" className="flex flex-col gap-3">
-                    <p className="body-sm text-danger">Could not load properties. Try again.</p>
-                    <Button variant="outline" onClick={() => setRetryVersion((value) => value + 1)}>
-                        Retry
-                    </Button>
-                </div>
-            ) : visible.length === 0 ? (
-                <EmptyState
-                    icon={Building2}
-                    heading={
-                        query ? "No properties match your search" : "No available properties yet"
-                    }
-                    description={
-                        query
-                            ? "Try a different title or city."
-                            : "Add a property to My Listings, then link this client here."
-                    }
-                />
-            ) : (
-                <VirtualListBox
-                    items={visible}
-                    getKey={(property) => property.id}
-                    estimateItemHeight={92}
-                    ariaLabel="Properties available to attach"
-                    renderItem={(property) => {
-                        const isSelected = selectedIds.includes(property.id);
-                        const alreadyLinked = attachedIds.includes(property.id);
-
-                        return (
-                            <div>
-                                <label
-                                    className={cn(
-                                        `
-                                          flex cursor-pointer items-start gap-3 rounded-card border
-                                          p-3 transition-[background-color,border-color]
-                                          duration-160
-                                        `,
-                                        isSelected
-                                            ? "border-brand bg-brand-soft/50"
-                                            : `
-                                              border-border-warm bg-surface
-                                              hover:border-ink/20 hover:bg-surface-muted/50
-                                            `,
-                                        alreadyLinked && "opacity-80",
-                                    )}
-                                >
-                                    <Checkbox
-                                        checked={isSelected}
-                                        disabled={alreadyLinked}
-                                        onCheckedChange={() => {
-                                            if (!alreadyLinked) handleToggle(property.id);
-                                        }}
-                                        aria-label={`Link ${property.title}`}
-                                        className="mbs-0.5 shrink-0"
-                                    />
-                                    <div className="flex flex-1 flex-col gap-1 min-inline-0">
-                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                            <span className="body-sm font-semibold text-ink">
-                                                {property.title}
-                                            </span>
-                                            {alreadyLinked ? (
-                                                <Badge color="emerald">Already linked</Badge>
-                                            ) : null}
-                                            {property.isDraft ? (
-                                                <Badge color="stone">Draft</Badge>
-                                            ) : null}
-                                        </div>
-                                        <p
-                                            className="
-                                              body-xs flex flex-wrap items-center gap-x-1
-                                              text-ink-muted
-                                            "
-                                        >
-                                            {property.city ? (
-                                                <>
-                                                    <span>{property.city}</span>
-                                                    <span aria-hidden>·</span>
-                                                </>
-                                            ) : null}
-                                            <PriceWithCommission
-                                                amountInr={property.amountInr}
-                                                isRent={property.isRent}
-                                                commissionPercent={property.commissionPercent}
-                                                commissionAmountInr={property.commissionAmount}
-                                                audience="broker"
-                                                size="xs"
-                                                showEmptyTip
-                                                className="text-ink-muted"
-                                            />
-                                        </p>
-                                    </div>
-                                </label>
-                            </div>
-                        );
-                    }}
-                />
-            )}
-        </AppModal>
+            filteredEmptyHeading="No properties match your search"
+            filteredEmptyDescription="Try a different title, locality or city."
+            searchPlaceholder="Search by title, locality or city"
+        />
     );
 }

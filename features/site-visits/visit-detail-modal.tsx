@@ -4,9 +4,11 @@ import Link from "next/link";
 
 import { formatRelativePast, formatShowingWhen } from "@/lib/format/date";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
+import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { ContactName } from "@/components/shared/contact-name";
 import {
     CalendarClock,
     Clock3,
@@ -174,7 +176,16 @@ export function VisitDetailModal({
                             <span className="flex flex-col">
                                 <span className="body-xs text-ink-subtle">{counterpartyRole}</span>
                                 <span className="body-sm font-medium text-ink">
-                                    {counterparty.name}
+                                    <ContactName
+                                        name={counterparty.name}
+                                        contactId={counterparty.id}
+                                        contactType={viewer === "broker" ? "owner" : undefined}
+                                        href={
+                                            viewer === "owner"
+                                                ? ownerBrokerProfileHref(counterparty.id)
+                                                : undefined
+                                        }
+                                    />
                                 </span>
                             </span>
                         </span>
@@ -209,7 +220,11 @@ export function VisitDetailModal({
                             <span className="flex flex-col">
                                 <span className="body-xs text-ink-subtle">Client</span>
                                 <span className="body-sm font-medium text-ink">
-                                    {visit.buyer.name}
+                                    <ContactName
+                                        name={visit.buyer.name}
+                                        contactId={visit.buyer.id}
+                                        contactType={viewer === "broker" ? "buyer" : undefined}
+                                    />
                                 </span>
                             </span>
                         </div>
