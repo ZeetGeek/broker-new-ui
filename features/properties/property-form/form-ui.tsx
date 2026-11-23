@@ -67,6 +67,7 @@ export function FormSection({
                     className={`
                       items-center gap-4 p-4 no-underline
                       hover:no-underline
+                      **:data-[slot=accordion-trigger-icon]:ms-0
                       **:data-[slot=accordion-trigger-icon]:text-ink-muted
                       sm:p-5
                     `}

@@ -223,8 +223,10 @@ function OwnerListingsPropertySearchFields({
     const selectionChipClass = (active: boolean) =>
         cn(
             `
-              relative flex items-center gap-2 rounded-full border px-4 py-3 text-start shadow-none
-              transition-[background-color,border-color,color,box-shadow] duration-160 min-block-11
+              relative flex items-center gap-1.5 rounded-full border px-3 py-2.5 text-start
+              shadow-none transition-[background-color,border-color,color,box-shadow] duration-160
+              min-block-11
+              sm:gap-2 sm:px-4 sm:py-3
             `,
             active
                 ? "border-brand bg-brand-soft font-medium text-brand-text"
@@ -240,7 +242,7 @@ function OwnerListingsPropertySearchFields({
             {fields.includes("type") ? (
                 <div role="group" aria-label="Looking for" className="flex flex-col gap-2.5">
                     <span className="text-sm font-medium text-ink">Looking for</span>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                         {transactionOptions.map((option) => {
                             const Icon = option.icon;
                             const active = v.type === option.value;
@@ -260,8 +262,9 @@ function OwnerListingsPropertySearchFields({
                                     }
                                     className={cn(
                                         `
-                                          gap-2 rounded-control border-border-warm bg-surface px-3
-                                          shadow-none min-block-12
+                                          gap-1.5 rounded-control border-border-warm bg-surface px-2
+                                          shadow-none min-block-12 min-inline-0
+                                          sm:gap-2 sm:px-3
                                         `,
                                         active &&
                                             `
@@ -302,8 +305,9 @@ function OwnerListingsPropertySearchFields({
                                 onClick={() => patch({ min: option.min, max: option.max })}
                                 className={cn(
                                     `
-                                      rounded-full border px-4 py-3 text-sm font-medium
+                                      rounded-full border px-3 py-2.5 text-sm font-medium
                                       transition-colors duration-160 min-block-11
+                                      sm:px-4 sm:py-3
                                     `,
                                     index === budgetIndex
                                         ? "border-brand bg-brand-soft text-brand-text"
@@ -377,25 +381,27 @@ function OwnerListingsPropertySearchFields({
                             "
                         />
                     </div>
-                    <div className="flex items-start justify-between gap-4">
-                        <label className="flex flex-col items-start gap-1.5 text-xs text-ink-muted">
+                    {/* Phone: two equal columns so the pills share the row instead of
+                        clipping the "5,000+ sq ft" placeholder. sm+: compact pills at the ends. */}
+                    <div className="grid grid-cols-2 gap-3 sm:flex sm:items-start sm:justify-between sm:gap-4">
+                        <label className="flex flex-col items-start gap-1.5 text-xs text-ink-muted min-inline-0">
                             Minimum
                             <EditableRangeValuePill
                                 ariaLabel="Minimum area in square feet"
                                 value={v.minAreaSqft}
                                 placeholder="200 sq ft"
                                 onValueChange={(minAreaSqft) => patch({ minAreaSqft })}
-                                className="px-3 inline-24"
+                                className="inline-full sm:px-3 sm:inline-28"
                             />
                         </label>
-                        <label className="flex flex-col items-end gap-1.5 text-xs text-ink-muted">
+                        <label className="flex flex-col items-end gap-1.5 text-xs text-ink-muted min-inline-0">
                             Maximum
                             <EditableRangeValuePill
                                 ariaLabel="Maximum area in square feet"
                                 value={v.maxAreaSqft}
                                 placeholder="5,000+ sq ft"
                                 onValueChange={(maxAreaSqft) => patch({ maxAreaSqft })}
-                                className="px-3 inline-28"
+                                className="inline-full sm:px-3 sm:inline-32"
                             />
                         </label>
                     </div>
@@ -466,8 +472,9 @@ function OwnerListingsPropertySearchFields({
                                     onClick={() => patch({ propertyType: option.value })}
                                     className={cn(
                                         `
-                                          flex items-center gap-2 rounded-full border px-4 py-3
+                                          flex items-center gap-1.5 rounded-full border px-3 py-2.5
                                           text-sm transition-colors duration-160 min-block-11
+                                          sm:gap-2 sm:px-4 sm:py-3
                                         `,
                                         active
                                             ? `
