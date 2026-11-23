@@ -25,10 +25,18 @@ export type NotificationActor = {
     avatarUrl: string | null;
 };
 
+/**
+ * Semantic tile tone for a notification icon.
+ * `urgent` = a deadline (reminder due, visit starting); `danger` = something was
+ * denied or cancelled; `brand` = routine product events; `neutral` = system.
+ */
+export type NotificationTone = "brand" | "urgent" | "danger" | "neutral";
+
 export type NotificationVisual = {
     Icon: AppIcon;
     iconName: NotificationGlyph;
     colorClass: string;
+    tone: NotificationTone;
 };
 
 const TAB_ORDER: NotificationTab[] = ["all", "requests", "visits", "updates"];
@@ -320,19 +328,29 @@ export function getNotificationVisual(item: NotificationItem): NotificationVisua
     const key = notificationKey(item);
 
     if (item.type === "task_reminder") {
-        return { Icon: BellRing, iconName: "bell-ring", colorClass: "!text-brand" };
+        return { Icon: BellRing, iconName: "bell-ring", colorClass: "!text-brand", tone: "urgent" };
     }
 
     if (item.type === "visit_reminder") {
-        return { Icon: CalendarClock, iconName: "calendar", colorClass: "!text-brand" };
+        return {
+            Icon: CalendarClock,
+            iconName: "calendar",
+            colorClass: "!text-brand",
+            tone: "urgent",
+        };
     }
 
     if (key.includes("referral")) {
-        return { Icon: Gift, iconName: "gift", colorClass: "!text-urgent-mid" };
+        return { Icon: Gift, iconName: "gift", colorClass: "!text-urgent-mid", tone: "brand" };
     }
 
     if (key.includes("message") || key.includes("chat")) {
-        return { Icon: MessageCircle, iconName: "message", colorClass: "!text-brand-deep" };
+        return {
+            Icon: MessageCircle,
+            iconName: "message",
+            colorClass: "!text-brand-deep",
+            tone: "neutral",
+        };
     }
 
     if (key.includes("visit") || key.includes("showing") || key.includes("schedule")) {
@@ -341,23 +359,24 @@ export function getNotificationVisual(item: NotificationItem): NotificationVisua
             iconName: "calendar",
             colorClass:
                 key.includes("approv") || key.includes("accept") ? "!text-brand" : "!text-urgent",
+            tone: key.includes("cancel") || key.includes("declin") ? "danger" : "brand",
         };
     }
 
     if (key.includes("invite") || key.includes("property") || key.includes("listing")) {
-        return { Icon: Building2, iconName: "building", colorClass: "!text-brand" };
+        return { Icon: Building2, iconName: "building", colorClass: "!text-brand", tone: "brand" };
     }
 
     if (key.includes("reject") || key.includes("declin") || key.includes("cancel")) {
-        return { Icon: XCircle, iconName: "cancel", colorClass: "!text-danger" };
+        return { Icon: XCircle, iconName: "cancel", colorClass: "!text-danger", tone: "danger" };
     }
 
     if (key.includes("approv") || key.includes("accepted") || key.includes("qualified")) {
-        return { Icon: BadgeCheck, iconName: "verified", colorClass: "!text-brand" };
+        return { Icon: BadgeCheck, iconName: "verified", colorClass: "!text-brand", tone: "brand" };
     }
 
     if (key.includes("represent") || key.includes("request")) {
-        return { Icon: Send, iconName: "send", colorClass: "!text-brand-deep" };
+        return { Icon: Send, iconName: "send", colorClass: "!text-brand-deep", tone: "brand" };
     }
 
     if (
@@ -366,20 +385,35 @@ export function getNotificationVisual(item: NotificationItem): NotificationVisua
         key.includes("follow up") ||
         key.includes("due")
     ) {
-        return { Icon: BellRing, iconName: "bell-ring", colorClass: "!text-urgent" };
+        return {
+            Icon: BellRing,
+            iconName: "bell-ring",
+            colorClass: "!text-urgent",
+            tone: "urgent",
+        };
     }
 
     if (key.includes("client") || key.includes("lead")) {
-        return { Icon: UserPlus, iconName: "client", colorClass: "!text-brand-text" };
+        return {
+            Icon: UserPlus,
+            iconName: "client",
+            colorClass: "!text-brand-text",
+            tone: "brand",
+        };
     }
 
     if (key.includes("verif") || key.includes("rera")) {
-        return { Icon: ShieldCheck, iconName: "shield", colorClass: "!text-brand-text" };
+        return {
+            Icon: ShieldCheck,
+            iconName: "shield",
+            colorClass: "!text-brand-text",
+            tone: "brand",
+        };
     }
 
     if (key.includes("announce") || key.includes("update") || key.includes("system")) {
-        return { Icon: Bell, iconName: "bell", colorClass: "!text-brand" };
+        return { Icon: Bell, iconName: "bell", colorClass: "!text-brand", tone: "neutral" };
     }
 
-    return { Icon: Bell, iconName: "bell", colorClass: "!text-brand" };
+    return { Icon: Bell, iconName: "bell", colorClass: "!text-brand", tone: "neutral" };
 }

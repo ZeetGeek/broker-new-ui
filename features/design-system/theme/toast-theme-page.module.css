@@ -1,0 +1,204 @@
+.playground {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 32px;
+    align-items: center;
+    margin-block-end: 56px;
+}
+
+.controls {
+    min-inline-size: 0;
+}
+.controls p {
+    max-inline-size: 40ch;
+}
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-block-start: 24px;
+}
+
+.stage {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 28px;
+    min-inline-size: 0;
+    min-block-size: 320px;
+    padding: 24px;
+    border-radius: var(--radius-card);
+    background: var(--color-surface-muted);
+}
+
+.stageHeader {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--color-ink-subtle);
+}
+
+.stageBody {
+    display: flex;
+    justify-content: center;
+    inline-size: 100%;
+}
+.specimen {
+    inline-size: 100%;
+    max-inline-size: 26rem;
+}
+.feedback {
+    min-block-size: 36px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--color-ink-muted);
+}
+.section {
+    margin-block-start: 48px;
+}
+.sectionHeader {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-block-end: 24px;
+}
+
+.variants {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 40px;
+}
+
+.variantHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-block-end: 12px;
+}
+.variantNote {
+    margin-block-start: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-ink-muted);
+}
+.restore {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 100px;
+}
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-block-end: 20px;
+}
+.catalog {
+    border-block-start: 1px solid var(--color-border-warm);
+}
+
+.example {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    inline-size: 100%;
+    padding: 16px 12px;
+    border-block-end: 1px solid var(--color-border-warm);
+    text-align: start;
+    cursor: pointer;
+    border-radius: 6px;
+}
+.example:hover,
+.example[aria-pressed="true"] {
+    background: var(--color-surface);
+}
+.example:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+}
+.exampleCopy {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+.exampleTitle {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+.exampleDescription {
+    display: block;
+    margin-block-start: 3px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-ink-muted);
+}
+.exampleAction {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    color: var(--color-brand-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+.guidance {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    padding-block: 24px;
+    border-block: 1px solid var(--color-border-warm);
+}
+.guidance p {
+    margin-block-start: 8px;
+    color: var(--color-ink-muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+.code {
+    overflow-x: auto;
+    margin-block-start: 20px;
+    padding: 20px;
+    background: var(--color-brand-ink);
+    color: var(--color-surface);
+    border-radius: var(--radius-inner);
+    font-size: 12px;
+    line-height: 1.8;
+}
+.code::selection,
+.code *::selection {
+    background: var(--color-brand-soft);
+    color: var(--color-brand-ink);
+}
+
+@media (max-width: 767px) {
+    .playground,
+    .variants,
+    .guidance {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .playground {
+        gap: 24px;
+        margin-block-end: 40px;
+    }
+    .stage {
+        padding: 16px;
+        min-block-size: 280px;
+    }
+    .example {
+        padding-inline: 4px;
+        gap: 8px;
+    }
+    .exampleAction span {
+        display: none;
+    }
+    .section {
+        margin-block-start: 36px;
+    }
+}

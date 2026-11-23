@@ -1,0 +1,39 @@
+.spinner {
+    --spinner-size: 1.5rem;
+    --spinner-stroke: 2.5px;
+    --spinner-duration: 1s;
+    display: inline-block;
+    flex-shrink: 0;
+    inline-size: var(--spinner-size);
+    block-size: var(--spinner-size);
+    border-radius: 50%;
+    background: conic-gradient(
+        from 0deg,
+        transparent,
+        var(--color-brand-soft) 25%,
+        var(--color-brand) 65%,
+        var(--color-brand-deep)
+    );
+    mask: radial-gradient(
+        farthest-side,
+        transparent calc(100% - var(--spinner-stroke)),
+        #000 calc(100% - var(--spinner-stroke) + 0.5px)
+    );
+    animation: gradient-spinner-rotate var(--spinner-duration) linear infinite;
+}
+
+.spinner[data-active="false"] {
+    animation-play-state: paused;
+}
+
+@keyframes gradient-spinner-rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinner {
+        animation: none;
+    }
+}
