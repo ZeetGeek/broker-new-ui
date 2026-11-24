@@ -5,12 +5,15 @@ import { useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { attachedClientsByProperty } from "@/lib/api/clients";
-import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
+import { loadPinnedProperties, myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
 import { propertiesApi } from "@/lib/api/properties";
 import { representativeApi } from "@/lib/api/representative";
 import { summarizePropertyBrokers } from "@/lib/format/property-brokers";
+import { PREF_KEYS } from "@/lib/prefs/keys";
 import { collectPropertyPages } from "@/lib/properties/list-criteria";
+import { isPinnedPropertyIds, togglePinnedProperty } from "@/lib/properties/pinned-properties";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
+import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import toast from "@/components/shared/app-toast";
@@ -38,11 +41,34 @@ import { useMyListingsFilters } from "@/features/properties/your-listings/use-my
 import { useShortcut } from "@/features/shortcuts/use-shortcut";
 import { useAppSelector } from "@/store/hooks";
 
+const EMPTY_PINNED_IDS: string[] = [];
+
 export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const queryClient = useQueryClient();
     const userId = useAppSelector((state) => state.auth.user?.id);
-    const { filters, setFilters, clearFilters, hasActiveFilters, scopeReady } =
-        useMyListingsFilters(portal === "broker");
+    const [storedPinnedIds, setPinnedIds] = usePersistedJson<string[]>(
+        `${PREF_KEYS.broker.myListings.pinnedProperties}:${userId ?? "signed-out"}`,
+        EMPTY_PINNED_IDS,
+        { isValid: isPinnedPropertyIds },
+    );
+    const pinnedIds = portal === "broker" && userId ? storedPinnedIds : EMPTY_PINNED_IDS;
+    const togglePin = useCallback(
+        (listing: MyListingItem) => {
+            if (!userId) return;
+            try {
+                setPinnedIds((ids) => togglePinnedProperty(ids, listing.id));
+                toast.success(
+                    pinnedIds.includes(listing.id) ? "Property unpinned" : "Property pinned to top",
+                );
+            } catch {
+                toast.error("Could not save your pin. Please try again.");
+            }
+        },
+        [userId, pinnedIds, setPinnedIds],
+    );
+    const { filters, setFilters, clearFilters, scopeReady } = useMyListingsFilters(
+        portal === "broker",
+    );
     const [addOpen, setAddOpen] = useState(false);
     const [clientListing, setClientListing] = useState<MyListingItem | null>(null);
     const [clientAttachOpen, setClientAttachOpen] = useState(false);
@@ -78,7 +104,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
 
     const infiniteFilters = useMemo(() => ({ ...filters, page: 1 }), [filters]);
     const query = useInfiniteItems({
-        queryKey: ["my-listings", portal, infiniteFilters],
+        queryKey: ["my-listings", portal, userId, infiniteFilters, pinnedIds],
         enabled: scopeReady,
         queryFn: async ({ cursor, signal }) => {
             const result = await myListingsApi.list(
@@ -86,6 +112,13 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 signal,
                 {
                     withAttachedClients: !isOwnerPortal,
+                    pinnedIds,
+                    pinnedProperties: () =>
+                        queryClient.fetchQuery({
+                            queryKey: ["inventory-pinned-properties", userId, pinnedIds],
+                            queryFn: ({ signal }) => loadPinnedProperties(pinnedIds, signal),
+                            staleTime: 30_000,
+                        }),
                     attachedClients: () =>
                         queryClient.fetchQuery({
                             queryKey: ["inventory-lead-summary", userId],
@@ -124,6 +157,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         void queryClient.invalidateQueries({ queryKey: ["people-filter-options", "my-listings"] });
         void queryClient.invalidateQueries({ queryKey: ["inventory-lead-summary"] });
         void queryClient.invalidateQueries({ queryKey: ["inventory-filter-collection"] });
+        void queryClient.invalidateQueries({ queryKey: ["inventory-pinned-properties"] });
         void queryClient.invalidateQueries({ queryKey: ["my-listings"] });
         void queryClient.invalidateQueries({ queryKey: ["my-listings-summary"] });
     }, [queryClient]);
@@ -162,13 +196,16 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         [refreshListings],
     );
 
-    const loading =
-        !scopeReady || query.isPending || (query.isFetching && !query.isFetchingNextPage);
+    const loading = !scopeReady || query.isPending;
+    const clientsUnavailable = query.data?.pages.some((page) => page.clientsUnavailable) ?? false;
+    const pinsUnavailable = query.data?.pages.some((page) => page.pinsUnavailable) ?? false;
+    // Sorting changes order, not whether properties match this view.
+    const hasActiveFilters = hasActiveMyListingsFilters({ ...filters, sort: "newest" });
     const inventoryTotal = summary?.total ?? 0;
     const isFirstRunEmpty =
         !loading &&
         !query.isError &&
-        !isDeletedView &&
+        (filters.status === "published" || filters.status === "draft") &&
         query.items.length === 0 &&
         !hasActiveFilters &&
         summary != null &&
@@ -177,8 +214,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
     const emptyVariant = (() => {
         if (hasActiveFilters) return "filtered" as const;
         if (isDeletedView) return "no_deleted" as const;
-        // True inventory empty always teaches Add — tab labels come second.
-        if (summary != null && inventoryTotal === 0) return "first_run" as const;
+        // Each status keeps its own message, even when the entire inventory is empty.
         if (filters.status === "sold") return "no_sold" as const;
         if (filters.status === "draft") return "no_draft" as const;
         if (filters.status === "published") return "no_published" as const;
@@ -192,7 +228,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     summary={summary}
                     resultTotal={query.total}
                     status={filters.status}
-                    hasActiveFilters={hasActiveMyListingsFilters({ ...filters, sort: "newest" })}
+                    hasActiveFilters={hasActiveFilters}
                     isLoading={summaryQuery.isPending}
                     hasError={query.isError}
                 />
@@ -209,6 +245,26 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             />
 
             <section aria-label="My Listings results" aria-busy={loading || query.isFetching}>
+                {!loading && (clientsUnavailable || pinsUnavailable) ? (
+                    <div
+                        role="status"
+                        className="body-sm flex flex-wrap items-center gap-3 py-3 text-ink-muted"
+                    >
+                        <p>
+                            {clientsUnavailable
+                                ? "Properties loaded, but client details are unavailable."
+                                : "Properties loaded, but some pinned properties could not be loaded."}
+                        </p>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={query.isFetching}
+                            onClick={() => void query.refetch()}
+                        >
+                            Try again
+                        </Button>
+                    </div>
+                ) : null}
                 {loading ? (
                     <MyListingsResultsSkeleton portal={portal} />
                 ) : query.isError && query.items.length === 0 ? (
@@ -226,6 +282,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 ) : query.items.length === 0 ? (
                     <MyListingsEmpty
                         variant={emptyVariant}
+                        status={filters.status}
                         searchQuery={filters.q}
                         onClearFilters={hasActiveFilters ? clearFilters : undefined}
                         onAddProperty={() => setAddOpen(true)}
@@ -270,6 +327,9 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                             <MyListingsGrid
                                 items={query.items}
                                 portal={portal}
+                                pinnedIds={pinnedIds}
+                                clientsUnavailable={clientsUnavailable}
+                                onTogglePin={!isOwnerPortal && userId ? togglePin : undefined}
                                 brokersByProperty={isOwnerPortal ? brokersByProperty : undefined}
                                 brokerSummaryState={isOwnerPortal ? brokerSummaryState : undefined}
                                 onInviteBroker={
@@ -319,7 +379,9 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     </div>
                 )}
             </section>
-            {isFirstRunEmpty ? null : <MyListingsAddFab onClick={() => setAddOpen(true)} />}
+            {portal === "owner" && !isFirstRunEmpty ? (
+                <MyListingsAddFab onClick={() => setAddOpen(true)} />
+            ) : null}
             {isOwnerPortal && brokerListing ? (
                 <InvitePropertyBrokerModal
                     key={brokerInviteSession}

@@ -8,9 +8,10 @@ import {
     representativeApi,
 } from "@/lib/api/representative";
 
+import { EmptyState } from "@/components/empty-state";
 import { AppModal } from "@/components/shared/app-modal";
+import { Clock, RefreshCw } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
-import { Button } from "@/components/ui/button";
 
 import { buildRepresentationTimeline } from "@/features/properties/my-requests/map-my-request";
 import { RequestTimeline } from "@/features/properties/my-requests/request-timeline";
@@ -88,17 +89,27 @@ export function BrowseRequestTimelineDialog({
                     </div>
                 ) : null}
                 {query.isError ? (
-                    <div role="alert" className="flex flex-col items-start gap-3 pbs-4">
-                        <p className="body-sm text-danger">Could not load the timeline.</p>
-                        <Button size="sm" variant="outline" onClick={() => void query.refetch()}>
-                            Try again
-                        </Button>
-                    </div>
+                    <EmptyState
+                        size="card"
+                        variant="error"
+                        icon={Clock}
+                        heading="Could not load the timeline"
+                        description="Check your connection and try again."
+                        action={{
+                            label: "Try again",
+                            icon: RefreshCw,
+                            onClick: () => void query.refetch(),
+                            disabled: query.isFetching,
+                        }}
+                    />
                 ) : null}
                 {!isLoading && !query.isError && steps.length === 0 ? (
-                    <p className="body-sm pbs-4 text-ink-muted">
-                        No timeline is available for this request.
-                    </p>
+                    <EmptyState
+                        size="card"
+                        icon={Clock}
+                        heading="No updates yet"
+                        description="Request and approval updates will appear here as they happen."
+                    />
                 ) : null}
                 {!isLoading && !query.isError && steps.length > 0 ? (
                     <RequestTimeline steps={steps} />

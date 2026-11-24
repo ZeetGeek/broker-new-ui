@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import type { BrokerVisit } from "@/lib/api/site-visits";
+import {
+    type BrokerVisit,
+    siteVisitsApi,
+    type VisitListPage,
+    type VisitListQuery,
+} from "@/lib/api/site-visits";
 
 import {
     dashboardVisitPhase,
@@ -98,4 +103,71 @@ test("busy visit ids are tracked per visit, so one finishing keeps another busy"
     const b = withBusy(ab, "a", false);
     assert.deepEqual([...b], ["b"]);
     assert.notEqual(b, ab);
+});
+
+test("today's paginated source keeps upcoming visits beyond earlier unmarked visits", async (t) => {
+    const earlier = Array.from({ length: 100 }, (_, i) =>
+        visit(`earlier-${i}`, "2026-11-23T09:00", "2026-11-23T09:30"),
+    );
+    const running = visit("running", "2026-11-23T14:45", "2026-11-23T15:30");
+    const later = visit("later", "2026-11-23T16:00", "2026-11-23T16:45");
+    const all = [...earlier, running, later];
+    const counts = {
+        upcoming: 1,
+        running: 1,
+        needs_update: 100,
+        completed: 0,
+        not_attended: 0,
+        cancelled: 0,
+    };
+    const signal = new AbortController().signal;
+    const requested: number[] = [];
+    t.mock.method(
+        siteVisitsApi,
+        "list",
+        async (query: VisitListQuery, receivedSignal?: AbortSignal) => {
+            assert.equal(query.tab, "active");
+            assert.equal(query.from, "2026-11-23");
+            assert.equal(query.to, "2026-11-23");
+            assert.equal(receivedSignal, signal);
+            const page = query.page ?? 1;
+            const limit = query.limit ?? 20;
+            requested.push(page);
+            return {
+                items: all.slice((page - 1) * limit, page * limit),
+                page,
+                totalPages: 2,
+                total: all.length,
+                counts,
+                clientOptions: [],
+                propertyOptions: [],
+                nextChangeAt: running.endsAt,
+            } satisfies VisitListPage;
+        },
+    );
+    const result = await siteVisitsApi.searchSource(
+        { tab: "active", from: "2026-11-23", to: "2026-11-23", sort: "start_asc" },
+        signal,
+    );
+    const groups = groupDashboardVisits(result.items, earlier.slice(0, 20), NOW);
+    assert.deepEqual(requested, [1, 2]);
+    assert.deepEqual(
+        groups.upcoming.map((item) => item.id),
+        ["later"],
+    );
+    assert.deepEqual(
+        groups.running.map((item) => item.id),
+        ["running"],
+    );
+    assert.equal(groups.needs_update.length, 100);
+    assert.deepEqual(result.counts, counts);
+    assert.equal(result.nextChangeAt, running.endsAt);
+});
+
+test("today's paginated source reports a later-page failure instead of a false empty result", async (t) => {
+    t.mock.method(siteVisitsApi, "list", async (query: VisitListQuery) => {
+        if (query.page === 2) throw new Error("Offline");
+        return { items: [], totalPages: 2 } as unknown as VisitListPage;
+    });
+    await assert.rejects(siteVisitsApi.searchSource({ tab: "active" }), /Offline/);
 });

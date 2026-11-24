@@ -8,8 +8,9 @@ import { plural } from "@/lib/format/plural";
 import { brokerPipelineDealHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import { ContactName } from "@/components/shared/contact-name";
-import { ArrowRight, CallIcon, StickyNote, WhatsAppIcon } from "@/components/shared/icons";
+import { ArrowRight, CallIcon, StickyNote, Users, WhatsAppIcon } from "@/components/shared/icons";
 import { type StatusTab, StatusTabs } from "@/components/shared/status-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
@@ -293,18 +294,28 @@ export function AnalyticsClientList({
                             ))}
                         </ul>
                     ) : (
-                        <div className="flex flex-col items-start gap-2">
-                            <p className="body-sm text-ink-muted">
-                                {clients.length
-                                    ? "No clients in this view."
-                                    : "No clients linked to this property yet."}
-                            </p>
-                            {clients.length > 0 && (
-                                <Button variant="ghost" size="sm" onClick={() => setFilter("all")}>
-                                    Show all clients
-                                </Button>
-                            )}
-                        </div>
+                        <EmptyState
+                            size="card"
+                            icon={Users}
+                            variant={clients.length ? "filtered" : "default"}
+                            heading={
+                                clients.length ? "No clients in this view" : "No clients linked yet"
+                            }
+                            description={
+                                clients.length
+                                    ? "Try another view to see clients linked to this property."
+                                    : "Link clients to this property to track their visits, offers and progress."
+                            }
+                            action={
+                                clients.length
+                                    ? {
+                                          label: "Show all clients",
+                                          icon: Users,
+                                          onClick: () => setFilter("all"),
+                                      }
+                                    : undefined
+                            }
+                        />
                     )}
                 </TabsContent>
             </Tabs>

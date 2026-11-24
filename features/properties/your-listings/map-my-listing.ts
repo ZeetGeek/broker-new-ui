@@ -6,6 +6,7 @@ import {
     categoryForPropertyType,
     needsBhk,
     PROPERTY_TYPE_LABELS,
+    propertyCategorySchema,
     type PropertyType,
 } from "@/lib/validation/property";
 
@@ -249,7 +250,9 @@ export function listingPhotoUrls(photos: unknown): string[] {
 
 export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingItem {
     const propertyType = mapPropertyType(listing);
-    const category = categoryForPropertyType(propertyType as PropertyType);
+    const category =
+        propertyCategorySchema.safeParse(listing.propertyType?.trim().toLowerCase()).data ??
+        categoryForPropertyType(propertyType as PropertyType);
     const bhk = mapBhk(listing);
     const { saleAmountInr, rentAmountInr } = mapPricing(listing);
     const furnishing = mapFurnishing(listing.furnishingStatus);

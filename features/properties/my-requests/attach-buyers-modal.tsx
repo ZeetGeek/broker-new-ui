@@ -56,6 +56,8 @@ export function AttachBuyersModal({
     const [isSaving, setIsSaving] = useState(false);
     const [createOpen, setCreateOpen] = useState(false);
     const [pickerKey, setPickerKey] = useState(0);
+    const [loadError, setLoadError] = useState(false);
+    const [revision, setRevision] = useState(0);
 
     useEffect(() => {
         if (!open) return undefined;
@@ -66,6 +68,7 @@ export function AttachBuyersModal({
             if (cancelled) return;
 
             setIsLoading(true);
+            setLoadError(false);
 
             void clientsApi
                 .listForProperty(request.propertyId)
@@ -79,6 +82,7 @@ export function AttachBuyersModal({
                 .catch(() => {
                     if (cancelled) return;
                     toast.error("Could not load your clients. Try again.");
+                    setLoadError(true);
                     setClients([]);
                     setAttachedIds([]);
                     setSelectedIds([]);
@@ -92,7 +96,7 @@ export function AttachBuyersModal({
             cancelled = true;
             window.clearTimeout(timer);
         };
-    }, [open, request.propertyId]);
+    }, [open, request.propertyId, revision]);
 
     const people = useMemo<PeoplePickerPerson[]>(
         () =>
@@ -103,8 +107,12 @@ export function AttachBuyersModal({
                 phoneDigits: client.phoneDigits,
                 lookingFor: client.lookingFor,
                 warning: mismatchReason(client, request),
+                selectionLocked: attachedIds.includes(client.id),
+                statusChips: attachedIds.includes(client.id)
+                    ? [{ label: "Already linked", color: "stone" as const }]
+                    : [],
             })),
-        [clients, request],
+        [clients, request, attachedIds],
     );
 
     const handleSave = useCallback(
@@ -151,11 +159,13 @@ export function AttachBuyersModal({
                 value={selectedIds}
                 onConfirm={handleSave}
                 title="Add clients"
-                description={`Pick who you will show ${request.title} to. You can select one or many.`}
+                description={`Choose clients to add to ${request.title}. Already linked clients stay selected.`}
                 confirmLabel={isSaving ? "Saving…" : "Save clients"}
-                confirmDisabled={isLoading || isSaving}
+                confirmDisabled={isLoading || isSaving || loadError}
                 closeOnConfirm={false}
                 loading={isLoading}
+                errorText={loadError ? "Could not load your clients. Please try again." : undefined}
+                onRetry={() => setRevision((value) => value + 1)}
                 onCreate={() => setCreateOpen(true)}
                 createLabel="Create client"
                 emptyHeading="You have no clients yet"
@@ -175,6 +185,7 @@ export function AttachBuyersModal({
                     notifyWorkflowSaved("contact");
                     if (id) setSelectedIds((current) => [...new Set([...current, id])]);
                     setIsLoading(true);
+                    setLoadError(false);
                     void clientsApi
                         .listForProperty(request.propertyId)
                         .then((result) => {
@@ -187,11 +198,12 @@ export function AttachBuyersModal({
                             }
                             setPickerKey((key) => key + 1);
                         })
-                        .catch(() =>
+                        .catch(() => {
+                            setLoadError(true);
                             toast.error(
                                 "Client created, but the list could not refresh. Reopen this dialog to try again.",
-                            ),
-                        )
+                            );
+                        })
                         .finally(() => setIsLoading(false));
                     setCreateOpen(false);
                 }}

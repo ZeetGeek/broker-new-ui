@@ -813,7 +813,7 @@ function TodayVisits({
                 className={cn(
                     taskStyles.fixedFooter,
                     visitStyles.footer,
-                    "flex flex-wrap items-center justify-between gap-2 border-bs border-border-warm",
+                    "flex items-center justify-between gap-2 border-bs border-border-warm",
                 )}
             >
                 <Link href="/broker/visits" className={LINK}>
@@ -823,12 +823,17 @@ function TodayVisits({
                 {needsUpdate > 0 ? (
                     <p className={visitStyles.footerNote}>
                         <Clock aria-hidden />
-                        {needsUpdate === 1
-                            ? "1 visit needs an update"
-                            : `${needsUpdate} visits need an update`}
+                        <span className="sr-only">
+                            {needsUpdate === 1
+                                ? "1 visit needs an update"
+                                : `${needsUpdate} visits need an update`}
+                        </span>
+                        <span aria-hidden>
+                            {needsUpdate === 1 ? "1 needs update" : `${needsUpdate} need update`}
+                        </span>
                     </p>
                 ) : query.isPending ? null : (
-                    <p className="caption text-ink-muted">No attendance updates pending</p>
+                    <p className="caption whitespace-nowrap text-ink-muted">All up to date</p>
                 )}
             </footer>
         </section>

@@ -280,7 +280,12 @@ export function RequestsCard({ data, className }: RequestsCardProps) {
                         </ul>
                     </div>
                 ) : (
-                    <p className="body text-ink-muted">No request details to show yet.</p>
+                    <EmptyState
+                        size="card"
+                        icon={Send}
+                        heading="No request updates yet"
+                        description="Updates will appear here after you ask an owner to represent their property."
+                    />
                 )}
             </div>
         </section>

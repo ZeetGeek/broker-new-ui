@@ -1,6 +1,7 @@
 .layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    align-items: start;
     gap: var(--card-grid-gap);
     min-inline-size: 0;
 }
@@ -9,7 +10,7 @@
     display: flex;
     flex-direction: column;
     min-inline-size: 0;
-    block-size: 600px;
+    block-size: auto;
     min-block-size: 0;
     overflow: hidden;
     border-radius: var(--radius-card);
@@ -25,16 +26,22 @@
 }
 
 .scrollViewport {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     min-block-size: 0;
+    max-block-size: 34rem;
     overflow-y: auto;
     overscroll-behavior-y: contain;
     padding-inline: 4px;
     margin-inline: -4px;
-    scrollbar-width: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-warm) transparent;
 }
 .scrollViewport::-webkit-scrollbar {
-    display: none;
+    width: 4px;
+}
+.scrollViewport::-webkit-scrollbar-thumb {
+    border-radius: var(--radius-control);
+    background: var(--color-border-warm);
 }
 .scrollViewport:focus-visible {
     outline: 2px solid var(--color-ring);
@@ -89,7 +96,7 @@
 }
 .inventoryContent {
     display: flex;
-    flex: 1;
+    flex: 1 1 auto;
     flex-direction: column;
     min-inline-size: 0;
     min-block-size: 0;
@@ -154,28 +161,38 @@
     border-spacing: 0 0.75rem;
     /* border-spacing also pads above the header row; cancel that gap under the tabs. */
     margin-block-start: -0.75rem;
+    margin-block-end: -0.75rem;
     text-align: start;
 }
 .table col:nth-child(1) {
-    inline-size: 45%;
+    inline-size: auto;
 }
 .table col:nth-child(2) {
-    inline-size: 15%;
+    inline-size: 7.5rem;
 }
 .table col:nth-child(3) {
-    inline-size: 15%;
+    inline-size: 8.5rem;
 }
 .table col:nth-child(4) {
-    inline-size: 15%;
+    inline-size: 7.5rem;
 }
 .table col:last-child {
-    inline-size: 10%;
+    /* Reserve both action buttons and cell padding before allocating title space. */
+    inline-size: 6rem;
+}
+@media (pointer: coarse) {
+    .table col:last-child {
+        inline-size: 7.5rem;
+    }
 }
 .rowActions {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     gap: 0.25rem;
+}
+.rowActions > * {
+    flex-shrink: 0;
 }
 .table thead {
     position: sticky;
@@ -348,14 +365,14 @@
     overflow-wrap: anywhere;
 }
 
-.propertyTitle {
+.propertyTitle,
+.eventTitle {
     min-inline-size: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.eventTitle,
 .updateText .secondary {
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -619,6 +636,7 @@
     font-weight: 600;
     font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 .empty {
     display: flex;
@@ -651,13 +669,13 @@
 @media (min-width: 1280px) {
     .layout {
         grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+        align-items: stretch;
     }
 }
 
 @media (max-width: 639px) {
     .panel {
         padding: 1rem;
-        block-size: auto;
     }
     .listingsPanel {
         --listings-inset: 1rem;
@@ -683,33 +701,14 @@
     }
 
     .scrollViewport {
-        flex-basis: auto;
-        max-block-size: 34rem;
         overscroll-behavior-y: auto;
-        scrollbar-width: thin;
-    }
-
-    .inventoryContent {
-        flex-basis: auto;
-    }
-
-    .updateLink {
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-    }
-
-    .eventIcon {
-        grid-row: 1 / 3;
-    }
-
-    .eventTime {
-        grid-column: 2;
     }
 }
 
 @container dashboard-listings (max-width: 44rem) {
     .table {
         display: block;
+        margin-block-end: 0;
     }
     .table tbody {
         display: flex;
@@ -820,12 +819,5 @@
     }
     .updatedContent {
         justify-content: flex-start;
-    }
-}
-
-/* Shared phone floor also applies before the first listing or update arrives. */
-@media (max-width: 639px) {
-    .panel {
-        min-block-size: 24rem;
     }
 }

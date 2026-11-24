@@ -299,6 +299,7 @@ import {
     IconPhotoUp,
     IconPill,
     IconPin,
+    IconPinFilled,
     IconPinnedOff,
     IconPlane,
     IconPlayerPause,
@@ -532,6 +533,7 @@ export const Phone = IconPhone;
 export const PhoneCall = IconPhone;
 export const Pill = IconPill;
 export const Pin = IconPin;
+export const PinFilled = IconPinFilled;
 export const PinOff = IconPinnedOff;
 export const Plane = IconPlane;
 export const Play = IconPlayerPlay;

@@ -94,6 +94,11 @@ export function hasActiveMyListingsFilters(filters: MyListingsFilters): boolean 
     );
 }
 
+/** Clearing criteria leaves the inventory view and selected ordering intact. */
+export function clearMyListingsFilters(filters: MyListingsFilters): MyListingsFilters {
+    return { ...DEFAULT_MY_LISTINGS_FILTERS, status: filters.status, sort: filters.sort };
+}
+
 /** Persist tab selection while resetting pagination for the next visit. */
 export function normalizeMyListingsStoredFilters(filters: MyListingsFilters): MyListingsFilters {
     return {

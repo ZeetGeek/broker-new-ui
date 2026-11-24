@@ -6,6 +6,7 @@ export const PREF_KEYS = {
         },
         myListings: {
             filters: "yb.broker.myListings.filters",
+            pinnedProperties: "yb.broker.myListings.pinnedProperties",
             requestsStatus: "yb.broker.myListings.requestsStatus",
         },
         requests: {

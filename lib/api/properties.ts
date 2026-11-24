@@ -693,7 +693,7 @@ export const propertiesApi = withTestNetwork({
         return apiFetch<PropertyListingOptions>("/properties/options");
     },
 
-    async get(id: string) {
+    async get(id: string, signal?: AbortSignal) {
         if (isMockMode()) {
             const { getMockMyListings } = await import("@/lib/api/my-listings");
             const mine = getMockMyListings().find((item) => item.id === id);
@@ -703,7 +703,7 @@ export const propertiesApi = withTestNetwork({
             }
             return Promise.resolve(listing);
         }
-        return apiFetch<PropertyListing>(`/properties/${id}`);
+        return apiFetch<PropertyListing>(`/properties/${id}`, { signal });
     },
 
     create(input: CreatePropertyInput) {
@@ -751,7 +751,26 @@ export const propertiesApi = withTestNetwork({
     },
 
     /** Attach or replace the exclusive owner on a broker listing. */
-    attachExclusiveOwner(id: string, exclusiveOwnerId: string) {
+    async attachExclusiveOwner(id: string, exclusiveOwnerId: string) {
+        if (isMockMode()) {
+            const { getMockMyListings } = await import("@/lib/api/my-listings");
+            const { exclusiveOwnersApi, exclusiveOwnerPhoneDigits } =
+                await import("@/lib/api/exclusive-owners");
+            const listing = getMockMyListings().find((item) => item.id === id && !item.deletedAt);
+            if (!listing) throw new ApiError("Listing not found", 404);
+            const owners = await exclusiveOwnersApi.list({ limit: Number.MAX_SAFE_INTEGER });
+            const owner = owners.items.find((item) => item.id === exclusiveOwnerId);
+            if (!owner) throw new ApiError("Owner not found", 404);
+            Object.assign(listing, {
+                exclusiveOwnerId,
+                ownerId: exclusiveOwnerId,
+                ownerOrigin: "custom",
+                ownerName: owner.fullName,
+                ownerPhoneDigits: exclusiveOwnerPhoneDigits(owner.phone),
+                updatedAt: new Date().toISOString(),
+            });
+            return mockInventoryListing(listing);
+        }
         return apiFetch<PropertyListing>(`/properties/${id}/exclusive-owner`, {
             method: "PATCH",
             body: JSON.stringify({ exclusiveOwnerId }),

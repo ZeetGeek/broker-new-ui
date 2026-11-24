@@ -116,6 +116,7 @@ export function OverlayCardSummary({
     locationLabel,
     specsLabel,
     wrapText = false,
+    truncateHeadline = false,
 }: {
     /** Omit to show the headline as plain text (no detail page). */
     href?: string;
@@ -129,6 +130,8 @@ export function OverlayCardSummary({
     specsLabel?: string;
     /** Inventory cards keep the full property details readable in narrow columns. */
     wrapText?: boolean;
+    /** Keep the title on one line with an ellipsis, independently of the location. */
+    truncateHeadline?: boolean;
 }) {
     return (
         <div className="flex flex-col gap-2 min-inline-0">
@@ -140,10 +143,16 @@ export function OverlayCardSummary({
                             href={href}
                             className={cn(
                                 HEADLINE_CLASS,
-                                wrapText && "overflow-visible text-start whitespace-normal",
+                                truncateHeadline
+                                    ? "block text-start"
+                                    : wrapText && "overflow-visible text-start whitespace-normal",
                             )}
                         >
-                            {wrapText ? (
+                            {truncateHeadline ? (
+                                <span className="block truncate" title={headline}>
+                                    {headline}
+                                </span>
+                            ) : wrapText ? (
                                 <span className="wrap-anywhere min-inline-0">{headline}</span>
                             ) : (
                                 <MarqueeText text={headline} />
@@ -154,10 +163,15 @@ export function OverlayCardSummary({
                             className={cn(
                                 "block font-semibold text-ink",
                                 HEADLINE_CLASS,
-                                wrapText ? "wrap-anywhere" : "truncate",
+                                wrapText && !truncateHeadline ? "wrap-anywhere" : "truncate",
                             )}
+                            title={truncateHeadline ? headline : undefined}
                         >
-                            {wrapText ? headline : <MarqueeText text={headline} />}
+                            {wrapText || truncateHeadline ? (
+                                headline
+                            ) : (
+                                <MarqueeText text={headline} />
+                            )}
                         </span>
                     )}
                 </h3>
@@ -321,6 +335,7 @@ export type OverlayCardProps = {
     chips: ReactNode;
     /** Icon buttons for the top-right of the photo (use OVERLAY_ICON_BUTTON_CLASS). */
     actions?: ReactNode;
+    chipsClassName?: string;
     className?: string;
     panelClassName?: string;
     /** Panel content, top to bottom. */
@@ -338,6 +353,7 @@ export function OverlayCard({
     sweep = false,
     chips,
     actions,
+    chipsClassName,
     className,
     panelClassName,
     children,
@@ -366,6 +382,7 @@ export function OverlayCard({
                           items-start gap-1.5
                         `,
                         actions ? "pe-14" : "pe-3",
+                        chipsClassName,
                     )}
                 >
                     {chips}

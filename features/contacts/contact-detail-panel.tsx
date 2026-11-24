@@ -2,24 +2,23 @@
 
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import { addCollection, Icon } from "@iconify/react/offline";
-
+import { canEditExclusiveOwners } from "@/lib/api/exclusive-owners";
 import { formatPersonName } from "@/lib/format/person-name";
 import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatListingPrice } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
-import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { useMarketCurrency } from "@/hooks/use-market";
 
+import { EmptyState } from "@/components/empty-state";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { CharacterCount } from "@/components/shared/character-count";
 import { DrawerSection, revealDrawerSections } from "@/components/shared/drawer-section";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     type AppIcon,
     Building2,
+    CallIcon,
     currencyIcon,
     Globe2,
     Home,
@@ -29,9 +28,11 @@ import {
     MapPin,
     Phone,
     Plus,
+    RefreshCw,
     Tag,
     Trash2,
     UserRound,
+    WhatsAppIcon,
 } from "@/components/shared/icons";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -48,10 +49,10 @@ import {
 } from "@/features/contacts/contact-card-model";
 import type { BuyerContactForm, OwnerContactForm } from "@/features/contacts/contact-form-model";
 import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
+import { ContactNotes } from "@/features/contacts/contact-notes";
 import type { BuyerRow, OwnerRow } from "@/features/contacts/types";
-import whatsappIcons from "@/features/properties/my-requests/bi-whatsapp.json";
 
-addCollection(whatsappIcons as Parameters<typeof addCollection>[0]);
+import styles from "./contacts-responsive.module.css";
 
 type DetailEntry = {
     label: string;
@@ -89,7 +90,12 @@ function IconFactGrid({ facts, onAdd }: { facts: IconFact[]; onAdd?: () => void 
 
     // Open field grid (Add buyer style) — no nested cell borders, so no double lines.
     return (
-        <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+        <dl
+            className={cn(
+                styles.factGrid,
+                "grid grid-cols-1 @min-[24rem]/contact-drawer:grid-cols-2",
+            )}
+        >
             {filled.map((fact, index) => {
                 const IconGlyph = fact.icon;
                 const aloneOnLastRow =
@@ -98,18 +104,24 @@ function IconFactGrid({ facts, onAdd }: { facts: IconFact[]; onAdd?: () => void 
                     <div
                         key={fact.label}
                         className={cn(
-                            "flex items-start gap-3 min-inline-0",
-                            (fact.wide || aloneOnLastRow) && "sm:col-span-2",
+                            "flex items-start gap-2 min-inline-0",
+                            (fact.wide || aloneOnLastRow) &&
+                                "@min-[24rem]/contact-drawer:col-span-2",
                         )}
                     >
                         <IconGlyph
                             aria-hidden
-                            className="mbs-1 shrink-0 text-ink-muted block-5 inline-5"
+                            className="mbs-0.5 shrink-0 text-ink-muted block-4 inline-4"
                             strokeWidth={1.75}
                         />
                         <div className="flex-1 min-inline-0">
                             <dt className="body-sm text-ink-muted">{fact.label}</dt>
-                            <dd className="body mbs-0.5 font-semibold wrap-break-word text-ink">
+                            <dd
+                                className={cn(
+                                    styles.factValue,
+                                    "body mbs-0.5 font-medium text-ink",
+                                )}
+                            >
                                 {fact.value}
                             </dd>
                         </div>
@@ -158,7 +170,7 @@ function DetailSection({
             {locked ? (
                 <div className="mbe-4 flex items-center gap-2">
                     <span
-                        className="flex items-center gap-1 text-[11px] text-ink-subtle"
+                        className="body-xs flex items-center gap-1 text-ink-subtle"
                         title="Owner details come from the platform"
                     >
                         <Lock aria-hidden className="block-3 inline-3" /> Platform managed
@@ -176,7 +188,7 @@ function DetailSection({
                                 key={entry.label}
                                 className={cn("min-inline-0", entry.wide && "col-span-2")}
                             >
-                                <dt className="text-[11px] font-medium text-ink-subtle">
+                                <dt className="body-xs font-medium text-ink-subtle">
                                     {entry.label}
                                 </dt>
                                 <dd className="body-xs mbs-1 font-medium wrap-break-word text-ink">
@@ -268,15 +280,21 @@ function AttachedPropertyRows({
                                 alt=""
                                 sizes="72px"
                                 size={72}
+                                className={styles.propertyCover}
                             />
                             <span className="flex-1 min-inline-0">
-                                <span className="body-sm block truncate font-semibold text-ink">
+                                <span
+                                    title={property.title}
+                                    className="body-sm block truncate font-medium text-ink"
+                                >
                                     {property.title}
                                 </span>
-                                <span className="body-xs text-ink-muted">{property.locality}</span>
+                                <span className="body-xs wrap-anywhere text-ink-muted">
+                                    {property.locality}
+                                </span>
                                 <span
                                     className="
-                                  tabular body-sm mbs-0.5 block font-semibold text-brand
+                                  tabular body-sm mbs-0.5 block font-medium text-brand
                                 "
                                 >
                                     {property.priceLabel}
@@ -325,6 +343,7 @@ function ContactSummary({
     badge,
     onEdit,
     editLocked = false,
+    editAvailable = true,
 }: {
     name: string;
     phone?: string;
@@ -332,19 +351,20 @@ function ContactSummary({
     badge?: ReactNode;
     onEdit: () => void;
     editLocked?: boolean;
+    editAvailable?: boolean;
 }) {
     return (
-        <div className="flex items-center gap-3 min-inline-0">
+        <div className={styles.summary}>
             <UserAvatar
                 name={name}
                 imageUrl={avatarUrl}
-                size="lg"
+                size="sm"
                 framed={false}
                 className="shrink-0"
             />
             <div className="flex-1 min-inline-0">
-                <span className="flex flex-wrap items-center gap-2">
-                    <span className="truncate font-display text-lg font-medium text-ink capitalize">
+                <span className="flex items-center gap-2 min-inline-0">
+                    <span title={name} className={cn(styles.summaryName, "text-ink")}>
                         {name}
                     </span>
                     {badge}
@@ -352,20 +372,31 @@ function ContactSummary({
                 {phone ? (
                     <a
                         href={formatTelUrl(phone)}
-                        className="
-                          body-sm tabular font-medium text-ink-muted
+                        className={cn(
+                            styles.summaryPhone,
+                            `
+                          tabular text-ink-muted
                           hover:text-brand-text hover:underline
-                        "
+                        `,
+                        )}
                     >
                         {formatPhoneIn(phone)}
                     </a>
                 ) : (
-                    <span className="body-sm text-ink-muted">Number hidden</span>
+                    <span className={cn(styles.summaryPhone, "text-ink-muted")}>Number hidden</span>
                 )}
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
                 {editLocked ? null : (
-                    <Button type="button" variant="outline" size="sm" onClick={onEdit}>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="min-block-11"
+                        onClick={onEdit}
+                        disabled={!editAvailable}
+                        title={editAvailable ? undefined : "Owner editing is not available yet"}
+                    >
                         Edit
                     </Button>
                 )}
@@ -378,7 +409,7 @@ function ContactCallFooter({ phone, name }: { phone?: string; name: string }) {
     if (!phone) return null;
 
     return (
-        <AppModalFooter className="grid grid-cols-2 gap-2 inline-full">
+        <AppModalFooter className={cn(styles.callActions, "grid grid-cols-2 gap-2 inline-full")}>
             <Button
                 type="button"
                 variant="outline"
@@ -387,7 +418,7 @@ function ContactCallFooter({ phone, name }: { phone?: string; name: string }) {
                 nativeButton={false}
                 render={<a href={formatTelUrl(phone)} aria-label={`Call ${name}`} />}
             >
-                <Phone aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+                <CallIcon aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                 Call
             </Button>
             <Button
@@ -405,13 +436,7 @@ function ContactCallFooter({ phone, name }: { phone?: string; name: string }) {
                     />
                 }
             >
-                <Icon
-                    icon="bi:whatsapp"
-                    width={16}
-                    height={16}
-                    className="block-4 inline-4"
-                    aria-hidden
-                />
+                <WhatsAppIcon aria-hidden className="block-4 inline-4" />
                 WhatsApp
             </Button>
         </AppModalFooter>
@@ -452,16 +477,8 @@ function BuyerPanel({
 }: BuyerPanelProps) {
     const CurrencyIcon = currencyIcon(useMarketCurrency().code);
     const model = toBuyerContactCardModel(buyer);
-    const [notes, setNotes] = useState(buyer.details?.notes || buyer.notes || "");
-    const [saved, setSaved] = useState(false);
     const [pendingDetach, setPendingDetach] = useState<ContactPropertyCardItem | null>(null);
     const [detachBusy, setDetachBusy] = useState(false);
-
-    const save = async (patch: Partial<BuyerContactForm>) => {
-        await onQuickUpdate(patch);
-        setSaved(true);
-        window.setTimeout(() => setSaved(false), 1400);
-    };
 
     const saleBudget = [buyer.budgetMinInr, buyer.budgetMaxInr]
         .filter((value): value is number => value != null)
@@ -607,16 +624,17 @@ function BuyerPanel({
                             value: formatPhoneIn(buyer.phoneDigits),
                         },
                         {
-                            label: "Email",
-                            icon: Mail,
-                            value: buyer.email,
-                            empty: !buyer.email,
-                        },
-                        {
                             label: "Source",
                             icon: Tag,
                             value: source,
                             empty: !source,
+                        },
+                        {
+                            label: "Email",
+                            icon: Mail,
+                            value: buyer.email,
+                            wide: true,
+                            empty: !buyer.email,
                         },
                     ]}
                 />
@@ -627,31 +645,11 @@ function BuyerPanel({
                 description="Keep useful context for the next conversation."
                 headingLevel={3}
             >
-                {saved ? (
-                    <p className="body-sm mbe-3 font-medium text-success" role="status">
-                        Saved
-                    </p>
-                ) : null}
-                <textarea
-                    aria-label="Client notes"
-                    aria-describedby="client-notes-count"
-                    value={notes}
-                    maxLength={MAX_CHARS.contactNote}
-                    onChange={(event) => setNotes(event.target.value)}
-                    onBlur={() => void save({ notes })}
-                    placeholder="Add useful context for the next conversation."
-                    className="
-                      body resize-none rounded-control border-2 border-border-warm bg-surface p-3.5
-                      leading-relaxed text-ink outline-none inline-full min-block-28
-                      hover:border-ink-subtle
-                      focus:border-ring focus:ring-3 focus:ring-ring/30
-                    "
-                />
-                <CharacterCount
-                    id="client-notes-count"
-                    value={notes}
-                    maxChars={MAX_CHARS.contactNote}
-                    className="mbs-2"
+                <ContactNotes
+                    key={buyer.id}
+                    label="Client"
+                    value={buyer.notes ?? buyer.details?.notes ?? ""}
+                    onSave={(notes) => onQuickUpdate({ notes })}
                 />
             </DrawerSection>
         </>
@@ -669,13 +667,6 @@ type OwnerPanelProps = {
 function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: OwnerPanelProps) {
     const details = owner.details;
     const model = toOwnerContactCardModel(owner);
-    const [notes, setNotes] = useState(owner.notes || details?.notes || "");
-    const [saved, setSaved] = useState(false);
-    const save = async (patch: Partial<OwnerContactForm>) => {
-        await onQuickUpdate(patch);
-        setSaved(true);
-        window.setTimeout(() => setSaved(false), 1400);
-    };
 
     const locality =
         details?.locality?.trim() ||
@@ -713,7 +704,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                 description="Review the owner type, location and address."
             >
                 <IconFactGrid
-                    onAdd={isPlatform ? undefined : onEdit}
+                    onAdd={isPlatform || !canEditExclusiveOwners() ? undefined : onEdit}
                     facts={[
                         {
                             label: "Owner type",
@@ -773,7 +764,7 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                 description="Find the owner’s phone number, email and source."
             >
                 <IconFactGrid
-                    onAdd={isPlatform ? undefined : onEdit}
+                    onAdd={isPlatform || !canEditExclusiveOwners() ? undefined : onEdit}
                     facts={[
                         {
                             label: "Mobile",
@@ -782,16 +773,17 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                             empty: !owner.phoneDigits,
                         },
                         {
-                            label: "Email",
-                            icon: Mail,
-                            value: details?.email,
-                            empty: !details?.email,
-                        },
-                        {
                             label: "Source",
                             icon: Tag,
                             value: source,
                             empty: !source,
+                        },
+                        {
+                            label: "Email",
+                            icon: Mail,
+                            value: details?.email,
+                            wide: true,
+                            empty: !details?.email,
                         },
                     ]}
                 />
@@ -802,44 +794,19 @@ function OwnerPanel({ owner, onEdit, onAttach, onQuickUpdate, propertiesRef }: O
                 description="Keep useful context for the next conversation."
                 headingLevel={3}
             >
-                {saved ? (
-                    <p className="body-sm mbe-3 font-medium text-success" role="status">
-                        Saved
-                    </p>
-                ) : null}
-                <textarea
-                    aria-label="Owner notes"
-                    aria-describedby={isPlatform ? undefined : "owner-notes-count"}
-                    value={notes}
-                    maxLength={MAX_CHARS.contactNote}
-                    readOnly={isPlatform}
-                    onChange={(event) => {
-                        if (!isPlatform) setNotes(event.target.value);
-                    }}
-                    onBlur={() => {
-                        if (!isPlatform) void save({ notes });
-                    }}
-                    placeholder={
+                <ContactNotes
+                    key={owner.id}
+                    label="Owner"
+                    value={owner.notes ?? details?.notes ?? ""}
+                    onSave={(notes) => onQuickUpdate({ notes })}
+                    readOnlyMessage={
                         isPlatform
                             ? "Platform owner details are managed by the owner."
-                            : "Add useful context for the next conversation."
+                            : !canEditExclusiveOwners()
+                              ? "Owner notes are read-only until owner updates are available."
+                              : undefined
                     }
-                    className="
-                      body resize-none rounded-control border-2 border-border-warm bg-surface p-3.5
-                      leading-relaxed text-ink outline-none inline-full min-block-28
-                      read-only:bg-surface-muted read-only:text-ink-muted
-                      hover:border-ink-subtle
-                      focus:border-ring focus:ring-3 focus:ring-ring/30
-                    "
                 />
-                {isPlatform ? null : (
-                    <CharacterCount
-                        id="owner-notes-count"
-                        value={notes}
-                        maxChars={MAX_CHARS.contactNote}
-                        className="mbs-2"
-                    />
-                )}
             </DrawerSection>
         </>
     );
@@ -936,21 +903,24 @@ export function ContactDetailPanel({
                 }
                 size="md"
                 padding="md"
-                className="contacts-detail-drawer"
-                headerClassName="
-                  !space-y-0 !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-b border-border-warm
-                "
+                nativeScroll
+                className={cn("contacts-detail-drawer", styles.drawer, styles.preview)}
+                headerClassName={styles.previewHeader}
                 bodyClassName="flex flex-col gap-0"
             >
                 {loadError ? (
-                    <div role="alert" className="flex flex-col items-start gap-3">
-                        <p className="body-sm text-ink-muted">{loadError}</p>
-                        {onRetryLoad ? (
-                            <Button variant="outline" onClick={onRetryLoad}>
-                                Retry
-                            </Button>
-                        ) : null}
-                    </div>
+                    <EmptyState
+                        size="card"
+                        icon={UserRound}
+                        variant={onRetryLoad ? "error" : "default"}
+                        heading={`${contactType === "owner" ? "Owner" : "Client"} unavailable`}
+                        description={loadError}
+                        action={
+                            onRetryLoad
+                                ? { label: "Try again", icon: RefreshCw, onClick: onRetryLoad }
+                                : undefined
+                        }
+                    />
                 ) : (
                     <ContactPanelSkeleton />
                 )}
@@ -994,24 +964,24 @@ export function ContactDetailPanel({
             manageBrowserHistory={manageBrowserHistory}
             open={open}
             onOpenChange={onOpenChange}
-            title={`${formatPersonName(row.name)} contact details`}
+            title={isBuyer ? "Client details" : "Owner details"}
             size="md"
             padding="md"
-            className="contacts-detail-drawer"
-            headerClassName="
-              !space-y-0 !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-b border-border-warm
-            "
-            footerClassName="
+            nativeScroll
+            className={cn("contacts-detail-drawer", styles.drawer, styles.preview)}
+            headerClassName={styles.previewHeader}
+            footerClassName={`${styles.drawerFooter}
               !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
-            "
+            `}
             header={
                 <ContactSummary
                     name={formatPersonName(row.name)}
                     phone={phone}
-                    avatarUrl={owner?.avatarUrl}
+                    avatarUrl={buyer?.avatarUrl ?? owner?.avatarUrl}
                     badge={badge}
                     onEdit={edit}
                     editLocked={owner?.origin === "platform"}
+                    editAvailable={!owner || canEditExclusiveOwners()}
                 />
             }
             footer={buyer || owner ? <ContactCallFooter phone={phone} name={row.name} /> : null}

@@ -1,12 +1,12 @@
 .placeholder {
     --dashboard-skeleton-duration: 1400ms;
     background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-surface));
-    animation: skeletonPulse var(--dashboard-skeleton-duration) linear infinite;
+    animation: skeletonPulse var(--dashboard-skeleton-duration) ease-in-out infinite;
     max-inline-size: 100%;
 }
 @keyframes skeletonPulse {
     50% {
-        opacity: 0.5;
+        opacity: var(--dashboard-skeleton-pulse-min, 0.5);
     }
 }
 .page {
@@ -17,9 +17,24 @@
     gap: 1rem;
     padding-block: 0.25rem;
 }
+.pageHeader .placeholder {
+    --dashboard-skeleton-pulse-min: 0.65;
+    background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-canvas));
+}
 .pageHeading {
-    inline-size: min(38rem, 90%);
-    block-size: 1.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 2.125rem;
+}
+.headingDate {
+    inline-size: 10rem;
+    block-size: 1.5rem;
+}
+.headingSummary {
+    inline-size: min(25rem, 100%);
+    block-size: 1.5rem;
 }
 .desktopMetadata {
     display: flex;
@@ -27,20 +42,55 @@
     align-items: center;
     gap: 1rem;
 }
-.desktopMetadata > :first-child {
-    max-inline-size: 17rem;
+.metadataDetails {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    min-inline-size: 0;
 }
-.loadingMessage {
-    color: var(--color-ink-muted);
-    font-size: 0.8125rem;
-    line-height: 1.5;
-    opacity: 0;
-    animation: showLoadingMessage 1ms 1s forwards;
+.metadataItem {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.375rem;
 }
-@keyframes showLoadingMessage {
-    to {
-        opacity: 1;
-    }
+.metadataIcon {
+    inline-size: 0.875rem;
+    block-size: 0.875rem;
+    border-radius: 50%;
+}
+.metadataTime {
+    inline-size: 7.5rem;
+    block-size: 0.625rem;
+    border-radius: 0.25rem;
+}
+.metadataArea {
+    inline-size: 4rem;
+    block-size: 0.625rem;
+    border-radius: 0.25rem;
+}
+.metadataChips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem;
+}
+.metadataChip {
+    inline-size: 3rem;
+    block-size: 1.5rem;
+    border-radius: 999px;
+}
+.metadataChip:nth-child(2) {
+    inline-size: 3.75rem;
+}
+.metadataChip:nth-child(3) {
+    inline-size: 4.75rem;
+}
+.quickAdd {
+    flex-shrink: 0;
+    inline-size: 8rem;
+    block-size: 2.5rem;
 }
 .card {
     display: flex;
@@ -170,9 +220,12 @@
     background: var(--color-surface);
 }
 .viewport {
-    flex: 1;
+    flex: 1 1 auto;
     min-block-size: 0;
     overflow: hidden;
+}
+.workCard .viewport {
+    max-block-size: 32rem;
 }
 .visitList,
 .updates,
@@ -198,7 +251,7 @@
     gap: 0.75rem;
     flex-shrink: 0;
     min-block-size: 3.5rem;
-    margin: 1rem -1rem -1rem;
+    margin: auto -1rem -1rem;
     padding-inline: 1rem;
     border-block-start: 1px solid var(--color-border-warm);
 }
@@ -441,23 +494,19 @@
         padding: 1.25rem;
     }
     .footer {
-        margin: 1rem -1.25rem -1.25rem;
+        margin: auto -1.25rem -1.25rem;
         padding-inline: 1.25rem;
     }
 }
 @media (max-width: 767.98px) {
-    .desktopMetadata > :last-child {
+    .desktopMetadata {
         display: none;
     }
     .pageHeading {
-        block-size: 2.75rem;
+        min-block-size: 2.375rem;
     }
     .workCard .viewport {
-        flex-basis: auto;
         max-block-size: clamp(18rem, 55svh, 28rem);
-    }
-    .workCard {
-        block-size: auto;
     }
     .stages {
         grid-template-columns: repeat(2, minmax(0, 1fr));

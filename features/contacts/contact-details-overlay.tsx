@@ -139,6 +139,7 @@ export function ContactDetailsOverlay({
                     buyer={contact.row}
                     onOpenChange={back}
                     onSaved={saved}
+                    onChanged={changed}
                 />
             ) : null}
             {contact?.type === "owner" && action === "attach" ? (

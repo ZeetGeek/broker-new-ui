@@ -250,10 +250,27 @@ export function DashboardSkeleton() {
         <LoadingState label="Loading your dashboard">
             <div className={cn(layout.dashboard, styles.page)}>
                 <div className={styles.pageHeader}>
-                    <Block className={styles.pageHeading} />
+                    <div className={styles.pageHeading}>
+                        <Block className={styles.headingDate} />
+                        <Block className={styles.headingSummary} />
+                    </div>
                     <div className={styles.desktopMetadata}>
-                        <p className={styles.loadingMessage}>Loading your dashboard…</p>
-                        <Block className={styles.button} />
+                        <div className={styles.metadataDetails}>
+                            <div className={styles.metadataItem}>
+                                <Block className={styles.metadataIcon} />
+                                <Block className={styles.metadataTime} />
+                            </div>
+                            <div className={styles.metadataItem}>
+                                <Block className={styles.metadataIcon} />
+                                <Block className={styles.metadataArea} />
+                            </div>
+                            <div className={styles.metadataChips}>
+                                {[0, 1, 2].map((id) => (
+                                    <Block key={id} className={styles.metadataChip} />
+                                ))}
+                            </div>
+                        </div>
+                        <Block className={styles.quickAdd} />
                     </div>
                 </div>
                 <div className={layout.stats}>

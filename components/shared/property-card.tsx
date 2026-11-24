@@ -1,5 +1,7 @@
 "use client";
 
+import type { CSSProperties } from "react";
+
 import { addCollection, Icon } from "@iconify/react/offline";
 
 import { formatAreaSqft } from "@/lib/format/area";
@@ -24,6 +26,7 @@ import { CardLink } from "@/components/shared/card-link";
 import { ClientPipelineInfo } from "@/components/shared/client-pipeline-info";
 import { ContactName } from "@/components/shared/contact-name";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
+import { IconButton } from "@/components/shared/icon-button";
 import {
     Calendar,
     Camera,
@@ -31,6 +34,8 @@ import {
     CircleCheck,
     Clock,
     MapPin,
+    Pin,
+    PinOff,
     RotateCcw,
     Send,
     Trash2,
@@ -41,6 +46,8 @@ import {
 } from "@/components/shared/icons";
 import {
     OVERLAY_GLASS_BUTTON_CLASS,
+    OVERLAY_ICON_BUTTON_CLASS,
+    OVERLAY_ICON_BUTTON_COLORS,
     OverlayCard,
     OverlayCardActions,
     OverlayCardSummary,
@@ -492,6 +499,10 @@ export type PropertyCardProps = {
     /** Saved (bookmarked) state. The Save button shows only when `onToggleSave` is set. */
     isSaved?: boolean;
     onToggleSave?: () => void;
+    /** Owned inventory: keep this property ahead of unpinned listings. */
+    isPinned?: boolean;
+    clientsUnavailable?: boolean;
+    onTogglePin?: () => void;
     /** Browse grid cards: listed this week in the broker's service areas — highlighted card. */
     isNewInYourArea?: boolean;
     /**
@@ -976,6 +987,9 @@ function OwnedOverlayPropertyCard({
     onDelete,
     isSaved = false,
     onToggleSave,
+    isPinned = false,
+    clientsUnavailable = false,
+    onTogglePin,
     audience = "broker",
     className,
     deleted,
@@ -1043,6 +1057,7 @@ function OwnedOverlayPropertyCard({
                 muted={isSold || listing.status !== "published"}
                 className={cn(styles.ownedCard, className)}
                 panelClassName={styles.panel}
+                chipsClassName={onTogglePin ? "pe-26" : undefined}
                 chips={
                     <>
                         {!isSold && listing.status === "unpublished" ? (
@@ -1068,42 +1083,77 @@ function OwnedOverlayPropertyCard({
                     </>
                 }
                 actions={
-                    <PropertyCardMenu
-                        listing={{
-                            id: listing.id,
-                            title: listing.title,
-                            locality: listing.locality,
-                            city: listing.city,
-                            priceLabel: sharePriceLabel,
-                            imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
-                            configLabel: listing.configLabel,
-                            propertyTypeLabel: listing.propertyTypeLabel,
-                            areaSqft: listing.areaSqft,
-                            bhk: listing.bhk,
-                            listingKind:
-                                offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
-                        }}
-                        onEdit={onEdit}
-                        onAnalytics={onAnalytics}
-                        onDelete={onDelete}
-                        isSaved={isSaved}
-                        onToggleSave={onToggleSave}
-                        isDraft={listing.status === "draft"}
-                        onAttachOwner={isSold ? undefined : onAttachOwner}
-                        attachOwnerLabel={
-                            hasOwner ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL
-                        }
-                        onAddBuyer={handleAddBuyer}
-                        isAddBuyerBlocked={isAddBuyerBlocked}
-                        contact={
-                            hasOwnerPhone
-                                ? {
-                                      name: ownerName || "Owner",
-                                      phoneDigits: ownerPhoneDigits,
-                                  }
-                                : undefined
-                        }
-                    />
+                    <div className="flex items-center gap-2">
+                        {onTogglePin ? (
+                            <IconButton
+                                size="sm"
+                                appearance="inverse"
+                                aria-label={isPinned ? "Unpin property" : "Pin property to top"}
+                                aria-pressed={isPinned}
+                                title={isPinned ? "Unpin property" : "Pin property to top"}
+                                className={OVERLAY_ICON_BUTTON_CLASS}
+                                style={
+                                    isPinned
+                                        ? ({
+                                              ...OVERLAY_ICON_BUTTON_COLORS,
+                                              "--icon-button-color": "var(--color-surface)",
+                                              "--icon-button-fill":
+                                                  "color-mix(in oklab, var(--color-ink) 40%, transparent)",
+                                              "--icon-button-hover":
+                                                  "color-mix(in oklab, var(--color-ink) 50%, transparent)",
+                                          } as CSSProperties)
+                                        : OVERLAY_ICON_BUTTON_COLORS
+                                }
+                                onClick={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
+                                    onTogglePin();
+                                }}
+                            >
+                                {isPinned ? (
+                                    <PinOff size={18} aria-hidden />
+                                ) : (
+                                    <Pin size={18} aria-hidden />
+                                )}
+                            </IconButton>
+                        ) : null}
+                        <PropertyCardMenu
+                            listing={{
+                                id: listing.id,
+                                title: listing.title,
+                                locality: listing.locality,
+                                city: listing.city,
+                                priceLabel: sharePriceLabel,
+                                imageSrc: listing.imageSrc ?? listing.imageSrcs?.[0] ?? null,
+                                configLabel: listing.configLabel,
+                                propertyTypeLabel: listing.propertyTypeLabel,
+                                areaSqft: listing.areaSqft,
+                                bhk: listing.bhk,
+                                listingKind:
+                                    offersRent(browse) && !offersSale(browse) ? "rent" : "sale",
+                            }}
+                            onEdit={onEdit}
+                            onAnalytics={onAnalytics}
+                            onDelete={onDelete}
+                            isSaved={isSaved}
+                            onToggleSave={onToggleSave}
+                            isDraft={listing.status === "draft"}
+                            onAttachOwner={isSold ? undefined : onAttachOwner}
+                            attachOwnerLabel={
+                                hasOwner ? OWNED_CHANGE_OWNER_LABEL : OWNED_ATTACH_OWNER_LABEL
+                            }
+                            onAddBuyer={handleAddBuyer}
+                            isAddBuyerBlocked={isAddBuyerBlocked}
+                            contact={
+                                hasOwnerPhone
+                                    ? {
+                                          name: ownerName || "Owner",
+                                          phoneDigits: ownerPhoneDigits,
+                                      }
+                                    : undefined
+                            }
+                        />
+                    </div>
                 }
             >
                 <div className="flex flex-col gap-3.5 min-inline-0">
@@ -1134,6 +1184,7 @@ function OwnedOverlayPropertyCard({
                         headline={headline}
                         locationLabel={`${listing.locality}, ${listing.city}`}
                         wrapText
+                        truncateHeadline
                     />
 
                     {ownerRowStyle === "linked" ? null : hasOwner ? (
@@ -1201,7 +1252,11 @@ function OwnedOverlayPropertyCard({
                     ) : null}
                     {ownerRowStyle === "linked" && audience === "broker" ? (
                         <div className="inline-full min-inline-0">
-                            {hasBuyers ? (
+                            {clientsUnavailable ? (
+                                <p className="body-sm rounded-control bg-surface-muted px-3 py-2 text-center text-ink-muted">
+                                    Client details unavailable
+                                </p>
+                            ) : hasBuyers ? (
                                 <div
                                     className={cn(
                                         "rounded-control border border-dashed border-brand/40",
@@ -1377,7 +1432,8 @@ function DeletedOwnedPropertyCard({
             imageSizes={imageSizes}
             priority={priority}
             muted
-            className={className}
+            className={cn(styles.ownedCard, className)}
+            panelClassName={styles.panel}
             chips={
                 <>
                     {offersSale(browse) ? (
@@ -1402,9 +1458,15 @@ function DeletedOwnedPropertyCard({
                 ) : null}
 
                 <OverlayCardSummary
-                    price={<ListingAskPrices listing={browse} audience={audience} />}
+                    price={
+                        <div className={styles.prices}>
+                            <ListingAskPrices listing={browse} audience={audience} />
+                        </div>
+                    }
                     headline={headline}
                     locationLabel={[listing.locality, listing.city].filter(Boolean).join(", ")}
+                    wrapText
+                    truncateHeadline
                 />
 
                 {ownerName ? (
@@ -1418,12 +1480,12 @@ function DeletedOwnedPropertyCard({
                 {buyers.length ? <AttachedBuyersRow buyers={buyers} /> : null}
             </div>
 
-            <OverlayCardActions>
+            <OverlayCardActions className={styles.deletedActions}>
                 <Button
                     variant="outline"
                     size="md"
                     type="button"
-                    className="flex-1 min-inline-0"
+                    className={styles.deletedAction}
                     disabled={busy}
                     loading={deleted.isRestoring}
                     onClick={deleted.onRestore}
@@ -1435,7 +1497,7 @@ function DeletedOwnedPropertyCard({
                     variant="destructive"
                     size="md"
                     type="button"
-                    className="flex-1 min-inline-0"
+                    className={styles.deletedAction}
                     disabled={busy}
                     onClick={deleted.onDeletePermanently}
                     aria-label={"Delete " + (listing.title || "property") + " permanently"}

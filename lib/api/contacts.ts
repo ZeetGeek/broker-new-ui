@@ -89,6 +89,7 @@ const mockPlatformOwnerTracking = new Map<
 function mockOwnerRows(): OwnerRow[] {
     const byName = new Map<string, OwnerRow>();
     for (const deal of MOCK_DEALS) {
+        if (deal.owner.origin === "exclusive") continue;
         const existing = byName.get(deal.owner.name);
         if (!existing) {
             byName.set(deal.owner.name, {
@@ -447,8 +448,21 @@ async function listOwners(
     >;
 }> {
     if (isMockMode()) {
+        // Add owner and the listing picker share the exclusive-owner store.
+        // Include that store here too, so sample volumes and newly added owners
+        // appear in Contacts instead of only in the property form's picker.
+        const exclusive = await exclusiveOwnersApi.list({ limit: Number.MAX_SAFE_INTEGER }, signal);
+        const customOwners = [
+            ...new Map(
+                [...exclusive.items.map(exclusiveOwnerToRow), ...mockCustomOwners].map((owner) => [
+                    owner.id,
+                    owner,
+                ]),
+            ).values(),
+        ];
+        const platformOwners = mockOwnerRows();
         const needle = filters.q.trim().toLowerCase();
-        const all = [...mockCustomOwners, ...mockOwnerRows()].filter((owner) => {
+        const all = [...customOwners, ...platformOwners].filter((owner) => {
             if (filters.ownerOrigin !== "all" && owner.origin !== filters.ownerOrigin) return false;
             if (!needle) return true;
             return [owner.name, ...owner.localities, ...owner.propertyTitles]
@@ -456,6 +470,8 @@ async function listOwners(
                 .toLowerCase()
                 .includes(needle);
         });
+        if (filters.sort === "name") all.sort((a, b) => a.name.localeCompare(b.name));
+        if (filters.sort === "most_active") all.sort((a, b) => b.liveDealCount - a.liveDealCount);
         const paged = paginateItems(all, page, limit);
         return {
             owners: paged.items,
@@ -467,8 +483,8 @@ async function listOwners(
                 lapsedOwnerCount: all.filter(
                     (owner) => owner.origin === "platform" && !owner.hasActiveRepresentation,
                 ).length,
-                platformOwnerCount: mockOwnerRows().length,
-                customOwnerCount: mockCustomOwners.length,
+                platformOwnerCount: platformOwners.length,
+                customOwnerCount: customOwners.length,
             },
         };
     }
@@ -743,6 +759,33 @@ export const contactsApi = {
                     const next = ownerRowFromValues(values, ownerId, current.linkedListingId);
                     mockCustomOwners[customIndex] = next;
                     return next;
+                }
+                if (origin === "custom") {
+                    const saved = await exclusiveOwnersApi.update(ownerId, {
+                        fullName: values.name.trim(),
+                        phone: values.phone,
+                        email: values.email,
+                        ownerType:
+                            values.ownerType === "builder" || values.ownerType === "company"
+                                ? values.ownerType
+                                : "individual",
+                        society: values.societyName,
+                        area: values.locality,
+                        country: values.country,
+                        state: values.state,
+                        city: values.city,
+                        pincode: values.pincode,
+                        fullAddress: values.fullAddress || values.address,
+                        reraNumber: values.reraNumber,
+                        source: (values.source as ExclusiveOwnerFormValues["source"]) || "",
+                        notes: values.notes,
+                    });
+                    const refreshed = await exclusiveOwnersApi.list({
+                        limit: Number.MAX_SAFE_INTEGER,
+                    });
+                    return exclusiveOwnerToRow(
+                        refreshed.items.find((item) => item.id === ownerId) ?? saved,
+                    );
                 }
                 const platform = mockOwnerRows().find((item) => item.id === ownerId);
                 if (!platform) throw new Error("Owner not found");

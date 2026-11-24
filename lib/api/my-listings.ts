@@ -14,6 +14,7 @@ import {
     propertyCriteriaCount,
 } from "@/lib/properties/list-criteria";
 import { collectPeopleFilterOptions, matchesPeopleFilters } from "@/lib/properties/people-filters";
+import { pinnedPropertiesFirst } from "@/lib/properties/pinned-properties";
 import { matchesListingSearch } from "@/lib/search/crm-search";
 import { withTestNetwork } from "@/lib/testing/test-network";
 
@@ -61,10 +62,7 @@ export function getMockMyListings(): MyListingItem[] {
     return mockMyListings;
 }
 
-function filterMockMyListings(
-    filters: MyListingsFilters,
-    source = mockMyListings,
-): MyListingItem[] {
+function filterMyListings(filters: MyListingsFilters, source = mockMyListings): MyListingItem[] {
     let items = source.filter((item) => {
         if (!matchesListingSearch(item, filters.q)) return false;
         if (filters.type === "sale" && item.transactionType === "rent") return false;
@@ -149,6 +147,27 @@ export type MyListingsSummary = {
     rent: number;
 };
 
+/** Fetch only pins, with bounded concurrency; ignore ones that no longer exist. */
+export async function loadPinnedProperties(ids: readonly string[], signal?: AbortSignal) {
+    const items: PropertyListing[] = [];
+    const uniqueIds = [...new Set(ids)];
+    for (let offset = 0; offset < uniqueIds.length; offset += 4) {
+        signal?.throwIfAborted();
+        const batch = await Promise.all(
+            uniqueIds.slice(offset, offset + 4).map(async (id) => {
+                try {
+                    return await propertiesApi.get(id, signal);
+                } catch (error) {
+                    if (error instanceof ApiError && error.status === 404) return null;
+                    throw error;
+                }
+            }),
+        );
+        items.push(...batch.filter((item): item is PropertyListing => item !== null));
+    }
+    return items;
+}
+
 function filtersToQuery(filters: MyListingsFilters): PropertyListQuery | null {
     const typeFilters = propertyTypeToApiFilters(filters.propertyType);
     return {
@@ -204,14 +223,24 @@ export const myListingsApi = withTestNetwork({
             withAttachedClients?: boolean;
             attachedClients?: () => Promise<Map<string, AttachedClientRef[]>>;
             propertyCollection?: (query: PropertyListQuery) => Promise<PropertyListing[]>;
+            pinnedProperties?: () => Promise<PropertyListing[]>;
+            /** Browser-local inventory pins, applied before pagination. */
+            pinnedIds?: readonly string[];
         } = {},
     ): Promise<MyListingsResult> {
         const { withAttachedClients = true } = options;
         const merged: MyListingsFilters = { ...DEFAULT_MY_LISTINGS_FILTERS, ...filters };
-        const attachedPromise =
+        const attachedPromise = (
             withAttachedClients || merged.clientId
                 ? (options.attachedClients ?? attachedClientsByProperty)()
-                : Promise.resolve(new Map<string, AttachedClientRef[]>());
+                : Promise.resolve(new Map<string, AttachedClientRef[]>())
+        ).then(
+            (clients) => ({ clients, unavailable: false }),
+            (error: unknown) => {
+                if (merged.clientId || signal?.aborted) throw error;
+                return { clients: new Map<string, AttachedClientRef[]>(), unavailable: true };
+            },
+        );
         const attach = (
             item: MyListingItem,
             attached: Map<string, AttachedClientRef[]>,
@@ -221,16 +250,21 @@ export const myListingsApi = withTestNetwork({
         });
         if (isMockMode()) {
             const attached = await attachedPromise;
-            const matched = filterMockMyListings(
+            const matched = filterMyListings(
                 merged,
-                mockMyListings.map((item) => attach(item, attached)),
+                mockMyListings.map((item) => attach(item, attached.clients)),
             );
-            const paged = paginateItems(matched, merged.page, PAGE_SIZE);
+            const paged = paginateItems(
+                pinnedPropertiesFirst(matched, options.pinnedIds ?? []),
+                merged.page,
+                PAGE_SIZE,
+            );
             return {
                 items: paged.items,
                 total: paged.total,
                 page: paged.page,
                 totalPages: paged.totalPages,
+                clientsUnavailable: attached.unavailable,
             };
         }
         const query = filtersToQuery(merged)!;
@@ -239,7 +273,20 @@ export const myListingsApi = withTestNetwork({
         const filterLocally =
             propertyCriteriaCount(merged.propertyFilters) > 0 ||
             Boolean(merged.ownerId || merged.clientId);
-        const [source, attached] = await Promise.all([
+        const pinnedIds = merged.status === "deleted" ? [] : (options.pinnedIds ?? []);
+        const pinsPromise =
+            !filterLocally && pinnedIds.length
+                ? (
+                      options.pinnedProperties ?? (() => loadPinnedProperties(pinnedIds, signal))
+                  )().then(
+                      (items) => ({ items, unavailable: false }),
+                      (error: unknown) => {
+                          if (signal?.aborted) throw error;
+                          return { items: [] as PropertyListing[], unavailable: true };
+                      },
+                  )
+                : Promise.resolve({ items: [] as PropertyListing[], unavailable: false });
+        const [source, attached, pins] = await Promise.all([
             filterLocally
                 ? (options.propertyCollection
                       ? options.propertyCollection({ ...query, page: 1 })
@@ -254,10 +301,11 @@ export const myListingsApi = withTestNetwork({
                   }))
                 : propertiesApi.list(query, signal),
             attachedPromise,
+            pinsPromise,
         ]);
         const items = source.items
             .map(mapPropertyListingToMyItem)
-            .map((item) => attach(item, attached));
+            .map((item) => attach(item, attached.clients));
         if (filterLocally) {
             // Join people before filtering and paginate only after every API page has been checked.
             const matched = items.filter(
@@ -269,13 +317,34 @@ export const myListingsApi = withTestNetwork({
                         merged,
                     ),
             );
-            return paginateItems(matched, merged.page, PAGE_SIZE);
+            return {
+                ...paginateItems(
+                    pinnedPropertiesFirst(matched, options.pinnedIds ?? []),
+                    merged.page,
+                    PAGE_SIZE,
+                ),
+                clientsUnavailable: attached.unavailable,
+            };
         }
+        const pinned = filterMyListings(
+            merged,
+            pins.items
+                .map(mapPropertyListingToMyItem)
+                .map((item) => attach(item, attached.clients)),
+        );
+        const pinnedSet = new Set(pinned.map((item) => item.id));
         return {
-            items,
+            // Pins are prepended once. Later server pages omit them; normal pagination
+            // and totals stay unchanged, without downloading intervening pages.
+            items: [
+                ...(merged.page === 1 ? pinned : []),
+                ...items.filter((item) => !pinnedSet.has(item.id)),
+            ],
             total: source.total,
             page: source.page,
             totalPages: Math.max(1, source.totalPages),
+            clientsUnavailable: attached.unavailable,
+            pinsUnavailable: pins.unavailable,
         };
     },
 

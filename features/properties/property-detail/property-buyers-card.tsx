@@ -7,8 +7,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { attachedClientsFor } from "@/lib/api/clients";
 import { toLegacyAmountFields } from "@/lib/format/listing-availability";
 
+import { EmptyState } from "@/components/empty-state";
 import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
-import { UserPlus, Users } from "@/components/shared/icons";
+import { RefreshCw, UserPlus, Users } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
 
@@ -40,23 +41,41 @@ export function PropertyBuyersCard({ item }: { item: MyListingItem }) {
                     </div>
                 </div>
             ) : query.isError ? (
-                <div>
-                    <p className={styles.actionDescription}>Couldn’t load attached clients.</p>
-                    <Button variant="link" onClick={() => void query.refetch()}>
-                        Try again
-                    </Button>
-                </div>
+                <EmptyState
+                    size="card"
+                    variant="error"
+                    icon={Users}
+                    heading="Could not load clients"
+                    description="Check your connection and try again."
+                    action={{
+                        label: "Try again",
+                        icon: RefreshCw,
+                        onClick: () => void query.refetch(),
+                        disabled: query.isFetching,
+                    }}
+                />
             ) : query.data.length ? (
                 <div className={styles.buyersSummary}>
                     <AttachedClientsSummary clients={query.data} size="md" />
                 </div>
             ) : (
-                <div className={styles.buyersEmpty}>
-                    <Users size={24} strokeWidth={1.75} aria-hidden />
-                    <p>No clients attached yet.</p>
-                </div>
+                <EmptyState
+                    size="card"
+                    icon={Users}
+                    heading="No clients attached yet"
+                    description="Attach a client to track their interest in this property."
+                    action={
+                        !item.isSold
+                            ? {
+                                  label: "Attach clients",
+                                  icon: UserPlus,
+                                  onClick: () => setOpen(true),
+                              }
+                            : undefined
+                    }
+                />
             )}
-            {!item.isSold && !query.isPending && !query.isError ? (
+            {!item.isSold && !query.isPending && !query.isError && query.data.length > 0 ? (
                 <div className={styles.contactActions}>
                     <Button variant="outline" size="md" onClick={() => setOpen(true)}>
                         <UserPlus size={18} aria-hidden />

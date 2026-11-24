@@ -762,7 +762,10 @@ export function InventoryAndUpdates({ activity, now }: { activity: ActivityData;
                                 </div>
                             </div>
                             <footer className={styles.footer} data-scroll-shadow={hasMoreListings}>
-                                <Link href="/broker/my-listings" className={styles.footerLink}>
+                                <Link
+                                    href={`/broker/my-listings?status=${selectedTab}`}
+                                    className={styles.footerLink}
+                                >
                                     Open listings <ArrowRight aria-hidden />
                                 </Link>
                                 {items.length > 0 &&

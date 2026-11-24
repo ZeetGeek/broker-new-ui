@@ -33,6 +33,7 @@ import {
     quickAddValidationIssues,
 } from "@/lib/properties/form-validation";
 import { scrollPropertyFormField } from "@/lib/properties/scroll-form-field";
+import { unsupportedPropertyClears } from "@/lib/properties/unsupported-property-clears";
 import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { OWNER_PROPERTIES_HREF, ownerPropertyDetailHref } from "@/lib/routes/owner";
 import {
@@ -545,18 +546,34 @@ export function PropertyForm({
             persistInFlightRef.current = false;
             return;
         }
-        if (
-            mode === "edit" &&
-            initialListing &&
-            initialListing.society &&
-            !current.location.projectOrSociety?.trim()
-        ) {
-            if (entryMode === "full") setStep("basics");
-            setFormBanner(
-                "Removing a saved society is not supported yet. Keep its name, or replace it with the correct name.",
-            );
-            persistInFlightRef.current = false;
-            return;
+        if (mode === "edit" && initialListing) {
+            const clears = unsupportedPropertyClears(initialListing, current);
+            const first = clears[0];
+            if (first) {
+                if (entryMode === "full") {
+                    setStep(first.step);
+                    setHighestUnlocked((value) =>
+                        Math.max(
+                            value,
+                            FORM_STEPS.findIndex((step) => step.id === first.step),
+                        ),
+                    );
+                }
+                for (const issue of clears)
+                    methods.setError(issue.path as FieldPath<PropertyDraftValues>, {
+                        type: "unsupported-clear",
+                        message: issue.message,
+                    });
+                setFormBanner(
+                    `Keep or replace these saved details before saving: ${clears.map((issue) => issue.label).join(", ")}. Removing them is not supported yet.`,
+                );
+                pendingFocusPathRef.current = first.path;
+                requestAnimationFrame(() => {
+                    if (focusFieldByPath(first.path)) pendingFocusPathRef.current = null;
+                });
+                persistInFlightRef.current = false;
+                return;
+            }
         }
         if (
             mode === "edit" &&

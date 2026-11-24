@@ -24,7 +24,8 @@ export function useDashboardVisits(now: Date | null) {
     const todayQuery = useQuery({
         queryKey: [...base, "today", today.from],
         queryFn: ({ signal }) =>
-            siteVisitsApi.list({ tab: "active", ...today, sort: "start_asc", limit: 50 }, signal),
+            // Read every page so earlier unmarked visits cannot hide later appointments.
+            siteVisitsApi.searchSource({ tab: "active", ...today, sort: "start_asc" }, signal),
         enabled,
         refetchInterval: 30_000,
     });

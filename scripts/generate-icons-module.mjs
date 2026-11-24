@@ -29,6 +29,7 @@ const MAP = {
     Bike: "IconBike",
     BookOpen: "IconBook",
     Bookmark: "IconBookmark",
+    PinFilled: "IconPinFilled",
     Briefcase: "IconBriefcase",
     Building: "IconBuilding",
     Building2: "IconBuildingSkyscraper",

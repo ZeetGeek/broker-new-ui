@@ -53,6 +53,8 @@ export type PeoplePickerPerson = {
     lookingFor?: PeoplePickerLookingFor | null;
     /** Amber chip for soft warnings (budget / intent mismatch). */
     warning?: string | null;
+    /** Existing links in an additive picker remain selected and cannot be removed. */
+    selectionLocked?: boolean;
     /** Extra chips after type / looking-for (e.g. “Current”). */
     statusChips?: readonly { label: string; color: "emerald" | "amber" | "sky" | "stone" }[];
 };
@@ -191,6 +193,7 @@ function PeoplePickerRow({
                       border-border-warm bg-surface
                       hover:border-ink/20 hover:bg-surface-muted/60
                     `,
+                person.selectionLocked && "cursor-default",
             )}
         >
             {multiple ? (
@@ -301,6 +304,10 @@ export function PeoplePicker(props: PeoplePickerProps) {
     const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
     const [draftSingle, setDraftSingle] = useState<string | null>(null);
     const [draftMulti, setDraftMulti] = useState<string[]>([]);
+    const lockedIds = useMemo(
+        () => new Set(people.filter((person) => person.selectionLocked).map((person) => person.id)),
+        [people],
+    );
     /** List scrolls inside VirtualListBox — drive the sticky header divider from that. */
     const [listScrolled, setListScrolled] = useState(false);
 
@@ -373,7 +380,7 @@ export function PeoplePicker(props: PeoplePickerProps) {
     })();
 
     function isSelected(id: string): boolean {
-        return multiple ? draftMulti.includes(id) : draftSingle === id;
+        return multiple ? lockedIds.has(id) || draftMulti.includes(id) : draftSingle === id;
     }
 
     function selectSingle(id: string | null) {
@@ -385,13 +392,14 @@ export function PeoplePicker(props: PeoplePickerProps) {
     }
 
     function toggleMulti(id: string) {
+        if (lockedIds.has(id)) return;
         setDraftMulti((current) =>
             current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
         );
     }
 
     function confirm() {
-        if (props.multiple) props.onConfirm(draftMulti);
+        if (props.multiple) props.onConfirm([...new Set([...draftMulti, ...lockedIds])]);
         else props.onConfirm(draftSingle);
         if (closeOnConfirm) onOpenChange(false);
     }
@@ -596,6 +604,7 @@ export function PeoplePicker(props: PeoplePickerProps) {
                                     <button
                                         type="button"
                                         aria-pressed={selected}
+                                        aria-disabled={person.selectionLocked || undefined}
                                         onClick={() => toggleMulti(person.id)}
                                         onKeyDown={(event) => onRowKeyDown(event, person.id)}
                                         className="text-start inline-full"

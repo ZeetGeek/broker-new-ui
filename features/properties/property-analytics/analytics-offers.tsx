@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import { ContactName } from "@/components/shared/contact-name";
 import {
     type AppIcon,
@@ -21,8 +22,6 @@ import type {
     PropertyReport,
 } from "@/features/properties/property-analytics/analytics-math";
 import { isPreviewAnalyticsClient } from "@/features/properties/property-analytics/mock-property-analytics";
-
-import styles from "./analytics.module.css";
 
 type OfferStatus = NonNullable<OfferInfo["status"]>;
 
@@ -154,15 +153,12 @@ export function AnalyticsOffers({
             className={className}
         >
             {rows.length === 0 ? (
-                <div className={styles.quietState}>
-                    <HandCoins aria-hidden className="block-5 inline-5" />
-                    <div className="flex flex-col gap-1">
-                        <p className="body-sm font-medium text-ink">No offers yet</p>
-                        <p className="body-sm text-ink-muted">
-                            Add an offer to a client’s deal to compare it with the asking price.
-                        </p>
-                    </div>
-                </div>
+                <EmptyState
+                    size="card"
+                    icon={HandCoins}
+                    heading="No offers yet"
+                    description="Add an offer to a client's deal to compare it with the asking price."
+                />
             ) : (
                 <>
                     {best?.offer ? (

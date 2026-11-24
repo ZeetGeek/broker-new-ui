@@ -2,7 +2,9 @@ import { formatPersonName } from "@/lib/format/person-name";
 import { plural } from "@/lib/format/plural";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import { ClientPipelineInfo } from "@/components/shared/client-pipeline-info";
+import { Users } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 
@@ -198,7 +200,12 @@ export function AnalyticsFunnel({
                         })}
                     </dl>
                 ) : (
-                    <p className="body-sm text-ink-muted">No clients on this property yet.</p>
+                    <EmptyState
+                        size="card"
+                        icon={Users}
+                        heading="No client progress yet"
+                        description="Link clients to this property to follow their progress through your pipeline."
+                    />
                 )}
             </div>
         </AnalyticsCard>

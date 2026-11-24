@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { type AttachableProperty, listAttachableProperties } from "@/lib/api/attachable-properties";
-import { clientsApi } from "@/lib/api/clients";
+import { clientsApi, PartialClientAttachError } from "@/lib/api/clients";
 
 import toast from "@/components/shared/app-toast";
 import { mapAttachablePropertyToPicker } from "@/components/shared/map-to-property-picker-property";
@@ -23,11 +23,13 @@ export function AttachBuyerPropertiesModal({
     onOpenChange,
     buyer,
     onSaved,
+    onChanged,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     buyer: AttachBuyerTarget;
     onSaved: () => void;
+    onChanged?: () => void;
 }) {
     const [properties, setProperties] = useState<AttachableProperty[]>([]);
     const [attachedIds, setAttachedIds] = useState<string[]>([]);
@@ -102,6 +104,16 @@ export function AttachBuyerPropertiesModal({
                     onOpenChange(false);
                 })
                 .catch((error) => {
+                    if (
+                        error instanceof PartialClientAttachError &&
+                        error.attachedPropertyIds.length
+                    ) {
+                        setAttachedIds((current) => [
+                            ...new Set([...current, ...error.attachedPropertyIds]),
+                        ]);
+                        setPickerKey((value) => value + 1);
+                        onChanged?.();
+                    }
                     toast.error(
                         error instanceof Error
                             ? error.message
@@ -110,7 +122,7 @@ export function AttachBuyerPropertiesModal({
                 })
                 .finally(() => setIsSaving(false));
         },
-        [attachedIds, buyer.id, onOpenChange, onSaved, isLoading, isSaving, loadError],
+        [attachedIds, buyer.id, onOpenChange, onSaved, onChanged, isLoading, isSaving, loadError],
     );
 
     const linkedCount = attachedIds.length;

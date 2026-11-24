@@ -80,7 +80,8 @@ export function DashboardTasksCard() {
     const catalogs = useTaskCatalogs();
     const [filter, setFilter] = useState<DashboardTab>("today");
     const [now, setNow] = useState(() => Date.now());
-    const [selectedDay, setSelectedDay] = useState(() => taskDateKey(Date.now()));
+    // null follows Today across midnight; an explicit date preserves calendar browsing.
+    const [browsedDay, setBrowsedDay] = useState<string | null>(null);
     const [completionFeedback, setCompletionFeedback] = useState<Record<string, number>>({});
     const viewport = useRef<HTMLDivElement>(null);
     const content = useRef<HTMLDivElement>(null);
@@ -88,6 +89,7 @@ export function DashboardTasksCard() {
     const [scrolled, setScrolled] = useState(false);
     const [announcement, setAnnouncement] = useState("");
     const today = taskDateKey(now);
+    const selectedDay = browsedDay ?? today;
 
     useEffect(() => {
         const tick = window.setInterval(() => setNow(Date.now()), 30_000);
@@ -120,7 +122,7 @@ export function DashboardTasksCard() {
 
     const shiftDay = (offset: number) => {
         const next = shiftTaskDate(selectedDay, offset);
-        if (next) setSelectedDay(next);
+        if (next) setBrowsedDay(next === today ? null : next);
     };
 
     const todayCount = tasks.filter((task) =>
@@ -163,7 +165,7 @@ export function DashboardTasksCard() {
     useEffect(() => {
         const el = viewport.current;
         if (el) el.scrollTop = 0;
-    }, [filter]);
+    }, [filter, selectedDay]);
 
     const changeTasks = async (updater: (latest: Task[]) => Task[], message?: string) => {
         if (busy) return false;
@@ -398,7 +400,7 @@ export function DashboardTasksCard() {
                                                 onClick={() => {
                                                     const currentTime = Date.now();
                                                     setNow(currentTime);
-                                                    setSelectedDay(taskDateKey(currentTime));
+                                                    setBrowsedDay(null);
                                                     setFilter("today");
                                                     setScrolled(false);
                                                     if (viewport.current)

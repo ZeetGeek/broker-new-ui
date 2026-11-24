@@ -3,6 +3,7 @@
     flex-direction: column;
     gap: var(--card-grid-gap);
     min-inline-size: 0;
+    padding-block-start: 0.5rem;
 }
 
 .dashboard > * {
@@ -12,8 +13,8 @@
 .workGrid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    align-items: start;
     gap: var(--card-grid-gap);
-    --dashboard-work-height: 42.5rem;
 }
 
 .nextVisit,
@@ -237,16 +238,11 @@
 }
 
 @media (min-width: 768px) {
-    .visits > section {
-        flex: 1;
-        block-size: auto;
-        min-block-size: 680px;
-    }
-
     .workGrid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         grid-template-areas: "next visits" "pipeline visits" "tasks tasks";
-        grid-template-rows: auto 1fr auto;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        align-items: stretch;
     }
 
     .nextVisit {
@@ -257,24 +253,17 @@
         grid-area: visits;
     }
 
+    /* Visits fill the height of the next-visit and pipeline cards beside them. */
+    .visits > section {
+        flex: 1;
+    }
+
     .tasks {
         grid-area: tasks;
     }
 
     .pipeline {
         grid-area: pipeline;
-    }
-}
-
-/* A full-width task list should grow with its contents on tablet. */
-@media (min-width: 768px) and (max-width: 1279.98px) {
-    .tasks > section {
-        block-size: auto;
-    }
-
-    .tasks > section > [role="region"] {
-        flex-basis: auto;
-        max-block-size: 32rem;
     }
 }
 
@@ -343,7 +332,12 @@
     .workGrid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         grid-template-areas: "next visits tasks" "pipeline visits tasks";
-        grid-template-rows: auto 1fr;
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    /* Tasks join the shared-height columns only in the three-column layout. */
+    .tasks > section {
+        flex: 1;
     }
 
     .heading {
@@ -359,9 +353,10 @@
     }
 }
 
-/* Phone: date + summary often wrap to 2–3 lines; give them more air. */
+/* Keep the heading close to tablet size, easing down on narrow phones. */
 @media (max-width: 767.98px) {
     .heading {
+        font-size: clamp(1.5rem, calc(1.125rem + 1.875vw), 1.75rem);
         line-height: 1.35;
     }
 }
@@ -396,7 +391,7 @@
     }
 }
 
-/* One geometry for loaded, loading, error and empty work cards. */
+/* Stacked cards keep their own height; shared rows stretch at their layout breakpoint. */
 .nextVisit,
 .pipeline {
     display: flex;
@@ -405,28 +400,6 @@
 .pipeline > * {
     flex: 1;
     min-block-size: 18rem;
-}
-
-@media (min-width: 768px) {
-    .workGrid {
-        grid-template-rows: auto minmax(0, 1fr) var(--dashboard-work-height);
-    }
-    .pipeline > * {
-        block-size: 100%;
-        min-block-size: 0;
-        overflow-y: auto;
-    }
-    .visits > section,
-    .tasks > section {
-        flex: 1;
-        block-size: var(--dashboard-work-height);
-        min-block-size: 0;
-    }
-}
-@media (min-width: 1280px) {
-    .workGrid {
-        grid-template-rows: auto minmax(0, 1fr);
-    }
 }
 
 /* The featured visit keeps its natural height, including at desktop widths. */
@@ -443,11 +416,5 @@
     }
     .statLink {
         padding: 0.75rem;
-    }
-}
-@media (max-width: 767.98px) {
-    .visits > section,
-    .tasks > section {
-        min-block-size: 18rem;
     }
 }

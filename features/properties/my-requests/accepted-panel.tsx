@@ -6,7 +6,9 @@ import { ownerInvitesApi } from "@/lib/api/owner-invites";
 import { propertyCriteriaCount } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
+import { Building2, RefreshCw, Search } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
 import { InviteCard } from "@/features/properties/my-requests/invite-card";
@@ -218,17 +220,18 @@ export function AcceptedPanel({
         );
     } else if (error) {
         body = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Could not load properties you represent</p>
-                <p className="body-sm text-ink-muted">{error}</p>
-                <button
-                    type="button"
-                    onClick={() => setRevision((prev) => prev + 1)}
-                    className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                >
-                    Try again
-                </button>
-            </div>
+            <EmptyState
+                size="page"
+                variant="error"
+                icon={Building2}
+                heading="Could not load approved properties"
+                description={error}
+                action={{
+                    label: "Try again",
+                    icon: RefreshCw,
+                    onClick: () => setRevision((prev) => prev + 1),
+                }}
+            />
         );
     } else if (!rows) {
         body = (
@@ -239,13 +242,17 @@ export function AcceptedPanel({
         );
     } else if (acceptedTotal === 0 && !narrowFilters) {
         body = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Nothing to represent yet</p>
-                <p className="body-sm max-w-prose text-ink-muted">
-                    When an owner accepts your request, or you accept their invite, it shows up
-                    here.
-                </p>
-            </div>
+            <EmptyState
+                size="page"
+                icon={Building2}
+                heading="No approved properties yet"
+                description="Properties appear here when an owner approves your request or you accept their invitation."
+                action={{
+                    label: "Browse owner listings",
+                    icon: Search,
+                    href: "/broker/owner-listings",
+                }}
+            />
         );
     } else if (rows.length === 0) {
         body = (

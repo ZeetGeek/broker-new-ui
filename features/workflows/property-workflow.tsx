@@ -12,11 +12,13 @@ import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 import type { WorkflowTarget } from "@/lib/workflows/target";
 
+import { EmptyState } from "@/components/empty-state";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import { ContactName } from "@/components/shared/contact-name";
 import { DrawerSection } from "@/components/shared/drawer-section";
+import { Building2, RefreshCw, UserPlus, Users } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { useWorkflowWorking } from "@/components/shared/workflow-context";
@@ -118,18 +120,43 @@ export function PropertyWorkflow({
                         Loading property…
                     </p>
                 ) : query.isError ? (
-                    <div role="alert" className="flex flex-col items-start gap-3">
-                        <p>Could not load this property. Check your connection and try again.</p>
-                        <Button variant="outline" onClick={() => void query.refetch()}>
-                            Retry
-                        </Button>
-                    </div>
+                    <EmptyState
+                        size="card"
+                        variant="error"
+                        icon={Building2}
+                        heading="Could not load this property"
+                        description="Check your connection and try again."
+                        action={{
+                            label: "Try again",
+                            icon: RefreshCw,
+                            onClick: () => void query.refetch(),
+                            disabled: query.isFetching,
+                        }}
+                    />
                 ) : !listing ? (
-                    <p>This property could not be found in your account.</p>
+                    <EmptyState
+                        size="card"
+                        icon={Building2}
+                        heading="Property no longer available"
+                        description="It may have been removed. Open My Listings to choose another property."
+                        action={{
+                            label: "Open My Listings",
+                            icon: Building2,
+                            href: "/broker/my-listings",
+                        }}
+                    />
                 ) : listing.deletedAt ? (
-                    <p>
-                        This property has been deleted. Restore it from My Listings before editing.
-                    </p>
+                    <EmptyState
+                        size="card"
+                        icon={Building2}
+                        heading="Property is deleted"
+                        description="Restore this property from the Deleted view in My Listings before editing it."
+                        action={{
+                            label: "Open My Listings",
+                            icon: Building2,
+                            href: "/broker/my-listings",
+                        }}
+                    />
                 ) : (
                     <>
                         <div className="mbe-5 flex items-start gap-3 min-inline-0">
@@ -220,25 +247,43 @@ export function PropertyWorkflow({
                                         Loading clients…
                                     </p>
                                 ) : clients.isError ? (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => void clients.refetch()}
-                                    >
-                                        Retry clients
-                                    </Button>
+                                    <EmptyState
+                                        size="card"
+                                        variant="error"
+                                        icon={Users}
+                                        heading="Could not load clients"
+                                        description="Check your connection and try again."
+                                        action={{
+                                            label: "Try again",
+                                            icon: RefreshCw,
+                                            onClick: () => void clients.refetch(),
+                                            disabled: clients.isFetching,
+                                        }}
+                                    />
                                 ) : clients.data?.length ? (
                                     <AttachedClientsSummary clients={clients.data} />
                                 ) : (
-                                    <p className="body-sm text-ink-muted">No clients linked yet.</p>
+                                    <EmptyState
+                                        size="card"
+                                        icon={Users}
+                                        heading="No clients linked yet"
+                                        description="Attach clients to track their interest in this property."
+                                        action={{
+                                            label: "Attach clients",
+                                            icon: UserPlus,
+                                            onClick: () => setMode("clients"),
+                                        }}
+                                    />
                                 )}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setMode("clients")}
-                                >
-                                    Attach clients
-                                </Button>
+                                {clients.data?.length ? (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setMode("clients")}
+                                    >
+                                        Attach clients
+                                    </Button>
+                                ) : null}
                             </div>
                         </DrawerSection>
                         {listing.imageSrcs.length > 1 ? (

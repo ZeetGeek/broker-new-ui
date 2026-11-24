@@ -298,11 +298,7 @@ export function NewBrokerDashboard() {
         isMockMode() && !isTestSampleMode() ? needsUpdate : (visits.needsUpdate.data?.total ?? 0);
     const taskCountKnown = !tasks.isLoading && !tasks.error;
     const lines = [
-        visitTotal === null
-            ? "Your visits, at a glance"
-            : visitTotal
-              ? `You have ${plural(visitTotal, "site visit")} today`
-              : "Your calendar is clear today",
+        "Your day, organised.",
         ...(taskCountKnown
             ? [
                   overdue
@@ -385,7 +381,7 @@ export function NewBrokerDashboard() {
         <section className={styles.dashboard} aria-labelledby="new-dashboard-heading">
             {/* Row 1: date + rotating summary. Row 2 (md+): info left · actions right.
                 Phone hides row 2 — the bottom-nav fan owns the actions. */}
-            <header className="-mbe-1 flex flex-col items-start gap-4 max-lg:-mbe-2 lg:gap-4">
+            <header className="flex flex-col items-start gap-4 md:-mbe-1 md:max-lg:-mbe-2 lg:gap-4">
                 <h1 id="new-dashboard-heading" className={`h3 ${styles.heading}`}>
                     <span className="shrink-0">{formatWeekdayDate(now)}.</span>{" "}
                     {/* A real space (not margin) so a wrapped summary starts flush left. */}

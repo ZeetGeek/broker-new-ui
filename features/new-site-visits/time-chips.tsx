@@ -2,6 +2,8 @@
 
 import { formatVisitTime } from "@/lib/visits/time";
 
+import { EmptyState } from "@/components/empty-state";
+import { CalendarCheck, Clock, RefreshCw } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 /** Free start times as tappable chips. Only times the server says will book. */
@@ -13,6 +15,7 @@ export function TimeChips({
     starts,
     value,
     onChange,
+    onRetry,
     invalid,
 }: {
     labelledBy: string;
@@ -23,6 +26,7 @@ export function TimeChips({
     starts: string[];
     value: string;
     onChange: (startAt: string) => void;
+    onRetry?: () => void;
     invalid: boolean;
 }) {
     if (!ready) {
@@ -41,13 +45,27 @@ export function TimeChips({
     }
     if (failed) {
         return (
-            <p role="alert" className="body-sm text-ink-muted">
-                Free times couldn&apos;t be loaded. Check your connection and try again.
-            </p>
+            <EmptyState
+                size="card"
+                variant="error"
+                icon={Clock}
+                heading="Could not load available times"
+                description="Check your connection and try again."
+                action={
+                    onRetry ? { label: "Try again", icon: RefreshCw, onClick: onRetry } : undefined
+                }
+            />
         );
     }
     if (starts.length === 0) {
-        return <p className="body-sm text-ink-muted">No free times this day. Try another date.</p>;
+        return (
+            <EmptyState
+                size="card"
+                icon={CalendarCheck}
+                heading="No times available"
+                description="Choose another date or a shorter visit to check for available times."
+            />
+        );
     }
     return (
         <div

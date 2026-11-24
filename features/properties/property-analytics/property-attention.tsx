@@ -11,6 +11,7 @@ import { getTestLabSettings, isTestSampleMode } from "@/lib/testing/test-lab";
 import { cn } from "@/lib/utils";
 import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 
+import { EmptyState } from "@/components/empty-state";
 import { CalendarCheck, CheckCircle2, ChevronRight, Clock, Info } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
@@ -183,16 +184,12 @@ function LivePropertyAttention({ propertyId }: { propertyId: string }) {
                         ))}
                     </ul>
                 ) : !failed.length ? (
-                    <div className={styles.empty}>
-                        <CheckCircle2 size={26} aria-hidden />
-                        <div>
-                            <strong>You’re up to date</strong>
-                            <p>
-                                No tasks, visits or client follow-ups need attention for this
-                                property.
-                            </p>
-                        </div>
-                    </div>
+                    <EmptyState
+                        size="card"
+                        icon={CheckCircle2}
+                        heading="You're up to date"
+                        description="No tasks, visits or client follow-ups need attention for this property."
+                    />
                 ) : null}
             </div>
         </AnalyticsCard>

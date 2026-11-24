@@ -14,7 +14,7 @@ function ContactCardSkeleton({ variant }: { variant: "buyer" | "owner" }) {
         <div
             className={cn(
                 "flex flex-col rounded-card border border-border-warm bg-surface p-4 shadow-md sm:p-5",
-                variant === "buyer" ? "min-block-96" : "min-block-80",
+                variant === "buyer" ? "md:min-block-96" : "md:min-block-80",
             )}
         >
             <div className="mbe-3 flex items-center justify-between gap-2">
@@ -77,7 +77,7 @@ export function ContactsSkeleton({
             </span>
             <div
                 aria-hidden
-                className="grid grid-cols-1 gap-card-grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                className="grid grid-cols-1 gap-card-grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             >
                 {Array.from({ length: count }, (_, index) => (
                     <ContactCardSkeleton key={index} variant={variant} />
@@ -172,7 +172,7 @@ export function ContactFormSkeleton({
                             <div className="flex flex-col gap-4 pbs-5">
                                 {section === 2 ? (
                                     <>
-                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div className="grid grid-cols-1 gap-4 @min-[28rem]/contact-drawer:grid-cols-2">
                                             <FieldSkeleton />
                                             <FieldSkeleton />
                                             <FieldSkeleton />
@@ -182,7 +182,10 @@ export function ContactFormSkeleton({
                                     </>
                                 ) : (
                                     <div
-                                        className={cn("grid gap-4", fields > 1 && "sm:grid-cols-2")}
+                                        className={cn(
+                                            "grid gap-4",
+                                            fields > 1 && "@min-[28rem]/contact-drawer:grid-cols-2",
+                                        )}
                                     >
                                         {Array.from({ length: fields }, (_, index) => (
                                             <FieldSkeleton key={index} />
@@ -190,7 +193,7 @@ export function ContactFormSkeleton({
                                     </div>
                                 )}
                                 {section === 0 ? (
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div className="grid grid-cols-1 gap-4 @min-[28rem]/contact-drawer:grid-cols-2">
                                         <div />
                                         <Bone className="block-5 inline-44 max-inline-full" />
                                     </div>

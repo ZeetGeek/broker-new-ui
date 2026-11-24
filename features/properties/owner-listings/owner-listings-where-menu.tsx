@@ -9,6 +9,7 @@ import {
 } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     type AppIcon,
@@ -206,15 +207,7 @@ function WhereMenuEmptyState({
     title: string;
     description: string;
 }) {
-    return (
-        <div className="flex flex-col items-center gap-3 px-6 text-center">
-            <Icon aria-hidden className="text-brand block-6 inline-6" strokeWidth={1.75} />
-            <div className="flex flex-col gap-1 max-inline-[16rem]">
-                <p className="body-sm font-medium text-ink">{title}</p>
-                <p className="body-sm text-pretty text-ink-muted">{description}</p>
-            </div>
-        </div>
-    );
+    return <EmptyState size="card" icon={Icon} heading={title} description={description} />;
 }
 
 function WhereBrowseRow({

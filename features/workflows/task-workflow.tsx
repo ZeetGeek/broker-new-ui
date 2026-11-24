@@ -7,7 +7,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 import type { WorkflowTarget } from "@/lib/workflows/target";
 
+import { EmptyState } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
+import { List, RefreshCw } from "@/components/shared/icons";
 import { useWorkflowWorking } from "@/components/shared/workflow-context";
 import { Button } from "@/components/ui/button";
 
@@ -103,12 +105,14 @@ export function TaskWorkflow({ target, onClose }: { target: Target; onClose: () 
     if ((loadError && !tasks.length) || (view.mode === "create" && catalogs.loadError))
         return (
             <TaskPanel title="Could not load task data" onClose={onClose}>
-                <p role="alert" className="body-sm text-ink-muted">
-                    Check your connection and try again. Your current page is unchanged.
-                </p>
-                <Button variant="outline" onClick={retry}>
-                    Retry
-                </Button>
+                <EmptyState
+                    size="card"
+                    variant="error"
+                    icon={List}
+                    heading="Could not load tasks"
+                    description="Check your connection and try again."
+                    action={{ label: "Try again", icon: RefreshCw, onClick: retry }}
+                />
             </TaskPanel>
         );
     if (isLoading || (view.mode === "create" && !catalogs.ready))
@@ -149,12 +153,13 @@ export function TaskWorkflow({ target, onClose }: { target: Target; onClose: () 
     if (!task)
         return (
             <TaskPanel title="Task not found" onClose={onClose}>
-                <p className="body-sm text-ink-muted">
-                    This task is no longer available in your account.
-                </p>
-                <Button variant="outline" onClick={retry}>
-                    Retry
-                </Button>
+                <EmptyState
+                    size="card"
+                    icon={List}
+                    heading="Task no longer available"
+                    description="It may have been deleted. Open Tasks to choose another task."
+                    action={{ label: "Open tasks", icon: List, href: "/broker/tasks" }}
+                />
             </TaskPanel>
         );
     if (

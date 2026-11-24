@@ -281,7 +281,12 @@ export function OwnerProfileView({
             <section className="flex flex-col gap-3">
                 <h2 className="eyebrow">Listed properties</h2>
                 {profile.properties.length === 0 ? (
-                    <p className="body-sm text-ink-muted">No published listings yet.</p>
+                    <EmptyState
+                        size="card"
+                        icon={Building2}
+                        heading="No published listings"
+                        description="This owner's properties will appear here once they publish a listing."
+                    />
                 ) : (
                     <div
                         className={

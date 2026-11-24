@@ -15,6 +15,7 @@ import { FilterChip } from "@/components/shared/filter-chip";
 import {
     AlertCircle,
     CheckCircle2,
+    List,
     Search,
     SlidersHorizontal,
     Trash2,
@@ -765,14 +766,14 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                 />
             )}
             {panelMissing && (
-                <TaskPanel
-                    title="Task not found"
-                    description="This task may have been deleted in this tab."
-                    onClose={close}
-                >
-                    <Button variant="outline" onClick={close}>
-                        Back to tasks
-                    </Button>
+                <TaskPanel title="Task not found" onClose={close}>
+                    <EmptyState
+                        size="card"
+                        icon={List}
+                        heading="Task no longer available"
+                        description="It may have been deleted. Choose another task from your list."
+                        action={{ label: "Back to tasks", icon: List, onClick: close }}
+                    />
                 </TaskPanel>
             )}
         </div>

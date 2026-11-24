@@ -48,10 +48,21 @@ export function ContactsHeader({
     onAdd?: () => void;
 }) {
     const isBuyers = filters.tab === "buyers";
+    const supportsActivitySort =
+        isBuyers || (FEATURE_PLATFORM_OWNER && filters.ownerOrigin === "platform");
     const addLabel = isBuyers ? "Add client" : "Add owner";
 
     const setTab = (tab: ContactsTab) => {
-        onFiltersChange({ ...filters, tab });
+        onFiltersChange({
+            ...filters,
+            tab,
+            sort:
+                tab === "owners" &&
+                filters.ownerOrigin !== "platform" &&
+                filters.sort === "most_active"
+                    ? "recent"
+                    : filters.sort,
+        });
     };
 
     return (
@@ -120,8 +131,18 @@ export function ContactsHeader({
                         <>
                             <ListToolbarSelect
                                 label={isBuyers ? "Sort clients" : "Sort owners"}
-                                value={filters.sort}
-                                options={SORT_OPTIONS}
+                                value={
+                                    !supportsActivitySort && filters.sort === "most_active"
+                                        ? "recent"
+                                        : filters.sort
+                                }
+                                options={
+                                    supportsActivitySort
+                                        ? SORT_OPTIONS
+                                        : SORT_OPTIONS.filter(
+                                              (option) => option.value !== "most_active",
+                                          )
+                                }
                                 defaultValue="recent"
                                 mobileLabel="Sort"
                                 tooltip="Change the order of the list."

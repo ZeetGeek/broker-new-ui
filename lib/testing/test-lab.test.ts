@@ -379,6 +379,8 @@ for (const scenario of [
             globalThis.window = { sessionStorage, localStorage };
             const { myListingsApi } = await import('./lib/api/my-listings.ts');
             const { clientsApi } = await import('./lib/api/clients.ts');
+            const { contactsApi } = await import('./lib/api/contacts.ts');
+            const { DEFAULT_CONTACTS_FILTERS } = await import('./features/contacts/types.ts');
             const { pipelineApi } = await import('./lib/api/pipeline.ts');
             const { propertiesApi } = await import('./lib/api/properties.ts');
             const { siteVisitsApi } = await import('./lib/api/site-visits.ts');
@@ -401,6 +403,16 @@ for (const scenario of [
             assert.equal(listings.total === 0, empty);
             assert.equal(visits.total === 0, empty);
             assert.equal(tasks.length === 0, empty);
+            const expectedOwners = ${JSON.stringify(settings.volume === "empty" ? 0 : settings.volume === "less" ? 3 : settings.volume === "stress" ? 300 : 30)};
+            const owners = await contactsApi.listOwnersPage({ ...DEFAULT_CONTACTS_FILTERS, tab: 'owners', ownerOrigin: 'custom' }, null);
+            assert.equal(owners.total, expectedOwners, 'Contacts includes exclusive owners at the selected sample volume');
+            assert.equal((await contactsApi.summary()).ownerCount, expectedOwners, 'owner counts agree with the owner list');
+            assert.ok(owners.items.every(owner => owner.origin === 'custom'), 'broker-added owners stay distinct from platform owners');
+            if (owners.items.length) {
+                const owner = owners.items[0];
+                assert.ok(owner.name && owner.phoneDigits && owner.details.city, 'sample owners include card and preview details');
+                assert.equal((await propertiesApi.get(owner.properties[0].id)).id, owner.properties[0].id, 'sample owner properties resolve to the shared inventory');
+            }
             if (${JSON.stringify(scenario === "stress" || scenario === "new-stress")}) {
                 assert.equal(tasks.length, 300, 'stress mode supplies 300 valid tasks');
                 assert.equal(deals.items.length, 300, 'stress mode supplies 300 pipeline records across stages');

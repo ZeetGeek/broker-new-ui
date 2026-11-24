@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { PropertyListing } from "@/lib/api/properties";
+import { matchesPropertyCriteria } from "@/lib/properties/list-criteria";
 
 import {
     mapPropertyListingToMyItem,
@@ -113,4 +114,31 @@ test("a saved listing reads back flatNo and carpetAreaSqft from the API", () => 
     assert.equal(item.carpetAreaSqft, 950);
     assert.equal(item.propertyAge, "5");
     assert.equal(item.propertyCondition, "ready_to_move");
+});
+
+test("inventory category filters retain API categories for subtypes shared across categories", () => {
+    for (const [category, subtype] of [
+        ["commercial", "warehouse"],
+        ["industrial", "industrial_plot"],
+        ["agricultural", "farm_land"],
+        ["land", "agricultural_land"],
+    ] as const) {
+        const item = mapPropertyListingToMyItem({ id: subtype, propertyType: category, subtype });
+        assert.equal(item.category, category);
+        assert.equal(item.subtype, subtype);
+        assert.equal(
+            matchesPropertyCriteria(
+                {
+                    ...item,
+                    propertyAge: item.propertyAge == null ? null : String(item.propertyAge),
+                },
+                { category, propertyType: subtype },
+            ),
+            true,
+        );
+    }
+    assert.equal(
+        mapPropertyListingToMyItem({ id: "old", subtype: "warehouse" }).category,
+        "industrial",
+    );
 });

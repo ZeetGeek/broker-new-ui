@@ -36,6 +36,9 @@ export type MyListingsGridProps = {
     /** Broker portal only. Save / remove save on the card menu. */
     onToggleSave?: (listing: MyListingItem) => void;
     isSaved?: (listing: MyListingItem) => boolean;
+    pinnedIds?: readonly string[];
+    clientsUnavailable?: boolean;
+    onTogglePin?: (listing: MyListingItem) => void;
     /** Deleted tab: cards become read-only with Restore / Delete permanently. */
     deletedActions?: {
         onRestore: (listing: MyListingItem) => void;
@@ -52,11 +55,17 @@ const GRID_BREAKPOINTS = [
     { minWidth: 1280, columns: 5 },
 ];
 
-const BROKER_GRID_BREAKPOINTS = GRID_BREAKPOINTS.filter(({ columns }) => columns <= 4);
+// Keep phone cards full-width, then use the same 2 → 3 → 4 progression as Contacts.
+const BROKER_GRID_BREAKPOINTS = [
+    { minWidth: 768, columns: 2 },
+    { minWidth: 1024, columns: 3 },
+    { minWidth: 1280, columns: 4 },
+];
 
 const BROKER_IMAGE_SIZES =
-    "(min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw";
-const IMAGE_SIZES = `(min-width: 1280px) 20vw, ${BROKER_IMAGE_SIZES}`;
+    "(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw";
+const IMAGE_SIZES =
+    "(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw";
 
 export function MyListingsGrid({
     items,
@@ -70,6 +79,9 @@ export function MyListingsGrid({
     brokerSummaryState,
     onToggleSave,
     isSaved,
+    pinnedIds,
+    clientsUnavailable,
+    onTogglePin,
     deletedActions,
 }: MyListingsGridProps) {
     const router = useRouter();
@@ -115,6 +127,9 @@ export function MyListingsGrid({
                 return (
                     <PropertyCard
                         variant="owned"
+                        isPinned={pinnedIds?.includes(item.id)}
+                        clientsUnavailable={clientsUnavailable}
+                        onTogglePin={onTogglePin ? () => onTogglePin(item) : undefined}
                         showStatus={portal !== "broker"}
                         ownerRowStyle={portal === "broker" ? "linked" : "inline"}
                         listing={listing}

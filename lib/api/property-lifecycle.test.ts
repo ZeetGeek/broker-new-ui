@@ -5,10 +5,33 @@ import { api } from "@/lib/api/client";
 import { myListingsApi } from "@/lib/api/my-listings";
 
 import {
+    clearMyListingsFilters,
     normalizeMyListingsStoredFilters,
     parseMyListingsFilters,
     serializeMyListingsFilters,
 } from "@/features/properties/your-listings/filter-my-listings";
+
+test("clearing filters preserves the selected inventory status and sorting", () => {
+    for (const status of ["published", "draft", "sold", "deleted"]) {
+        const cleared = clearMyListingsFilters(
+            parseMyListingsFilters({
+                status,
+                q: "Mumbai",
+                ownerId: "owner-1",
+                clientId: "client-1",
+                sort: "price_desc",
+                bhk: "2",
+            }),
+        );
+        assert.equal(cleared.status, status);
+        assert.equal(cleared.sort, "price_desc");
+        assert.equal(cleared.q, "");
+        assert.equal(cleared.ownerId, undefined);
+        assert.equal(cleared.clientId, undefined);
+        assert.deepEqual(cleared.bhk, []);
+        assert.equal(cleared.page, 1);
+    }
+});
 
 test("inventory tabs accept sold and recently deleted", () => {
     assert.equal(parseMyListingsFilters({ status: "sold" }).status, "sold");
