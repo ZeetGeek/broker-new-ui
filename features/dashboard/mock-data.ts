@@ -1,4 +1,9 @@
+import { testSnapshot } from "@/lib/testing/test-data";
+import { getTestLabSettings, isTestSampleMode } from "@/lib/testing/test-lab";
+
 import type { PipelineStageId } from "@/config/constants";
+import { MOCK_CLIENTS } from "@/features/clients/mock-clients";
+import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
 
 export type TodayItemKind = "site_visit" | "call";
 export type TodayItemState = "done" | "upcoming" | "blocked" | "elapsed" | "cancelled" | "missed";
@@ -588,7 +593,7 @@ export const FOLLOWUPS_PLACEHOLDER: FollowUpsData = {
     ],
 };
 
-export const dashboardMock: DashboardMock = {
+export const dashboardMock: DashboardMock = testSnapshot({
     siteVisitCount: 2,
     requestsWaitingCount: 4,
     reraStatus: "verifying",
@@ -755,4 +760,31 @@ export const dashboardMock: DashboardMock = {
             imageSrc: "/properties/6.jpg",
         },
     ],
-};
+});
+
+if (isTestSampleMode()) {
+    const settings = getTestLabSettings();
+    dashboardMock.activeClientCount = MOCK_CLIENTS.length;
+    for (const stage of dashboardMock.pipelineCard.stages) {
+        stage.count = MOCK_DEALS.filter(
+            (deal) => (deal.status === "visit" ? "site_visit" : deal.status) === stage.key,
+        ).length;
+    }
+    dashboardMock.pipelineCard.activeTotal = dashboardMock.pipelineCard.stages.reduce(
+        (total, stage) => total + stage.count,
+        0,
+    );
+    dashboardMock.pipelineCard.thisMonth = {
+        won: MOCK_DEALS.filter((deal) => deal.status === "closed").length,
+        lost: MOCK_DEALS.filter((deal) => deal.status === "lost").length,
+    };
+    dashboardMock.pipeline = dashboardMock.pipelineCard.stages.map((stage) => ({
+        stageId: stage.key,
+        count: stage.count,
+    }));
+    dashboardMock.daysSinceSignup = settings.account === "new" ? 0 : 90;
+    if (settings.account === "new" || settings.account === "incomplete") {
+        dashboardMock.reraStatus = "profile_incomplete";
+        dashboardMock.serviceAreas = [];
+    }
+}

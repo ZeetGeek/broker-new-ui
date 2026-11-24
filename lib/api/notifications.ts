@@ -1,6 +1,9 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
 import { isLaunchEventVisible } from "@/lib/notifications/launch-policy";
+import { testData } from "@/lib/testing/test-data";
+import { isTestSampleMode } from "@/lib/testing/test-lab";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";
 
@@ -60,10 +63,12 @@ export type NotificationListResponse = {
     items: NotificationItem[];
 };
 
+let sampleNotifications: NotificationItem[] | null = null;
+
 const rawNotificationsApi = {
     list(params?: { page?: number; limit?: number; unreadOnly?: boolean }, signal?: AbortSignal) {
         if (isMockMode()) {
-            const items: NotificationItem[] = [
+            const seed: NotificationItem[] = [
                 {
                     id: "nt_001",
                     userId: "user_design_broker",
@@ -122,6 +127,36 @@ const rawNotificationsApi = {
                     createdAt: new Date(Date.now() - 28 * 3_600_000).toISOString(),
                 },
             ];
+            if (isTestSampleMode())
+                seed.push(
+                    {
+                        ...seed[1],
+                        id: "sample-task-notice",
+                        type: "task_reminder",
+                        title: "Follow up with your client",
+                        body: "Review the shortlist before the next visit.",
+                        href: "/broker/tasks",
+                        referenceType: "task",
+                        referenceId: null,
+                        relatedLeadId: null,
+                        relatedPropertyId: null,
+                    },
+                    {
+                        ...seed[1],
+                        id: "sample-listing-notice",
+                        type: "property_assigned",
+                        title: "Your listing is ready",
+                        body: "Open your listings to review the property details.",
+                        href: "/broker/my-listings",
+                        referenceType: "property",
+                        referenceId: null,
+                        relatedLeadId: null,
+                        relatedPropertyId: null,
+                        isRead: true,
+                    },
+                );
+            if (isTestSampleMode()) sampleNotifications ??= testData(seed);
+            const items = sampleNotifications ?? testData(seed);
             const unread = items.filter((item) => !item.isRead);
             const visible = params?.unreadOnly ? unread : items;
             return Promise.resolve({
@@ -129,7 +164,10 @@ const rawNotificationsApi = {
                 limit: params?.limit ?? 20,
                 total: visible.length,
                 unreadCount: unread.length,
-                items: visible,
+                items: visible.slice(
+                    ((params?.page ?? 1) - 1) * (params?.limit ?? 20),
+                    (params?.page ?? 1) * (params?.limit ?? 20),
+                ),
             });
         }
         const q = new URLSearchParams();
@@ -142,7 +180,11 @@ const rawNotificationsApi = {
         });
     },
 
-    unreadCount() {
+    unreadCount(): Promise<{ unreadCount: number }> {
+        if (isTestSampleMode())
+            return rawNotificationsApi
+                .list({ limit: Number.MAX_SAFE_INTEGER })
+                .then((result) => ({ unreadCount: result.unreadCount }));
         if (isMockMode()) {
             return Promise.resolve({ unreadCount: 2 });
         }
@@ -150,6 +192,16 @@ const rawNotificationsApi = {
     },
 
     markRead(id: string) {
+        if (isTestSampleMode()) {
+            const item = sampleNotifications?.find((item) => item.id === id);
+            if (item) {
+                item.isRead = true;
+                item.readAt = new Date().toISOString();
+            }
+            return Promise.resolve({
+                unreadCount: sampleNotifications?.filter((item) => !item.isRead).length ?? 0,
+            });
+        }
         if (isMockMode()) {
             return Promise.resolve({ unreadCount: 1 });
         }
@@ -159,6 +211,12 @@ const rawNotificationsApi = {
     },
 
     markAllRead() {
+        if (isTestSampleMode()) {
+            sampleNotifications?.forEach((item) => {
+                item.isRead = true;
+                item.readAt = new Date().toISOString();
+            });
+        }
         if (isMockMode()) {
             return Promise.resolve({ unreadCount: 0 });
         }
@@ -168,7 +226,7 @@ const rawNotificationsApi = {
     },
 };
 
-export const notificationsApi = {
+export const notificationsApi = withTestNetwork({
     ...rawNotificationsApi,
     async list(
         params?: { page?: number; limit?: number; unreadOnly?: boolean },
@@ -216,4 +274,4 @@ export const notificationsApi = {
         const result = await this.list({ limit: 1 });
         return { unreadCount: result.unreadCount };
     },
-};
+});

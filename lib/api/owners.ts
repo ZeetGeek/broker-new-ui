@@ -1,5 +1,6 @@
 import { ApiError, apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
 
@@ -148,7 +149,7 @@ function mapOwnerProfile(raw: OwnerProfileApi, fallbackId: string): BrokerOwnerP
     };
 }
 
-export const ownersApi = {
+export const ownersApi = withTestNetwork({
     /**
      * Broker-facing owner profile. Public `/owners/:id` first; represented
      * contacts at `/clients/owners/:id` if that is all the API exposes.
@@ -183,4 +184,4 @@ export const ownersApi = {
             return mapOwnerProfile(raw, ownerUserId);
         }
     },
-};
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { VISIT_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
 
@@ -130,11 +131,9 @@ export function VisitDetailPanel({
                             "
                         >
                             <AppImage
-                                src={
-                                    visit.property.coverUrl ??
-                                    "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                                }
+                                src={visit.property.coverUrl ?? PROPERTY_PLACEHOLDER_SRC}
                                 alt=""
+                                fallbackSrc={PROPERTY_PLACEHOLDER_SRC}
                                 fill
                                 sizes="96px"
                             />

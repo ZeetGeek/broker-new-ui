@@ -11,9 +11,9 @@ import {
 } from "@/lib/format/commission";
 import { BROKER_EARNINGS_HREF } from "@/lib/routes/broker";
 
+import { EmptyState, LoadingState } from "@/components/empty-state";
 import { IconButton } from "@/components/shared/icon-button";
-import { ChevronLeft, ChevronRight, HandCoins } from "@/components/shared/icons";
-import { Skeleton } from "@/components/shared/skeleton";
+import { ChartBar, ChevronLeft, ChevronRight, HandCoins } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
     type ChartConfig,
@@ -31,7 +31,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-import { CardEmpty, CardError } from "./card-states";
+import { CardError } from "./card-states";
 import {
     closedDealsLabel,
     type CommissionMonths,
@@ -39,6 +39,7 @@ import {
     DASHBOARD_DEFAULT_MONTHS,
     maxCommissionPage,
 } from "./commission-window";
+import { CommissionSkeleton } from "./dashboard-skeleton";
 import { useDashboardEarnings } from "./use-dashboard-earnings";
 
 import styles from "./commission-earned.module.css";
@@ -56,7 +57,10 @@ const PERIOD_OPTIONS = [
 
 function CommissionShell({ children }: { children: React.ReactNode }) {
     return (
-        <section aria-labelledby="commission-earned-heading" className={styles.section}>
+        <section
+            aria-labelledby="commission-earned-heading"
+            className={`${styles.section} ${styles.stateSection}`}
+        >
             <div className={styles.summary}>
                 <h2 id="commission-earned-heading" className="h6">
                     Commission earned
@@ -75,13 +79,9 @@ export function CommissionEarned({ now }: { now: Date }) {
 
     if (report.isPending) {
         return (
-            <CommissionShell>
-                <div aria-busy="true" aria-label="Loading your commission" className="grid gap-3">
-                    <Skeleton className="block-12 inline-48" />
-                    <Skeleton className="block-9 inline-40" />
-                    <Skeleton className="block-48 inline-full" />
-                </div>
-            </CommissionShell>
+            <LoadingState label="Loading your commission">
+                <CommissionSkeleton />
+            </LoadingState>
         );
     }
     if (report.isError && !report.data) {
@@ -97,21 +97,19 @@ export function CommissionEarned({ now }: { now: Date }) {
     }
     if (!report.data.hasResolvedDeals) {
         return (
-            <CommissionShell>
-                <CardEmpty
+            <section
+                className={`${styles.section} ${styles.stateSection}`}
+                aria-labelledby="commission-earned-heading"
+            >
+                <EmptyState
+                    size="card"
                     icon={HandCoins}
-                    title="No commission earned yet"
-                    description="Mark a deal as sold in your pipeline and your commission shows here, month by month."
-                    action={
-                        <Link
-                            href="/broker/pipeline"
-                            className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                        >
-                            Open pipeline
-                        </Link>
-                    }
+                    headingId="commission-earned-heading"
+                    heading="No commission earned yet"
+                    description="Commission from closed deals will appear here, month by month."
+                    action={{ label: "Open pipeline", icon: ChartBar, href: "/broker/pipeline" }}
                 />
-            </CommissionShell>
+            </section>
         );
     }
 
@@ -238,11 +236,12 @@ export function CommissionEarned({ now }: { now: Date }) {
                     className={styles.chartViewport}
                     role="region"
                     aria-label="Monthly commission chart"
-                    tabIndex={months === 12 ? 0 : undefined}
+                    tabIndex={0}
                 >
                     <ChartContainer
                         key={`${months}-${page}`}
                         config={CHART_CONFIG}
+                        data-months={months}
                         className={`${styles.chart} ${months === 12 ? styles.yearChart : ""} ${report.isPlaceholderData ? "opacity-60" : ""}`}
                         aria-label={`Monthly sale and rent commission, ${period}`}
                     >

@@ -1,6 +1,9 @@
 import { cn } from "@/lib/utils";
 
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { ListPageHeading } from "@/components/shared/list-page-heading";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
+import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
 import { Skeleton } from "@/components/shared/skeleton";
 
 import { DEAL_STAGE_ORDER, type DealStage, type DealsView } from "@/features/pipeline/types";
@@ -168,62 +171,25 @@ export function PipelineBoardSkeleton({
 export function PipelineHeaderSkeleton() {
     return (
         <>
-            <div aria-hidden className="flex flex-col gap-3 md:hidden">
-                <div className="flex items-center justify-between gap-3">
-                    <Bone className="rounded-sm block-7 inline-24" />
-                    <Bone className="rounded-control inline-36 min-block-(--touch-target-min)" />
-                </div>
-                <div className="flex gap-2">
-                    <Bone className="flex-1 rounded-control min-block-(--touch-target-min) min-inline-0" />
-                    <Bone className="rounded-control inline-24 min-block-(--touch-target-min)" />
-                </div>
-            </div>
-            <h1 className="h3 hidden min-inline-0 md:block">
-                <span className="sr-only">Loading pipeline</span>
-                <span aria-hidden className="relative inline-block align-bottom">
-                    <span className="invisible">Pipeline.</span>
-                    <Bone className="absolute inset-s-0 inset-bs-[0.12em] bg-border-warm block-[0.8em] inline-full" />
-                </span>{" "}
-                <span aria-hidden className="relative inline-block align-bottom max-inline-full">
-                    <span className="invisible">Your deals, from first contact to close</span>
-                    <Bone className="absolute inset-s-0 inset-bs-[0.12em] bg-border-warm block-[0.8em] inline-full" />
-                </span>
-            </h1>
-            <div
-                className="hidden flex-wrap items-center gap-x-3 gap-y-2 motion-safe:animate-pulse md:flex"
-                aria-hidden
-            >
-                <div className="flex items-center gap-1.5 rounded-control border border-border-warm bg-surface px-3.5 shadow-sm block-[38px] inline-24">
-                    <Bone className="shrink-0 rounded-full block-3 inline-3" />
-                    <Bone className="rounded-full block-3 inline-10" />
-                </div>
-                <div className="flex gap-3">
-                    {[
-                        "inline-20 sm:inline-36",
-                        "inline-24 sm:inline-40",
-                        "inline-20 sm:inline-32",
-                    ].map((width, index) => (
-                        <div
-                            key={index}
-                            className={cn(
-                                "flex items-center gap-1.5 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px]",
-                                width,
-                            )}
-                        >
-                            <Bone className="flex-1 rounded-full block-3" />
-                            <Bone className="shrink-0 rounded-full block-4 inline-5" />
-                        </div>
-                    ))}
-                </div>
-                <div className="ms-auto flex gap-2">
-                    <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px] inline-44 sm:inline-52 lg:inline-64">
-                        <Bone className="shrink-0 rounded-full block-3 inline-3" />
-                        <Bone className="rounded-full block-3 inline-2/3" />
-                    </div>
-                    <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px] inline-20 sm:inline-36">
-                        <Bone className="shrink-0 rounded-full block-3 inline-3" />
-                        <Bone className="flex-1 rounded-full block-3" />
-                    </div>
+            <PortalSectionNav>
+                <ListPageHeading title="Pipeline.">
+                    <span className="sr-only">Loading pipeline summary</span>
+                    <Bone className="bg-border-warm block-5 inline-80 max-inline-full" />
+                </ListPageHeading>
+            </PortalSectionNav>
+            <div role="status" aria-busy="true">
+                <span className="sr-only">Loading deal controls</span>
+                <div aria-hidden>
+                    <ResponsiveListToolbar
+                        selection={
+                            <>
+                                <Bone className="block-11 inline-20" />
+                                <Bone className="flex-1 block-11 min-inline-0 sm:flex-none sm:inline-40" />
+                            </>
+                        }
+                        search={<Bone className="block-11 inline-full" />}
+                        actions={<Bone className="block-11 inline-11 sm:inline-36" />}
+                    />
                 </div>
             </div>
         </>
@@ -233,7 +199,7 @@ export function PipelineHeaderSkeleton() {
 /** App Router/Suspense fallback reserves the same header slots as the page. */
 export function PipelinePageSkeleton() {
     return (
-        <div className="flex flex-col gap-3 min-inline-0 md:gap-5" aria-busy="true">
+        <div className="flex flex-col gap-4 min-inline-0 md:gap-5" aria-busy="true">
             <PipelineHeaderSkeleton />
             <PipelineBoardSkeleton />
         </div>

@@ -14,6 +14,7 @@ import {
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { InfinitePage } from "@/lib/pagination/infinite-page";
 import { matchesClientSearch, matchesOwnerSearch } from "@/lib/search/crm-search";
+import { withTestNetwork } from "@/lib/testing/test-network";
 import { clientPhoneForStorage, parseClientMobile } from "@/lib/validation/client-phone";
 import type { ExclusiveOwnerFormValues } from "@/lib/validation/exclusive-owner";
 
@@ -553,290 +554,299 @@ export function sortBuyerRows(rows: BuyerRow[], sort: ContactsFilters["sort"]): 
     });
 }
 
-export const contactsApi = {
-    async buyerSearchSource(signal?: AbortSignal): Promise<BuyerRow[]> {
-        return (await listClientsWithLeadSummary({ signal })).map(toBuyerRow);
-    },
+export const contactsApi = withTestNetwork(
+    {
+        async buyerSearchSource(signal?: AbortSignal): Promise<BuyerRow[]> {
+            return (await listClientsWithLeadSummary({ signal })).map(toBuyerRow);
+        },
 
-    async ownerSearchSource(filters: ContactsFilters, signal?: AbortSignal): Promise<OwnerRow[]> {
-        const owners: OwnerRow[] = [];
-        let page = 1;
-        let totalPages = 1;
-        while (page <= totalPages) {
-            signal?.throwIfAborted();
-            const result = await listOwners(
-                { ...ownerFiltersForFeature(filters), q: "" },
-                page,
-                100,
-                signal,
-                false,
-            );
-            owners.push(...result.owners);
-            totalPages = result.totalPages;
-            page++;
-        }
-        return isMockMode() ? owners : attachExclusiveOwnerListings(owners, signal, Infinity);
-    },
-    /** Resolve deep links independently of the list's filters and loaded pages. */
-    async findContact(
-        id: string,
-        type?: "buyer" | "owner",
-        signal?: AbortSignal,
-    ): Promise<{ type: "buyer"; row: BuyerRow } | { type: "owner"; row: OwnerRow } | null> {
-        const filters = { ...DEFAULT_CONTACTS_FILTERS, q: "" };
-        if (type !== "owner") {
-            let cursor: string | null = null;
-            do {
-                const page = await contactsApi.listBuyersPage(filters, cursor, signal);
-                const row = page.items.find((item) => item.id === id);
-                if (row) return { type: "buyer", row };
-                cursor = page.nextCursor;
-            } while (cursor);
-        }
-        if (type !== "buyer") {
-            for (const ownerOrigin of FEATURE_PLATFORM_OWNER
-                ? (["custom", "platform"] as const)
-                : (["custom"] as const)) {
+        async ownerSearchSource(
+            filters: ContactsFilters,
+            signal?: AbortSignal,
+        ): Promise<OwnerRow[]> {
+            const owners: OwnerRow[] = [];
+            let page = 1;
+            let totalPages = 1;
+            while (page <= totalPages) {
+                signal?.throwIfAborted();
+                const result = await listOwners(
+                    { ...ownerFiltersForFeature(filters), q: "" },
+                    page,
+                    100,
+                    signal,
+                    false,
+                );
+                owners.push(...result.owners);
+                totalPages = result.totalPages;
+                page++;
+            }
+            return isMockMode() ? owners : attachExclusiveOwnerListings(owners, signal, Infinity);
+        },
+        /** Resolve deep links independently of the list's filters and loaded pages. */
+        async findContact(
+            id: string,
+            type?: "buyer" | "owner",
+            signal?: AbortSignal,
+        ): Promise<{ type: "buyer"; row: BuyerRow } | { type: "owner"; row: OwnerRow } | null> {
+            const filters = { ...DEFAULT_CONTACTS_FILTERS, q: "" };
+            if (type !== "owner") {
                 let cursor: string | null = null;
                 do {
-                    const page = await contactsApi.listOwnersPage(
-                        { ...filters, ownerOrigin },
-                        cursor,
-                        signal,
-                    );
+                    const page = await contactsApi.listBuyersPage(filters, cursor, signal);
                     const row = page.items.find((item) => item.id === id);
-                    if (row) return { type: "owner", row };
+                    if (row) return { type: "buyer", row };
                     cursor = page.nextCursor;
                 } while (cursor);
             }
-        }
-        return null;
-    },
-    async listBuyersPage(
-        filters: ContactsFilters,
-        cursor: string | null,
-        signal?: AbortSignal,
-        searchSource?: () => Promise<BuyerRow[]>,
-    ): Promise<InfinitePage<BuyerRow>> {
-        const page = cursor ? Number(cursor) || 1 : 1;
-        if (filters.q.trim()) {
-            const source = await (searchSource?.() ?? contactsApi.buyerSearchSource(signal));
-            signal?.throwIfAborted();
-            const matched = sortBuyerRows(
-                source.filter((row) => matchesClientSearch(row, filters.q)),
-                filters.sort,
-            );
-            const result = paginateItems(matched, page, 20);
-            return { ...result, items: await enrichAttachedPropertyCovers(result.items, signal) };
-        }
-        // Buyers are broker Client contacts — `GET /clients` (with lead summary).
-        // There is no `/contacts/buyers` route on the API.
-        const result = await listClientsPageWithLeadSummary({
-            search: filters.q,
-            sort: filters.sort,
-            page,
-            limit: 20,
-            signal,
-        });
-        return {
-            items: result.items.map(toBuyerRow),
-            total: result.total,
-            nextCursor: result.page < result.totalPages ? String(result.page + 1) : null,
-        };
-    },
-
-    async listOwnersPage(
-        filters: ContactsFilters,
-        cursor: string | null,
-        signal?: AbortSignal,
-        searchSource?: () => Promise<OwnerRow[]>,
-    ): Promise<InfinitePage<OwnerRow>> {
-        const page = cursor ? Number(cursor) || 1 : 1;
-        if (filters.q.trim()) {
-            const source = await (searchSource?.() ??
-                contactsApi.ownerSearchSource(filters, signal));
-            signal?.throwIfAborted();
-            return paginateItems(
-                source.filter((row) => matchesOwnerSearch(row, filters.q)),
-                page,
-                20,
-            );
-        }
-        const result = await listOwners(ownerFiltersForFeature(filters), page, 20, signal);
-        return {
-            items: result.owners,
-            total: result.total,
-            nextCursor: result.page < result.totalPages ? String(result.page + 1) : null,
-        };
-    },
-
-    async summary(signal?: AbortSignal): Promise<ContactsSummary> {
-        const base = { ...DEFAULT_CONTACTS_FILTERS, q: "" };
-        const [buyers, owners, platform] = await Promise.all([
-            listClientsPageWithLeadSummary({ page: 1, limit: 1, signal }),
-            listOwners({ ...base, ownerOrigin: "custom" }, 1, 1, signal),
-            FEATURE_PLATFORM_OWNER
-                ? listOwners({ ...base, ownerOrigin: "platform" }, 1, 1, signal)
-                : Promise.resolve({
-                      summary: { lapsedOwnerCount: 0, platformOwnerCount: 0 },
-                  }),
-        ]);
-        return {
-            buyerCount: buyers.total,
-            ownerCount: owners.summary.customOwnerCount,
-            unmatchedBuyerCount: 0,
-            lapsedOwnerCount: platform.summary.lapsedOwnerCount,
-            platformOwnerCount: platform.summary.platformOwnerCount,
-            customOwnerCount: owners.summary.customOwnerCount,
-        };
-    },
-
-    /**
-     * Buyers from `GET /clients`; exclusive owners from `GET /exclusive-owners`.
-     */
-    async list(filters: ContactsFilters): Promise<ContactsResult> {
-        const search = filters.q.trim();
-        const [allClients, searchedClients, ownersResult] = await Promise.all([
-            listClientsWithLeadSummary(),
-            search ? listClientsWithLeadSummary({ search }) : Promise.resolve(null),
-            listOwners(ownerFiltersForFeature(filters)),
-        ]);
-
-        const buyersAll = allClients.map(toBuyerRow);
-        const buyers = (searchedClients ?? allClients).map(toBuyerRow);
-
-        return {
-            buyers: sortBuyerRows(buyers, filters.sort),
-            owners: ownersResult.owners,
-            summary: {
-                buyerCount: buyersAll.length,
-                ownerCount: ownersResult.summary.ownerCount,
-                unmatchedBuyerCount: buyersAll.filter((row) => row.liveDealCount === 0).length,
-                lapsedOwnerCount: ownersResult.summary.lapsedOwnerCount,
-                platformOwnerCount: ownersResult.summary.platformOwnerCount,
-                customOwnerCount: ownersResult.summary.customOwnerCount,
-            },
-        };
-    },
-
-    async checkDuplicate(
-        rawPhone: string,
-        countryIso2 = "IN",
-    ): Promise<{ id: string; name: string; type: "buyer" | "owner" } | null> {
-        if (!parseClientMobile(rawPhone, countryIso2)) return null;
-        const phone = clientPhoneForStorage(rawPhone, countryIso2);
-        const buyers = await clientsApi.list({ search: phone });
-        const buyer = buyers.find((item) => item.phoneDigits === phone);
-        if (buyer) return { id: buyer.id, name: buyer.name, type: "buyer" };
-        if (isMockMode()) {
-            const owner = [...mockCustomOwners, ...mockOwnerRows()].find(
-                (item) => item.phoneDigits === phone,
-            );
-            return owner ? { id: owner.id, name: owner.name, type: "owner" } : null;
-        }
-        return null;
-    },
-
-    /** Create/update buyer via existing `POST|PATCH /clients` — no DB changes. */
-    async saveBuyer(input: NewBuyerInput, buyerId?: string): Promise<string | undefined> {
-        const saved = buyerId
-            ? await clientsApi.update(buyerId, input)
-            : await clientsApi.create(input);
-        return saved.id;
-    },
-
-    async saveOwner(
-        values: OwnerContactForm,
-        ownerId?: string,
-        origin?: "platform" | "custom",
-    ): Promise<OwnerRow> {
-        if (isMockMode()) {
-            if (ownerId) {
-                const customIndex = mockCustomOwners.findIndex((item) => item.id === ownerId);
-                if (customIndex >= 0) {
-                    const current = mockCustomOwners[customIndex]!;
-                    const next = ownerRowFromValues(values, ownerId, current.linkedListingId);
-                    mockCustomOwners[customIndex] = next;
-                    return next;
+            if (type !== "buyer") {
+                for (const ownerOrigin of FEATURE_PLATFORM_OWNER
+                    ? (["custom", "platform"] as const)
+                    : (["custom"] as const)) {
+                    let cursor: string | null = null;
+                    do {
+                        const page = await contactsApi.listOwnersPage(
+                            { ...filters, ownerOrigin },
+                            cursor,
+                            signal,
+                        );
+                        const row = page.items.find((item) => item.id === id);
+                        if (row) return { type: "owner", row };
+                        cursor = page.nextCursor;
+                    } while (cursor);
                 }
-                const platform = mockOwnerRows().find((item) => item.id === ownerId);
-                if (!platform) throw new Error("Owner not found");
-                const tracking = {
-                    status: values.status,
-                    lastSpokeAt: values.lastSpokeAt,
-                    tags: values.tags,
-                    notes: values.notes,
-                };
-                mockPlatformOwnerTracking.set(ownerId, tracking);
-                return { ...platform, ...tracking };
             }
-            const created = ownerRowFromValues(values, `custom_owner_${Date.now()}`);
-            mockCustomOwners.unshift(created);
-            return created;
-        }
-
-        if (ownerId && origin === "platform") {
-            const item = await apiFetch<ApiOwnerItem>(`/contacts/owners/${ownerId}`, {
-                method: "PATCH",
-                body: JSON.stringify({
-                    status: values.status,
-                    lastSpokeAt: values.lastSpokeAt,
-                    nextFollowUpAt: values.nextFollowUpAt || null,
-                    tags: values.tags,
-                    notes: values.notes.trim() || null,
-                }),
+            return null;
+        },
+        async listBuyersPage(
+            filters: ContactsFilters,
+            cursor: string | null,
+            signal?: AbortSignal,
+            searchSource?: () => Promise<BuyerRow[]>,
+        ): Promise<InfinitePage<BuyerRow>> {
+            const page = cursor ? Number(cursor) || 1 : 1;
+            if (filters.q.trim()) {
+                const source = await (searchSource?.() ?? contactsApi.buyerSearchSource(signal));
+                signal?.throwIfAborted();
+                const matched = sortBuyerRows(
+                    source.filter((row) => matchesClientSearch(row, filters.q)),
+                    filters.sort,
+                );
+                const result = paginateItems(matched, page, 20);
+                return {
+                    ...result,
+                    items: await enrichAttachedPropertyCovers(result.items, signal),
+                };
+            }
+            // Buyers are broker Client contacts — `GET /clients` (with lead summary).
+            // There is no `/contacts/buyers` route on the API.
+            const result = await listClientsPageWithLeadSummary({
+                search: filters.q,
+                sort: filters.sort,
+                page,
+                limit: 20,
+                signal,
             });
-            return toOwnerRow(item);
-        }
+            return {
+                items: result.items.map(toBuyerRow),
+                total: result.total,
+                nextCursor: result.page < result.totalPages ? String(result.page + 1) : null,
+            };
+        },
 
-        // Create exclusive owner (broker CRM). Updates are not supported yet.
-        if (ownerId) {
-            throw new Error("Editing exclusive owners is not available yet.");
-        }
+        async listOwnersPage(
+            filters: ContactsFilters,
+            cursor: string | null,
+            signal?: AbortSignal,
+            searchSource?: () => Promise<OwnerRow[]>,
+        ): Promise<InfinitePage<OwnerRow>> {
+            const page = cursor ? Number(cursor) || 1 : 1;
+            if (filters.q.trim()) {
+                const source = await (searchSource?.() ??
+                    contactsApi.ownerSearchSource(filters, signal));
+                signal?.throwIfAborted();
+                return paginateItems(
+                    source.filter((row) => matchesOwnerSearch(row, filters.q)),
+                    page,
+                    20,
+                );
+            }
+            const result = await listOwners(ownerFiltersForFeature(filters), page, 20, signal);
+            return {
+                items: result.owners,
+                total: result.total,
+                nextCursor: result.page < result.totalPages ? String(result.page + 1) : null,
+            };
+        },
 
-        const payload: ExclusiveOwnerFormValues = {
-            fullName: values.name.trim(),
-            phone: normalizeIndianPhone(values.phone),
-            email: values.email.trim(),
-            ownerType:
-                values.ownerType === "builder" || values.ownerType === "company"
-                    ? values.ownerType
-                    : "individual",
-            society: values.societyName.trim(),
-            area: values.locality.trim(),
-            country: values.country.trim(),
-            state: values.state.trim(),
-            city: values.city.trim(),
-            pincode: values.pincode.trim(),
-            fullAddress: values.fullAddress.trim() || values.address.trim(),
-            reraNumber: values.reraNumber.trim(),
-            source: (values.source as ExclusiveOwnerFormValues["source"]) || "",
-            notes: values.notes.trim(),
-        };
-        const created = await exclusiveOwnersApi.create(payload);
-        return exclusiveOwnerToRow(created);
-    },
+        async summary(signal?: AbortSignal): Promise<ContactsSummary> {
+            const base = { ...DEFAULT_CONTACTS_FILTERS, q: "" };
+            const [buyers, owners, platform] = await Promise.all([
+                listClientsPageWithLeadSummary({ page: 1, limit: 1, signal }),
+                listOwners({ ...base, ownerOrigin: "custom" }, 1, 1, signal),
+                FEATURE_PLATFORM_OWNER
+                    ? listOwners({ ...base, ownerOrigin: "platform" }, 1, 1, signal)
+                    : Promise.resolve({
+                          summary: { lapsedOwnerCount: 0, platformOwnerCount: 0 },
+                      }),
+            ]);
+            return {
+                buyerCount: buyers.total,
+                ownerCount: owners.summary.customOwnerCount,
+                unmatchedBuyerCount: 0,
+                lapsedOwnerCount: platform.summary.lapsedOwnerCount,
+                platformOwnerCount: platform.summary.platformOwnerCount,
+                customOwnerCount: owners.summary.customOwnerCount,
+            };
+        },
 
-    linkMockOwnerListing(ownerId: string, listingId: string, title: string): void {
-        if (!isMockMode()) return;
-        const owner = mockCustomOwners.find((item) => item.id === ownerId);
-        if (!owner) return;
-        owner.linkedListingId = listingId;
-        owner.linkedListingTitle = title;
-    },
+        /**
+         * Buyers from `GET /clients`; exclusive owners from `GET /exclusive-owners`.
+         */
+        async list(filters: ContactsFilters): Promise<ContactsResult> {
+            const search = filters.q.trim();
+            const [allClients, searchedClients, ownersResult] = await Promise.all([
+                listClientsWithLeadSummary(),
+                search ? listClientsWithLeadSummary({ search }) : Promise.resolve(null),
+                listOwners(ownerFiltersForFeature(filters)),
+            ]);
 
-    /** Remove a broker-added exclusive owner from contacts. */
-    async removeOwner(ownerId: string): Promise<void> {
-        if (isMockMode()) {
-            const index = mockCustomOwners.findIndex((item) => item.id === ownerId);
-            if (index >= 0) mockCustomOwners.splice(index, 1);
-            mockPlatformOwnerTracking.delete(ownerId);
+            const buyersAll = allClients.map(toBuyerRow);
+            const buyers = (searchedClients ?? allClients).map(toBuyerRow);
+
+            return {
+                buyers: sortBuyerRows(buyers, filters.sort),
+                owners: ownersResult.owners,
+                summary: {
+                    buyerCount: buyersAll.length,
+                    ownerCount: ownersResult.summary.ownerCount,
+                    unmatchedBuyerCount: buyersAll.filter((row) => row.liveDealCount === 0).length,
+                    lapsedOwnerCount: ownersResult.summary.lapsedOwnerCount,
+                    platformOwnerCount: ownersResult.summary.platformOwnerCount,
+                    customOwnerCount: ownersResult.summary.customOwnerCount,
+                },
+            };
+        },
+
+        async checkDuplicate(
+            rawPhone: string,
+            countryIso2 = "IN",
+        ): Promise<{ id: string; name: string; type: "buyer" | "owner" } | null> {
+            if (!parseClientMobile(rawPhone, countryIso2)) return null;
+            const phone = clientPhoneForStorage(rawPhone, countryIso2);
+            const buyers = await clientsApi.list({ search: phone });
+            const buyer = buyers.find((item) => item.phoneDigits === phone);
+            if (buyer) return { id: buyer.id, name: buyer.name, type: "buyer" };
+            if (isMockMode()) {
+                const owner = [...mockCustomOwners, ...mockOwnerRows()].find(
+                    (item) => item.phoneDigits === phone,
+                );
+                return owner ? { id: owner.id, name: owner.name, type: "owner" } : null;
+            }
+            return null;
+        },
+
+        /** Create/update buyer via existing `POST|PATCH /clients` — no DB changes. */
+        async saveBuyer(input: NewBuyerInput, buyerId?: string): Promise<string | undefined> {
+            const saved = buyerId
+                ? await clientsApi.update(buyerId, input)
+                : await clientsApi.create(input);
+            return saved.id;
+        },
+
+        async saveOwner(
+            values: OwnerContactForm,
+            ownerId?: string,
+            origin?: "platform" | "custom",
+        ): Promise<OwnerRow> {
+            if (isMockMode()) {
+                if (ownerId) {
+                    const customIndex = mockCustomOwners.findIndex((item) => item.id === ownerId);
+                    if (customIndex >= 0) {
+                        const current = mockCustomOwners[customIndex]!;
+                        const next = ownerRowFromValues(values, ownerId, current.linkedListingId);
+                        mockCustomOwners[customIndex] = next;
+                        return next;
+                    }
+                    const platform = mockOwnerRows().find((item) => item.id === ownerId);
+                    if (!platform) throw new Error("Owner not found");
+                    const tracking = {
+                        status: values.status,
+                        lastSpokeAt: values.lastSpokeAt,
+                        tags: values.tags,
+                        notes: values.notes,
+                    };
+                    mockPlatformOwnerTracking.set(ownerId, tracking);
+                    return { ...platform, ...tracking };
+                }
+                const created = ownerRowFromValues(values, `custom_owner_${Date.now()}`);
+                mockCustomOwners.unshift(created);
+                return created;
+            }
+
+            if (ownerId && origin === "platform") {
+                const item = await apiFetch<ApiOwnerItem>(`/contacts/owners/${ownerId}`, {
+                    method: "PATCH",
+                    body: JSON.stringify({
+                        status: values.status,
+                        lastSpokeAt: values.lastSpokeAt,
+                        nextFollowUpAt: values.nextFollowUpAt || null,
+                        tags: values.tags,
+                        notes: values.notes.trim() || null,
+                    }),
+                });
+                return toOwnerRow(item);
+            }
+
+            // Create exclusive owner (broker CRM). Updates are not supported yet.
+            if (ownerId) {
+                throw new Error("Editing exclusive owners is not available yet.");
+            }
+
+            const payload: ExclusiveOwnerFormValues = {
+                fullName: values.name.trim(),
+                phone: normalizeIndianPhone(values.phone),
+                email: values.email.trim(),
+                ownerType:
+                    values.ownerType === "builder" || values.ownerType === "company"
+                        ? values.ownerType
+                        : "individual",
+                society: values.societyName.trim(),
+                area: values.locality.trim(),
+                country: values.country.trim(),
+                state: values.state.trim(),
+                city: values.city.trim(),
+                pincode: values.pincode.trim(),
+                fullAddress: values.fullAddress.trim() || values.address.trim(),
+                reraNumber: values.reraNumber.trim(),
+                source: (values.source as ExclusiveOwnerFormValues["source"]) || "",
+                notes: values.notes.trim(),
+            };
+            const created = await exclusiveOwnersApi.create(payload);
+            return exclusiveOwnerToRow(created);
+        },
+
+        linkMockOwnerListing(ownerId: string, listingId: string, title: string): void {
+            if (!isMockMode()) return;
+            const owner = mockCustomOwners.find((item) => item.id === ownerId);
+            if (!owner) return;
+            owner.linkedListingId = listingId;
+            owner.linkedListingTitle = title;
+        },
+
+        /** Remove a broker-added exclusive owner from contacts. */
+        async removeOwner(ownerId: string): Promise<void> {
+            if (isMockMode()) {
+                const index = mockCustomOwners.findIndex((item) => item.id === ownerId);
+                if (index >= 0) mockCustomOwners.splice(index, 1);
+                mockPlatformOwnerTracking.delete(ownerId);
+                await exclusiveOwnersApi.remove(ownerId);
+                return;
+            }
             await exclusiveOwnersApi.remove(ownerId);
-            return;
-        }
-        await exclusiveOwnersApi.remove(ownerId);
+        },
     },
-};
+    ["linkMockOwnerListing"],
+);
 
 function ownerRowFromValues(
     values: OwnerContactForm,

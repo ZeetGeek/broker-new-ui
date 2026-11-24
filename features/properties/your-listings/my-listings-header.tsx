@@ -179,7 +179,6 @@ export function MyListingsToolbarSkeleton({
             <span className="sr-only">Loading listing controls</span>
             <div aria-hidden>
                 <ResponsiveListToolbar
-                    inlineMobileActions
                     selection={
                         <>
                             <div
@@ -284,7 +283,6 @@ export function MyListingsHeader({
             <div className="sticky inset-bs-0 z-10">
                 <TooltipProvider>
                     <ResponsiveListToolbar
-                        inlineMobileActions
                         selection={
                             <>
                                 <FilterChip

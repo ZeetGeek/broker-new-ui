@@ -9,6 +9,7 @@ import { formatPrice, formatRent } from "@/lib/format/price";
 import type { PropertyBrokersSummary } from "@/lib/format/property-brokers";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { formatRepresentationExpiry, formatRepresentedSince } from "@/lib/format/representation";
+import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
@@ -24,7 +25,6 @@ import { ClientPipelineInfo } from "@/components/shared/client-pipeline-info";
 import { ContactName } from "@/components/shared/contact-name";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
 import {
-    Building2,
     Calendar,
     Camera,
     Check,
@@ -55,6 +55,7 @@ import {
 } from "@/components/shared/price-with-commission";
 import { PropertyCardMenu } from "@/components/shared/property-card-menu";
 import { PropertyOwnerContactActions } from "@/components/shared/property-owner-contact-actions";
+import { PropertyPlaceholderImage } from "@/components/shared/property-placeholder-image";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import tablerMenuIcons from "@/components/shared/tabler-menu.json";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -666,22 +667,15 @@ function PropertyCardPhoto({
                         sizes={imageSizes}
                         priority={priority}
                         className="object-cover"
+                        fallbackSrc={PROPERTY_PLACEHOLDER_SRC}
                     />
                 </HoverScaleLayer>
             ) : (
-                <div
-                    className="
-                      flex flex-col items-center justify-center gap-2 px-4 text-center block-full
-                      inline-full
-                    "
-                >
-                    <Building2
-                        aria-hidden
-                        className="text-ink-subtle block-8 inline-8"
-                        strokeWidth={1.5}
-                    />
-                    <p className="body-xs text-ink-subtle">No photos yet</p>
-                </div>
+                <PropertyPlaceholderImage
+                    sizes={imageSizes}
+                    alt={`${alt} — no photos yet`}
+                    priority={priority}
+                />
             )}
 
             <div className="absolute inset-0 flex items-start justify-between gap-2 p-3">

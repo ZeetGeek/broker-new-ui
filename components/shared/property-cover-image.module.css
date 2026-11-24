@@ -15,11 +15,3 @@
         0 2px 4px -1px color-mix(in srgb, var(--color-ink) 12%, transparent),
         0 6px 16px -4px color-mix(in srgb, var(--color-ink) 14%, transparent);
 }
-
-.placeholder {
-    inline-size: 40%;
-    block-size: 40%;
-    max-inline-size: 1.5rem;
-    max-block-size: 1.5rem;
-    color: var(--color-ink-subtle);
-}

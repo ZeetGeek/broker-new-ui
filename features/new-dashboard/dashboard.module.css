@@ -5,10 +5,15 @@
     min-inline-size: 0;
 }
 
+.dashboard > * {
+    min-inline-size: 0;
+}
+
 .workGrid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: var(--card-grid-gap);
+    --dashboard-work-height: 42.5rem;
 }
 
 .nextVisit,
@@ -388,5 +393,61 @@
     .statLink:active {
         transform: none;
         transition: none;
+    }
+}
+
+/* One geometry for loaded, loading, error and empty work cards. */
+.nextVisit,
+.pipeline {
+    display: flex;
+    flex-direction: column;
+}
+.pipeline > * {
+    flex: 1;
+    min-block-size: 18rem;
+}
+
+@media (min-width: 768px) {
+    .workGrid {
+        grid-template-rows: auto minmax(0, 1fr) var(--dashboard-work-height);
+    }
+    .pipeline > * {
+        block-size: 100%;
+        min-block-size: 0;
+        overflow-y: auto;
+    }
+    .visits > section,
+    .tasks > section {
+        flex: 1;
+        block-size: var(--dashboard-work-height);
+        min-block-size: 0;
+    }
+}
+@media (min-width: 1280px) {
+    .workGrid {
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+}
+
+/* The featured visit keeps its natural height, including at desktop widths. */
+.nextVisit > * {
+    flex: none;
+    block-size: auto;
+    min-block-size: 0;
+}
+
+/* Keep the two-column summary legible on the narrowest supported phones. */
+@media (max-width: 359.98px) {
+    .stats {
+        gap: 0.625rem;
+    }
+    .statLink {
+        padding: 0.75rem;
+    }
+}
+@media (max-width: 767.98px) {
+    .visits > section,
+    .tasks > section {
+        min-block-size: 18rem;
     }
 }

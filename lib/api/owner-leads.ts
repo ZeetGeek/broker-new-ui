@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 export type LeadStage =
     | "new"
@@ -82,7 +83,7 @@ export type RespondOfferInput = {
     notes?: string;
 };
 
-export const ownerLeadsApi = {
+export const ownerLeadsApi = withTestNetwork({
     list(params?: OwnerLeadsQuery) {
         if (isMockMode()) {
             return Promise.resolve({
@@ -110,4 +111,4 @@ export const ownerLeadsApi = {
             body: JSON.stringify(body),
         });
     },
-};
+});

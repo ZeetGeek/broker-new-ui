@@ -1,3 +1,5 @@
+import { testData, testSnapshot } from "@/lib/testing/test-data";
+
 import type { RequestItem } from "@/features/properties/my-requests/types";
 
 const HOUR_MS = 3_600_000;
@@ -21,7 +23,7 @@ const IMAGES = [
  * cases the UI has to handle: unseen by owner, expiring soon, and approved
  * but with no client attached yet.
  */
-export const MOCK_REQUESTS: RequestItem[] = [
+export const MOCK_REQUESTS: RequestItem[] = testData([
     {
         id: "req_042",
         propertyId: "pr_108",
@@ -388,11 +390,11 @@ export const MOCK_REQUESTS: RequestItem[] = [
             { key: "cancelled", label: "You cancelled attempt 1", at: daysAgo(28) },
         ],
     },
-];
+]);
 
-export const MOCK_REQUESTS_QUOTA = {
+export const MOCK_REQUESTS_QUOTA = testSnapshot({
     limit: 10,
     used: 8,
     remaining: 2,
     resetsOn: new Date(Date.now() + 9 * DAY_MS).toISOString(),
-};
+});

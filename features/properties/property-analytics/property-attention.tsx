@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { isMockMode } from "@/lib/api/mock-mode";
 import { pipelineApi } from "@/lib/api/pipeline";
 import { siteVisitsApi } from "@/lib/api/site-visits";
+import { getTestLabSettings, isTestSampleMode } from "@/lib/testing/test-lab";
 import { cn } from "@/lib/utils";
 import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 
@@ -14,19 +16,24 @@ import { Skeleton } from "@/components/shared/skeleton";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
-import { PREVIEW_PROPERTY_ANALYTICS, PREVIEW_PROPERTY_ATTENTION, USE_MOCK_DATA } from "@/config";
+import { PREVIEW_PROPERTY_ANALYTICS, PREVIEW_PROPERTY_ATTENTION } from "@/config";
 import { useVisitsLive, VISITS_KEY } from "@/features/new-site-visits/use-visits";
 import { DEFAULT_DEALS_FILTERS } from "@/features/pipeline/types";
 import { AnalyticsCard } from "@/features/properties/property-analytics/analytics-card";
 import { BrokerAttentionPreview } from "@/features/properties/property-analytics/broker-attention-preview";
 import { buildPropertyAttention } from "@/features/properties/property-analytics/property-attention-model";
+import { TASK_QUERY_ROOT } from "@/features/tasks/preview-store";
 import { useTasks } from "@/features/tasks/task-store";
 import { useAppSelector } from "@/store/hooks";
 
 import styles from "./broker-property-analytics.module.css";
 
 export function PropertyAttention({ propertyId }: { propertyId: string }) {
-    if (PREVIEW_PROPERTY_ATTENTION || PREVIEW_PROPERTY_ANALYTICS || USE_MOCK_DATA)
+    if (
+        (isMockMode() && !isTestSampleMode()) ||
+        (getTestLabSettings().source === "default" &&
+            (PREVIEW_PROPERTY_ATTENTION || PREVIEW_PROPERTY_ANALYTICS))
+    )
         return <BrokerAttentionPreview />;
     return <LivePropertyAttention propertyId={propertyId} />;
 }
@@ -84,7 +91,7 @@ function LivePropertyAttention({ propertyId }: { propertyId: string }) {
         void queryClient.invalidateQueries({
             predicate: (query) =>
                 query.queryKey[1] === accountId &&
-                ["tasks", "private-tasks-mock-v8"].includes(String(query.queryKey[0])),
+                ["tasks", TASK_QUERY_ROOT].includes(String(query.queryKey[0])),
         });
         void pipeline.refetch();
         void visits.refetch();

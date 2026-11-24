@@ -7,6 +7,7 @@ import { buildMyListingsSummaryLines } from "@/lib/format/my-listings-summary";
 import { cn } from "@/lib/utils";
 
 import { AddFab } from "@/components/shared/add-fab";
+import { ListPageHeading } from "@/components/shared/list-page-heading";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Skeleton } from "@/components/shared/skeleton";
 
@@ -62,22 +63,25 @@ export function MyListingsIntro({
     );
 
     return (
-        <h1 className="h3 flex flex-col items-start gap-1 text-start min-inline-0 sm:block">
-            {isLoading ? (
-                <span aria-hidden className="relative inline-block align-bottom">
-                    <span className="invisible">My Listings.</span>
-                    <span
-                        className="
+        <ListPageHeading
+            title={
+                isLoading ? (
+                    <span aria-hidden className="relative inline-block align-bottom">
+                        <span className="invisible">My Listings.</span>
+                        <span
+                            className="
                           absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control
                           bg-border-warm block-[0.8em] inline-full
                         "
-                    >
-                        <Skeleton className="bg-ink/3 block-full inline-full" />
+                        >
+                            <Skeleton className="bg-ink/3 block-full inline-full" />
+                        </span>
                     </span>
-                </span>
-            ) : (
-                <span className="text-ink">My Listings.</span>
-            )}{" "}
+                ) : (
+                    "My Listings."
+                )
+            }
+        >
             <RotatingHeaderSummary
                 key={`${status}:${lines.join("|")}`}
                 lines={lines}
@@ -89,6 +93,6 @@ export function MyListingsIntro({
                 }
                 reservePlaceholder
             />
-        </h1>
+        </ListPageHeading>
     );
 }

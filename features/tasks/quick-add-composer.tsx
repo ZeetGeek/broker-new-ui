@@ -621,7 +621,7 @@ export function QuickAddComposer({
         >
             <div className={styles.body}>
                 <div className={styles.field}>
-                    <div className={styles.mirror} aria-hidden>
+                    <div data-quick-add-mirror className={styles.mirror} aria-hidden>
                         {draft.text ? (
                             mirrorText(draft.text, marks, invalidChipRanges)
                         ) : (
@@ -764,7 +764,7 @@ export function QuickAddComposer({
                         </div>
                     )}
                 </div>
-                <p className={styles.meta} hidden={!active}>
+                <p data-quick-add-meta className={styles.meta} hidden={!active}>
                     <QuickAddHelp
                         fieldRef={fieldRef}
                         onOpenChange={(open) => {

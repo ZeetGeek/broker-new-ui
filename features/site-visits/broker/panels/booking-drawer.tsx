@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { brokerVisitsApi, SlotTakenError } from "@/lib/api/broker-visits";
 import { ApiError } from "@/lib/api/client";
+import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { checkVisitConflicts, type ConflictResult } from "@/lib/visits/conflicts";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 import { useBookSlot } from "@/hooks/use-book-slot";
@@ -279,11 +280,9 @@ export function BookingDrawer({
                         "
                     >
                         <AppImage
-                            src={
-                                item.property.coverUrl ??
-                                "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                            }
+                            src={item.property.coverUrl ?? PROPERTY_PLACEHOLDER_SRC}
                             alt=""
+                            fallbackSrc={PROPERTY_PLACEHOLDER_SRC}
                             fill
                             sizes="64px"
                         />

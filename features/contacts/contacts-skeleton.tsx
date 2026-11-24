@@ -1,5 +1,8 @@
 import { cn } from "@/lib/utils";
 
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { ListPageHeading } from "@/components/shared/list-page-heading";
+import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
 import { Skeleton } from "@/components/shared/skeleton";
 
 function Bone({ className }: { className?: string }) {
@@ -86,49 +89,38 @@ export function ContactsSkeleton({
 
 export function ContactsIntroSkeleton() {
     return (
-        <div
-            role="status"
-            aria-busy="true"
-            className="flex flex-wrap items-center gap-2 min-block-8 motion-safe:animate-pulse"
-        >
-            <span className="sr-only">Loading client summary</span>
-            <Bone className="bg-border-warm block-6 inline-28" />
-            <Bone className="bg-border-warm block-6 inline-96 max-inline-full" />
+        <div role="status" aria-busy="true">
+            <ListPageHeading
+                title={
+                    <>
+                        <span className="sr-only">Loading client summary</span>
+                        <Bone className="bg-border-warm block-6 inline-28" />
+                    </>
+                }
+            >
+                <Bone className="bg-border-warm block-5 inline-80 max-inline-full" />
+            </ListPageHeading>
         </div>
     );
 }
 
 export function ContactsHeaderSkeleton() {
     return (
-        <div
-            role="status"
-            aria-busy="true"
-            className="flex flex-col gap-3 min-inline-0 motion-safe:animate-pulse lg:flex-row lg:items-center lg:justify-between lg:gap-4"
-        >
+        <div role="status" aria-busy="true">
             <span className="sr-only">Loading client filters</span>
-            <div className="flex gap-2 overflow-hidden inline-full min-inline-0 lg:flex-1 lg:inline-auto">
-                {[0, 1].map((index) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px]"
-                    >
-                        <Bone className="rounded-full block-3 inline-3" />
-                        <Bone className="block-3 inline-12" />
-                        <Bone className="rounded-full block-4 inline-4" />
-                    </div>
-                ))}
-            </div>
-            <div className="flex gap-2 inline-full min-inline-0 lg:shrink-0 lg:gap-2.5 lg:inline-auto">
-                <div className="flex flex-1 items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-11 min-inline-0 lg:flex-none lg:block-[38px] lg:inline-64">
-                    <Bone className="rounded-full block-3 inline-3" />
-                    <Bone className="block-3 inline-3/4" />
-                </div>
-                <div className="flex shrink-0 items-center rounded-control border border-border-warm bg-surface px-3 shadow-sm block-11 inline-24 lg:block-[38px]">
-                    <Bone className="block-3 inline-full" />
-                </div>
-                <div className="hidden items-center rounded-control bg-surface px-3 block-[38px] inline-32 md:flex">
-                    <Bone className="block-3 inline-full" />
-                </div>
+            <div aria-hidden>
+                <ResponsiveListToolbar
+                    selection={
+                        <Bone className="flex-1 block-11 min-inline-0 sm:flex-none sm:inline-48" />
+                    }
+                    search={<Bone className="block-11 inline-full" />}
+                    actions={
+                        <>
+                            <Bone className="block-11 inline-11 sm:inline-36" />
+                            <Bone className="hidden block-11 inline-32 md:block" />
+                        </>
+                    }
+                />
             </div>
         </div>
     );
@@ -136,8 +128,10 @@ export function ContactsHeaderSkeleton() {
 
 export function ContactsPageSkeleton() {
     return (
-        <div className="flex flex-col gap-3 sm:gap-6">
-            <ContactsIntroSkeleton />
+        <div className="flex flex-col gap-4 sm:gap-6">
+            <PortalSectionNav>
+                <ContactsIntroSkeleton />
+            </PortalSectionNav>
             <ContactsHeaderSkeleton />
             <ContactsSkeleton />
         </div>

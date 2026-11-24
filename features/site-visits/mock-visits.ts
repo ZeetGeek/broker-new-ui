@@ -1,3 +1,5 @@
+import { testData } from "@/lib/testing/test-data";
+
 import type { VisitBroker, VisitEvent, VisitItem } from "@/features/site-visits/types";
 
 const MIN_MS = 60_000;
@@ -165,7 +167,7 @@ function history(entries: Array<Omit<VisitEvent, "id">>): VisitEvent[] {
  * - a lapsed representation, so the owner phone number is gone
  * - a declined proposal that carries alternative slots
  */
-export const MOCK_VISITS: VisitItem[] = [
+export const MOCK_VISITS: VisitItem[] = testData([
     {
         id: "vs_001",
         status: "confirmed",
@@ -501,6 +503,6 @@ export const MOCK_VISITS: VisitItem[] = [
             },
         ]),
     },
-];
+]);
 
 export { BROKER as MOCK_BROKER, BUYERS as MOCK_BUYERS, PROPERTIES as MOCK_VISIT_PROPERTIES };

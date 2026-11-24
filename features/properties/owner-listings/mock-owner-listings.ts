@@ -1,3 +1,5 @@
+import { testData } from "@/lib/testing/test-data";
+
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 
 const LOCALITIES = [
@@ -451,39 +453,42 @@ const ENTRIES: MockOwnerListingSeed[] = [
     },
 ];
 
-export const MOCK_OWNER_LISTINGS: OwnerListingItem[] = ENTRIES.map((entry, index) => {
-    const photoCount = 4 + (index % 5);
-    const imageSrcs = Array.from(
-        { length: photoCount },
-        (_, photoIndex) => IMAGES[(index + photoIndex) % IMAGES.length]!,
-    );
+export const MOCK_OWNER_LISTINGS: OwnerListingItem[] = testData(
+    ENTRIES.map((entry, index) => {
+        const photoCount = 4 + (index % 5);
+        const imageSrcs = Array.from(
+            { length: photoCount },
+            (_, photoIndex) => IMAGES[(index + photoIndex) % IMAGES.length]!,
+        );
 
-    return {
-        ...entry,
-        state: "Gujarat",
-        country: "India",
-        id: `ol_${String(index + 1).padStart(3, "0")}`,
-        imageSrc: imageSrcs[0]!,
-        imageSrcs,
-        propertyTypeLabel: PROPERTY_TYPES[index % PROPERTY_TYPES.length]!,
-        category: (() => {
-            const type = PROPERTY_TYPES[index % PROPERTY_TYPES.length]!;
-            if (type === "shop" || type === "office") return "commercial" as const;
-            if (type === "plot") return "land" as const;
-            return "residential" as const;
-        })(),
-        subtype: PROPERTY_TYPES[index % PROPERTY_TYPES.length]!,
-        brokerSlotsTotal: 3,
-        brokerSlotsOpen: Math.max(0, 3 - entry.brokerRequestCount),
-        commissionPercent: index % 4 === 0 ? 0 : index % 3 === 0 ? 2.5 : 2,
-        commissionAmount: index % 5 === 0 ? 25_000 : index % 4 === 0 ? 0 : 15_000,
-        ownerName: OWNER_NAMES[index % OWNER_NAMES.length]!,
-        ownerUserId: `owner-user-${(index % OWNER_NAMES.length) + 1}`,
-        ownerLocationLabel: OWNER_LOCATIONS[index % OWNER_LOCATIONS.length]!,
-        photoCount,
-        isNew: entry.listedHoursAgo <= 7 * 24,
-        readyToMove: index % 5 < 2,
-    };
-});
+        return {
+            ...entry,
+            state: "Gujarat",
+            country: "India",
+            id: `ol_${String(index + 1).padStart(3, "0")}`,
+            imageSrc: imageSrcs[0]!,
+            imageSrcs,
+            propertyTypeLabel: PROPERTY_TYPES[index % PROPERTY_TYPES.length]!,
+            category: (() => {
+                const type = PROPERTY_TYPES[index % PROPERTY_TYPES.length]!;
+                if (type === "shop" || type === "office") return "commercial" as const;
+                if (type === "plot") return "land" as const;
+                return "residential" as const;
+            })(),
+            subtype: PROPERTY_TYPES[index % PROPERTY_TYPES.length]!,
+            brokerSlotsTotal: 3,
+            brokerSlotsOpen: Math.max(0, 3 - entry.brokerRequestCount),
+            commissionPercent: index % 4 === 0 ? 0 : index % 3 === 0 ? 2.5 : 2,
+            commissionAmount: index % 5 === 0 ? 25_000 : index % 4 === 0 ? 0 : 15_000,
+            ownerName: OWNER_NAMES[index % OWNER_NAMES.length]!,
+            ownerUserId: `owner-user-${(index % OWNER_NAMES.length) + 1}`,
+            ownerLocationLabel: OWNER_LOCATIONS[index % OWNER_LOCATIONS.length]!,
+            photoCount,
+            isNew: entry.listedHoursAgo <= 7 * 24,
+            readyToMove: index % 5 < 2,
+        };
+    }),
+    "marketplace",
+);
 
 export const OWNER_LISTING_LOCALITIES = [...LOCALITIES];

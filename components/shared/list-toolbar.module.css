@@ -1,0 +1,13 @@
+/* Only the visual label collapses; the trigger retains its complete accessible name. */
+@media (max-width: 639px) {
+    .compactSelect {
+        justify-content: center;
+        inline-size: var(--list-control-height);
+        min-inline-size: var(--list-control-height);
+        padding-inline: 0;
+    }
+    .compactSelect > span,
+    .compactSelect > svg:last-child {
+        display: none;
+    }
+}

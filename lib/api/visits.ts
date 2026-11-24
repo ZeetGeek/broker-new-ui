@@ -1,4 +1,5 @@
 import { formatDateIso } from "@/lib/format/date";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import { MOCK_VISITS } from "@/features/site-visits/mock-visits";
 import {
@@ -186,7 +187,7 @@ function appendHistory(
     return [...visit.history, { id: `ev_${visit.history.length + 1}`, at: nowIso(), ...entry }];
 }
 
-export const visitsApi = {
+export const visitsApi = withTestNetwork({
     /**
      * Every visit this viewer may see, filtered and sorted.
      *
@@ -389,4 +390,4 @@ export const visitsApi = {
             }),
         }));
     },
-};
+});

@@ -38,6 +38,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useShortcutDisplayKeys } from "@/features/shortcuts/use-shortcut-display-keys";
 
 import searchStyles from "./list-search-field.module.css";
+import toolbarStyles from "./list-toolbar.module.css";
 
 export const LIST_SEARCH_WIDTH_CLASS =
     "min-inline-44 inline-44 sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64";
@@ -62,7 +63,7 @@ export function ListSearchField({
     onChange,
     debounceMs = 300,
     fullWidth = false,
-    placeholder = "Search here...",
+    placeholder = "Search",
     searchHelp,
     className,
     wrapperClassName,
@@ -106,7 +107,7 @@ export function ListSearchField({
                 !searchHelp && wrapperClassName,
             )}
             className={cn(
-                "rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20 pointer-coarse:min-block-11",
+                "list-control rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20",
                 className,
             )}
         />
@@ -198,6 +199,7 @@ export function ListToolbarSelect<T extends string>({
                         filterChipClassName(active),
                         "gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50",
                         !active && "text-ink-muted",
+                        mobileLabel && toolbarStyles.compactSelect,
                         className,
                     )}
                 />
@@ -240,6 +242,7 @@ export function ListToolbarSelect<T extends string>({
                         <DropdownMenuRadioItem
                             key={option.value}
                             value={option.value}
+                            closeOnClick
                             disabled={option.disabled}
                             className={cn(value === option.value && "font-semibold text-brand")}
                         >
@@ -277,12 +280,12 @@ export function ListAddButton({
             {...props}
             variant={variant}
             size="sm"
-            className={cn("gap-2 px-3.5 block-[38px]!", className)}
+            className={cn("list-control gap-2 px-3.5", className)}
         >
             <Icon aria-hidden strokeWidth={1.75} />
             {label}
             {shortcut ? (
-                <KbdGroup className="gap-0.5 pointer-coarse:hidden">
+                <KbdGroup className="hidden gap-0.5 sm:inline-flex pointer-coarse:hidden">
                     {displayKeys.map((key) => (
                         <Kbd
                             key={key}

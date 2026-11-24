@@ -1,4 +1,7 @@
 import { buildPropertyTitle } from "@/lib/format/property-title";
+import { testSnapshot } from "@/lib/testing/test-data";
+import { testData } from "@/lib/testing/test-data";
+import { isTestSampleMode } from "@/lib/testing/test-lab";
 import {
     categoryForPropertyType,
     needsBhk,
@@ -59,7 +62,7 @@ export function listingFromCreateInput(
     input: CreateMyListingInput,
     now = new Date().toISOString(),
 ): MyListingItem {
-    const imageSrcs = input.imageSrcs.length > 0 ? input.imageSrcs : ["/properties/1.jpg"];
+    const imageSrcs = input.imageSrcs.filter((src) => src.trim());
     const status: MyListingStatus = input.publish ? "published" : "draft";
     const category: MyListingCategory =
         input.category ?? categoryForPropertyType(input.propertyType as PropertyType);
@@ -110,7 +113,7 @@ export function listingFromCreateInput(
         inboundRequestCount: 0,
         listedDaysAgo: 0,
         photoCount: imageSrcs.length,
-        imageSrc: imageSrcs[0]!,
+        imageSrc: imageSrcs[0] ?? "",
         imageSrcs,
         createdAt: now,
         updatedAt: now,
@@ -147,8 +150,8 @@ export function applyListingUpdate(
         next.furnishingLabel = FURNISHING_LABELS[input.furnishing];
     }
     if (input.imageSrcs != null) {
-        next.imageSrcs = input.imageSrcs.length > 0 ? input.imageSrcs : ["/properties/1.jpg"];
-        next.imageSrc = next.imageSrcs[0]!;
+        next.imageSrcs = input.imageSrcs.filter((src) => src.trim());
+        next.imageSrc = next.imageSrcs[0] ?? "";
         next.photoCount = next.imageSrcs.length;
     }
     if (input.bathrooms !== undefined) next.bathrooms = input.bathrooms;
@@ -612,9 +615,26 @@ const SEED_DRAFTS: SeedDraft[] = [
     },
 ];
 
-export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = SEED_DRAFTS.map(hydrateSeed);
+export const MOCK_MY_LISTINGS_SEED: MyListingItem[] = testData(SEED_DRAFTS.map(hydrateSeed));
 
-export const MOCK_BROKER_REQUESTS: BrokerRequestsResult = {
+if (isTestSampleMode()) {
+    MOCK_MY_LISTINGS_SEED.forEach((listing, index) => {
+        listing.exclusiveOwnerId = `sample-owner-${listing.id}`;
+        listing.ownerId = listing.exclusiveOwnerId;
+        listing.ownerOrigin = "custom";
+        listing.ownerName =
+            ["Aarav Shah", "Priya Desai", "Mehul Patel", "Nisha Mehta"][index % 4] +
+            (index > 3 ? ` ${index + 1}` : "");
+        listing.ownerPhoneDigits = `980000${String(index).padStart(4, "0")}`;
+        if (index % 10 === 8) {
+            listing.isSold = true;
+            listing.soldAt = new Date().toISOString();
+        }
+        if (index % 10 === 9) listing.deletedAt = new Date().toISOString();
+    });
+}
+
+export const MOCK_BROKER_REQUESTS: BrokerRequestsResult = testSnapshot({
     counts: { approved: 3, pending: 4, declined: 2 },
     quota: { limit: 10, used: 8, remaining: 2, resetsOn: "2026-09-30" },
     items: [
@@ -729,4 +749,4 @@ export const MOCK_BROKER_REQUESTS: BrokerRequestsResult = {
             action: { label: "Browse similar", href: "/broker/owner-listings" },
         },
     ] satisfies BrokerRequestItem[],
-};
+});

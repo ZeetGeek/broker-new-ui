@@ -2,6 +2,7 @@
 
 import type { ShowingStatus, VisitShowing } from "@/lib/api/owner-slots";
 import { formatDateIn, formatTimeIn, parseApiInstant } from "@/lib/format/date";
+import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
@@ -59,8 +60,9 @@ export function ShowingRow({
                     "
                 >
                     <AppImage
-                        src={showing.property?.photos?.[0] || "/properties/1.jpg"}
+                        src={showing.property?.photos?.[0] || PROPERTY_PLACEHOLDER_SRC}
                         alt=""
+                        fallbackSrc={PROPERTY_PLACEHOLDER_SRC}
                         fill
                         sizes="72px"
                     />

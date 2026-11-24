@@ -12,6 +12,7 @@ import {
     getSessionVersion,
     setSession,
 } from "@/lib/auth/session";
+import { isTestLabReloading, isTestSampleMode } from "@/lib/testing/test-lab";
 
 import { API_URL } from "@/config";
 
@@ -178,6 +179,8 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config: RetryConfig) => {
+    if (isTestLabReloading())
+        throw new ApiError("Test setup is changing. Reload the page to continue.", 0);
     if (!config.skipAuth) {
         if (config._sessionVersion != null && config._sessionVersion !== getSessionVersion()) {
             throw new ApiError("Session changed", 0);
@@ -267,7 +270,13 @@ api.interceptors.response.use(
  * Backed by axios so expired access tokens are refreshed via interceptor.
  */
 export async function apiFetch<T = unknown>(path: string, options: ApiOptions = {}): Promise<T> {
+    if (isTestLabReloading())
+        throw new ApiError("Test setup is changing. Reload the page to continue.", 0);
     if (isMockMode()) {
+        if (isTestSampleMode()) {
+            const { sampleApiFetch } = await import("@/lib/testing/sample-api");
+            return sampleApiFetch<T>(path, options);
+        }
         return Promise.resolve({} as T);
     }
 

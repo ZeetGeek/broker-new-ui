@@ -6,10 +6,13 @@ import { formatInTimeZone } from "date-fns-tz";
 
 import { cn } from "@/lib/utils";
 
+import { EmptyState, LoadingState } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     ArrowRight,
+    CalendarCheck,
+    Check,
     ChevronLeft,
     ChevronRight,
     LockKeyhole,
@@ -20,6 +23,7 @@ import { useWorkflow } from "@/components/shared/workflow-context";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
+import { DashboardTaskListSkeleton } from "@/features/new-dashboard/dashboard-skeleton";
 import { useAppSelector } from "@/store/hooks";
 
 import { nextTaskDates, setTaskCompleted } from "./lifecycle";
@@ -154,7 +158,7 @@ export function DashboardTasksCard() {
             observer.disconnect();
             el.removeEventListener("scroll", measure);
         };
-    }, [isLoading, filter, visible.length]);
+    }, [isLoading, filter, visible.length, tasks.length]);
 
     useEffect(() => {
         const el = viewport.current;
@@ -274,6 +278,31 @@ export function DashboardTasksCard() {
 
     const countFor = (value: DashboardTab) => (value === "today" ? todayCount : overdueCount);
 
+    const empty =
+        !isLoading && !error && !tasks.some((task) => !task.deletedAt && !task.completedAt);
+    if (empty) {
+        return (
+            <section
+                className={cn(
+                    "flex flex-col rounded-card bg-surface p-4 shadow-sm ring-1 ring-border-warm/50 min-inline-0 sm:p-5",
+                    styles.card,
+                    styles.fixedCard,
+                )}
+                data-empty="true"
+                aria-labelledby="preview-tasks-title"
+            >
+                <EmptyState
+                    size="card"
+                    icon={CalendarCheck}
+                    headingId="preview-tasks-title"
+                    heading="No tasks planned"
+                    description="Add a follow-up or reminder to keep your day organised."
+                    action={{ label: "Add task", icon: Plus, href: "/broker/tasks?view=create" }}
+                />
+            </section>
+        );
+    }
+
     return (
         <section
             className={cn(
@@ -281,6 +310,7 @@ export function DashboardTasksCard() {
                 styles.card,
                 styles.fixedCard,
             )}
+            data-empty={!isLoading && !error && !visible.length}
             aria-labelledby="preview-tasks-title"
         >
             <p className="sr-only" aria-live="polite">
@@ -312,7 +342,7 @@ export function DashboardTasksCard() {
                     options={TAB_OPTIONS.map((tab) => ({
                         ...tab,
                         id: `dashboard-tasks-tab-${tab.value}`,
-                        count: countFor(tab.value),
+                        count: isLoading || error ? undefined : countFor(tab.value),
                     }))}
                 />
             </div>
@@ -331,9 +361,9 @@ export function DashboardTasksCard() {
                         className={cn("t-tabs-panel", planner.planner, styles.paper)}
                     >
                         {isLoading && (
-                            <p className="body-sm py-8 text-center text-ink-muted" role="status">
-                                Loading your tasks…
-                            </p>
+                            <LoadingState label="Loading your tasks">
+                                <DashboardTaskListSkeleton />
+                            </LoadingState>
                         )}
                         {error && (
                             <p className="body-sm py-8 text-danger" role="alert">
@@ -426,23 +456,22 @@ export function DashboardTasksCard() {
                                             />
                                         </li>
                                     ) : null}
-                                    {filter === "today"
-                                        ? Array.from(
-                                              { length: Math.max(0, 10 - visible.length - 1) },
-                                              (_, index) => (
-                                                  <li
-                                                      key={`line-${index}`}
-                                                      className={planner.blankLine}
-                                                      aria-hidden
-                                                  />
-                                              ),
-                                          )
-                                        : null}
                                 </ul>
-                                {!visible.length && filter === "overdue" ? (
-                                    <p className="body-sm py-6 text-center text-ink-muted">
-                                        No overdue tasks.
-                                    </p>
+                                {!visible.length ? (
+                                    <EmptyState
+                                        size="card"
+                                        icon={filter === "overdue" ? Check : CalendarCheck}
+                                        heading={
+                                            filter === "overdue"
+                                                ? "No overdue tasks"
+                                                : "No tasks planned"
+                                        }
+                                        description={
+                                            filter === "overdue"
+                                                ? "Tasks that pass their due date will appear here."
+                                                : "Add a follow-up or reminder for this day using the field above."
+                                        }
+                                    />
                                 ) : null}
                             </section>
                         )}

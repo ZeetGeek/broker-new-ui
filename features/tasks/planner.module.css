@@ -1077,7 +1077,7 @@
  * small-container rules force the controls visible. With a real pointer,
  * keep them hover / focus only. Touch devices keep them always visible.
  */
-@media (hover: hover) {
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
     .rowGutters .lineCheck,
     .rowGutters .lineAction,
     .rowGutters .restoreAction {
@@ -1091,6 +1091,50 @@
     .rowGutters .taskLine:focus-within .restoreAction,
     .rowGutters .lineAction[data-popup-open] {
         opacity: 1;
+    }
+}
+
+/* Phone layouts expose both controls even when DevTools keeps a mouse pointer.
+   Touch and hybrid devices also keep these actions visible at wider widths. */
+@media (max-width: 767px), (hover: none), (pointer: coarse) {
+    .rowGutters {
+        --dashboard-task-target: var(--touch-target-min, max(2.75rem, 44px));
+    }
+
+    .rowGutters .taskLine .lineCheck,
+    .rowGutters .taskLine .lineAction,
+    .rowGutters .taskLine .restoreAction {
+        opacity: 1;
+    }
+
+    .rowGutters .lineCheck {
+        inline-size: 1.25rem;
+        block-size: 1.25rem;
+        inset-inline-start: calc((var(--dashboard-row-gutter, 2.75rem) + 1.25rem) / -2);
+    }
+
+    .rowGutters .lineCheck::after {
+        inset: calc((1.25rem - var(--dashboard-task-target)) / 2);
+    }
+
+    /* Small circular face; the transparent hit area stays phone-sized. */
+    .rowGutters .lineAction[data-icon-button],
+    .rowGutters .restoreAction[data-icon-button] {
+        --icon-button-size: 1.5rem;
+        inline-size: 1.5rem;
+        block-size: 1.5rem;
+        min-inline-size: 1.5rem;
+        min-block-size: 1.5rem;
+        inset-inline-end: calc((var(--dashboard-action-gutter, 1.75rem) + 1.5rem) / -2);
+        border-radius: 50%;
+        box-shadow: none;
+    }
+
+    .rowGutters .lineAction::after,
+    .rowGutters .restoreAction::after {
+        content: "";
+        position: absolute;
+        inset: calc((1.5rem - var(--dashboard-task-target)) / 2);
     }
 }
 @media (prefers-reduced-motion: reduce) {

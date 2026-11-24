@@ -15,6 +15,7 @@ import {
 } from "@/lib/properties/list-criteria";
 import { collectPeopleFilterOptions, matchesPeopleFilters } from "@/lib/properties/people-filters";
 import { matchesListingSearch } from "@/lib/search/crm-search";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import type { OwnerContactForm } from "@/features/contacts/contact-form-model";
 import { moneyToRupees } from "@/features/contacts/contact-form-model";
@@ -54,6 +55,11 @@ let mockMyListings: MyListingItem[] = MOCK_MY_LISTINGS_SEED.map((item) => ({
     workstations: item.workstations ?? null,
     ceilingHeightFt: item.ceilingHeightFt ?? null,
 }));
+
+/** Shared sample inventory for property pickers and detail pages. */
+export function getMockMyListings(): MyListingItem[] {
+    return mockMyListings;
+}
 
 function filterMockMyListings(
     filters: MyListingsFilters,
@@ -163,7 +169,7 @@ function filtersToQuery(filters: MyListingsFilters): PropertyListQuery | null {
     };
 }
 
-export const myListingsApi = {
+export const myListingsApi = withTestNetwork({
     async summary(): Promise<MyListingsSummary> {
         if (isMockMode()) {
             return mockMyListingsSummary();
@@ -622,4 +628,4 @@ export const myListingsApi = {
         }
         await propertiesApi.moveToDeleted(propertyId);
     },
-};
+});

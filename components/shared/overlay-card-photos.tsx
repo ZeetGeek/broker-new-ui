@@ -12,11 +12,13 @@ import {
 
 import useEmblaCarousel from "embla-carousel-react";
 
+import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { cn } from "@/lib/utils";
 
 import { AppImage } from "@/components/shared/app-image";
 import { HoverScaleLayer, HoverScaleRoot } from "@/components/shared/hover-scale-media";
-import { Building2, ChevronLeft, ChevronRight } from "@/components/shared/icons";
+import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
+import { PropertyPlaceholderImage } from "@/components/shared/property-placeholder-image";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 
 /**
@@ -156,18 +158,19 @@ export function OverlayCardPhotos({
 
     if (images.length === 0) {
         return (
-            <div
-                className="
-                  flex flex-col items-center justify-center gap-2 bg-surface-muted px-4 text-center
-                  block-full inline-full
-                "
-            >
-                <Building2
-                    aria-hidden
-                    className="text-ink-subtle block-8 inline-8"
-                    strokeWidth={1.5}
-                />
-                <p className="body-xs text-ink-muted">No photos yet</p>
+            <div className="relative overflow-hidden block-full inline-full">
+                <PhotoLink
+                    href={href}
+                    onClick={blockDragClick}
+                    onDragStart={(event) => event.preventDefault()}
+                >
+                    <PropertyPlaceholderImage
+                        sizes={imageSizes}
+                        alt={`${imageAlt} — no photos yet`}
+                        priority={priority}
+                        className={cn("pointer-events-none", muted && "grayscale-60")}
+                    />
+                </PhotoLink>
             </div>
         );
     }
@@ -214,6 +217,7 @@ export function OverlayCardPhotos({
                                             sizes={imageSizes}
                                             priority={priority && index === 0}
                                             draggable={false}
+                                            fallbackSrc={PROPERTY_PLACEHOLDER_SRC}
                                             className={cn(
                                                 "pointer-events-none object-cover",
                                                 muted && "grayscale-60",

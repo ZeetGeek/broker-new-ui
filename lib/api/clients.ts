@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
+import { withTestNetwork } from "@/lib/testing/test-network";
 import type { BuyerPropertyKind, BuyerSource } from "@/lib/validation/buyer";
 
 import { MOCK_CLIENTS, MOCK_PROPERTY_CLIENTS } from "@/features/clients/mock-clients";
@@ -709,7 +710,7 @@ export async function attachedClientsByProperty(
     return map;
 }
 
-export const clientsApi = {
+export const clientsApi = withTestNetwork({
     /** Every buyer on the broker's book. */
     async list(options?: { search?: string }): Promise<ClientItem[]> {
         if (isMockMode()) {
@@ -954,7 +955,7 @@ export const clientsApi = {
         }
         await apiFetch<void>(`/clients/leads/${leadId}`, { method: "DELETE" });
     },
-};
+});
 
 function toClientPayload(input: NewBuyerInput) {
     return {

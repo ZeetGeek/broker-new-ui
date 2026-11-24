@@ -12,6 +12,7 @@ import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { useRouter } from "@/lib/navigation";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { areaColorClassName } from "@/lib/styles/area-color";
+import { isTestSampleMode } from "@/lib/testing/test-lab";
 import { cn } from "@/lib/utils";
 import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 
@@ -47,7 +48,7 @@ import {
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
-import { DashboardError, DashboardLoading } from "@/features/dashboard/dashboard-page-shell";
+import { DashboardError } from "@/features/dashboard/dashboard-page-shell";
 import {
     mapBrokerDashboardView,
     mapBrokerDashboardViewFromMock,
@@ -62,6 +63,7 @@ import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 import { CommissionEarned } from "./commission-earned";
 import { DASHBOARD_DEFAULT_MONTHS } from "./commission-window";
 import { refreshDashboardQueries } from "./dashboard-refresh";
+import { DashboardSkeleton, DashboardStatSkeleton } from "./dashboard-skeleton";
 import { InventoryAndUpdates } from "./inventory-and-updates";
 import { useDashboardEarnings } from "./use-dashboard-earnings";
 import { useDashboardVisits } from "./use-dashboard-visits";
@@ -78,13 +80,16 @@ function WorkingAreas({ areas }: { areas: string[] }) {
 
     if (!uniqueAreas.length) {
         return (
-            <Link
-                href="/broker/profile"
-                className="inline-flex items-center gap-1.5 rounded-control font-medium text-brand focus-visible:outline-2 focus-visible:outline-ring pointer-coarse:min-block-11"
+            <Button
+                variant="link"
+                size="sm"
+                nativeButton={false}
+                render={<Link href="/broker/profile" />}
+                className="px-0 text-brand"
             >
                 <MapPin aria-hidden className="shrink-0 block-4 inline-4" />
                 Add working areas
-            </Link>
+            </Button>
         );
     }
 
@@ -256,15 +261,16 @@ export function NewBrokerDashboard() {
             />
         );
     }
-    if (!now || status === "idle" || status === "loading") return <DashboardLoading />;
+    if (!now || status === "idle" || status === "loading") return <DashboardSkeleton />;
 
     const view = isMockMode()
         ? mapBrokerDashboardViewFromMock(dashboardMock, profile, now)
         : mapBrokerDashboardView(data, profile, now);
     // Same source as the pipeline card, so the two never disagree.
-    const activeDeals = isMockMode()
-        ? view.pipelineCard.activeTotal
-        : (earnings.data?.live.count ?? null);
+    const activeDeals =
+        isMockMode() && !isTestSampleMode()
+            ? view.pipelineCard.activeTotal
+            : (earnings.data?.live.count ?? null);
     const overdue = tasks.tasks.filter(
         (task) =>
             !task.completedAt && !task.deletedAt && taskGroup(task, now.getTime()) === "overdue",
@@ -277,17 +283,19 @@ export function NewBrokerDashboard() {
             item.kind === "site_visit" && (item.state === "elapsed" || item.state === "missed"),
     ).length;
     const counts = todayVisits.data?.counts;
-    const visitTotal = isMockMode()
-        ? view.siteVisitCount
-        : counts
-          ? counts.upcoming +
-            counts.running +
-            counts.needs_update +
-            counts.completed +
-            counts.not_attended
-          : null;
+    const visitTotal =
+        isMockMode() && !isTestSampleMode()
+            ? view.siteVisitCount
+            : counts
+              ? counts.upcoming +
+                counts.running +
+                counts.needs_update +
+                counts.completed +
+                counts.not_attended
+              : null;
     // Every unmarked visit, any day — the same number as the Visits page tab.
-    const visitNeedsUpdate = isMockMode() ? needsUpdate : (visits.needsUpdate.data?.total ?? 0);
+    const visitNeedsUpdate =
+        isMockMode() && !isTestSampleMode() ? needsUpdate : (visits.needsUpdate.data?.total ?? 0);
     const taskCountKnown = !tasks.isLoading && !tasks.error;
     const lines = [
         visitTotal === null
@@ -317,6 +325,7 @@ export function NewBrokerDashboard() {
     const stats = [
         {
             label: "Visits today",
+            loading: visitTotal === null && todayVisits.isPending,
             icon: CalendarCheck,
             urgent: false,
             value: visitTotal,
@@ -325,11 +334,14 @@ export function NewBrokerDashboard() {
                     ? todayVisits.isError
                         ? "Couldn't load visits · open to retry"
                         : "Loading today's visits…"
-                    : `${counts?.upcoming ?? upcoming} upcoming · ${counts?.needs_update ?? needsUpdate} need an update`,
+                    : visitTotal === 0
+                      ? "No visits scheduled today"
+                      : `${counts?.upcoming ?? upcoming} upcoming · ${counts?.needs_update ?? needsUpdate} need an update`,
             href: "/broker/visits?range=today&tab=upcoming",
         },
         {
             label: "Overdue tasks",
+            loading: tasks.isLoading,
             icon: BellRing,
             urgent: overdue > 0,
             value: taskCountKnown ? overdue : null,
@@ -344,6 +356,7 @@ export function NewBrokerDashboard() {
         },
         {
             label: "Active deals",
+            loading: activeDeals === null && earnings.isPending,
             icon: Briefcase,
             urgent: false,
             value: activeDeals,
@@ -355,6 +368,7 @@ export function NewBrokerDashboard() {
         },
         {
             label: "Published listings",
+            loading: listings.isPending,
             icon: Building2,
             urgent: false,
             value: listings.data?.published ?? null,
@@ -500,7 +514,9 @@ export function NewBrokerDashboard() {
                             <span
                                 className={`h3 ms-auto shrink-0 tabular-nums ${stat.urgent ? "text-urgent" : "text-brand"}`}
                             >
-                                {stat.value === null ? (
+                                {stat.loading ? (
+                                    <DashboardStatSkeleton />
+                                ) : stat.value === null ? (
                                     <span aria-label="Count unavailable">—</span>
                                 ) : (
                                     stat.value.toLocaleString("en-IN")

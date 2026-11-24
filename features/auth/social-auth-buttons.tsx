@@ -9,6 +9,7 @@ import { addCollection, Icon } from "@iconify/react/offline";
 
 import { authApi } from "@/lib/api/auth";
 
+import toast from "@/components/shared/app-toast";
 import { Button } from "@/components/ui/button";
 
 import type { Portal } from "./portal";
@@ -68,16 +69,24 @@ export function SocialAuthButtons({
     const [isOpeningGoogle, setIsOpeningGoogle] = React.useState(false);
 
     function handleGoogle() {
-        setIsOpeningGoogle(true);
-        window.location.href = authApi.googleStartUrl({
-            role,
-            // Register already collected the role. Login must still ask new users.
-            roleChosen: action === "Sign up",
-            ...(action === "Sign up" && referralCode?.trim()
-                ? { referralCode: referralCode.trim().toUpperCase() }
-                : {}),
-            ...(action === "Sign up" && countryIso2 ? { countryIso2 } : {}),
-        });
+        try {
+            const url = authApi.googleStartUrl({
+                role,
+                // Register already collected the role. Login must still ask new users.
+                roleChosen: action === "Sign up",
+                ...(action === "Sign up" && referralCode?.trim()
+                    ? { referralCode: referralCode.trim().toUpperCase() }
+                    : {}),
+                ...(action === "Sign up" && countryIso2 ? { countryIso2 } : {}),
+            });
+            setIsOpeningGoogle(true);
+            window.location.href = url;
+        } catch (error) {
+            setIsOpeningGoogle(false);
+            toast.error(
+                error instanceof Error ? error.message : "Google sign-in couldn't open. Try again.",
+            );
+        }
     }
 
     // Apple sign-in disabled — not working yet. Uncomment to restore.

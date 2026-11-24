@@ -1,6 +1,7 @@
 import { dashboardApi, type DashboardRequestQuota } from "@/lib/api/dashboard";
 import { isMockMode } from "@/lib/api/mock-mode";
 import { representativeApi } from "@/lib/api/representative";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import { mapBrokerRequests } from "@/features/properties/your-listings/map-broker-request";
 import { MOCK_BROKER_REQUESTS } from "@/features/properties/your-listings/mock-my-listings";
@@ -21,7 +22,7 @@ function statusMatches(
     return itemType === "declined";
 }
 
-export const brokerRequestsApi = {
+export const brokerRequestsApi = withTestNetwork({
     async list(status: BrokerRequestStatusFilter = "all"): Promise<BrokerRequestsResult> {
         if (isMockMode()) {
             return {
@@ -50,4 +51,4 @@ export const brokerRequestsApi = {
         if (isMockMode()) return;
         await representativeApi.remind(_requestId);
     },
-};
+});

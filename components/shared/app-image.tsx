@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image, { type ImageProps } from "next/image";
 
+import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { cn } from "@/lib/utils";
 
 const DEFAULT_QUALITY = 80;
@@ -11,15 +12,14 @@ const DEFAULT_QUALITY = 80;
 // every API image and avoids a white flash while remote property photos load.
 const DEFAULT_BLUR_DATA_URL =
     "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='12'%3E%3Cpath fill='%23e9e7e2' d='M0 0h16v12H0z'/%3E%3C/svg%3E";
-const TRANSPARENT_FALLBACK = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
 
 type ImageSource = ImageProps["src"];
 
 export type AppImageProps = Omit<ImageProps, "alt" | "src"> & {
     /** Required — decorative images still pass an empty string explicitly. */
     alt: string;
-    src: ImageSource;
-    /** Replaces a failed image. `null` keeps the browser's normal error state. */
+    src?: ImageSource | null;
+    /** Missing and failed images use the shared placeholder. `null` lets the caller handle failure. */
     fallbackSrc?: ImageSource | null;
 };
 
@@ -50,7 +50,7 @@ function supportsBlurPlaceholder(src: ImageSource): boolean {
 export function AppImage({
     alt,
     src,
-    fallbackSrc = TRANSPARENT_FALLBACK,
+    fallbackSrc = PROPERTY_PLACEHOLDER_SRC,
     className,
     quality,
     placeholder,
@@ -65,9 +65,11 @@ export function AppImage({
 }: AppImageProps) {
     // Store the URL that failed so a changed `src` automatically gets a retry.
     const [failedSource, setFailedSource] = useState<string>();
-    const originalSourceKey = sourceKey(src);
-    const useFallback = failedSource === originalSourceKey && fallbackSrc !== null;
+    const hasSource = typeof src === "string" ? Boolean(src.trim()) : Boolean(src);
+    const originalSourceKey = src ? sourceKey(src) : "";
+    const useFallback = (!hasSource || failedSource === originalSourceKey) && fallbackSrc !== null;
     const resolvedSrc = useFallback ? fallbackSrc : src;
+    if (!resolvedSrc) return null;
     const bypassOptimizer = unoptimized ?? shouldBypassOptimizer(resolvedSrc);
     const shouldPreload = preload ?? priority ?? false;
     const resolvedPlaceholder =

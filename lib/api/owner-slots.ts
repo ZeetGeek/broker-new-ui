@@ -2,6 +2,7 @@ import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
 import { toApiUtcParts } from "@/lib/datetime/api";
 import { formatTimeIn } from "@/lib/format/date";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 export type VisitSlotStatus = "open" | "closed" | "booked";
 
@@ -158,7 +159,7 @@ const EMPTY_SHOWINGS_PAGE = (): OwnerShowingsPage => ({
     },
 });
 
-export const ownerSlotsApi = {
+export const ownerSlotsApi = withTestNetwork({
     list(params?: {
         propertyId?: string;
         status?: VisitSlotStatus;
@@ -240,4 +241,4 @@ export const ownerSlotsApi = {
             body: JSON.stringify({ status }),
         });
     },
-};
+});

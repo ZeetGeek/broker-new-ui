@@ -164,7 +164,7 @@ export function SlidingTabs<Value extends string | number>({
                 >
                     {option.label}
                     {option.count != null && option.count > 0 && (
-                        <span className={styles.count}>
+                        <span data-slot="tab-count" className={styles.count}>
                             {option.count > 99 ? "99+" : option.count}
                         </span>
                     )}

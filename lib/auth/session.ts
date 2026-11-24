@@ -1,5 +1,6 @@
 import { isOwnerUnavailable, OWNER_UNAVAILABLE_HREF } from "@/lib/auth/launch-policy";
 import type { Currency } from "@/lib/format/currency";
+import { isTestSampleMode } from "@/lib/testing/test-lab";
 
 export const GOOGLE_ONBOARDING_KEY = "google_onboarding_pending";
 
@@ -51,6 +52,7 @@ const LEGACY_REFRESH_TOKEN_KEY = "broker_refresh_token";
  */
 let memoryAccessToken: string | null = null;
 let memoryUser: AuthUser | null = null;
+let memoryIsSample = false;
 let sessionVersion = 0;
 
 /** Changes at identity boundaries, but not routine token rotation. */
@@ -63,13 +65,18 @@ export function getSessionVersion(): number {
  * Otherwise they live in sessionStorage, which the browser drops when the tab closes.
  */
 function activeStorage(): Storage {
+    if (isTestSampleMode()) return sessionStorage;
     return sessionStorage.getItem(TOKEN_KEY) ? sessionStorage : localStorage;
 }
 
+function sessionKey(key: string): string {
+    return isTestSampleMode() ? `crm.test-lab.data.${key}` : key;
+}
+
 export function getAccessToken(): string | null {
-    if (memoryAccessToken) return memoryAccessToken;
+    if (memoryAccessToken && memoryIsSample === isTestSampleMode()) return memoryAccessToken;
     if (typeof window === "undefined") return null;
-    return activeStorage().getItem(TOKEN_KEY);
+    return activeStorage().getItem(sessionKey(TOKEN_KEY));
 }
 
 /**
@@ -81,9 +88,9 @@ export function sessionCountryName(): string {
 }
 
 export function getStoredUser(): AuthUser | null {
-    if (memoryUser) return memoryUser;
+    if (memoryUser && memoryIsSample === isTestSampleMode()) return memoryUser;
     if (typeof window === "undefined") return null;
-    const raw = activeStorage().getItem(USER_KEY);
+    const raw = activeStorage().getItem(sessionKey(USER_KEY));
     if (!raw) return null;
     try {
         return JSON.parse(raw) as AuthUser;
@@ -101,7 +108,13 @@ export function setSession(session: AuthSession, options?: { persist?: boolean }
     if (previous?.id !== session.user.id || previous?.role !== session.user.role) sessionVersion++;
     memoryAccessToken = session.accessToken;
     memoryUser = session.user;
+    memoryIsSample = isTestSampleMode();
     if (typeof window === "undefined") return;
+    if (isTestSampleMode()) {
+        sessionStorage.setItem(sessionKey(TOKEN_KEY), session.accessToken);
+        sessionStorage.setItem(sessionKey(USER_KEY), JSON.stringify(session.user));
+        return;
+    }
     const persist = options?.persist ?? activeStorage() === localStorage;
     const target = persist ? localStorage : sessionStorage;
     const other = persist ? sessionStorage : localStorage;
@@ -117,6 +130,11 @@ export function clearSession() {
     memoryAccessToken = null;
     memoryUser = null;
     if (typeof window === "undefined") return;
+    if (isTestSampleMode()) {
+        sessionStorage.removeItem(sessionKey(TOKEN_KEY));
+        sessionStorage.removeItem(sessionKey(USER_KEY));
+        return;
+    }
     for (const storage of [localStorage, sessionStorage]) {
         storage.removeItem(TOKEN_KEY);
         storage.removeItem(USER_KEY);

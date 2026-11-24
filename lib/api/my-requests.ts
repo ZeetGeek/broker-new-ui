@@ -4,6 +4,7 @@ import { isMockMode } from "@/lib/api/mock-mode";
 import { representativeApi } from "@/lib/api/representative";
 import { formatDateIso } from "@/lib/format/date";
 import { dealListingApiQuery } from "@/lib/properties/deal-listing-query";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import {
     filterRequests,
@@ -64,7 +65,7 @@ function withClientCount(
     };
 }
 
-export const myRequestsApi = {
+export const myRequestsApi = withTestNetwork({
     async list(filters: RequestsFilters): Promise<RequestsResult> {
         if (isMockMode()) {
             const matched = sortRequests(filterRequests(MOCK_REQUESTS, filters), filters.sort);
@@ -127,4 +128,4 @@ export const myRequestsApi = {
         }
         await representativeApi.requestRepresentation(target.propertyId);
     },
-};
+});

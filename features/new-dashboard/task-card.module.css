@@ -148,6 +148,7 @@
     color: var(--color-ink-subtle);
     font-size: 0.75rem;
     font-weight: 600;
+    padding-block: 0.5rem;
 }
 @media (min-width: 640px) {
     .fixedCard {
@@ -199,10 +200,17 @@
   Mouse / trackpad: actions only show on hover, so both columns shrink to the
   check's original 22px — tight and equal on each side.
 */
-@media (hover: hover) and (pointer: fine) {
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
     .paper {
         --dashboard-row-gutter: 1.375rem;
         --dashboard-action-gutter: 1.375rem;
+    }
+}
+
+@media (max-width: 767px), (hover: none), (pointer: coarse) {
+    .paper {
+        --dashboard-row-gutter: 1.75rem;
+        --dashboard-action-gutter: 1.75rem;
     }
 }
 .dayColumnFlush {
@@ -210,6 +218,53 @@
 }
 .paper .paperList {
     min-block-size: 0;
+}
+
+@media (max-width: 767px) {
+    .paper :global([data-quick-add] [data-idle]) {
+        font-size: calc(0.875rem / var(--layout-font-scale, 1));
+    }
+
+    /* Both layers must use the same type metrics so the caret stays aligned. */
+    .paper :global([data-quick-add] textarea),
+    .paper :global([data-quick-add] [data-quick-add-mirror]) {
+        font-size: calc(0.75rem / var(--layout-font-scale, 1));
+        font-weight: 600;
+    }
+
+    .paper :global([data-quick-add]) {
+        --qa-line: var(--touch-target-min, calc(2.75rem / var(--layout-font-scale, 1)));
+    }
+
+    .paper :global([data-quick-add-meta]) {
+        padding-block: 0;
+    }
+
+    .paper :global([data-quick-add-help]) {
+        position: relative;
+        min-block-size: 2rem;
+        padding-block: 0;
+    }
+
+    .paper :global([data-quick-add-help])::after {
+        content: "";
+        position: absolute;
+        inset-block: calc((2rem - var(--qa-line)) / 2);
+        inset-inline: 0;
+    }
+
+    .paper :global([data-quick-add] > button[type="submit"]) {
+        position: relative;
+        inline-size: 2rem;
+        block-size: 2rem;
+        margin-block-start: calc((var(--qa-line) - 2rem) / 2);
+    }
+
+    .paper :global([data-quick-add] > button[type="submit"])::after {
+        content: "";
+        position: absolute;
+        inset: calc((2rem - var(--qa-line)) / 2);
+    }
 }
 .paper .paperList::after {
     content: none;
@@ -246,6 +301,24 @@
     margin-inline-start: auto;
     padding-block-end: 0.125rem;
 }
+
+@container task-card (max-width: 18rem) {
+    .paper .dayNav {
+        padding-inline: 0;
+    }
+    .dayNav {
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .dayNavButtons {
+        flex-wrap: wrap;
+        max-inline-size: 100%;
+    }
+    .fixedFooter {
+        padding-block: 0.25rem;
+        gap: 0;
+    }
+}
 @media (pointer: coarse) {
     /* The date/nav use the full card width; task action gutters belong to rows. */
     .paper .dayNav {
@@ -261,4 +334,19 @@
         min-inline-size: var(--touch-target-min, 2.75rem);
         min-block-size: var(--touch-target-min, 2.75rem);
     }
+}
+
+/* Filtered empty messages fill the remaining list area. */
+.fixedCard[data-empty="true"] .scrollViewport,
+.fixedCard[data-empty="true"] .list,
+.fixedCard[data-empty="true"] .list > [role="tabpanel"],
+.fixedCard[data-empty="true"] .dayColumnFlush {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-block-size: 0;
+}
+.fixedCard[data-empty="true"] .dayNav,
+.fixedCard[data-empty="true"] .paperList {
+    flex: none;
 }

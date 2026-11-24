@@ -9,7 +9,7 @@ import { useReducedMotion } from "motion/react";
 import { measuredPxToRem } from "@/lib/styles/rem";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Building2 } from "@/components/shared/icons";
+import { PropertyPlaceholderImage } from "@/components/shared/property-placeholder-image";
 import { Skeleton } from "@/components/shared/skeleton";
 
 import styles from "./property-photo-gallery.module.css";
@@ -176,8 +176,10 @@ export function PropertyPhotoGallery({
                                             </span>
                                         ) : (
                                             <span className={styles.photoEmpty}>
-                                                <Building2 size={32} strokeWidth={1.5} />
-                                                <span>Photo could not load</span>
+                                                <PropertyPlaceholderImage
+                                                    sizes="(max-width: 899px) 90vw, 560px"
+                                                    alt={`${property.title} - photo could not load`}
+                                                />
                                             </span>
                                         )}
                                     </button>
@@ -220,8 +222,10 @@ export function PropertyPhotoGallery({
                 </div>
             ) : (
                 <div className={styles.emptyGallery}>
-                    <Building2 size={32} strokeWidth={1.5} />
-                    <span>No property photos added</span>
+                    <PropertyPlaceholderImage
+                        sizes="(max-width: 899px) 90vw, 560px"
+                        alt={`${property.title} - no photos added`}
+                    />
                 </div>
             )}
             {lightboxOpen ? (

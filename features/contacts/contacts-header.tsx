@@ -55,7 +55,7 @@ export function ContactsHeader({
     };
 
     return (
-        <div className="sticky inset-bs-0 z-10 bg-canvas pbs-2 lg:pbs-0">
+        <div className="sticky inset-bs-0 z-10 bg-canvas">
             <TooltipProvider>
                 <ResponsiveListToolbar
                     selection={

@@ -1,9 +1,9 @@
+import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { cn } from "@/lib/utils";
-
-import { Building2 } from "@/components/shared/icons";
 
 import { AppImage } from "./app-image";
 import { HoverScaleMedia } from "./hover-scale-media";
+import { PropertyPlaceholderImage } from "./property-placeholder-image";
 
 const THUMB_FRAME = `relative shrink-0 overflow-hidden rounded-[8px] bg-surface-muted`;
 
@@ -23,8 +23,6 @@ export type PropertyThumbProps = {
      * the default width and the photo renders soft on a dense display.
      */
     sizes?: string;
-    /** Glyph size for the missing-photo state, matched to the frame. */
-    iconClassName?: string;
     /**
      * Zoom the photo on hover. Off on dense surfaces (the pipeline board),
      * where a card under the cursor should change colour, not move.
@@ -41,7 +39,7 @@ export type PropertyThumbProps = {
 
 /**
  * Compact property photo used in dashboard list rows.
- * Missing src keeps the designed muted placeholder (not a broken image).
+ * Missing or failed src shows the brand property placeholder.
  */
 export function PropertyThumb({
     src,
@@ -49,23 +47,28 @@ export function PropertyThumb({
     className,
     priority = false,
     sizes = "(max-width: 640px) 72px, 88px",
-    iconClassName = "block-5 inline-5",
     hoverScale = true,
     sizeClassName,
 }: PropertyThumbProps) {
     const frame = cn(THUMB_FRAME, sizeClassName ?? THUMB_SIZE);
-    if (!src) {
+    if (!src?.trim()) {
         return (
-            <span
-                className={cn(frame, "flex items-center justify-center text-ink-subtle", className)}
-                aria-hidden
-            >
-                <Building2 className={iconClassName} strokeWidth={1.75} />
+            <span className={cn(frame, className)} aria-hidden>
+                <PropertyPlaceholderImage sizes={sizes} />
             </span>
         );
     }
 
-    const image = <AppImage src={src} alt={alt} fill sizes={sizes} priority={priority} />;
+    const image = (
+        <AppImage
+            src={src}
+            alt={alt}
+            fill
+            sizes={sizes}
+            priority={priority}
+            fallbackSrc={PROPERTY_PLACEHOLDER_SRC}
+        />
+    );
 
     return (
         <span className={cn(frame, className)}>

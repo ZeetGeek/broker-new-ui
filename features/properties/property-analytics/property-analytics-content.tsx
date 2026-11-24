@@ -5,16 +5,18 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
 import { propertyAnalyticsApi } from "@/lib/api/property-analytics";
 import { plural } from "@/lib/format/plural";
 import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { getTestLabSettings } from "@/lib/testing/test-lab";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { AlertCircle, Building2, Clock, Info, Users } from "@/components/shared/icons";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
-import { PREVIEW_PROPERTY_ANALYTICS, USE_MOCK_DATA } from "@/config";
+import { PREVIEW_PROPERTY_ANALYTICS } from "@/config";
 import { AnalyticsClientList } from "@/features/properties/property-analytics/analytics-client-list";
 import { agoLabel } from "@/features/properties/property-analytics/analytics-labels";
 import { buildPropertyReport } from "@/features/properties/property-analytics/analytics-math";
@@ -55,7 +57,8 @@ function usePropertyAnalyticsReport({
     propertyId: string;
     listing: MyListingItem;
 }) {
-    const preview = PREVIEW_PROPERTY_ANALYTICS || USE_MOCK_DATA;
+    const preview =
+        isMockMode() || (getTestLabSettings().source === "default" && PREVIEW_PROPERTY_ANALYTICS);
     const query = useQuery({
         queryKey: [
             "property-analytics",
@@ -201,16 +204,17 @@ function LivePropertyAnalyticsContent({
 
     return (
         <div className={styles.report}>
-            {PREVIEW_PROPERTY_ANALYTICS || USE_MOCK_DATA ? (
+            {isMockMode() ||
+            (getTestLabSettings().source === "default" && PREVIEW_PROPERTY_ANALYTICS) ? (
                 <p
                     role="status"
                     className="body-sm flex items-start gap-2 rounded-inner bg-brand-soft px-4 py-3 text-brand-text"
                 >
                     <Info aria-hidden className="mbs-0.5 shrink-0 block-4 inline-4" />
                     <span>
-                        <strong className="font-semibold">Sample broker data.</strong> 60 clients
-                        with visits, offers and deal progress. Contact and deal actions are disabled
-                        for these samples.
+                        <strong className="font-semibold">Sample broker data.</strong>{" "}
+                        {report.counts.total} clients with visits, offers and deal progress. Contact
+                        and deal actions are disabled for these samples.
                     </span>
                 </p>
             ) : null}

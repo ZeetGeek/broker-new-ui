@@ -5,8 +5,9 @@ import {
     showingListingFacts,
 } from "@/lib/api/broker-visits-map";
 import { apiFetch } from "@/lib/api/client";
-import { paginateItems } from "@/lib/api/mock-mode";
+import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import { matchesVisitSearch } from "@/lib/search/crm-search";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 /**
  * Broker Visits client for `/slots/broker/*`. Converts API showings into the
@@ -185,7 +186,7 @@ function json(method: "POST" | "PATCH", body: unknown) {
     };
 }
 
-export const siteVisitsApi = {
+export const siteVisitsApi = withTestNetwork({
     async searchSource(q: VisitListQuery, signal?: AbortSignal): Promise<VisitListPage> {
         const base = { ...q, search: undefined, limit: 100 };
         const first = await siteVisitsApi.list({ ...base, page: 1 }, signal);
@@ -203,6 +204,11 @@ export const siteVisitsApi = {
         signal?: AbortSignal,
         searchSource?: () => Promise<VisitListPage>,
     ): Promise<VisitListPage> {
+        if (isMockMode()) {
+            const { sampleVisits } = await import("@/lib/testing/sample-visits");
+            return sampleVisits.list(q);
+        }
+
         if (q.search?.trim()) {
             const source = await (searchSource?.() ?? siteVisitsApi.searchSource(q, signal));
             signal?.throwIfAborted();
@@ -261,6 +267,11 @@ export const siteVisitsApi = {
 
     /** The deal's earliest visit that is not yet marked or cancelled. */
     async activeForLead(leadId: string): Promise<BrokerVisit | null> {
+        if (isMockMode()) {
+            const { sampleVisits } = await import("@/lib/testing/sample-visits");
+            return sampleVisits.list({ tab: "active", leadId, limit: 1 }).items[0] ?? null;
+        }
+
         const params = new URLSearchParams({
             tab: "active",
             leadId,
@@ -274,6 +285,11 @@ export const siteVisitsApi = {
 
     /** Deals the broker can book a visit for (exclusive listings, open deals). */
     async bookable(): Promise<BookableLead[]> {
+        if (isMockMode()) {
+            const { sampleVisits } = await import("@/lib/testing/sample-visits");
+            return sampleVisits.bookable();
+        }
+
         const response = await apiFetch<ApiExclusiveOpen>(
             "/slots/broker/exclusive/open?leadsOnly=true",
         );
@@ -296,6 +312,11 @@ export const siteVisitsApi = {
         durationMinutes: VisitDuration;
         excludeShowingId?: string;
     }): Promise<string[]> {
+        if (isMockMode()) {
+            const { sampleVisits } = await import("@/lib/testing/sample-visits");
+            return sampleVisits.freeTimes(a);
+        }
+
         const params = new URLSearchParams({
             propertyId: a.propertyId,
             from: a.date,
@@ -317,6 +338,11 @@ export const siteVisitsApi = {
         notes?: string;
         reminders?: number[];
     }): Promise<void> {
+        if (isMockMode()) {
+            const { sampleVisits } = await import("@/lib/testing/sample-visits");
+            return sampleVisits.book(a);
+        }
+
         await apiFetch("/slots/broker/exclusive/book", json("POST", a));
     },
 
@@ -329,12 +355,22 @@ export const siteVisitsApi = {
             reminders?: number[];
         },
     ): Promise<BrokerVisit> {
+        if (isMockMode()) {
+            const { sampleVisits } = await import("@/lib/testing/sample-visits");
+            return sampleVisits.reschedule(id, a);
+        }
+
         return mapShowing(
             await apiFetch<ApiShowing>(`/slots/broker/showings/${id}/reschedule`, json("PATCH", a)),
         );
     },
 
     async updateReminders(id: string, reminders: number[]): Promise<BrokerVisit> {
+        if (isMockMode()) {
+            const { sampleVisits } = await import("@/lib/testing/sample-visits");
+            return sampleVisits.updateReminders(id, reminders);
+        }
+
         return mapShowing(
             await apiFetch<ApiShowing>(
                 `/slots/broker/showings/${id}/reminders`,
@@ -344,10 +380,20 @@ export const siteVisitsApi = {
     },
 
     async cancel(id: string): Promise<void> {
+        if (isMockMode()) {
+            const { sampleVisits } = await import("@/lib/testing/sample-visits");
+            return sampleVisits.cancel(id);
+        }
+
         await apiFetch(`/slots/broker/showings/${id}/cancel`, { method: "PATCH" });
     },
 
     async setOutcome(id: string, status: "completed" | "no_show"): Promise<BrokerVisit> {
+        if (isMockMode()) {
+            const { sampleVisits } = await import("@/lib/testing/sample-visits");
+            return sampleVisits.setOutcome(id, status);
+        }
+
         return mapShowing(
             await apiFetch<ApiShowing>(
                 `/slots/broker/showings/${id}/outcome`,
@@ -355,4 +401,4 @@ export const siteVisitsApi = {
             ),
         );
     },
-};
+});

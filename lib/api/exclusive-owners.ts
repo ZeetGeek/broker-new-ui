@@ -1,9 +1,13 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import { isTestSampleMode } from "@/lib/testing/test-lab";
+import { withTestNetwork } from "@/lib/testing/test-network";
 import {
     type ExclusiveOwnerFormValues,
     normalizeExclusiveOwnerPhone,
 } from "@/lib/validation/exclusive-owner";
+
+import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-my-listings";
 
 export type ExclusiveOwnerProperty = {
     id: string;
@@ -60,7 +64,48 @@ export type ExclusiveOwnerListQuery = {
 
 export type NewExclusiveOwnerInput = ExclusiveOwnerFormValues;
 
-const mockExclusiveOwners: ExclusiveOwnerItem[] = [];
+const mockExclusiveOwners: ExclusiveOwnerItem[] = isTestSampleMode()
+    ? MOCK_MY_LISTINGS_SEED.map((listing, index) => ({
+          id: listing.exclusiveOwnerId ?? `sample-owner-${listing.id}`,
+          fullName:
+              listing.ownerName ||
+              ["Aarav Shah", "Priya Desai", "Mehul Patel", "Nisha Mehta"][index % 4] +
+                  (index > 3 ? ` ${index + 1}` : ""),
+          name:
+              listing.ownerName ||
+              ["Aarav Shah", "Priya Desai", "Mehul Patel", "Nisha Mehta"][index % 4] +
+                  (index > 3 ? ` ${index + 1}` : ""),
+          phone: `+91980000${String(index).padStart(4, "0")}`,
+          email: null,
+          ownerType: "individual",
+          society: listing.society || "Sample society",
+          area: listing.locality,
+          country: "India",
+          state: null,
+          city: listing.city,
+          pincode: listing.pinCode,
+          fullAddress: listing.address,
+          reraNumber: null,
+          source: "personal_contact",
+          notes: "Sample owner for testing.",
+          propertyCount: 1,
+          properties: [
+              {
+                  id: listing.id,
+                  title: listing.title,
+                  city: listing.city,
+                  address: listing.address,
+                  photos: listing.imageSrcs,
+                  salePrice: listing.saleAmountInr,
+                  monthlyRent: listing.rentAmountInr,
+                  propertyType: listing.category,
+              },
+          ],
+          origin: "custom",
+          createdAt: listing.createdAt,
+          updatedAt: listing.updatedAt,
+      }))
+    : [];
 
 function digitsOnly(value: string): string {
     return value.replace(/\D/g, "");
@@ -102,7 +147,7 @@ function matchesSearch(item: ExclusiveOwnerItem, search?: string) {
         .includes(needle);
 }
 
-export const exclusiveOwnersApi = {
+export const exclusiveOwnersApi = withTestNetwork({
     async list(
         query: ExclusiveOwnerListQuery = {},
         signal?: AbortSignal,
@@ -178,7 +223,7 @@ export const exclusiveOwnersApi = {
         }
         await apiFetch<void>(`/exclusive-owners/${ownerId}`, { method: "DELETE" });
     },
-};
+});
 
 export function exclusiveOwnerPhoneDigits(phone: string): string {
     const digits = digitsOnly(phone);

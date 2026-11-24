@@ -20,7 +20,6 @@ import {
     Check,
     CircleHelp,
     Copy,
-    ImageIcon,
     List,
     LockKeyhole,
     MapPin,
@@ -32,6 +31,7 @@ import {
 import { OVERLAY_ICON_BUTTON_COLORS } from "@/components/shared/overlay-card";
 import { ListingAskPrices } from "@/components/shared/price-with-commission";
 import { PropertyOwnerContactActions } from "@/components/shared/property-owner-contact-actions";
+import { PropertyPlaceholderImage } from "@/components/shared/property-placeholder-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -362,28 +362,14 @@ export function LiveSummaryPanel({
                             unoptimized={/^(blob:|https?:)/.test(cover.url)}
                         />
                     ) : (
-                        <div className="flex flex-col items-center justify-center gap-4 px-5 pbs-12 pbe-6 text-center min-block-60 min-inline-0">
-                            <div className="flex flex-col items-center gap-3">
-                                <span className="flex items-center justify-center rounded-full border-2 border-dashed border-brand/35 text-brand block-12 inline-12">
-                                    <ImageIcon
-                                        className="block-6 inline-6"
-                                        strokeWidth={1.5}
-                                        aria-hidden
-                                    />
-                                </span>
-                                <p className="text-sm/5 font-semibold text-ink">
-                                    Add a cover photo
-                                </p>
-                                <p className="body-xs text-ink-muted">
-                                    Help people recognise your property.
-                                </p>
-                            </div>
+                        <div className="relative flex items-end justify-center px-5 py-4 text-center min-block-60 min-inline-0">
+                            <PropertyPlaceholderImage sizes="(max-width: 1279px) 100vw, 320px" />
                             {photoFilesRef || onGoToMedia ? (
                                 <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
-                                    className="gap-1.5 border-brand/25 bg-surface text-brand-text hover:border-brand/50 hover:bg-surface"
+                                    className="relative z-1 gap-1.5 border-brand/25 bg-surface text-brand-text hover:border-brand/50 hover:bg-surface"
                                     onClick={() =>
                                         photoFilesRef
                                             ? coverInputRef.current?.click()

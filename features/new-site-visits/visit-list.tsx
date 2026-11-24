@@ -18,6 +18,7 @@ import {
     Search,
     SlidersHorizontal,
 } from "@/components/shared/icons";
+import { ListPageHeading } from "@/components/shared/list-page-heading";
 import {
     ListAddButton,
     ListSearchField,
@@ -25,6 +26,7 @@ import {
 } from "@/components/shared/list-toolbar";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { ListStatusSelect } from "@/components/shared/responsive-list-toolbar";
+import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { StatusTabs } from "@/components/shared/status-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -211,67 +213,65 @@ export function VisitList({
         >
             <PortalSectionNav>
                 <header className={styles.pageHeader}>
-                    <h1 className={`h3 text-start min-inline-0 ${styles.pageTitle}`}>
-                        <span className="text-ink">Site visits.</span>{" "}
-                        <span className={styles.headerSummary}>
-                            <RotatingHeaderSummary
-                                key={summaryLines.join("|")}
-                                lines={
-                                    summaryLines.length ? summaryLines : ["Your visits at a glance"]
-                                }
-                                loadingPlaceholder="Your visits at a glance"
-                            />
-                        </span>
-                    </h1>
+                    <ListPageHeading title="Site visits.">
+                        <RotatingHeaderSummary
+                            key={summaryLines.join("|")}
+                            lines={summaryLines.length ? summaryLines : ["Your visits at a glance"]}
+                            loadingPlaceholder="Your visits at a glance"
+                        />
+                    </ListPageHeading>
                     {firstRun && (
                         <ListAddButton
                             label="Schedule visit"
                             shortcutId="schedule_visit"
                             onClick={onSchedule}
+                            className={styles.firstSchedule}
                         />
                     )}
                 </header>
             </PortalSectionNav>
             {!firstRun && (
-                <div className={styles.listToolbar}>
-                    <div className={styles.toolbarFilters}>
-                        <FilterChip
-                            label="Filters"
-                            icon={SlidersHorizontal}
-                            count={filterCount}
-                            isActive={filterCount > 0}
-                            clearable={filterCount > 0}
-                            onClick={onFilters}
-                            onClear={onClear}
-                        />
-                    </div>
-                    <div className={styles.statusTabs}>
-                        <StatusTabs
-                            label="Visit status"
-                            value={tab}
-                            tabs={VISIT_TABS.map((t) => ({
-                                ...t,
-                                count: counts[t.value],
-                                dotClassName: VISIT_STATUS_COLORS[t.value].dotClassName,
-                            }))}
-                        />
-                    </div>
-                    <div className={styles.statusSelect}>
-                        <ListStatusSelect
-                            label="Status"
-                            value={tab}
-                            options={VISIT_TABS.map((t) => ({
-                                ...t,
-                                count: counts[t.value],
-                                dotClassName: VISIT_STATUS_COLORS[t.value].dotClassName,
-                            }))}
-                            onChange={(value) => {
-                                const selected = VISIT_TABS.find((t) => t.value === value);
-                                if (selected) onTab(selected.value);
-                            }}
-                        />
-                    </div>
-                    <div className={styles.toolbarSearch}>
+                <ResponsiveListToolbar
+                    selection={
+                        <>
+                            <FilterChip
+                                label="Filters"
+                                icon={SlidersHorizontal}
+                                count={filterCount}
+                                isActive={filterCount > 0}
+                                clearable={filterCount > 0}
+                                onClick={onFilters}
+                                onClear={onClear}
+                            />
+                            <div className={styles.statusTabs}>
+                                <StatusTabs
+                                    label="Visit status"
+                                    value={tab}
+                                    tabs={VISIT_TABS.map((t) => ({
+                                        ...t,
+                                        count: counts[t.value],
+                                        dotClassName: VISIT_STATUS_COLORS[t.value].dotClassName,
+                                    }))}
+                                />
+                            </div>
+                            <div className={styles.statusSelect}>
+                                <ListStatusSelect
+                                    label="Status"
+                                    value={tab}
+                                    options={VISIT_TABS.map((t) => ({
+                                        ...t,
+                                        count: counts[t.value],
+                                        dotClassName: VISIT_STATUS_COLORS[t.value].dotClassName,
+                                    }))}
+                                    onChange={(value) => {
+                                        const selected = VISIT_TABS.find((t) => t.value === value);
+                                        if (selected) onTab(selected.value);
+                                    }}
+                                />
+                            </div>
+                        </>
+                    }
+                    search={
                         <ListSearchField
                             searchHelp={CRM_SEARCH_HELP.visits}
                             aria-label="Search visits"
@@ -280,7 +280,25 @@ export function VisitList({
                             debounceMs={0}
                             fullWidth
                         />
-                    </div>
+                    }
+                    actions={
+                        <ListToolbarSelect
+                            className={styles.toolbarSort}
+                            label="Sort visits"
+                            mobileLabel="Sort"
+                            value={sort}
+                            options={SORT_OPTIONS}
+                            onChange={onSort}
+                        />
+                    }
+                    primaryAction={
+                        <ListAddButton
+                            label="Schedule visit"
+                            shortcutId="schedule_visit"
+                            onClick={onSchedule}
+                        />
+                    }
+                >
                     <ListToolbarSelect
                         active
                         className={styles.toolbarDates}
@@ -288,20 +306,6 @@ export function VisitList({
                         value={range}
                         options={DATE_RANGES}
                         onChange={onRange}
-                    />
-                    <ListToolbarSelect
-                        className={styles.toolbarSort}
-                        label="Sort visits"
-                        mobileLabel="Sort"
-                        value={sort}
-                        options={SORT_OPTIONS}
-                        onChange={onSort}
-                    />
-                    <ListAddButton
-                        label="Schedule visit"
-                        shortcutId="schedule_visit"
-                        onClick={onSchedule}
-                        className={styles.toolbarSchedule}
                     />
                     {filtered && (
                         <Button
@@ -313,7 +317,7 @@ export function VisitList({
                             Clear filters
                         </Button>
                     )}
-                </div>
+                </ResponsiveListToolbar>
             )}
             <TabsContent value={tab} aria-label={LIST_COPY[tab]} aria-busy={loading}>
                 {loadError && !loading ? (

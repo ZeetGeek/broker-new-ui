@@ -12,6 +12,7 @@ import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 import { useDebouncedValue } from "@/hooks/use-locations";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import toast, { showAppToast } from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AlertCircle } from "@/components/shared/icons";
@@ -812,12 +813,12 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     };
 
     return (
-        <Tabs value={view} className="gap-3 min-inline-0 md:gap-5" onValueChange={selectView}>
+        <Tabs value={view} className="gap-4 min-inline-0 md:gap-5" onValueChange={selectView}>
             {isFirstLoad && isFetching ? (
                 <PipelineHeaderSkeleton />
             ) : (
                 <>
-                    <div className="flex items-center justify-between gap-2 min-inline-0">
+                    <PortalSectionNav>
                         <PipelineIntro
                             deals={view === "board" ? liveDeals : outcomeDeals}
                             view={view}
@@ -825,19 +826,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                             isLoading={isFirstLoad && isFetching}
                             hasError={error != null}
                         />
-                        <div className="max-inline-[55%] min-inline-0 md:hidden">
-                            <PipelineOutcomeTabs
-                                compact
-                                onChange={selectView}
-                                view={view}
-                                counts={{
-                                    board: summary?.liveTotal ?? null,
-                                    sold: summary?.closedCount ?? null,
-                                    lost: summary?.lostCount ?? null,
-                                }}
-                            />
-                        </div>
-                    </div>
+                    </PortalSectionNav>
                     {filters.stage ? (
                         <div className="body-sm flex flex-wrap items-center gap-3 text-ink-muted">
                             <span>Showing {DEAL_STAGE_META[filters.stage].label} deals</span>

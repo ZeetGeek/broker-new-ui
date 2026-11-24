@@ -16,7 +16,7 @@ import { useAppSelector } from "@/store/hooks";
  */
 export function useDashboardVisits(now: Date | null) {
     const hydrated = useAppSelector((state) => state.auth.hydrated);
-    // Demo mode answers every call with an empty list, like the Visits page.
+    // The dashboard and Visits page use the same date-filtered source, including test samples.
     const enabled = hydrated && now !== null;
     const today = now ? visitDateBounds("today", now.getTime()) : { from: "", to: "" };
     const base = [...VISITS_KEY, "list", "dashboard"] as const;

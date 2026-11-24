@@ -1,7 +1,8 @@
-import { apiFetch } from "@/lib/api/client";
+import { ApiError, apiFetch } from "@/lib/api/client";
 import { isMockMode, MOCK_ACCESS_TOKEN, MOCK_AUTH_USER } from "@/lib/api/mock-mode";
 import { isOwnerUnavailable, signupPortal } from "@/lib/auth/launch-policy";
 import { type AuthUser, getStoredUser } from "@/lib/auth/session";
+import { isTestLabReloading, isTestSampleMode } from "@/lib/testing/test-lab";
 
 import { API_URL } from "@/config";
 
@@ -146,6 +147,13 @@ export const authApi = {
         /** True when the register page already collected owner/broker. */
         roleChosen?: boolean;
     }) {
+        if (isTestLabReloading())
+            throw new ApiError("Test setup is changing. Reload the page to continue.", 0);
+        if (isTestSampleMode())
+            throw new ApiError(
+                "Google sign-in is unavailable with sample data. Switch Test lab to Live API to use it.",
+                0,
+            );
         const params = new URLSearchParams();
         params.set("role", signupPortal(options?.role ?? "broker"));
         if (options?.accountType) {

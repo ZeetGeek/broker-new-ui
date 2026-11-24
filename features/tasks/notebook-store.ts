@@ -4,10 +4,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 import { tasksApi } from "@/lib/api/tasks";
+import { testStorageKey } from "@/lib/testing/test-lab";
+import { simulateTestRequest } from "@/lib/testing/test-network";
 
 import { defaultNotebook, notebookSchema, type TaskNotebook } from "./notebook-model";
 
-const keyFor = (accountId: string) => `crm.private-task-lists.mock.v1.${accountId}`;
+const keyFor = (accountId: string) => testStorageKey(`crm.private-task-lists.mock.v1.${accountId}`);
 export const notebookQueryKey = (accountId: string) => ["private-task-lists", accountId] as const;
 export type NotebookUpdater = (current: TaskNotebook) => TaskNotebook;
 
@@ -40,14 +42,22 @@ export function useTaskNotebook(accountId: string) {
     const queryKey = notebookQueryKey(accountId);
     const query = useQuery({
         queryKey,
-        queryFn: mock ? () => notebookPreviewStore.read(accountId) : fetchNotebook,
+        queryFn: mock
+            ? async () => {
+                  await simulateTestRequest();
+                  return notebookPreviewStore.read(accountId);
+              }
+            : fetchNotebook,
         staleTime: mock ? Infinity : 60_000,
         retry: mock ? false : 1,
     });
     const mutation = useMutation({
         scope: { id: `task-notebook:${accountId}` },
         mutationFn: async (updater: NotebookUpdater) => {
-            if (mock) return notebookPreviewStore.update(accountId, updater);
+            if (mock) {
+                await simulateTestRequest();
+                return notebookPreviewStore.update(accountId, updater);
+            }
             const current = client.getQueryData<TaskNotebook>(queryKey) ?? (await fetchNotebook());
             const next = notebookSchema.parse(updater(current));
             return notebookSchema.parse(await tasksApi.replaceNotebook(next));

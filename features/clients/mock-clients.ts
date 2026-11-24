@@ -1,3 +1,5 @@
+import { testData, testRelationMap } from "@/lib/testing/test-data";
+
 import type { ClientItem } from "@/features/clients/types";
 
 const DAY_MS = 86_400_000;
@@ -7,7 +9,7 @@ function daysAgo(days: number): string {
 }
 
 /** The broker's own book of buyers, for the attach-to-property picker. */
-export const MOCK_CLIENTS: ClientItem[] = [
+export const MOCK_CLIENTS: ClientItem[] = testData([
     {
         id: "cl_001",
         name: "Ankit Shah",
@@ -144,13 +146,13 @@ export const MOCK_CLIENTS: ClientItem[] = [
         attachedPropertyCount: 0,
         documents: [],
     },
-];
+]);
 
 /**
  * Which buyers are already on which property, keyed by property id. Mirrors
  * what the API would return alongside the request.
  */
-export const MOCK_PROPERTY_CLIENTS: Record<string, string[]> = {
+export const MOCK_PROPERTY_CLIENTS: Record<string, string[]> = testRelationMap({
     pr_099: ["cl_002"],
     pr_088: ["cl_004", "cl_007"],
-};
+});

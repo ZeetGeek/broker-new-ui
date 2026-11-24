@@ -8,7 +8,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import { measuredPxToRem } from "@/lib/styles/rem";
 
 import { AppImage } from "@/components/shared/app-image";
-import { Camera } from "@/components/shared/icons";
+import { PropertyPlaceholderImage } from "@/components/shared/property-placeholder-image";
 import { Skeleton } from "@/components/shared/skeleton";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 
@@ -152,9 +152,8 @@ export function PropertyGallery({
         return (
             <div>
                 <div className={styles.noPhotos}>
-                    <Camera size={32} strokeWidth={1.5} aria-hidden />
-                    <h2>No property photos yet</h2>
-                    <p>Photos will appear here when they are added.</p>
+                    <PropertyPlaceholderImage sizes="(max-width: 1199px) 100vw, 1200px" priority />
+                    <h2 className="sr-only">No property photos yet</h2>
                     {editHref ? <Link href={editHref}>Add property photos</Link> : null}
                 </div>
                 {navigation ? (

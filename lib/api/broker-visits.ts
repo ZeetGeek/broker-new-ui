@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/broker-visits-map";
 import { ApiError, apiFetch } from "@/lib/api/client";
 import { clientsApi } from "@/lib/api/clients";
+import { withTestNetwork } from "@/lib/testing/test-network";
 import { buildVisitSummary } from "@/lib/visits/summary";
 
 import type {
@@ -183,7 +184,7 @@ export class SlotTakenError extends Error {
 
 const bookedSlotIds = new Set<string>();
 
-export const brokerVisitsApi = {
+export const brokerVisitsApi = withTestNetwork({
     async summary(): Promise<BrokerVisitSummary> {
         if (USE_MOCK_VISITS) {
             return buildVisitSummary(
@@ -535,4 +536,4 @@ export const brokerVisitsApi = {
         }
         return clientsApi.listOpenLeadClientIds(propertyId);
     },
-};
+});

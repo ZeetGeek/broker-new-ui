@@ -13,6 +13,7 @@ import { PREF_KEYS } from "@/lib/prefs/keys";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { AddFab } from "@/components/shared/add-fab";
 import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -457,17 +458,19 @@ export function ContactsPage({
 
     return (
         <TooltipProvider>
-            <div className="flex flex-col gap-3 min-inline-0 sm:gap-6">
-                {summaryQuery.isPending ? (
-                    <ContactsIntroSkeleton />
-                ) : (
-                    <ContactsIntro
-                        summary={summary}
-                        tab={filters.tab}
-                        isLoading={summaryQuery.isPending}
-                        hasError={summaryQuery.isError}
-                    />
-                )}
+            <div className="flex flex-col gap-4 min-inline-0 sm:gap-6">
+                <PortalSectionNav>
+                    {summaryQuery.isPending ? (
+                        <ContactsIntroSkeleton />
+                    ) : (
+                        <ContactsIntro
+                            summary={summary}
+                            tab={filters.tab}
+                            isLoading={summaryQuery.isPending}
+                            hasError={summaryQuery.isError}
+                        />
+                    )}
+                </PortalSectionNav>
                 {addDealFlow ? (
                     <div
                         className="

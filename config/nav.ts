@@ -77,7 +77,7 @@ const BROKER_MARKETPLACE_NAV_ITEMS: NavItem[] = [
  * Compact desktop nav shows the first 3 — everything after goes under "More".
  */
 export const BROKER_NAV_ITEMS: NavItem[] = [
-    { label: "Dashboard", href: "/broker/dashboard", shortcutId: "dashboard" },
+    { label: "Dashboard", mobileLabel: "Home", href: "/broker/dashboard", shortcutId: "dashboard" },
     { label: "Clients", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
     {
         label: "My Listings",

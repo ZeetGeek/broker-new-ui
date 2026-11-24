@@ -56,11 +56,7 @@ export function ListStatusSelect({
                     (selected?.label ?? value) +
                     (selected?.count ? ", " + selected.count : "")
                 }
-                className={cn(
-                    filterChipClassName(true),
-                    "border! text-sm! block-[38px]! pointer-coarse:min-block-11",
-                    styles.trigger,
-                )}
+                className={cn(filterChipClassName(true), "border! text-sm!", styles.trigger)}
             >
                 {!hideLabel ? <span className={styles.label}>{label}:</span> : null}
                 <span
@@ -126,22 +122,23 @@ export function ResponsiveListToolbar({
     selection,
     search,
     actions,
+    primaryAction,
     children,
-    inlineMobileActions = false,
 }: {
     selection: ReactNode;
     search: ReactNode;
     actions: ReactNode;
+    /** Full-width on phones; beside sorting on larger screens. */
+    primaryAction?: ReactNode;
     children?: ReactNode;
-    /** Keep search and compact actions together on phones, below the selection row. */
-    inlineMobileActions?: boolean;
 }) {
     return (
         <div className={styles.container}>
-            <div className={cn(styles.toolbar, inlineMobileActions && styles.inlineMobileActions)}>
+            <div className={cn(styles.toolbar, primaryAction && styles.hasPrimaryAction)}>
                 <div className={styles.selection}>{selection}</div>
                 <div className={styles.search}>{search}</div>
                 <div className={styles.actions}>{actions}</div>
+                {primaryAction ? <div className={styles.primaryAction}>{primaryAction}</div> : null}
             </div>
             {children}
         </div>
