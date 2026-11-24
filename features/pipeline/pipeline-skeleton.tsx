@@ -96,7 +96,7 @@ function DealCardSkeleton({
     );
 }
 
-/** Responsive cold-load placeholders; existing records stay visible during refetches. */
+/** Results-only placeholders for the first load and changed search/filter criteria. */
 export function PipelineBoardSkeleton({
     view = "board",
     mobileStage = "new",

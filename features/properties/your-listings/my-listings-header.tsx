@@ -8,6 +8,7 @@ import {
     normalizePropertyCriteria,
     propertyCriteriaCount,
 } from "@/lib/properties/list-criteria";
+import { CRM_SEARCH_HELP } from "@/lib/search/search-help";
 import { getShortcut } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
@@ -357,7 +358,7 @@ export function MyListingsHeader({
                         search={
                             <ListSearchField
                                 fullWidth
-                                searchHelp="Search listings by property title, locality, city or property type."
+                                searchHelp={CRM_SEARCH_HELP.listings}
                                 aria-label="Search your listings"
                                 value={filters.q}
                                 onChange={(q) => onFiltersChange({ ...filters, q, page: 1 })}

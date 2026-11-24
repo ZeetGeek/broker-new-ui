@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -15,6 +14,7 @@ import { buildWhatsAppInviteUrl } from "@/lib/share/referral";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
+import toast from "@/components/shared/app-toast";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 
 import { CreditsLedger } from "@/features/referrals/credits-ledger";

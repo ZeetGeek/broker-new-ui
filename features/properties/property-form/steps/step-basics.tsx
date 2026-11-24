@@ -2,10 +2,10 @@
 
 import { useRef } from "react";
 import { useFormContext } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { DEFAULT_PROPERTY_DRAFT, type PropertyDraftValues } from "@/lib/schemas/property";
 
+import toast from "@/components/shared/app-toast";
 import { Home, LayoutGrid, Tag } from "@/components/shared/icons";
 
 import {

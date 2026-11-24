@@ -1,7 +1,5 @@
 "use client";
 
-import toast from "react-hot-toast";
-
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { useReducedMotion } from "motion/react";
 import Lightbox from "yet-another-react-lightbox";
@@ -9,6 +7,7 @@ import DownloadPlugin from "yet-another-react-lightbox/plugins/download";
 import Inline from "yet-another-react-lightbox/plugins/inline";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 
+import toast from "@/components/shared/app-toast";
 import { Download, Minus, Plus, X } from "@/components/shared/icons";
 import { Dialog, DialogClose, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 

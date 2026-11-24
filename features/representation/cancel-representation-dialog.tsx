@@ -1,16 +1,16 @@
 "use client";
 
 import { useId, useState } from "react";
-import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import { TriangleAlert } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 const REASON_MAX = MAX_CHARS.endRepresentationReason;
@@ -93,25 +93,19 @@ export function CancelRepresentationDialog({
                     : `${counterpartName} will stop representing ${propertyTitle}. This happens right away.`
             }
             footer={
-                <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => handleOpenChange(false)}
-                    >
-                        {isBroker ? "Keep representing" : "Keep broker"}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="destructive"
-                        disabled={busy}
-                        loading={busy}
-                        onClick={() => void confirm()}
-                    >
-                        {isBroker ? "Stop selling" : "Remove broker"}
-                    </Button>
-                </div>
+                <AppModalFooter
+                    className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full"
+                    secondaryLabel={isBroker ? "Keep representing" : "Keep broker"}
+                    secondaryVariant="ghost"
+                    secondaryDisabled={busy}
+                    onSecondary={() => handleOpenChange(false)}
+                    primaryLabel={isBroker ? "Stop selling" : "Remove broker"}
+                    primaryType="button"
+                    primaryVariant="destructive"
+                    primaryDisabled={busy}
+                    primaryLoading={busy}
+                    onPrimary={() => void confirm()}
+                />
             }
         >
             <div className="flex flex-col gap-4">

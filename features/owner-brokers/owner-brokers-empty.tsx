@@ -27,7 +27,7 @@ export function OwnerBrokersEmpty({
                     className="py-16"
                 >
                     {onClearSearch ? (
-                        <Button variant="secondary" size="sm" onClick={onClearSearch}>
+                        <Button variant="accent" size="sm" onClick={onClearSearch}>
                             Clear the search
                         </Button>
                     ) : null}
@@ -54,7 +54,7 @@ export function OwnerBrokersEmpty({
                 className="py-16"
             >
                 {onClearSearch ? (
-                    <Button variant="secondary" size="sm" onClick={onClearSearch}>
+                    <Button variant="accent" size="sm" onClick={onClearSearch}>
                         Clear the search
                     </Button>
                 ) : null}

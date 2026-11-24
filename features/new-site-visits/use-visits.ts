@@ -23,13 +23,22 @@ const PAGE_SIZE = 20;
 const VISIT_CHANGED_EVENT = "visit.changed";
 
 export function useVisitList(query: Omit<VisitListQuery, "page" | "limit">) {
+    const queryClient = useQueryClient();
+    const userId = useAppSelector((state) => state.auth.user?.id);
+    const sourceQuery = { ...query, search: undefined };
     return useInfiniteQuery({
         queryKey: [...VISITS_KEY, "list", query],
-        queryFn: ({ pageParam }) =>
-            siteVisitsApi.list({ ...query, page: pageParam, limit: PAGE_SIZE }),
+        queryFn: ({ pageParam, signal }) =>
+            siteVisitsApi.list({ ...query, page: pageParam, limit: PAGE_SIZE }, signal, () =>
+                queryClient.fetchQuery({
+                    queryKey: [...VISITS_KEY, "search-source", userId, sourceQuery],
+                    queryFn: ({ signal }) => siteVisitsApi.searchSource(sourceQuery, signal),
+                    staleTime: 30_000,
+                }),
+            ),
         initialPageParam: 1,
         getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
-        // Filter changes dim the list instead of wiping it.
+        // Retain header counts and filter options while results show their skeleton.
         placeholderData: keepPreviousData,
         refetchOnWindowFocus: true,
     });

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -14,12 +13,13 @@ import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 import { useBookSlot } from "@/hooks/use-book-slot";
 
 import { AppImage } from "@/components/shared/app-image";
-import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import toast from "@/components/shared/app-toast";
 import { DrawerSection, revealDrawerSections } from "@/components/shared/drawer-section";
 import { CalendarClock, MapPin } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogPopup } from "@/components/ui/dialog";
 
 import type {
     BrokerSiteVisit,
@@ -224,7 +224,7 @@ export function BookingDrawer({
     });
 
     return (
-        <Dialog
+        <AppModal
             open={open}
             onOpenChange={(next) => {
                 if (!next) {
@@ -233,177 +233,18 @@ export function BookingDrawer({
                     onClose();
                 }
             }}
-        >
-            <DialogPopup
-                showCloseButton={false}
-                className="
+            title="Book this visit"
+            bodyClassName="p-0"
+            scrollBody={false}
+            className="
                   inset-s-0! inset-bs-auto! inset-be-0! flex translate-0! flex-col gap-0
                   overflow-hidden rounded-b-none p-0 inline-full max-block-[94dvh] max-inline-none
                   sm:inset-s-auto! sm:inset-e-0! sm:inset-bs-0! sm:rounded-none sm:block-full
-                  sm:inline-[var(--drawer-detail-width)] sm:max-block-none
-                  sm:max-inline-[var(--drawer-detail-width)]
+                  sm:inline-(--drawer-detail-width) sm:max-block-none
+                  sm:max-inline-(--drawer-detail-width)
                 "
-            >
-                <AppModalHeader title="Book this visit" />
-                <div className="shrink-0 border-be border-border-warm p-5">
-                    <p className="body-sm text-ink-muted">
-                        One screen. Your client, the timing, and any clash.
-                    </p>
-                    <div className="mbs-4 flex gap-3 rounded-inner bg-surface-muted p-3">
-                        <div
-                            className="
-                          relative shrink-0 overflow-hidden rounded-[8px] block-14 inline-16
-                        "
-                        >
-                            <AppImage
-                                src={
-                                    item.property.coverUrl ??
-                                    "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                                }
-                                alt=""
-                                fill
-                                sizes="64px"
-                            />
-                        </div>
-                        <div className="min-inline-0">
-                            <p className="body-sm truncate font-bold text-ink">
-                                {item.property.title}
-                            </p>
-                            <p className="body-xs flex items-center gap-1 text-ink-muted">
-                                <MapPin aria-hidden className="block-3 inline-3" />
-                                {item.property.locality} · Owner {item.owner.name}
-                            </p>
-                            <p className="body-sm tabular mbs-1 font-bold text-brand-text">
-                                {formatVisitDate(slot.startsAt)} · {formatVisitTime(slot.startsAt)}–
-                                {formatVisitTime(slot.endsAt)}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <form
-                    id="booking-form"
-                    onSubmit={(event) => {
-                        revealDrawerSections(event.currentTarget);
-                        void submit(event);
-                    }}
-                    className="flex-1 overflow-y-auto p-5"
-                >
-                    {!hasBookingAccess ? (
-                        <p
-                            role="alert"
-                            className="
-                              body-sm rounded-inner bg-urgent-soft px-3 py-2 font-semibold
-                              text-pending
-                            "
-                        >
-                            The owner must approve access before this time can be booked.
-                        </p>
-                    ) : null}
-                    <DrawerSection
-                        title="Clients for this visit"
-                        contentClassName="flex flex-col gap-4"
-                        description="Choose up to three clients to bring to the property."
-                    >
-                        <BuyerPicker
-                            buyers={allBuyers}
-                            selected={buyerIds}
-                            emptyMessage={buyerListMessage}
-                            onChange={(ids) =>
-                                form.setValue("buyerIds", ids, { shouldValidate: true })
-                            }
-                            onBuyerCreated={(buyer) =>
-                                setCreated({
-                                    propertyId,
-                                    buyers: [
-                                        buyer,
-                                        ...createdBuyers.filter((row) => row.id !== buyer.id),
-                                    ],
-                                })
-                            }
-                        />
-                        {form.formState.errors.buyerIds ? (
-                            <p role="alert" className="mbs-2 text-sm text-danger">
-                                {form.formState.errors.buyerIds.message}
-                            </p>
-                        ) : null}
-                    </DrawerSection>
-                    {buyerIds.length > 0 || apiConflict || inlineError ? (
-                        <DrawerSection
-                            title="Timing and availability"
-                            contentClassName="flex flex-col gap-4"
-                            description="Check for overlapping visits and review other available times."
-                        >
-                            {buyerIds.length || apiConflict ? (
-                                <ConflictPanel result={conflict} onOpenVisit={onOpenVisit} />
-                            ) : null}
-                            {localConflict.level === "tight" && !apiConflict ? (
-                                <label
-                                    className="
-                          flex cursor-pointer items-center gap-3 rounded-inner border
-                          border-pending/20 bg-urgent-soft px-3 text-pending min-block-11
-                        "
-                                >
-                                    <Checkbox
-                                        checked={acceptTight}
-                                        onCheckedChange={(checked) =>
-                                            form.setValue("acceptTight", checked)
-                                        }
-                                    />
-                                    <span className="body-sm font-semibold">
-                                        I know, book anyway
-                                    </span>
-                                </label>
-                            ) : null}
-                            {inlineError ? (
-                                <div
-                                    role="alert"
-                                    className="rounded-inner bg-danger-soft p-3 text-danger"
-                                >
-                                    <p className="body-sm font-bold">{inlineError}</p>
-                                    {alternatives.length ? (
-                                        <div className="mbs-3 flex flex-wrap gap-2">
-                                            {alternatives.map((candidate) => (
-                                                <Button
-                                                    key={candidate.id}
-                                                    type="button"
-                                                    variant="surface"
-                                                    size="md"
-                                                    className="ring-2 ring-brand/20"
-                                                    onClick={() =>
-                                                        onChooseAlternative(candidate.id)
-                                                    }
-                                                >
-                                                    <CalendarClock aria-hidden />
-                                                    {formatVisitTime(candidate.startsAt)}
-                                                </Button>
-                                            ))}
-                                        </div>
-                                    ) : null}
-                                </div>
-                            ) : null}
-                            {apiConflict && alternatives.length ? (
-                                <div className="flex flex-wrap gap-2">
-                                    {alternatives.map((candidate) => (
-                                        <Button
-                                            key={candidate.id}
-                                            type="button"
-                                            variant="surface"
-                                            size="md"
-                                            className="ring-2 ring-brand/20"
-                                            onClick={() => onChooseAlternative(candidate.id)}
-                                        >
-                                            <CalendarClock aria-hidden />
-                                            {formatVisitTime(candidate.startsAt)}
-                                        </Button>
-                                    ))}
-                                </div>
-                            ) : null}
-                        </DrawerSection>
-                    ) : null}
-                </form>
-
-                <footer
+            footer={
+                <AppModalFooter
                     className="
                   sticky inset-be-0 flex shrink-0 items-center justify-between gap-4 border-bs
                   border-border-warm bg-surface p-4
@@ -423,8 +264,158 @@ export function BookingDrawer({
                             ? "Confirm booking"
                             : "Send booking to owner"}
                     </Button>
-                </footer>
-            </DialogPopup>
-        </Dialog>
+                </AppModalFooter>
+            }
+            footerClassName="p-0"
+        >
+            <div className="shrink-0 border-be border-border-warm p-5">
+                <p className="body-sm text-ink-muted">
+                    One screen. Your client, the timing, and any clash.
+                </p>
+                <div className="mbs-4 flex gap-3 rounded-inner bg-surface-muted p-3">
+                    <div
+                        className="
+                          relative shrink-0 overflow-hidden rounded-[8px] block-14 inline-16
+                        "
+                    >
+                        <AppImage
+                            src={
+                                item.property.coverUrl ??
+                                "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                            }
+                            alt=""
+                            fill
+                            sizes="64px"
+                        />
+                    </div>
+                    <div className="min-inline-0">
+                        <p className="body-sm truncate font-bold text-ink">{item.property.title}</p>
+                        <p className="body-xs flex items-center gap-1 text-ink-muted">
+                            <MapPin aria-hidden className="block-3 inline-3" />
+                            {item.property.locality} · Owner {item.owner.name}
+                        </p>
+                        <p className="body-sm tabular mbs-1 font-bold text-brand-text">
+                            {formatVisitDate(slot.startsAt)} · {formatVisitTime(slot.startsAt)}–
+                            {formatVisitTime(slot.endsAt)}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <form
+                id="booking-form"
+                onSubmit={(event) => {
+                    revealDrawerSections(event.currentTarget);
+                    void submit(event);
+                }}
+                className="flex-1 overflow-y-auto p-5 min-block-0"
+            >
+                {!hasBookingAccess ? (
+                    <p
+                        role="alert"
+                        className="
+                              body-sm rounded-inner bg-urgent-soft px-3 py-2 font-semibold
+                              text-pending
+                            "
+                    >
+                        The owner must approve access before this time can be booked.
+                    </p>
+                ) : null}
+                <DrawerSection
+                    title="Clients for this visit"
+                    contentClassName="flex flex-col gap-4"
+                    description="Choose up to three clients to bring to the property."
+                >
+                    <BuyerPicker
+                        buyers={allBuyers}
+                        selected={buyerIds}
+                        emptyMessage={buyerListMessage}
+                        onChange={(ids) => form.setValue("buyerIds", ids, { shouldValidate: true })}
+                        onBuyerCreated={(buyer) =>
+                            setCreated({
+                                propertyId,
+                                buyers: [
+                                    buyer,
+                                    ...createdBuyers.filter((row) => row.id !== buyer.id),
+                                ],
+                            })
+                        }
+                    />
+                    {form.formState.errors.buyerIds ? (
+                        <p role="alert" className="mbs-2 text-sm text-danger">
+                            {form.formState.errors.buyerIds.message}
+                        </p>
+                    ) : null}
+                </DrawerSection>
+                {buyerIds.length > 0 || apiConflict || inlineError ? (
+                    <DrawerSection
+                        title="Timing and availability"
+                        contentClassName="flex flex-col gap-4"
+                        description="Check for overlapping visits and review other available times."
+                    >
+                        {buyerIds.length || apiConflict ? (
+                            <ConflictPanel result={conflict} onOpenVisit={onOpenVisit} />
+                        ) : null}
+                        {localConflict.level === "tight" && !apiConflict ? (
+                            <label
+                                className="
+                          flex cursor-pointer items-center gap-3 rounded-inner border
+                          border-pending/20 bg-urgent-soft px-3 text-pending min-block-11
+                        "
+                            >
+                                <Checkbox
+                                    checked={acceptTight}
+                                    onCheckedChange={(checked) =>
+                                        form.setValue("acceptTight", checked)
+                                    }
+                                />
+                                <span className="body-sm font-semibold">I know, book anyway</span>
+                            </label>
+                        ) : null}
+                        {inlineError ? (
+                            <div
+                                role="alert"
+                                className="rounded-inner bg-danger-soft p-3 text-danger"
+                            >
+                                <p className="body-sm font-bold">{inlineError}</p>
+                                {alternatives.length ? (
+                                    <div className="mbs-3 flex flex-wrap gap-2">
+                                        {alternatives.map((candidate) => (
+                                            <Button
+                                                key={candidate.id}
+                                                type="button"
+                                                variant="surface"
+                                                size="md"
+                                                className="ring-2 ring-brand/20"
+                                                onClick={() => onChooseAlternative(candidate.id)}
+                                            >
+                                                <CalendarClock aria-hidden />
+                                                {formatVisitTime(candidate.startsAt)}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                ) : null}
+                            </div>
+                        ) : null}
+                        {apiConflict && alternatives.length ? (
+                            <div className="flex flex-wrap gap-2">
+                                {alternatives.map((candidate) => (
+                                    <Button
+                                        key={candidate.id}
+                                        type="button"
+                                        variant="surface"
+                                        size="md"
+                                        className="ring-2 ring-brand/20"
+                                        onClick={() => onChooseAlternative(candidate.id)}
+                                    >
+                                        <CalendarClock aria-hidden />
+                                        {formatVisitTime(candidate.startsAt)}
+                                    </Button>
+                                ))}
+                            </div>
+                        ) : null}
+                    </DrawerSection>
+                ) : null}
+            </form>
+        </AppModal>
     );
 }

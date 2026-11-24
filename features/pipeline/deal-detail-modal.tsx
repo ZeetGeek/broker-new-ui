@@ -7,6 +7,7 @@ import { formatPrice, formatRent } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { ContactName } from "@/components/shared/contact-name";
 import {
     type AppIcon,
@@ -30,6 +31,7 @@ import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { PipelineDetailSkeleton } from "@/features/pipeline/pipeline-skeleton";
 import {
     describeStageHistory,
@@ -245,12 +247,12 @@ export function DealDetailModal({
             nativeScroll
             footer={
                 isLoading ? (
-                    <div className={styles.footer} aria-hidden>
+                    <AppModalFooter className={styles.footer} aria-hidden>
                         <Skeleton className="block-11 inline-36" />
                         <Skeleton className="block-11 inline-44" />
-                    </div>
+                    </AppModalFooter>
                 ) : deal ? (
-                    <div className={styles.footer}>
+                    <AppModalFooter className={styles.footer}>
                         <Button
                             variant="link"
                             nativeButton={false}
@@ -264,10 +266,10 @@ export function DealDetailModal({
                                 Edit note
                             </Button>
                         ) : null}
-                        {onMakeOffer ? (
+                        {onMakeOffer && isLiveStage(deal.status) && !deal.property.isSold ? (
                             <Button variant="outline" disabled={isBusy} onClick={onMakeOffer}>
                                 <HandCoins aria-hidden size={18} />
-                                {deal.offerAmountInr != null ? "Update offer" : "Add offer"}
+                                {deal.offerAmountInr != null ? "Update offer" : "Record offer"}
                             </Button>
                         ) : null}
                         {target ? (
@@ -280,7 +282,7 @@ export function DealDetailModal({
                                 {isBusy ? "Please wait..." : actionLabel}
                             </Button>
                         ) : null}
-                    </div>
+                    </AppModalFooter>
                 ) : undefined
             }
             className={styles.modal}
@@ -446,14 +448,21 @@ export function DealDetailModal({
                                             </DetailField>
                                         ) : null}
                                         {deal.offerAmountInr != null ? (
-                                            <DetailField label="Latest offer" icon={HandCoins}>
+                                            <DetailField
+                                                label={
+                                                    FEATURE_PLATFORM_OWNER
+                                                        ? "Latest offer"
+                                                        : "Recorded offer"
+                                                }
+                                                icon={HandCoins}
+                                            >
                                                 <span>
                                                     {formatMoney(
                                                         deal.offerAmountInr,
                                                         deal.property.isRent,
                                                     )}
                                                 </span>
-                                                {deal.offerStatus ? (
+                                                {FEATURE_PLATFORM_OWNER && deal.offerStatus ? (
                                                     <Badge variant="neutral" className="ms-2">
                                                         {OFFER_STATUS_LABEL[deal.offerStatus]}
                                                     </Badge>

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { AppTimePicker } from "@/components/shared/app-time-picker";
 import { CharacterCount } from "@/components/shared/character-count";
 import { revealDrawerSections } from "@/components/shared/drawer-section";
@@ -17,7 +18,7 @@ import {
 } from "@/components/shared/map-to-people-picker-person";
 import { mapTaskPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
 import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
-import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
+import { PropertyPickerField } from "@/components/shared/property-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -266,17 +267,15 @@ export function TaskForm({
             busy={busy}
             dirty={dirty}
             footer={
-                <div className="flex flex-wrap items-center justify-end gap-2 inline-full">
-                    <Button
-                        variant="accent"
-                        type="submit"
-                        form={formId}
-                        disabled={busy}
-                        loading={busy}
-                    >
-                        {primary}
-                    </Button>
-                </div>
+                <AppModalFooter
+                    className="flex flex-wrap items-center justify-end gap-2 inline-full"
+                    primaryLabel={primary}
+                    primaryVariant="accent"
+                    primaryType="submit"
+                    primaryFormId={formId}
+                    primaryDisabled={busy}
+                    primaryLoading={busy}
+                />
             }
         >
             <form id={formId} onSubmit={submit} className="inline-full" noValidate>
@@ -588,20 +587,21 @@ export function TaskForm({
                                         disabled={busy}
                                         onChange={(next) => patch(next)}
                                     />
-                                    <PropertyInlineSelect
+                                    <PropertyPickerField
                                         label="Property"
+                                        manageBrowserHistory={false}
                                         properties={catalogs.properties.map(
                                             mapTaskPropertyToPicker,
                                         )}
                                         value={draft.propertyId || null}
-                                        onValueChange={(propertyId) =>
+                                        onConfirm={(propertyId) =>
                                             patch({ propertyId: propertyId ?? "" })
                                         }
                                         disabled={busy}
                                         placeholder="No linked property"
                                         allowClear
                                         clearLabel="No linked property"
-                                        size="md"
+                                        triggerSize="default"
                                     />
                                 </div>
                             </WizardSection>

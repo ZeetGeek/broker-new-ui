@@ -10,7 +10,6 @@ import {
     useState,
 } from "react";
 import { type FieldPath, FormProvider, useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { clientsApi } from "@/lib/api/clients";
 import { myListingsApi } from "@/lib/api/my-listings";
@@ -44,6 +43,7 @@ import {
     STEP_ROOT_FIELDS,
     stepSchemas,
 } from "@/lib/schemas/property";
+import { getShortcut, shortcutMatchesEvent } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 import {
     isStepVisible as ruleStepIsVisible,
@@ -52,22 +52,17 @@ import {
 } from "@/lib/visibility/rules";
 import { FieldRulesProvider } from "@/lib/visibility/use-field-rules";
 
-import { IconButton } from "@/components/shared/icon-button";
-import { ArrowRight, Check, ChevronDown, RotateCcw, X } from "@/components/shared/icons";
+import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { AppModalHeader } from "@/components/shared/app-modal-header";
+import toast from "@/components/shared/app-toast";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { ArrowRight, Check, ChevronDown, RotateCcw } from "@/components/shared/icons";
+import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Skeleton } from "@/components/shared/skeleton";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
-import { useWorkflowDismiss } from "@/components/shared/workflow-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogClose,
-    DialogDescription,
-    DialogHeader,
-    DialogPopup,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress, ProgressLabel } from "@/components/ui/progress";
 
@@ -166,6 +161,10 @@ export function PropertyForm({
     const [restoringDraft, setRestoringDraft] = useState(true);
     const [storageError, setStorageError] = useState<string | null>(null);
     const [attachmentRetry, setAttachmentRetry] = useState<PendingBuyerAttachment | null>(null);
+    const [confirmation, setConfirmation] = useState<{
+        action: "fresh" | "close";
+        description: string;
+    } | null>(null);
     const pendingAttachmentRef = useRef<PendingBuyerAttachment | null>(null);
     const photoFilesRef = useRef<Map<string, File>>(new Map());
     const autosaveReadyRef = useRef(false);
@@ -372,33 +371,6 @@ export function PropertyForm({
         };
     }, []);
 
-    useEffect(() => {
-        function onKeyDown(event: KeyboardEvent) {
-            if (isDialog && !open) return;
-            if ((event.target as HTMLElement | null)?.closest(".contacts-form-drawer")) return;
-            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
-                event.preventDefault();
-                void saveDraftLocally();
-                return;
-            }
-            const target = event.target as HTMLElement | null;
-            const isEditing =
-                target?.matches("input, textarea, select, [contenteditable='true']") ?? false;
-            if (isEditing) return;
-            if (!event.ctrlKey && !event.metaKey && !event.altKey && /^[1-9]$/.test(event.key)) {
-                const index = Number(event.key) - 1;
-                const targetStep = activeSteps[index];
-                if (targetStep) changeStep(targetStep.id);
-            }
-            if (!event.ctrlKey && !event.metaKey && event.key === "0") {
-                const targetStep = activeSteps[activeSteps.length - 1];
-                if (targetStep) changeStep(targetStep.id);
-            }
-        }
-        window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
-    });
-
     // After a step jump (e.g. Publish), focus the first invalid field once it mounts.
     useEffect(() => {
         const path = pendingFocusPathRef.current;
@@ -409,26 +381,14 @@ export function PropertyForm({
         return () => cancelAnimationFrame(frame);
     }, [entryMode, step]);
 
-    async function saveDraftLocally() {
-        if (!keepsLocalDraft) return;
-        try {
-            await writeLocalDraft(methods.getValues());
-            setSavedAt(new Date());
-            setStorageError(null);
-            toast.success("Draft saved on this device.");
-        } catch {
-            toast.error("Couldn't save the local draft.");
-        }
-    }
-
-    async function startFreshListing() {
-        if (
-            methods.formState.isDirty &&
-            !window.confirm(
-                "Start fresh? This removes the current draft and its photos from this device.",
-            )
-        )
+    async function startFreshListing(confirmed = false) {
+        if (methods.formState.isDirty && !confirmed) {
+            setConfirmation({
+                action: "fresh",
+                description: "This removes the current draft and its photos from this device.",
+            });
             return;
+        }
         autosaveReadyRef.current = false;
         try {
             await removePropertyDraft(localStorageKey);
@@ -878,18 +838,16 @@ export function PropertyForm({
         )
             return;
         // Bare Enter must not advance (inputs use it for tags / search / custom add).
-        // Ctrl/Cmd+Enter continues or publishes — same as the footer primary action.
         event.preventDefault();
-        if (!event.ctrlKey && !event.metaKey) return;
-        if (entryMode === "quick" || isLastStep) {
-            void persistProperty("publish");
-            return;
-        }
+        const shortcut = getShortcut("form_primary");
+        if (!shortcut || !shortcutMatchesEvent(event.nativeEvent, shortcut.keys)) return;
+        // Publishing is public and consequential, so it remains button-only.
+        if (entryMode === "quick" || isLastStep) return;
         goNext();
     }
 
     async function requestClose() {
-        if (saving || persistInFlightRef.current) return;
+        if (saving || persistInFlightRef.current || confirmation) return;
         if (attachmentRetry) {
             toast.error("Please retry attaching clients before closing this form.");
             return;
@@ -904,24 +862,26 @@ export function PropertyForm({
                 // Still allow closing if storage is unavailable.
             }
         }
-        if (
-            methods.formState.isDirty &&
-            !window.confirm(
-                !keepsLocalDraft
-                    ? "Close without saving? Your changes to this property will be lost."
+        if (methods.formState.isDirty) {
+            setConfirmation({
+                action: "close",
+                description: !keepsLocalDraft
+                    ? "Your changes to this property will be lost."
                     : locallySaved
-                      ? "Close this form? Your latest changes and photos are saved on this device."
-                      : "This device could not save your latest changes. Close and lose those changes?",
-            )
-        )
+                      ? "Your latest changes and photos are saved on this device."
+                      : "This device could not save your latest changes. Closing will lose those changes.",
+            });
             return;
+        }
+        closeForm();
+    }
+
+    function closeForm() {
         onOpenChange?.(false);
         onCancel?.();
         if (!isDialog && !onCancel)
             router.push(portal === "owner" ? OWNER_PROPERTIES_HREF : BROKER_YOUR_LISTINGS_HREF);
     }
-
-    useWorkflowDismiss(isDialog && open, () => void requestClose());
 
     const formActions = (
         <PropertyFormActions
@@ -970,9 +930,6 @@ export function PropertyForm({
                             }}
                             onPublish={() => {
                                 void persistProperty("publish");
-                            }}
-                            onClose={() => {
-                                void requestClose();
                             }}
                             showClose={isDialog}
                             restoring={restoringDraft}
@@ -1204,6 +1161,22 @@ export function PropertyForm({
                         </div>
                     ) : null}
                 </form>
+                <ConfirmDialog
+                    open={confirmation !== null}
+                    onOpenChange={(next) => {
+                        if (!next) setConfirmation(null);
+                    }}
+                    title={confirmation?.action === "fresh" ? "Start fresh?" : "Close this form?"}
+                    description={confirmation?.description}
+                    confirmLabel={confirmation?.action === "fresh" ? "Start fresh" : "Close form"}
+                    cancelLabel="Keep editing"
+                    onConfirm={() => {
+                        const action = confirmation?.action;
+                        setConfirmation(null);
+                        if (action === "fresh") void startFreshListing(true);
+                        else if (action === "close") closeForm();
+                    }}
+                />
             </FieldRulesProvider>
         </FormProvider>
     );
@@ -1221,22 +1194,19 @@ export function PropertyForm({
         );
 
     return (
-        <Dialog
+        <AppModal
             open={open}
+            title={mode === "edit" ? "Edit property" : "Add property"}
+            showHeader={false}
+            scrollBody={false}
+            size="full"
+            className="inset-0 translate-none overflow-clip rounded-none border-0 p-0 shadow-none block-dvh inline-dvw max-block-none max-inline-none sm:inline-dvw sm:max-inline-none"
             onOpenChange={(next) => {
                 if (!next) void requestClose();
             }}
         >
-            <DialogPopup
-                showCloseButton={false}
-                className="
-                  inset-0 flex translate-none flex-col gap-0 overflow-clip rounded-none border-0
-                  p-0 shadow-none block-dvh inline-dvw max-inline-none
-                "
-            >
-                {surface}
-            </DialogPopup>
-        </Dialog>
+            {surface}
+        </AppModal>
     );
 }
 
@@ -1269,7 +1239,6 @@ function PropertyFormHeader({
     savingIntent,
     onSaveDraft,
     onPublish,
-    onClose,
     showClose,
     restoring,
 }: {
@@ -1280,7 +1249,6 @@ function PropertyFormHeader({
     savingIntent: "draft" | "publish" | null;
     onSaveDraft: () => void;
     onPublish: () => void;
-    onClose: () => void;
     showClose: boolean;
     restoring: boolean;
 }) {
@@ -1316,7 +1284,57 @@ function PropertyFormHeader({
             </div>
         );
 
-    return (
+    return showClose ? (
+        <AppModalHeader
+            title={title}
+            titleExtra={savedHint}
+            actions={
+                <>
+                    <SlidingTabs
+                        value={entryMode}
+                        onValueChange={onEntryModeChange}
+                        label="Entry mode"
+                        height={36}
+                        options={ENTRY_MODE_TABS}
+                    />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="default"
+                        loading={savingIntent === "draft"}
+                        disabled={isBusy}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onSaveDraft();
+                        }}
+                        className="hidden sm:inline-flex"
+                    >
+                        Save as draft
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="accent"
+                        size="default"
+                        loading={savingIntent === "publish"}
+                        disabled={isBusy}
+                        onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onPublish();
+                        }}
+                    >
+                        Publish
+                    </Button>
+                </>
+            }
+            closeDisabled={isBusy}
+            titleClassName="flex-none text-xl font-semibold"
+            rowClassName="flex-wrap gap-3 sm:flex-nowrap"
+            actionsClassName="justify-end inline-full sm:inline-auto"
+            className="px-4 py-3 shadow-xs sm:px-6"
+        />
+    ) : (
         <header
             className="
               flex shrink-0 flex-wrap items-center justify-between gap-3 border-be
@@ -1324,30 +1342,12 @@ function PropertyFormHeader({
               sm:flex-nowrap sm:px-6
             "
         >
-            {showClose ? (
-                <DialogHeader
-                    className="
-                      flex flex-1 flex-row flex-wrap items-center! gap-2.5 pe-0 text-start
-                      min-inline-0
-                    "
-                >
-                    <DialogTitle className="text-xl font-semibold min-inline-0">
-                        {title}
-                    </DialogTitle>
-                    <DialogDescription className="sr-only">
-                        Property and commission details. Full details walks through every step;
-                        Quick add publishes with just the essentials.
-                    </DialogDescription>
-                    {savedHint}
-                </DialogHeader>
-            ) : (
-                <div className="flex flex-1 flex-wrap items-center gap-2.5 min-inline-0">
-                    <h1 className="font-display text-xl font-semibold text-ink min-inline-0">
-                        {title}
-                    </h1>
-                    {savedHint}
-                </div>
-            )}
+            <div className="flex flex-1 flex-wrap items-center gap-2.5 min-inline-0">
+                <h1 className="font-display text-xl font-semibold text-ink min-inline-0">
+                    {title}
+                </h1>
+                {savedHint}
+            </div>
             <div
                 className="
                   flex shrink-0 items-center justify-end gap-2 inline-full
@@ -1390,25 +1390,6 @@ function PropertyFormHeader({
                 >
                     Publish
                 </Button>
-                {showClose ? (
-                    <DialogClose
-                        onClick={(event) => {
-                            event.preventDefault();
-                            onClose();
-                        }}
-                        render={
-                            <IconButton
-                                type="button"
-                                size="md"
-                                aria-label="Close"
-                                className="shrink-0"
-                            />
-                        }
-                    >
-                        <X className="block-4 inline-4" strokeWidth={2} aria-hidden />
-                        <span className="sr-only">Close</span>
-                    </DialogClose>
-                ) : null}
             </div>
         </header>
     );
@@ -1446,7 +1427,7 @@ function PropertyFormActions({
 
     if (entryMode === "quick") {
         return (
-            <div className="flex flex-wrap items-center justify-between gap-3 pbe-[env(safe-area-inset-bottom)]">
+            <AppModalFooter className="flex flex-wrap items-center justify-between gap-3 pbe-[env(safe-area-inset-bottom)]">
                 {showStartFresh ? (
                     <Button
                         type="button"
@@ -1482,12 +1463,27 @@ function PropertyFormActions({
                         Publish <Check aria-hidden />
                     </Button>
                 </div>
-            </div>
+            </AppModalFooter>
         );
     }
 
+    const primaryAction = (
+        <Button
+            type="button"
+            variant="accent"
+            size="md"
+            loading={isSubmitting}
+            disabled={isSubmitting}
+            onClick={onNext}
+            className="inline-full"
+        >
+            {primaryLabel}
+            {isLastStep ? <Check aria-hidden /> : <ArrowRight aria-hidden />}
+        </Button>
+    );
+
     return (
-        <div className="flex flex-col gap-4 pbe-[env(safe-area-inset-bottom)] text-center">
+        <AppModalFooter className="flex flex-col items-stretch gap-4 pbe-[env(safe-area-inset-bottom)] text-center">
             <div className="flex flex-col gap-4 min-inline-0">
                 {showStartFresh ? (
                     <Button
@@ -1518,21 +1514,6 @@ function PropertyFormActions({
                                 Step {stepIndex + 1} of {stepCount}
                             </ProgressLabel>
                         </Progress>
-                        <p
-                            className="
-                              body-xs hidden flex-wrap items-center justify-center gap-1.5
-                              text-ink-muted
-                              xl:flex
-                            "
-                        >
-                            Press
-                            <KbdGroup className="gap-1">
-                                <Kbd className="px-1.5 text-[10px] min-inline-4">1</Kbd>
-                                <span aria-hidden>–</span>
-                                <Kbd className="px-1.5 text-[10px] min-inline-4">5</Kbd>
-                            </KbdGroup>
-                            to jump steps
-                        </p>
                     </div>
                 ) : null}
             </div>
@@ -1559,21 +1540,16 @@ function PropertyFormActions({
                     </Button>
                 ) : null}
                 {showPrimary ? (
-                    <Button
-                        type="button"
-                        variant="accent"
-                        size="md"
-                        loading={isSubmitting}
-                        disabled={isSubmitting}
-                        onClick={onNext}
-                        className="inline-full"
-                    >
-                        {primaryLabel}
-                        {isLastStep ? <Check aria-hidden /> : <ArrowRight aria-hidden />}
-                    </Button>
+                    isLastStep ? (
+                        primaryAction
+                    ) : (
+                        <ShortcutTooltip shortcutId="form_primary" label="Continue">
+                            {primaryAction}
+                        </ShortcutTooltip>
+                    )
                 ) : null}
             </div>
-        </div>
+        </AppModalFooter>
     );
 }
 

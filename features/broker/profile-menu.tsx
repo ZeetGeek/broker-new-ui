@@ -80,6 +80,7 @@ export function BrokerProfileMenu({
                         className="shrink-0 text-ink! block-4.5! inline-4.5!"
                     />
                     <span className="flex-1 min-inline-0">Saved properties</span>
+                    <PortalProfileShortcutHint shortcutId="saved_properties" />
                 </DropdownMenuItem>
 
                 {/* Verification & RERA temporarily hidden; retain menu action for later. */}

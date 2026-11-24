@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
@@ -14,6 +13,7 @@ import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import { Search } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";

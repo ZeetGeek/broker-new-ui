@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import toast from "react-hot-toast";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
@@ -14,6 +13,7 @@ import {
 } from "@/lib/auth/session";
 import { useRouter } from "@/lib/navigation";
 
+import toast from "@/components/shared/app-toast";
 import { Button } from "@/components/ui/button";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";

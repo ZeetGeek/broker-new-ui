@@ -1,6 +1,5 @@
 "use client";
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { myRequestsApi } from "@/lib/api/my-requests";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
@@ -8,6 +7,7 @@ import { representativeApi } from "@/lib/api/representative";
 import { propertyCriteriaCount } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 
+import toast from "@/components/shared/app-toast";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
 import { InviteCard } from "@/features/properties/my-requests/invite-card";

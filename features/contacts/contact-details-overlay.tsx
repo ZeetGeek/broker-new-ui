@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -12,6 +11,7 @@ import { AmbiguousContactNameError, findContactByName } from "@/lib/contacts/fin
 import type { PersonDetailsTarget } from "@/lib/contacts/person-details-target";
 import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 
+import toast from "@/components/shared/app-toast";
 import { usePersonDetailsWorking } from "@/components/shared/person-details-context";
 
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";

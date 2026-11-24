@@ -2,11 +2,13 @@
 
 import type { ReactElement } from "react";
 
-import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
+import { getShortcut, type ShortcutId, type ShortcutPortal } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+import { useShortcutDisplayKeys } from "@/features/shortcuts/use-shortcut-display-keys";
 
 export type ShortcutTooltipProps = {
     /** Registry id — the tooltip renders that shortcut's own label unless overridden. */
@@ -14,6 +16,7 @@ export type ShortcutTooltipProps = {
     /** Override the registry label, e.g. "Add contacts" for a button that lands on Contacts. */
     label?: string;
     side?: "top" | "bottom" | "inline-start" | "inline-end";
+    portal?: ShortcutPortal;
     children: ReactElement;
 };
 
@@ -26,9 +29,11 @@ export function ShortcutTooltip({
     shortcutId,
     label,
     side = "bottom",
+    portal = "broker",
     children,
 }: ShortcutTooltipProps) {
-    const shortcut = getShortcut(shortcutId);
+    const shortcut = getShortcut(shortcutId, portal);
+    const displayKeys = useShortcutDisplayKeys(shortcut);
     if (!shortcut) return children;
 
     return (
@@ -37,7 +42,7 @@ export function ShortcutTooltip({
             <TooltipContent side={side}>
                 {label ?? shortcut.label}
                 <KbdGroup className="gap-0.5">
-                    {shortcut.displayKeys.map((key) => (
+                    {displayKeys.map((key) => (
                         <Kbd key={key} className="px-1.5 text-[10px] min-inline-4">
                             {key}
                         </Kbd>
@@ -53,6 +58,7 @@ export type ShortcutKbdMessageProps = {
     /** The action phrase, e.g. "to browse properties". */
     children: ReactElement | string;
     className?: string;
+    portal?: ShortcutPortal;
 };
 
 /**
@@ -61,20 +67,26 @@ export type ShortcutKbdMessageProps = {
  * the destination page, so the hint teaches the shortcut instead of sending
  * the user to another empty screen.
  */
-export function ShortcutKbdMessage({ shortcutId, children, className }: ShortcutKbdMessageProps) {
-    const shortcut = getShortcut(shortcutId);
+export function ShortcutKbdMessage({
+    shortcutId,
+    children,
+    className,
+    portal = "broker",
+}: ShortcutKbdMessageProps) {
+    const shortcut = getShortcut(shortcutId, portal);
+    const displayKeys = useShortcutDisplayKeys(shortcut);
     if (!shortcut) return null;
 
     return (
         <p
             className={cn(
-                `body-sm inline-flex flex-wrap items-center justify-center gap-1.5 text-ink-subtle`,
+                `body-sm inline-flex flex-wrap items-center justify-center gap-1.5 text-ink-subtle pointer-coarse:hidden`,
                 className,
             )}
         >
             <span>Press</span>
             <KbdGroup className="gap-0.5">
-                {shortcut.displayKeys.map((key) => (
+                {displayKeys.map((key) => (
                     <Kbd key={key} variant="muted" className="px-1.5 text-[10px] min-inline-4">
                         {key}
                     </Kbd>

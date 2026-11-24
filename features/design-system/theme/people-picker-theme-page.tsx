@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { formatPersonName } from "@/lib/format/person-name";
 
+import toast from "@/components/shared/app-toast";
 import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
 import {
     PeoplePicker,
@@ -116,7 +117,7 @@ function ClientSingleDemo() {
                 people={DEMO_PEOPLE}
                 value={value}
                 onConfirm={setValue}
-                onCreate={() => window.alert("Wire Create client from the feature screen.")}
+                onCreate={() => toast.info("Wire Create client from the feature screen.")}
                 allowClear
             />
         </div>
@@ -141,7 +142,7 @@ function OwnerSingleDemo() {
                 onConfirm={setValue}
                 title="Attach exclusive owner"
                 description="Choose one owner for this listing. You can change them later."
-                onCreate={() => window.alert("Wire Create owner from the feature screen.")}
+                onCreate={() => toast.info("Wire Create owner from the feature screen.")}
             />
         </div>
     );
@@ -173,7 +174,7 @@ function BothDemo() {
                 value={value}
                 onConfirm={setValue}
                 title="Select a client or owner"
-                onCreate={() => window.alert("Wire create contact from the feature screen.")}
+                onCreate={() => toast.info("Wire create contact from the feature screen.")}
             />
         </div>
     );
@@ -212,7 +213,7 @@ function MultiDemo() {
                 onConfirm={setValue}
                 title="Attach clients"
                 description="Pick everyone who should see this listing."
-                onCreate={() => window.alert("Wire Create client from the feature screen.")}
+                onCreate={() => toast.info("Wire Create client from the feature screen.")}
                 allowClear
                 clearLabel="Clear all"
             />
@@ -235,7 +236,7 @@ function FieldDemos() {
                 people={DEMO_PEOPLE}
                 value={clientId}
                 onConfirm={setClientId}
-                onCreate={() => window.alert("Create client")}
+                onCreate={() => toast.info("Create client")}
             />
             <PeoplePickerField
                 kinds="owner"
@@ -300,7 +301,7 @@ function EmptyDemo() {
                 people={[]}
                 value={null}
                 onConfirm={() => undefined}
-                onCreate={() => window.alert("Create client")}
+                onCreate={() => toast.info("Create client")}
             />
         </>
     );
@@ -321,7 +322,7 @@ function ErrorDemo() {
                 value={null}
                 onConfirm={() => undefined}
                 errorText="Couldn't load owners. Check your connection and try again."
-                onRetry={() => window.alert("Refetch owners")}
+                onRetry={() => toast.info("Refetch owners")}
             />
         </>
     );
@@ -340,7 +341,7 @@ function InlineSelectDemos() {
                 value={bothId}
                 onValueChange={setBothId}
                 placeholder="Select a client or owner"
-                onCreate={(query) => window.alert(`Create contact: ${query}`)}
+                onCreate={(query) => toast.info(`Create contact: ${query}`)}
             />
             <PeopleInlineSelect
                 label="Client"
@@ -351,7 +352,7 @@ function InlineSelectDemos() {
                 placeholder="Select a client"
                 allowClear
                 clearLabel="Any client"
-                onCreate={(query) => window.alert(`Create client: ${query}`)}
+                onCreate={(query) => toast.info(`Create client: ${query}`)}
                 createLabel="Create client"
             />
             <PeopleInlineSelect
@@ -363,7 +364,7 @@ function InlineSelectDemos() {
                 placeholder="Any owner"
                 allowClear
                 clearLabel="Any owner"
-                onCreate={(query) => window.alert(`Create owner: ${query}`)}
+                onCreate={(query) => toast.info(`Create owner: ${query}`)}
                 createLabel="Create owner"
             />
         </div>

@@ -2,7 +2,6 @@
 
 import { type MutableRefObject, type ReactNode, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { createClientId } from "@/lib/client-id";
 import {
@@ -22,6 +21,7 @@ import { cn } from "@/lib/utils";
 
 import { FieldLabel } from "@/components/property/fields/field-label";
 import { AppImage } from "@/components/shared/app-image";
+import toast from "@/components/shared/app-toast";
 import {
     Check,
     CircleAlert,

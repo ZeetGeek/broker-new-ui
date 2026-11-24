@@ -1,10 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { useCallback, useMemo, useState } from "react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { tinykeys } from "tinykeys";
 
 import { attachedClientsByProperty } from "@/lib/api/clients";
 import { myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
@@ -12,10 +10,12 @@ import { propertiesApi } from "@/lib/api/properties";
 import { representativeApi } from "@/lib/api/representative";
 import { summarizePropertyBrokers } from "@/lib/format/property-brokers";
 import { collectPropertyPages } from "@/lib/properties/list-criteria";
-import { getShortcut } from "@/lib/shortcuts";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import toast from "@/components/shared/app-toast";
+import { EmptyState } from "@/components/shared/empty-state";
+import { AlertCircle } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { Button } from "@/components/ui/button";
 
@@ -35,20 +35,8 @@ import {
 import { MyListingsResultsSkeleton } from "@/features/properties/your-listings/my-listings-skeleton";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 import { useMyListingsFilters } from "@/features/properties/your-listings/use-my-listings-filters";
+import { useShortcut } from "@/features/shortcuts/use-shortcut";
 import { useAppSelector } from "@/store/hooks";
-
-function isEditable(el: EventTarget | null): boolean {
-    if (!(el instanceof HTMLElement)) return false;
-    const tag = el.tagName;
-    return (
-        tag === "INPUT" ||
-        tag === "TEXTAREA" ||
-        tag === "SELECT" ||
-        el.isContentEditable ||
-        el.getAttribute("role") === "textbox" ||
-        el.closest("[contenteditable='true']") !== null
-    );
-}
 
 export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "owner" }) {
     const queryClient = useQueryClient();
@@ -140,29 +128,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         void queryClient.invalidateQueries({ queryKey: ["my-listings-summary"] });
     }, [queryClient]);
 
-    useEffect(() => {
-        const shortcut = getShortcut("add_property");
-        if (!shortcut) return undefined;
-
-        const unsubscribe = tinykeys(window, {
-            [shortcut.keys]: (event) => {
-                if (isEditable(event.target)) return;
-                if (event.repeat) return;
-                if (addOpen || editingListing != null || deletingListing != null) return;
-                if (isOwnerAttachOpen || isBrokerInviteOpen || clientAttachOpen) return;
-                setAddOpen(true);
-            },
-        });
-
-        return () => unsubscribe();
-    }, [
-        addOpen,
-        editingListing,
-        deletingListing,
-        isOwnerAttachOpen,
-        isBrokerInviteOpen,
-        clientAttachOpen,
-    ]);
+    useShortcut("add_property", () => setAddOpen(true), { portal });
 
     const confirmDelete = useCallback(async () => {
         if (!deletingListing) return;
@@ -196,10 +162,12 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         [refreshListings],
     );
 
-    const loading = !scopeReady || query.isPending;
+    const loading =
+        !scopeReady || query.isPending || (query.isFetching && !query.isFetchingNextPage);
     const inventoryTotal = summary?.total ?? 0;
     const isFirstRunEmpty =
         !loading &&
+        !query.isError &&
         !isDeletedView &&
         query.items.length === 0 &&
         !hasActiveFilters &&
@@ -225,7 +193,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     resultTotal={query.total}
                     status={filters.status}
                     hasActiveFilters={hasActiveMyListingsFilters({ ...filters, sort: "newest" })}
-                    isLoading={loading || summaryQuery.isPending}
+                    isLoading={summaryQuery.isPending}
                     hasError={query.isError}
                 />
             </PortalSectionNav>
@@ -236,7 +204,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 onFiltersChange={setFilters}
                 summary={summary}
                 isLoading={summaryQuery.isPending}
-                isInitialLoading={loading}
+                isInitialLoading={!scopeReady && summaryQuery.isPending}
                 onAddProperty={isFirstRunEmpty ? undefined : () => setAddOpen(true)}
             />
 
@@ -244,17 +212,17 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 {loading ? (
                     <MyListingsResultsSkeleton portal={portal} />
                 ) : query.isError && query.items.length === 0 ? (
-                    <div
-                        role="alert"
-                        className="flex flex-col items-center gap-4 py-12 text-center"
+                    <EmptyState
+                        size="page"
+                        variant="error"
+                        icon={AlertCircle}
+                        heading="Your listings couldn’t be loaded"
+                        description="Check your connection and try again to see your properties."
                     >
-                        <p className="body-sm text-danger">
-                            Couldn&apos;t load your listings. Check your connection and try again.
-                        </p>
-                        <Button variant="outline" onClick={() => void query.refetch()}>
+                        <Button variant="accent" onClick={() => void query.refetch()}>
                             Try again
                         </Button>
-                    </div>
+                    </EmptyState>
                 ) : query.items.length === 0 ? (
                     <MyListingsEmpty
                         variant={emptyVariant}

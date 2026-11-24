@@ -1,13 +1,13 @@
 "use client";
 
 import { type ReactNode, useCallback, useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 import { myRequestsApi } from "@/lib/api/my-requests";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import toast from "@/components/shared/app-toast";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
 import { AcceptedPanel } from "@/features/properties/my-requests/accepted-panel";

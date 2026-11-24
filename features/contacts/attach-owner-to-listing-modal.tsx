@@ -1,31 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { propertiesApi } from "@/lib/api/properties";
-import { cn } from "@/lib/utils";
+import { collectPropertyPages } from "@/lib/properties/list-criteria";
 
-import { AppModal } from "@/components/shared/app-modal";
-import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { EmptyState } from "@/components/shared/empty-state";
-import { Building2, Search } from "@/components/shared/icons";
-import { VirtualListBox } from "@/components/shared/virtual-list-box";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import toast from "@/components/shared/app-toast";
+import { mapMyListingToPicker } from "@/components/shared/map-to-property-picker-property";
+import { PropertyPicker } from "@/components/shared/property-picker";
 
 import type { OwnerRow } from "@/features/contacts/types";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
-
-function matchesQuery(listing: MyListingItem, q: string): boolean {
-    const needle = q.trim().toLowerCase();
-    if (!needle) return true;
-    return [listing.title, listing.locality, listing.city, listing.society]
-        .join(" ")
-        .toLowerCase()
-        .includes(needle);
-}
 
 export function AttachOwnerToListingModal({
     open,
@@ -39,165 +25,95 @@ export function AttachOwnerToListingModal({
     onSaved: () => void;
 }) {
     const [listings, setListings] = useState<MyListingItem[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [query, setQuery] = useState("");
-    const [selectedId, setSelectedId] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
+    const [retryVersion, setRetryVersion] = useState(0);
     const [busy, setBusy] = useState(false);
 
     useEffect(() => {
         if (!open) return undefined;
-        let cancelled = false;
+        const controller = new AbortController();
         const timer = window.setTimeout(() => {
-            if (cancelled) return;
             setLoading(true);
-            setQuery("");
-            setSelectedId("");
-            void myListingsApi
-                .list({ page: 1 })
-                .then((result) => {
-                    if (!cancelled) setListings(result.items);
+            setLoadError(false);
+            setListings([]);
+            void collectPropertyPages((page) => myListingsApi.list({ page }, controller.signal))
+                .then((items) => {
+                    if (!controller.signal.aborted) setListings(items);
                 })
                 .catch(() => {
-                    if (!cancelled) {
-                        setListings([]);
-                        toast.error("Couldn't load your listings");
-                    }
+                    if (!controller.signal.aborted) setLoadError(true);
                 })
                 .finally(() => {
-                    if (!cancelled) setLoading(false);
+                    if (!controller.signal.aborted) setLoading(false);
                 });
         }, 0);
         return () => {
-            cancelled = true;
+            controller.abort();
             window.clearTimeout(timer);
         };
-    }, [open]);
+    }, [open, retryVersion]);
 
-    const filtered = useMemo(
-        () => listings.filter((listing) => matchesQuery(listing, query)),
-        [listings, query],
+    const pickerProperties = useMemo(
+        () =>
+            listings.map((listing) => ({
+                ...mapMyListingToPicker(listing),
+                statusChips: listing.exclusiveOwnerId
+                    ? [
+                          {
+                              label:
+                                  listing.exclusiveOwnerId === owner.id
+                                      ? "Already attached"
+                                      : "Has another owner",
+                              color: "stone" as const,
+                          },
+                      ]
+                    : undefined,
+            })),
+        [listings, owner.id],
     );
 
-    const attach = useCallback(() => {
-        if (!selectedId) return;
-        setBusy(true);
-        void propertiesApi
-            .attachExclusiveOwner(selectedId, owner.id)
-            .then(() => {
-                toast.success(`Attached ${owner.name} to listing`);
-                onSaved();
-                onOpenChange(false);
-            })
-            .catch((error) => {
-                toast.error(
-                    error instanceof Error ? error.message : "Couldn't attach owner to listing",
-                );
-            })
-            .finally(() => setBusy(false));
-    }, [onOpenChange, onSaved, owner.id, owner.name, selectedId]);
+    const attach = useCallback(
+        (selectedId: string | null) => {
+            if (!selectedId || busy || loading || loadError) return;
+            setBusy(true);
+            void propertiesApi
+                .attachExclusiveOwner(selectedId, owner.id)
+                .then(() => {
+                    toast.success(`Attached ${owner.name} to listing`);
+                    onSaved();
+                    onOpenChange(false);
+                })
+                .catch((error) => {
+                    toast.error(
+                        error instanceof Error ? error.message : "Couldn't attach owner to listing",
+                    );
+                })
+                .finally(() => setBusy(false));
+        },
+        [busy, loading, loadError, onOpenChange, onSaved, owner.id, owner.name],
+    );
 
     return (
-        <AppModal
+        <PropertyPicker
             open={open}
-            onOpenChange={onOpenChange}
-            size="lg"
+            onOpenChange={(next) => {
+                if (!busy) onOpenChange(next);
+            }}
             title="Attach to listing"
             description={`Pick one of your listings to link ${owner.name} as the exclusive owner.`}
-            header={
-                <Input
-                    size="sm"
-                    value={query}
-                    onValueChange={setQuery}
-                    placeholder="Search your listings"
-                    aria-label="Search your listings"
-                    startIcon={Search}
-                    clearable
-                    wrapperClassName="min-inline-56 flex-1"
-                />
-            }
-            footer={
-                <AppModalFooter
-                    primaryLabel={busy ? "Attaching…" : "Attach to listing"}
-                    primaryIcon={<Building2 aria-hidden strokeWidth={1.75} />}
-                    onPrimary={attach}
-                    primaryDisabled={!selectedId || busy || loading}
-                    secondaryLabel="Cancel"
-                    onSecondary={() => onOpenChange(false)}
-                    secondaryDisabled={busy}
-                />
-            }
-        >
-            {loading ? (
-                <div className="flex flex-col gap-2">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                        <div
-                            key={index}
-                            className="animate-pulse rounded-card bg-surface-muted block-20"
-                            aria-hidden
-                        />
-                    ))}
-                </div>
-            ) : filtered.length === 0 ? (
-                <EmptyState
-                    icon={Building2}
-                    heading={query ? "No listings match" : "No listings yet"}
-                    description={
-                        query
-                            ? "Try a different title or locality."
-                            : "Add a property in My Listings first, then attach this owner."
-                    }
-                />
-            ) : (
-                <RadioGroup value={selectedId} onValueChange={setSelectedId}>
-                    <VirtualListBox
-                        items={filtered}
-                        getKey={(listing) => listing.id}
-                        estimateItemHeight={80}
-                        ariaLabel="My Listings"
-                        renderItem={(listing) => {
-                            const selected = selectedId === listing.id;
-                            return (
-                                <label
-                                    className={cn(
-                                        `
-                                          flex cursor-pointer items-start gap-3 rounded-card border
-                                          p-3 transition-[background-color,border-color]
-                                          duration-160
-                                        `,
-                                        selected
-                                            ? "border-brand bg-brand-soft/50"
-                                            : `
-                                              border-border-warm bg-surface
-                                              hover:border-ink/20 hover:bg-surface-muted/50
-                                            `,
-                                    )}
-                                >
-                                    <RadioGroupItem
-                                        value={listing.id}
-                                        aria-label={`Attach to ${listing.title}`}
-                                        className="mbs-1 shrink-0"
-                                    />
-                                    <div className="flex-1 min-inline-0">
-                                        <p className="body-sm font-semibold text-ink">
-                                            {listing.title}
-                                        </p>
-                                        <p className="body-xs text-ink-muted">
-                                            {[listing.locality, listing.city]
-                                                .filter(Boolean)
-                                                .join(", ")}
-                                            {listing.exclusiveOwnerId
-                                                ? listing.exclusiveOwnerId === owner.id
-                                                    ? " · Already attached"
-                                                    : " · Has another owner"
-                                                : ""}
-                                        </p>
-                                    </div>
-                                </label>
-                            );
-                        }}
-                    />
-                </RadioGroup>
-            )}
-        </AppModal>
+            properties={pickerProperties}
+            value={null}
+            onConfirm={attach}
+            commitOnSelect={false}
+            closeOnConfirm={false}
+            confirmLabel={busy ? "Attaching…" : "Attach to listing"}
+            confirmDisabled={busy || loading || loadError}
+            loading={loading}
+            errorText={loadError ? "Couldn't load your listings. Try again." : undefined}
+            onRetry={() => setRetryVersion((current) => current + 1)}
+            emptyHeading="No listings yet"
+            emptyDescription="Add a property in My Listings first, then attach this owner."
+        />
     );
 }

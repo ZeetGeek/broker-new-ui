@@ -1,12 +1,13 @@
 "use client";
 
 import type { MutableRefObject } from "react";
-import toast from "react-hot-toast";
 
 import { createClientId } from "@/lib/client-id";
 import { preparePhotoForUpload } from "@/lib/media/prepare-photo";
 import { MAX_PROPERTY_PHOTOS } from "@/lib/properties/form-media";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
+
+import toast from "@/components/shared/app-toast";
 
 export type DraftPhoto = PropertyDraftValues["media"]["photos"][number];
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 
 import { useQuery } from "@tanstack/react-query";
@@ -21,6 +20,7 @@ import {
     ownerPropertyEditHref,
 } from "@/lib/routes/owner";
 
+import toast from "@/components/shared/app-toast";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";

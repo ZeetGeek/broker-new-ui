@@ -101,7 +101,12 @@ export function EarningsPage() {
                     heading="Couldn’t load your earnings"
                     description="Check your internet connection and try again. Your deals are safe."
                 >
-                    <Button type="button" onClick={() => refetch()} loading={isRefetching}>
+                    <Button
+                        type="button"
+                        onClick={() => refetch()}
+                        loading={isRefetching}
+                        variant="accent"
+                    >
                         Try again
                     </Button>
                 </EmptyState>
@@ -121,7 +126,11 @@ export function EarningsPage() {
                     heading="Your earnings will show here"
                     description="Add a client to a property and work the deal in your pipeline. When you mark it as sold, the commission shows up on this page."
                 >
-                    <Button nativeButton={false} render={<Link href={BROKER_PIPELINE_HREF} />}>
+                    <Button
+                        nativeButton={false}
+                        render={<Link href={BROKER_PIPELINE_HREF} />}
+                        variant="accent"
+                    >
                         Go to pipeline
                     </Button>
                 </EmptyState>

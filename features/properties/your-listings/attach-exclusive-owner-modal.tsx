@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -12,6 +11,7 @@ import { formatPersonName } from "@/lib/format/person-name";
 import { uniqueInfiniteItems } from "@/lib/pagination/infinite-page";
 import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 
+import toast from "@/components/shared/app-toast";
 import type { PeoplePickerPerson } from "@/components/shared/people-picker";
 import { PeoplePicker } from "@/components/shared/people-picker";
 import { Button } from "@/components/ui/button";

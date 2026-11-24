@@ -20,6 +20,9 @@ import type {
     ClientRow,
     PropertyReport,
 } from "@/features/properties/property-analytics/analytics-math";
+import { isPreviewAnalyticsClient } from "@/features/properties/property-analytics/mock-property-analytics";
+
+import styles from "./analytics.module.css";
 
 function visitPriority(client: ClientRow): number {
     if (client.visit?.upcoming) return 0;
@@ -29,6 +32,7 @@ function visitPriority(client: ClientRow): number {
 
 /** A compact visit row, prioritising upcoming and unresolved appointments. */
 function VisitRow({ client, now }: { client: ClientRow; now: Date }) {
+    const sample = isPreviewAnalyticsClient(client.id);
     const visit = client.visit!;
     const label = visit.upcoming
         ? formatShowingWhen(visit.at, now)
@@ -57,7 +61,7 @@ function VisitRow({ client, now }: { client: ClientRow; now: Date }) {
                 <ContactName
                     name={client.name}
                     contactId={client.clientId}
-                    contactType="buyer"
+                    contactType={sample ? undefined : "buyer"}
                     className="body-sm truncate font-semibold text-ink hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 />
                 <p className="body-sm truncate text-ink-muted">
@@ -69,8 +73,9 @@ function VisitRow({ client, now }: { client: ClientRow; now: Date }) {
                 size="sm"
                 className="shrink-0"
                 aria-label={`Open ${client.name}'s deal`}
-                nativeButton={false}
-                render={<Link href={brokerPipelineDealHref(client.id)} />}
+                nativeButton={sample}
+                disabled={sample}
+                render={sample ? undefined : <Link href={brokerPipelineDealHref(client.id)} />}
             >
                 Open
                 <ArrowRight aria-hidden />
@@ -107,48 +112,25 @@ export function AnalyticsVisits({
 
     return (
         <AnalyticsCard
-            title="Site visit performance"
+            title="Site visits"
             titleId="analytics-visits-heading"
-            description="Bookings and outcomes for this property"
+            description="Bookings and the latest visit updates"
             className={className}
         >
-            <div className="flex flex-col gap-3 rounded-inner bg-surface-muted p-4">
-                <div className="flex items-end justify-between gap-4">
-                    <div className="flex flex-col gap-1">
-                        <p className="h3 text-ink tabular-nums">
-                            {report.visits.clientsVisited} of {report.counts.total}
-                        </p>
-                        <p className="body-sm text-ink-muted">Clients have booked a visit</p>
-                    </div>
-                    <span className="body font-semibold text-brand tabular-nums">
-                        {visitedPercent}%
-                    </span>
-                </div>
-                <span
-                    aria-hidden
-                    className="block overflow-hidden rounded-full bg-border-warm block-2"
-                >
-                    <span
-                        className="block rounded-full bg-brand block-full"
-                        style={{ inlineSize: `${visitedPercent}%` }}
-                    />
-                </span>
-            </div>
-
-            <dl className="grid grid-cols-3 divide-x divide-border-warm text-center">
-                <div className="px-2">
+            <dl className={styles.visitMetrics}>
+                <div>
                     <dt className="body-xs text-ink-muted">Total visits</dt>
-                    <dd className="h5 mbs-1 text-ink tabular-nums">{report.visits.total}</dd>
+                    <dd className="h3 text-ink tabular-nums">{report.visits.total}</dd>
                 </div>
-                <div className="px-2">
+                <div>
                     <dt className="body-xs text-ink-muted">Upcoming</dt>
-                    <dd className="h5 mbs-1 text-ink tabular-nums">{report.visits.upcoming}</dd>
+                    <dd className="h3 text-ink tabular-nums">{report.visits.upcoming}</dd>
                 </div>
-                <div className="px-2">
+                <div>
                     <dt className="body-xs text-ink-muted">Needs update</dt>
                     <dd
                         className={cn(
-                            "h5 mbs-1 tabular-nums",
+                            "h3 tabular-nums",
                             needsUpdate > 0 ? "text-urgent" : "text-ink",
                         )}
                     >
@@ -156,6 +138,28 @@ export function AnalyticsVisits({
                     </dd>
                 </div>
             </dl>
+            {report.visits.total > 0 ? (
+                <div className="flex flex-col gap-2 border-bs border-border-warm pbs-4">
+                    <p className="body-sm text-ink-muted">
+                        <strong className="font-semibold text-ink">
+                            {report.visits.clientsVisited} of {report.counts.total}
+                        </strong>{" "}
+                        clients booked a visit
+                        <span className="float-end font-semibold text-brand tabular-nums">
+                            {visitedPercent}%
+                        </span>
+                    </p>
+                    <span
+                        aria-hidden
+                        className="overflow-hidden rounded-full bg-surface-muted block-2"
+                    >
+                        <span
+                            className="block rounded-full bg-brand block-full"
+                            style={{ inlineSize: `${visitedPercent}%` }}
+                        />
+                    </span>
+                </div>
+            ) : null}
 
             {visitRows.length > 0 ? (
                 <div className="flex flex-col gap-2 border-bs border-border-warm pbs-4">
@@ -167,10 +171,15 @@ export function AnalyticsVisits({
                     </ul>
                 </div>
             ) : (
-                <p className="body-sm flex items-start gap-2 text-ink-muted">
-                    <CalendarCheck aria-hidden className="mbs-px shrink-0 block-4 inline-4" />
-                    No visits booked yet. Visit activity appears here once a client is scheduled.
-                </p>
+                <div className={styles.quietState}>
+                    <CalendarCheck aria-hidden className="block-5 inline-5" />
+                    <div className="flex flex-col gap-1">
+                        <p className="body-sm font-medium text-ink">No visits booked yet</p>
+                        <p className="body-sm text-ink-muted">
+                            Schedule a visit from a client’s deal to see it here.
+                        </p>
+                    </div>
+                </div>
             )}
 
             {report.visits.total > 0 && report.visits.clientsVisited === 0 ? (

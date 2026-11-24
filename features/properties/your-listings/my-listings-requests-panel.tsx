@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 import { brokerRequestsApi } from "@/lib/api/broker-requests";
 import { PREF_KEYS } from "@/lib/prefs/keys";
@@ -9,7 +8,9 @@ import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
-import { Check, Clock, Send, X } from "@/components/shared/icons";
+import toast from "@/components/shared/app-toast";
+import { EmptyState } from "@/components/shared/empty-state";
+import { AlertCircle, Check, Clock, Search, Send, X } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -150,6 +151,7 @@ function PlatformMyListingsRequestsPanel() {
     );
     const [result, setResult] = useState<BrokerRequestsResult | null>(null);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
     const [busyId, setBusyId] = useState<string | null>(null);
     const [revision, setRevision] = useState(0);
 
@@ -162,6 +164,7 @@ function PlatformMyListingsRequestsPanel() {
             if (cancelled) return;
 
             setLoading(true);
+            setLoadError(false);
             void brokerRequestsApi
                 .list(status)
                 .then((next) => {
@@ -170,11 +173,7 @@ function PlatformMyListingsRequestsPanel() {
                 })
                 .catch(() => {
                     if (cancelled) return;
-                    setResult({
-                        counts: { approved: 0, pending: 0, declined: 0 },
-                        quota: { limit: 10, used: 0, remaining: 10, resetsOn: "" },
-                        items: [],
-                    });
+                    setLoadError(true);
                 })
                 .finally(() => {
                     if (!cancelled) setLoading(false);
@@ -251,13 +250,32 @@ function PlatformMyListingsRequestsPanel() {
                 ))}
             </div>
 
-            {loading && !result ? null : result && total === 0 && status === "all" ? (
+            {loading && !result ? null : loadError ? (
+                <EmptyState
+                    size="page"
+                    variant="error"
+                    icon={AlertCircle}
+                    heading="Your requests couldn’t be loaded"
+                    description="Check your connection and try again to see your requests to owners."
+                >
+                    <Button variant="accent" onClick={() => setRevision((value) => value + 1)}>
+                        Try again
+                    </Button>
+                </EmptyState>
+            ) : result && total === 0 && status === "all" ? (
                 <MyListingsRequestsEmpty />
             ) : result && result.items.length === 0 ? (
-                <div className="py-10 text-center">
-                    <p className="h6 text-ink">No {status} requests</p>
-                    <p className="body-sm mbs-2 text-ink-muted">Try another filter.</p>
-                </div>
+                <EmptyState
+                    size="page"
+                    variant="filtered"
+                    icon={Search}
+                    heading={`No ${status} requests`}
+                    description="Requests with this status will appear here. View all requests to see the rest."
+                >
+                    <Button variant="accent" onClick={() => setStatus("all")}>
+                        View all requests
+                    </Button>
+                </EmptyState>
             ) : result ? (
                 <WindowVirtualGrid
                     items={result.items}

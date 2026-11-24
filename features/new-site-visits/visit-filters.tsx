@@ -3,13 +3,12 @@
 import { useMemo, useState } from "react";
 
 import { AppDateRangeFields } from "@/components/shared/app-date-range-fields";
+import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { mapFilterPersonToPicker } from "@/components/shared/map-to-people-picker-person";
 import { mapFilterPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
 import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
 import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
-import { Dialog, DialogPopup } from "@/components/ui/dialog";
 
 import styles from "./visits.module.css";
 
@@ -53,48 +52,15 @@ export function VisitFiltersDialog({
         [propertyOptions],
     );
     return (
-        <Dialog
+        <AppModal
             open
             onOpenChange={(open) => {
                 if (!open) onClose();
             }}
-        >
-            <DialogPopup
-                showCloseButton={false}
-                className={`flex flex-col gap-0 overflow-hidden p-0 inline-[min(32rem,calc(100vw-1rem))] ${styles.filtersDialog}`}
-            >
-                <AppModalHeader title="Filter visits" />
-                <div className="flex flex-col gap-5 p-5 sm:p-8">
-                    <PeopleInlineSelect
-                        label="Client"
-                        lockedScope="client"
-                        people={clientPeople}
-                        value={draft.client || null}
-                        onValueChange={(client) =>
-                            setDraft((current) => ({
-                                ...current,
-                                client: client ?? "",
-                            }))
-                        }
-                        placeholder="Any client"
-                        allowClear
-                        clearLabel="Any client"
-                    />
-                    <PropertyInlineSelect
-                        label="Property"
-                        properties={propertyRows}
-                        value={draft.property || null}
-                        onValueChange={(property) =>
-                            setDraft((current) => ({
-                                ...current,
-                                property: property ?? "",
-                            }))
-                        }
-                        placeholder="Any property"
-                        allowClear
-                        clearLabel="Any property"
-                    />
-                </div>
+            title="Filter visits"
+            bodyClassName="p-0"
+            className={`flex flex-col gap-0 overflow-hidden p-0 inline-[min(32rem,calc(100vw-1rem))] ${styles.filtersDialog}`}
+            footer={
                 <AppModalFooter
                     className={`justify-between border-bs border-border-warm p-5 sm:px-8 ${styles.filtersFooter}`}
                     secondaryLabel="Clear"
@@ -102,8 +68,41 @@ export function VisitFiltersDialog({
                     primaryLabel="Show visits"
                     onPrimary={() => onApply(draft)}
                 />
-            </DialogPopup>
-        </Dialog>
+            }
+            footerClassName="p-0"
+        >
+            <div className="flex flex-col gap-5 p-5 sm:p-8">
+                <PeopleInlineSelect
+                    label="Client"
+                    lockedScope="client"
+                    people={clientPeople}
+                    value={draft.client || null}
+                    onValueChange={(client) =>
+                        setDraft((current) => ({
+                            ...current,
+                            client: client ?? "",
+                        }))
+                    }
+                    placeholder="Any client"
+                    allowClear
+                    clearLabel="Any client"
+                />
+                <PropertyInlineSelect
+                    label="Property"
+                    properties={propertyRows}
+                    value={draft.property || null}
+                    onValueChange={(property) =>
+                        setDraft((current) => ({
+                            ...current,
+                            property: property ?? "",
+                        }))
+                    }
+                    placeholder="Any property"
+                    allowClear
+                    clearLabel="Any property"
+                />
+            </div>
+        </AppModal>
     );
 }
 
@@ -120,24 +119,15 @@ export function VisitDateRangeDialog({
     const [draft, setDraft] = useState(value);
     const invalid = !!(draft.from && draft.to && draft.from > draft.to);
     return (
-        <Dialog
+        <AppModal
             open
             onOpenChange={(open) => {
                 if (!open) onClose();
             }}
-        >
-            <DialogPopup
-                showCloseButton={false}
-                className="flex flex-col gap-0 overflow-hidden p-0 inline-[min(40rem,calc(100vw-1rem))]"
-            >
-                <AppModalHeader title="Visit dates" />
-                <div className="p-5 sm:p-8">
-                    <AppDateRangeFields
-                        from={draft.from}
-                        to={draft.to}
-                        onChange={(range) => setDraft((current) => ({ ...current, ...range }))}
-                    />
-                </div>
+            title="Visit dates"
+            bodyClassName="p-0"
+            className="flex flex-col gap-0 overflow-hidden p-0 inline-[min(40rem,calc(100vw-1rem))]"
+            footer={
                 <AppModalFooter
                     className="justify-between border-bs border-border-warm p-5 sm:px-8"
                     secondaryLabel="Cancel"
@@ -146,7 +136,16 @@ export function VisitDateRangeDialog({
                     primaryDisabled={invalid}
                     onPrimary={() => onApply({ ...draft, range: "custom" })}
                 />
-            </DialogPopup>
-        </Dialog>
+            }
+            footerClassName="p-0"
+        >
+            <div className="p-5 sm:p-8">
+                <AppDateRangeFields
+                    from={draft.from}
+                    to={draft.to}
+                    onChange={(range) => setDraft((current) => ({ ...current, ...range }))}
+                />
+            </div>
+        </AppModal>
     );
 }

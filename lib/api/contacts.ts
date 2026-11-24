@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api/client";
 import {
     clientsApi,
+    enrichAttachedPropertyCovers,
     listClientsPageWithLeadSummary,
     listClientsWithLeadSummary,
     type NewBuyerInput,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/api/exclusive-owners";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { InfinitePage } from "@/lib/pagination/infinite-page";
+import { matchesClientSearch, matchesOwnerSearch } from "@/lib/search/crm-search";
 import { clientPhoneForStorage, parseClientMobile } from "@/lib/validation/client-phone";
 import type { ExclusiveOwnerFormValues } from "@/lib/validation/exclusive-owner";
 
@@ -326,6 +328,7 @@ function exclusiveOwnerToRow(item: ExclusiveOwnerItem): OwnerRow {
 async function attachExclusiveOwnerListings(
     owners: OwnerRow[],
     signal?: AbortSignal,
+    maxPages = 5,
 ): Promise<OwnerRow[]> {
     const customIds = new Set(
         owners
@@ -344,7 +347,8 @@ async function attachExclusiveOwnerListings(
     try {
         let page = 1;
         let totalPages = 1;
-        while (page <= totalPages && page <= 5) {
+        while (page <= totalPages && page <= maxPages) {
+            signal?.throwIfAborted();
             const response = await apiFetch<{
                 items?: Array<{
                     id: string;
@@ -385,7 +389,9 @@ async function attachExclusiveOwnerListings(
             totalPages = Math.max(1, response.totalPages ?? 1);
             page += 1;
         }
-    } catch {
+    } catch (error) {
+        signal?.throwIfAborted();
+        if (maxPages === Infinity) throw error;
         return owners;
     }
 
@@ -430,6 +436,7 @@ async function listOwners(
     page = 1,
     limit = 20,
     signal?: AbortSignal,
+    withListingCovers = true,
 ): Promise<{
     owners: OwnerRow[];
     total: number;
@@ -503,7 +510,8 @@ async function listOwners(
         signal,
     );
 
-    const owners = await attachExclusiveOwnerListings(data.items.map(exclusiveOwnerToRow), signal);
+    const rows = data.items.map(exclusiveOwnerToRow);
+    const owners = withListingCovers ? await attachExclusiveOwnerListings(rows, signal) : rows;
 
     return {
         owners,
@@ -546,6 +554,29 @@ export function sortBuyerRows(rows: BuyerRow[], sort: ContactsFilters["sort"]): 
 }
 
 export const contactsApi = {
+    async buyerSearchSource(signal?: AbortSignal): Promise<BuyerRow[]> {
+        return (await listClientsWithLeadSummary({ signal })).map(toBuyerRow);
+    },
+
+    async ownerSearchSource(filters: ContactsFilters, signal?: AbortSignal): Promise<OwnerRow[]> {
+        const owners: OwnerRow[] = [];
+        let page = 1;
+        let totalPages = 1;
+        while (page <= totalPages) {
+            signal?.throwIfAborted();
+            const result = await listOwners(
+                { ...ownerFiltersForFeature(filters), q: "" },
+                page,
+                100,
+                signal,
+                false,
+            );
+            owners.push(...result.owners);
+            totalPages = result.totalPages;
+            page++;
+        }
+        return isMockMode() ? owners : attachExclusiveOwnerListings(owners, signal, Infinity);
+    },
     /** Resolve deep links independently of the list's filters and loaded pages. */
     async findContact(
         id: string,
@@ -585,8 +616,19 @@ export const contactsApi = {
         filters: ContactsFilters,
         cursor: string | null,
         signal?: AbortSignal,
+        searchSource?: () => Promise<BuyerRow[]>,
     ): Promise<InfinitePage<BuyerRow>> {
         const page = cursor ? Number(cursor) || 1 : 1;
+        if (filters.q.trim()) {
+            const source = await (searchSource?.() ?? contactsApi.buyerSearchSource(signal));
+            signal?.throwIfAborted();
+            const matched = sortBuyerRows(
+                source.filter((row) => matchesClientSearch(row, filters.q)),
+                filters.sort,
+            );
+            const result = paginateItems(matched, page, 20);
+            return { ...result, items: await enrichAttachedPropertyCovers(result.items, signal) };
+        }
         // Buyers are broker Client contacts — `GET /clients` (with lead summary).
         // There is no `/contacts/buyers` route on the API.
         const result = await listClientsPageWithLeadSummary({
@@ -607,8 +649,19 @@ export const contactsApi = {
         filters: ContactsFilters,
         cursor: string | null,
         signal?: AbortSignal,
+        searchSource?: () => Promise<OwnerRow[]>,
     ): Promise<InfinitePage<OwnerRow>> {
         const page = cursor ? Number(cursor) || 1 : 1;
+        if (filters.q.trim()) {
+            const source = await (searchSource?.() ??
+                contactsApi.ownerSearchSource(filters, signal));
+            signal?.throwIfAborted();
+            return paginateItems(
+                source.filter((row) => matchesOwnerSearch(row, filters.q)),
+                page,
+                20,
+            );
+        }
         const result = await listOwners(ownerFiltersForFeature(filters), page, 20, signal);
         return {
             items: result.owners,

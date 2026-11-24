@@ -1,7 +1,7 @@
 "use client";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { Button } from "@/components/ui/button";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 
 export function DeleteOwnerDialog({
     open,
@@ -24,25 +24,19 @@ export function DeleteOwnerDialog({
             title="Delete this owner?"
             description={`“${name}” will be removed from your owner list.`}
             footer={
-                <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => onOpenChange(false)}
-                    >
-                        Keep owner
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="destructive"
-                        disabled={busy}
-                        loading={busy}
-                        onClick={onConfirm}
-                    >
-                        Delete owner
-                    </Button>
-                </div>
+                <AppModalFooter
+                    className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full"
+                    secondaryLabel="Keep owner"
+                    secondaryVariant="ghost"
+                    secondaryDisabled={busy}
+                    onSecondary={() => onOpenChange(false)}
+                    primaryLabel="Delete owner"
+                    primaryType="button"
+                    primaryVariant="destructive"
+                    primaryDisabled={busy}
+                    primaryLoading={busy}
+                    onPrimary={onConfirm}
+                />
             }
         >
             <p className="body text-ink-muted">

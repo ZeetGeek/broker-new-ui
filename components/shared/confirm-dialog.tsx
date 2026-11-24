@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { Button } from "@/components/ui/button";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 
 export type ConfirmDialogProps = {
     open: boolean;
@@ -48,25 +48,19 @@ export function ConfirmDialog({
             title={title}
             description={description}
             footer={
-                <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => onOpenChange(false)}
-                    >
-                        {cancelLabel}
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="destructive"
-                        disabled={busy}
-                        loading={busy}
-                        onClick={onConfirm}
-                    >
-                        {confirmLabel}
-                    </Button>
-                </div>
+                <AppModalFooter
+                    className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full"
+                    secondaryLabel={cancelLabel}
+                    secondaryVariant="ghost"
+                    secondaryDisabled={busy}
+                    onSecondary={() => onOpenChange(false)}
+                    primaryLabel={confirmLabel}
+                    primaryType="button"
+                    primaryVariant="destructive"
+                    primaryDisabled={busy}
+                    primaryLoading={busy}
+                    onPrimary={onConfirm}
+                />
             }
         >
             {children ?? null}

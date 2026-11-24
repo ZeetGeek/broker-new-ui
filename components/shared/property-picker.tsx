@@ -39,6 +39,7 @@ type LookingFilter = "all" | PropertyPickerLookingFor;
 type PropertyPickerBase = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    manageBrowserHistory?: boolean;
     properties: readonly PropertyPickerProperty[];
     /**
      * When `"both"` (default), All / Sale / Rent tabs appear.
@@ -100,6 +101,7 @@ export function PropertyPicker(props: PropertyPickerProps) {
     const {
         open,
         onOpenChange,
+        manageBrowserHistory,
         properties,
         lookingFor = "both",
         audience = "broker",
@@ -201,26 +203,31 @@ export function PropertyPicker(props: PropertyPickerProps) {
     }
 
     function selectSingle(id: string | null) {
+        if (loading || confirmDisabled || hasError) return;
         setDraftSingle(id);
         if (commitOnSelect && !props.multiple) {
             props.onConfirm(id);
-            onOpenChange(false);
+            if (closeOnConfirm) onOpenChange(false);
         }
     }
 
     function toggleMulti(id: string) {
+        if (loading || confirmDisabled || hasError) return;
         setDraftMulti((current) =>
             current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
         );
     }
 
     function confirm() {
+        if (primaryDisabled) return;
         if (props.multiple) props.onConfirm(draftMulti);
         else props.onConfirm(draftSingle);
         if (closeOnConfirm) onOpenChange(false);
     }
 
     function onRowKeyDown(event: KeyboardEvent<HTMLElement>, id: string) {
+        // Price/commission controls inside a row handle their own keyboard events.
+        if (event.target !== event.currentTarget) return;
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
         if (multiple) toggleMulti(id);
@@ -252,6 +259,7 @@ export function PropertyPicker(props: PropertyPickerProps) {
         <AppModal
             open={open}
             onOpenChange={onOpenChange}
+            manageBrowserHistory={manageBrowserHistory}
             size="md"
             title={resolvedTitle}
             description={description}
@@ -325,7 +333,7 @@ export function PropertyPicker(props: PropertyPickerProps) {
                                 variant="ghost"
                                 size="default"
                                 className="me-auto inline-auto"
-                                disabled={listBusy}
+                                disabled={listBusy || confirmDisabled}
                                 onClick={() => {
                                     if (props.multiple) {
                                         setDraftMulti([]);
@@ -334,7 +342,7 @@ export function PropertyPicker(props: PropertyPickerProps) {
                                         setDraftSingle(null);
                                         props.onConfirm(null);
                                     }
-                                    onOpenChange(false);
+                                    if (closeOnConfirm) onOpenChange(false);
                                 }}
                             >
                                 {clearLabel}
@@ -412,7 +420,8 @@ export function PropertyPicker(props: PropertyPickerProps) {
                                         tabIndex={0}
                                         onClick={() => toggleMulti(property.id)}
                                         onKeyDown={(event) => onRowKeyDown(event, property.id)}
-                                        className="cursor-pointer text-start outline-none inline-full"
+                                        aria-disabled={confirmDisabled || undefined}
+                                        className="cursor-pointer rounded-card text-start outline-none inline-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                                     >
                                         <PropertyPickerChrome selected={selected} multiple>
                                             <PropertyOptionRow
@@ -445,7 +454,8 @@ export function PropertyPicker(props: PropertyPickerProps) {
                                             tabIndex={0}
                                             onClick={() => selectSingle(property.id)}
                                             onKeyDown={(event) => onRowKeyDown(event, property.id)}
-                                            className="cursor-pointer text-start outline-none"
+                                            aria-disabled={confirmDisabled || undefined}
+                                            className="cursor-pointer rounded-card text-start outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                                         >
                                             {/* Keep RadioGroup value in sync for a11y; tip buttons must not nest in a <label>/<button>. */}
                                             <RadioGroupItem
@@ -533,6 +543,8 @@ type PropertyPickerFieldChrome = {
     placeholder?: string;
     disabled?: boolean;
     errorText?: string;
+    /** Loading errors belong to the picker; errorText is field validation. */
+    pickerErrorText?: string;
     helperText?: string;
     triggerSize?: "default" | "lg";
 };
@@ -660,6 +672,8 @@ export function PropertyPickerField(props: PropertyPickerFieldProps) {
             {props.multiple ? (
                 <PropertyPicker
                     {...props}
+                    errorText={props.pickerErrorText}
+                    confirmDisabled={disabled || props.confirmDisabled}
                     open={open}
                     onOpenChange={setOpen}
                     multiple
@@ -669,6 +683,8 @@ export function PropertyPickerField(props: PropertyPickerFieldProps) {
             ) : (
                 <PropertyPicker
                     {...props}
+                    errorText={props.pickerErrorText}
+                    confirmDisabled={disabled || props.confirmDisabled}
                     open={open}
                     onOpenChange={setOpen}
                     multiple={false}

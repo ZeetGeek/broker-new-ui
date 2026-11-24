@@ -19,7 +19,7 @@ export function ReferralsFirstRunEmpty({ onInvite }: { onInvite: () => void }) {
             description="Brokers you invite show up here, from the moment they open your link to the day they start working a property."
             className="py-14"
         >
-            <Button variant="secondary" size="sm" onClick={onInvite}>
+            <Button variant="accent" size="sm" onClick={onInvite}>
                 <UserRoundPlus aria-hidden />
                 Invite by number
             </Button>
@@ -36,7 +36,7 @@ export function ReferralsFilteredEmpty({ onClear }: { onClear: () => void }) {
             description="Try a different name, number or status."
             className="py-14"
         >
-            <Button variant="secondary" size="sm" onClick={onClear}>
+            <Button variant="accent" size="sm" onClick={onClear}>
                 Clear the filters
             </Button>
         </EmptyState>

@@ -1,7 +1,6 @@
 "use client";
 
 import { type ReactNode, useCallback, useRef, useState } from "react";
-import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 
@@ -10,6 +9,7 @@ import {
     personDetailsTarget,
 } from "@/lib/contacts/person-details-target";
 
+import toast from "@/components/shared/app-toast";
 import {
     PersonDetailsContext,
     PersonDetailsWorkingContext,

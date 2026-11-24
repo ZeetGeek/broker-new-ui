@@ -1,0 +1,82 @@
+.root {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    min-inline-size: 0;
+    box-sizing: border-box;
+    padding: 1.5rem 1rem;
+    text-align: center;
+}
+
+.page {
+    min-block-size: max(25rem, calc(100dvh - 17rem));
+    inline-size: 100%;
+    padding: 2.5rem 1.5rem;
+    border: 1px solid var(--color-border-warm);
+    border-radius: 16px;
+    background: var(--color-surface);
+}
+
+.visual {
+    display: grid;
+    place-items: center;
+    flex: none;
+    inline-size: 4.5rem;
+    block-size: 4.5rem;
+    border: 1px solid color-mix(in srgb, var(--color-brand) 40%, var(--color-brand-soft));
+    border-radius: 50%;
+    background: var(--color-brand-soft);
+    color: var(--color-brand);
+}
+
+.icon {
+    inline-size: 2rem;
+    block-size: 2rem;
+}
+
+.copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    min-inline-size: 0;
+    max-inline-size: 28rem;
+    overflow-wrap: anywhere;
+}
+
+.copy > :is(h2, p) {
+    margin: 0;
+}
+
+.copy > p {
+    line-height: 1.65;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    max-inline-size: 100%;
+    margin-block-start: 0.25rem;
+}
+
+.actions > :is(button, a) {
+    block-size: auto;
+    min-block-size: 44px;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    padding-block: 0.625rem;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+@media (max-width: 639px) {
+    .page {
+        min-block-size: max(22rem, calc(100dvh - 20rem));
+        padding: 2rem 1rem;
+    }
+}

@@ -170,7 +170,7 @@ export function OwnerBrokersBrowse({
                 description="Loosen a filter to see more brokers."
                 className="py-16"
             >
-                <Button variant="secondary" size="sm" onClick={clearFilters}>
+                <Button variant="accent" size="sm" onClick={clearFilters}>
                     Clear filters
                 </Button>
             </EmptyState>

@@ -1,7 +1,7 @@
 import { formatDateShort, formatTimeIn, isSameCalendarDay } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
-import { Calendar, CalendarClock, CalendarPlus, Pencil } from "@/components/shared/icons";
+import { Calendar, CalendarClock, Pencil } from "@/components/shared/icons";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -27,7 +27,7 @@ export function VisitStageBlock({ deal }: { deal: DealItem }) {
         <div
             className={cn(
                 styles.visitBlock,
-                "flex items-center gap-2.5 rounded-inner border border-stage-3-soft/70 px-3 py-1",
+                "flex items-center gap-2.5 rounded-inner border border-stage-3-soft/70 p-2.5",
                 isToday ? "bg-stage-3-soft/30" : "bg-stage-3-soft/15",
             )}
         >
@@ -77,7 +77,6 @@ export function VisitStageBlock({ deal }: { deal: DealItem }) {
                     className={cn("shrink-0 text-xs", styles.scheduleAction)}
                     render={<Link href={href} onClick={(event) => event.stopPropagation()} />}
                 >
-                    <CalendarPlus aria-hidden strokeWidth={1.75} />
                     Schedule visit
                 </Button>
             )}

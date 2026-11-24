@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Toaster } from "react-hot-toast";
 
 import { MotionConfig } from "motion/react";
+
+import { AppToaster } from "@/components/shared/app-toast";
 
 /**
  * App chrome wrapper. Theme is fixed to light (see `html` in `app/layout.tsx`) —
@@ -14,19 +15,7 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
     return (
         <MotionConfig reducedMotion="user">
             {children}
-            <Toaster
-                position="bottom-center"
-                toastOptions={{
-                    className: "body font-sans!",
-                    style: {
-                        background: "var(--color-surface)",
-                        color: "var(--color-ink)",
-                        border: "0.0625rem solid var(--color-border-warm)",
-                        borderRadius: "var(--radius-inner)",
-                        boxShadow: "var(--shadow-md)",
-                    },
-                }}
-            />
+            <AppToaster />
         </MotionConfig>
     );
 }

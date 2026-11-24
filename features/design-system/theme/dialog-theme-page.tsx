@@ -6,17 +6,9 @@ import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { CharacterCount } from "@/components/shared/character-count";
 import { StickyNote } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogClose,
-    DialogDescription,
-    DialogPopup,
-    DialogTrigger,
-} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
 import { DesignSystemShell } from "@/features/design-system/design-system-shell";
@@ -31,36 +23,32 @@ function Swatch({ label, children }: { label: string; children: React.ReactNode 
     );
 }
 
-function CompoundDemo() {
+function ConfirmationDemo() {
+    const [open, setOpen] = useState(false);
     return (
-        <Dialog>
-            <DialogTrigger
-                render={
-                    <Button size="default" variant="outline">
-                        Open dialog
-                    </Button>
+        <>
+            <Button size="default" variant="outline" onClick={() => setOpen(true)}>
+                Open dialog
+            </Button>
+            <AppModal
+                open={open}
+                onOpenChange={setOpen}
+                title="Approve this broker?"
+                footer={
+                    <AppModalFooter
+                        secondaryLabel="Cancel"
+                        onSecondary={() => setOpen(false)}
+                        primaryLabel="Approve broker"
+                        onPrimary={() => setOpen(false)}
+                    />
                 }
-            />
-            <DialogPopup showCloseButton={false} className="gap-0 p-0">
-                <AppModalHeader title="Approve this broker?" />
-                <div className="space-y-4 p-(--dialog-pad)">
-                    <DialogDescription className="px-(--dialog-pad) pbs-3">
-                        They can show &ldquo;3 BHK in Andheri West&rdquo; to clients. You can revoke
-                        later.
-                    </DialogDescription>
-                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                        <DialogClose
-                            render={
-                                <Button size="default" variant="ghost">
-                                    Cancel
-                                </Button>
-                            }
-                        />
-                        <DialogClose render={<Button size="default">Approve broker</Button>} />
-                    </div>
-                </div>
-            </DialogPopup>
-        </Dialog>
+            >
+                <p className="body-sm text-ink-muted">
+                    They can show &ldquo;3 BHK in Andheri West&rdquo; to clients. You can revoke
+                    later.
+                </p>
+            </AppModal>
+        </>
     );
 }
 
@@ -126,30 +114,19 @@ function DestructiveDemo() {
                     </>
                 }
                 footer={
-                    <div
+                    <AppModalFooter
                         className="
                       flex flex-row flex-wrap items-center justify-end gap-2 inline-full
                     "
-                    >
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="default"
-                            onClick={() => setOpen(false)}
-                            className="inline-auto"
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            size="default"
-                            onClick={() => setOpen(false)}
-                            className="inline-auto"
-                        >
-                            Delete property
-                        </Button>
-                    </div>
+                        secondaryLabel="Cancel"
+                        secondaryVariant="ghost"
+                        onSecondary={() => setOpen(false)}
+                        primaryLabel="Delete property"
+                        primaryType="button"
+                        primaryVariant="destructive"
+                        primarySize="default"
+                        onPrimary={() => setOpen(false)}
+                    />
                 }
             >
                 <p className="body-sm text-ink-muted">
@@ -172,8 +149,9 @@ export function DialogThemePage() {
                 <section>
                     <h2 className="h4 text-ink">Uses</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        Prefer <code className="body-xs">AppModal</code> in product UI. Reach for
-                        the compound Dialog only when the surface is short and has no scroll body.
+                        Use <code className="body-xs">AppModal</code> for every product modal,
+                        including short confirmations. Photo lightboxes keep their specialized
+                        viewer.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
                         {DIALOG_USES.map((use) => (
@@ -183,7 +161,7 @@ export function DialogThemePage() {
                                   flex items-center justify-center inline-full min-block-14
                                 "
                                 >
-                                    {use.name === "compound" ? <CompoundDemo /> : null}
+                                    {use.name === "confirmation" ? <ConfirmationDemo /> : null}
                                     {use.name === "app-modal" ? <AppModalDemo /> : null}
                                     {use.name === "destructive" ? <DestructiveDemo /> : null}
                                 </div>

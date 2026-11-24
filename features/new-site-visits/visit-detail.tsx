@@ -1,8 +1,8 @@
 "use client";
-
 import type { BrokerVisit } from "@/lib/api/site-visits";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { ContactName } from "@/components/shared/contact-name";
 import { DrawerSection } from "@/components/shared/drawer-section";
 import { CalendarDays, CalendarPlus, Clock, MapPin, Plus } from "@/components/shared/icons";
@@ -67,19 +67,17 @@ export function AttendanceConfirmation({
             onClose={onClose}
             error={error}
             footer={(close) => (
-                <>
-                    <Button variant="outline" disabled={busy} onClick={close}>
-                        {intent === "cancelled" ? "Keep visit" : "Go back"}
-                    </Button>
-                    <Button
-                        variant={intent === "cancelled" ? "destructive" : "accent"}
-                        disabled={busy}
-                        loading={busy}
-                        onClick={() => void onConfirm()}
-                    >
-                        {busy ? "Saving…" : copy.action}
-                    </Button>
-                </>
+                <AppModalFooter
+                    secondaryLabel={intent === "cancelled" ? "Keep visit" : "Go back"}
+                    secondaryVariant="outline"
+                    secondaryDisabled={busy}
+                    onSecondary={close}
+                    primaryLabel={busy ? "Saving…" : copy.action}
+                    primaryVariant={intent === "cancelled" ? "destructive" : "accent"}
+                    primaryDisabled={busy}
+                    primaryLoading={busy}
+                    onPrimary={() => void onConfirm()}
+                />
             )}
         >
             <div className={styles.confirmSummary}>
@@ -128,7 +126,7 @@ export function VisitDetail({
             busy={busy}
             onClose={onBack}
             footer={(close) => (
-                <div className={styles.detailFooter}>
+                <AppModalFooter className={styles.detailFooter}>
                     {visit.isExclusive && (
                         <Button
                             size="sm"
@@ -181,7 +179,7 @@ export function VisitDetail({
                                 </Button>
                             );
                         })}
-                </div>
+                </AppModalFooter>
             )}
         >
             <div className="flex flex-col min-inline-0">

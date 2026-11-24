@@ -13,6 +13,7 @@ import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 import type { WorkflowTarget } from "@/lib/workflows/target";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import { ContactName } from "@/components/shared/contact-name";
 import { DrawerSection } from "@/components/shared/drawer-section";
@@ -104,9 +105,11 @@ export function PropertyWorkflow({
                 className="contacts-detail-drawer"
                 footer={
                     listing && !listing.deletedAt ? (
-                        <Button variant="accent" onClick={() => setMode("edit")}>
-                            Edit property
-                        </Button>
+                        <AppModalFooter
+                            primaryLabel="Edit property"
+                            primaryVariant="accent"
+                            onPrimary={() => setMode("edit")}
+                        />
                     ) : undefined
                 }
             >

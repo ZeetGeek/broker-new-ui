@@ -34,15 +34,6 @@
     outline-offset: 2px;
 }
 
-.empty {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 1.5rem 1rem;
-    border: 1px dashed var(--color-border-warm);
-    border-radius: var(--radius-card);
-}
-
 @media (min-width: 48rem) {
     .board {
         display: none;

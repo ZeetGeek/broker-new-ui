@@ -1,7 +1,6 @@
 "use client";
 
 import { Fragment, type UIEvent, useCallback, useEffect, useRef, useState } from "react";
-import toast from "react-hot-toast";
 
 import SimpleBar from "simplebar-react";
 
@@ -12,12 +11,13 @@ import { formatDateShort, isSameCalendarDay } from "@/lib/format/date";
 import { getNotificationSocket } from "@/lib/socket/notifications";
 
 import { AppImage } from "@/components/shared/app-image";
-import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import toast from "@/components/shared/app-toast";
 import { ChevronDown } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogPopup } from "@/components/ui/dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { ChatComposer } from "@/features/chat/chat-composer";
@@ -53,7 +53,7 @@ function DateSeparatorWave() {
 }
 
 /** Name, presence and role — no call buttons, by product decision. */
-function ChatHeader({ peer }: { peer: ChatPeer }) {
+function ChatPeerSummary({ peer }: { peer: ChatPeer }) {
     return (
         <div className="flex flex-1 items-center gap-3 min-inline-0">
             <UserAvatar name={peer.name} imageUrl={peer.avatarUrl} size="md" />
@@ -261,144 +261,143 @@ export function ChatModal({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup
-                showCloseButton={false}
-                style={{ maxInlineSize: "36rem" }}
-                className="
+        <AppModal
+            open={open}
+            onOpenChange={onOpenChange}
+            title={peer?.name ?? "Chat"}
+            bodyClassName="p-0"
+            scrollBody={false}
+            style={{ maxInlineSize: "36rem" }}
+            className="
                   flex flex-col gap-0 overflow-hidden p-0 block-[min(90dvh,46rem)]
                   inline-[calc(100vw-1.5rem)] max-block-[calc(100dvh-1.5rem)]
                 "
-            >
-                <AppModalHeader title={peer?.name ?? "Chat"} />
-                <TooltipProvider>
-                    {peer ? (
-                        <div className="px-5 py-3">
-                            <ChatHeader peer={peer} />
-                        </div>
-                    ) : null}
-                    <div className="relative flex-1 min-block-0">
-                        <SimpleBar
-                            className="app-modal-simplebar block-full"
-                            style={{ maxHeight: "100%", height: "100%" }}
-                            ariaLabel="Conversation"
-                            scrollableNodeProps={{
-                                onScroll: (event: UIEvent<HTMLDivElement>) => {
-                                    const node = event.currentTarget;
-                                    const away =
-                                        node.scrollHeight - node.scrollTop - node.clientHeight > 64;
-                                    followLatestRef.current = !away;
-                                    setAwayFromBottom(away);
-                                },
-                            }}
-                            autoHide
-                        >
-                            {showLoading ? (
-                                <ChatSkeleton />
-                            ) : showEmpty ? (
-                                <div
-                                    role="status"
-                                    className="
+        >
+            <TooltipProvider>
+                {peer ? (
+                    <div className="px-5 py-3">
+                        <ChatPeerSummary peer={peer} />
+                    </div>
+                ) : null}
+                <div className="relative flex-1 min-block-0">
+                    <SimpleBar
+                        className="app-modal-simplebar block-full"
+                        style={{ maxHeight: "100%", height: "100%" }}
+                        ariaLabel="Conversation"
+                        scrollableNodeProps={{
+                            onScroll: (event: UIEvent<HTMLDivElement>) => {
+                                const node = event.currentTarget;
+                                const away =
+                                    node.scrollHeight - node.scrollTop - node.clientHeight > 64;
+                                followLatestRef.current = !away;
+                                setAwayFromBottom(away);
+                            },
+                        }}
+                        autoHide
+                    >
+                        {showLoading ? (
+                            <ChatSkeleton />
+                        ) : showEmpty ? (
+                            <div
+                                role="status"
+                                className="
                                       flex flex-col items-center justify-center gap-4 px-6 py-8
                                       text-center min-block-[min(48dvh,24rem)]
                                     "
-                                >
-                                    <AppImage
-                                        src="/illustrations/chat-empty-conversation.png"
-                                        alt=""
-                                        width={288}
-                                        height={192}
-                                        sizes="(max-width: 400px) 240px, 288px"
-                                        className="
+                            >
+                                <AppImage
+                                    src="/illustrations/chat-empty-conversation.png"
+                                    alt=""
+                                    width={288}
+                                    height={192}
+                                    sizes="(max-width: 400px) 240px, 288px"
+                                    className="
                                           object-contain block-auto inline-60 max-inline-full
                                           sm:inline-72
                                         "
-                                        placeholder="empty"
-                                    />
-                                    <div className="space-y-2 max-inline-72">
-                                        <p className="h6 text-ink">
-                                            A good conversation starts with hello.
-                                        </p>
-                                        <p className="text-sm/relaxed font-medium text-ink/65">
-                                            Ask a question or share a detail about this property.
-                                        </p>
-                                    </div>
+                                    placeholder="empty"
+                                />
+                                <div className="space-y-2 max-inline-72">
+                                    <p className="h6 text-ink">
+                                        A good conversation starts with hello.
+                                    </p>
+                                    <p className="text-sm/relaxed font-medium text-ink/65">
+                                        Ask a question or share a detail about this property.
+                                    </p>
                                 </div>
-                            ) : (
-                                <ul
-                                    aria-label="Messages"
-                                    className="flex flex-col gap-4 px-4 py-5 sm:px-5"
-                                >
-                                    {messages.map((message, index) => {
-                                        const previous = messages[index - 1];
-                                        const date = new Date(message.sentAt);
-                                        const showDate =
-                                            !previous ||
-                                            !isSameCalendarDay(new Date(previous.sentAt), date);
-                                        return (
-                                            <Fragment key={message.id}>
-                                                {showDate ? (
-                                                    <li
-                                                        className="
+                            </div>
+                        ) : (
+                            <ul
+                                aria-label="Messages"
+                                className="flex flex-col gap-4 px-4 py-5 sm:px-5"
+                            >
+                                {messages.map((message, index) => {
+                                    const previous = messages[index - 1];
+                                    const date = new Date(message.sentAt);
+                                    const showDate =
+                                        !previous ||
+                                        !isSameCalendarDay(new Date(previous.sentAt), date);
+                                    return (
+                                        <Fragment key={message.id}>
+                                            {showDate ? (
+                                                <li
+                                                    className="
                                                           flex items-center justify-center gap-4
                                                           py-3
                                                         "
-                                                    >
-                                                        <DateSeparatorWave />
-                                                        <time
-                                                            dateTime={message.sentAt}
-                                                            className="
+                                                >
+                                                    <DateSeparatorWave />
+                                                    <time
+                                                        dateTime={message.sentAt}
+                                                        className="
                                                               body-xs shrink-0 font-semibold
                                                               text-ink/65
                                                             "
-                                                        >
-                                                            {formatDateShort(date)}
-                                                        </time>
-                                                        <DateSeparatorWave />
-                                                    </li>
-                                                ) : null}
-                                                <ChatMessageRow
-                                                    message={message}
-                                                    peer={peer}
-                                                    onDelete={
-                                                        message.isOwn ? handleDelete : undefined
-                                                    }
-                                                />
-                                            </Fragment>
-                                        );
-                                    })}
-                                </ul>
-                            )}
-                            <div ref={bottomRef} />
-                        </SimpleBar>
-                        {awayFromBottom && !showLoading ? (
-                            <Button
-                                type="button"
-                                variant="surface"
-                                size="icon-md"
-                                aria-label="Go to latest messages"
-                                onClick={scrollToLatest}
-                                className="
+                                                    >
+                                                        {formatDateShort(date)}
+                                                    </time>
+                                                    <DateSeparatorWave />
+                                                </li>
+                                            ) : null}
+                                            <ChatMessageRow
+                                                message={message}
+                                                peer={peer}
+                                                onDelete={message.isOwn ? handleDelete : undefined}
+                                            />
+                                        </Fragment>
+                                    );
+                                })}
+                            </ul>
+                        )}
+                        <div ref={bottomRef} />
+                    </SimpleBar>
+                    {awayFromBottom && !showLoading ? (
+                        <Button
+                            type="button"
+                            variant="surface"
+                            size="icon-md"
+                            aria-label="Go to latest messages"
+                            onClick={scrollToLatest}
+                            className="
                                   absolute inset-s-1/2 inset-be-3 -translate-x-1/2 rounded-full
                                 "
-                            >
-                                <ChevronDown aria-hidden strokeWidth={1.75} />
-                            </Button>
-                        ) : null}
-                    </div>
+                        >
+                            <ChevronDown aria-hidden strokeWidth={1.75} />
+                        </Button>
+                    ) : null}
+                </div>
 
-                    <footer className="shrink-0 px-5 pbs-3 pbe-5">
-                        <ChatComposer
-                            key={representationId ?? "chat"}
-                            onSend={handleSend}
-                            disabled={!canSend || showLoading || sending}
-                            sending={sending}
-                            closed={Boolean(peer?.closed)}
-                            recipientName={peer?.name}
-                        />
-                    </footer>
-                </TooltipProvider>
-            </DialogPopup>
-        </Dialog>
+                <AppModalFooter className="block shrink-0 px-5 pbs-3 pbe-5">
+                    <ChatComposer
+                        key={representationId ?? "chat"}
+                        onSend={handleSend}
+                        disabled={!canSend || showLoading || sending}
+                        sending={sending}
+                        closed={Boolean(peer?.closed)}
+                        recipientName={peer?.name}
+                    />
+                </AppModalFooter>
+            </TooltipProvider>
+        </AppModal>
     );
 }

@@ -19,6 +19,8 @@ import {
 } from "@/features/properties/property-analytics/analytics-labels";
 import type { PropertyReport } from "@/features/properties/property-analytics/analytics-math";
 
+import styles from "./analytics.module.css";
+
 type Stat = {
     key: string;
     icon: AppIcon;
@@ -78,54 +80,57 @@ function outcomeStat(report: PropertyReport): Stat {
         key: "outcome",
         icon: Award,
         label: "Best offer",
-        value: "None",
+        value: "—",
         hasValue: false,
-        detail: "Shows once a client makes an offer",
+        detail: "No offers yet",
     };
 }
 
 /** Four headline numbers for this listing. Words carry each figure, not colour. */
-export function AnalyticsStatStrip({ report, now }: { report: PropertyReport; now: Date }) {
-    const { counts, visits, offers, closedWord } = report;
+export function AnalyticsStatStrip({
+    report,
+    now,
+    clientDetail,
+}: {
+    report: PropertyReport;
+    now: Date;
+    clientDetail: string;
+}) {
+    const { counts, visits, offers } = report;
 
     const stats: Stat[] = [
         {
             key: "clients",
             icon: Users,
             label: "Clients",
-            value: counts.total > 0 ? counts.total : "None",
+            value: counts.total,
             hasValue: counts.total > 0,
-            detail:
-                joinParts([
-                    [counts.active, "active"],
-                    [counts.won, closedWord.toLowerCase()],
-                    [counts.lost, "lost"],
-                ]) ?? "None added yet",
+            detail: clientDetail || "No clients yet",
         },
         {
             key: "visits",
             icon: CalendarCheck,
             label: "Site visits",
-            value: visits.total > 0 ? visits.total : "None",
+            value: visits.total,
             hasValue: visits.total > 0,
             detail: visits.nextAt
                 ? `Next: ${formatShowingWhen(visits.nextAt, now)}`
                 : visits.clientsVisited > 0
                   ? `${visits.clientsVisited} of ${plural(counts.total, "client")} booked`
-                  : "None booked yet",
+                  : "No visits booked",
         },
         {
             key: "offers",
             icon: HandCoins,
             label: "Offers",
-            value: offers.rows.length > 0 ? offers.rows.length : "None",
+            value: offers.rows.length,
             hasValue: offers.rows.length > 0,
             detail:
                 joinParts([
                     [offers.pending, "waiting"],
                     [offers.accepted, "accepted"],
                     [offers.rejected, "declined"],
-                ]) ?? "None yet",
+                ]) ?? "No offers yet",
         },
         outcomeStat(report),
     ];
@@ -135,34 +140,27 @@ export function AnalyticsStatStrip({ report, now }: { report: PropertyReport; no
             <h2 id="analytics-stats-heading" className="sr-only">
                 This listing in numbers
             </h2>
-            <ul className="grid grid-cols-2 overflow-hidden rounded-card bg-surface shadow-sm ring-1 ring-border-warm/50 lg:grid-cols-4">
+            <ul className={styles.stats}>
                 {stats.map((stat) => (
-                    <li
-                        key={stat.key}
-                        className="relative p-2 after:absolute after:inset-y-4 after:inset-e-0 after:bg-border-warm after:inline-px even:after:hidden lg:last:after:hidden lg:even:after:block"
-                    >
-                        <div className="flex items-center gap-3 rounded-control px-3 py-2.5 block-full min-block-11 min-inline-0">
-                            <stat.icon
-                                aria-hidden
-                                className={cn(
-                                    "hidden shrink-0 block-6 inline-6 sm:block",
-                                    stat.hasValue ? "text-brand" : "text-ink-muted",
-                                )}
-                                strokeWidth={1.75}
-                            />
-                            <div className="flex flex-col gap-1 min-inline-0">
-                                <span className="body-sm font-semibold text-ink">{stat.label}</span>
-                                <span className="body-sm text-ink-muted">{stat.detail}</span>
-                            </div>
-                            <span
-                                className={cn(
-                                    "h3 ms-auto shrink-0 tabular-nums",
-                                    stat.hasValue ? "text-ink" : "text-ink-muted",
-                                )}
-                            >
-                                {stat.value}
-                            </span>
-                        </div>
+                    <li key={stat.key} className={styles.stat}>
+                        <span className="body-sm font-semibold text-ink">{stat.label}</span>
+                        <stat.icon
+                            aria-hidden
+                            className={cn(styles.statIcon, "block-5 inline-5")}
+                            strokeWidth={1.75}
+                        />
+                        <span
+                            className={cn(
+                                styles.statValue,
+                                "h3 tabular-nums",
+                                stat.hasValue ? "text-ink" : "text-ink-muted",
+                            )}
+                        >
+                            {stat.value}
+                        </span>
+                        <span className={cn(styles.statDetail, "body-sm text-ink-muted")}>
+                            {stat.detail}
+                        </span>
                     </li>
                 ))}
             </ul>

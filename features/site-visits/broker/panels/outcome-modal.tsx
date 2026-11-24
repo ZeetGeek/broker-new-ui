@@ -11,6 +11,7 @@ import { dateAtIstOffset, inputValueInIst } from "@/lib/visits/time";
 
 import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
 import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Button } from "@/components/ui/button";
@@ -122,7 +123,7 @@ export default function OutcomeModal({
             description={`${visit.property.title} · ${visit.buyers[0].name}`}
             size="md"
             footer={
-                <div
+                <AppModalFooter
                     className="
                       flex flex-row flex-wrap items-center justify-between gap-2 inline-full
                     "
@@ -140,7 +141,7 @@ export default function OutcomeModal({
                     >
                         Save outcome
                     </Button>
-                </div>
+                </AppModalFooter>
             }
         >
             <form

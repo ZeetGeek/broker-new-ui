@@ -108,6 +108,7 @@
 .groupHeading {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 0.65rem;
     padding-inline: 0.25rem;
     margin-block-end: 0.7rem;
@@ -117,18 +118,12 @@
     font-weight: 650;
 }
 .groupCount {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-inline-size: 1.25rem;
-    block-size: 1.25rem;
-    padding-inline: 0.25rem;
-    border-radius: 999px;
-    background: var(--color-brand);
-    font-size: 0.6875rem;
-    font-weight: 700;
-    color: var(--color-surface);
+    flex-shrink: 0;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-ink-muted);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 .list {
     display: flex;
@@ -586,9 +581,6 @@
 @container visits (max-width: 639px) {
     .pageTabs {
         gap: 1rem;
-    }
-    .emptyFrame {
-        min-block-size: clamp(14rem, calc(100dvh - 22rem), 22rem);
     }
     .listToolbar :is(button, [role="combobox"], input) {
         min-block-size: 44px;
@@ -1113,17 +1105,20 @@
     .overlayBody .field [role="group"] > button {
         flex: 1 1 auto;
     }
-    .visitDrawer .footerActions > button {
+    .visitDrawer .footerActions > button,
+    .visitDrawer .overlayFooter [data-slot="dialog-footer"] > button {
         flex: 1 1 0;
         min-inline-size: 0;
         min-block-size: 48px;
         white-space: normal;
     }
-    .compactDialog .footerActions {
+    .compactDialog .footerActions,
+    .compactDialog .overlayFooter [data-slot="dialog-footer"] {
         flex-direction: column-reverse;
         align-items: stretch;
     }
-    .compactDialog .footerActions > button {
+    .compactDialog .footerActions > button,
+    .compactDialog .overlayFooter [data-slot="dialog-footer"] > button {
         min-block-size: 48px;
         white-space: normal;
     }

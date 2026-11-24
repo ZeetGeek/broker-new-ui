@@ -2,6 +2,7 @@
 
 import { type ComponentProps, useEffect, useState } from "react";
 
+import type { SearchHelp } from "@/lib/search/search-help";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,8 @@ import {
 } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { useShortcutDisplayKeys } from "@/features/shortcuts/use-shortcut-display-keys";
+
 import searchStyles from "./list-search-field.module.css";
 
 export const LIST_SEARCH_WIDTH_CLASS =
@@ -50,7 +53,7 @@ type ListSearchFieldProps = Omit<
     /** Let a page's responsive layout size the search field. */
     fullWidth?: boolean;
     /** Fields supported by this page’s search, revealed by the info button. */
-    searchHelp?: string;
+    searchHelp?: SearchHelp;
 };
 
 /** Shared list search face, including clear, focus and external filter resets. */
@@ -134,12 +137,21 @@ export function ListSearchField({
                 >
                     <Info aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                 </PopoverTrigger>
-                <PopoverContent align="end" className="gap-1.5 max-inline-[calc(100dvw-2rem)]">
-                    <PopoverTitle className="text-sm font-semibold">
-                        What you can search
-                    </PopoverTitle>
-                    <PopoverDescription className="text-sm text-ink-muted">
-                        {searchHelp}
+                <PopoverContent
+                    align="end"
+                    sideOffset={12}
+                    className="gap-1.5 rounded-inner max-inline-[calc(100dvw-2rem)]"
+                >
+                    <PopoverTitle className="text-sm font-semibold">You can search by</PopoverTitle>
+                    <PopoverDescription render={<div />} className="text-sm text-ink-muted">
+                        <ul className="flex list-disc flex-col gap-1 ps-4">
+                            {searchHelp.fields.map((field) => (
+                                <li key={field}>{field}</li>
+                            ))}
+                        </ul>
+                        <p className="mbs-3">
+                            Combine terms, like ‘{searchHelp.example}’. {searchHelp.filterNote}
+                        </p>
                     </PopoverDescription>
                 </PopoverContent>
             </Popover>
@@ -247,7 +259,7 @@ type ListAddButtonProps = Omit<ComponentProps<typeof Button>, "children" | "size
     shortcutId?: ShortcutId;
 };
 
-/** Shared add action. Shortcut handling stays with the page. */
+/** Shared add action. Shortcut handling stays with the page or portal shell. */
 export function ListAddButton({
     label,
     icon: Icon = Plus,
@@ -258,6 +270,7 @@ export function ListAddButton({
     ...props
 }: ListAddButtonProps) {
     const shortcut = shortcutId ? getShortcut(shortcutId) : undefined;
+    const displayKeys = useShortcutDisplayKeys(shortcut);
     return (
         <Button
             type="button"
@@ -269,8 +282,8 @@ export function ListAddButton({
             <Icon aria-hidden strokeWidth={1.75} />
             {label}
             {shortcut ? (
-                <KbdGroup className="gap-0.5">
-                    {shortcut.displayKeys.map((key) => (
+                <KbdGroup className="gap-0.5 pointer-coarse:hidden">
+                    {displayKeys.map((key) => (
                         <Kbd
                             key={key}
                             className="border-surface/25 bg-surface/15 px-1.5 text-[10px] text-surface [box-shadow:none] min-inline-4"

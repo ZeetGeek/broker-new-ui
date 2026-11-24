@@ -1,10 +1,10 @@
 "use client";
 import { type ChangeEvent, type FormEvent, type KeyboardEvent, useRef, useState } from "react";
-import toast from "react-hot-toast";
 import dynamic from "next/dynamic";
 
 import { cn } from "@/lib/utils";
 
+import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import { FileText, ImagePlus, Plus, Smile, X } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";

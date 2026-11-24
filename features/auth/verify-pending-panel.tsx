@@ -1,13 +1,13 @@
 "use client";
 
 import * as React from "react";
-import toast from "react-hot-toast";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 
+import toast from "@/components/shared/app-toast";
 import { Button } from "@/components/ui/button";
 
 import { AuthFormFrame } from "./auth-back-link";

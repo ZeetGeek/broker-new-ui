@@ -1,4 +1,5 @@
 import type { NotificationItem } from "@/lib/api/notifications";
+import { getReminderParts } from "@/lib/notifications/display-content";
 
 export type ReminderToastContent = {
     kind: "task" | "visit";
@@ -10,12 +11,9 @@ export type ReminderToastContent = {
 };
 
 export function reminderToastContent(item: NotificationItem): ReminderToastContent | null {
-    const kind =
-        item.type === "task_reminder" ? "task" : item.type === "visit_reminder" ? "visit" : null;
-    if (!kind) return null;
-    const parts = (item.body ?? "").split(" · ");
-    const line = parts.length > 2 ? parts.slice(0, -2).join(" · ") : (parts[0] ?? "");
-    const detail = parts.length > 2 ? parts.slice(-2).join(" · ") : parts.slice(1).join(" · ");
+    const parts = getReminderParts(item);
+    if (!parts) return null;
+    const { kind, line, detail } = parts;
     return {
         kind,
         title: item.title || (kind === "task" ? "Task reminder" : "Visit reminder"),

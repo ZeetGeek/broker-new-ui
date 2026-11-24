@@ -88,7 +88,7 @@ test("reminders land in a fixed bell tab whatever the task is called", () => {
                 body: "Respond to request · Schedule site visit · At due time · Today, 2:52 PM",
             }),
         ),
-        "updates",
+        "tasks",
     );
     assert.equal(
         getNotificationTab(

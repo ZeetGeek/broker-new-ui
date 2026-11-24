@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 import { useQueryClient } from "@tanstack/react-query";
 
 import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 
+import toast from "@/components/shared/app-toast";
 import { UserPlus } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 

@@ -22,7 +22,7 @@ export function formatVisitTime(value: string | Date): string {
 }
 
 export function formatVisitDate(value: string | Date): string {
-    return formatInTimeZone(value, VISITS_TIME_ZONE, "EEE d MMM");
+    return formatInTimeZone(value, VISITS_TIME_ZONE, "EEE d MMM yyyy");
 }
 
 export function formatVisitA11yDate(value: string | Date): string {

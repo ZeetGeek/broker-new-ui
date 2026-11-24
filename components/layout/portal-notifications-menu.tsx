@@ -1,7 +1,6 @@
 "use client";
 
-import { type ReactNode, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { ApiError } from "@/lib/api/client";
 import type { NotificationItem } from "@/lib/api/notifications";
@@ -19,10 +18,16 @@ import {
     type NotificationTab,
     type NotificationTone,
 } from "@/lib/notifications/classify";
-import { getNotificationDisplayContent } from "@/lib/notifications/display-content";
+import {
+    getNotificationDisplayContent,
+    getReminderParts,
+} from "@/lib/notifications/display-content";
 import { cn } from "@/lib/utils";
 
-import { NotificationIcon } from "@/components/shared/icons";
+import { buildDemoNotifications } from "@/components/layout/notification-demo-items";
+import toast from "@/components/shared/app-toast";
+import { IconButton } from "@/components/shared/icon-button";
+import { CheckCheck, NotificationIcon, Trash2 } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
@@ -70,9 +75,9 @@ const notificationsListClass = `
 
 const rowClass = `
   group/notification relative flex inline-full cursor-pointer items-start gap-3 rounded-inner
-  px-3 py-3 font-normal text-ink transition-colors duration-160
-  hover:bg-surface-muted! data-highlighted:bg-surface-muted! focus:bg-surface-muted!
-  data-[unread=true]:bg-brand-soft/45
+  bg-transparent px-3 py-3 font-normal text-ink transition-colors duration-160
+  hover:bg-surface-muted/60! data-highlighted:bg-surface-muted/60! focus:bg-surface-muted/60!
+  [&_svg]:text-inherit! [&_svg_*]:text-inherit!
 `;
 
 /* The menu item forces descendants to ink on focus; these keep the action faces intact. */
@@ -92,7 +97,7 @@ const TONE_TILE_CLASS: Record<NotificationTone, string> = {
     brand: "bg-brand-soft text-brand-text!",
     urgent: "bg-urgent-soft text-urgent!",
     danger: "bg-danger-soft text-danger!",
-    neutral: "bg-surface-muted text-ink-muted!",
+    neutral: "bg-canvas text-ink-muted!",
 };
 
 function UnreadBadge({ count }: { count: number }) {
@@ -115,26 +120,62 @@ function NotificationTile({ item }: { item: NotificationItem }) {
         <span
             aria-hidden
             className={cn(
-                "flex shrink-0 items-center justify-center rounded-inner block-10 inline-10",
+                "flex shrink-0 items-center justify-center rounded-inner block-8 inline-8",
                 TONE_TILE_CLASS[tone],
             )}
         >
-            <NotificationIcon name={iconName} className="block-5! inline-5!" />
+            <NotificationIcon name={iconName} className="block-4! inline-4!" />
         </span>
+    );
+}
+
+/** Icon-only header action with a tooltip, so the title row stays on one line. */
+function HeaderAction({
+    label,
+    tone,
+    onClick,
+    children,
+}: {
+    label: string;
+    tone: "neutral" | "danger";
+    onClick: () => void;
+    children: ReactNode;
+}) {
+    return (
+        <Tooltip>
+            <TooltipTrigger
+                render={
+                    <IconButton
+                        type="button"
+                        size="sm"
+                        tone={tone}
+                        aria-label={label}
+                        onClick={onClick}
+                    />
+                }
+            >
+                {children}
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{label}</TooltipContent>
+        </Tooltip>
     );
 }
 
 function NotificationsHeader({
     unreadCount,
+    hasItems,
     activeTab,
     tabCounts,
     onMarkAllRead,
+    onClearAll,
     onTabChange,
 }: {
     unreadCount: number;
+    hasItems: boolean;
     activeTab: NotificationTab;
     tabCounts: Record<NotificationTab, number>;
     onMarkAllRead: () => void;
+    onClearAll: () => void;
     onTabChange: (tab: NotificationTab) => void;
 }) {
     return (
@@ -148,17 +189,23 @@ function NotificationsHeader({
                         </span>
                     ) : null}
                 </div>
-                {unreadCount > 0 ? (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={onMarkAllRead}
-                        className="-me-2 font-medium text-ink-muted hover:bg-surface-muted hover:text-ink"
-                    >
-                        <NotificationIcon name="checks" aria-hidden data-icon="inline-start" />
-                        Mark all read
-                    </Button>
+                {unreadCount > 0 || hasItems ? (
+                    <div className="flex items-center gap-2">
+                        {unreadCount > 0 ? (
+                            <HeaderAction
+                                label="Mark all read"
+                                tone="neutral"
+                                onClick={onMarkAllRead}
+                            >
+                                <CheckCheck aria-hidden className="block-4 inline-4" />
+                            </HeaderAction>
+                        ) : null}
+                        {hasItems ? (
+                            <HeaderAction label="Clear all" tone="danger" onClick={onClearAll}>
+                                <Trash2 aria-hidden className="block-4 inline-4" />
+                            </HeaderAction>
+                        ) : null}
+                    </div>
                 ) : null}
             </div>
             <SlidingTabs
@@ -217,7 +264,7 @@ function NotificationsSkeleton() {
             <span className="sr-only">Loading notifications…</span>
             {[0, 1, 2].map((key) => (
                 <div key={key} aria-hidden className="flex items-start gap-3 p-3">
-                    <span className="shrink-0 animate-pulse rounded-inner bg-surface-muted block-10 inline-10" />
+                    <span className="shrink-0 animate-pulse rounded-inner bg-surface-muted block-8 inline-8" />
                     <span className="flex flex-1 flex-col gap-2 pbs-1">
                         <span className="animate-pulse rounded-full bg-surface-muted block-3 inline-3/4" />
                         <span className="animate-pulse rounded-full bg-surface-muted block-3 inline-1/2" />
@@ -304,9 +351,13 @@ function NotificationRowContent({
 }) {
     const occurredAt = item.createdAt ? new Date(item.createdAt) : null;
     const { title, body } = getNotificationDisplayContent(item);
+    const reminder = getReminderParts(item);
     const propertyLabel = getPropertyLabel(item);
     const showActions = isActionableRequest(item, userRole);
     const decisionLabel = getRepresentationDecisionLabel(item);
+    // Reminders drop the generic "Task / Visit reminder" title: the icon and tab
+    // already say what it is, so the task or visit itself leads the row.
+    const headline = reminder?.line || title;
 
     return (
         <>
@@ -322,7 +373,8 @@ function NotificationRowContent({
                         )}
                     >
                         {!item.isRead ? <span className="sr-only">Unread: </span> : null}
-                        {title}
+                        {reminder?.line ? <span className="sr-only">{title}: </span> : null}
+                        {headline}
                     </span>
                     <span className="flex shrink-0 items-center gap-1.5 pbs-0.5">
                         {occurredAt ? (
@@ -340,7 +392,11 @@ function NotificationRowContent({
                     </span>
                 </div>
 
-                {body ? (
+                {reminder ? (
+                    reminder.detail ? (
+                        <p className="tabular body-xs text-ink-muted!">{reminder.detail}</p>
+                    ) : null
+                ) : body ? (
                     <p
                         data-notification-body
                         className="body-sm line-clamp-2 wrap-anywhere text-ink-muted!"
@@ -356,7 +412,7 @@ function NotificationRowContent({
                             aria-hidden
                             className="shrink-0 text-ink-subtle! block-3.5 inline-3.5"
                         />
-                        <span className="truncate">{propertyLabel}</span>
+                        <span className="truncate text-inherit!">{propertyLabel}</span>
                     </span>
                 ) : null}
 
@@ -416,6 +472,75 @@ function NotificationRow({
     );
 }
 
+/**
+ * DESIGN-ONLY: show static sample notifications instead of the live feed.
+ * Set to `false` (and delete `notification-demo-items.ts`) to go back to the API.
+ */
+const USE_DEMO_NOTIFICATIONS = true;
+
+/** Local, in-memory stand-in for `useNotifications()` so the demo rows stay clickable. */
+function useDemoNotifications() {
+    const [baseItems] = useState(() => buildDemoNotifications(new Date()));
+    const [readIds, setReadIds] = useState<ReadonlySet<string>>(() => new Set());
+    const [decisions, setDecisions] = useState<Record<string, string>>({});
+
+    const items = useMemo(
+        () =>
+            baseItems.map((item) => ({
+                ...item,
+                isRead: item.isRead || readIds.has(item.id),
+                representationStatus: decisions[item.id] ?? item.representationStatus,
+            })),
+        [baseItems, readIds, decisions],
+    );
+
+    return {
+        items,
+        unreadCount: items.filter((item) => !item.isRead).length,
+        loading: false,
+        markRead: async (id: string) => {
+            setReadIds((prev) => new Set(prev).add(id));
+        },
+        markAllRead: async () => {
+            setReadIds(new Set(baseItems.map((item) => item.id)));
+        },
+        respondToRepresentation: async (
+            notificationId: string,
+            _representationId: string,
+            status: "accepted" | "rejected",
+        ) => {
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            setDecisions((prev) => ({ ...prev, [notificationId]: status }));
+            setReadIds((prev) => new Set(prev).add(notificationId));
+        },
+    };
+}
+
+/**
+ * True while the list has rows hidden below the fold, so the footer can cast
+ * the same lift shadow as the dashboard listings footer ("more to scroll").
+ */
+function useHasMoreBelow(element: HTMLElement | null) {
+    const [hasMore, setHasMore] = useState(false);
+
+    useEffect(() => {
+        if (!element) return;
+        const update = () =>
+            setHasMore(element.scrollTop + element.clientHeight < element.scrollHeight - 1);
+        element.addEventListener("scroll", update, { passive: true });
+        // ResizeObserver fires once on observe, which also sets the initial value.
+        const observer = new ResizeObserver(update);
+        observer.observe(element);
+        for (const child of element.children) observer.observe(child);
+        return () => {
+            element.removeEventListener("scroll", update);
+            observer.disconnect();
+        };
+    }, [element]);
+
+    return element !== null && hasMore;
+}
+
 function NotificationDayBlock({
     section,
     children,
@@ -438,8 +563,23 @@ export function PortalNotificationsMenu({
     triggerClassName,
     tooltipLabel,
 }: PortalNotificationsMenuProps) {
-    const { items, unreadCount, loading, markRead, markAllRead, respondToRepresentation } =
-        useNotifications();
+    const live = useNotifications();
+    const demo = useDemoNotifications();
+    const {
+        items: feedItems,
+        unreadCount,
+        loading,
+        markRead,
+        markAllRead,
+        respondToRepresentation,
+    } = USE_DEMO_NOTIFICATIONS ? demo : live;
+    // "Clear all" hides what is in the list for this session only — there is no
+    // delete endpoint yet. Anything that arrives afterwards still shows.
+    const [clearedIds, setClearedIds] = useState<ReadonlySet<string>>(() => new Set());
+    const items = useMemo(
+        () => feedItems.filter((item) => !clearedIds.has(item.id)),
+        [feedItems, clearedIds],
+    );
     const userRole = useAppSelector((state) => state.auth.user?.role);
     const [activeTab, setActiveTab] = useState<NotificationTab>("all");
     const now = new Date();
@@ -452,6 +592,30 @@ export function PortalNotificationsMenu({
         [items, activeTab],
     );
     const daySections = groupNotificationsByDay(filteredItems, now);
+    const [listEl, setListEl] = useState<HTMLDivElement | null>(null);
+    const hasMoreBelow = useHasMoreBelow(listEl);
+
+    const handleMarkRead = (id: string) => {
+        void markRead(id).catch(() => {
+            toast.error("Couldn't mark this notification as read. Try again.", {
+                id: "notification-mark-read-error",
+            });
+        });
+    };
+
+    const handleMarkAllRead = () => {
+        void markAllRead().catch(() => {
+            toast.error("Couldn't mark all notifications as read. Try again.", {
+                id: "notifications-mark-all-read-error",
+            });
+        });
+    };
+
+    const handleClearAll = () => {
+        setClearedIds((prev) => new Set([...prev, ...items.map((item) => item.id)]));
+        // Cleared items should not keep the bell badge lit.
+        if (unreadCount > 0) handleMarkAllRead();
+    };
 
     const trigger = (
         <DropdownMenuTrigger
@@ -485,6 +649,7 @@ export function PortalNotificationsMenu({
         list = (
             <div
                 key={activeTab}
+                ref={setListEl}
                 className={notificationsListClass}
                 role="region"
                 aria-label="Notification list"
@@ -500,7 +665,7 @@ export function PortalNotificationsMenu({
                                     viewAllHref={viewAllHref}
                                     userRole={userRole}
                                     now={now}
-                                    onMarkRead={(id) => void markRead(id)}
+                                    onMarkRead={handleMarkRead}
                                     onRespond={respondToRepresentation}
                                 />
                             ))}
@@ -525,9 +690,11 @@ export function PortalNotificationsMenu({
             <DropdownMenuContent align="end" sideOffset={12} className={menuSurfaceClass}>
                 <NotificationsHeader
                     unreadCount={unreadCount}
+                    hasItems={items.length > 0}
                     activeTab={activeTab}
                     tabCounts={tabCounts}
-                    onMarkAllRead={() => void markAllRead()}
+                    onMarkAllRead={handleMarkAllRead}
+                    onClearAll={handleClearAll}
                     onTabChange={setActiveTab}
                 />
 
@@ -535,13 +702,20 @@ export function PortalNotificationsMenu({
 
                 {list}
 
-                <div className="shrink-0 border-bs border-border-warm p-2">
+                <div
+                    data-scroll-shadow={hasMoreBelow}
+                    className="
+                      relative z-1 shrink-0 border-bs border-border-warm bg-surface p-3
+                      transition-shadow duration-160
+                      data-[scroll-shadow=true]:shadow-[0_-10px_18px_-12px_rgb(25_28_26/28%)]
+                    "
+                >
                     <Button
-                        variant="ghost"
-                        size="md"
+                        variant="outline"
+                        size="default"
                         nativeButton={false}
                         render={<Link href={viewAllHref} />}
-                        className="font-semibold text-ink inline-full hover:bg-surface-muted hover:text-ink"
+                        className="font-medium inline-full"
                     >
                         View all notifications
                         <NotificationIcon

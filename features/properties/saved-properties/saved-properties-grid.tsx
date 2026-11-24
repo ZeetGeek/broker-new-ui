@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import toast from "react-hot-toast";
 
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -9,6 +8,7 @@ import { ApiError } from "@/lib/api/client";
 import { findPendingBrokerRepresentationId, representativeApi } from "@/lib/api/representative";
 import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/routes/broker";
 
+import toast from "@/components/shared/app-toast";
 import { PropertyCard } from "@/components/shared/property-card";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 

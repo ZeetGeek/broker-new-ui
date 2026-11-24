@@ -56,5 +56,7 @@ test("account menu and broker shortcuts no longer expose unimplemented destinati
     assert.doesNotMatch(menu, /Preview public profile|\/broker\/verification|\/b\//);
     const shell = source("features/dashboard/broker-portal-shell.tsx");
     assert.doesNotMatch(shell, /\/broker\/settings/);
-    assert.match(shell, /\["settings"\]/);
+    assert.match(shell, /tasks: "\/broker\/tasks"/);
+    assert.match(shell, /earnings: BROKER_EARNINGS_HREF/);
+    assert.match(shell, /saved_properties: "\/broker\/saved-properties"/);
 });

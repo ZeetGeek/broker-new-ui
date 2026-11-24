@@ -7,6 +7,7 @@ import {
     normalizePropertyCriteria,
     propertyCriteriaCount,
 } from "@/lib/properties/list-criteria";
+import { CRM_SEARCH_HELP } from "@/lib/search/search-help";
 
 import { FilterChip } from "@/components/shared/filter-chip";
 import { SlidersHorizontal } from "@/components/shared/icons";
@@ -77,7 +78,8 @@ export function PipelineToolbar({
                 <ListSearchField
                     fullWidth
                     placeholder="Search deals"
-                    aria-label="Search deals by client, owner or area"
+                    aria-label="Search deals"
+                    searchHelp={CRM_SEARCH_HELP.deals}
                     debounceMs={0}
                     value={filters.q}
                     onChange={(q) => onPatch({ q })}
@@ -122,7 +124,7 @@ export function PipelineToolbar({
                     search={
                         <ListSearchField
                             fullWidth
-                            searchHelp="Search deals by client name, owner name or area."
+                            searchHelp={CRM_SEARCH_HELP.deals}
                             aria-label="Search your deals"
                             debounceMs={0}
                             value={filters.q}

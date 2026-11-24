@@ -5,6 +5,8 @@ import {
     showingListingFacts,
 } from "@/lib/api/broker-visits-map";
 import { apiFetch } from "@/lib/api/client";
+import { paginateItems } from "@/lib/api/mock-mode";
+import { matchesVisitSearch } from "@/lib/search/crm-search";
 
 /**
  * Broker Visits client for `/slots/broker/*`. Converts API showings into the
@@ -184,7 +186,29 @@ function json(method: "POST" | "PATCH", body: unknown) {
 }
 
 export const siteVisitsApi = {
-    async list(q: VisitListQuery, signal?: AbortSignal): Promise<VisitListPage> {
+    async searchSource(q: VisitListQuery, signal?: AbortSignal): Promise<VisitListPage> {
+        const base = { ...q, search: undefined, limit: 100 };
+        const first = await siteVisitsApi.list({ ...base, page: 1 }, signal);
+        const items = [...first.items];
+        for (let page = 2; page <= first.totalPages; page++) {
+            signal?.throwIfAborted();
+            const next = await siteVisitsApi.list({ ...base, page }, signal);
+            items.push(...next.items);
+        }
+        return { ...first, items, total: items.length, page: 1, totalPages: 1 };
+    },
+
+    async list(
+        q: VisitListQuery,
+        signal?: AbortSignal,
+        searchSource?: () => Promise<VisitListPage>,
+    ): Promise<VisitListPage> {
+        if (q.search?.trim()) {
+            const source = await (searchSource?.() ?? siteVisitsApi.searchSource(q, signal));
+            signal?.throwIfAborted();
+            const matched = source.items.filter((visit) => matchesVisitSearch(visit, q.search!));
+            return { ...source, ...paginateItems(matched, q.page ?? 1, q.limit ?? 20) };
+        }
         const response = await apiFetch<ApiVisitListPage>(
             `/slots/broker/bookings?${visitListParams(q)}`,
             { signal },

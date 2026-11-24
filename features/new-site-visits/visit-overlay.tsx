@@ -3,7 +3,7 @@
 import { type ReactNode, useState } from "react";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { Button } from "@/components/ui/button";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 
 import styles from "./visits.module.css";
 
@@ -54,14 +54,14 @@ export function VisitOverlay({
                 bodyClassName={styles.overlayBody}
                 footerClassName={styles.overlayFooter}
                 footer={
-                    <>
+                    <AppModalFooter className="flex-col items-stretch">
                         {error && (
                             <p role="alert" className={styles.saveError}>
                                 {error}
                             </p>
                         )}
-                        <div className={styles.footerActions}>{footer(close)}</div>
-                    </>
+                        {footer(close)}
+                    </AppModalFooter>
                 }
             >
                 {children}
@@ -74,14 +74,15 @@ export function VisitOverlay({
                     description="Your changes will be lost if you close this form."
                     size="sm"
                     footer={
-                        <div className={styles.footerActions}>
-                            <Button variant="outline" onClick={() => setDiscardOpen(false)}>
-                                Keep editing
-                            </Button>
-                            <Button variant="destructive" onClick={onClose}>
-                                Discard changes
-                            </Button>
-                        </div>
+                        <AppModalFooter
+                            className={styles.footerActions}
+                            secondaryLabel="Keep editing"
+                            secondaryVariant="outline"
+                            onSecondary={() => setDiscardOpen(false)}
+                            primaryLabel="Discard changes"
+                            primaryVariant="destructive"
+                            onPrimary={onClose}
+                        />
                     }
                 >
                     <p className={styles.muted}>

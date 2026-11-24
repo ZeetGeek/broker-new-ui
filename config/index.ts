@@ -11,6 +11,7 @@ export const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true";
 
 /** Filled single-property analytics for deliberate UI review only. */
 export const PREVIEW_PROPERTY_ANALYTICS =
+    process.env.NODE_ENV !== "production" &&
     process.env.NEXT_PUBLIC_PREVIEW_PROPERTY_ANALYTICS === "true";
 
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "YesBroker";

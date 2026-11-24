@@ -35,9 +35,9 @@ import { useAppSelector } from "@/store/hooks";
 
 const OWNER_SHORTCUT_ROUTES = {
     dashboard: OWNER_OVERVIEW_HREF,
-    ownerListings: OWNER_BROKERS_HREF,
-    deals: OWNER_REQUESTS_HREF,
-    yourListings: OWNER_PROPERTIES_HREF,
+    owner_listings: OWNER_BROKERS_HREF,
+    my_deals: OWNER_REQUESTS_HREF,
+    your_listings: OWNER_PROPERTIES_HREF,
     pipeline: OWNER_REQUESTS_HREF,
     contacts: OWNER_LEADS_HREF,
     visits: OWNER_VISITS_HREF,
@@ -66,12 +66,10 @@ function OwnerPortalShellInner({ children }: { children: ReactNode }) {
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
     const handleShortcutsOpen = useCallback(() => setIsShortcutsOpen(true), []);
-    const handleLogoutFocus = useCallback(() => setIsProfileMenuOpen(true), []);
-
     useGlobalShortcuts({
         routes: OWNER_SHORTCUT_ROUTES,
         onShortcutsOpen: handleShortcutsOpen,
-        onLogoutFocus: handleLogoutFocus,
+        portal: "owner",
     });
 
     const userName = profile?.fullName?.trim() || user?.fullName?.trim() || user?.email || "Owner";
@@ -117,7 +115,11 @@ function OwnerPortalShellInner({ children }: { children: ReactNode }) {
                 >
                     {children}
                 </PortalHeader>
-                <ShortcutsCheatsheet open={isShortcutsOpen} onOpenChange={setIsShortcutsOpen} />
+                <ShortcutsCheatsheet
+                    open={isShortcutsOpen}
+                    onOpenChange={setIsShortcutsOpen}
+                    portal="owner"
+                />
             </ChatProvider>
         </NotificationProvider>
     );

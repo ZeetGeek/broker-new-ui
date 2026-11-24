@@ -2,16 +2,16 @@
 
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
-import { tinykeys } from "tinykeys";
-
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
 import type { AppIcon } from "@/components/shared/icons";
 import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
+import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Skeleton } from "@/components/shared/skeleton";
 import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 
 import { ContactFormSkeleton } from "@/features/contacts/contacts-skeleton";
+import { useShortcut } from "@/features/shortcuts/use-shortcut";
 
 /** Same control height and type as Add property fields (44px, text-sm). */
 export const nativeControlClass = `
@@ -945,24 +946,21 @@ export function ContactFormDrawer({
         if (!open) setDiscardOpen(false);
     }
 
-    useEffect(() => {
-        if (!open || busy || loading || embedded?.active === false) return;
-        const unsubscribe = tinykeys(window, {
-            "$mod+Enter": (event) => {
-                event.preventDefault();
-                onPrimary();
-            },
-            ...(onSaveAnother
-                ? {
-                      "$mod+Shift+Enter": (event) => {
-                          event.preventDefault();
-                          onSaveAnother?.();
-                      },
-                  }
-                : {}),
-        });
-        return () => unsubscribe();
-    }, [busy, loading, open, onPrimary, onSaveAnother, embedded?.active]);
+    const shortcutEnabled = open && !busy && !loading && embedded?.active !== false && !discardOpen;
+    const shortcutBelongsToForm = (event: KeyboardEvent) =>
+        event.target instanceof Node && Boolean(bodyRef.current?.contains(event.target));
+    useShortcut("form_primary", () => onPrimary(), {
+        enabled: shortcutEnabled,
+        allowInDialog: true,
+        allowInEditable: true,
+        shouldHandle: shortcutBelongsToForm,
+    });
+    useShortcut("form_submit_another", () => onSaveAnother?.(), {
+        enabled: shortcutEnabled && Boolean(onSaveAnother),
+        allowInDialog: true,
+        allowInEditable: true,
+        shouldHandle: shortcutBelongsToForm,
+    });
 
     useEffect(() => {
         if (!footerError || !open || embedded?.active === false) return;
@@ -979,7 +977,7 @@ export function ContactFormDrawer({
     }, [footerError, open, embedded?.active]);
 
     const footer = (
-        <div className="flex flex-col gap-3 inline-full">
+        <AppModalFooter className="flex-col items-stretch gap-3">
             {footerError ? (
                 <p
                     role="alert"
@@ -988,7 +986,7 @@ export function ContactFormDrawer({
                     {footerError}
                 </p>
             ) : null}
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <AppModalFooter>
                 {loading ? (
                     <div
                         role="status"
@@ -1002,28 +1000,35 @@ export function ContactFormDrawer({
                 ) : (
                     <>
                         {onSaveAnother ? (
+                            <ShortcutTooltip
+                                shortcutId="form_submit_another"
+                                label={saveAnotherLabel}
+                            >
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={onSaveAnother}
+                                    disabled={busy}
+                                >
+                                    {saveAnotherLabel}
+                                </Button>
+                            </ShortcutTooltip>
+                        ) : null}
+                        <ShortcutTooltip shortcutId="form_primary" label={primaryLabel}>
                             <Button
                                 type="button"
-                                variant="outline"
-                                onClick={onSaveAnother}
+                                variant="accent"
+                                onClick={onPrimary}
                                 disabled={busy}
+                                loading={busy}
                             >
-                                {saveAnotherLabel}
+                                {primaryLabel}
                             </Button>
-                        ) : null}
-                        <Button
-                            type="button"
-                            variant="accent"
-                            onClick={onPrimary}
-                            disabled={busy}
-                            loading={busy}
-                        >
-                            {primaryLabel}
-                        </Button>
+                        </ShortcutTooltip>
                     </>
                 )}
-            </div>
-        </div>
+            </AppModalFooter>
+        </AppModalFooter>
     );
 
     if (embedded) {
@@ -1040,9 +1045,9 @@ export function ContactFormDrawer({
                         children
                     )}
                 </div>
-                <div className="shrink-0 border-bs border-border-warm p-(--dialog-pad)">
+                <AppModalFooter className="shrink-0 border-bs border-border-warm p-(--dialog-pad)">
                     {footer}
-                </div>
+                </AppModalFooter>
             </div>
         );
     }
@@ -1083,18 +1088,18 @@ export function ContactFormDrawer({
                 title="Discard unsaved changes?"
                 description="What you typed will be lost if you leave now."
                 footer={
-                    <div
+                    <AppModalFooter
                         className="
                       flex flex-row flex-wrap items-center justify-end gap-2 inline-full
                     "
-                    >
-                        <Button type="button" variant="ghost" onClick={() => setDiscardOpen(false)}>
-                            Keep editing
-                        </Button>
-                        <Button type="button" variant="destructive" onClick={confirmDiscard}>
-                            Discard changes
-                        </Button>
-                    </div>
+                        secondaryLabel="Keep editing"
+                        secondaryVariant="ghost"
+                        onSecondary={() => setDiscardOpen(false)}
+                        primaryLabel="Discard changes"
+                        primaryType="button"
+                        primaryVariant="destructive"
+                        onPrimary={confirmDiscard}
+                    />
                 }
             >
                 <p className="body text-ink-muted">

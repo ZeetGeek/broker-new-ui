@@ -1,6 +1,7 @@
 "use client";
 
 import type { BrokerVisit, VisitSort, VisitTab } from "@/lib/api/site-visits";
+import { CRM_SEARCH_HELP } from "@/lib/search/search-help";
 import { addVisitDays, formatVisitDate, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
@@ -9,10 +10,12 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
 import { IconButton } from "@/components/shared/icon-button";
 import {
+    AlertCircle,
     type AppIcon,
     CalendarClock,
     CalendarDays,
     MapPin,
+    Search,
     SlidersHorizontal,
 } from "@/components/shared/icons";
 import {
@@ -37,6 +40,7 @@ import {
     visitState,
 } from "./model";
 import { VISIT_ACTIONS } from "./visit-actions";
+import { VisitListSkeleton } from "./visit-list-skeleton";
 import { VISIT_STATUS_COLORS, VisitStatusBadge } from "./visit-status";
 
 import styles from "./visits.module.css";
@@ -113,15 +117,14 @@ export const SORT_OPTIONS: { value: VisitSort; label: string }[] = [
     { value: "booked_desc", label: "Recently booked" },
 ];
 
-const EMPTY_FRAME = `${styles.emptyFrame} min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]`;
-
 export function VisitList({
     visits,
     counts,
     firstRun,
     filtered,
     filterCount,
-    refreshing,
+    loading,
+    loadError,
     hasMore,
     loadingMore,
     tab,
@@ -139,6 +142,7 @@ export function VisitList({
     onSchedule,
     onOpen,
     onAction,
+    onRetry,
 }: {
     visits: BrokerVisit[];
     counts: Record<VisitTab, number>;
@@ -147,7 +151,8 @@ export function VisitList({
     /** A search, filter or custom date range is narrowing the list. */
     filtered: boolean;
     filterCount: number;
-    refreshing: boolean;
+    loading: boolean;
+    loadError: boolean;
     hasMore: boolean;
     loadingMore: boolean;
     tab: VisitTab;
@@ -165,6 +170,7 @@ export function VisitList({
     onSchedule: () => void;
     onOpen: (visit: BrokerVisit) => void;
     onAction: (visit: BrokerVisit, action: VisitActionKind) => void;
+    onRetry: () => void;
 }) {
     const groups = new Map<string, BrokerVisit[]>();
     for (const visit of visits) {
@@ -217,7 +223,13 @@ export function VisitList({
                             />
                         </span>
                     </h1>
-                    {firstRun && <ListAddButton label="Schedule visit" onClick={onSchedule} />}
+                    {firstRun && (
+                        <ListAddButton
+                            label="Schedule visit"
+                            shortcutId="schedule_visit"
+                            onClick={onSchedule}
+                        />
+                    )}
                 </header>
             </PortalSectionNav>
             {!firstRun && (
@@ -261,7 +273,7 @@ export function VisitList({
                     </div>
                     <div className={styles.toolbarSearch}>
                         <ListSearchField
-                            searchHelp="Search visits by client name, phone number or property."
+                            searchHelp={CRM_SEARCH_HELP.visits}
                             aria-label="Search visits"
                             value={search}
                             onChange={onSearch}
@@ -287,6 +299,7 @@ export function VisitList({
                     />
                     <ListAddButton
                         label="Schedule visit"
+                        shortcutId="schedule_visit"
                         onClick={onSchedule}
                         className={styles.toolbarSchedule}
                     />
@@ -302,47 +315,63 @@ export function VisitList({
                     )}
                 </div>
             )}
-            <TabsContent value={tab} aria-label={LIST_COPY[tab]}>
-                {firstRun ? (
+            <TabsContent value={tab} aria-label={LIST_COPY[tab]} aria-busy={loading}>
+                {loadError && !loading ? (
                     <EmptyState
-                        className={EMPTY_FRAME}
+                        size="page"
+                        variant="error"
+                        icon={AlertCircle}
+                        heading="Your visits couldn’t be loaded"
+                        description="Check your connection and try again, or change your search and filters."
+                    >
+                        <Button variant="accent" onClick={onRetry}>
+                            Try again
+                        </Button>
+                    </EmptyState>
+                ) : loading ? (
+                    <VisitListSkeleton />
+                ) : visits.length === 0 && filtered ? (
+                    <EmptyState
+                        size="page"
+                        variant="filtered"
+                        icon={Search}
+                        heading="No visits match these filters"
+                        description="Try a different client, property or date range, or clear your search and filters."
+                    >
+                        <Button variant="accent" onClick={onClear}>
+                            Clear search & filters
+                        </Button>
+                    </EmptyState>
+                ) : firstRun && visits.length === 0 ? (
+                    <EmptyState
+                        size="page"
                         icon={CalendarDays}
                         heading="Schedule your first site visit"
-                        description="Pick a client, one of your listings, how long, and a free time. The visit then moves through Upcoming and Running on its own."
+                        description="Choose a client, a property and a time. Keep every visit and its outcome together here."
                     >
                         <Button size="md" variant="accent" onClick={onSchedule}>
                             Schedule a visit
                         </Button>
                     </EmptyState>
-                ) : visits.length === 0 && filtered ? (
-                    <div
-                        className={`flex flex-col items-center justify-center gap-4 text-center ${EMPTY_FRAME}`}
-                        aria-live="polite"
-                    >
-                        <p className="h5 text-ink">No visits match these filters</p>
-                        <p className="body-sm max-w-prose text-ink-muted">
-                            Try another search or clear your filters.
-                        </p>
-                        <button
-                            type="button"
-                            onClick={onClear}
-                            className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                        >
-                            Clear filters
-                        </button>
-                    </div>
                 ) : visits.length === 0 ? (
                     <EmptyState
-                        className={EMPTY_FRAME}
+                        size="page"
                         icon={CalendarDays}
                         heading={empty.heading}
                         description={empty.description}
-                    />
-                ) : (
-                    <div
-                        aria-busy={refreshing || undefined}
-                        className={`${styles.groups} ${refreshing ? "opacity-60" : ""}`}
                     >
+                        {tab === "upcoming" ? (
+                            <Button variant="accent" onClick={onSchedule}>
+                                Schedule a visit
+                            </Button>
+                        ) : tab !== "needs_update" ? (
+                            <Button variant="accent" onClick={() => onTab("upcoming")}>
+                                View upcoming visits
+                            </Button>
+                        ) : null}
+                    </EmptyState>
+                ) : (
+                    <div className={styles.groups}>
                         {[...groups].map(([day, rows]) => (
                             <section
                                 key={day}
@@ -355,11 +384,8 @@ export function VisitList({
                                             {dayLabel(day, rows[0].startsAt)}
                                         </time>
                                     </h2>
-                                    <span
-                                        className={styles.groupCount}
-                                        aria-label={`${rows.length} ${plural(rows.length)}`}
-                                    >
-                                        {rows.length}
+                                    <span className={styles.groupCount}>
+                                        {rows.length} {plural(rows.length)}
                                     </span>
                                 </div>
                                 <div className={styles.list}>

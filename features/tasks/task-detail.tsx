@@ -3,6 +3,8 @@
 import { isMockMode } from "@/lib/api/mock-mode";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
 
+import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { ContactName } from "@/components/shared/contact-name";
 import { DrawerSection } from "@/components/shared/drawer-section";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -21,9 +23,7 @@ import {
     Trash2,
     User,
 } from "@/components/shared/icons";
-import { useWorkflowDismiss } from "@/components/shared/workflow-context";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogDescription, DialogPopup, DialogTitle } from "@/components/ui/dialog";
 
 import { nextTaskDates } from "./lifecycle";
 import {
@@ -92,7 +92,7 @@ export function TaskDetail({
             onClose={onClose}
             busy={busy}
             footer={
-                <div className={styles.detailFooter}>
+                <AppModalFooter className={styles.detailFooter}>
                     {task.deletedAt ? (
                         <Button variant="accent" disabled={busy} onClick={onRestore}>
                             <RotateCcw aria-hidden />
@@ -127,7 +127,7 @@ export function TaskDetail({
                             </Button>
                         </>
                     )}
-                </div>
+                </AppModalFooter>
             }
         >
             <span className={`${styles.statusBadge} ${overdue ? styles.overdueBadge : ""}`}>
@@ -360,37 +360,37 @@ export function TaskDeleteDialog({
     onClose: () => void;
     onConfirm: () => void;
 }) {
-    useWorkflowDismiss(true, () => {
-        if (!busy) onClose();
-    });
     return (
-        <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
-            <DialogPopup showCloseButton={false} className={styles.deleteDialog}>
-                <DialogTitle>Delete task?</DialogTitle>
-                <p className={styles.deleteTaskName}>{task.title}</p>
-                <DialogDescription>
-                    Reminders will stop. You can restore it from Deleted.
-                </DialogDescription>
-                {error && (
-                    <p role="alert" className={styles.error}>
-                        {error}
-                    </p>
-                )}
-                <div className={styles.deleteActions}>
-                    <Button variant="outline" disabled={busy} onClick={onClose}>
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        disabled={busy}
-                        loading={busy}
-                        onClick={onConfirm}
-                    >
-                        Delete task
-                    </Button>
-                </div>
-            </DialogPopup>
-        </Dialog>
+        <AppModal
+            open
+            size="sm"
+            padding="md"
+            title="Delete task?"
+            showCloseButton={false}
+            description="Reminders will stop. You can restore it from Deleted."
+            onOpenChange={(open) => !open && !busy && onClose()}
+            footer={
+                <AppModalFooter
+                    className={styles.deleteActions}
+                    secondaryLabel="Cancel"
+                    secondaryVariant="outline"
+                    secondaryDisabled={busy}
+                    onSecondary={onClose}
+                    primaryLabel="Delete task"
+                    primaryVariant="destructive"
+                    primaryDisabled={busy}
+                    primaryLoading={busy}
+                    onPrimary={onConfirm}
+                />
+            }
+        >
+            <p className={styles.deleteTaskName}>{task.title}</p>
+            {error && (
+                <p role="alert" className={styles.error}>
+                    {error}
+                </p>
+            )}
+        </AppModal>
     );
 }
 
@@ -423,9 +423,11 @@ export function TaskReminders({
             description="A nudge at the right time, just for you."
             onClose={onClose}
             footer={
-                <Button variant="outline" className="inline-full" onClick={onClose}>
-                    Back to tasks
-                </Button>
+                <AppModalFooter>
+                    <Button variant="outline" className="inline-full" onClick={onClose}>
+                        Back to tasks
+                    </Button>
+                </AppModalFooter>
             }
         >
             <p className={styles.reminderIntro}>

@@ -8,6 +8,7 @@ import {
     useEffect,
     useId,
     useLayoutEffect,
+    useMemo,
     useRef,
     useState,
 } from "react";
@@ -20,7 +21,14 @@ import {
 import { mapTaskPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
 import type { PeopleInlineScope } from "@/components/shared/people-inline-select";
 import { PeopleOptionRow } from "@/components/shared/people-option-row";
-import { PropertyOptionRow } from "@/components/shared/property-option-row";
+import {
+    type PropertyInlineScope,
+    PropertyInlineSuggestions,
+} from "@/components/shared/property-inline-select";
+import {
+    propertyMatchesLookingFor,
+    propertyMatchesQuery,
+} from "@/components/shared/property-picker-meta";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 
 import { type Task, taskDateLabel } from "./model";
@@ -47,7 +55,6 @@ import {
     type QuickAddHighlightKind,
     type QuickAddMention,
     type QuickAddOption,
-    quickAddPropertyOptions,
     type QuickAddRange,
 } from "./quick-add-parse";
 
@@ -189,6 +196,14 @@ export function QuickAddComposer({
     });
     const [hint, setHint] = useState("");
     const optionsListRef = useRef<HTMLDivElement>(null);
+    const [propertyScopeState, setPropertyScopeState] = useState<{
+        mentionStart: number | null;
+        scope: PropertyInlineScope;
+    }>({ mentionStart: null, scope: "all" });
+    const propertyRows = useMemo(
+        () => catalogs.properties.map(mapTaskPropertyToPicker),
+        [catalogs.properties],
+    );
 
     const candidate = active
         ? findQuickAddMention(draft.text, caret, draft.entities, draft.closedMention)
@@ -205,10 +220,28 @@ export function QuickAddComposer({
         peopleScopeState.mentionStart === candidate.start
             ? peopleScopeState.scope
             : "all";
-    const options = !candidate
+    const propertyScope =
+        candidate?.kind === "property" && propertyScopeState.mentionStart === candidate.start
+            ? propertyScopeState.scope
+            : "all";
+    const filteredProperties =
+        candidate?.kind === "property"
+            ? propertyRows.filter(
+                  (property) =>
+                      (propertyScope === "all" ||
+                          propertyMatchesLookingFor(property, propertyScope)) &&
+                      propertyMatchesQuery(property, candidate.query.trim().toLowerCase()),
+              )
+            : [];
+    const options: QuickAddOption[] = !candidate
         ? []
         : candidate.kind === "property"
-          ? quickAddPropertyOptions(catalogs, candidate.query)
+          ? filteredProperties.map((property) => ({
+                kind: "property",
+                id: property.id,
+                label: property.title,
+                detail: "",
+            }))
           : peopleScope === "all"
             ? contactOptions
             : contactOptions.filter((option) => option.kind === peopleScope);
@@ -221,7 +254,8 @@ export function QuickAddComposer({
             !/\s/.test(candidate.query))
             ? candidate
             : null;
-    const optionNavKey = `${mention?.kind ?? ""}:${mention?.start ?? ""}:${peopleScope}:${candidate?.query ?? ""}`;
+    const optionNavKey = `${mention?.kind ?? ""}:${mention?.start ?? ""}:${peopleScope}:${propertyScope}:${candidate?.query ?? ""}`;
+    const propertyMention = mention?.kind === "property" ? mention : null;
     const optionIndex = optionNav.key === optionNavKey ? optionNav.index : 0;
     const setOptionIndex = (next: number | ((current: number) => number)) => {
         setOptionNav((current) => {
@@ -236,7 +270,7 @@ export function QuickAddComposer({
         if (!candidate || candidate.kind === "property") return;
         setPeopleScopeState({ mentionStart: candidate.start, scope });
         setOptionNav({
-            key: `${candidate.kind}:${candidate.start}:${scope}:${candidate.query}`,
+            key: `${candidate.kind}:${candidate.start}:${scope}:all:${candidate.query}`,
             index: 0,
         });
     };
@@ -297,6 +331,7 @@ export function QuickAddComposer({
         selectionRef.current = { start: 0, end: 0 };
         pendingCaretRef.current = 0;
         setPeopleScopeState({ mentionStart: null, scope: "all" });
+        setPropertyScopeState({ mentionStart: null, scope: "all" });
         setOptionNav({ key: "", index: 0 });
     };
 
@@ -312,6 +347,7 @@ export function QuickAddComposer({
         setCaret(snapshot.caret);
         setOptionNav({ key: "", index: 0 });
         setPeopleScopeState({ mentionStart: null, scope: "all" });
+        setPropertyScopeState({ mentionStart: null, scope: "all" });
         setHint("");
         selectionRef.current = { start: snapshot.caret, end: snapshot.caret };
         pendingCaretRef.current = snapshot.caret;
@@ -418,6 +454,7 @@ export function QuickAddComposer({
         setDraft(result.draft);
         setCaret(result.caret);
         setOptionIndex(0);
+        setPropertyScopeState({ mentionStart: null, scope: "all" });
         setHint("");
         selectionRef.current = { start: result.caret, end: result.caret };
         pendingCaretRef.current = result.caret;
@@ -521,10 +558,15 @@ export function QuickAddComposer({
                 pick(mention, options[activeOption]!);
                 return;
             }
+            if (event.key === "Enter") {
+                event.preventDefault();
+                return;
+            }
             if (event.key === "Escape") {
                 event.preventDefault();
                 event.stopPropagation();
                 setDraft((current) => ({ ...current, closedMention: mention.start }));
+                setPropertyScopeState({ mentionStart: null, scope: "all" });
                 return;
             }
         }
@@ -626,41 +668,53 @@ export function QuickAddComposer({
                             composingRef.current = false;
                         }}
                     />
-                    {mention && (
-                        <div
-                            className={
-                                mention.kind === "property" ? styles.options : styles.peopleOptions
+                    {propertyMention && (
+                        <PropertyInlineSuggestions
+                            className={styles.propertyOptions}
+                            properties={filteredProperties}
+                            scope={propertyScope}
+                            onScopeChange={(scope) =>
+                                setPropertyScopeState({
+                                    mentionStart: propertyMention.start,
+                                    scope,
+                                })
                             }
+                            listId={listboxId}
+                            listRef={optionsListRef}
+                            activeIndex={activeOption}
+                            onActiveIndexChange={setOptionIndex}
+                            selectedId={values.propertyId}
+                            onSelect={(id) => {
+                                const option = options.find((item) => item.id === id);
+                                if (option) pick(propertyMention, option);
+                            }}
+                        />
+                    )}
+                    {mention && !propertyMention && (
+                        <div
+                            className={styles.peopleOptions}
                             onPointerDown={(event) => event.preventDefault()}
                         >
-                            {mention.kind !== "property" ? (
-                                <div className={styles.peopleTabs}>
-                                    <SlidingTabs
-                                        label="Filter people by role"
-                                        value={peopleScope}
-                                        onValueChange={setPeopleScope}
-                                        className="self-start"
-                                        height={32}
-                                        options={[
-                                            { value: "all", label: "All" },
-                                            { value: "client", label: "Clients" },
-                                            { value: "owner", label: "Owners" },
-                                        ]}
-                                    />
-                                </div>
-                            ) : null}
+                            <div className={styles.peopleTabs}>
+                                <SlidingTabs
+                                    label="Filter people by role"
+                                    value={peopleScope}
+                                    onValueChange={setPeopleScope}
+                                    className="self-start"
+                                    height={32}
+                                    options={[
+                                        { value: "all", label: "All" },
+                                        { value: "client", label: "Clients" },
+                                        { value: "owner", label: "Owners" },
+                                    ]}
+                                />
+                            </div>
                             <div
                                 id={listboxId}
                                 ref={optionsListRef}
                                 role="listbox"
-                                aria-label={
-                                    mention.kind === "property"
-                                        ? "Properties"
-                                        : "Clients and owners"
-                                }
-                                className={
-                                    mention.kind === "property" ? undefined : styles.peopleList
-                                }
+                                aria-label="Clients and owners"
+                                className={styles.peopleList}
                             >
                                 {options.length ? (
                                     options.map((option, index) => (
@@ -672,57 +726,38 @@ export function QuickAddComposer({
                                             tabIndex={-1}
                                             aria-selected={index === activeOption}
                                             data-option-index={index}
-                                            className={
-                                                option.kind === "property"
-                                                    ? styles.option
-                                                    : styles.peopleOption
-                                            }
+                                            className={styles.peopleOption}
                                             data-active={index === activeOption || undefined}
                                             onPointerEnter={() => setOptionIndex(index)}
                                             onClick={() => pick(mention, option)}
                                         >
-                                            {option.kind === "property" ? (
-                                                <PropertyOptionRow
-                                                    property={mapTaskPropertyToPicker(
-                                                        catalogs.properties.find(
-                                                            (property) => property.id === option.id,
-                                                        ) ?? {
-                                                            id: option.id,
-                                                            title: option.label,
-                                                        },
-                                                    )}
-                                                />
-                                            ) : (
-                                                <PeopleOptionRow
-                                                    person={
-                                                        option.kind === "owner"
-                                                            ? mapTaskOwnerToPicker({
-                                                                  id: option.id,
-                                                                  name: option.label,
-                                                                  type: option.type,
-                                                                  phoneDigits: option.phoneDigits,
-                                                              })
-                                                            : mapTaskClientToPicker({
-                                                                  id: option.id,
-                                                                  name: option.label,
-                                                                  type: option.type,
-                                                                  phoneDigits: option.phoneDigits,
-                                                              })
-                                                    }
-                                                    showRolePip
-                                                />
-                                            )}
+                                            <PeopleOptionRow
+                                                person={
+                                                    option.kind === "owner"
+                                                        ? mapTaskOwnerToPicker({
+                                                              id: option.id,
+                                                              name: option.label,
+                                                              type: option.type,
+                                                              phoneDigits: option.phoneDigits,
+                                                          })
+                                                        : mapTaskClientToPicker({
+                                                              id: option.id,
+                                                              name: option.label,
+                                                              type: option.type,
+                                                              phoneDigits: option.phoneDigits,
+                                                          })
+                                                }
+                                                showRolePip
+                                            />
                                         </button>
                                     ))
                                 ) : (
                                     <p className={styles.optionsEmpty}>
-                                        {mention.kind === "property"
-                                            ? "No matching properties"
-                                            : peopleScope === "client"
-                                              ? "No matching clients"
-                                              : peopleScope === "owner"
-                                                ? "No matching owners"
-                                                : "No matching Clients or owners"}
+                                        {peopleScope === "client"
+                                            ? "No matching clients"
+                                            : peopleScope === "owner"
+                                              ? "No matching owners"
+                                              : "No matching Clients or owners"}
                                     </p>
                                 )}
                             </div>

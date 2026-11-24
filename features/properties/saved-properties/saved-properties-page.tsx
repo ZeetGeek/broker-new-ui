@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -11,6 +10,7 @@ import { visibleSavedProperties } from "@/lib/properties/saved-properties";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import toast from "@/components/shared/app-toast";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";

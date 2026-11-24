@@ -35,6 +35,7 @@ import type {
     AttentionItem,
     PropertyReport,
 } from "@/features/properties/property-analytics/analytics-math";
+import { isPreviewAnalyticsClient } from "@/features/properties/property-analytics/mock-property-analytics";
 
 const COLLAPSED_COUNT = 5;
 
@@ -119,6 +120,7 @@ function AttentionRow({
     now: Date;
 }) {
     const { client } = item;
+    const sample = isPreviewAnalyticsClient(client.id);
     const row = describe(item, closedWord, now);
     const dealHref = brokerPipelineDealHref(client.id);
     const canCall = row.call && client.phone != null;
@@ -140,7 +142,7 @@ function AttentionRow({
                     <ContactName
                         name={client.name}
                         contactId={client.clientId}
-                        contactType="buyer"
+                        contactType={sample ? undefined : "buyer"}
                         className="font-medium text-ink hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     />
                     {" · "}
@@ -152,8 +154,9 @@ function AttentionRow({
                     variant="outline"
                     size="sm"
                     className="shrink-0"
-                    nativeButton={false}
-                    render={<a href={formatTelUrl(client.phone!)} />}
+                    nativeButton={sample}
+                    disabled={sample}
+                    render={sample ? undefined : <a href={formatTelUrl(client.phone!)} />}
                     aria-label={`Call ${client.name}`}
                 >
                     <CallIcon aria-hidden strokeWidth={1.75} />
@@ -164,8 +167,9 @@ function AttentionRow({
                     variant="outline"
                     size="sm"
                     className="shrink-0"
-                    nativeButton={false}
-                    render={<Link href={dealHref} />}
+                    nativeButton={sample}
+                    disabled={sample}
+                    render={sample ? undefined : <Link href={dealHref} />}
                     aria-label={`Open ${client.name}'s deal`}
                 >
                     Open

@@ -17,6 +17,7 @@ import { measuredCssToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     ArrowLeft,
@@ -717,14 +718,18 @@ function NameEditor({
                 if (!open && !pending) onCancel();
             }}
             footer={
-                <div className={styles.nameActions}>
-                    <Button variant="outline" onClick={onCancel} disabled={pending}>
-                        Cancel
-                    </Button>
-                    <Button type="submit" form={formId} variant="accent" loading={pending}>
-                        {initial ? "Save changes" : title}
-                    </Button>
-                </div>
+                <AppModalFooter
+                    className={styles.nameActions}
+                    secondaryLabel="Cancel"
+                    secondaryVariant="outline"
+                    onSecondary={onCancel}
+                    secondaryDisabled={pending}
+                    primaryLabel={initial ? "Save changes" : title}
+                    primaryType="submit"
+                    primaryFormId={formId}
+                    primaryVariant="accent"
+                    primaryLoading={pending}
+                />
             }
         >
             <form id={formId} className={styles.nameForm} onSubmit={submit}>

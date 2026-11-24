@@ -5,6 +5,7 @@ import { buildWhatsAppInviteUrl } from "@/lib/share/referral";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { BellRing, MessageSquare } from "@/components/shared/icons";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -71,6 +72,54 @@ export function ReferralDetailModal({
             size="md"
             title={referral.person.name}
             description={referralStatusHint(referral)}
+            footer={
+                <AppModalFooter className="flex flex-wrap gap-2 border-bs border-border-warm pbs-4">
+                    <Button
+                        variant="secondary"
+                        size="md"
+                        nativeButton={false}
+                        render={
+                            <a
+                                href={buildWhatsAppInviteUrl(message, referral.person.phoneDigits)}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                            />
+                        }
+                    >
+                        <MessageSquare aria-hidden />
+                        Message on WhatsApp
+                    </Button>
+
+                    {isNudgeable(referral.status) ? (
+                        <div className="flex flex-col gap-1.5">
+                            <Button
+                                variant="default"
+                                size="md"
+                                loading={isBusy}
+                                disabled={nudge.kind !== "allowed"}
+                                onClick={() => onNudge(referral.id)}
+                            >
+                                <BellRing aria-hidden />
+                                {isBusy ? "Nudging…" : "Nudge them"}
+                            </Button>
+                            {/* The reason sits under the button rather than in
+                                a tooltip: on a phone there is no hover, so a
+                                tooltip-only explanation never appears. */}
+                            {blockedReason ? (
+                                <p className="body-xs text-ink-subtle">{blockedReason}</p>
+                            ) : null}
+                        </div>
+                    ) : referral.status === "awaiting_approval" ? (
+                        // No button at all here. The only thing that moves this
+                        // forward is an owner's decision, and offering an action
+                        // that cannot affect it would be a lie about who is in
+                        // control (docs/EMPTY_STATES.md rule 6).
+                        <p className="body-sm self-center text-ink-muted">
+                            Nothing to do — the owner has their request.
+                        </p>
+                    ) : null}
+                </AppModalFooter>
+            }
         >
             <div className="flex flex-col gap-5">
                 <div className="flex items-center gap-3">
@@ -165,53 +214,6 @@ export function ReferralDetailModal({
                         )}
                     />
                 </section>
-
-                <div className="flex flex-wrap gap-2 border-bs border-border-warm pbs-4">
-                    <Button
-                        variant="secondary"
-                        size="md"
-                        nativeButton={false}
-                        render={
-                            <a
-                                href={buildWhatsAppInviteUrl(message, referral.person.phoneDigits)}
-                                target="_blank"
-                                rel="noreferrer noopener"
-                            />
-                        }
-                    >
-                        <MessageSquare aria-hidden />
-                        Message on WhatsApp
-                    </Button>
-
-                    {isNudgeable(referral.status) ? (
-                        <div className="flex flex-col gap-1.5">
-                            <Button
-                                variant="default"
-                                size="md"
-                                loading={isBusy}
-                                disabled={nudge.kind !== "allowed"}
-                                onClick={() => onNudge(referral.id)}
-                            >
-                                <BellRing aria-hidden />
-                                {isBusy ? "Nudging…" : "Nudge them"}
-                            </Button>
-                            {/* The reason sits under the button rather than in
-                                a tooltip: on a phone there is no hover, so a
-                                tooltip-only explanation never appears. */}
-                            {blockedReason ? (
-                                <p className="body-xs text-ink-subtle">{blockedReason}</p>
-                            ) : null}
-                        </div>
-                    ) : referral.status === "awaiting_approval" ? (
-                        // No button at all here. The only thing that moves this
-                        // forward is an owner's decision, and offering an action
-                        // that cannot affect it would be a lie about who is in
-                        // control (docs/EMPTY_STATES.md rule 6).
-                        <p className="body-sm self-center text-ink-muted">
-                            Nothing to do — the owner has their request.
-                        </p>
-                    ) : null}
-                </div>
             </div>
         </AppModal>
     );

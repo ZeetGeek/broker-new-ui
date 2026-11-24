@@ -1,0 +1,262 @@
+.report {
+    display: flex;
+    flex-direction: column;
+    gap: var(--card-grid-gap);
+    min-inline-size: 0;
+    padding-block-end: 1.5rem;
+}
+
+.heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+}
+
+.metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    color: var(--color-ink-muted);
+}
+
+.metadata > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--card-grid-gap);
+}
+
+.stat {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-content: start;
+    align-items: center;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    padding: 1rem;
+    border: 1px solid var(--color-border-warm);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.statIcon {
+    grid-column: 2;
+    grid-row: 1;
+    color: var(--color-brand);
+}
+
+.statValue {
+    grid-column: 1 / -1;
+    overflow-wrap: anywhere;
+}
+
+.statDetail {
+    grid-column: 1 / -1;
+}
+
+.workspace,
+.main,
+.aside {
+    display: flex;
+    flex-direction: column;
+    gap: var(--card-grid-gap);
+    min-inline-size: 0;
+}
+
+/* A single reading order on phones; independent columns on desktop. */
+.main,
+.aside {
+    display: contents;
+}
+
+.attention {
+    order: 1;
+}
+.journey {
+    order: 2;
+}
+.commission {
+    order: 3;
+}
+.visits {
+    order: 4;
+}
+.offers {
+    order: 5;
+}
+.clients {
+    order: 6;
+}
+
+.journeyRows {
+    display: grid;
+    gap: 1.125rem;
+}
+
+.journeyRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+}
+
+.journeyTrack {
+    grid-column: 1 / -1;
+    overflow: hidden;
+    block-size: 0.625rem;
+    border-radius: 999px;
+    background: var(--color-surface-muted);
+}
+
+.journeyFill {
+    display: block;
+    block-size: 100%;
+    border-radius: inherit;
+    background: var(--color-brand);
+}
+
+.journeyRow:first-child .journeyFill {
+    background: var(--color-success-mid);
+}
+
+.stageSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-block-start: 1.25rem;
+    border-block-start: 1px solid var(--color-border-warm);
+}
+
+.stageLegend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+}
+.stageLegend > div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.commission {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    border-radius: var(--radius-card);
+    background: var(--color-brand);
+    color: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.commissionFooter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    padding-block-start: 1rem;
+    border-block-start: 1px solid rgb(255 255 255 / 22%);
+}
+
+.visitMetrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+.visitMetrics > div {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.25rem;
+}
+.visitMetrics > div + div {
+    padding-inline-start: 0.75rem;
+    border-inline-start: 1px solid var(--color-border-warm);
+}
+
+.quietState {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding-block: 0.25rem;
+}
+.quietState > svg {
+    flex-shrink: 0;
+    margin-block-start: 0.125rem;
+    color: var(--color-ink-muted);
+}
+
+.clientRow {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-block: 1.25rem;
+}
+.clientRow:first-child {
+    padding-block-start: 0;
+}
+.clientRow:last-child {
+    padding-block-end: 0;
+}
+.clientIdentity {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    min-inline-size: 0;
+}
+.clientFacts {
+    display: grid;
+    gap: 0.75rem;
+    min-inline-size: 0;
+}
+.clientFact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+.clientActions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+    .stat {
+        padding: 1.125rem 1.25rem;
+    }
+    .commission {
+        padding: 1.5rem;
+    }
+    .clientFacts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+        align-items: start;
+    }
+    .main,
+    .aside {
+        display: flex;
+    }
+    .aside {
+        position: sticky;
+        inset-block-start: var(--portal-sticky-offset);
+    }
+    .main > *,
+    .aside > * {
+        order: initial;
+    }
+}

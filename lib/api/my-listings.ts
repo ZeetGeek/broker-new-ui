@@ -14,6 +14,7 @@ import {
     propertyCriteriaCount,
 } from "@/lib/properties/list-criteria";
 import { collectPeopleFilterOptions, matchesPeopleFilters } from "@/lib/properties/people-filters";
+import { matchesListingSearch } from "@/lib/search/crm-search";
 
 import type { OwnerContactForm } from "@/features/contacts/contact-form-model";
 import { moneyToRupees } from "@/features/contacts/contact-form-model";
@@ -58,14 +59,8 @@ function filterMockMyListings(
     filters: MyListingsFilters,
     source = mockMyListings,
 ): MyListingItem[] {
-    const needle = filters.q.trim().toLowerCase();
     let items = source.filter((item) => {
-        if (needle) {
-            const hay = [item.title, item.locality, item.city, item.configLabel]
-                .join(" ")
-                .toLowerCase();
-            if (!hay.includes(needle)) return false;
-        }
+        if (!matchesListingSearch(item, filters.q)) return false;
         if (filters.type === "sale" && item.transactionType === "rent") return false;
         if (filters.type === "rent" && item.transactionType === "sale") return false;
         if (
@@ -151,7 +146,6 @@ export type MyListingsSummary = {
 function filtersToQuery(filters: MyListingsFilters): PropertyListQuery | null {
     const typeFilters = propertyTypeToApiFilters(filters.propertyType);
     return {
-        search: filters.q.trim() || undefined,
         transactionType: filters.type || undefined,
         ...typeFilters,
         bhkConfig: filters.bhk.length > 0 ? bhkValuesToApiConfig(filters.bhk) : undefined,
@@ -233,6 +227,7 @@ export const myListingsApi = {
         }
         const query = filtersToQuery(merged)!;
         const filterLocally =
+            Boolean(merged.q.trim()) ||
             propertyCriteriaCount(merged.propertyFilters) > 0 ||
             Boolean(merged.ownerId || merged.clientId);
         const [source, attached] = await Promise.all([
@@ -258,6 +253,7 @@ export const myListingsApi = {
             // Join people before filtering and paginate only after every API page has been checked.
             const matched = items.filter(
                 (item) =>
+                    matchesListingSearch(item, merged.q) &&
                     matchesListingCriteria(item, merged) &&
                     matchesPeopleFilters(
                         item.exclusiveOwnerId ?? item.ownerId,

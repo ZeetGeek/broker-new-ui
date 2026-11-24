@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import toast from "react-hot-toast";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -22,6 +21,7 @@ import {
     brokerOwnerProfileHref,
 } from "@/lib/routes/broker";
 
+import toast from "@/components/shared/app-toast";
 import { ContactName } from "@/components/shared/contact-name";
 import { CallIcon, Lock, WhatsAppIcon } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";

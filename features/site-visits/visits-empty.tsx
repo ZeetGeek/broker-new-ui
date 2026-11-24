@@ -49,6 +49,7 @@ export function VisitsFirstRunEmpty({
                 size="lg"
                 nativeButton={false}
                 render={<Link href={canSchedule ? SCHEDULE_HREF : BROWSE_HREF} />}
+                variant="accent"
             >
                 {canSchedule ? "Schedule a visit" : "Browse Marketplace"}
             </Button>
@@ -65,7 +66,7 @@ export function VisitsFilteredEmpty({ onClear }: { onClear: () => void }) {
             description="Try a different property, name or status."
             className="py-16"
         >
-            <Button variant="secondary" size="sm" onClick={onClear}>
+            <Button variant="accent" size="sm" onClick={onClear}>
                 Clear the filters
             </Button>
         </EmptyState>

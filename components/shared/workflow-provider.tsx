@@ -1,10 +1,10 @@
 "use client";
 import { type ReactNode, useCallback, useRef, useState } from "react";
-import toast from "react-hot-toast";
 import { usePathname } from "next/navigation";
 
 import { isWorkingWorkflow, workflowTarget } from "@/lib/workflows/target";
 
+import toast from "@/components/shared/app-toast";
 import {
     useWorkflowState,
     WorkflowContext,

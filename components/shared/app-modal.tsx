@@ -1,23 +1,18 @@
 "use client";
 
-import {
-    type CSSProperties,
-    type ReactNode,
-    type UIEvent,
-    useEffect,
-    useRef,
-    useState,
-} from "react";
+import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
 
 import SimpleBar from "simplebar-react";
 
+import { observeScrollOverflow } from "@/lib/styles/scroll-overflow";
 import { cn } from "@/lib/utils";
 
 import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { useWorkflowDismiss } from "@/components/shared/workflow-context";
-import { Dialog, DialogDescription, DialogPopup } from "@/components/ui/dialog";
+import { Dialog, DialogFooter, DialogPopup } from "@/components/ui/dialog";
 
 import "simplebar-react/dist/simplebar.min.css";
+import styles from "./app-modal.module.css";
 
 const SIZE_CLASS: Record<NonNullable<AppModalProps["size"]>, string> = {
     sm: `
@@ -66,6 +61,8 @@ export type AppModalProps = {
     /** Existing URL-owned drawers can retain their own Back behavior. */
     manageBrowserHistory?: boolean;
     nativeScroll?: boolean;
+    /** Working surfaces with their own scrolling (chat, property editor, filter sheets). */
+    scrollBody?: boolean;
     /** Temporarily release modal focus when a nested external lightbox owns it. */
     modal?: boolean;
     onOpenChange: (open: boolean) => void;
@@ -77,6 +74,9 @@ export type AppModalProps = {
     footer?: ReactNode;
     children: ReactNode;
     showCloseButton?: boolean;
+    closeDisabled?: boolean;
+    /** Fullscreen forms may render AppModalHeader inside their disabled fieldset. */
+    showHeader?: boolean;
     /** Horizontal size of the popup */
     size?: "sm" | "md" | "lg" | "xl" | "full";
     /** Controls --dialog-pad (header/body/footer inset) */
@@ -99,6 +99,7 @@ export function AppModal({
     open,
     manageBrowserHistory = true,
     nativeScroll = false,
+    scrollBody = true,
     modal = true,
     onOpenChange,
     title,
@@ -107,6 +108,8 @@ export function AppModal({
     footer,
     children,
     showCloseButton = true,
+    closeDisabled = false,
+    showHeader = true,
     size = "md",
     padding = "lg",
     className,
@@ -118,48 +121,22 @@ export function AppModal({
     descriptionClassName,
 }: AppModalProps) {
     useWorkflowDismiss(open && manageBrowserHistory, () => onOpenChange(false));
-    const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
-    const contentRef = useRef<HTMLDivElement>(null);
-    const [hasMoreBelow, setHasMoreBelow] = useState(false);
-    const [scrolledFromTop, setScrolledFromTop] = useState(false);
-
-    function syncScrollEdges(node: HTMLElement) {
-        setScrolledFromTop(node.scrollTop > 2);
-        setHasMoreBelow(node.scrollHeight - node.clientHeight - node.scrollTop > 2);
-    }
+    const [body, setBody] = useState<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        if (!open) return undefined;
-        // Reset edge flags after open so a prior scroll does not flash a divider.
-        const frame = window.requestAnimationFrame(() => {
-            setScrolledFromTop(false);
-            setHasMoreBelow(false);
+        if (!open || !body) return undefined;
+        const stop = observeScrollOverflow(body, (hasMoreBelow) => {
+            body.toggleAttribute("data-scroll-below", hasMoreBelow);
         });
-        return () => window.cancelAnimationFrame(frame);
-    }, [open]);
-
-    useEffect(() => {
-        if (!open || !nativeScroll || !viewport) return undefined;
-        const content = contentRef.current;
-        if (!content) return undefined;
-        const update = () => syncScrollEdges(viewport);
-        const observer = new ResizeObserver(update);
-        observer.observe(viewport);
-        observer.observe(content);
-        viewport.addEventListener("scroll", update, { passive: true });
-        update();
         return () => {
-            observer.disconnect();
-            viewport.removeEventListener("scroll", update);
+            stop();
+            body.removeAttribute("data-scroll-below");
         };
-    }, [open, nativeScroll, viewport]);
+    }, [open, body]);
 
     const pad = PAD_VALUE[padding];
     const showDescription = hasVisibleDescription(description);
     const titleClass = cn("font-display text-lg font-medium text-ink", titleClassName);
-    const showStickyHeader = showDescription || Boolean(header);
-    const headerScrolled = open && scrolledFromTop;
-    const footerHasMore = open && hasMoreBelow;
 
     return (
         <Dialog open={open} modal={modal} onOpenChange={onOpenChange}>
@@ -175,71 +152,65 @@ export function AppModal({
                     className,
                 )}
             >
-                <AppModalHeader
-                    title={title}
-                    showCloseButton={showCloseButton}
-                    titleClassName={cn(titleClass, "not-sr-only")}
-                />
-                {showStickyHeader ? (
-                    <div
-                        className={cn(
-                            `
-                              shrink-0 space-y-3 bg-surface px-(--dialog-pad) pbs-3
-                              transition-[border-color] duration-160
-                            `,
-                            // Keep a 1px slot so showing the divider does not jump layout.
-                            headerScrolled
-                                ? "border-be border-(--dialog-divider)"
-                                : "border-be border-transparent",
-                            headerClassName,
-                        )}
+                {showHeader ? (
+                    <AppModalHeader
+                        title={title}
+                        showCloseButton={showCloseButton}
+                        closeDisabled={closeDisabled}
+                        titleClassName={cn(titleClass, "not-sr-only")}
+                        description={showDescription ? description : undefined}
+                        descriptionClassName={descriptionClassName}
+                        contentClassName={headerClassName}
                     >
-                        {showDescription ? (
-                            <DialogDescription className={descriptionClassName}>
-                                {description}
-                            </DialogDescription>
-                        ) : null}
                         {header}
-                    </div>
+                    </AppModalHeader>
                 ) : null}
 
-                <div
-                    ref={setViewport}
-                    className={cn(
-                        "relative flex-1 min-block-0",
-                        nativeScroll ? "overflow-y-auto overscroll-contain" : "overflow-hidden",
-                    )}
-                >
-                    {nativeScroll ? (
-                        <div ref={contentRef} className={cn("p-(--dialog-pad)", bodyClassName)}>
-                            {children}
-                        </div>
-                    ) : (
-                        <SimpleBar
-                            className="app-modal-simplebar block-full"
-                            style={{ maxHeight: "100%" }}
-                            autoHide
-                            scrollableNodeProps={{
-                                onScroll: (event: UIEvent<HTMLDivElement>) => {
-                                    syncScrollEdges(event.currentTarget);
-                                },
-                            }}
-                        >
+                {!scrollBody ? (
+                    <div
+                        ref={setBody}
+                        className={cn(
+                            styles.body,
+                            "flex flex-1 flex-col overflow-hidden min-block-0",
+                            bodyClassName,
+                        )}
+                    >
+                        {children}
+                    </div>
+                ) : (
+                    <div
+                        ref={setBody}
+                        className={cn(
+                            styles.body,
+                            "relative flex-1 min-block-0",
+                            nativeScroll ? "overflow-y-auto overscroll-contain" : "overflow-hidden",
+                        )}
+                    >
+                        {nativeScroll ? (
                             <div className={cn("p-(--dialog-pad)", bodyClassName)}>{children}</div>
-                        </SimpleBar>
-                    )}
-                </div>
+                        ) : (
+                            <SimpleBar
+                                className="app-modal-simplebar block-full"
+                                style={{ maxHeight: "100%" }}
+                                autoHide
+                            >
+                                <div className={cn("p-(--dialog-pad)", bodyClassName)}>
+                                    {children}
+                                </div>
+                            </SimpleBar>
+                        )}
+                    </div>
+                )}
 
                 {footer ? (
-                    <div
+                    <DialogFooter
                         className={cn(
-                            "shrink-0 px-(--dialog-pad) pbs-3 pbe-(--dialog-pad)",
-                            footerHasMore && "shadow-[0_-6px_16px_-8px_rgb(0_0_0/0.2)]",
+                            "block shrink-0 px-(--dialog-pad) pbs-3 pbe-(--dialog-pad)",
                             footerClassName,
                         )}
                     >
                         {footer}
-                    </div>
+                    </DialogFooter>
                 ) : null}
             </DialogPopup>
         </Dialog>

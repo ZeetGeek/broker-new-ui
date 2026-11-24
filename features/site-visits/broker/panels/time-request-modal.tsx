@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import toast from "react-hot-toast";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { formatInTimeZone } from "date-fns-tz";
@@ -19,11 +18,13 @@ import { useCreateTimeRequest } from "@/hooks/use-time-requests";
 
 import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import { IconButton } from "@/components/shared/icon-button";
 import { Clock3, Plus, Trash2 } from "@/components/shared/icons";
 import { mapNestedVisitPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
-import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
+import { PropertyPickerField } from "@/components/shared/property-picker";
 import { Button } from "@/components/ui/button";
 
 import type { PersonSummary, PropertyWithSlots } from "@/features/site-visits/broker/model";
@@ -189,7 +190,7 @@ export function TimeRequestModal({
             description="Give the owner one preferred time and up to two backups."
             size="lg"
             footer={
-                <div
+                <AppModalFooter
                     className="
                   flex flex-row flex-wrap items-center justify-between gap-2 inline-full
                 "
@@ -207,7 +208,7 @@ export function TimeRequestModal({
                     >
                         Send time request
                     </Button>
-                </div>
+                </AppModalFooter>
             }
         >
             <form id="time-request-form" onSubmit={submit} className="space-y-5">
@@ -221,16 +222,17 @@ export function TimeRequestModal({
                         {requestError}
                     </p>
                 ) : null}
-                <PropertyInlineSelect
+                <PropertyPickerField
                     label="Property"
                     properties={properties.map(mapNestedVisitPropertyToPicker)}
                     value={selectedPropertyId || null}
-                    onValueChange={(id) =>
+                    onConfirm={(id) =>
                         form.setValue("propertyId", id ?? "", { shouldValidate: true })
                     }
                     placeholder="Choose a property"
+                    required
                     errorText={form.formState.errors.propertyId?.message}
-                    size="lg"
+                    triggerSize="lg"
                 />
                 <BuyerPicker
                     buyers={allBuyers}

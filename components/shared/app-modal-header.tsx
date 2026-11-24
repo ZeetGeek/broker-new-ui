@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 import { IconButton } from "@/components/shared/icon-button";
 import { XIcon } from "@/components/shared/icons";
-import { DialogClose, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { DialogClose, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type AppModalHeaderProps = Omit<ComponentProps<"div">, "title"> & {
     title: ReactNode;
@@ -15,6 +15,11 @@ type AppModalHeaderProps = Omit<ComponentProps<"div">, "title"> & {
     closeDisabled?: boolean;
     titleClassName?: string;
     descriptionClassName?: string;
+    contentClassName?: string;
+    titleExtra?: ReactNode;
+    actions?: ReactNode;
+    rowClassName?: string;
+    actionsClassName?: string;
 };
 
 /** Use inside DialogPopup with showCloseButton={false} to avoid duplicate controls. */
@@ -25,39 +30,59 @@ export function AppModalHeader({
     closeDisabled = false,
     titleClassName,
     descriptionClassName,
+    contentClassName,
+    titleExtra,
+    actions,
+    rowClassName,
+    actionsClassName,
     className,
     children,
     ...props
 }: AppModalHeaderProps) {
     return (
-        <div
+        <DialogHeader
             data-slot="app-modal-header"
             className={cn(
-                "shrink-0 border-be border-(--dialog-divider) bg-surface px-(--dialog-pad) py-3",
+                "shrink-0 gap-0 border-be border-(--dialog-divider) bg-surface px-(--dialog-pad) py-3",
                 className,
             )}
             {...props}
         >
-            <div className="flex items-center justify-between gap-4">
-                <DialogTitle className={cn("flex-1 text-start min-inline-0", titleClassName)}>
-                    {title}
-                </DialogTitle>
-                {showCloseButton ? (
-                    <DialogClose
-                        render={<IconButton size="md" />}
-                        disabled={closeDisabled}
-                        aria-label="Close"
-                    >
-                        <XIcon className="block-4 inline-4" strokeWidth={2} aria-hidden />
-                    </DialogClose>
+            <div
+                data-slot="dialog-heading-row"
+                className={cn("flex items-center justify-between gap-4 inline-full", rowClassName)}
+            >
+                <div className="flex flex-1 flex-wrap items-center gap-2.5 min-inline-0">
+                    <DialogTitle className={cn("flex-1 text-start min-inline-0", titleClassName)}>
+                        {title}
+                    </DialogTitle>
+                    {titleExtra}
+                </div>
+                {actions || showCloseButton ? (
+                    <div className={cn("flex shrink-0 items-center gap-2", actionsClassName)}>
+                        {actions}
+                        {showCloseButton ? (
+                            <DialogClose
+                                render={<IconButton size="md" />}
+                                disabled={closeDisabled}
+                                aria-label="Close"
+                            >
+                                <XIcon className="block-4 inline-4" strokeWidth={2} aria-hidden />
+                            </DialogClose>
+                        ) : null}
+                    </div>
                 ) : null}
             </div>
-            {description ? (
-                <DialogDescription className={cn("mbs-1.5", descriptionClassName)}>
-                    {description}
-                </DialogDescription>
+            {description || children ? (
+                <div className={cn("space-y-3 pbs-3 inline-full", contentClassName)}>
+                    {description ? (
+                        <DialogDescription className={descriptionClassName}>
+                            {description}
+                        </DialogDescription>
+                    ) : null}
+                    {children}
+                </div>
             ) : null}
-            {children}
-        </div>
+        </DialogHeader>
     );
 }

@@ -30,9 +30,30 @@ browser Back dismissal. `WorkflowHost` loads only the requested workflow family.
 Reuse the original forms and mutations; call `useWorkflowWorking` during local
 edit/busy states and `notifyWorkflowSaved` after a successful mutation. Refresh
 query families without resetting page filters, scroll, or the selected tab.
+Use `AppModal` from `components/shared/app-modal.tsx` for every product modal,
+including filters, confirmations, crop dialogs, and fullscreen editors. Use
+`ConfirmDialog` for reusable confirmations. Only photo lightboxes keep their
+specialized viewer. Feature code must not compose `Dialog` / `DialogPopup`
+directly or use browser-native alerts or confirmations. Editors with their own
+toolbar inside a form can use `showHeader={false}` only when they render
+`AppModalHeader` themselves (including the accessible title);
+surfaces that already own their scroll area can use `scrollBody={false}`.
+
+Dialog headers and footers use `AppModalHeader` and `AppModalFooter`, backed by
+`DialogHeader` and `DialogFooter`. Put descriptions and extra header controls in
+the shared header; pass actions through the modal's `footer` slot. Do not build
+separate `<header>`, `<footer>`, or action-row containers for a dialog. The shared
+footer supports destructive variants, loading states, external form submission,
+and custom children for links or multiple actions.
+
+`AppModal` manages footer scroll shadows for dialogs and drawers, including
+native, SimpleBar, and custom scroll areas. The shadow appears only while
+content remains below and clears at the end. Do not add page-specific listeners
+or permanent footer shadows.
+
 New `AppModal` surfaces register their existing close/dirty guard automatically;
-raw dialog forms use `useWorkflowDismiss`. Contacts' existing URL-owned detail
-drawer opts out with `manageBrowserHistory={false}`.
+Contacts' existing URL-owned detail drawer opts out with
+`manageBrowserHistory={false}`.
 
 Keep property creation/editing in `PropertyFormDialog`, task edits in `TaskForm`,
 and visit scheduling in `ScheduleForm`. Do not invent API endpoints for overlays.
@@ -222,6 +243,12 @@ id(s) via `onConfirm`.
   `<PriceWithCommission>`, property info (`formatPropertyCardName`), location
   with pin (area, city, state), and Sale / Rent badges — never a street address.
 - `PropertyPickerField` is the form / filter face that opens the modal.
+- Use field triggers for task links, visit scheduling, and broker invitations;
+  use the modal directly for client/owner attachments. Task `#` mentions use
+  `PropertyInlineSuggestions` from the inline select module, keeping focus in
+  the task input with shared property rows and scope tabs.
+- Field validation uses `errorText`; picker loading failures use `pickerErrorText`.
+  Task pickers pass `manageBrowserHistory={false}` to keep task edits local.
 - Optional `onCreate`, `allowClear`, loading / empty / error states match other
   AppModal pickers.
 

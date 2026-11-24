@@ -6,10 +6,6 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { CircleCheck, CircleSlash, LayoutGrid, LostIcon, Search } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
-/** Fills the results band so the teach block sits in the visual middle of the page. */
-const EMPTY_FRAME =
-    "min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]";
-
 /** A deal starts by linking a buyer to a property in Contacts. */
 export function PipelineFirstRunEmpty() {
     return (
@@ -17,7 +13,7 @@ export function PipelineFirstRunEmpty() {
             icon={LayoutGrid}
             heading="No deals yet"
             description="Add a property to My Listings, then link a client to it from Clients. The deal will appear here automatically."
-            className={EMPTY_FRAME}
+            size="page"
         >
             <Button
                 size="md"
@@ -35,13 +31,14 @@ export function PipelineFirstRunEmpty() {
 export function PipelineFilteredEmpty({ onClear }: { onClear: () => void }) {
     return (
         <EmptyState
+            size="page"
+            variant="filtered"
             icon={Search}
             heading="No deals match"
-            description="Try a different name, area or owner."
-            className="py-16"
+            description="Try a different client, property or stage, or clear your search and filters."
         >
-            <Button variant="secondary" size="sm" onClick={onClear}>
-                Clear the search
+            <Button variant="accent" size="sm" onClick={onClear}>
+                Clear search & filters
             </Button>
         </EmptyState>
     );
@@ -54,7 +51,7 @@ export function PipelineDoneEmpty() {
             icon={CircleSlash}
             heading="No active deals"
             description="Your finished and lost deals are saved in their tabs. Active deals appear here."
-            className={EMPTY_FRAME}
+            size="page"
         />
     );
 }
@@ -66,14 +63,14 @@ export function PipelineOutcomeEmpty({ outcome }: { outcome: "sold" | "lost" }) 
             icon={CircleCheck}
             heading="No finished deals yet"
             description="When you mark a deal as sold, it moves here."
-            className={EMPTY_FRAME}
+            size="page"
         />
     ) : (
         <EmptyState
             icon={LostIcon}
             heading="No lost deals"
             description="Deals you mark as lost move here, so the board only shows what you are still working on."
-            className={EMPTY_FRAME}
+            size="page"
         />
     );
 }

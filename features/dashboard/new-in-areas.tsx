@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import toast from "react-hot-toast";
 
 import { ApiError } from "@/lib/api/client";
 import { propertiesApi } from "@/lib/api/properties";
@@ -10,6 +9,7 @@ import { formatAreaSqft } from "@/lib/format/area";
 import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import toast from "@/components/shared/app-toast";
 import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Bookmark, Clock3, MapPin, Users } from "@/components/shared/icons";

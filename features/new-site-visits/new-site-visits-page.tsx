@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,8 +14,9 @@ import {
 } from "@/lib/api/site-visits";
 import { closeDirectVisitHref, directVisitWorkflow } from "@/lib/visits/direct-workflow";
 
-import { Button } from "@/components/ui/button";
+import toast from "@/components/shared/app-toast";
 
+import { useShortcut } from "@/features/shortcuts/use-shortcut";
 import { VisitWorkflow } from "@/features/workflows/visit-workflow";
 
 import {
@@ -42,6 +42,14 @@ import styles from "./visits.module.css";
 
 const FINISHED_TABS: VisitTab[] = ["completed", "not_attended", "cancelled"];
 const SEARCH_DEBOUNCE_MS = 300;
+const EMPTY_COUNTS: Record<VisitTab, number> = {
+    upcoming: 0,
+    running: 0,
+    needs_update: 0,
+    completed: 0,
+    not_attended: 0,
+    cancelled: 0,
+};
 
 /** Finished tabs look back 30 days by default; everything else shows all dates. */
 function defaultRange(tab: VisitTab) {
@@ -96,6 +104,8 @@ export function NewSiteVisitsPage() {
             : null,
     );
     const [actionError, setActionError] = useState("");
+    const scheduleVisit = () => setView({ kind: "schedule", intent: null, intentMissed: false });
+    useShortcut("schedule_visit", scheduleVisit);
 
     const range = filters.range || defaultRange(tab);
     const bounds = range === "custom" ? filters : visitDateBounds(range, now);
@@ -180,62 +190,51 @@ export function NewSiteVisitsPage() {
 
     return (
         <main className={styles.page}>
-            {list.isPending ? (
-                <div role="status" className={styles.loading}>
-                    Loading your visits…
-                </div>
-            ) : list.isError && !list.data ? (
-                <div role="alert" className={styles.empty}>
-                    <h1 className="h3 text-ink">Your visits couldn’t be loaded</h1>
-                    <p>Check your connection and try again.</p>
-                    <div className={styles.actions}>
-                        <Button variant="outline" onClick={() => void list.refetch()}>
-                            Try again
-                        </Button>
-                    </div>
-                </div>
-            ) : (
-                <VisitList
-                    visits={visits}
-                    counts={firstPage!.counts}
-                    firstRun={firstPage!.clientOptions.length === 0}
-                    filtered={filtered}
-                    filterCount={filterCount}
-                    refreshing={list.isPlaceholderData}
-                    hasMore={Boolean(list.hasNextPage)}
-                    loadingMore={list.isFetchingNextPage}
-                    tab={tab}
-                    now={now}
-                    search={searchInput}
-                    range={range}
-                    sort={sort ?? (FINISHED_TABS.includes(tab) ? "start_desc" : "start_asc")}
-                    onTab={(next) => {
-                        setTab(next);
-                        setSort(undefined);
-                        setFilters((current) => ({ ...current, range: "", from: "", to: "" }));
-                    }}
-                    onSearch={setSearchInput}
-                    onRange={(next) => {
-                        if (next === "custom") setDialog("dates");
-                        else
-                            setFilters((current) => ({
-                                ...current,
-                                range: next,
-                                from: "",
-                                to: "",
-                            }));
-                    }}
-                    onSort={setSort}
-                    onFilters={() => setDialog("filters")}
-                    onClear={clearFilters}
-                    onMore={() => void list.fetchNextPage()}
-                    onSchedule={() =>
-                        setView({ kind: "schedule", intent: null, intentMissed: false })
-                    }
-                    onOpen={(visit) => setView({ kind: "detail", visit })}
-                    onAction={handleAction}
-                />
-            )}
+            <VisitList
+                visits={visits}
+                counts={firstPage?.counts ?? EMPTY_COUNTS}
+                firstRun={Boolean(firstPage && firstPage.clientOptions.length === 0)}
+                filtered={filtered}
+                loadError={list.isError}
+                filterCount={filterCount}
+                loading={
+                    list.isPending ||
+                    list.isPlaceholderData ||
+                    (list.isFetching && !list.isFetchingNextPage) ||
+                    searchInput.trim() !== search
+                }
+                hasMore={Boolean(list.hasNextPage)}
+                loadingMore={list.isFetchingNextPage}
+                tab={tab}
+                now={now}
+                search={searchInput}
+                range={range}
+                sort={sort ?? (FINISHED_TABS.includes(tab) ? "start_desc" : "start_asc")}
+                onTab={(next) => {
+                    setTab(next);
+                    setSort(undefined);
+                    setFilters((current) => ({ ...current, range: "", from: "", to: "" }));
+                }}
+                onSearch={setSearchInput}
+                onRange={(next) => {
+                    if (next === "custom") setDialog("dates");
+                    else
+                        setFilters((current) => ({
+                            ...current,
+                            range: next,
+                            from: "",
+                            to: "",
+                        }));
+                }}
+                onSort={setSort}
+                onFilters={() => setDialog("filters")}
+                onClear={clearFilters}
+                onMore={() => void list.fetchNextPage()}
+                onSchedule={scheduleVisit}
+                onOpen={(visit) => setView({ kind: "detail", visit })}
+                onAction={handleAction}
+                onRetry={() => void list.refetch()}
+            />
 
             {directTarget && (
                 <VisitWorkflow

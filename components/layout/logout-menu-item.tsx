@@ -1,35 +1,13 @@
 "use client";
 
-import { getShortcut } from "@/lib/shortcuts";
-
 import { PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
 
 export type LogoutMenuItemProps = {
     disabled?: boolean;
     /** Opens the logout confirm. Never signs out directly. */
     onSelect: () => void;
 };
-
-function LogoutShortcutHint() {
-    const shortcut = getShortcut("logout");
-    if (!shortcut?.showInProfileMenu) return null;
-
-    return (
-        <KbdGroup className="ms-auto hidden gap-0.5 sm:inline-flex">
-            {shortcut.displayKeys.map((key) => (
-                <Kbd
-                    key={key}
-                    variant="surface"
-                    className="border-danger/30 px-1.5 text-[10px] tracking-normal text-danger"
-                >
-                    {key}
-                </Kbd>
-            ))}
-        </KbdGroup>
-    );
-}
 
 export function LogoutMenuItem({ disabled = false, onSelect }: LogoutMenuItemProps) {
     return (
@@ -50,7 +28,6 @@ export function LogoutMenuItem({ disabled = false, onSelect }: LogoutMenuItemPro
             />
 
             <span className="flex-1 min-inline-0">{disabled ? "Signing out…" : "Log out"}</span>
-            <LogoutShortcutHint />
         </DropdownMenuItem>
     );
 }

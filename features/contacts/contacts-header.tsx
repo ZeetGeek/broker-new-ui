@@ -1,5 +1,7 @@
 "use client";
 
+import { CRM_SEARCH_HELP } from "@/lib/search/search-help";
+
 import { FilterChip } from "@/components/shared/filter-chip";
 import { Home, User } from "@/components/shared/icons";
 import {
@@ -106,16 +108,8 @@ export function ContactsHeader({
                     search={
                         <ListSearchField
                             fullWidth
-                            searchHelp={
-                                isBuyers
-                                    ? "Search clients by name, phone number or area."
-                                    : "Search owners by name, area or linked property title."
-                            }
-                            aria-label={
-                                isBuyers
-                                    ? "Search clients by name, number or area"
-                                    : "Search owners by name, number or area"
-                            }
+                            searchHelp={isBuyers ? CRM_SEARCH_HELP.clients : CRM_SEARCH_HELP.owners}
+                            aria-label={isBuyers ? "Search clients" : "Search owners"}
                             value={filters.q}
                             onChange={(q) => onFiltersChange({ ...filters, q })}
                         />
@@ -135,7 +129,7 @@ export function ContactsHeader({
                             {onAdd ? (
                                 <ListAddButton
                                     label={addLabel}
-                                    shortcutId="add_contact"
+                                    shortcutId={isBuyers ? "add_contact" : "add_owner"}
                                     onClick={onAdd}
                                     className="hidden md:inline-flex"
                                 />

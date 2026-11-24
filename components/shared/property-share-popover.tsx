@@ -15,6 +15,7 @@ import {
 } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
 
+import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import { Check, Link2, Share2 } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
@@ -58,16 +59,23 @@ export type PropertySharePopoverProps = {
     className?: string;
 };
 
-async function copyText(value: string) {
+async function copyText(value: string): Promise<boolean> {
     try {
         await navigator.clipboard.writeText(value);
+        return true;
     } catch {
-        const input = document.createElement("input");
-        input.value = value;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand("copy");
-        document.body.removeChild(input);
+        let input: HTMLInputElement | null = null;
+        try {
+            input = document.createElement("input");
+            input.value = value;
+            document.body.appendChild(input);
+            input.select();
+            return document.execCommand("copy");
+        } catch {
+            return false;
+        } finally {
+            input?.remove();
+        }
     }
 }
 
@@ -105,7 +113,13 @@ export function PropertySharePopover({
     }, []);
 
     const handleCopyLink = useCallback(async () => {
-        await copyText(shareUrl);
+        const copied = await copyText(shareUrl);
+        if (!copied) {
+            toast.error("Couldn't copy the property link. Try again.", {
+                id: "property-link-copy-error",
+            });
+            return;
+        }
         setCopiedAt(performance.now());
     }, [shareUrl]);
 

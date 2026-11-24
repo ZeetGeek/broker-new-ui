@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 
 import type { AppIcon } from "@/components/shared/icons";
 
+import styles from "./empty-state.module.css";
+
 type EmptyStateIcon = AppIcon | ComponentType<SVGProps<SVGSVGElement> & { strokeWidth?: number }>;
 
 export type EmptyStateProps = {
@@ -13,10 +15,13 @@ export type EmptyStateProps = {
     children?: ReactNode;
     className?: string;
     headingId?: string;
+    /** Page results get a bounded surface; embedded cards stay compact. */
+    size?: "compact" | "page";
+    variant?: "default" | "filtered" | "error";
 };
 
 /**
- * First-run empty state — icon, headline, one line, optional action.
+ * Shared empty, no-results and load-failure state with an optional recovery action.
  * See docs/EMPTY_STATES.md § Anatomy.
  */
 export function EmptyState({
@@ -26,34 +31,27 @@ export function EmptyState({
     children,
     className,
     headingId,
+    size = "compact",
+    variant = "default",
 }: EmptyStateProps) {
     return (
         <div
-            className={cn(
-                `
-                  flex flex-1 flex-col items-center justify-center gap-5 px-4 text-center
-                  min-block-0
-                `,
-                className,
-            )}
-            aria-live="polite"
+            className={cn(styles.root, size === "page" && styles.page, className)}
+            data-variant={variant}
+            role={variant === "error" ? "alert" : "status"}
+            aria-live={variant === "error" ? "assertive" : "polite"}
         >
-            <div className="flex flex-col items-center gap-3.5 max-inline-sm">
-                <Icon
-                    aria-hidden
-                    className="text-brand-text/70 block-10 inline-10"
-                    strokeWidth={1.5}
-                />
-
-                <div className="flex flex-col gap-1.5">
-                    <h2 id={headingId} className="h3 text-balance text-ink">
-                        {heading}
-                    </h2>
-                    <p className="body-sm text-pretty text-ink-muted">{description}</p>
-                </div>
+            <div className={styles.visual} aria-hidden="true">
+                <Icon className={styles.icon} strokeWidth={1.5} />
+            </div>
+            <div className={styles.copy}>
+                <h2 id={headingId} className="h3 text-balance text-ink">
+                    {heading}
+                </h2>
+                <p className="body-sm text-pretty text-ink-muted">{description}</p>
             </div>
 
-            {children ? <div className="flex flex-col items-center pbs-1">{children}</div> : null}
+            {children ? <div className={styles.actions}>{children}</div> : null}
         </div>
     );
 }

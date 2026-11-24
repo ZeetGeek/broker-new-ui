@@ -106,6 +106,7 @@ function NotFoundState() {
                 nativeButton={false}
                 className="bg-brand-ink text-surface hover:bg-brand-ink/90"
                 render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
+                variant="accent"
             >
                 Back to Marketplace
             </Button>

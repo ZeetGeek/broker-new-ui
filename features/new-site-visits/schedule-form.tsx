@@ -1,20 +1,21 @@
 "use client";
 
 import { type FormEvent, useEffect, useId, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 
 import type { BookableLead, BrokerVisit } from "@/lib/api/site-visits";
 import { formatPersonName } from "@/lib/format/person-name";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { formatVisitDate, formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import { revealDrawerSections } from "@/components/shared/drawer-section";
 import { Bell, Building2, UserRound } from "@/components/shared/icons";
 import { mapFilterPersonToPicker } from "@/components/shared/map-to-people-picker-person";
 import { mapVisitLeadPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
 import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
-import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
+import { PropertyPickerField } from "@/components/shared/property-picker";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -197,20 +198,18 @@ export function ScheduleForm({
             dirty={dirty}
             error={saveError}
             footer={(close) => (
-                <>
-                    <Button variant="outline" disabled={busy} onClick={close}>
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="accent"
-                        type="submit"
-                        form={formId}
-                        disabled={busy || noLeads}
-                        loading={busy}
-                    >
-                        {busy ? "Saving…" : visit ? "Save new time" : "Schedule visit"}
-                    </Button>
-                </>
+                <AppModalFooter
+                    secondaryLabel="Cancel"
+                    secondaryVariant="outline"
+                    secondaryDisabled={busy}
+                    onSecondary={close}
+                    primaryLabel={busy ? "Saving…" : visit ? "Save new time" : "Schedule visit"}
+                    primaryVariant="accent"
+                    primaryType="submit"
+                    primaryFormId={formId}
+                    primaryDisabled={busy || noLeads}
+                    primaryLoading={busy}
+                />
             )}
         >
             <form id={formId} onSubmit={submit} noValidate>
@@ -296,11 +295,12 @@ export function ScheduleForm({
                                                 *
                                             </span>
                                         </label>
-                                        <PropertyInlineSelect
+                                        <PropertyPickerField
                                             id={`${formId}-property`}
                                             properties={propertyPickerRows}
                                             value={draft.propertyId || null}
-                                            onValueChange={(id) => chooseProperty(id ?? "")}
+                                            onConfirm={(id) => chooseProperty(id ?? "")}
+                                            required
                                             disabled={busy || !draft.clientId}
                                             errorText={show("propertyId")}
                                             helperText={
@@ -309,7 +309,7 @@ export function ScheduleForm({
                                                     : undefined
                                             }
                                             placeholder="Select a property"
-                                            size="md"
+                                            triggerSize="default"
                                         />
                                     </div>
                                 </div>

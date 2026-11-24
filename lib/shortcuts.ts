@@ -1,4 +1,7 @@
+export type ShortcutPortal = "broker" | "owner";
+
 export type ShortcutId =
+    | "shortcuts_cheatsheet"
     | "dashboard"
     | "owner_listings"
     | "my_deals"
@@ -6,38 +9,42 @@ export type ShortcutId =
     | "pipeline"
     | "contacts"
     | "visits"
+    | "tasks"
+    | "earnings"
     | "referrals"
     | "notifications"
+    | "saved_properties"
     | "profile"
     | "settings"
-    | "shortcuts_cheatsheet"
-    | "logout"
     | "add_property"
     | "add_contact"
-    | "dashboard_add_listing"
-    | "dashboard_schedule_visit"
-    | "dashboard_add_task";
+    | "add_owner"
+    | "schedule_visit"
+    | "add_task"
+    | "form_primary"
+    | "form_submit_another";
 
-export type ShortcutScope = "global" | "list" | "form" | "dialog";
+export type ShortcutScope = "global" | "page" | "list" | "form" | "dialog";
 
 export type ShortcutDef = {
     id: ShortcutId;
-    /** tinykeys binding string, e.g. "g d" or "$mod+KeyK". Prefer the `code` form. */
+    /** tinykeys binding string. Prefer KeyboardEvent.code names for letter keys. */
     keys: string;
-    /** Display keys shown in hints and the cheatsheet (e.g. ["G", "D"]). */
+    /** Keys shown in UI. Use "$mod" for the platform Control/Command key. */
     displayKeys: readonly string[];
     label: string;
     group: string;
     scope: ShortcutScope;
-    /** Render as kbd hints inside the profile dropdown (desktop only). */
+    /** Render as a kbd hint inside the account menu. */
     showInProfileMenu?: boolean;
 };
 
 /**
- * Single source for keyboard shortcuts. The global listener and cheatsheet
- * dialog consume this list — profile menu hints read from here too.
+ * The broker registry is the source of truth for behavior and every visible
+ * hint. Global navigation uses G, page actions use A, and consequential
+ * actions deliberately have no shortcut.
  */
-export const SHORTCUTS: readonly ShortcutDef[] = [
+export const BROKER_SHORTCUTS: readonly ShortcutDef[] = [
     {
         id: "shortcuts_cheatsheet",
         keys: "Shift+Slash",
@@ -49,55 +56,234 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
     },
     {
         id: "dashboard",
-        keys: "g d",
+        keys: "KeyG KeyD",
         displayKeys: ["G", "D"],
         label: "Dashboard",
         group: "Go to",
         scope: "global",
     },
     {
-        id: "owner_listings",
-        keys: "g o",
-        displayKeys: ["G", "O"],
-        label: "Marketplace",
-        group: "Go to",
-        scope: "global",
-    },
-    {
-        id: "my_deals",
-        keys: "g q",
-        displayKeys: ["G", "Q"],
-        label: "Requests & Invitations",
+        id: "contacts",
+        keys: "KeyG KeyC",
+        displayKeys: ["G", "C"],
+        label: "Clients",
         group: "Go to",
         scope: "global",
     },
     {
         id: "your_listings",
-        keys: "g p",
-        displayKeys: ["G", "P"],
+        keys: "KeyG KeyL",
+        displayKeys: ["G", "L"],
         label: "My Listings",
         group: "Go to",
         scope: "global",
     },
     {
         id: "pipeline",
-        keys: "g c",
-        displayKeys: ["G", "C"],
+        keys: "KeyG KeyP",
+        displayKeys: ["G", "P"],
         label: "Pipeline",
         group: "Go to",
         scope: "global",
     },
     {
+        id: "visits",
+        keys: "KeyG KeyV",
+        displayKeys: ["G", "V"],
+        label: "Visits",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "tasks",
+        keys: "KeyG KeyT",
+        displayKeys: ["G", "T"],
+        label: "Tasks",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "earnings",
+        keys: "KeyG KeyE",
+        displayKeys: ["G", "E"],
+        label: "Earnings",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "owner_listings",
+        keys: "KeyG KeyM",
+        displayKeys: ["G", "M"],
+        label: "Marketplace",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "my_deals",
+        keys: "KeyG KeyR",
+        displayKeys: ["G", "R"],
+        label: "Requests & Invitations",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "notifications",
+        keys: "KeyG KeyN",
+        displayKeys: ["G", "N"],
+        label: "Notifications",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "saved_properties",
+        keys: "KeyG KeyS",
+        displayKeys: ["G", "S"],
+        label: "Saved properties",
+        group: "Go to",
+        scope: "global",
+        showInProfileMenu: true,
+    },
+    {
+        id: "profile",
+        keys: "KeyG KeyU",
+        displayKeys: ["G", "U"],
+        label: "My profile",
+        group: "Go to",
+        scope: "global",
+        showInProfileMenu: true,
+    },
+    {
+        id: "referrals",
+        keys: "KeyG KeyF",
+        displayKeys: ["G", "F"],
+        label: "Referrals",
+        group: "Go to",
+        scope: "global",
+        showInProfileMenu: true,
+    },
+    {
+        id: "add_contact",
+        keys: "KeyA KeyC",
+        displayKeys: ["A", "C"],
+        label: "Add client",
+        group: "On this page",
+        scope: "page",
+    },
+    {
+        id: "add_owner",
+        keys: "KeyA KeyO",
+        displayKeys: ["A", "O"],
+        label: "Add owner",
+        group: "On this page",
+        scope: "page",
+    },
+    {
+        id: "add_property",
+        keys: "KeyA KeyL",
+        displayKeys: ["A", "L"],
+        label: "Add listing",
+        group: "On this page",
+        scope: "page",
+    },
+    {
+        id: "schedule_visit",
+        keys: "KeyA KeyV",
+        displayKeys: ["A", "V"],
+        label: "Schedule visit",
+        group: "On this page",
+        scope: "page",
+    },
+    {
+        id: "add_task",
+        keys: "KeyA KeyT",
+        displayKeys: ["A", "T"],
+        label: "Add task",
+        group: "On this page",
+        scope: "page",
+    },
+    {
+        id: "form_primary",
+        keys: "$mod+Enter",
+        displayKeys: ["$mod", "Enter"],
+        label: "Save or continue",
+        group: "Form",
+        scope: "form",
+    },
+    {
+        id: "form_submit_another",
+        keys: "$mod+Shift+Enter",
+        displayKeys: ["$mod", "Shift", "Enter"],
+        label: "Save and add another",
+        group: "Form",
+        scope: "form",
+    },
+] as const;
+
+/**
+ * Owner shortcuts are intentionally kept separate. Broker key changes must not
+ * silently rewrite the owner portal while that surface is outside this task.
+ */
+export const OWNER_SHORTCUTS: readonly ShortcutDef[] = [
+    {
+        id: "shortcuts_cheatsheet",
+        keys: "Shift+Slash",
+        displayKeys: ["?"],
+        label: "Keyboard shortcuts",
+        group: "General",
+        scope: "global",
+        showInProfileMenu: true,
+    },
+    {
+        id: "dashboard",
+        keys: "KeyG KeyD",
+        displayKeys: ["G", "D"],
+        label: "Overview",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "owner_listings",
+        keys: "KeyG KeyO",
+        displayKeys: ["G", "O"],
+        label: "Browse brokers",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "my_deals",
+        keys: "KeyG KeyQ",
+        displayKeys: ["G", "Q"],
+        label: "Requests",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "your_listings",
+        keys: "KeyG KeyP",
+        displayKeys: ["G", "P"],
+        label: "My properties",
+        group: "Go to",
+        scope: "global",
+    },
+    {
+        id: "pipeline",
+        keys: "KeyG KeyC",
+        displayKeys: ["G", "C"],
+        label: "Requests",
+        group: "Go to",
+        scope: "global",
+    },
+    {
         id: "contacts",
-        keys: "g b",
+        keys: "KeyG KeyB",
         displayKeys: ["G", "B"],
-        label: "Contacts",
+        label: "Leads",
         group: "Go to",
         scope: "global",
     },
     {
         id: "visits",
-        keys: "g v",
+        keys: "KeyG KeyV",
         displayKeys: ["G", "V"],
         label: "Visits",
         group: "Go to",
@@ -105,7 +291,7 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
     },
     {
         id: "referrals",
-        keys: "g r",
+        keys: "KeyG KeyR",
         displayKeys: ["G", "R"],
         label: "Referrals",
         group: "Go to",
@@ -114,16 +300,15 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
     },
     {
         id: "notifications",
-        keys: "g n",
+        keys: "KeyG KeyN",
         displayKeys: ["G", "N"],
         label: "Notifications",
         group: "Go to",
         scope: "global",
-        showInProfileMenu: true,
     },
     {
         id: "profile",
-        keys: "g m",
+        keys: "KeyG KeyM",
         displayKeys: ["G", "M"],
         label: "My profile",
         group: "Go to",
@@ -132,104 +317,113 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
     },
     {
         id: "settings",
-        keys: "g s",
+        keys: "KeyG KeyS",
         displayKeys: ["G", "S"],
         label: "Settings",
         group: "Go to",
         scope: "global",
-        showInProfileMenu: true,
-    },
-    {
-        id: "logout",
-        keys: "Shift+KeyQ",
-        displayKeys: ["⇧", "Q"],
-        label: "Log out",
-        group: "Account",
-        scope: "global",
-        showInProfileMenu: true,
     },
     {
         id: "add_property",
         keys: "KeyN",
         displayKeys: ["N"],
         label: "Add property",
-        group: "Listings",
-        scope: "list",
-    },
-    {
-        id: "add_contact",
-        keys: "KeyN",
-        displayKeys: ["N"],
-        label: "Add client / owner",
-        group: "Clients",
-        scope: "list",
-    },
-    {
-        id: "dashboard_add_listing",
-        keys: "Shift+KeyL",
-        displayKeys: ["⇧", "L"],
-        label: "Add listing",
-        group: "Dashboard",
-        scope: "list",
-    },
-    {
-        id: "dashboard_schedule_visit",
-        keys: "Shift+KeyV",
-        displayKeys: ["⇧", "V"],
-        label: "Schedule visit",
-        group: "Dashboard",
-        scope: "list",
-    },
-    {
-        id: "dashboard_add_task",
-        keys: "Shift+KeyT",
-        displayKeys: ["⇧", "T"],
-        label: "Add task",
-        group: "Dashboard",
+        group: "Properties",
         scope: "list",
     },
 ] as const;
 
-export function getShortcut(id: ShortcutId): ShortcutDef | undefined {
-    return SHORTCUTS.find((shortcut) => shortcut.id === id);
+/** Broker-default alias retained for existing broker-facing consumers. */
+export const SHORTCUTS = BROKER_SHORTCUTS;
+
+export function getShortcuts(portal: ShortcutPortal = "broker"): readonly ShortcutDef[] {
+    return portal === "owner" ? OWNER_SHORTCUTS : BROKER_SHORTCUTS;
 }
 
-if (process.env.NODE_ENV !== "production") {
-    const seen = new Map<string, string>();
-    for (const s of SHORTCUTS) {
-        // List bindings only mount on their page, so the same key can mean
-        // "add property" on listings and "add contact" on contacts. They still
-        // collide with a global that claims the same key.
-        if (s.scope === "list") {
-            const globalKey = `*:${s.keys.toLowerCase()}`;
-            const existing = seen.get(globalKey);
-            if (existing) {
-                throw new Error(`Shortcut conflict: "${s.keys}" used by ${existing} and ${s.id}`);
-            }
-            continue;
-        }
+export function getShortcut(
+    id: ShortcutId,
+    portal: ShortcutPortal = "broker",
+): ShortcutDef | undefined {
+    return getShortcuts(portal).find((shortcut) => shortcut.id === id);
+}
 
-        const keysInScope = s.scope === "global" ? ["*"] : [s.scope, "*"];
-        for (const scope of keysInScope) {
-            const key = `${scope}:${s.keys.toLowerCase()}`;
-            const existing = seen.get(key);
-            if (existing) {
-                throw new Error(`Shortcut conflict: "${s.keys}" used by ${existing} and ${s.id}`);
-            }
-            seen.set(key, s.id);
+export function getBrokerContextShortcutIds(pathname: string): readonly ShortcutId[] {
+    if (pathname === "/broker/dashboard") {
+        return ["add_contact", "add_property", "schedule_visit", "add_task"];
+    }
+    if (pathname === "/broker/contacts") return ["add_contact", "add_owner"];
+    if (pathname === "/broker/my-listings") return ["add_property"];
+    if (pathname === "/broker/visits") return ["schedule_visit"];
+    if (pathname === "/broker/tasks") return ["add_task"];
+    if (
+        pathname === "/broker/properties/new" ||
+        /^\/broker\/properties\/[^/]+\/edit$/.test(pathname)
+    ) {
+        return ["form_primary"];
+    }
+    return [];
+}
+
+export type ShortcutKeyboardEvent = Pick<
+    KeyboardEvent,
+    "altKey" | "code" | "ctrlKey" | "key" | "metaKey" | "shiftKey"
+>;
+
+/** Match a single chord from the registry. Sequences remain tinykeys-owned. */
+export function shortcutMatchesEvent(event: ShortcutKeyboardEvent, keys: string): boolean {
+    if (keys.includes(" ")) return false;
+
+    const tokens = keys.split("+");
+    const primary = tokens.at(-1);
+    if (!primary) return false;
+
+    const expectsMod = tokens.includes("$mod");
+    const expectsControl = tokens.includes("Control");
+    const expectsMeta = tokens.includes("Meta");
+    const expectsAlt = tokens.includes("Alt");
+    const expectsShift = tokens.includes("Shift");
+
+    const modifierMatches = expectsMod
+        ? event.ctrlKey || event.metaKey
+        : event.ctrlKey === expectsControl && event.metaKey === expectsMeta;
+    if (!modifierMatches || event.altKey !== expectsAlt || event.shiftKey !== expectsShift) {
+        return false;
+    }
+
+    if (/^(Key|Digit|Numpad)/.test(primary)) {
+        return event.code.toLowerCase() === primary.toLowerCase();
+    }
+    return event.key.toLowerCase() === primary.toLowerCase();
+}
+
+function validateShortcutRegistry(portal: ShortcutPortal, shortcuts: readonly ShortcutDef[]) {
+    const seen = new Map<string, ShortcutId>();
+    for (const shortcut of shortcuts) {
+        const key = shortcut.keys.toLowerCase();
+        const existing = seen.get(key);
+        if (existing) {
+            throw new Error(
+                `${portal} shortcut conflict: "${shortcut.keys}" used by ${existing} and ${shortcut.id}`,
+            );
         }
+        seen.set(key, shortcut.id);
     }
 
     const firstKeys = new Set(
-        SHORTCUTS.filter((s) => s.keys.includes(" ")).map((s) =>
-            s.keys.split(" ")[0].toLowerCase(),
-        ),
+        shortcuts
+            .filter((shortcut) => shortcut.keys.includes(" "))
+            .map((shortcut) => shortcut.keys.split(" ")[0]!.toLowerCase()),
     );
-    for (const s of SHORTCUTS) {
-        if (!s.keys.includes(" ") && firstKeys.has(s.keys.toLowerCase())) {
+    for (const shortcut of shortcuts) {
+        if (!shortcut.keys.includes(" ") && firstKeys.has(shortcut.keys.toLowerCase())) {
             throw new Error(
-                `Shortcut "${s.keys}" (${s.id}) is shadowed by a sequence starting with it`,
+                `${portal} shortcut "${shortcut.keys}" (${shortcut.id}) is shadowed by a sequence`,
             );
         }
     }
+}
+
+if (process.env.NODE_ENV !== "production") {
+    validateShortcutRegistry("broker", BROKER_SHORTCUTS);
+    validateShortcutRegistry("owner", OWNER_SHORTCUTS);
 }

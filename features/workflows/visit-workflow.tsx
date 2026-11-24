@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import Link from "next/link";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +11,8 @@ import { matchWorkflowVisitIntent, resolveWorkflowVisitIntent } from "@/lib/visi
 import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 import type { WorkflowTarget } from "@/lib/workflows/target";
 
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import toast from "@/components/shared/app-toast";
 import { useWorkflowWorking } from "@/components/shared/workflow-context";
 import { Button } from "@/components/ui/button";
 
@@ -134,19 +135,16 @@ export function VisitWorkflow({
                 title="Sample visit"
                 onClose={onClose}
                 footer={(close) => (
-                    <>
-                        <Button variant="outline" onClick={close}>
-                            Close
-                        </Button>
-                        <Button
-                            variant="accent"
-                            onClick={() =>
-                                setView({ kind: "schedule", intent: null, intentMissed: false })
-                            }
-                        >
-                            Schedule a new visit
-                        </Button>
-                    </>
+                    <AppModalFooter
+                        secondaryLabel="Close"
+                        secondaryVariant="outline"
+                        onSecondary={close}
+                        primaryLabel="Schedule a new visit"
+                        primaryVariant="accent"
+                        onPrimary={() =>
+                            setView({ kind: "schedule", intent: null, intentMissed: false })
+                        }
+                    />
                 )}
             >
                 <p className="body text-ink-muted">
@@ -197,14 +195,14 @@ export function VisitWorkflow({
                 title="Visit cannot be rescheduled"
                 onClose={onClose}
                 footer={(close) => (
-                    <>
-                        <Button variant="outline" onClick={close}>
-                            Close
-                        </Button>
-                        <Button variant="accent" onClick={() => setView({ kind: "detail", visit })}>
-                            View details
-                        </Button>
-                    </>
+                    <AppModalFooter
+                        secondaryLabel="Close"
+                        secondaryVariant="outline"
+                        onSecondary={close}
+                        primaryLabel="View details"
+                        primaryVariant="accent"
+                        onPrimary={() => setView({ kind: "detail", visit })}
+                    />
                 )}
             >
                 <p className="body text-ink-muted">
@@ -267,7 +265,7 @@ export function VisitWorkflow({
             }
             onClose={onClose}
             footer={(close) => (
-                <>
+                <AppModalFooter>
                     <Button variant="outline" onClick={close}>
                         Close
                     </Button>
@@ -276,7 +274,7 @@ export function VisitWorkflow({
                             Retry
                         </Button>
                     ) : null}
-                </>
+                </AppModalFooter>
             )}
         >
             <p className="body text-ink-muted" role={query.isError || missing ? "alert" : "status"}>

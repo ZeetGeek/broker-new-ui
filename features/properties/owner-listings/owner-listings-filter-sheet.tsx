@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 
 import { formatMoney } from "@/lib/format/money";
 import { extractSheetFilters } from "@/lib/format/owner-listings-labels";
@@ -14,8 +14,8 @@ import type { PeopleFilters, PeopleFilterScope } from "@/lib/properties/people-f
 import { cn } from "@/lib/utils";
 import { useMarketCurrency } from "@/hooks/use-market";
 
+import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { FilterAccordionTrigger } from "@/components/shared/filter-accordion-trigger";
 import {
     type AppIcon,
@@ -50,7 +50,6 @@ import { PropertyFilterFields } from "@/components/shared/property-filter-fields
 import { RangeValuePill } from "@/components/shared/range-value-pill";
 import { Accordion, AccordionContent, AccordionItem } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogPopup } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RangeSlider } from "@/components/ui/slider";
 
@@ -506,24 +505,6 @@ export function OwnerListingsFilterSheet({
     const [draftDiscovery, setDraftDiscovery] = useState(() =>
         normalizePropertyCriteria(discoveryFilters),
     );
-    const [hasContentBelow, setHasContentBelow] = useState(false);
-    const scrollRef = useCallback((node: HTMLDivElement | null) => {
-        if (!node) return;
-
-        const updateScrollState = () => {
-            setHasContentBelow(node.scrollHeight - node.clientHeight - node.scrollTop > 1);
-        };
-        const observer = new ResizeObserver(updateScrollState);
-        observer.observe(node);
-        if (node.firstElementChild) observer.observe(node.firstElementChild);
-        node.addEventListener("scroll", updateScrollState, { passive: true });
-        updateScrollState();
-
-        return () => {
-            observer.disconnect();
-            node.removeEventListener("scroll", updateScrollState);
-        };
-    }, []);
     const [draftSource, setDraftSource] = useState({ open: false, appliedFilters });
     const currency = useMarketCurrency();
     const lookingFor = showDiscoveryFilters ? draftDiscovery.type : appliedFilters.type;
@@ -813,14 +794,18 @@ export function OwnerListingsFilterSheet({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup
-                showCloseButton={false}
-                className={cn(
-                    `
+        <AppModal
+            open={open}
+            onOpenChange={onOpenChange}
+            title={title}
+            bodyClassName="p-0"
+            scrollBody={false}
+            footerClassName="p-0"
+            className={cn(
+                `
                       flex flex-col gap-0 overflow-hidden border-border-warm bg-surface p-0
                       block-[min(92dvh,calc(100%-1rem))] inline-[min(40rem,calc(100vw-1rem))]
-                      max-inline-[min(40rem,calc(100vw-1rem))]
+                      max-block-none max-inline-[min(40rem,calc(100vw-1rem))]
                       max-[575px]:rounded-none
                       max-[575px]:border-0
                       max-[575px]:shadow-none
@@ -828,378 +813,365 @@ export function OwnerListingsFilterSheet({
                       sm:block-[min(90dvh,calc(100%-1.5rem))] sm:inline-[min(40rem,calc(100vw-3rem))]
                       sm:max-inline-[min(40rem,calc(100vw-3rem))]
                     `,
-                )}
-            >
-                <AppModalHeader title={title} className="px-4 sm:px-8 sm:py-4" />
-
-                <ScrollArea
-                    viewportRef={scrollRef}
-                    className="
-                      flex-1 bg-surface min-block-0
-                      **:data-[slot=scroll-area-scrollbar]:inset-e-1.5
-                      **:data-[slot=scroll-area-viewport]:overscroll-contain
-                    "
-                >
-                    <div className="px-4 pbe-3 sm:px-8">
-                        {additionalFields?.content}
-                        {open && peopleFilterScope ? (
-                            <PeopleFilterFields
-                                scope={peopleFilterScope}
-                                value={draftPeople}
-                                onChange={setDraftPeople}
-                            />
-                        ) : null}
-                        <Accordion
-                            key={open ? "open" : "closed"}
-                            multiple
-                            defaultValue={defaultOpenSections}
-                            className="
-                              overflow-visible rounded-none border-0
-                              **:data-[slot=accordion-content]:-mx-1
-                              **:data-[slot=accordion-content]:border-0
-                              **:data-[slot=accordion-content]:px-1
-                              [&_[data-slot=accordion-content]>div]:border-0
-                            "
-                        >
-                            {showDiscoveryFilters ? (
-                                <AccordionItem
-                                    value="discovery"
-                                    className="
-                                      border-0 border-border-warm
-                                      not-last:border-be
-                                      data-open:bg-transparent
-                                    "
-                                >
-                                    <FilterAccordionTrigger
-                                        title="Property search"
-                                        description={discoveryDescription}
-                                    />
-                                    <AccordionContent className="px-0 pbe-0">
-                                        <div className="border-0 pbe-6">
-                                            <PropertyFilterFields
-                                                value={draftDiscovery}
-                                                onChange={setDraftDiscovery}
-                                                presentation="owner-listings"
-                                                fields={["where", "type", "budget"]}
-                                            />
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ) : null}
-                            {showDiscoveryFilters ? (
-                                <AccordionItem
-                                    value="discovery-type"
-                                    className="
-                                      border-0 border-border-warm
-                                      not-last:border-be
-                                      data-open:bg-transparent
-                                    "
-                                >
-                                    <FilterAccordionTrigger
-                                        title="Size & property type"
-                                        description="Choose the size, category and property type."
-                                    />
-                                    <AccordionContent className="px-0 pbe-0">
-                                        <div className="border-0 pbe-6">
-                                            <PropertyFilterFields
-                                                value={draftDiscovery}
-                                                onChange={setDraftDiscovery}
-                                                presentation="owner-listings"
-                                                fields={["area", "category", "propertyType"]}
-                                            />
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ) : null}
-                            {showLayoutSection ? (
-                                <AccordionItem
-                                    value="layout"
-                                    className="
-                                      border-0 border-border-warm
-                                      not-last:border-be
-                                      data-open:bg-transparent
-                                    "
-                                >
-                                    <FilterAccordionTrigger
-                                        title="Rooms & layout"
-                                        summary={layoutSummary}
-                                        description="Set a count, or keep Any to see all options."
-                                    />
-                                    <AccordionContent className="px-0 pbe-0">
-                                        <div className="flex flex-col gap-5 border-0 pbe-6">
-                                            {visibility.showBhk ? (
-                                                <CountFilter
-                                                    label="Bedrooms (BHK)"
-                                                    icon={Bed}
-                                                    options={BHK_OPTIONS}
-                                                    selected={draft.bhk}
-                                                    onChange={(values) =>
-                                                        updateDraft({ bhk: values })
-                                                    }
-                                                />
-                                            ) : null}
-                                            {visibility.showBathrooms ? (
-                                                <CountFilter
-                                                    label="Bathrooms"
-                                                    icon={Bath}
-                                                    options={BATHROOM_OPTIONS}
-                                                    selected={draft.bathrooms}
-                                                    onChange={(values) =>
-                                                        updateDraft({ bathrooms: values })
-                                                    }
-                                                />
-                                            ) : null}
-                                            {visibility.showBalconies ? (
-                                                <CountFilter
-                                                    label="Balconies"
-                                                    icon={Fence}
-                                                    options={BALCONY_OPTIONS}
-                                                    selected={draft.balconies}
-                                                    onChange={(values) =>
-                                                        updateDraft({ balconies: values })
-                                                    }
-                                                />
-                                            ) : null}
-                                            {visibility.showParking ? (
-                                                <CountFilter
-                                                    label="Parking"
-                                                    icon={Car}
-                                                    options={PARKING_OPTIONS}
-                                                    selected={draft.parking}
-                                                    onChange={(values) =>
-                                                        updateDraft({ parking: values })
-                                                    }
-                                                />
-                                            ) : null}
-                                            {visibility.showFloors ? (
-                                                <ChipGroup
-                                                    label="Floor"
-                                                    options={FLOOR_OPTIONS}
-                                                    selected={draft.floors}
-                                                    onToggle={(value) =>
-                                                        updateDraft({
-                                                            floors: toggleListValue(
-                                                                draft.floors,
-                                                                value,
-                                                            ),
-                                                        })
-                                                    }
-                                                />
-                                            ) : null}
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ) : null}
-
-                            {showMoreSection ? (
-                                <AccordionItem
-                                    value="more"
-                                    className="
-                                      border-0 border-border-warm
-                                      not-last:border-be
-                                      data-open:bg-transparent
-                                    "
-                                >
-                                    <FilterAccordionTrigger
-                                        title="Property details"
-                                        summary={moreSummary}
-                                    />
-                                    <AccordionContent className="px-0 pbe-0">
-                                        <div className="flex flex-col gap-7 border-0 pbe-6">
-                                            {visibility.showFurnishing ? (
-                                                <ChipGroup
-                                                    label="Furnishing"
-                                                    options={FURNISHING_OPTIONS}
-                                                    single
-                                                    value={draft.furnishing}
-                                                    onSelect={(value) =>
-                                                        updateDraft({
-                                                            furnishing: value as
-                                                                OwnerListingFurnishing | "",
-                                                        })
-                                                    }
-                                                />
-                                            ) : null}
-                                            {visibility.showPropertyCondition ? (
-                                                <ChipGroup
-                                                    label="Condition"
-                                                    options={PROPERTY_CONDITION_OPTIONS}
-                                                    selected={draft.propertyConditions}
-                                                    onToggle={toggleCondition}
-                                                />
-                                            ) : null}
-                                            {visibility.showPropertyAge ? (
-                                                <ChipGroup
-                                                    label="Age"
-                                                    options={PROPERTY_AGE_OPTIONS}
-                                                    selected={draft.propertyAges}
-                                                    onToggle={(value) =>
-                                                        updateDraft({
-                                                            propertyAges: toggleListValue(
-                                                                draft.propertyAges,
-                                                                value,
-                                                            ),
-                                                        })
-                                                    }
-                                                />
-                                            ) : null}
-                                            {visibility.showFacing ? (
-                                                <ChipGroup
-                                                    label="Facing"
-                                                    options={FACING_OPTIONS}
-                                                    selected={draft.facing}
-                                                    onToggle={(value) =>
-                                                        updateDraft({
-                                                            facing: toggleListValue(
-                                                                draft.facing,
-                                                                value,
-                                                            ),
-                                                        })
-                                                    }
-                                                />
-                                            ) : null}
-                                            {visibility.showSuitableFor ? (
-                                                <ChipGroup
-                                                    label="Suitable for"
-                                                    options={SUITABLE_FOR_OPTIONS}
-                                                    selected={draft.suitableFor}
-                                                    onToggle={(value) =>
-                                                        updateDraft({
-                                                            suitableFor: toggleListValue(
-                                                                draft.suitableFor,
-                                                                value,
-                                                            ),
-                                                        })
-                                                    }
-                                                />
-                                            ) : null}
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ) : null}
-
-                            <AccordionItem
-                                value="deal"
-                                className="border-0 border-border-warm data-open:bg-transparent"
-                            >
-                                <FilterAccordionTrigger
-                                    title="Listed & commission"
-                                    summary={dealSummary}
-                                />
-                                <AccordionContent className="px-0 pbe-0">
-                                    <div className="flex flex-col gap-7">
-                                        <ChipGroup
-                                            label="Listed"
-                                            options={LISTED_OPTIONS}
-                                            single
-                                            value={draft.listedWithinDays}
-                                            onSelect={setListedPreset}
-                                        />
-                                        {showSaleCommission ? (
-                                            <CommissionRange
-                                                label="Sale commission (%)"
-                                                minLabel={formatPercent(saleRange[0])}
-                                                maxLabel={formatPercent(saleRange[1])}
-                                                isAny={
-                                                    !draft.minCommissionPercent &&
-                                                    !draft.maxCommissionPercent
-                                                }
-                                                boundsLabel={`${formatPercent(SALE_COMMISSION_RANGE.min)} â€“ ${formatPercent(SALE_COMMISSION_RANGE.max)}`}
-                                            >
-                                                <RangeSlider
-                                                    value={saleRange}
-                                                    min={SALE_COMMISSION_RANGE.min}
-                                                    max={SALE_COMMISSION_RANGE.max}
-                                                    step={SALE_COMMISSION_RANGE.step}
-                                                    thumbAlignment="edge"
-                                                    thumbLabels={[
-                                                        "Minimum sale commission",
-                                                        "Maximum sale commission",
-                                                    ]}
-                                                    onValueChange={(next) => {
-                                                        const [min, max] = rangeToDraft(
-                                                            next,
-                                                            SALE_COMMISSION_RANGE,
-                                                            1,
-                                                        );
-                                                        updateDraft({
-                                                            minCommissionPercent: min,
-                                                            maxCommissionPercent: max,
-                                                        });
-                                                    }}
-                                                />
-                                            </CommissionRange>
-                                        ) : null}
-                                        {showRentCommission ? (
-                                            <CommissionRange
-                                                label={`Rent commission (fixed ${currency.symbol})`}
-                                                minLabel={formatMoney(rentRange[0])}
-                                                maxLabel={
-                                                    rentRange[1] >= rentCommissionBounds.max
-                                                        ? `${formatMoney(rentCommissionBounds.max)}+`
-                                                        : formatMoney(rentRange[1])
-                                                }
-                                                isAny={
-                                                    !draft.minCommissionAmount &&
-                                                    !draft.maxCommissionAmount
-                                                }
-                                                boundsLabel={`${formatMoney(rentCommissionBounds.min)} â€“ ${formatMoney(rentCommissionBounds.max)}+`}
-                                            >
-                                                <RangeSlider
-                                                    value={rentRange}
-                                                    min={rentCommissionBounds.min}
-                                                    max={rentCommissionBounds.max}
-                                                    step={rentCommissionBounds.step}
-                                                    thumbAlignment="edge"
-                                                    thumbLabels={[
-                                                        "Minimum rent commission",
-                                                        "Maximum rent commission",
-                                                    ]}
-                                                    onValueChange={(next) => {
-                                                        const [min, max] = rangeToDraft(
-                                                            next,
-                                                            rentCommissionBounds,
-                                                            0,
-                                                        );
-                                                        updateDraft({
-                                                            minCommissionAmount: min,
-                                                            maxCommissionAmount: max,
-                                                        });
-                                                    }}
-                                                />
-                                            </CommissionRange>
-                                        ) : null}
-                                    </div>
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                    </div>
-                </ScrollArea>
-
-                <div
+            )}
+            footer={
+                <AppModalFooter
                     className={cn(
                         `
                           relative z-1 shrink-0 border-bs border-border-warm bg-surface px-4 py-3
                           max-[575px]:pbe-[max(0.75rem,env(safe-area-inset-bottom))]
                           sm:px-8 sm:py-5
                         `,
-                        hasContentBelow && "shadow-[0_-6px_16px_-8px_rgb(0_0_0/0.2)]",
+                        "flex-nowrap justify-between gap-3 [&_button]:rounded-inner [&_button]:px-4 [&_button]:min-block-11 sm:[&_button]:px-5",
                     )}
-                >
-                    <AppModalFooter
+                    secondaryLabel="Clear all"
+                    secondaryDisabled={!hasDraftFilters && !additionalFields?.active}
+                    onSecondary={handleClear}
+                    primaryLabel={applyLabel}
+                    onPrimary={handleApply}
+                />
+            }
+        >
+            <ScrollArea
+                className="
+                      flex-1 bg-surface min-block-0
+                      **:data-[slot=scroll-area-scrollbar]:inset-e-1.5
+                      **:data-[slot=scroll-area-viewport]:overscroll-contain
+                    "
+            >
+                <div className="px-4 pbe-3 sm:px-8">
+                    {additionalFields?.content}
+                    {open && peopleFilterScope ? (
+                        <PeopleFilterFields
+                            scope={peopleFilterScope}
+                            value={draftPeople}
+                            onChange={setDraftPeople}
+                        />
+                    ) : null}
+                    <Accordion
+                        key={open ? "open" : "closed"}
+                        multiple
+                        defaultValue={defaultOpenSections}
                         className="
-                          flex-nowrap justify-between gap-3
-                          [&_button]:rounded-inner [&_button]:px-4 [&_button]:min-block-11
-                          sm:[&_button]:px-5
-                        "
-                        secondaryLabel="Clear all"
-                        secondaryDisabled={!hasDraftFilters && !additionalFields?.active}
-                        onSecondary={handleClear}
-                        primaryLabel={applyLabel}
-                        onPrimary={handleApply}
-                    />
+                              overflow-visible rounded-none border-0
+                              **:data-[slot=accordion-content]:-mx-1
+                              **:data-[slot=accordion-content]:border-0
+                              **:data-[slot=accordion-content]:px-1
+                              [&_[data-slot=accordion-content]>div]:border-0
+                            "
+                    >
+                        {showDiscoveryFilters ? (
+                            <AccordionItem
+                                value="discovery"
+                                className="
+                                      border-0 border-border-warm
+                                      not-last:border-be
+                                      data-open:bg-transparent
+                                    "
+                            >
+                                <FilterAccordionTrigger
+                                    title="Property search"
+                                    description={discoveryDescription}
+                                />
+                                <AccordionContent className="px-0 pbe-0">
+                                    <div className="border-0 pbe-6">
+                                        <PropertyFilterFields
+                                            value={draftDiscovery}
+                                            onChange={setDraftDiscovery}
+                                            presentation="owner-listings"
+                                            fields={["where", "type", "budget"]}
+                                        />
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ) : null}
+                        {showDiscoveryFilters ? (
+                            <AccordionItem
+                                value="discovery-type"
+                                className="
+                                      border-0 border-border-warm
+                                      not-last:border-be
+                                      data-open:bg-transparent
+                                    "
+                            >
+                                <FilterAccordionTrigger
+                                    title="Size & property type"
+                                    description="Choose the size, category and property type."
+                                />
+                                <AccordionContent className="px-0 pbe-0">
+                                    <div className="border-0 pbe-6">
+                                        <PropertyFilterFields
+                                            value={draftDiscovery}
+                                            onChange={setDraftDiscovery}
+                                            presentation="owner-listings"
+                                            fields={["area", "category", "propertyType"]}
+                                        />
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ) : null}
+                        {showLayoutSection ? (
+                            <AccordionItem
+                                value="layout"
+                                className="
+                                      border-0 border-border-warm
+                                      not-last:border-be
+                                      data-open:bg-transparent
+                                    "
+                            >
+                                <FilterAccordionTrigger
+                                    title="Rooms & layout"
+                                    summary={layoutSummary}
+                                    description="Set a count, or keep Any to see all options."
+                                />
+                                <AccordionContent className="px-0 pbe-0">
+                                    <div className="flex flex-col gap-5 border-0 pbe-6">
+                                        {visibility.showBhk ? (
+                                            <CountFilter
+                                                label="Bedrooms (BHK)"
+                                                icon={Bed}
+                                                options={BHK_OPTIONS}
+                                                selected={draft.bhk}
+                                                onChange={(values) => updateDraft({ bhk: values })}
+                                            />
+                                        ) : null}
+                                        {visibility.showBathrooms ? (
+                                            <CountFilter
+                                                label="Bathrooms"
+                                                icon={Bath}
+                                                options={BATHROOM_OPTIONS}
+                                                selected={draft.bathrooms}
+                                                onChange={(values) =>
+                                                    updateDraft({ bathrooms: values })
+                                                }
+                                            />
+                                        ) : null}
+                                        {visibility.showBalconies ? (
+                                            <CountFilter
+                                                label="Balconies"
+                                                icon={Fence}
+                                                options={BALCONY_OPTIONS}
+                                                selected={draft.balconies}
+                                                onChange={(values) =>
+                                                    updateDraft({ balconies: values })
+                                                }
+                                            />
+                                        ) : null}
+                                        {visibility.showParking ? (
+                                            <CountFilter
+                                                label="Parking"
+                                                icon={Car}
+                                                options={PARKING_OPTIONS}
+                                                selected={draft.parking}
+                                                onChange={(values) =>
+                                                    updateDraft({ parking: values })
+                                                }
+                                            />
+                                        ) : null}
+                                        {visibility.showFloors ? (
+                                            <ChipGroup
+                                                label="Floor"
+                                                options={FLOOR_OPTIONS}
+                                                selected={draft.floors}
+                                                onToggle={(value) =>
+                                                    updateDraft({
+                                                        floors: toggleListValue(
+                                                            draft.floors,
+                                                            value,
+                                                        ),
+                                                    })
+                                                }
+                                            />
+                                        ) : null}
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ) : null}
+
+                        {showMoreSection ? (
+                            <AccordionItem
+                                value="more"
+                                className="
+                                      border-0 border-border-warm
+                                      not-last:border-be
+                                      data-open:bg-transparent
+                                    "
+                            >
+                                <FilterAccordionTrigger
+                                    title="Property details"
+                                    summary={moreSummary}
+                                />
+                                <AccordionContent className="px-0 pbe-0">
+                                    <div className="flex flex-col gap-7 border-0 pbe-6">
+                                        {visibility.showFurnishing ? (
+                                            <ChipGroup
+                                                label="Furnishing"
+                                                options={FURNISHING_OPTIONS}
+                                                single
+                                                value={draft.furnishing}
+                                                onSelect={(value) =>
+                                                    updateDraft({
+                                                        furnishing: value as
+                                                            OwnerListingFurnishing | "",
+                                                    })
+                                                }
+                                            />
+                                        ) : null}
+                                        {visibility.showPropertyCondition ? (
+                                            <ChipGroup
+                                                label="Condition"
+                                                options={PROPERTY_CONDITION_OPTIONS}
+                                                selected={draft.propertyConditions}
+                                                onToggle={toggleCondition}
+                                            />
+                                        ) : null}
+                                        {visibility.showPropertyAge ? (
+                                            <ChipGroup
+                                                label="Age"
+                                                options={PROPERTY_AGE_OPTIONS}
+                                                selected={draft.propertyAges}
+                                                onToggle={(value) =>
+                                                    updateDraft({
+                                                        propertyAges: toggleListValue(
+                                                            draft.propertyAges,
+                                                            value,
+                                                        ),
+                                                    })
+                                                }
+                                            />
+                                        ) : null}
+                                        {visibility.showFacing ? (
+                                            <ChipGroup
+                                                label="Facing"
+                                                options={FACING_OPTIONS}
+                                                selected={draft.facing}
+                                                onToggle={(value) =>
+                                                    updateDraft({
+                                                        facing: toggleListValue(
+                                                            draft.facing,
+                                                            value,
+                                                        ),
+                                                    })
+                                                }
+                                            />
+                                        ) : null}
+                                        {visibility.showSuitableFor ? (
+                                            <ChipGroup
+                                                label="Suitable for"
+                                                options={SUITABLE_FOR_OPTIONS}
+                                                selected={draft.suitableFor}
+                                                onToggle={(value) =>
+                                                    updateDraft({
+                                                        suitableFor: toggleListValue(
+                                                            draft.suitableFor,
+                                                            value,
+                                                        ),
+                                                    })
+                                                }
+                                            />
+                                        ) : null}
+                                    </div>
+                                </AccordionContent>
+                            </AccordionItem>
+                        ) : null}
+
+                        <AccordionItem
+                            value="deal"
+                            className="border-0 border-border-warm data-open:bg-transparent"
+                        >
+                            <FilterAccordionTrigger
+                                title="Listed & commission"
+                                summary={dealSummary}
+                            />
+                            <AccordionContent className="px-0 pbe-0">
+                                <div className="flex flex-col gap-7">
+                                    <ChipGroup
+                                        label="Listed"
+                                        options={LISTED_OPTIONS}
+                                        single
+                                        value={draft.listedWithinDays}
+                                        onSelect={setListedPreset}
+                                    />
+                                    {showSaleCommission ? (
+                                        <CommissionRange
+                                            label="Sale commission (%)"
+                                            minLabel={formatPercent(saleRange[0])}
+                                            maxLabel={formatPercent(saleRange[1])}
+                                            isAny={
+                                                !draft.minCommissionPercent &&
+                                                !draft.maxCommissionPercent
+                                            }
+                                            boundsLabel={`${formatPercent(SALE_COMMISSION_RANGE.min)} â€“ ${formatPercent(SALE_COMMISSION_RANGE.max)}`}
+                                        >
+                                            <RangeSlider
+                                                value={saleRange}
+                                                min={SALE_COMMISSION_RANGE.min}
+                                                max={SALE_COMMISSION_RANGE.max}
+                                                step={SALE_COMMISSION_RANGE.step}
+                                                thumbAlignment="edge"
+                                                thumbLabels={[
+                                                    "Minimum sale commission",
+                                                    "Maximum sale commission",
+                                                ]}
+                                                onValueChange={(next) => {
+                                                    const [min, max] = rangeToDraft(
+                                                        next,
+                                                        SALE_COMMISSION_RANGE,
+                                                        1,
+                                                    );
+                                                    updateDraft({
+                                                        minCommissionPercent: min,
+                                                        maxCommissionPercent: max,
+                                                    });
+                                                }}
+                                            />
+                                        </CommissionRange>
+                                    ) : null}
+                                    {showRentCommission ? (
+                                        <CommissionRange
+                                            label={`Rent commission (fixed ${currency.symbol})`}
+                                            minLabel={formatMoney(rentRange[0])}
+                                            maxLabel={
+                                                rentRange[1] >= rentCommissionBounds.max
+                                                    ? `${formatMoney(rentCommissionBounds.max)}+`
+                                                    : formatMoney(rentRange[1])
+                                            }
+                                            isAny={
+                                                !draft.minCommissionAmount &&
+                                                !draft.maxCommissionAmount
+                                            }
+                                            boundsLabel={`${formatMoney(rentCommissionBounds.min)} â€“ ${formatMoney(rentCommissionBounds.max)}+`}
+                                        >
+                                            <RangeSlider
+                                                value={rentRange}
+                                                min={rentCommissionBounds.min}
+                                                max={rentCommissionBounds.max}
+                                                step={rentCommissionBounds.step}
+                                                thumbAlignment="edge"
+                                                thumbLabels={[
+                                                    "Minimum rent commission",
+                                                    "Maximum rent commission",
+                                                ]}
+                                                onValueChange={(next) => {
+                                                    const [min, max] = rangeToDraft(
+                                                        next,
+                                                        rentCommissionBounds,
+                                                        0,
+                                                    );
+                                                    updateDraft({
+                                                        minCommissionAmount: min,
+                                                        maxCommissionAmount: max,
+                                                    });
+                                                }}
+                                            />
+                                        </CommissionRange>
+                                    ) : null}
+                                </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 </div>
-            </DialogPopup>
-        </Dialog>
+            </ScrollArea>
+        </AppModal>
     );
 }

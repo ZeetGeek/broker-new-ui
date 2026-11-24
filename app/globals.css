@@ -532,6 +532,10 @@
 }
 
 @layer base {
+    [data-portal-shell] {
+        /* Desktop navigation: 44px control + 24px padding + border, then a card gap. */
+        --portal-sticky-offset: calc(var(--size-control-lg) + 1.5rem + 1px + var(--card-grid-gap));
+    }
     * {
         @apply border-border outline-ring/50;
     }

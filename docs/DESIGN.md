@@ -834,12 +834,22 @@ confirmation on top of the page â€” not a second page, not a toast.
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
-Compound API: `Dialog` + `DialogTrigger` + `DialogPopup` (+ `DialogHeader` /
-`DialogTitle` / `DialogDescription` / `DialogClose`). Product screens use
+Compound API: `Dialog` + `DialogTrigger` + `DialogPopup` (+ `DialogHeader` / `DialogFooter` /
+`DialogTitle` / `DialogDescription` / `DialogClose`). This API is the internal
+foundation. All product modals, including filters, confirmations, photo cropping,
+and fullscreen editors, use `AppModal` or `ConfirmDialog`. Photo lightboxes keep
+their specialized viewer. Do not compose the primitive directly in feature code
+or use browser-native alerts or confirmations. Product screens use
 `AppModal` from `components/shared/app-modal.tsx` â€” same visual system: one
 `bg-surface` shell, content-height (`max-block` not forced full viewport), no
 header/footer dividers, quiet close. `AppModalFooter`: ghost cancel + default
 primary, `Button` `size="default"`, auto width, right-aligned.
+
+All dialog chrome uses `AppModalHeader` and `AppModalFooter`, backed by the
+compound header/footer primitives. Descriptions, extra controls and editor
+toolbars belong in the shared header. Use the shared footer for confirmations,
+form actions, loading states, contact links and multiple actions; do not create
+separate header/footer shells in feature code.
 
 **Surface:** `rounded-card`, `border-border-warm`, `bg-surface`, `shadow-xl`.
 Backdrop is `bg-ink/50` + light blur. Motion is transitions.dev **06-modal**:

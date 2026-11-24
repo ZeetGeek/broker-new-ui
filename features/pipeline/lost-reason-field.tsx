@@ -3,6 +3,7 @@
 import { Price } from "@/components/shared/price";
 import { RadioGroup } from "@/components/ui/radio-group";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { ChoiceCard } from "@/features/pipeline/choice-card";
 import { differenceLine } from "@/features/pipeline/final-price-field";
 import {
@@ -83,7 +84,7 @@ export function LostReasonField({
                                         isRent={isRent}
                                         className="font-semibold text-ink"
                                     />
-                                    {deal.offerStatus
+                                    {FEATURE_PLATFORM_OWNER && deal.offerStatus
                                         ? ` · ${OFFER_STATUS_LABEL[deal.offerStatus]}`
                                         : null}
                                     {offerGap ? ` · ${offerGap}` : null}
