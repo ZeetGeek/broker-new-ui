@@ -136,39 +136,72 @@ test("owner search finds a linked property on a later owner page", async (t) => 
     assert.equal(result.total, 1);
 });
 
-test("listing search joins people and checks every filtered property page before pagination", async (t) => {
+test("listing search is sent to the API and pages normally instead of collecting every page", async (t) => {
     const previous = propertiesApi.list;
     t.after(() => {
         propertiesApi.list = previous;
     });
-    const requests: number[] = [];
+    const requests: { search?: string; page?: number }[] = [];
     propertiesApi.list = async (query) => {
-        assert.equal(query?.search, undefined);
         assert.equal(query?.publishStatus, "published");
-        requests.push(query!.page!);
-        const page = query?.page ?? 1;
+        requests.push({ search: query?.search, page: query?.page });
         const listing: PropertyListing = {
-            id: `p${page}`,
-            title: page === 2 ? "Orchid Heights" : "Other property",
+            id: "p2",
+            title: "Orchid Heights",
             subtype: "apartment",
             city: "Mumbai",
             publishStatus: "published",
             status: "available",
             exclusiveOwner: { id: "o1", fullName: "Meera Shah", phone: "+919876543210" },
         };
-        return { items: [listing], page, total: 2, totalPages: 2, limit: 20 };
+        return { items: [listing], page: 1, total: 25, totalPages: 2, limit: 20 };
     };
     const result = await myListingsApi.list(
-        { q: "Ravi Orchid Meera", status: "published" },
+        { q: "  Ravi Orchid Meera ", status: "published" },
         undefined,
         { attachedClients: async () => new Map([["p2", [{ id: "c1", name: "Ravi Patel" }]]]) },
     );
-    assert.deepEqual(requests, [1, 2]);
+    // One request for the page asked for; the server does the matching.
+    assert.deepEqual(requests, [{ search: "Ravi Orchid Meera", page: 1 }]);
     assert.deepEqual(
         result.items.map((item) => item.id),
         ["p2"],
     );
-    assert.equal(result.total, 1);
+    assert.equal(result.total, 25);
+    assert.equal(result.totalPages, 2);
+    assert.deepEqual(result.items[0].attachedClients, [{ id: "c1", name: "Ravi Patel" }]);
+});
+
+test("listing search still applies with local-only filters", async (t) => {
+    const previous = propertiesApi.list;
+    t.after(() => {
+        propertiesApi.list = previous;
+    });
+    const searches: (string | undefined)[] = [];
+    propertiesApi.list = async (query) => {
+        searches.push(query?.search);
+        const page = query?.page ?? 1;
+        const listing: PropertyListing = {
+            id: `p${page}`,
+            title: "Orchid Heights",
+            subtype: "apartment",
+            city: "Mumbai",
+            publishStatus: "published",
+            status: "available",
+        };
+        return { items: [listing], page, total: 2, totalPages: 2, limit: 20 };
+    };
+    const result = await myListingsApi.list(
+        { q: "Orchid", status: "published", clientId: "c1" },
+        undefined,
+        { attachedClients: async () => new Map([["p2", [{ id: "c1", name: "Ravi Patel" }]]]) },
+    );
+    // The client filter is still local, so every page is checked — each one searched.
+    assert.deepEqual(searches, ["Orchid", "Orchid"]);
+    assert.deepEqual(
+        result.items.map((item) => item.id),
+        ["p2"],
+    );
 });
 
 test("visit search retains status/date/person filters, searches later pages and paginates matches", async (t) => {

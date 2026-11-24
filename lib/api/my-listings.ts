@@ -146,6 +146,8 @@ export type MyListingsSummary = {
 function filtersToQuery(filters: MyListingsFilters): PropertyListQuery | null {
     const typeFilters = propertyTypeToApiFilters(filters.propertyType);
     return {
+        // Searched on the server: title, address, owner, attached clients, PIN, phone.
+        search: filters.q.trim() || undefined,
         transactionType: filters.type || undefined,
         ...typeFilters,
         bhkConfig: filters.bhk.length > 0 ? bhkValuesToApiConfig(filters.bhk) : undefined,
@@ -226,8 +228,9 @@ export const myListingsApi = {
             };
         }
         const query = filtersToQuery(merged)!;
+        // Search runs on the server; only filters the API cannot apply yet
+        // still need every page collected and filtered here.
         const filterLocally =
-            Boolean(merged.q.trim()) ||
             propertyCriteriaCount(merged.propertyFilters) > 0 ||
             Boolean(merged.ownerId || merged.clientId);
         const [source, attached] = await Promise.all([
@@ -253,7 +256,6 @@ export const myListingsApi = {
             // Join people before filtering and paginate only after every API page has been checked.
             const matched = items.filter(
                 (item) =>
-                    matchesListingSearch(item, merged.q) &&
                     matchesListingCriteria(item, merged) &&
                     matchesPeopleFilters(
                         item.exclusiveOwnerId ?? item.ownerId,

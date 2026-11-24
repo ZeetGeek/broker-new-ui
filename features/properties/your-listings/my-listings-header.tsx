@@ -360,6 +360,8 @@ export function MyListingsHeader({
                                 fullWidth
                                 searchHelp={CRM_SEARCH_HELP.listings}
                                 aria-label="Search your listings"
+                                // Searched on the server, so wait for a pause in typing.
+                                debounceMs={500}
                                 value={filters.q}
                                 onChange={(q) => onFiltersChange({ ...filters, q, page: 1 })}
                             />
