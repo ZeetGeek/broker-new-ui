@@ -12,7 +12,7 @@
     z-index: 20;
 }
 /* Keep the embedded action inside the compact search face on touch screens. */
-.helpButton.helpButton {
+.withHelp .helpButton.helpButton {
     min-block-size: var(--size-control-sm);
     min-inline-size: var(--size-control-sm);
 }

@@ -202,7 +202,7 @@ export function MyListingsToolbarSkeleton({
                         </>
                     }
                     search={
-                        <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px] min-inline-0 pointer-coarse:min-block-11">
+                        <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm list-control min-inline-0">
                             <Skeleton className="shrink-0 block-4 inline-4" />
                             <Skeleton className="block-3 inline-1/2" />
                         </div>
@@ -226,7 +226,7 @@ export function MyListingsToolbarSkeleton({
                                 <div
                                     className="
                               hidden items-center gap-2 rounded-control bg-surface px-3.5 text-sm
-                              font-semibold shadow-sm block-[38px]
+                              font-semibold shadow-sm list-control
                               md:inline-flex
                             "
                                 >

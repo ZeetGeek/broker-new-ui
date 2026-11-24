@@ -1,6 +1,6 @@
 /* Only the visual label collapses; the trigger retains its complete accessible name. */
 @media (max-width: 639px) {
-    .compactSelect {
+    .compactSelect.compactSelect {
         justify-content: center;
         inline-size: var(--list-control-height);
         min-inline-size: var(--list-control-height);

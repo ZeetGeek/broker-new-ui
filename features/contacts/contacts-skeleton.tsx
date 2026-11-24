@@ -111,13 +111,13 @@ export function ContactsHeaderSkeleton() {
             <div aria-hidden>
                 <ResponsiveListToolbar
                     selection={
-                        <Bone className="flex-1 block-11 min-inline-0 sm:flex-none sm:inline-48" />
+                        <Bone className="flex-1 list-control min-inline-0 sm:flex-none sm:inline-48" />
                     }
-                    search={<Bone className="block-11 inline-full" />}
+                    search={<Bone className="list-control inline-full" />}
                     actions={
                         <>
-                            <Bone className="block-11 inline-11 sm:inline-36" />
-                            <Bone className="hidden block-11 inline-32 md:block" />
+                            <Bone className="list-control inline-(--list-control-height) sm:inline-36" />
+                            <Bone className="hidden list-control inline-32 md:block" />
                         </>
                     }
                 />

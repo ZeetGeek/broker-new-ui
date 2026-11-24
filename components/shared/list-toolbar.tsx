@@ -107,7 +107,7 @@ export function ListSearchField({
                 !searchHelp && wrapperClassName,
             )}
             className={cn(
-                "list-control rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20",
+                "rounded-control border! border-border-warm bg-surface text-sm! font-medium shadow-sm list-control hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20",
                 className,
             )}
         />
@@ -280,7 +280,7 @@ export function ListAddButton({
             {...props}
             variant={variant}
             size="sm"
-            className={cn("list-control gap-2 px-3.5", className)}
+            className={cn("gap-2 px-3.5 list-control", className)}
         >
             <Icon aria-hidden strokeWidth={1.75} />
             {label}

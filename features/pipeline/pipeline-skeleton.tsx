@@ -183,12 +183,14 @@ export function PipelineHeaderSkeleton() {
                     <ResponsiveListToolbar
                         selection={
                             <>
-                                <Bone className="block-11 inline-20" />
-                                <Bone className="flex-1 block-11 min-inline-0 sm:flex-none sm:inline-40" />
+                                <Bone className="list-control inline-20" />
+                                <Bone className="flex-1 list-control min-inline-0 sm:flex-none sm:inline-40" />
                             </>
                         }
-                        search={<Bone className="block-11 inline-full" />}
-                        actions={<Bone className="block-11 inline-11 sm:inline-36" />}
+                        search={<Bone className="list-control inline-full" />}
+                        actions={
+                            <Bone className="list-control inline-(--list-control-height) sm:inline-36" />
+                        }
                     />
                 </div>
             </div>
