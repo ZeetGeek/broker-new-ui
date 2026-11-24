@@ -23,6 +23,11 @@ function estimatedCommission(
         report.clients.find((client) => client.group === "won") ?? report.offers.best;
     const side = referenceClient?.side ?? (listing.transactionType === "rent" ? "rent" : "sale");
     const baseInr = report.closedInr ?? (side === "rent" ? report.ask.rentInr : report.ask.saleInr);
+    // A closed deal keeps the commission locked at close, as Earnings does, even if
+    // the listing's commission was edited afterwards.
+    if (report.counts.won > 0 && report.closedCommissionInr != null) {
+        return { amountInr: Math.round(report.closedCommissionInr), side, baseInr };
+    }
 
     if (side === "rent") {
         const amount = listing.commissionAmount ?? 0;

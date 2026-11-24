@@ -74,11 +74,16 @@ function offerText(client: ClientRow): string | null {
 
 function visitText(client: ClientRow, now: Date): string | null {
     if (client.visits === 0 && !client.visit) return null;
-    const count = plural(Math.max(client.visits, 1), "visit");
+    // Cancelled visits are not counted, so a client may have only a cancelled one.
+    const count = client.visits > 0 ? plural(client.visits, "visit") : "No visits booked";
     const visit = client.visit;
     if (!visit) return count;
     const when = visit.upcoming ? formatShowingWhen(visit.at, now) : formatDateShort(visit.at);
-    const status = visit.needsUpdate ? "Needs update" : visitStatusLabel(visit.status);
+    const status = visit.running
+        ? "Happening now"
+        : visit.needsUpdate
+          ? "Needs update"
+          : visitStatusLabel(visit.status);
     return `${count} · ${visit.upcoming ? "Next" : "Latest"} ${when}${status ? ` (${status})` : ""}`;
 }
 

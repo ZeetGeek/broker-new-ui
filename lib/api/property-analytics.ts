@@ -25,6 +25,12 @@ export type LeadStageKey = (typeof LEAD_STAGES)[number];
 
 export type StageCounts = Record<LeadStageKey, number>;
 
+/** Same states as the Visits page tabs. */
+export type VisitStateKey =
+    "upcoming" | "running" | "needs_update" | "completed" | "not_attended" | "cancelled";
+
+export type VisitCounts = Record<VisitStateKey, number>;
+
 export type PropertyAnalyticsLead = {
     id: string;
     stage: LeadStageKey;
@@ -36,13 +42,21 @@ export type PropertyAnalyticsLead = {
     offerStatus: "pending" | "accepted" | "rejected" | null;
     listPrice: string | null;
     closedAmount: string | null;
+    /** Commission locked when the deal closed, whole INR. */
+    commissionInrAtClose?: string | null;
+    lostReason?: string | null;
     notes: string | null;
     createdAt: string | null;
     updatedAt: string | null;
+    /** Booked visits; cancelled visits are left out. */
     showings: number;
+    visits?: VisitCounts;
+    /** The soonest upcoming visit, else the latest one that was not cancelled. */
     latestShowing: {
         status: string | null;
         scheduledDate: string;
+        endAt?: string | null;
+        state?: VisitStateKey;
     } | null;
 };
 
@@ -72,10 +86,15 @@ export type PropertyAnalytics = {
         acceptedOffers: number;
         rejectedOffers: number;
         showings: number;
+        clientsVisited?: number;
+        visits?: VisitCounts;
         closedWonAmount: string | null;
+        /** Sum of commissions locked on closed deals, whole INR. */
+        closedCommissionInr?: string | null;
     };
     byStage: StageCounts;
     leads: PropertyAnalyticsLead[];
+    generatedAt?: string;
 };
 
 export type ListingsAnalyticsProperty = {

@@ -55,6 +55,9 @@ export const STATUS_ORDER: DealStatus[] = [
 
 const LIVE_VISIT_STATUSES = new Set(["scheduled", "confirmed"]);
 
+/** Length assumed for a visit stored without an end. Same as the API. */
+const DEFAULT_VISIT_MS = 30 * 60_000;
+
 export type ListingAsk = { saleInr: number | null; rentInr: number | null };
 
 export type OfferInfo = {
@@ -71,10 +74,13 @@ export type OfferInfo = {
 
 export type VisitInfo = {
     at: Date;
+    endsAt: Date;
     status: string | null;
     /** Booked and still ahead. */
     upcoming: boolean;
-    /** Booked, time has passed, and nobody marked how it went. */
+    /** Booked and happening now. */
+    running: boolean;
+    /** Booked, it has ended, and nobody marked how it went. Same as Visits → Needs update. */
     needsUpdate: boolean;
 };
 
@@ -121,9 +127,11 @@ export type PropertyReport = {
     lastUpdateAt: Date | null;
     counts: { total: number; active: number; won: number; lost: number };
     visits: {
+        /** Booked visits; cancelled ones are left out. */
         total: number;
         clientsVisited: number;
         upcoming: number;
+        needsUpdate: number;
         nextAt: Date | null;
         lastAt: Date | null;
     };
@@ -135,6 +143,8 @@ export type PropertyReport = {
         best: ClientRow | null;
     };
     closedInr: number | null;
+    /** Commission locked when the deal closed. Null when nothing closed or it was unvalued. */
+    closedCommissionInr: number | null;
     funnel: FunnelStep[];
     statusCounts: Record<DealStatus, number>;
     attention: AttentionItem[];
@@ -213,14 +223,20 @@ function toClientRow(lead: PropertyAnalyticsLead, ask: ListingAsk, now: Date): C
     const visitAt = date(lead.latestShowing?.scheduledDate);
     const visitStatus = lead.latestShowing?.status ?? null;
     const live = visitStatus == null || LIVE_VISIT_STATUSES.has(visitStatus);
-    const visit: VisitInfo | null = visitAt
-        ? {
-              at: visitAt,
-              status: visitStatus,
-              upcoming: live && visitAt.getTime() > now.getTime(),
-              needsUpdate: live && group === "active" && visitAt.getTime() <= now.getTime(),
-          }
-        : null;
+    let visit: VisitInfo | null = null;
+    if (visitAt) {
+        const endsAt =
+            date(lead.latestShowing?.endAt) ?? new Date(visitAt.getTime() + DEFAULT_VISIT_MS);
+        const t = now.getTime();
+        visit = {
+            at: visitAt,
+            endsAt,
+            status: visitStatus,
+            upcoming: live && visitAt.getTime() > t,
+            running: live && visitAt.getTime() <= t && endsAt.getTime() > t,
+            needsUpdate: live && endsAt.getTime() <= t,
+        };
+    }
 
     const updatedAt = date(lead.updatedAt);
 
@@ -345,6 +361,15 @@ export function buildPropertyReport(data: PropertyAnalytics, now: Date): Propert
     const won = clients.filter((c) => c.group === "won");
     const closedFromRows = won.reduce((sum, c) => sum + (c.closedInr ?? 0), 0);
     const closedInr = amount(data.summary.closedWonAmount) ?? (closedFromRows || null);
+    const lockedFromRows = won.reduce(
+        (sum, c) =>
+            sum + (amount(data.leads.find((l) => l.id === c.id)?.commissionInrAtClose) ?? 0),
+        0,
+    );
+    const closedCommissionInr =
+        amount(data.summary.closedCommissionInr) ?? (lockedFromRows || null);
+    // The API counts every visit by state; older payloads only carry each client's latest.
+    const apiVisits = data.summary.visits;
 
     const listedAt = date(data.property.createdAt);
     const soldAt = date(data.property.soldAt);
@@ -360,8 +385,11 @@ export function buildPropertyReport(data: PropertyAnalytics, now: Date): Propert
         counts,
         visits: {
             total: clients.reduce((sum, c) => sum + c.visits, 0),
-            clientsVisited: clients.filter((c) => c.visits > 0).length,
-            upcoming: upcoming.length,
+            clientsVisited:
+                data.summary.clientsVisited ?? clients.filter((c) => c.visits > 0).length,
+            upcoming: apiVisits?.upcoming ?? upcoming.length,
+            needsUpdate:
+                apiVisits?.needs_update ?? clients.filter((c) => c.visit?.needsUpdate).length,
             nextAt: upcoming[0] ?? null,
             lastAt: past[0] ?? null,
         },
@@ -373,6 +401,7 @@ export function buildPropertyReport(data: PropertyAnalytics, now: Date): Propert
             best: standing[0] ?? offerRows[0] ?? null,
         },
         closedInr,
+        closedCommissionInr,
         funnel: buildFunnel(clients),
         statusCounts,
         attention: buildAttention(clients),
