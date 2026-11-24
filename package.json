@@ -20,10 +20,10 @@
     },
     "lint-staged": {
         "*.{js,jsx,ts,tsx}": [
-            "node ./node_modules/prettier/bin/prettier.cjs --check --end-of-line auto"
+            "prettier --check --end-of-line auto"
         ],
         "*.{json,css,scss,md}": [
-            "node ./node_modules/prettier/bin/prettier.cjs --check --end-of-line auto"
+            "prettier --check --end-of-line auto"
         ]
     },
     "dependencies": {
