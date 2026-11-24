@@ -31,3 +31,6 @@ export const FEATURE_RERA_VERIFICATION = false;
 
 /** Public profile URL controls are temporarily hidden; keep their code and saved values. */
 export const FEATURE_PUBLIC_PROFILE_URL = false;
+
+/** Saved-property UI and actions are temporarily hidden throughout the broker portal. */
+export const FEATURE_SAVED_PROPERTIES = false;

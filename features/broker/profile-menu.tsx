@@ -8,9 +8,10 @@ import {
     PortalProfileMenuSeparator,
     PortalProfileShortcutHint,
 } from "@/components/layout/portal-profile-menu";
-import { PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
+import { Activity, Bell, PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
 import { DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
+import { FEATURE_SAVED_PROPERTIES } from "@/config";
 import { SUPPORT_WHATSAPP_URL } from "@/config/constants";
 import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
@@ -70,18 +71,20 @@ export function BrokerProfileMenu({
                     <PortalProfileShortcutHint shortcutId="profile" />
                 </DropdownMenuItem>
 
-                <DropdownMenuItem
-                    className={portalProfileMenuItemClass}
-                    render={<Link href={SAVED_PROPERTIES_HREF} />}
-                >
-                    <AccountMenuIcon
-                        name="bookmark"
-                        aria-hidden
-                        className="shrink-0 text-ink! block-4.5! inline-4.5!"
-                    />
-                    <span className="flex-1 min-inline-0">Saved properties</span>
-                    <PortalProfileShortcutHint shortcutId="saved_properties" />
-                </DropdownMenuItem>
+                {FEATURE_SAVED_PROPERTIES ? (
+                    <DropdownMenuItem
+                        className={portalProfileMenuItemClass}
+                        render={<Link href={SAVED_PROPERTIES_HREF} />}
+                    >
+                        <AccountMenuIcon
+                            name="bookmark"
+                            aria-hidden
+                            className="shrink-0 text-ink! block-4.5! inline-4.5!"
+                        />
+                        <span className="flex-1 min-inline-0">Saved properties</span>
+                        <PortalProfileShortcutHint shortcutId="saved_properties" />
+                    </DropdownMenuItem>
+                ) : null}
 
                 {/* Verification & RERA temporarily hidden; retain menu action for later. */}
                 {FEATURE_RERA_VERIFICATION && broker.verificationState !== "VERIFIED" ? (
@@ -97,6 +100,27 @@ export function BrokerProfileMenu({
                         <span className="flex-1 min-inline-0">Verification & RERA</span>
                     </DropdownMenuItem>
                 ) : null}
+            </DropdownMenuGroup>
+
+            <PortalProfileMenuSeparator />
+
+            <DropdownMenuGroup>
+                <DropdownMenuItem
+                    className={portalProfileMenuItemClass}
+                    render={<Link href="/broker/notifications" />}
+                >
+                    <Bell aria-hidden className="shrink-0 text-ink! block-4.5! inline-4.5!" />
+                    <span className="flex-1 min-inline-0">Notification history</span>
+                    <PortalProfileShortcutHint shortcutId="notifications" />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    className={portalProfileMenuItemClass}
+                    render={<Link href="/broker/recent-updates" />}
+                >
+                    <Activity aria-hidden className="shrink-0 text-ink! block-4.5! inline-4.5!" />
+                    <span className="flex-1 whitespace-nowrap min-inline-0">Recent updates</span>
+                    <PortalProfileShortcutHint shortcutId="recent_updates" />
+                </DropdownMenuItem>
             </DropdownMenuGroup>
 
             <PortalProfileMenuSeparator />

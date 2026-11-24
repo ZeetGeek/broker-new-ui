@@ -28,6 +28,7 @@ import { Building2, Calendar, CheckCircle2, UserPlus } from "@/components/shared
 import { PersonDetailsProvider } from "@/components/shared/person-details-provider";
 import { WorkflowHost, WorkflowProvider } from "@/components/shared/workflow-provider";
 
+import { FEATURE_SAVED_PROPERTIES } from "@/config";
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
 import { BROKER_MOBILE_PRIMARY_HREFS, BROKER_NAV_ITEMS } from "@/config/nav";
 import { mapBrokerProfileMenuBroker } from "@/features/broker/map-profile-menu";
@@ -55,7 +56,8 @@ const BROKER_SHORTCUT_ROUTES = {
     earnings: BROKER_EARNINGS_HREF,
     ...(FEATURE_PLATFORM_OWNER ? { referrals: "/broker/referrals" } : {}),
     notifications: BROKER_NOTIFICATIONS_HREF,
-    saved_properties: "/broker/saved-properties",
+    recent_updates: "/broker/recent-updates",
+    ...(FEATURE_SAVED_PROPERTIES ? { saved_properties: "/broker/saved-properties" } : {}),
     profile: "/broker/profile",
 };
 

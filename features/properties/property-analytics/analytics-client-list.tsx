@@ -51,7 +51,7 @@ function StagePill({ client, closedWord }: { client: ClientRow; closedWord: stri
 function Fact({ label, children }: { label: string; children: ReactNode }) {
     return (
         <div className={styles.clientFact}>
-            <dt className="body-xs text-ink-muted">{label}</dt>
+            <dt className="body-sm font-medium text-ink-muted">{label}</dt>
             <dd className="body-sm text-ink min-inline-0">{children}</dd>
         </div>
     );
@@ -97,8 +97,7 @@ function ClientCard({
     const dealHref = brokerPipelineDealHref(client.id);
     const offer = offerText(client);
     const visit = visitText(client, now);
-    const meta = [
-        client.phone ? formatPhoneIn(client.phone) : "No phone number",
+    const activity = [
         client.addedAt ? `Added ${formatDateShort(client.addedAt)}` : null,
         client.updatedAt ? `Updated ${agoLabel(client.updatedAt, now)}` : null,
     ].filter(Boolean);
@@ -107,9 +106,9 @@ function ClientCard({
         <article className={styles.clientRow}>
             <div className={styles.clientIdentity}>
                 <UserAvatar name={client.name} size="md" />
-                <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <h3 className="body font-semibold text-ink capitalize">
+                <div className="flex flex-1 flex-col gap-1 min-inline-0">
+                    <div className={styles.clientHeading}>
+                        <h3 className="body-lg font-semibold wrap-anywhere text-ink min-inline-0">
                             <ContactName
                                 name={client.name}
                                 contactId={client.clientId}
@@ -119,21 +118,29 @@ function ClientCard({
                         </h3>
                         <StagePill client={client} closedWord={closedWord} />
                     </div>
-                    <p className="body-sm wrap-anywhere text-ink-muted tabular-nums">
-                        {meta.join(" · ")}
-                    </p>
-                    {client.email ? (
-                        <p className="body-sm wrap-anywhere text-ink-muted">{client.email}</p>
-                    ) : null}
+                    <div className="body-sm flex flex-wrap items-baseline gap-x-3 gap-y-1 text-ink-muted">
+                        <span className="tabular-nums">
+                            {client.phone ? formatPhoneIn(client.phone) : "Phone number not added"}
+                        </span>
+                        {client.email ? (
+                            <span className="wrap-anywhere min-inline-0">{client.email}</span>
+                        ) : null}
+                    </div>
                 </div>
             </div>
 
             <dl className={styles.clientFacts}>
-                <Fact label="Offer">
-                    {offer ?? <span className="text-ink-muted">No offers yet</span>}
+                <Fact
+                    label={
+                        client.group === "won" && client.closedInr != null
+                            ? "Deal result"
+                            : "Latest offer"
+                    }
+                >
+                    {offer ?? <span className="text-ink-subtle">No offer recorded</span>}
                 </Fact>
-                <Fact label="Visits">
-                    {visit ?? <span className="text-ink-muted">No visits booked</span>}
+                <Fact label="Site visits">
+                    {visit ?? <span className="text-ink-subtle">No visits booked yet</span>}
                 </Fact>
             </dl>
 
@@ -148,26 +155,30 @@ function ClientCard({
                 </p>
             ) : null}
 
+            {activity.length > 0 && (
+                <p className="body-xs wrap-anywhere text-ink-subtle">{activity.join(" · ")}</p>
+            )}
+
             <div className={styles.clientActions}>
                 {client.phone ? (
                     <>
                         <Button
                             variant="outline"
-                            size="md"
-                            className="flex-1 sm:flex-none"
+                            size="sm"
                             nativeButton={sample}
                             disabled={sample}
                             render={sample ? undefined : <a href={formatTelUrl(client.phone)} />}
+                            aria-label={`Call ${client.name}`}
                         >
                             <CallIcon aria-hidden strokeWidth={1.75} />
                             Call
                         </Button>
                         <Button
                             variant="outline"
-                            size="md"
-                            className="flex-1 sm:flex-none"
+                            size="sm"
                             nativeButton={sample}
                             disabled={sample}
+                            aria-label={`WhatsApp ${client.name}`}
                             render={
                                 sample ? undefined : (
                                     <a
@@ -187,12 +198,13 @@ function ClientCard({
                     </>
                 ) : null}
                 <Button
-                    variant="ghost"
-                    size="md"
-                    className="ms-auto"
+                    variant="accent"
+                    size="sm"
+                    className={styles.clientDealAction}
                     nativeButton={sample}
                     disabled={sample}
                     render={sample ? undefined : <Link href={dealHref} />}
+                    aria-label={`Open ${client.name}'s deal`}
                 >
                     Open deal
                     <ArrowRight aria-hidden />
@@ -242,12 +254,17 @@ export function AnalyticsClientList({
             >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-col gap-1">
-                        <h2 id="analytics-clients-heading" className="h5 text-ink">
-                            Clients{" "}
-                            <span className="text-ink-muted tabular-nums">{counts.total}</span>
+                        <h2
+                            id="analytics-clients-heading"
+                            className={cn("h5 text-ink", styles.clientSectionHeading)}
+                        >
+                            Clients
+                            <span className={cn("body-sm tabular-nums", styles.clientCount)}>
+                                {counts.total}
+                            </span>
                         </h2>
                         <p className="body-sm text-ink-muted">
-                            Every conversation and deal in one place
+                            Contact details and deal progress for this property.
                         </p>
                     </div>
                     {showTabs ? (
@@ -255,18 +272,33 @@ export function AnalyticsClientList({
                     ) : null}
                 </div>
                 <TabsContent value={filter}>
-                    <ul className="divide-y divide-border-warm">
-                        {visible.map((client) => (
-                            <li key={client.id} className="py-4 first:pbs-0 last:pbe-0">
-                                <ClientCard
-                                    client={client}
-                                    closedWord={closedWord}
-                                    propertyTitle={propertyTitle}
-                                    now={now}
-                                />
-                            </li>
-                        ))}
-                    </ul>
+                    {visible.length ? (
+                        <ul className="divide-y divide-border-warm">
+                            {visible.map((client) => (
+                                <li key={client.id} className="py-4 first:pbs-0 last:pbe-0">
+                                    <ClientCard
+                                        client={client}
+                                        closedWord={closedWord}
+                                        propertyTitle={propertyTitle}
+                                        now={now}
+                                    />
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <div className="flex flex-col items-start gap-2">
+                            <p className="body-sm text-ink-muted">
+                                {clients.length
+                                    ? "No clients in this view."
+                                    : "No clients linked to this property yet."}
+                            </p>
+                            {clients.length > 0 && (
+                                <Button variant="ghost" size="sm" onClick={() => setFilter("all")}>
+                                    Show all clients
+                                </Button>
+                            )}
+                        </div>
+                    )}
                 </TabsContent>
             </Tabs>
         </section>

@@ -1,3 +1,5 @@
+import { FEATURE_SAVED_PROPERTIES } from "@/config";
+
 export type ShortcutPortal = "broker" | "owner";
 
 export type ShortcutId =
@@ -13,6 +15,7 @@ export type ShortcutId =
     | "earnings"
     | "referrals"
     | "notifications"
+    | "recent_updates"
     | "saved_properties"
     | "profile"
     | "settings"
@@ -44,7 +47,7 @@ export type ShortcutDef = {
  * hint. Global navigation uses G, page actions use A, and consequential
  * actions deliberately have no shortcut.
  */
-export const BROKER_SHORTCUTS: readonly ShortcutDef[] = [
+const BROKER_SHORTCUT_DEFINITIONS: readonly ShortcutDef[] = [
     {
         id: "shortcuts_cheatsheet",
         keys: "Shift+Slash",
@@ -130,9 +133,19 @@ export const BROKER_SHORTCUTS: readonly ShortcutDef[] = [
         id: "notifications",
         keys: "KeyG KeyN",
         displayKeys: ["G", "N"],
-        label: "Notifications",
+        label: "Notification history",
         group: "Go to",
         scope: "global",
+        showInProfileMenu: true,
+    },
+    {
+        id: "recent_updates",
+        keys: "KeyG KeyH",
+        displayKeys: ["G", "H"],
+        label: "Recent updates",
+        group: "Go to",
+        scope: "global",
+        showInProfileMenu: true,
     },
     {
         id: "saved_properties",
@@ -218,6 +231,10 @@ export const BROKER_SHORTCUTS: readonly ShortcutDef[] = [
         scope: "form",
     },
 ] as const;
+
+export const BROKER_SHORTCUTS = BROKER_SHORTCUT_DEFINITIONS.filter(
+    (shortcut) => FEATURE_SAVED_PROPERTIES || shortcut.id !== "saved_properties",
+);
 
 /**
  * Owner shortcuts are intentionally kept separate. Broker key changes must not

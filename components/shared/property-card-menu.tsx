@@ -36,6 +36,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { FEATURE_SAVED_PROPERTIES } from "@/config";
 import { REPRESENTATION_REMINDER_LIMIT } from "@/config/constants";
 
 addCollection(shareBrands as Parameters<typeof addCollection>[0]);
@@ -579,7 +580,7 @@ export function PropertyCardMenu({
                         </DropdownMenuSubContent>
                     </DropdownMenuSub>
 
-                    {onToggleSave ? (
+                    {FEATURE_SAVED_PROPERTIES && onToggleSave ? (
                         <DropdownMenuItem
                             closeOnClick={false}
                             className={cn(ITEM_CLASS, DISABLED_ITEM_CLASS)}

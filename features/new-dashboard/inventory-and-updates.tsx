@@ -752,7 +752,7 @@ export function InventoryAndUpdates({ activity, now }: { activity: ActivityData;
                         variant="outline"
                         size="sm"
                         nativeButton={false}
-                        render={<Link href="/broker/notifications" />}
+                        render={<Link href="/broker/recent-updates" />}
                     >
                         View all <ArrowRight aria-hidden />
                     </Button>
@@ -771,7 +771,7 @@ export function InventoryAndUpdates({ activity, now }: { activity: ActivityData;
                                     <li key={item.id}>
                                         <Link
                                             data-linked-card
-                                            href={item.href || "/broker/notifications"}
+                                            href={item.href || "/broker/recent-updates"}
                                             className={styles.updateLink}
                                         >
                                             <span className={styles.eventIcon}>

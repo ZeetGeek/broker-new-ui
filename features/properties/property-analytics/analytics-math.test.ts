@@ -6,6 +6,7 @@ import type { PropertyAnalytics, PropertyAnalyticsLead } from "@/lib/api/propert
 import {
     buildPropertyReport,
     closedWordFor,
+    hasReachedMilestone,
     leadSide,
     listingAsk,
 } from "@/features/properties/property-analytics/analytics-math";
@@ -128,6 +129,25 @@ test("funnel counts how far clients got, even when later lost", () => {
     assert.deepEqual(
         report.funnel.map((step) => step.count),
         [5, 4, 2, 1],
+    );
+    // The names shown on hover must include past milestones even for lost clients.
+    assert.deepEqual(
+        report.clients
+            .filter((client) => hasReachedMilestone(client, "visited"))
+            .map((client) => client.id),
+        ["b", "c", "d", "e"],
+    );
+    assert.deepEqual(
+        report.clients
+            .filter((client) => hasReachedMilestone(client, "offered"))
+            .map((client) => client.id),
+        ["d", "e"],
+    );
+    assert.deepEqual(
+        report.clients
+            .filter((client) => hasReachedMilestone(client, "won"))
+            .map((client) => client.id),
+        ["e"],
     );
     assert.deepEqual(report.counts, { total: 5, active: 2, won: 1, lost: 2 });
     assert.equal(report.closedInr, 8_700_000);

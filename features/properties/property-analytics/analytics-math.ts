@@ -284,26 +284,28 @@ export function buildAttention(clients: ClientRow[]): AttentionItem[] {
  * How far clients got, not where they sit now: a client who visited and was
  * then lost still counts as having visited. Each step is a subset of the last.
  */
-export function buildFunnel(clients: ClientRow[]): FunnelStep[] {
-    let visited = 0;
-    let offered = 0;
-    let won = 0;
-    for (const client of clients) {
-        const rank = STAGE_RANK[client.stage];
-        const didOffer = rank >= STAGE_RANK.offer_made || client.offer != null;
-        const didVisit = didOffer || rank >= STAGE_RANK.site_visit || client.visits > 0;
-        if (didVisit) visited += 1;
-        if (didOffer) offered += 1;
-        if (client.group === "won") won += 1;
+export function hasReachedMilestone(client: ClientRow, key: FunnelStep["key"]): boolean {
+    const rank = STAGE_RANK[client.stage];
+    const didOffer = rank >= STAGE_RANK.offer_made || client.offer != null;
+    switch (key) {
+        case "added":
+            return true;
+        case "visited":
+            return didOffer || rank >= STAGE_RANK.site_visit || client.visits > 0;
+        case "offered":
+            return didOffer;
+        case "won":
+            return client.group === "won";
     }
+}
+
+export function buildFunnel(clients: ClientRow[]): FunnelStep[] {
     const total = clients.length;
-    const share = (count: number) => (total > 0 ? count / total : 0);
-    return [
-        { key: "added", count: total, share: share(total) },
-        { key: "visited", count: visited, share: share(visited) },
-        { key: "offered", count: offered, share: share(offered) },
-        { key: "won", count: won, share: share(won) },
-    ];
+    const keys: FunnelStep["key"][] = ["added", "visited", "offered", "won"];
+    return keys.map((key) => {
+        const count = clients.filter((client) => hasReachedMilestone(client, key)).length;
+        return { key, count, share: total > 0 ? count / total : 0 };
+    });
 }
 
 function offerOrder(a: ClientRow, b: ClientRow): number {

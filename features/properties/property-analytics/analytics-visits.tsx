@@ -38,12 +38,12 @@ function VisitRow({ client, now }: { client: ClientRow; now: Date }) {
         ? formatShowingWhen(visit.at, now)
         : `On ${formatDateShort(visit.at)}`;
     const status = visit.needsUpdate
-        ? "Needs update"
+        ? "Outcome needed"
         : (visitStatusLabel(visit.status) ?? (visit.upcoming ? "Booked" : "Visit logged"));
     const Icon = visit.upcoming ? CalendarClock : visit.needsUpdate ? Clock : CircleCheck;
 
     return (
-        <li className="flex items-center gap-3 py-3 first:pbs-0 last:pbe-0">
+        <li className={styles.visitRow}>
             <span
                 aria-hidden
                 className={cn(
@@ -62,22 +62,28 @@ function VisitRow({ client, now }: { client: ClientRow; now: Date }) {
                     name={client.name}
                     contactId={client.clientId}
                     contactType={sample ? undefined : "buyer"}
-                    className="body-sm truncate font-semibold text-ink hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    className="body-sm font-semibold wrap-anywhere text-ink hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 />
-                <p className="body-sm truncate text-ink-muted">
-                    {label} · {status}
+                <p className="body-sm wrap-anywhere text-ink-muted">{label}</p>
+                <p
+                    className={cn(
+                        "body-xs font-medium",
+                        visit.needsUpdate ? "text-urgent" : "text-ink-muted",
+                    )}
+                >
+                    {status}
                 </p>
             </div>
             <Button
                 variant="ghost"
                 size="sm"
-                className="shrink-0"
+                className={styles.visitRowAction}
                 aria-label={`Open ${client.name}'s deal`}
                 nativeButton={sample}
                 disabled={sample}
                 render={sample ? undefined : <Link href={brokerPipelineDealHref(client.id)} />}
             >
-                Open
+                Open deal
                 <ArrowRight aria-hidden />
             </Button>
         </li>
@@ -114,24 +120,38 @@ export function AnalyticsVisits({
         <AnalyticsCard
             title="Site visits"
             titleId="analytics-visits-heading"
-            description="Bookings and the latest visit updates"
+            description="Upcoming visits and outcomes to record."
             className={className}
         >
             <dl className={styles.visitMetrics}>
                 <div>
-                    <dt className="body-xs text-ink-muted">Total visits</dt>
-                    <dd className="h3 text-ink tabular-nums">{report.visits.total}</dd>
-                </div>
-                <div>
-                    <dt className="body-xs text-ink-muted">Upcoming</dt>
-                    <dd className="h3 text-ink tabular-nums">{report.visits.upcoming}</dd>
-                </div>
-                <div>
-                    <dt className="body-xs text-ink-muted">Needs update</dt>
+                    <dt className="body-sm text-ink-muted">Total visits</dt>
                     <dd
                         className={cn(
                             "h3 tabular-nums",
-                            needsUpdate > 0 ? "text-urgent" : "text-ink",
+                            report.visits.total > 0 ? "text-ink" : "text-ink-subtle",
+                        )}
+                    >
+                        {report.visits.total}
+                    </dd>
+                </div>
+                <div>
+                    <dt className="body-sm text-ink-muted">Upcoming</dt>
+                    <dd
+                        className={cn(
+                            "h3 tabular-nums",
+                            report.visits.upcoming > 0 ? "text-ink" : "text-ink-subtle",
+                        )}
+                    >
+                        {report.visits.upcoming}
+                    </dd>
+                </div>
+                <div>
+                    <dt className="body-sm text-ink-muted">Outcome needed</dt>
+                    <dd
+                        className={cn(
+                            "h3 tabular-nums",
+                            needsUpdate > 0 ? "text-urgent" : "text-ink-subtle",
                         )}
                     >
                         {needsUpdate}
@@ -139,13 +159,15 @@ export function AnalyticsVisits({
                 </div>
             </dl>
             {report.visits.total > 0 ? (
-                <div className="flex flex-col gap-2 border-bs border-border-warm pbs-4">
-                    <p className="body-sm text-ink-muted">
-                        <strong className="font-semibold text-ink">
-                            {report.visits.clientsVisited} of {report.counts.total}
-                        </strong>{" "}
-                        clients booked a visit
-                        <span className="float-end font-semibold text-brand tabular-nums">
+                <div className="flex flex-col gap-2">
+                    <p className={cn("body-sm text-ink-muted", styles.visitReach)}>
+                        <span>
+                            <strong className="font-semibold text-ink">
+                                {report.visits.clientsVisited} of {report.counts.total}
+                            </strong>{" "}
+                            clients booked a visit
+                        </span>
+                        <span className="font-semibold text-brand tabular-nums">
                             {visitedPercent}%
                         </span>
                     </p>
@@ -163,7 +185,7 @@ export function AnalyticsVisits({
 
             {visitRows.length > 0 ? (
                 <div className="flex flex-col gap-2 border-bs border-border-warm pbs-4">
-                    <h3 className="body-sm font-semibold text-ink">Next and latest visits</h3>
+                    <h3 className="body-sm font-semibold text-ink">Upcoming and recent visits</h3>
                     <ul className="flex flex-col divide-y divide-border-warm">
                         {visitRows.map((client) => (
                             <VisitRow key={client.id} client={client} now={now} />
@@ -171,13 +193,33 @@ export function AnalyticsVisits({
                     </ul>
                 </div>
             ) : (
-                <div className={styles.quietState}>
-                    <CalendarCheck aria-hidden className="block-5 inline-5" />
-                    <div className="flex flex-col gap-1">
-                        <p className="body-sm font-medium text-ink">No visits booked yet</p>
+                <div className={styles.visitEmpty}>
+                    <span className={styles.visitEmptyIcon}>
+                        <CalendarCheck aria-hidden className="block-5 inline-5" />
+                    </span>
+                    <div className={styles.visitEmptyCopy}>
+                        <h3 className="body-sm font-semibold text-ink">
+                            {report.visits.total > 0
+                                ? "No appointment details available"
+                                : "Book the first site visit"}
+                        </h3>
                         <p className="body-sm text-ink-muted">
-                            Schedule a visit from a client’s deal to see it here.
+                            {report.visits.total > 0
+                                ? "Visits are recorded, but their dates and outcomes aren’t available here."
+                                : "Choose a client below, then open their deal to schedule a visit."}
                         </p>
+                        {report.visits.total === 0 && report.counts.total > 0 && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                nativeButton={false}
+                                render={<a href="#analytics-clients-heading" />}
+                                className="mbs-2 self-start"
+                            >
+                                Choose a client
+                                <ArrowRight aria-hidden />
+                            </Button>
+                        )}
                     </div>
                 </div>
             )}

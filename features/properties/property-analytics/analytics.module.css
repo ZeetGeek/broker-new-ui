@@ -6,25 +6,16 @@
     padding-block-end: 1.5rem;
 }
 
-.heading {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem 1.5rem;
-}
-
-.metadata {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-    color: var(--color-ink-muted);
-}
-
-.metadata > span {
+.metadataItem {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
+    color: var(--color-ink-muted);
+    font-size: calc(0.75rem / var(--layout-font-scale));
+    line-height: 1.5;
+}
+.metadataItem > svg {
+    flex-shrink: 0;
 }
 
 .stats {
@@ -98,20 +89,102 @@
 
 .journeyRows {
     display: grid;
-    gap: 1.125rem;
+    gap: 1.25rem;
 }
 
 .journeyRow {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: baseline;
+    align-items: center;
     gap: 0.5rem 1rem;
+}
+
+.journeyLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+
+.journeyDot {
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+}
+
+.journeyMetrics {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.journeyValue {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    min-inline-size: 0;
+    max-inline-size: 14rem;
+    padding: 0.125rem 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-brand-text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+button.journeyValue:hover,
+.journeyValue[data-popup-open] {
+    background: transparent;
+    color: var(--color-brand-text);
+}
+.journeyClientAvatars {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding-inline-start: 0.125rem;
+}
+.journeyClientAvatars > span + span {
+    margin-inline-start: -0.375rem;
+}
+.journeyClientText {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+button.journeyValue:hover .journeyClientText,
+.journeyValue[data-popup-open] .journeyClientText {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+}
+.journeyEmpty {
+    color: var(--color-ink-muted);
+}
+
+@media (max-width: 639px) {
+    .journeyValue {
+        max-inline-size: 9rem;
+    }
+    .journeyMetrics {
+        gap: 0.5rem;
+    }
+}
+
+.journeyShare {
+    inline-size: 4.5ch;
+    flex-shrink: 0;
+    color: var(--color-ink-muted);
+    text-align: end;
 }
 
 .journeyTrack {
     grid-column: 1 / -1;
     overflow: hidden;
-    block-size: 0.625rem;
+    block-size: 0.375rem;
     border-radius: 999px;
     background: var(--color-surface-muted);
 }
@@ -120,11 +193,19 @@
     display: block;
     block-size: 100%;
     border-radius: inherit;
-    background: var(--color-brand);
 }
 
-.journeyRow:first-child .journeyFill {
-    background: var(--color-success-mid);
+.stageDistribution {
+    display: flex;
+    gap: 0.25rem;
+    overflow: hidden;
+    block-size: 0.375rem;
+    border-radius: 999px;
+}
+
+.stageDistribution > span {
+    flex-basis: 0;
+    border-radius: inherit;
 }
 
 .stageSection {
@@ -136,14 +217,21 @@
 }
 
 .stageLegend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.25rem;
+    display: grid;
+    gap: 0.75rem;
 }
 .stageLegend > div {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.5rem;
+    min-inline-size: 0;
+}
+.stageLegend dt {
+    overflow-wrap: anywhere;
+}
+.stageLegend dd {
+    text-align: end;
 }
 
 .commission {
@@ -152,32 +240,120 @@
     gap: 1.25rem;
     padding: 1.25rem;
     border-radius: var(--radius-card);
-    background: var(--color-brand);
+    background: linear-gradient(to bottom right, #1b7a5a, #16664d);
     color: var(--color-surface);
     box-shadow: var(--shadow-sm);
 }
 
-.commissionFooter {
+.commissionEstimate {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-inline-size: 0;
+}
+.commissionBasis {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem 2rem;
+    align-items: baseline;
+    gap: 0.25rem 0.5rem;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+.commissionFooter {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
     padding-block-start: 1rem;
     border-block-start: 1px solid rgb(255 255 255 / 22%);
+}
+.commissionNote {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-block-start: 0.25rem;
 }
 
 .visitMetrics {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem;
+    gap: 1rem;
+    padding-block-end: 1rem;
+    border-block-end: 1px solid var(--color-border-warm);
 }
 .visitMetrics > div {
     display: flex;
-    flex-direction: column-reverse;
-    gap: 0.25rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-inline-size: 0;
 }
-.visitMetrics > div + div {
-    padding-inline-start: 0.75rem;
-    border-inline-start: 1px solid var(--color-border-warm);
+.visitMetrics dt,
+.visitMetrics dd {
+    overflow-wrap: anywhere;
+}
+.visitReach {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+}
+.visitReach > span:last-child {
+    flex-shrink: 0;
+}
+.visitEmpty {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+.visitEmptyIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    flex-shrink: 0;
+    border-radius: var(--radius-inner);
+    background: var(--color-surface-muted);
+    color: var(--color-ink-muted);
+}
+.visitEmptyCopy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-inline-size: 0;
+    max-inline-size: 48ch;
+    overflow-wrap: anywhere;
+}
+.visitRow {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding-block: 0.75rem;
+}
+.visitRow:first-child {
+    padding-block-start: 0;
+}
+.visitRow:last-child {
+    padding-block-end: 0;
+}
+.visitRowAction {
+    justify-self: end;
+}
+@media (max-width: 479px) {
+    .visitMetrics {
+        gap: 0.75rem;
+    }
+    .visitMetrics dt {
+        min-block-size: 3em;
+    }
+    .visitRow {
+        grid-template-columns: 2.5rem minmax(0, 1fr);
+        row-gap: 0.5rem;
+    }
+    .visitRowAction {
+        grid-column: 2;
+        justify-self: start;
+    }
 }
 
 .quietState {
@@ -196,18 +372,38 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding-block: 1.25rem;
+    min-inline-size: 0;
 }
-.clientRow:first-child {
-    padding-block-start: 0;
+.clientSectionHeading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    scroll-margin-block-start: calc(var(--portal-sticky-offset) + 1rem);
 }
-.clientRow:last-child {
-    padding-block-end: 0;
+.clientCount {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 1.5rem;
+    block-size: 1.5rem;
+    padding-inline: 0.375rem;
+    border-radius: var(--radius-inner);
+    background: var(--color-surface-muted);
+    color: var(--color-ink-muted);
+    font-weight: 600;
 }
 .clientIdentity {
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
+    min-inline-size: 0;
+}
+.clientHeading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 0.75rem;
     min-inline-size: 0;
 }
 .clientFacts {
@@ -223,10 +419,14 @@
     overflow-wrap: anywhere;
 }
 .clientActions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
+    padding-block-start: 1rem;
+    border-block-start: 1px solid var(--color-border-warm);
+}
+.clientDealAction {
+    grid-column: 1 / -1;
 }
 
 @media (min-width: 640px) {
@@ -238,6 +438,13 @@
     }
     .clientFacts {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .clientActions {
+        grid-template-columns: auto auto minmax(0, 1fr);
+    }
+    .clientDealAction {
+        grid-column: -2 / -1;
+        justify-self: end;
     }
 }
 

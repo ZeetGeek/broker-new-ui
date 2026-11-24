@@ -52,7 +52,7 @@ export function PropertyAnalyticsContent({
     return <LivePropertyAnalyticsContent propertyId={propertyId} listing={listing} />;
 }
 
-function LivePropertyAnalyticsContent({
+function usePropertyAnalyticsReport({
     propertyId,
     listing,
 }: {
@@ -66,7 +66,7 @@ function LivePropertyAnalyticsContent({
             PREVIEW_PROPERTY_ANALYTICS ? "preview" : "live",
         ],
         queryFn: ({ signal }) => propertyAnalyticsApi.property(propertyId, signal),
-        enabled: Boolean(propertyId),
+        enabled: Boolean(propertyId) && !PREVIEW_PROPERTY_ANALYTICS && !USE_MOCK_DATA,
         // Arriving from a card should show a visit or offer logged a moment ago.
         staleTime: 0,
     });
@@ -104,6 +104,45 @@ function LivePropertyAnalyticsContent({
     const fetchedAt = query.dataUpdatedAt;
     const now = useMemo(() => new Date(fetchedAt), [fetchedAt]);
     const report = useMemo(() => (data ? buildPropertyReport(data, now) : null), [data, now]);
+
+    return { query, data, report, now };
+}
+
+/** Header and report share the same query so dates stay in sync. */
+export function PropertyAnalyticsMetadata({
+    propertyId,
+    listing,
+}: {
+    propertyId: string;
+    listing: MyListingItem;
+}) {
+    const { report, now } = usePropertyAnalyticsReport({ propertyId, listing });
+    const daysListed = report?.daysListed ?? listing.listedDaysAgo;
+
+    return (
+        <>
+            <span className={styles.metadataItem}>
+                <Clock aria-hidden className="block-4 inline-4" />
+                {plural(daysListed, "day")} on the market
+            </span>
+            {report?.lastUpdateAt ? (
+                <span className={styles.metadataItem}>
+                    <Info aria-hidden className="block-4 inline-4" />
+                    Updated {agoLabel(report.lastUpdateAt, now)}
+                </span>
+            ) : null}
+        </>
+    );
+}
+
+function LivePropertyAnalyticsContent({
+    propertyId,
+    listing,
+}: {
+    propertyId: string;
+    listing: MyListingItem;
+}) {
+    const { query, data, report, now } = usePropertyAnalyticsReport({ propertyId, listing });
 
     if (query.isPending) return <AnalyticsSkeleton />;
 
@@ -192,26 +231,6 @@ function LivePropertyAnalyticsContent({
                 </>
             ) : (
                 <>
-                    <header className={styles.heading}>
-                        <div className="flex flex-col gap-1.5 min-inline-0">
-                            <h2 className="h3 text-ink">Property performance</h2>
-                            <p className="body-sm wrap-anywhere text-ink-muted">{propertyTitle}</p>
-                        </div>
-                        <div className={styles.metadata}>
-                            {report.daysListed != null ? (
-                                <span className="body-sm">
-                                    <Clock aria-hidden className="block-4 inline-4" />
-                                    {plural(report.daysListed, "day")} on the market
-                                </span>
-                            ) : null}
-                            {report.lastUpdateAt ? (
-                                <span className="body-sm">
-                                    <Info aria-hidden className="block-4 inline-4" />
-                                    Updated {agoLabel(report.lastUpdateAt, now)}
-                                </span>
-                            ) : null}
-                        </div>
-                    </header>
                     <div className={styles.workspace}>
                         <div className={styles.main}>
                             <AnalyticsStatStrip

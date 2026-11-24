@@ -7,6 +7,8 @@ import { Bookmark } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { FEATURE_SAVED_PROPERTIES } from "@/config";
+
 export type PropertySaveButtonProps = {
     isSaved: boolean;
     /** Listing title, used so screen readers know which property is being saved. */
@@ -24,6 +26,8 @@ export function PropertySaveButton({
     iconOnly = false,
     className,
 }: PropertySaveButtonProps) {
+    if (!FEATURE_SAVED_PROPERTIES) return null;
+
     const ActionButton = iconOnly ? IconButton : Button;
     return (
         <Tooltip>

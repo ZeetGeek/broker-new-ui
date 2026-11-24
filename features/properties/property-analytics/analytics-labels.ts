@@ -1,6 +1,7 @@
 import { formatRelativePast } from "@/lib/format/date";
 import { formatPrice, formatRent } from "@/lib/format/price";
 
+import { stageTitle } from "@/features/pipeline/stage-history";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { type DealStatus, isLiveStage } from "@/features/pipeline/types";
 import type {
@@ -62,11 +63,11 @@ export function visitStatusLabel(status: string | null): string | null {
 export function funnelStepLabel(key: FunnelStep["key"], closedWord: string): string {
     switch (key) {
         case "added":
-            return "Clients added";
+            return DEAL_STAGE_META.new.label;
         case "visited":
-            return "Booked a visit";
+            return DEAL_STAGE_META.visit.label;
         case "offered":
-            return "Made an offer";
+            return stageTitle("offer_made");
         case "won":
             return closedWord;
     }

@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { cn } from "@/lib/utils";
 
 import { ContactName } from "@/components/shared/contact-name";
@@ -22,28 +24,46 @@ function stageChipClass(stage?: string | null) {
 export function ClientPipelineInfo({
     clients,
     className,
+    children,
+    triggerLabel = "View client pipeline stages",
+    heading = "Client pipeline stages",
+    openOnHover = false,
+    enabled = true,
+    emptyMessage = "No clients linked yet.",
 }: {
-    clients: Array<{ id: string; name: string; stage?: string | null }>;
+    clients: Array<{ id: string; contactId?: string | null; name: string; stage?: string | null }>;
     className?: string;
+    children?: ReactNode;
+    triggerLabel?: string;
+    heading?: string;
+    openOnHover?: boolean;
+    enabled?: boolean;
+    emptyMessage?: string;
 }) {
+    if (!enabled) {
+        return <span className={className}>{children}</span>;
+    }
+
     return (
         <Popover>
             <PopoverTrigger
-                aria-label="View client pipeline stages"
+                aria-label={triggerLabel}
+                openOnHover={openOnHover}
+                closeDelay={150}
                 onClick={(event) => event.stopPropagation()}
                 className={cn(
                     "touch-target z-10 flex items-center justify-center rounded-control text-brand-text transition-colors duration-160 hover:bg-brand-soft/30 focus-visible:outline-2 focus-visible:outline-ring",
                     className,
                 )}
             >
-                <List aria-hidden className="block-4 inline-4" />
+                {children ?? <List aria-hidden className="block-4 inline-4" />}
             </PopoverTrigger>
             <PopoverContent
                 align="start"
-                className="inline-60 max-inline-[calc(100vw-2rem)]"
+                className="inline-max max-inline-[calc(100dvw-2rem)]"
                 onClick={(event) => event.stopPropagation()}
             >
-                <h3 className="body-sm font-semibold text-ink">Client pipeline stages</h3>
+                <h3 className="body-sm font-semibold text-ink">{heading}</h3>
                 {clients.length ? (
                     <ul className="flex flex-col gap-3 overflow-y-auto max-block-72">
                         {clients.map((client) => (
@@ -51,7 +71,11 @@ export function ClientPipelineInfo({
                                 <UserAvatar name={client.name} size="2xs" />
                                 <ContactName
                                     name={client.name}
-                                    contactId={client.id}
+                                    contactId={
+                                        client.contactId === undefined
+                                            ? client.id
+                                            : client.contactId
+                                    }
                                     contactType="buyer"
                                     className="body-sm flex-1 wrap-anywhere min-inline-0"
                                 />
@@ -68,7 +92,7 @@ export function ClientPipelineInfo({
                         ))}
                     </ul>
                 ) : (
-                    <p className="body-sm text-ink-muted">No clients linked yet.</p>
+                    <p className="body-sm text-ink-muted">{emptyMessage}</p>
                 )}
             </PopoverContent>
         </Popover>

@@ -48,6 +48,12 @@ const PropertyAnalyticsContent = dynamic(
     { loading: () => <AnalyticsSkeleton /> },
 );
 
+const PropertyAnalyticsMetadata = dynamic(() =>
+    import("../property-analytics/property-analytics-content").then(
+        (module) => module.PropertyAnalyticsMetadata,
+    ),
+);
+
 const PROPERTY_TABS = [
     { value: "info", label: "Property info", id: "property-info-tab" },
     { value: "analytics", label: "Analytics", id: "property-analytics-tab" },
@@ -159,6 +165,11 @@ function OwnedPropertyDetail({
                     ) : undefined
                 }
                 panelLabelId={portal === "broker" ? `property-${activeTab}-tab` : undefined}
+                headerMetadata={
+                    activeTab === "analytics" ? (
+                        <PropertyAnalyticsMetadata propertyId={item.id} listing={item} />
+                    ) : undefined
+                }
                 analytics={
                     activeTab === "analytics" ? (
                         <PropertyAnalyticsContent propertyId={item.id} listing={item} />
