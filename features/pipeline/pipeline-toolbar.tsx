@@ -80,7 +80,8 @@ export function PipelineToolbar({
                     placeholder="Search deals"
                     aria-label="Search deals"
                     searchHelp={CRM_SEARCH_HELP.deals}
-                    debounceMs={0}
+                    // Searched on the server, so wait for a pause in typing.
+                    debounceMs={500}
                     value={filters.q}
                     onChange={(q) => onPatch({ q })}
                     className="text-base! min-block-(--touch-target-min)!"
@@ -126,7 +127,7 @@ export function PipelineToolbar({
                             fullWidth
                             searchHelp={CRM_SEARCH_HELP.deals}
                             aria-label="Search your deals"
-                            debounceMs={0}
+                            debounceMs={500}
                             value={filters.q}
                             onChange={(q) => onPatch({ q })}
                         />
