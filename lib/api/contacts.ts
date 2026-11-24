@@ -1,7 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
 import {
     clientsApi,
-    enrichAttachedPropertyCovers,
     listClientsPageWithLeadSummary,
     listClientsWithLeadSummary,
     type NewBuyerInput,
@@ -13,7 +12,7 @@ import {
 } from "@/lib/api/exclusive-owners";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { InfinitePage } from "@/lib/pagination/infinite-page";
-import { matchesClientSearch, matchesOwnerSearch } from "@/lib/search/crm-search";
+import { matchesOwnerSearch } from "@/lib/search/crm-search";
 import { clientPhoneForStorage, parseClientMobile } from "@/lib/validation/client-phone";
 import type { ExclusiveOwnerFormValues } from "@/lib/validation/exclusive-owner";
 
@@ -554,10 +553,6 @@ export function sortBuyerRows(rows: BuyerRow[], sort: ContactsFilters["sort"]): 
 }
 
 export const contactsApi = {
-    async buyerSearchSource(signal?: AbortSignal): Promise<BuyerRow[]> {
-        return (await listClientsWithLeadSummary({ signal })).map(toBuyerRow);
-    },
-
     async ownerSearchSource(filters: ContactsFilters, signal?: AbortSignal): Promise<OwnerRow[]> {
         const owners: OwnerRow[] = [];
         let page = 1;
@@ -616,22 +611,12 @@ export const contactsApi = {
         filters: ContactsFilters,
         cursor: string | null,
         signal?: AbortSignal,
-        searchSource?: () => Promise<BuyerRow[]>,
     ): Promise<InfinitePage<BuyerRow>> {
         const page = cursor ? Number(cursor) || 1 : 1;
-        if (filters.q.trim()) {
-            const source = await (searchSource?.() ?? contactsApi.buyerSearchSource(signal));
-            signal?.throwIfAborted();
-            const matched = sortBuyerRows(
-                source.filter((row) => matchesClientSearch(row, filters.q)),
-                filters.sort,
-            );
-            const result = paginateItems(matched, page, 20);
-            return { ...result, items: await enrichAttachedPropertyCovers(result.items, signal) };
-        }
         // Buyers are broker Client contacts — `GET /clients` (with lead summary).
         // There is no `/contacts/buyers` route on the API.
         const result = await listClientsPageWithLeadSummary({
+            // Searched on the server: each word may match a different field.
             search: filters.q,
             sort: filters.sort,
             page,

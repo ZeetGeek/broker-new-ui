@@ -166,14 +166,7 @@ export function ContactsPage({
 
     const buyersQuery = useInfiniteItems({
         queryKey: ["contacts", "buyers", filters.q, filters.sort, revision],
-        queryFn: ({ cursor, signal }) =>
-            contactsApi.listBuyersPage(filters, cursor, signal, () =>
-                queryClient.fetchQuery({
-                    queryKey: ["contacts", "search-source", "buyers", userId, revision],
-                    queryFn: ({ signal }) => contactsApi.buyerSearchSource(signal),
-                    staleTime: 30_000,
-                }),
-            ),
+        queryFn: ({ cursor, signal }) => contactsApi.listBuyersPage(filters, cursor, signal),
         enabled: filters.tab === "buyers",
     });
     const ownersQuery = useInfiniteItems({
