@@ -81,6 +81,48 @@ const eslintConfig = defineConfig([
         },
     },
     {
+        name: "yesbroker/shared-modals",
+        files: ["app/**/*.{ts,tsx}", "features/**/*.{ts,tsx}", "components/shared/**/*.{ts,tsx}"],
+        ignores: [
+            "components/shared/app-modal.tsx",
+            "components/shared/app-modal-header.tsx",
+            "components/shared/app-modal-footer.tsx",
+            "features/chat/chat-lightbox.tsx",
+            "features/properties/property-detail/property-lightbox.tsx",
+        ],
+        rules: {
+            "no-restricted-syntax": [
+                "error",
+                {
+                    selector:
+                        "CallExpression[callee.object.name='window'][callee.property.name=/^(alert|confirm|prompt)$/]",
+                    message: "Use AppModal or ConfirmDialog instead of browser-native dialogs.",
+                },
+                {
+                    selector:
+                        "JSXOpeningElement[name.name=/^(AppModal|TaskPanel|VisitOverlay)$/] > JSXAttribute[name.name='footer'] > JSXExpressionContainer > JSXElement > JSXOpeningElement[name.name=/^(div|footer)$/]",
+                    message:
+                        "Use AppModalFooter for dialog footer content instead of an ad hoc container.",
+                },
+            ],
+            "no-restricted-imports": [
+                "error",
+                {
+                    paths: [
+                        "@/components/ui/dialog",
+                        "@base-ui/react/dialog",
+                        "@base-ui/react/alert-dialog",
+                        "@base-ui/react/drawer",
+                    ].map((name) => ({
+                        name,
+                        message:
+                            "Use the shared AppModal (or ConfirmDialog) for product modals. Photo lightboxes are exempt.",
+                    })),
+                },
+            ],
+        },
+    },
+    {
         name: "yesbroker/tailwind",
         files: ["**/*.{js,jsx,ts,tsx}"],
         plugins: {

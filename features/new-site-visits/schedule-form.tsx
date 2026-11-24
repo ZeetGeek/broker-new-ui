@@ -7,6 +7,7 @@ import { formatPersonName } from "@/lib/format/person-name";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { formatVisitDate, formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import { revealDrawerSections } from "@/components/shared/drawer-section";
@@ -197,20 +198,18 @@ export function ScheduleForm({
             dirty={dirty}
             error={saveError}
             footer={(close) => (
-                <>
-                    <Button variant="outline" disabled={busy} onClick={close}>
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="accent"
-                        type="submit"
-                        form={formId}
-                        disabled={busy || noLeads}
-                        loading={busy}
-                    >
-                        {busy ? "Saving…" : visit ? "Save new time" : "Schedule visit"}
-                    </Button>
-                </>
+                <AppModalFooter
+                    secondaryLabel="Cancel"
+                    secondaryVariant="outline"
+                    secondaryDisabled={busy}
+                    onSecondary={close}
+                    primaryLabel={busy ? "Saving…" : visit ? "Save new time" : "Schedule visit"}
+                    primaryVariant="accent"
+                    primaryType="submit"
+                    primaryFormId={formId}
+                    primaryDisabled={busy || noLeads}
+                    primaryLoading={busy}
+                />
             )}
         >
             <form id={formId} onSubmit={submit} noValidate>

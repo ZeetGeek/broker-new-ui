@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { type BrokerProfile, representativeApi } from "@/lib/api/representative";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { Send, ShieldCheck } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 
 import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import {
@@ -79,21 +79,23 @@ export function BrokerProfileDialog({
             title={<span className="capitalize">{name}</span>}
             description={[profile.orgName, brokerLocationLine(profile)].filter(Boolean).join(" · ")}
             footer={
-                <div className="flex justify-end gap-2">
-                    <Button variant="ghost" onClick={() => onOpenChange(false)}>
-                        Close
-                    </Button>
-                    <Button
-                        variant="accent"
-                        onClick={() => {
-                            if (closeOnInvite) onOpenChange(false);
-                            onInvite(profile);
-                        }}
-                    >
-                        <Send aria-hidden strokeWidth={1.75} />
-                        Invite
-                    </Button>
-                </div>
+                <AppModalFooter
+                    className="flex justify-end gap-2"
+                    secondaryLabel="Close"
+                    secondaryVariant="ghost"
+                    onSecondary={() => onOpenChange(false)}
+                    primaryLabel={
+                        <>
+                            <Send aria-hidden strokeWidth={1.75} />
+                            Invite
+                        </>
+                    }
+                    primaryVariant="accent"
+                    onPrimary={() => {
+                        if (closeOnInvite) onOpenChange(false);
+                        onInvite(profile);
+                    }}
+                />
             }
         >
             <div className="flex flex-col gap-5 pbe-2">

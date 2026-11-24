@@ -3,9 +3,9 @@
 import { useCallback, useId, useState } from "react";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { Home, User } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
-import { Button } from "@/components/ui/button";
 
 import { AddBuyerModal } from "@/features/contacts/add-buyer-modal";
 import { AddOwnerModal } from "@/features/contacts/add-owner-modal";
@@ -135,20 +135,18 @@ export function AddContactModal({
                 title="Discard unsaved changes?"
                 description="Unsaved details in both tabs will be lost if you leave now."
                 footer={
-                    <div className="flex flex-wrap justify-end gap-2">
-                        <Button variant="ghost" onClick={() => setDiscardOpen(false)}>
-                            Keep editing
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={() => {
-                                setDiscardOpen(false);
-                                onOpenChange(false);
-                            }}
-                        >
-                            Discard changes
-                        </Button>
-                    </div>
+                    <AppModalFooter
+                        className="flex flex-wrap justify-end gap-2"
+                        secondaryLabel="Keep editing"
+                        secondaryVariant="ghost"
+                        onSecondary={() => setDiscardOpen(false)}
+                        primaryLabel="Discard changes"
+                        primaryVariant="destructive"
+                        onPrimary={() => {
+                            setDiscardOpen(false);
+                            onOpenChange(false);
+                        }}
+                    />
                 }
             >
                 <p className="body text-ink-muted">You can keep editing or discard and close.</p>

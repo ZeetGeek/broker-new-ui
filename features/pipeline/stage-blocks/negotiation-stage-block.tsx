@@ -1,10 +1,11 @@
-import { formatPrice } from "@/lib/format/price";
+import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
-import { CircleCheck, CircleX, Clock, Handshake } from "@/components/shared/icons";
+import { CircleCheck, CircleX, Clock, HandCoins } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
 import type { DealItem } from "@/features/pipeline/types";
 
@@ -41,13 +42,13 @@ export function NegotiationStageBlock({
         <div
             className={cn(
                 styles.negotiationBlock,
-                "flex items-center gap-2.5 rounded-inner border px-3 py-1 min-block-10",
-                rejected
+                "flex items-center gap-2.5 rounded-inner border p-2.5 min-block-10",
+                FEATURE_PLATFORM_OWNER && rejected
                     ? "border-danger/15 bg-danger-soft/40 text-danger"
                     : "border-stage-4-soft/70 bg-stage-4-soft/15 text-brand-text",
             )}
         >
-            <Handshake aria-hidden className="shrink-0 block-4.5 inline-4.5" />
+            <HandCoins aria-hidden strokeWidth={1.75} className="shrink-0 block-4.5 inline-4.5" />
             {offer == null ? (
                 <p className="body-xs flex-1 font-medium text-ink min-inline-0">No offer yet</p>
             ) : (
@@ -56,30 +57,36 @@ export function NegotiationStageBlock({
                         render={
                             <span
                                 tabIndex={0}
-                                className="body-xs flex-1 truncate rounded-sm font-semibold text-ink min-inline-0 focus-visible:outline-2 focus-visible:outline-ring"
+                                className="body-xs flex-1 rounded-sm font-semibold text-ink min-inline-0 focus-visible:outline-2 focus-visible:outline-ring"
                             />
                         }
                     >
-                        Offer <span className="tabular">{formatPrice(offer)}</span>
+                        <span className="block font-normal text-ink-muted">
+                            {FEATURE_PLATFORM_OWNER ? "Offer" : "Recorded offer"}
+                        </span>
+                        <span className="body-sm tabular wrap-anywhere">
+                            {deal.property.isRent ? formatRent(offer) : formatPrice(offer)}
+                        </span>
                     </TooltipTrigger>
                     <TooltipContent>{offerGap(deal.property.amountInr, offer)}</TooltipContent>
                 </Tooltip>
             )}
-            {offer == null && onMakeOffer ? (
+            {onMakeOffer && (!FEATURE_PLATFORM_OWNER || offer == null) ? (
                 <Button
-                    variant="link"
+                    variant="outline"
                     size="sm"
                     type="button"
                     onClick={(event) => {
                         event.stopPropagation();
                         onMakeOffer();
                     }}
-                    className="px-0 text-xs text-brand-text"
+                    className={cn("shrink-0 text-xs", styles.scheduleAction)}
+                    aria-label={offer == null ? "Record offer" : "Update recorded offer"}
                 >
-                    Add offer
+                    {offer == null ? "Record offer" : "Update"}
                 </Button>
             ) : null}
-            {offer != null && status ? (
+            {FEATURE_PLATFORM_OWNER && offer != null && status ? (
                 <span
                     className={cn("body-xs flex shrink-0 items-center gap-1.5", styles.offerStatus)}
                     title={status}

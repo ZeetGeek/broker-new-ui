@@ -1,7 +1,7 @@
 "use client";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { Button } from "@/components/ui/button";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 
 export type PropertyDeleteDialogProps = {
     permanent?: boolean;
@@ -35,28 +35,21 @@ export function PropertyDeleteDialog({
                     : `"${title}" will move to Deleted.`
             }
             footer={
-                <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="default"
-                        disabled={busy}
-                        onClick={() => onOpenChange(false)}
-                        className="inline-auto"
-                    >
-                        Keep it
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="destructive"
-                        size="default"
-                        disabled={busy}
-                        onClick={onConfirm}
-                        className="inline-auto"
-                    >
-                        {busy ? "Removing…" : permanent ? "Delete permanently" : "Delete property"}
-                    </Button>
-                </div>
+                <AppModalFooter
+                    className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full"
+                    secondaryLabel="Keep it"
+                    secondaryVariant="ghost"
+                    secondaryDisabled={busy}
+                    onSecondary={() => onOpenChange(false)}
+                    primaryLabel={
+                        busy ? "Removing…" : permanent ? "Delete permanently" : "Delete property"
+                    }
+                    primaryType="button"
+                    primaryVariant="destructive"
+                    primarySize="default"
+                    primaryDisabled={busy}
+                    onPrimary={onConfirm}
+                />
             }
         >
             <p className="body text-ink-muted">

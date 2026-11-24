@@ -7,10 +7,10 @@ import { propertiesApi } from "@/lib/api/properties";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import { Info } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 const REASON_MAX = MAX_CHARS.markSoldReason;
@@ -79,25 +79,19 @@ export function MarkSoldDialog({
             title="Mark this property as sold?"
             description={propertyTitle}
             footer={
-                <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => handleOpenChange(false)}
-                    >
-                        Not yet
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="accent"
-                        disabled={busy}
-                        loading={busy}
-                        onClick={() => void confirm()}
-                    >
-                        Mark as sold
-                    </Button>
-                </div>
+                <AppModalFooter
+                    className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full"
+                    secondaryLabel="Not yet"
+                    secondaryVariant="ghost"
+                    secondaryDisabled={busy}
+                    onSecondary={() => handleOpenChange(false)}
+                    primaryLabel="Mark as sold"
+                    primaryType="button"
+                    primaryVariant="accent"
+                    primaryDisabled={busy}
+                    primaryLoading={busy}
+                    onPrimary={() => void confirm()}
+                />
             }
         >
             <div className="flex flex-col gap-4">

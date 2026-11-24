@@ -8,6 +8,7 @@ import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { ContactName } from "@/components/shared/contact-name";
 import {
     CalendarClock,
@@ -88,6 +89,35 @@ export function VisitDetailModal({
             size="lg"
             title={`${visit.property.configLabel} in ${visit.property.locality}`}
             description={VISIT_STATUS_HINT[visit.status][viewer]}
+            footer={
+                (actions.primary ||
+                    actions.secondary.length > 0 ||
+                    actions.overflow.length > 0) && (
+                    <AppModalFooter className="flex flex-wrap gap-2 border-bs border-border-warm pbs-4">
+                        {actions.primary ? (
+                            <Button
+                                size="lg"
+                                loading={isBusy}
+                                onClick={() => onAction(visit.id, actions.primary!)}
+                            >
+                                {visitActionLabel(actions.primary, viewer)}
+                            </Button>
+                        ) : null}
+
+                        {[...actions.secondary, ...actions.overflow].map((action) => (
+                            <Button
+                                key={action}
+                                size="lg"
+                                variant={isDestructiveAction(action) ? "destructive" : "outline"}
+                                disabled={isBusy}
+                                onClick={() => onAction(visit.id, action)}
+                            >
+                                {visitActionLabel(action, viewer)}
+                            </Button>
+                        ))}
+                    </AppModalFooter>
+                )
+            }
         >
             <div className="flex flex-col gap-5">
                 <div className="flex items-start justify-between gap-3">
@@ -324,34 +354,6 @@ export function VisitDetailModal({
                         }}
                     />
                 </div>
-
-                {(actions.primary ||
-                    actions.secondary.length > 0 ||
-                    actions.overflow.length > 0) && (
-                    <div className="flex flex-wrap gap-2 border-bs border-border-warm pbs-4">
-                        {actions.primary ? (
-                            <Button
-                                size="lg"
-                                loading={isBusy}
-                                onClick={() => onAction(visit.id, actions.primary!)}
-                            >
-                                {visitActionLabel(actions.primary, viewer)}
-                            </Button>
-                        ) : null}
-
-                        {[...actions.secondary, ...actions.overflow].map((action) => (
-                            <Button
-                                key={action}
-                                size="lg"
-                                variant={isDestructiveAction(action) ? "destructive" : "outline"}
-                                disabled={isBusy}
-                                onClick={() => onAction(visit.id, action)}
-                            >
-                                {visitActionLabel(action, viewer)}
-                            </Button>
-                        ))}
-                    </div>
-                )}
             </div>
         </AppModal>
     );

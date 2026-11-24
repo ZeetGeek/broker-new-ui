@@ -14,6 +14,8 @@ import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import toast from "@/components/shared/app-toast";
+import { EmptyState } from "@/components/shared/empty-state";
+import { AlertCircle } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { Button } from "@/components/ui/button";
 
@@ -160,10 +162,12 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         [refreshListings],
     );
 
-    const loading = !scopeReady || query.isPending;
+    const loading =
+        !scopeReady || query.isPending || (query.isFetching && !query.isFetchingNextPage);
     const inventoryTotal = summary?.total ?? 0;
     const isFirstRunEmpty =
         !loading &&
+        !query.isError &&
         !isDeletedView &&
         query.items.length === 0 &&
         !hasActiveFilters &&
@@ -189,7 +193,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                     resultTotal={query.total}
                     status={filters.status}
                     hasActiveFilters={hasActiveMyListingsFilters({ ...filters, sort: "newest" })}
-                    isLoading={loading || summaryQuery.isPending}
+                    isLoading={summaryQuery.isPending}
                     hasError={query.isError}
                 />
             </PortalSectionNav>
@@ -200,7 +204,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 onFiltersChange={setFilters}
                 summary={summary}
                 isLoading={summaryQuery.isPending}
-                isInitialLoading={loading}
+                isInitialLoading={!scopeReady && summaryQuery.isPending}
                 onAddProperty={isFirstRunEmpty ? undefined : () => setAddOpen(true)}
             />
 
@@ -208,17 +212,17 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 {loading ? (
                     <MyListingsResultsSkeleton portal={portal} />
                 ) : query.isError && query.items.length === 0 ? (
-                    <div
-                        role="alert"
-                        className="flex flex-col items-center gap-4 py-12 text-center"
+                    <EmptyState
+                        size="page"
+                        variant="error"
+                        icon={AlertCircle}
+                        heading="Your listings couldn’t be loaded"
+                        description="Check your connection and try again to see your properties."
                     >
-                        <p className="body-sm text-danger">
-                            Couldn&apos;t load your listings. Check your connection and try again.
-                        </p>
-                        <Button variant="outline" onClick={() => void query.refetch()}>
+                        <Button variant="accent" onClick={() => void query.refetch()}>
                             Try again
                         </Button>
-                    </div>
+                    </EmptyState>
                 ) : query.items.length === 0 ? (
                     <MyListingsEmpty
                         variant={emptyVariant}

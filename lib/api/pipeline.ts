@@ -7,6 +7,7 @@ import {
     type PropertyFilterRecord,
 } from "@/lib/properties/list-criteria";
 import { collectPeopleFilterOptions, matchesPeopleFilters } from "@/lib/properties/people-filters";
+import { matchesDealSearch } from "@/lib/search/crm-search";
 
 import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
 import {
@@ -422,37 +423,12 @@ function mapLeadToDetail(lead: ApiLead): DealDetail | null {
  * in Andheri. A phone typed with spaces ("98765 43210") matches on digits.
  */
 function matchesQuery(deal: DealItem, q: string): boolean {
-    const words = searchWords(q);
-    if (words.length === 0) return true;
-
-    // A whole phone number, however it was typed ("+91 98765-43210").
-    const phone = deal.buyer.phoneDigits;
-    if (phone && /^[\d\s()+-]+$/.test(q.trim())) {
-        const digits = digitsOnly(q);
-        const local = digits.length > 10 ? digits.slice(-10) : digits;
-        if (local.length >= 3 && phone.includes(local)) return true;
-    }
-
-    // Punctuation is ignored on both sides, so "Andheri West, Mumbai",
-    // "sector 62" and "Sector-62" all find a deal in Sector-62.
-    const text = ` ${searchWords(
-        [
-            deal.buyer.name,
-            deal.property.title,
-            deal.property.locality,
-            deal.property.city,
-            deal.owner.name === OWNER_PLACEHOLDER ? "" : deal.owner.name,
-        ].join(" "),
-    ).join(" ")} ${phone}`;
-    return words.every((word) => text.includes(word));
-}
-
-/** Lowercase words with punctuation dropped. */
-function searchWords(value: string): string[] {
-    return value
-        .toLowerCase()
-        .split(/[^\p{L}\p{N}]+/u)
-        .filter(Boolean);
+    return matchesDealSearch(
+        deal.owner.name === OWNER_PLACEHOLDER
+            ? { ...deal, owner: { ...deal.owner, name: "" } }
+            : deal,
+        q,
+    );
 }
 
 function sortDeals(items: DealItem[], sort: DealsFilters["sort"]): DealItem[] {

@@ -6,9 +6,9 @@ import { ApiError } from "@/lib/api/client";
 import { myListingsApi } from "@/lib/api/my-listings";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import toast from "@/components/shared/app-toast";
 import { Info } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 
 /**
  * Confirm putting a sold listing back on the market. Closed contacts stay
@@ -65,25 +65,19 @@ export function MarkAvailableDialog({
             title="Publish this property again?"
             description={propertyTitle}
             footer={
-                <div className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        disabled={busy}
-                        onClick={() => handleOpenChange(false)}
-                    >
-                        Keep sold
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="accent"
-                        disabled={busy}
-                        loading={busy}
-                        onClick={() => void confirm()}
-                    >
-                        Publish again
-                    </Button>
-                </div>
+                <AppModalFooter
+                    className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full"
+                    secondaryLabel="Keep sold"
+                    secondaryVariant="ghost"
+                    secondaryDisabled={busy}
+                    onSecondary={() => handleOpenChange(false)}
+                    primaryLabel="Publish again"
+                    primaryType="button"
+                    primaryVariant="accent"
+                    primaryDisabled={busy}
+                    primaryLoading={busy}
+                    onPrimary={() => void confirm()}
+                />
             }
         >
             <div className="flex gap-3 rounded-inner border border-border-warm bg-canvas p-3.5">

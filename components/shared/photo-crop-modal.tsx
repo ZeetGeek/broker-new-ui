@@ -10,10 +10,10 @@ import {
 } from "react";
 import ReactCrop, { centerCrop, makeAspectCrop, type PercentCrop } from "react-image-crop";
 
-import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { Check, RotateCcw } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogPopup } from "@/components/ui/dialog";
 
 import "react-image-crop/dist/ReactCrop.css";
 import styles from "./photo-crop-modal.module.css";
@@ -198,129 +198,129 @@ export function PhotoCropModal({
     }, [crop, loaded, open]);
 
     return (
-        <Dialog
+        <AppModal
             open={open}
             onOpenChange={(next) => {
                 if (!isCropping) onOpenChange(next);
             }}
-        >
-            <DialogPopup className={styles.modal} showCloseButton={false}>
-                <AppModalHeader
-                    title="Crop your photo"
-                    description="Move and resize the circle to frame your photo."
-                    closeDisabled={isCropping}
-                    descriptionClassName="body-sm text-ink-muted"
+            title="Crop your photo"
+            bodyClassName="p-0"
+            size="lg"
+            className={styles.modal}
+            description="Move and resize the circle to frame your photo."
+            closeDisabled={isCropping}
+            descriptionClassName="body-sm text-ink-muted"
+            footer={
+                <AppModalFooter
+                    className={styles.footer}
+                    secondaryLabel="Cancel"
+                    secondaryVariant="outline"
+                    secondaryDisabled={isCropping}
+                    onSecondary={handleCancel}
+                    primaryLabel={
+                        <>
+                            <Check aria-hidden />
+                            {isCropping ? "Preparing photo…" : "Use photo"}
+                        </>
+                    }
+                    primaryType="button"
+                    primaryVariant="accent"
+                    primarySize="default"
+                    primaryLoading={isCropping}
+                    primaryDisabled={
+                        isCropping || !loaded || imageFailed || !crop?.width || !crop?.height
+                    }
+                    onPrimary={() => void handleConfirm()}
                 />
-                <div className={styles.body}>
-                    <div className={styles.stage} aria-busy={!loaded && !imageFailed}>
-                        {!loaded && !imageFailed ? (
-                            <p role="status" className="body-sm text-ink-muted">
-                                Loading photo?
-                            </p>
-                        ) : null}
-                        {imageFailed ? (
-                            <p role="alert" className="body-sm text-danger">
-                                This photo could not open. Choose another JPG, PNG or WebP image.
-                            </p>
-                        ) : imageUrl ? (
-                            <ReactCrop
-                                crop={crop}
-                                onChange={(_, percentCrop) => setCrop(percentCrop)}
-                                aspect={ASPECT}
-                                circularCrop
-                                keepSelection
-                                disabled={isCropping || !loaded}
-                                aria-label="Photo crop area. Use arrow keys to move the selection."
-                                className={styles.cropper}
-                                style={
-                                    {
-                                        "--photo-aspect": imageAspect,
-                                        visibility: loaded ? "visible" : "hidden",
-                                    } as CSSProperties
-                                }
-                            >
-                                {/* eslint-disable-next-line @next/next/no-img-element -- local object URL; cropping requires the original image element */}
-                                <img
-                                    ref={imgRef}
-                                    src={imageUrl}
-                                    alt="Photo to crop"
-                                    onLoad={onImageLoad}
-                                    onError={() => {
-                                        setImageFailed(true);
-                                        setLoaded(false);
-                                    }}
-                                    className={styles.image}
-                                />
-                            </ReactCrop>
-                        ) : null}
-                    </div>
-                    <div className={styles.previewRow}>
-                        <div className={styles.preview}>
-                            <canvas
-                                ref={previewRef}
-                                width={128}
-                                height={128}
-                                role="img"
-                                aria-label="Cropped profile photo preview"
-                            />
-                        </div>
-                        <div className="flex-1 min-inline-0">
-                            <p className="body-sm font-semibold text-ink">Profile preview</p>
-                            <p className="body-xs mbs-1 text-ink-muted">
-                                This is how your photo will appear.
-                            </p>
-                        </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={!loaded || imageFailed || isCropping}
-                            onClick={() => {
-                                const image = imgRef.current;
-                                if (image)
-                                    setCrop(
-                                        centerAspectCrop(
-                                            image.naturalWidth,
-                                            image.naturalHeight,
-                                            ASPECT,
-                                        ),
-                                    );
-                                setError(null);
-                            }}
-                        >
-                            <RotateCcw aria-hidden /> Reset
-                        </Button>
-                    </div>
-                    {error ? (
-                        <p role="alert" className="body-sm text-danger">
-                            {error}
+            }
+            footerClassName="p-0"
+        >
+            <div className={styles.body}>
+                <div className={styles.stage} aria-busy={!loaded && !imageFailed}>
+                    {!loaded && !imageFailed ? (
+                        <p role="status" className="body-sm text-ink-muted">
+                            Loading photo?
                         </p>
                     ) : null}
+                    {imageFailed ? (
+                        <p role="alert" className="body-sm text-danger">
+                            This photo could not open. Choose another JPG, PNG or WebP image.
+                        </p>
+                    ) : imageUrl ? (
+                        <ReactCrop
+                            crop={crop}
+                            onChange={(_, percentCrop) => setCrop(percentCrop)}
+                            aspect={ASPECT}
+                            circularCrop
+                            keepSelection
+                            disabled={isCropping || !loaded}
+                            aria-label="Photo crop area. Use arrow keys to move the selection."
+                            className={styles.cropper}
+                            style={
+                                {
+                                    "--photo-aspect": imageAspect,
+                                    visibility: loaded ? "visible" : "hidden",
+                                } as CSSProperties
+                            }
+                        >
+                            {/* eslint-disable-next-line @next/next/no-img-element -- local object URL; cropping requires the original image element */}
+                            <img
+                                ref={imgRef}
+                                src={imageUrl}
+                                alt="Photo to crop"
+                                onLoad={onImageLoad}
+                                onError={() => {
+                                    setImageFailed(true);
+                                    setLoaded(false);
+                                }}
+                                className={styles.image}
+                            />
+                        </ReactCrop>
+                    ) : null}
                 </div>
-                <div className={styles.footer}>
+                <div className={styles.previewRow}>
+                    <div className={styles.preview}>
+                        <canvas
+                            ref={previewRef}
+                            width={128}
+                            height={128}
+                            role="img"
+                            aria-label="Cropped profile photo preview"
+                        />
+                    </div>
+                    <div className="flex-1 min-inline-0">
+                        <p className="body-sm font-semibold text-ink">Profile preview</p>
+                        <p className="body-xs mbs-1 text-ink-muted">
+                            This is how your photo will appear.
+                        </p>
+                    </div>
                     <Button
                         type="button"
                         variant="outline"
-                        size="default"
-                        disabled={isCropping}
-                        onClick={handleCancel}
+                        size="sm"
+                        disabled={!loaded || imageFailed || isCropping}
+                        onClick={() => {
+                            const image = imgRef.current;
+                            if (image)
+                                setCrop(
+                                    centerAspectCrop(
+                                        image.naturalWidth,
+                                        image.naturalHeight,
+                                        ASPECT,
+                                    ),
+                                );
+                            setError(null);
+                        }}
                     >
-                        Cancel
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="accent"
-                        size="default"
-                        loading={isCropping}
-                        disabled={
-                            isCropping || !loaded || imageFailed || !crop?.width || !crop?.height
-                        }
-                        onClick={() => void handleConfirm()}
-                    >
-                        <Check aria-hidden /> {isCropping ? "Preparing photo…" : "Use photo"}
+                        <RotateCcw aria-hidden /> Reset
                     </Button>
                 </div>
-            </DialogPopup>
-        </Dialog>
+                {error ? (
+                    <p role="alert" className="body-sm text-danger">
+                        {error}
+                    </p>
+                ) : null}
+            </div>
+        </AppModal>
     );
 }

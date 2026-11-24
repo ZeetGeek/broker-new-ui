@@ -294,7 +294,7 @@ export function OwnerLeadsPage() {
                             }
                         >
                             {hasSearch ? (
-                                <Button variant="outline" size="sm" onClick={handleClearSearch}>
+                                <Button variant="accent" size="sm" onClick={handleClearSearch}>
                                     Clear filters
                                 </Button>
                             ) : null}
@@ -328,7 +328,7 @@ export function OwnerLeadsPage() {
                         }
                     >
                         {hasSearch ? (
-                            <Button variant="outline" size="sm" onClick={handleClearSearch}>
+                            <Button variant="accent" size="sm" onClick={handleClearSearch}>
                                 Clear filters
                             </Button>
                         ) : null}

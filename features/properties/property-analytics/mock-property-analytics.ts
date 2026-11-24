@@ -70,186 +70,143 @@ function lead(
     };
 }
 
-/** One busy commercial plot — every analytics card has something real to show. */
+/** Busy listing for layout review: every stage, offer state and visit outcome. */
 function buildFilledLeads(): PropertyAnalyticsLead[] {
-    return [
-        lead({
-            id: "lead_priya_offer",
-            stage: "offer_made",
-            buyerName: "Priya Mehta",
-            buyerPhone: "+919820011223",
-            buyerEmail: "priya.mehta@email.com",
-            clientId: "client_priya",
-            offerAmount: "19800000",
-            offerStatus: "pending",
-            closedAmount: null,
-            notes: "Wants registry in her husband's name. Cash + home loan mix.",
-            createdAt: atDays(-28),
-            updatedAt: atDays(-1),
-            showings: 2,
-            latestShowing: { status: "completed", scheduledDate: atDays(-6) },
-        }),
-        lead({
-            id: "lead_vivek_high",
-            stage: "negotiation",
-            buyerName: "Vivek Nair",
-            buyerPhone: "+919887766554",
-            buyerEmail: "vivek.nair@email.com",
-            clientId: "client_vivek",
-            offerAmount: "21000000",
-            offerStatus: "pending",
-            closedAmount: null,
-            notes: "Above asking. Waiting on board resolution from his firm.",
-            createdAt: atDays(-21),
-            updatedAt: atDays(-0.2),
-            showings: 3,
-            latestShowing: { status: "completed", scheduledDate: atDays(-3) },
-        }),
-        lead({
-            id: "lead_harsh_visit",
-            stage: "site_visit",
-            buyerName: "Harsh Patel",
-            buyerPhone: "+919825501100",
-            buyerEmail: "harsh.patel@email.com",
-            clientId: "client_harsh",
-            offerAmount: null,
-            offerStatus: null,
-            closedAmount: null,
-            notes: "Bringing his CA tomorrow. Focus on road access and NA papers.",
-            createdAt: atDays(-12),
-            updatedAt: atDays(-1),
-            showings: 1,
-            latestShowing: { status: "confirmed", scheduledDate: atDays(1, 10) },
-        }),
-        lead({
-            id: "lead_ankit_update",
-            stage: "site_visit",
-            buyerName: "Ankit Shah",
-            buyerPhone: "+919898989898",
-            buyerEmail: "ankit.shah@email.com",
-            clientId: "client_ankit",
-            offerAmount: null,
-            offerStatus: null,
-            closedAmount: null,
-            notes: "Visited yesterday — still waiting on his feedback.",
-            createdAt: atDays(-18),
-            updatedAt: atDays(-2),
-            showings: 1,
-            latestShowing: { status: "scheduled", scheduledDate: atDays(-1, 16) },
-        }),
-        lead({
-            id: "lead_neha_quiet",
-            stage: "contacted",
-            buyerName: "Neha Desai",
-            buyerPhone: "+919712345678",
-            buyerEmail: "neha.desai@email.com",
-            clientId: "client_neha",
-            offerAmount: null,
-            offerStatus: null,
-            closedAmount: null,
-            notes: "Liked the location. Went quiet after first call.",
-            createdAt: atDays(-30),
-            updatedAt: atDays(-18),
-            showings: 0,
-            latestShowing: null,
-        }),
-        lead({
-            id: "lead_rohan_new",
-            stage: "new",
-            buyerName: "Rohan Joshi",
-            buyerPhone: "+919909090901",
-            buyerEmail: "rohan.joshi@email.com",
-            clientId: "client_rohan",
-            offerAmount: null,
-            offerStatus: null,
-            closedAmount: null,
-            notes: "Inbound from Instagram ad. Not contacted yet.",
-            createdAt: atDays(-2),
-            updatedAt: atDays(-2),
-            showings: 0,
-            latestShowing: null,
-        }),
-        lead({
-            id: "lead_divyesh_new",
-            stage: "new",
-            buyerName: "Divyesh B",
-            buyerPhone: "+919856525662",
-            buyerEmail: "test@gmail.com",
-            clientId: "client_divyesh",
-            offerAmount: null,
-            offerStatus: null,
-            closedAmount: null,
-            notes: "test add buyer",
-            createdAt: atDays(-18),
-            updatedAt: atDays(-18),
-            showings: 0,
-            latestShowing: null,
-        }),
-        lead({
-            id: "lead_meera_ok",
-            stage: "contacted",
-            buyerName: "Meera Bhatt",
-            buyerPhone: "+919933221100",
-            buyerEmail: "meera.bhatt@email.com",
-            clientId: "client_meera",
-            offerAmount: null,
-            offerStatus: null,
-            closedAmount: null,
-            notes: "Comparing two plots. Call again after Diwali weekend.",
-            createdAt: atDays(-9),
-            updatedAt: atDays(-1),
-            showings: 0,
-            latestShowing: null,
-        }),
-        lead({
-            id: "lead_kavya_rejected",
-            stage: "offer_made",
-            buyerName: "Kavya Iyer",
-            buyerPhone: "+919944556677",
-            buyerEmail: "kavya.iyer@email.com",
-            clientId: "client_kavya",
-            offerAmount: "18500000",
-            offerStatus: "rejected",
-            closedAmount: null,
-            notes: "Offer too low vs circle rate. May come back.",
-            createdAt: atDays(-40),
-            updatedAt: atDays(-8),
-            showings: 2,
-            latestShowing: { status: "completed", scheduledDate: atDays(-14) },
-        }),
-        lead({
-            id: "lead_amit_won",
-            stage: "closed_won",
-            buyerName: "Amit Trivedi",
-            buyerPhone: "+919876543210",
-            buyerEmail: "amit.trivedi@email.com",
-            clientId: "client_amit",
-            offerAmount: "20000000",
-            offerStatus: "accepted",
-            closedAmount: "20000000",
-            notes: "Token paid. Agreement next Tuesday.",
-            createdAt: atDays(-45),
-            updatedAt: atDays(-4),
-            showings: 4,
-            latestShowing: { status: "completed", scheduledDate: atDays(-10) },
-        }),
-        lead({
-            id: "lead_sneha_lost",
-            stage: "closed_lost",
-            buyerName: "Sneha Kapoor",
-            buyerPhone: "+919900112233",
-            buyerEmail: "sneha.kapoor@email.com",
-            clientId: "client_sneha",
-            offerAmount: null,
-            offerStatus: null,
-            closedAmount: null,
-            notes: "Bought a smaller plot closer to the highway.",
-            createdAt: atDays(-35),
-            updatedAt: atDays(-7),
-            showings: 1,
-            latestShowing: { status: "completed", scheduledDate: atDays(-20) },
-        }),
+    const names = [
+        "Priya Mehta",
+        "Vivek Nair",
+        "Harsh Patel",
+        "Ankit Shah",
+        "Neha Desai",
+        "Rohan Joshi",
+        "Meera Bhatt",
+        "Kavya Iyer",
+        "Amit Trivedi",
+        "Sneha Kapoor",
+        "Arjun Rao",
+        "Ishita Shah",
+        "Rahul Verma",
+        "Pooja Menon",
+        "Kunal Jain",
+        "Nisha Reddy",
+        "Sanjay Gupta",
+        "Aditi Kulkarni",
+        "Dev Patel",
+        "Riya Sethi",
+        "Manish Bansal",
+        "Ananya Das",
+        "Varun Malhotra",
+        "Sonal Agarwal",
+        "Akash Nair",
+        "Tanvi Joshi",
+        "Rajesh Kumar",
+        "Sakshi Bhat",
+        "Nikhil Deshmukh",
+        "Deepa Shah",
+        "Gaurav Sinha",
+        "Shreya Kapoor",
+        "Vikas Mehta",
+        "Simran Kaur",
+        "Pranav Rao",
+        "Swati Iyer",
+        "Karan Shah",
+        "Anjali Verma",
+        "Sameer Khan",
+        "Divya Nair",
     ];
+    return names.map((name, index) => {
+        const stage: LeadStageKey =
+            index < 8
+                ? "new"
+                : index < 16
+                  ? "contacted"
+                  : index < 26
+                    ? "site_visit"
+                    : index < 32
+                      ? "negotiation"
+                      : index < 36
+                        ? "offer_made"
+                        : index === 36
+                          ? "closed_won"
+                          : "closed_lost";
+        const hasOffer = index >= 29 && index <= 37;
+        const offerStatus: PropertyAnalyticsLead["offerStatus"] = !hasOffer
+            ? null
+            : index === 36 || index === 35
+              ? "accepted"
+              : index === 33 || index === 37
+                ? "rejected"
+                : "pending";
+        const hasVisit = index >= 16;
+        const upcoming = index >= 16 && index <= 19;
+        const needsUpdate = index === 20 || index === 21;
+        const visitStatus = upcoming
+            ? index % 2
+                ? "scheduled"
+                : "confirmed"
+            : needsUpdate
+              ? "scheduled"
+              : index === 22
+                ? "cancelled"
+                : index === 23
+                  ? "no_show"
+                  : "completed";
+        const offerAmount = hasOffer ? String(23_000_000 + (index - 29) * 350_000) : null;
+        const note =
+            stage === "new"
+                ? "New client. Call to understand their requirements."
+                : upcoming
+                  ? "Visit booked. Confirm the meeting point before leaving."
+                  : needsUpdate
+                    ? "Visit time has passed. Record the outcome and next step."
+                    : offerStatus === "pending"
+                      ? "Offer shared with the owner. Follow up on their response."
+                      : stage === "closed_won"
+                        ? "Deal closed. Documents handed over."
+                        : stage === "closed_lost"
+                          ? "Client chose another property closer to their workplace."
+                          : index % 3 === 0
+                            ? "Comparing nearby properties. Follow up with the latest availability and documents."
+                            : index % 3 === 1
+                              ? "Interested in the location. Discuss access, paperwork and the expected timeline."
+                              : null;
+        return lead({
+            id: `preview_analytics_${index + 1}`,
+            clientId: null,
+            buyerName: name,
+            // Deliberately non-dialable sample numbers; preview contact actions are disabled.
+            buyerPhone: index === 14 ? null : `+910000000${String(index + 1).padStart(3, "0")}`,
+            buyerEmail:
+                index % 4 === 0 ? null : `${name.toLowerCase().replaceAll(" ", ".")}@example.test`,
+            stage,
+            offerAmount,
+            offerStatus,
+            listPrice: "25000000",
+            closedAmount: stage === "closed_won" ? offerAmount : null,
+            notes: note,
+            createdAt: atDays(-18 + (index % 4)),
+            updatedAt:
+                stage === "contacted" && index % 2 === 0
+                    ? atDays(-15)
+                    : index % 6 === 0
+                      ? new Date().toISOString()
+                      : atDays(-(index % 6)),
+            showings: hasVisit ? 1 + (index % 3) : 0,
+            latestShowing: hasVisit
+                ? {
+                      status: visitStatus,
+                      scheduledDate: atDays(
+                          upcoming ? index - 15 : -(1 + (index % 7)),
+                          10 + (index % 7),
+                      ),
+                  }
+                : null,
+        });
+    });
+}
+
+export function isPreviewAnalyticsClient(id: string): boolean {
+    return id.startsWith("preview_analytics_");
 }
 
 export function getMockPropertyAnalytics(propertyId: string): PropertyAnalytics {
@@ -263,7 +220,7 @@ export function getMockPropertyAnalytics(propertyId: string): PropertyAnalytics 
             status: "available",
             publishStatus: "published",
             transactionType: "sale",
-            salePrice: "20500000",
+            salePrice: "25000000",
             monthlyRent: null,
             photo: "/properties/1.jpg",
             createdAt: atDays(-17),

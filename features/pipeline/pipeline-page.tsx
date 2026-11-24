@@ -8,12 +8,13 @@ import { PREF_KEYS } from "@/lib/prefs/keys";
 import { EMPTY_PROPERTY_CRITERIA } from "@/lib/properties/list-criteria";
 import { pipelineStageFromQuery } from "@/lib/properties/pipeline-stage-query";
 import { StageOperationGate } from "@/lib/properties/stage-operation-gate";
-import { cn } from "@/lib/utils";
 import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 import { useDebouncedValue } from "@/hooks/use-locations";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
 import toast, { showAppToast } from "@/components/shared/app-toast";
+import { EmptyState } from "@/components/shared/empty-state";
+import { AlertCircle } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -287,6 +288,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     const [moveRequest, setMoveRequest] = useState<StageMoveRequest | null>(null);
     const [isSavingMove, setIsSavingMove] = useState(false);
     const [offerDealId, setOfferDealId] = useState<string | null>(null);
+    const [offerFallback, setOfferFallback] = useState<DealItem | null>(null);
     const [isSavingOffer, setIsSavingOffer] = useState(false);
     const [viewDealId, setViewDealId] = useState<string | null>(null);
     const [viewDetail, setViewDetail] = useState<DealDetail | null>(null);
@@ -579,13 +581,24 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             try {
                 setOfferError(null);
                 await pipelineApi.makeOffer(offerDealId, offerAmount, notes);
+                // Show the saved amount immediately; the refresh below reconciles
+                // the server's stage, history and summary counts.
+                setDeals(
+                    (previous) =>
+                        previous?.map((deal) =>
+                            deal.id === offerDealId
+                                ? { ...deal, offerAmountInr: offerAmount }
+                                : deal,
+                        ) ?? null,
+                );
                 setOfferDealId(null);
+                setOfferFallback(null);
                 toast.success("Offer saved");
             } catch (saveError) {
                 setOfferError(
                     saveError instanceof Error
                         ? saveError.message
-                        : "Could not submit the offer. Your amount is still here. Try again.",
+                        : "Could not save the offer. Your amount is still here. Try again.",
                 );
             } finally {
                 stageGate.end();
@@ -673,6 +686,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             },
             onMakeOffer: (dealId) => {
                 setOfferError(null);
+                setOfferFallback(null);
                 setOfferDealId(dealId);
             },
             onPin: (dealId) => {
@@ -751,7 +765,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
 
     const offerDeal =
         offerDealId != null
-            ? ((deals ?? []).find((deal) => deal.id === offerDealId) ?? null)
+            ? ((deals ?? []).find((deal) => deal.id === offerDealId) ?? offerFallback)
             : null;
 
     const noteDeal =
@@ -760,8 +774,10 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     const isFirstLoad = deals === null;
     // Describes the deals on screen, so a pending clear never flashes first-run copy.
     const hasSearch = loadedWithFilters;
-    // A filter change is loading. Stage moves refetch too, but must not dim the board.
+    // Only changed criteria replace the results; stage-save refreshes keep the board usable.
     const isStale = !isFirstLoad && loadedKey !== requestKey;
+    const resultsLoading =
+        (isFirstLoad && isFetching) || (!error && (isStale || filters.q.trim() !== searchTerm));
     const isFirstRun =
         !hasSearch &&
         summary != null &&
@@ -854,7 +870,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 </>
             )}
 
-            {error ? (
+            {error && !isFirstLoad ? (
                 <p role="alert" className="body-sm text-danger">
                     {error}
                 </p>
@@ -879,26 +895,26 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 </div>
             ) : null}
 
-            <TabsContent
-                key={view}
-                value={view}
-                aria-busy={isFetching}
-                // Keep the last result visible and dim it while the next one loads.
-                className={cn("transition-opacity duration-160", isStale && "opacity-60")}
-            >
-                {isFetching && !isFirstLoad ? (
+            <TabsContent key={view} value={view} aria-busy={resultsLoading || isFetching}>
+                {isFetching && !isFirstLoad && !resultsLoading ? (
                     <span role="status" className="sr-only">
                         Updating your deals
                     </span>
                 ) : null}
-                {isFirstLoad && isFetching ? (
+                {resultsLoading ? (
                     <PipelineBoardSkeleton view={view} mobileStage={mobileStage} />
                 ) : isFirstLoad && error ? (
-                    <div className="flex items-center justify-center min-block-80">
-                        <Button variant="outline" onClick={() => setRevision((value) => value + 1)}>
+                    <EmptyState
+                        size="page"
+                        variant="error"
+                        icon={AlertCircle}
+                        heading="Your pipeline couldn’t be loaded"
+                        description="Check your connection and try again to see your deals."
+                    >
+                        <Button variant="accent" onClick={() => setRevision((value) => value + 1)}>
                             Try loading again
                         </Button>
-                    </div>
+                    </EmptyState>
                 ) : isFirstRun && view === "board" ? (
                     <PipelineFirstRunEmpty />
                 ) : view !== "board" ? (
@@ -980,7 +996,10 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     void handleConfirmOffer(offerAmount, notes);
                 }}
                 onCancel={() => {
-                    if (!isSavingOffer) setOfferDealId(null);
+                    if (!isSavingOffer) {
+                        setOfferDealId(null);
+                        setOfferFallback(null);
+                    }
                 }}
             />
 
@@ -1006,6 +1025,18 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     if (viewDealId) openLeadView(viewDealId);
                 }}
                 isBusy={busyId != null || isSavingMove}
+                onMakeOffer={
+                    viewDetail && isLiveStage(viewDetail.status) && !viewDetail.property.isSold
+                        ? () => {
+                              setOfferFallback(viewDetail);
+                              setOfferError(null);
+                              setOfferDealId(viewDetail.id);
+                              setViewDealId(null);
+                              setViewDetail(null);
+                              setViewError(null);
+                          }
+                        : undefined
+                }
                 onStageAction={(status) => {
                     if (!viewDetail || busyId != null || isSavingMove) return;
                     requestMove(

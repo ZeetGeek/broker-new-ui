@@ -13,6 +13,7 @@ import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { useMarketCurrency } from "@/hooks/use-market";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
 import { DrawerSection, revealDrawerSections } from "@/components/shared/drawer-section";
 import { IconButton } from "@/components/shared/icon-button";
@@ -317,7 +318,7 @@ function AttachedPropertyRows({
     );
 }
 
-function PanelHeader({
+function ContactSummary({
     name,
     phone,
     avatarUrl,
@@ -377,7 +378,7 @@ function ContactCallFooter({ phone, name }: { phone?: string; name: string }) {
     if (!phone) return null;
 
     return (
-        <div className="grid grid-cols-2 gap-2 inline-full">
+        <AppModalFooter className="grid grid-cols-2 gap-2 inline-full">
             <Button
                 type="button"
                 variant="outline"
@@ -413,7 +414,7 @@ function ContactCallFooter({ phone, name }: { phone?: string; name: string }) {
                 />
                 WhatsApp
             </Button>
-        </div>
+        </AppModalFooter>
     );
 }
 
@@ -565,35 +566,27 @@ function BuyerPanel({
                         : undefined
                 }
                 footer={
-                    <div
+                    <AppModalFooter
                         className="
                       flex flex-row flex-wrap items-center justify-end gap-2 inline-full
                     "
-                    >
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            disabled={detachBusy}
-                            onClick={() => setPendingDetach(null)}
-                        >
-                            Keep linked
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            disabled={detachBusy}
-                            loading={detachBusy}
-                            onClick={() => {
-                                if (!pendingDetach) return;
-                                setDetachBusy(true);
-                                void onDetachProperty(pendingDetach)
-                                    .then(() => setPendingDetach(null))
-                                    .finally(() => setDetachBusy(false));
-                            }}
-                        >
-                            Remove property
-                        </Button>
-                    </div>
+                        secondaryLabel="Keep linked"
+                        secondaryVariant="ghost"
+                        secondaryDisabled={detachBusy}
+                        onSecondary={() => setPendingDetach(null)}
+                        primaryLabel="Remove property"
+                        primaryType="button"
+                        primaryVariant="destructive"
+                        primaryDisabled={detachBusy}
+                        primaryLoading={detachBusy}
+                        onPrimary={() => {
+                            if (!pendingDetach) return;
+                            setDetachBusy(true);
+                            void onDetachProperty(pendingDetach)
+                                .then(() => setPendingDetach(null))
+                                .finally(() => setDetachBusy(false));
+                        }}
+                    />
                 }
             >
                 <p className="body text-ink-muted">
@@ -1012,7 +1005,7 @@ export function ContactDetailPanel({
               !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
             "
             header={
-                <PanelHeader
+                <ContactSummary
                     name={formatPersonName(row.name)}
                     phone={phone}
                     avatarUrl={owner?.avatarUrl}

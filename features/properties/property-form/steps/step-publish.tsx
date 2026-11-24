@@ -13,6 +13,7 @@ import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import toast from "@/components/shared/app-toast";
 import { Check, ChevronDown, UserRound, Users, X } from "@/components/shared/icons";
 import {
@@ -300,24 +301,18 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                 title="Detach client?"
                 size="sm"
                 footer={
-                    <div className="flex justify-end gap-2">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            disabled={detaching}
-                            onClick={() => setBuyerToDetach(null)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            loading={detaching}
-                            onClick={() => void detachBuyer()}
-                        >
-                            Detach client
-                        </Button>
-                    </div>
+                    <AppModalFooter
+                        className="flex justify-end gap-2"
+                        secondaryLabel="Cancel"
+                        secondaryVariant="ghost"
+                        secondaryDisabled={detaching}
+                        onSecondary={() => setBuyerToDetach(null)}
+                        primaryLabel="Detach client"
+                        primaryType="button"
+                        primaryVariant="destructive"
+                        primaryLoading={detaching}
+                        onPrimary={() => void detachBuyer()}
+                    />
                 }
             >
                 <p className="text-sm/6 text-ink-muted">

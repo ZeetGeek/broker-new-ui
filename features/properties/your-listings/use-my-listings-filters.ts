@@ -67,6 +67,7 @@ export function useMyListingsFilters(peopleEnabled = false) {
         serialize,
         forStorage: normalizeMyListingsStoredFilters,
         isValid: isMyListingsFilters,
+        shallow: true,
     });
 
     const setFilters = useCallback(

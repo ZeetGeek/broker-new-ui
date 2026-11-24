@@ -1,7 +1,13 @@
 import { cn } from "@/lib/utils";
 
 import { ContactName } from "@/components/shared/contact-name";
-import { type AppIcon, CircleCheck, CircleSlash, Clock } from "@/components/shared/icons";
+import {
+    type AppIcon,
+    CircleCheck,
+    CircleSlash,
+    Clock,
+    HandCoins,
+} from "@/components/shared/icons";
 
 import { OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
 import { AnalyticsCard } from "@/features/properties/property-analytics/analytics-card";
@@ -14,6 +20,9 @@ import type {
     OfferInfo,
     PropertyReport,
 } from "@/features/properties/property-analytics/analytics-math";
+import { isPreviewAnalyticsClient } from "@/features/properties/property-analytics/mock-property-analytics";
+
+import styles from "./analytics.module.css";
 
 type OfferStatus = NonNullable<OfferInfo["status"]>;
 
@@ -89,6 +98,7 @@ function OfferRow({
     amountMax: number;
     showSide: boolean;
 }) {
+    const sample = isPreviewAnalyticsClient(client.id);
     const offer = client.offer!;
     const gap = offerGapLabel(offer);
     return (
@@ -98,7 +108,7 @@ function OfferRow({
                     <ContactName
                         name={client.name}
                         contactId={client.clientId}
-                        contactType="buyer"
+                        contactType={sample ? undefined : "buyer"}
                         className="body-sm truncate font-semibold text-ink hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     />
                     <p className="body-sm flex flex-wrap items-baseline gap-x-2 text-ink-muted">
@@ -144,14 +154,19 @@ export function AnalyticsOffers({
             className={className}
         >
             {rows.length === 0 ? (
-                <p className="body-sm text-ink-muted">
-                    No offers yet. When a client makes an offer in your pipeline, it shows here
-                    against the asking price.
-                </p>
+                <div className={styles.quietState}>
+                    <HandCoins aria-hidden className="block-5 inline-5" />
+                    <div className="flex flex-col gap-1">
+                        <p className="body-sm font-medium text-ink">No offers yet</p>
+                        <p className="body-sm text-ink-muted">
+                            Add an offer to a client’s deal to compare it with the asking price.
+                        </p>
+                    </div>
+                </div>
             ) : (
                 <>
                     {best?.offer ? (
-                        <div className="flex flex-col gap-4 rounded-inner bg-surface-muted p-4 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="flex flex-col gap-4 border-be border-border-warm pbe-4">
                             <div className="flex flex-col gap-1 min-inline-0">
                                 <span className="body-xs font-semibold text-ink-muted">
                                     Best standing offer

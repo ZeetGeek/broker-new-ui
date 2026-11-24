@@ -7,6 +7,7 @@ import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { RadioGroup } from "@/components/ui/radio-group";
 
+import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { ChoiceCard } from "@/features/pipeline/choice-card";
 import { OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
 import type { DealItem } from "@/features/pipeline/types";
@@ -170,7 +171,7 @@ export function FinalPriceField({
                                     isRent={isRent}
                                     className="font-semibold text-ink"
                                 />
-                                {deal.offerStatus
+                                {FEATURE_PLATFORM_OWNER && deal.offerStatus
                                     ? ` · ${OFFER_STATUS_LABEL[deal.offerStatus]}`
                                     : null}
                                 {offerDiff ? ` · ${offerDiff}` : null}

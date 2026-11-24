@@ -4,7 +4,8 @@ import { VISIT_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
 
 import { AppImage } from "@/components/shared/app-image";
-import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { AttachedClientsSummary } from "@/components/shared/attached-clients-summary";
 import { ContactName } from "@/components/shared/contact-name";
 import { DrawerSection } from "@/components/shared/drawer-section";
@@ -12,7 +13,6 @@ import { CalendarCheck, CallIcon, MapPin, Trash2, WhatsAppIcon } from "@/compone
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogPopup } from "@/components/ui/dialog";
 
 import { APP_NAME } from "@/config";
 import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
@@ -96,184 +96,174 @@ export function VisitDetailPanel({
     const ownerMessage = `Hi ${visit.owner.name}, I’m bringing ${visit.buyers[0].name} to ${visit.property.title} on ${dayAndTime}. — ${brokerName}, ${APP_NAME}`;
     const status = VISIT_STATUS[visit.status];
     return (
-        <Dialog
+        <AppModal
             open={open}
             onOpenChange={(next) => {
                 if (!next) onClose();
             }}
-        >
-            <DialogPopup
-                showCloseButton={false}
-                className="
+            title={status.label}
+            bodyClassName="p-0"
+            scrollBody={false}
+            className="
                   inset-s-0! inset-bs-auto! inset-be-0! flex translate-0! flex-col gap-0
                   overflow-hidden rounded-b-none p-0 inline-full max-block-[94dvh] max-inline-none
                   sm:inset-s-auto! sm:inset-e-0! sm:inset-bs-0! sm:rounded-none sm:block-full
                   sm:inline-(--drawer-detail-width) sm:max-block-none
                   sm:max-inline-(--drawer-detail-width)
                 "
-            >
-                <AppModalHeader title={status.label} />
-                <div className={`shrink-0 px-5 py-4 ${status.tone}`}>
-                    <p className="body-sm text-ink-muted">
-                        {formatVisitDate(visit.startsAt)} · {formatVisitTime(visit.startsAt)}–
-                        {formatVisitTime(visit.endsAt)}
-                    </p>
-                </div>
-                <div className="flex-1 overflow-y-auto p-5">
-                    <DrawerSection
-                        title="Property"
-                        description="Review the property, asking price and address."
-                    >
-                        <section className="flex gap-3">
-                            <div
-                                className="
+        >
+            <div className={`shrink-0 px-5 py-4 ${status.tone}`}>
+                <p className="body-sm text-ink-muted">
+                    {formatVisitDate(visit.startsAt)} · {formatVisitTime(visit.startsAt)}–
+                    {formatVisitTime(visit.endsAt)}
+                </p>
+            </div>
+            <div className="flex-1 overflow-y-auto p-5">
+                <DrawerSection
+                    title="Property"
+                    description="Review the property, asking price and address."
+                >
+                    <section className="flex gap-3">
+                        <div
+                            className="
                               relative shrink-0 overflow-hidden rounded-[8px] bg-surface-muted block-20 inline-24
                             "
-                            >
-                                <AppImage
-                                    src={
-                                        visit.property.coverUrl ??
-                                        "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                                    }
-                                    alt=""
-                                    fill
-                                    sizes="96px"
+                        >
+                            <AppImage
+                                src={
+                                    visit.property.coverUrl ??
+                                    "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                                }
+                                alt=""
+                                fill
+                                sizes="96px"
+                            />
+                        </div>
+                        <div className="min-inline-0">
+                            <h2 className="h5 truncate text-ink">{visit.property.title}</h2>
+                            <p className="body-xs mbs-1 text-ink-muted">
+                                {visit.property.configLabel} ·{" "}
+                                {visit.property.areaSqft.toLocaleString("en-IN")} sqft
+                            </p>
+                            <PriceWithCommission
+                                amountInr={visit.property.amountInr}
+                                isRent={visit.property.purpose === "rent"}
+                                commissionPercent={visit.property.commissionPercent}
+                                commissionAmountInr={visit.property.commissionAmountInr}
+                                audience="broker"
+                                size="sm"
+                                className="mbs-2"
+                            />
+                            <p className="body-xs mbs-2 flex items-start gap-1.5 text-ink-muted">
+                                <MapPin
+                                    aria-hidden
+                                    className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
                                 />
-                            </div>
-                            <div className="min-inline-0">
-                                <h2 className="h5 truncate text-ink">{visit.property.title}</h2>
-                                <p className="body-xs mbs-1 text-ink-muted">
-                                    {visit.property.configLabel} ·{" "}
-                                    {visit.property.areaSqft.toLocaleString("en-IN")} sqft
-                                </p>
-                                <PriceWithCommission
-                                    amountInr={visit.property.amountInr}
-                                    isRent={visit.property.purpose === "rent"}
-                                    commissionPercent={visit.property.commissionPercent}
-                                    commissionAmountInr={visit.property.commissionAmountInr}
-                                    audience="broker"
-                                    size="sm"
-                                    className="mbs-2"
-                                />
-                                <p className="body-xs mbs-2 flex items-start gap-1.5 text-ink-muted">
-                                    <MapPin
-                                        aria-hidden
-                                        className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
-                                    />
-                                    {visit.property.address}
-                                </p>
-                            </div>
-                        </section>
-                    </DrawerSection>
+                                {visit.property.address}
+                            </p>
+                        </div>
+                    </section>
+                </DrawerSection>
+                <DrawerSection
+                    title="Clients and owner"
+                    description="Find contact details for everyone involved in the visit."
+                >
+                    <section className="grid gap-2">
+                        {visit.buyers.length > 1 ? (
+                            <AttachedClientsSummary clients={visit.buyers} className="body-sm" />
+                        ) : null}
+                        <ContactBlock
+                            label={visit.buyers.length > 1 ? "Primary client" : "Client"}
+                            person={visit.buyers[0]}
+                            message={buyerMessage}
+                        />
+                        <ContactBlock label="Owner" person={visit.owner} message={ownerMessage} />
+                    </section>
+                </DrawerSection>
+                {visit.ownerNote || visit.brokerNote ? (
                     <DrawerSection
-                        title="Clients and owner"
-                        description="Find contact details for everyone involved in the visit."
+                        title="Visit notes"
+                        description="Read the owner’s instructions and your notes."
                     >
-                        <section className="grid gap-2">
-                            {visit.buyers.length > 1 ? (
-                                <AttachedClientsSummary
-                                    clients={visit.buyers}
-                                    className="body-sm"
-                                />
-                            ) : null}
-                            <ContactBlock
-                                label={visit.buyers.length > 1 ? "Primary client" : "Client"}
-                                person={visit.buyers[0]}
-                                message={buyerMessage}
-                            />
-                            <ContactBlock
-                                label="Owner"
-                                person={visit.owner}
-                                message={ownerMessage}
-                            />
-                        </section>
-                    </DrawerSection>
-                    {visit.ownerNote || visit.brokerNote ? (
-                        <DrawerSection
-                            title="Visit notes"
-                            description="Read the owner’s instructions and your notes."
-                        >
-                            <section>
-                                <div className="mbs-2 space-y-2">
-                                    {visit.ownerNote ? (
-                                        <p
-                                            className="
+                        <section>
+                            <div className="mbs-2 space-y-2">
+                                {visit.ownerNote ? (
+                                    <p
+                                        className="
                                           body-xs rounded-inner bg-surface-muted p-3 text-ink
                                         "
-                                        >
-                                            <span className="font-bold">Owner:</span>{" "}
-                                            {visit.ownerNote}
-                                        </p>
-                                    ) : null}
-                                    {visit.brokerNote ? (
-                                        <p
-                                            className="
-                                          body-xs rounded-inner bg-surface-muted p-3 text-ink
-                                        "
-                                        >
-                                            <span className="font-bold">Your note:</span>{" "}
-                                            {visit.brokerNote}
-                                        </p>
-                                    ) : null}
-                                </div>
-                            </section>
-                        </DrawerSection>
-                    ) : null}
-                    {USE_MOCK_VISITS || visit.outcome ? (
-                        <DrawerSection
-                            title="Visit outcome"
-                            description="Review the client’s interest, feedback and next step."
-                        >
-                            <section className="rounded-inner border border-border-warm p-4">
-                                <div className="flex items-center justify-between gap-3">
-                                    <div>
-                                        <p className="body-xs text-ink-muted">
-                                            {visit.outcome
-                                                ? `${visit.outcome.interest} · ${visit.outcome.nextStep.replaceAll("_", " ")}`
-                                                : USE_MOCK_VISITS
-                                                  ? "Not logged yet"
-                                                  : "Saving outcomes is not available yet. Manage client notes and stages in Pipeline."}
-                                        </p>
-                                    </div>
-                                    {!visit.outcome && USE_MOCK_VISITS ? (
-                                        <Button onClick={onLogOutcome}>
-                                            <CalendarCheck aria-hidden /> Log outcome
-                                        </Button>
-                                    ) : null}
-                                </div>
-                                {visit.outcome?.feedback ? (
-                                    <p className="body-xs mbs-3 text-ink-muted">
-                                        {visit.outcome.feedback}
+                                    >
+                                        <span className="font-bold">Owner:</span> {visit.ownerNote}
                                     </p>
                                 ) : null}
-                            </section>
-                        </DrawerSection>
-                    ) : null}
-                    {![
-                        "cancelled_by_broker",
-                        "cancelled_by_owner",
-                        "completed",
-                        "no_show",
-                        "expired",
-                    ].includes(visit.status) ? (
-                        <section className="flex flex-wrap gap-2 border-bs border-danger/15 pbs-4">
-                            {USE_MOCK_VISITS ? (
-                                <Button variant="surface" onClick={onReschedule}>
-                                    Reschedule
-                                </Button>
-                            ) : (
-                                <p className="body-xs text-ink-muted">
-                                    To change the time, cancel this visit and book another open
-                                    slot. Check availability before cancelling.
-                                </p>
-                            )}
-                            <Button variant="destructive" onClick={onCancel}>
-                                <Trash2 aria-hidden /> Cancel visit
-                            </Button>
+                                {visit.brokerNote ? (
+                                    <p
+                                        className="
+                                          body-xs rounded-inner bg-surface-muted p-3 text-ink
+                                        "
+                                    >
+                                        <span className="font-bold">Your note:</span>{" "}
+                                        {visit.brokerNote}
+                                    </p>
+                                ) : null}
+                            </div>
                         </section>
-                    ) : null}
-                </div>
-            </DialogPopup>
-        </Dialog>
+                    </DrawerSection>
+                ) : null}
+                {USE_MOCK_VISITS || visit.outcome ? (
+                    <DrawerSection
+                        title="Visit outcome"
+                        description="Review the client’s interest, feedback and next step."
+                    >
+                        <section className="rounded-inner border border-border-warm p-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <p className="body-xs text-ink-muted">
+                                        {visit.outcome
+                                            ? `${visit.outcome.interest} · ${visit.outcome.nextStep.replaceAll("_", " ")}`
+                                            : USE_MOCK_VISITS
+                                              ? "Not logged yet"
+                                              : "Saving outcomes is not available yet. Manage client notes and stages in Pipeline."}
+                                    </p>
+                                </div>
+                                {!visit.outcome && USE_MOCK_VISITS ? (
+                                    <Button onClick={onLogOutcome}>
+                                        <CalendarCheck aria-hidden /> Log outcome
+                                    </Button>
+                                ) : null}
+                            </div>
+                            {visit.outcome?.feedback ? (
+                                <p className="body-xs mbs-3 text-ink-muted">
+                                    {visit.outcome.feedback}
+                                </p>
+                            ) : null}
+                        </section>
+                    </DrawerSection>
+                ) : null}
+                {![
+                    "cancelled_by_broker",
+                    "cancelled_by_owner",
+                    "completed",
+                    "no_show",
+                    "expired",
+                ].includes(visit.status) ? (
+                    <AppModalFooter className="gap-2 border-bs border-danger/15 pbs-4">
+                        {USE_MOCK_VISITS ? (
+                            <Button variant="surface" onClick={onReschedule}>
+                                Reschedule
+                            </Button>
+                        ) : (
+                            <p className="body-xs text-ink-muted">
+                                To change the time, cancel this visit and book another open slot.
+                                Check availability before cancelling.
+                            </p>
+                        )}
+                        <Button variant="destructive" onClick={onCancel}>
+                            <Trash2 aria-hidden /> Cancel visit
+                        </Button>
+                    </AppModalFooter>
+                ) : null}
+            </div>
+        </AppModal>
     );
 }

@@ -2,6 +2,7 @@
 
 import { type ReactNode, useId, useLayoutEffect, useRef } from "react";
 
+import { EmptyState } from "@/components/shared/empty-state";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 
@@ -122,15 +123,12 @@ export function PipelineMobileBoard({
                         ) : null}
                     </>
                 ) : (
-                    <div className={styles.empty}>
-                        <p className="body-sm font-semibold text-ink">
-                            No deals in {DEAL_STAGE_META[active].label.toLowerCase()}
-                        </p>
-                        <p className="body-sm text-ink-muted">
-                            {DEAL_STAGE_META[active].emptyHint}. Choose another stage above to see
-                            its deals.
-                        </p>
-                    </div>
+                    <EmptyState
+                        size="page"
+                        icon={DEAL_STAGE_META[active].icon}
+                        heading={`No deals in ${DEAL_STAGE_META[active].label.toLowerCase()}`}
+                        description={`${DEAL_STAGE_META[active].emptyHint}. Choose another stage above to see its deals.`}
+                    />
                 )}
             </div>
         </div>

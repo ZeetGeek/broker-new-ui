@@ -401,11 +401,11 @@ export function OwnerVisitsPage() {
                     }
                 >
                     {showingFocus ? (
-                        <Button variant="outline" onClick={() => setShowingFocus(undefined)}>
+                        <Button variant="accent" onClick={() => setShowingFocus(undefined)}>
                             Clear filter
                         </Button>
                     ) : (
-                        <Button variant="outline" onClick={() => setTab("availability")}>
+                        <Button variant="accent" onClick={() => setTab("availability")}>
                             Manage availability
                         </Button>
                     )}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import toast from "@/components/shared/app-toast";
 import { PropertyInlineSelect } from "@/components/shared/property-inline-select";
 import {
     PropertyPicker,
@@ -125,7 +126,7 @@ function SingleDemo() {
                 properties={DEMO_PROPERTIES}
                 value={value}
                 onConfirm={setValue}
-                onCreate={() => window.alert("Wire Add property from the feature screen.")}
+                onCreate={() => toast.info("Wire Add property from the feature screen.")}
                 allowClear
             />
         </div>
@@ -150,7 +151,7 @@ function SaleOnlyDemo() {
                 onConfirm={setValue}
                 title="Select a sale listing"
                 description="Only sale listings in this pool."
-                onCreate={() => window.alert("Wire Add property from the feature screen.")}
+                onCreate={() => toast.info("Wire Add property from the feature screen.")}
             />
         </div>
     );
@@ -187,7 +188,7 @@ function MultiDemo() {
                 onConfirm={setValue}
                 title="Attach properties"
                 description="Pick every listing that should be linked."
-                onCreate={() => window.alert("Wire Add property from the feature screen.")}
+                onCreate={() => toast.info("Wire Add property from the feature screen.")}
                 allowClear
                 clearLabel="Clear all"
             />
@@ -208,7 +209,7 @@ function FieldDemos() {
                 properties={DEMO_PROPERTIES}
                 value={singleId}
                 onConfirm={setSingleId}
-                onCreate={() => window.alert("Add property")}
+                onCreate={() => toast.info("Add property")}
             />
             <PropertyPickerField
                 label="Sale listing"
@@ -263,7 +264,7 @@ function EmptyDemo() {
                 properties={[]}
                 value={null}
                 onConfirm={() => undefined}
-                onCreate={() => window.alert("Add property")}
+                onCreate={() => toast.info("Add property")}
             />
         </>
     );
@@ -283,7 +284,7 @@ function ErrorDemo() {
                 value={null}
                 onConfirm={() => undefined}
                 errorText="Couldn't load properties. Check your connection and try again."
-                onRetry={() => window.alert("Refetch properties")}
+                onRetry={() => toast.info("Refetch properties")}
             />
         </>
     );
@@ -302,7 +303,7 @@ function InlineSelectDemos() {
                 value={bothId}
                 onValueChange={setBothId}
                 placeholder="Select a property"
-                onCreate={(query) => window.alert(`Add property: ${query}`)}
+                onCreate={(query) => toast.info(`Add property: ${query}`)}
             />
             <PropertyInlineSelect
                 label="Sale listing"
@@ -313,7 +314,7 @@ function InlineSelectDemos() {
                 placeholder="Select a sale listing"
                 allowClear
                 clearLabel="Any sale listing"
-                onCreate={(query) => window.alert(`Add sale listing: ${query}`)}
+                onCreate={(query) => toast.info(`Add sale listing: ${query}`)}
                 createLabel="Add property"
             />
             <PropertyInlineSelect

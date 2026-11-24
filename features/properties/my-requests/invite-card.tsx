@@ -5,10 +5,9 @@ import { useState } from "react";
 import { formatRelativePast } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
-import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { AppModal } from "@/components/shared/app-modal";
 import { Check, Send, X } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogPopup } from "@/components/ui/dialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { useChat } from "@/features/chat/chat-provider";
@@ -329,17 +328,20 @@ export function InviteCard({
                 )}
             </DealOverlayCard>
 
-            <Dialog open={isTimelineOpen} onOpenChange={setIsTimelineOpen}>
-                <DialogPopup showCloseButton={false} className="gap-0 p-0 max-inline-md">
-                    <AppModalHeader title="Request timeline" />
-                    <div className="px-5 py-4">
-                        <p className="body-xs text-ink-muted">
-                            Invited {formatRelativePast(new Date(item.invitedAt), new Date())}
-                        </p>
-                        <RequestTimeline steps={inviteTimeline(item)} />
-                    </div>
-                </DialogPopup>
-            </Dialog>
+            <AppModal
+                open={isTimelineOpen}
+                onOpenChange={setIsTimelineOpen}
+                title="Request timeline"
+                bodyClassName="p-0"
+                className="gap-0 p-0 max-inline-md"
+            >
+                <div className="px-5 py-4">
+                    <p className="body-xs text-ink-muted">
+                        Invited {formatRelativePast(new Date(item.invitedAt), new Date())}
+                    </p>
+                    <RequestTimeline steps={inviteTimeline(item)} />
+                </div>
+            </AppModal>
 
             {item.stage === "accepted" ? (
                 <>

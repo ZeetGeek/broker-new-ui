@@ -825,7 +825,7 @@
 
 .rail {
     position: sticky;
-    inset-block-start: 28px;
+    inset-block-start: var(--portal-sticky-offset, 1.75rem);
     display: flex;
     flex-direction: column;
     gap: var(--card-grid-gap);

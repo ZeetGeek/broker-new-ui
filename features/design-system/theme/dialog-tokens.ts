@@ -1,8 +1,8 @@
 export const DIALOG_USES = [
     {
-        name: "compound",
-        label: "Compound Dialog",
-        note: "Raw Dialog + DialogPopup. Short confirmations and one-off surfaces.",
+        name: "confirmation",
+        label: "Confirmation",
+        note: "AppModal for short confirmations, with the action and consequence made clear.",
     },
     {
         name: "app-modal",

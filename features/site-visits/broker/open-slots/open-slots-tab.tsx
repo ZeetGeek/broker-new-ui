@@ -8,11 +8,10 @@ import type { ApiLeadOption, ApiOwnerOption, ApiPropertyOption } from "@/lib/api
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { sortSlotsForBuyer } from "@/lib/visits/grouping";
 
+import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { VirtualStack } from "@/components/shared/virtual-stack";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogDescription, DialogPopup } from "@/components/ui/dialog";
 
 import type {
     PersonSummary,
@@ -252,7 +251,7 @@ export function OpenSlotsTab({
     ];
 
     const filtersDialog = (
-        <Dialog
+        <AppModal
             open={filtersOpen}
             onOpenChange={(open) => {
                 if (open) {
@@ -262,57 +261,59 @@ export function OpenSlotsTab({
                 }
                 setFiltersOpen(open);
             }}
-        >
-            <DialogPopup
-                showCloseButton={false}
-                className="gap-0 overflow-hidden p-0 max-inline-3xl sm:max-inline-3xl"
-            >
-                <AppModalHeader title="Filter open slots" />
-                <DialogDescription className="px-(--dialog-pad) pbs-3">
+            title="Filter open slots"
+            bodyClassName="p-0"
+            size="lg"
+            className="gap-0 overflow-hidden p-0 max-inline-3xl sm:max-inline-3xl"
+            description={
+                <>
                     Pick a client or owner to narrow the leads, then pick a lead to see its
                     property.
-                </DialogDescription>
-                <div className="overflow-y-auto p-5 max-block-[68dvh]">
-                    <SlotFilters
-                        buyers={buyers}
-                        buyerId={draftBuyerId}
-                        onBuyerChange={setDraftBuyerId}
-                        ownerOptions={ownerOptions}
-                        ownerId={draftFilters.owner || undefined}
-                        onOwnerChange={(owner) =>
-                            setDraftFilters((current) => ({ ...current, owner: owner ?? "" }))
-                        }
-                        leadOptions={leadOptions}
-                        leadId={draftLeadId}
-                        onLeadChange={setDraftLeadId}
-                    />
-                </div>
-                <footer className="border-bs border-border-warm bg-surface px-5 py-4">
-                    <AppModalFooter
-                        secondaryLabel="Reset filter"
-                        onSecondary={() => {
-                            setDraftFilters(DEFAULT_SLOT_FILTERS);
-                            setDraftBuyerId(undefined);
-                            setDraftLeadId(undefined);
-                        }}
-                        primaryLabel="Apply filters"
-                        onPrimary={() => {
-                            // One URL write: separate buyer / lead callbacks would
-                            // each patch stale searchParams and undo each other.
-                            replaceParams((params) => {
-                                writeFilters(params, draftFilters);
-                                if (draftBuyerId) params.set("buyer", draftBuyerId);
-                                else params.delete("buyer");
-                                if (draftLeadId) params.set("lead", draftLeadId);
-                                else params.delete("lead");
-                                params.delete("propertyId");
-                            });
-                            setFiltersOpen(false);
-                        }}
-                    />
-                </footer>
-            </DialogPopup>
-        </Dialog>
+                </>
+            }
+            footer={
+                <AppModalFooter
+                    secondaryLabel="Reset filter"
+                    onSecondary={() => {
+                        setDraftFilters(DEFAULT_SLOT_FILTERS);
+                        setDraftBuyerId(undefined);
+                        setDraftLeadId(undefined);
+                    }}
+                    primaryLabel="Apply filters"
+                    onPrimary={() => {
+                        // One URL write: separate buyer / lead callbacks would
+                        // each patch stale searchParams and undo each other.
+                        replaceParams((params) => {
+                            writeFilters(params, draftFilters);
+                            if (draftBuyerId) params.set("buyer", draftBuyerId);
+                            else params.delete("buyer");
+                            if (draftLeadId) params.set("lead", draftLeadId);
+                            else params.delete("lead");
+                            params.delete("propertyId");
+                        });
+                        setFiltersOpen(false);
+                    }}
+                    className="border-bs border-border-warm bg-surface px-5 py-4"
+                />
+            }
+            footerClassName="p-0"
+        >
+            <div className="overflow-y-auto p-5 max-block-[68dvh]">
+                <SlotFilters
+                    buyers={buyers}
+                    buyerId={draftBuyerId}
+                    onBuyerChange={setDraftBuyerId}
+                    ownerOptions={ownerOptions}
+                    ownerId={draftFilters.owner || undefined}
+                    onOwnerChange={(owner) =>
+                        setDraftFilters((current) => ({ ...current, owner: owner ?? "" }))
+                    }
+                    leadOptions={leadOptions}
+                    leadId={draftLeadId}
+                    onLeadChange={setDraftLeadId}
+                />
+            </div>
+        </AppModal>
     );
 
     if (isLoading && items.length === 0) {

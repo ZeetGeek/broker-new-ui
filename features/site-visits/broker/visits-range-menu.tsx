@@ -7,10 +7,9 @@ import { formatDateIso, formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
 import { AppDateRangeFields } from "@/components/shared/app-date-range-fields";
+import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { CalendarRange, ChevronDown, Search } from "@/components/shared/icons";
-import { Dialog, DialogDescription, DialogPopup } from "@/components/ui/dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -198,37 +197,37 @@ export function VisitsRangeMenu({
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-                <DialogPopup
-                    showCloseButton={false}
-                    className="gap-0 overflow-hidden p-0 max-inline-md sm:max-inline-md"
-                >
-                    <AppModalHeader title="Custom date range" />
-                    <DialogDescription className="px-(--dialog-pad) pbs-3">
-                        {customDescription}
-                    </DialogDescription>
-                    <div className="p-(--dialog-pad)">
-                        <AppDateRangeFields from={draft.from} to={draft.to} onChange={setDraft} />
-                    </div>
-                    <footer className="border-bs border-border-warm bg-surface px-5 py-4">
-                        <AppModalFooter
-                            secondaryLabel="Cancel"
-                            onSecondary={() => setPickerOpen(false)}
-                            primaryLabel="Apply range"
-                            primaryDisabled={!validRange}
-                            onPrimary={() => {
-                                if (!validRange) return;
-                                onRangeChange({
-                                    range: "custom",
-                                    customFrom: draft.from,
-                                    customTo: draft.to,
-                                });
-                                setPickerOpen(false);
-                            }}
-                        />
-                    </footer>
-                </DialogPopup>
-            </Dialog>
+            <AppModal
+                open={pickerOpen}
+                onOpenChange={setPickerOpen}
+                title="Custom date range"
+                bodyClassName="p-0"
+                className="gap-0 overflow-hidden p-0 max-inline-md sm:max-inline-md"
+                description={<>{customDescription}</>}
+                footer={
+                    <AppModalFooter
+                        secondaryLabel="Cancel"
+                        onSecondary={() => setPickerOpen(false)}
+                        primaryLabel="Apply range"
+                        primaryDisabled={!validRange}
+                        onPrimary={() => {
+                            if (!validRange) return;
+                            onRangeChange({
+                                range: "custom",
+                                customFrom: draft.from,
+                                customTo: draft.to,
+                            });
+                            setPickerOpen(false);
+                        }}
+                        className="border-bs border-border-warm bg-surface px-5 py-4"
+                    />
+                }
+                footerClassName="p-0"
+            >
+                <div className="p-(--dialog-pad)">
+                    <AppDateRangeFields from={draft.from} to={draft.to} onChange={setDraft} />
+                </div>
+            </AppModal>
         </div>
     );
 }

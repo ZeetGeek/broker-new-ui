@@ -2,6 +2,7 @@
 
 import { type ComponentProps, useEffect, useState } from "react";
 
+import type { SearchHelp } from "@/lib/search/search-help";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +53,7 @@ type ListSearchFieldProps = Omit<
     /** Let a page's responsive layout size the search field. */
     fullWidth?: boolean;
     /** Fields supported by this page’s search, revealed by the info button. */
-    searchHelp?: string;
+    searchHelp?: SearchHelp;
 };
 
 /** Shared list search face, including clear, focus and external filter resets. */
@@ -136,12 +137,21 @@ export function ListSearchField({
                 >
                     <Info aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
                 </PopoverTrigger>
-                <PopoverContent align="end" className="gap-1.5 max-inline-[calc(100dvw-2rem)]">
-                    <PopoverTitle className="text-sm font-semibold">
-                        What you can search
-                    </PopoverTitle>
-                    <PopoverDescription className="text-sm text-ink-muted">
-                        {searchHelp}
+                <PopoverContent
+                    align="end"
+                    sideOffset={12}
+                    className="gap-1.5 rounded-inner max-inline-[calc(100dvw-2rem)]"
+                >
+                    <PopoverTitle className="text-sm font-semibold">You can search by</PopoverTitle>
+                    <PopoverDescription render={<div />} className="text-sm text-ink-muted">
+                        <ul className="flex list-disc flex-col gap-1 ps-4">
+                            {searchHelp.fields.map((field) => (
+                                <li key={field}>{field}</li>
+                            ))}
+                        </ul>
+                        <p className="mbs-3">
+                            Combine terms, like ‘{searchHelp.example}’. {searchHelp.filterNote}
+                        </p>
                     </PopoverDescription>
                 </PopoverContent>
             </Popover>

@@ -217,9 +217,10 @@ function DealCardMenu({
                         />
                         Add a note
                     </DropdownMenuItem>
-                    {live && FEATURE_PLATFORM_OWNER ? (
+                    {live ? (
                         <DropdownMenuItem
                             className={DEAL_MENU_ITEM_CLASS}
+                            disabled={isBusy || deal.property.isSold}
                             onClick={(event) => act(event, () => handlers.onMakeOffer(deal.id))}
                         >
                             <PropertyMenuIcon
@@ -227,7 +228,13 @@ function DealCardMenu({
                                 aria-hidden
                                 className={DEAL_MENU_ICON_CLASS}
                             />
-                            {isRevisingOffer(deal.offerStatus) ? "Revise offer" : "Make offer"}
+                            {FEATURE_PLATFORM_OWNER
+                                ? isRevisingOffer(deal.offerStatus)
+                                    ? "Revise offer"
+                                    : "Make offer"
+                                : deal.offerAmountInr != null
+                                  ? "Update offer"
+                                  : "Record offer"}
                         </DropdownMenuItem>
                     ) : null}
                 </DropdownMenuGroup>
@@ -311,13 +318,15 @@ function DealCardMenu({
 }
 
 function StageMiddle({ deal, onMakeOffer }: { deal: DealItem; onMakeOffer?: () => void }) {
-    // Site visit always shows its block: with no visit booked, booking one is
-    // the next step, so the card asks for it. An empty "No offer yet" box is
-    // still noise; Make offer stays in the menu.
-    if (deal.status === "visit") return <VisitStageBlock deal={deal} />;
-    if (deal.status === "negotiation" && deal.offerAmountInr != null)
-        return <NegotiationStageBlock deal={deal} onMakeOffer={onMakeOffer} />;
-    return null;
+    // Keep the saved offer visible even if the broker later changes the stage.
+    return (
+        <>
+            {deal.status === "visit" ? <VisitStageBlock deal={deal} /> : null}
+            {deal.offerAmountInr != null || deal.status === "negotiation" ? (
+                <NegotiationStageBlock deal={deal} onMakeOffer={onMakeOffer} />
+            ) : null}
+        </>
+    );
 }
 
 /**
@@ -518,14 +527,14 @@ export function DealCard({
                     </div>
                 </div>
 
-                {deal.status === "visit" || deal.status === "negotiation" ? (
-                    <StageMiddle
-                        deal={deal}
-                        onMakeOffer={
-                            FEATURE_PLATFORM_OWNER ? () => handlers.onMakeOffer(deal.id) : undefined
-                        }
-                    />
-                ) : null}
+                <StageMiddle
+                    deal={deal}
+                    onMakeOffer={
+                        live && !isBusy && !deal.property.isSold
+                            ? () => handlers.onMakeOffer(deal.id)
+                            : undefined
+                    }
+                />
 
                 {!live ? (
                     <div

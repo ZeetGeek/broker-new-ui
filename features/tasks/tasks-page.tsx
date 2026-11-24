@@ -1,15 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 
 import { useSearchParams } from "@/lib/navigation";
+import { matchesCrmSearch } from "@/lib/search/crm-search";
+import { CRM_SEARCH_HELP } from "@/lib/search/search-help";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import toast from "@/components/shared/app-toast";
 import { DrawerSection } from "@/components/shared/drawer-section";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterChip } from "@/components/shared/filter-chip";
-import { CheckCircle2, SlidersHorizontal, Trash2, X } from "@/components/shared/icons";
+import {
+    AlertCircle,
+    CheckCircle2,
+    Search,
+    SlidersHorizontal,
+    Trash2,
+    X,
+} from "@/components/shared/icons";
 import {
     ListAddButton,
     ListSearchField,
@@ -17,7 +27,6 @@ import {
 } from "@/components/shared/list-toolbar";
 import { ResponsiveListStatus } from "@/components/shared/responsive-list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
-import { Skeleton } from "@/components/shared/skeleton";
 import { StatusTabs } from "@/components/shared/status-tabs";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -48,6 +57,7 @@ import { type TaskDraftMode, taskFromDraft } from "./task-from-draft";
 import { TaskArchive } from "./task-list";
 import { TaskPanel } from "./task-panel";
 import { TaskPlanner } from "./task-planner";
+import { TaskResultsSkeleton } from "./task-results-skeleton";
 import { useTasks } from "./task-store";
 
 import styles from "./tasks.module.css";
@@ -138,6 +148,8 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
     const view = params.get("view");
     const selected = tasks.find((task) => task.id === params.get("task"));
     const search = params.get("q") ?? "";
+    const deferredSearch = useDeferredValue(search);
+    const searchPending = search !== deferredSearch;
     const due = DUE_FILTERS.some((f) => f.value === params.get("due"))
         ? (params.get("due") ?? "")
         : "";
@@ -196,9 +208,15 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         const client = catalogs.clients.find((c) => c.id === task.clientId);
         const property = catalogs.properties.find((p) => p.id === task.propertyId);
         const owner = catalogs.owners.find((o) => o.id === task.ownerId);
-        const haystack =
-            `${task.title} ${task.details} ${client?.name ?? task.client?.name ?? ""} ${owner?.name ?? task.owner?.name ?? ""} ${property?.title ?? task.property?.title ?? ""} ${property?.locality ?? ""}`.toLowerCase();
-        return haystack.includes(search.trim().toLowerCase());
+        return matchesCrmSearch(deferredSearch, [
+            task.title,
+            task.details,
+            client?.name ?? task.client?.name,
+            owner?.name ?? task.owner?.name,
+            property?.title ?? task.property?.title,
+            property?.locality,
+            property?.city,
+        ]);
     });
     const close = () => {
         setError("");
@@ -437,7 +455,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                     </div>
                     <div className={styles.searchField}>
                         <ListSearchField
-                            searchHelp="Search by task name, notes, or a linked client, owner or property."
+                            searchHelp={CRM_SEARCH_HELP.tasks}
                             aria-label="Search tasks"
                             placeholder="Search"
                             value={search}
@@ -515,16 +533,20 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                         </div>
                     )}
                     {loadError && (
-                        <div className={styles.error} role="alert">
-                            <p>
-                                {isLive
-                                    ? "Your tasks couldn’t be loaded. Check your connection and try again."
-                                    : "Tasks couldn’t load. Check that storage is available in this tab, or reset the task list to start empty."}
-                            </p>
+                        <EmptyState
+                            size="page"
+                            variant="error"
+                            icon={AlertCircle}
+                            heading="Your tasks couldn’t be loaded"
+                            description={
+                                isLive
+                                    ? "Check your connection and try again to see your follow-ups."
+                                    : "Allow storage in this browser, or reset the task list to start empty."
+                            }
+                        >
                             <Button
-                                className="mbs-3"
                                 size="sm"
-                                variant="outline"
+                                variant="accent"
                                 disabled={busy}
                                 onClick={() =>
                                     void reset().catch(() =>
@@ -538,28 +560,37 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                             >
                                 {isLive ? "Try again" : "Reset task list"}
                             </Button>
-                        </div>
+                        </EmptyState>
                     )}
                     {error && !view && (
                         <p className={styles.error} role="alert">
                             {error}
                         </p>
                     )}
-                    <TabsContent value={tab} className={styles.content}>
-                        {isLoading ? (
-                            <div
-                                className={styles.loading}
-                                aria-label="Loading tasks"
-                                role="status"
+                    <TabsContent
+                        value={tab}
+                        className={styles.content}
+                        aria-busy={isLoading || searchPending}
+                    >
+                        {isLoading || searchPending ? (
+                            <TaskResultsSkeleton />
+                        ) : loadError ? null : tab === "all" &&
+                          !filtered &&
+                          tasks.length === 0 &&
+                          !lists.isLoading &&
+                          lists.notebook.tabs.length === 1 &&
+                          lists.notebook.lists.length === 1 ? (
+                            <EmptyState
+                                size="page"
+                                icon={CheckCircle2}
+                                heading="Make room for your next follow-up"
+                                description="Add a call, a reminder or something to do. Link it to a client, owner or property when needed."
                             >
-                                {Array.from({ length: 5 }, (_, i) => (
-                                    <Skeleton
-                                        key={i}
-                                        className="rounded-control block-80 inline-full"
-                                    />
-                                ))}
-                            </div>
-                        ) : loadError ? null : tab === "all" && !filtered ? (
+                                <Button variant="accent" onClick={create}>
+                                    Add your first task
+                                </Button>
+                            </EmptyState>
+                        ) : tab === "all" && !filtered ? (
                             <TaskPlanner
                                 notebook={lists.notebook}
                                 notebookLoading={lists.isLoading}
@@ -609,8 +640,9 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                             />
                         ) : (
                             <EmptyState
-                                className={styles.empty}
-                                icon={tab === "deleted" ? Trash2 : CheckCircle2}
+                                size="page"
+                                variant={filtered ? "filtered" : "default"}
+                                icon={filtered ? Search : tab === "deleted" ? Trash2 : CheckCircle2}
                                 heading={
                                     filtered
                                         ? "No tasks match these filters"
@@ -631,7 +663,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                 }
                             >
                                 <Button
-                                    variant="outline"
+                                    variant="accent"
                                     onClick={
                                         filtered ? clear : () => updateWorkspace({ tab: undefined })
                                     }
@@ -758,29 +790,21 @@ function TaskFilters({
     const [link, setLink] = useState(linked);
     return (
         <TaskPanel
+            compact
             title="Filter tasks"
             description="Find the follow-ups that need your attention."
             onClose={onClose}
             footer={
-                <div className="flex justify-between gap-3">
-                    <Button
-                        variant="outline"
-                        onClick={() => {
-                            setDate("");
-                            setLink("");
-                        }}
-                    >
-                        Reset
-                    </Button>
-                    <Button
-                        variant="accent"
-                        onClick={() =>
-                            onApply({ due: date || undefined, linked: link || undefined })
-                        }
-                    >
-                        Apply filters
-                    </Button>
-                </div>
+                <AppModalFooter
+                    secondaryLabel="Reset"
+                    onSecondary={() => {
+                        setDate("");
+                        setLink("");
+                    }}
+                    primaryLabel="Apply filters"
+                    primaryVariant="accent"
+                    onPrimary={() => onApply({ due: date || undefined, linked: link || undefined })}
+                />
             }
         >
             <DrawerSection title="Due date" description="Choose when the tasks are due.">
@@ -816,7 +840,7 @@ function TaskFilters({
                     </div>
                 </fieldset>
             </DrawerSection>
-            <p className="body-sm text-ink-muted">
+            <p className="body-sm mbs-4 text-ink-muted">
                 Filters apply to the selected tab. Tasks can link to Clients, owners and properties.
             </p>
         </TaskPanel>

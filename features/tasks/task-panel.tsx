@@ -5,7 +5,7 @@ import { type ReactNode, useState } from "react";
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { Button } from "@/components/ui/button";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 
 import styles from "./task-panel.module.css";
 
@@ -85,14 +85,15 @@ export function TaskPanel({
                     description="What you typed will be lost if you leave now."
                     size="sm"
                     footer={
-                        <div className="flex flex-wrap items-center justify-end gap-2 inline-full">
-                            <Button variant="ghost" onClick={() => setDiscardOpen(false)}>
-                                Keep editing
-                            </Button>
-                            <Button variant="destructive" onClick={onClose}>
-                                Discard changes
-                            </Button>
-                        </div>
+                        <AppModalFooter
+                            className="flex flex-wrap items-center justify-end gap-2 inline-full"
+                            secondaryLabel="Keep editing"
+                            secondaryVariant="ghost"
+                            onSecondary={() => setDiscardOpen(false)}
+                            primaryLabel="Discard changes"
+                            primaryVariant="destructive"
+                            onPrimary={onClose}
+                        />
                     }
                 >
                     <p className="body text-ink-muted">

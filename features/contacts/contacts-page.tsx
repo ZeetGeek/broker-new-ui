@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api/client";
 import { clientsApi } from "@/lib/api/clients";
@@ -16,7 +16,7 @@ import { usePersistedJson } from "@/hooks/use-persisted-json";
 import { AddFab } from "@/components/shared/add-fab";
 import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
-import { ClientsTabIcon, OwnersTabIcon, Search } from "@/components/shared/icons";
+import { AlertCircle, ClientsTabIcon, OwnersTabIcon, Search } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,7 @@ import {
     type OwnerRow,
 } from "@/features/contacts/types";
 import { useShortcut } from "@/features/shortcuts/use-shortcut";
+import { useAppSelector } from "@/store/hooks";
 
 /** Contacts grid: 1 → 2 → 3 → 4 columns, capped at four on desktop. */
 const CONTACT_GRID_BREAKPOINTS = [
@@ -62,10 +63,6 @@ const CONTACT_GRID_BREAKPOINTS = [
     { minWidth: 1024, columns: 3 },
     { minWidth: 1280, columns: 4 },
 ];
-
-/** Fills the results band so the teach block sits in the visual middle of the page. */
-const CONTACTS_EMPTY_FRAME =
-    "min-block-[min(34rem,calc(100dvh-14rem))] py-10 md:min-block-[min(38rem,calc(100dvh-12rem))]";
 
 function isContactsFilters(value: unknown): value is ContactsFilters {
     if (typeof value !== "object" || value === null) return false;
@@ -87,6 +84,8 @@ export function ContactsPage({
     initialAddOwner?: boolean;
     addDealFlow?: boolean;
 }) {
+    const queryClient = useQueryClient();
+    const userId = useAppSelector((state) => state.auth.user?.id);
     const [filters, setFilters] = usePersistedJson<ContactsFilters>(
         PREF_KEYS.broker.contacts.prefs,
         DEFAULT_CONTACTS_FILTERS,
@@ -167,12 +166,34 @@ export function ContactsPage({
 
     const buyersQuery = useInfiniteItems({
         queryKey: ["contacts", "buyers", filters.q, filters.sort, revision],
-        queryFn: ({ cursor, signal }) => contactsApi.listBuyersPage(filters, cursor, signal),
+        queryFn: ({ cursor, signal }) =>
+            contactsApi.listBuyersPage(filters, cursor, signal, () =>
+                queryClient.fetchQuery({
+                    queryKey: ["contacts", "search-source", "buyers", userId, revision],
+                    queryFn: ({ signal }) => contactsApi.buyerSearchSource(signal),
+                    staleTime: 30_000,
+                }),
+            ),
         enabled: filters.tab === "buyers",
     });
     const ownersQuery = useInfiniteItems({
         queryKey: ["contacts", "owners", filters.q, filters.sort, filters.ownerOrigin, revision],
-        queryFn: ({ cursor, signal }) => contactsApi.listOwnersPage(filters, cursor, signal),
+        queryFn: ({ cursor, signal }) =>
+            contactsApi.listOwnersPage(filters, cursor, signal, () =>
+                queryClient.fetchQuery({
+                    queryKey: [
+                        "contacts",
+                        "search-source",
+                        "owners",
+                        userId,
+                        filters.ownerOrigin,
+                        filters.sort,
+                        revision,
+                    ],
+                    queryFn: ({ signal }) => contactsApi.ownerSearchSource(filters, signal),
+                    staleTime: 30_000,
+                }),
+            ),
         enabled: filters.tab === "owners",
     });
     const summaryQuery = useQuery({
@@ -295,14 +316,17 @@ export function ContactsPage({
     const hasSearch = filters.q.trim().length > 0;
     const summary = summaryQuery.data ?? null;
     const isBuyers = filters.tab === "buyers";
+    const hasActiveFilters = hasSearch || (!isBuyers && filters.ownerOrigin !== "all");
     const buyers = useMemo(
         () => sortBuyerRows(buyersQuery.items, filters.sort),
         [buyersQuery.items, filters.sort],
     );
     const rows = isBuyers ? buyers : ownersQuery.items;
     const activeQuery = isBuyers ? buyersQuery : ownersQuery;
+    const resultsLoading =
+        activeQuery.isPending || (activeQuery.isFetching && !activeQuery.isFetchingNextPage);
     const isFirstRunEmpty =
-        !activeQuery.isPending && !activeQuery.isError && rows.length === 0 && !hasSearch;
+        !activeQuery.isPending && !activeQuery.isError && rows.length === 0 && !hasActiveFilters;
     const openAdd = useCallback(() => {
         if (isBuyers) setIsAddOpen(true);
         else setIsOwnerAddOpen(true);
@@ -476,36 +500,50 @@ export function ContactsPage({
                 )}
 
                 {activeQuery.isError && rows.length === 0 ? (
-                    <div role="alert" className="flex flex-col items-start gap-3 py-12">
-                        <p className="body-sm font-medium text-ink">
-                            Clients could not load. Check your connection and try again.
-                        </p>
+                    <EmptyState
+                        size="page"
+                        variant="error"
+                        icon={AlertCircle}
+                        heading={
+                            isBuyers
+                                ? "Your clients couldn’t be loaded"
+                                : "Your owners couldn’t be loaded"
+                        }
+                        description="Check your connection and try again to see your contacts."
+                    >
                         <Button
-                            variant="secondary"
+                            variant="accent"
                             size="sm"
                             onClick={() => void activeQuery.refetch()}
                         >
                             Try again
                         </Button>
-                    </div>
+                    </EmptyState>
                 ) : null}
 
-                {activeQuery.isError && rows.length === 0 ? null : activeQuery.isPending ? (
+                {activeQuery.isError && rows.length === 0 ? null : resultsLoading ? (
                     <ContactsSkeleton variant={isBuyers ? "buyer" : "owner"} />
                 ) : rows.length === 0 ? (
-                    hasSearch ? (
+                    hasActiveFilters ? (
                         <EmptyState
+                            size="page"
+                            variant="filtered"
                             icon={Search}
-                            heading="Nothing matches"
-                            description="Try a different name, number or area."
-                            className="py-16"
+                            heading={
+                                isBuyers
+                                    ? "No clients match your search"
+                                    : "No owners match these filters"
+                            }
+                            description="Try a different name, number or area, or clear your search and filters."
                         >
                             <Button
-                                variant="secondary"
+                                variant="accent"
                                 size="sm"
-                                onClick={() => setFilters((prev) => ({ ...prev, q: "" }))}
+                                onClick={() =>
+                                    setFilters((prev) => ({ ...prev, q: "", ownerOrigin: "all" }))
+                                }
                             >
-                                Clear the search
+                                Clear search & filters
                             </Button>
                         </EmptyState>
                     ) : isBuyers ? (
@@ -513,7 +551,7 @@ export function ContactsPage({
                             icon={ClientsTabIcon}
                             heading="No clients yet"
                             description="Add the people looking to buy or rent. You can link them to a property once they are on your list."
-                            className={CONTACTS_EMPTY_FRAME}
+                            size="page"
                         >
                             <Button size="md" variant="accent" onClick={() => setIsAddOpen(true)}>
                                 Add your first client
@@ -528,7 +566,7 @@ export function ContactsPage({
                                     ? "Platform owners appear after accepting your request. You can also add an owner for a private listing."
                                     : "Add an owner to start linking their properties to your listings."
                             }
-                            className={CONTACTS_EMPTY_FRAME}
+                            size="page"
                         >
                             <Button
                                 size="md"

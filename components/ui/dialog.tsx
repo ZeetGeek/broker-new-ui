@@ -97,8 +97,18 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
             data-slot="dialog-header"
+            className={cn("flex flex-col gap-1.5 text-start", className)}
+            {...props}
+        />
+    );
+}
+
+function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
+    return (
+        <div
+            data-slot="dialog-footer"
             className={cn(
-                `flex flex-col gap-1.5 pe-[calc(var(--dialog-pad)+1.25rem)] text-start`,
+                "flex flex-row flex-wrap items-center justify-end gap-2 inline-full",
                 className,
             )}
             {...props}
@@ -131,6 +141,7 @@ export {
     DialogBackdrop,
     DialogClose,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogPopup,
     DialogPortal,

@@ -1,0 +1,9 @@
+.body[data-scroll-below] + :global([data-slot="dialog-footer"]),
+.body[data-scroll-below]
+    :global(
+        [data-slot="dialog-footer"]:not([data-slot="dialog-footer"] [data-slot="dialog-footer"])
+    ) {
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 -6px 16px -8px color-mix(in srgb, var(--color-ink) 20%, transparent);
+}

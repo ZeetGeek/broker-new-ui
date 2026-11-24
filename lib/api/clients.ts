@@ -436,7 +436,7 @@ function mapContact(contact: ApiClientContact): ClientItem {
  * When `/clients` nests property titles but omits `photos`, fill covers from
  * `GET /properties/:id` for the unique missing ids on this page only.
  */
-async function enrichAttachedPropertyCovers<T extends ClientLeadSummary>(
+export async function enrichAttachedPropertyCovers<T extends ClientLeadSummary>(
     items: T[],
     signal?: AbortSignal,
 ): Promise<T[]> {
@@ -509,6 +509,7 @@ async function enrichAttachedPropertyCovers<T extends ClientLeadSummary>(
  */
 export async function listClientsWithLeadSummary(options?: {
     search?: string;
+    signal?: AbortSignal;
 }): Promise<Array<ClientItem & ClientLeadSummary>> {
     if (isMockMode()) {
         return mockClientsWithLeads(options?.search);
@@ -566,19 +567,25 @@ export async function listClientsPageWithLeadSummary(options: {
     };
 }
 
-async function fetchAllContacts(options?: { search?: string }): Promise<ApiClientContact[]> {
+async function fetchAllContacts(options?: {
+    search?: string;
+    signal?: AbortSignal;
+}): Promise<ApiClientContact[]> {
     const items: ApiClientContact[] = [];
     let page = 1;
     let totalPages = 1;
     const search = options?.search?.trim();
 
     while (page <= totalPages) {
+        options?.signal?.throwIfAborted();
         const qs = new URLSearchParams({
             page: String(page),
             limit: "100",
         });
         if (search) qs.set("search", search);
-        const response = await apiFetch<ClientsListResponse>(`/clients?${qs}`);
+        const response = await apiFetch<ClientsListResponse>(`/clients?${qs}`, {
+            signal: options?.signal,
+        });
         items.push(...(response.items ?? []));
         totalPages = Math.max(1, response.totalPages ?? 1);
         page += 1;

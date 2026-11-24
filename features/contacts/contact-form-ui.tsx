@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
 import type { AppIcon } from "@/components/shared/icons";
 import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
@@ -976,7 +977,7 @@ export function ContactFormDrawer({
     }, [footerError, open, embedded?.active]);
 
     const footer = (
-        <div className="flex flex-col gap-3 inline-full">
+        <AppModalFooter className="flex-col items-stretch gap-3">
             {footerError ? (
                 <p
                     role="alert"
@@ -985,7 +986,7 @@ export function ContactFormDrawer({
                     {footerError}
                 </p>
             ) : null}
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <AppModalFooter>
                 {loading ? (
                     <div
                         role="status"
@@ -1026,8 +1027,8 @@ export function ContactFormDrawer({
                         </ShortcutTooltip>
                     </>
                 )}
-            </div>
-        </div>
+            </AppModalFooter>
+        </AppModalFooter>
     );
 
     if (embedded) {
@@ -1044,9 +1045,9 @@ export function ContactFormDrawer({
                         children
                     )}
                 </div>
-                <div className="shrink-0 border-bs border-border-warm p-(--dialog-pad)">
+                <AppModalFooter className="shrink-0 border-bs border-border-warm p-(--dialog-pad)">
                     {footer}
-                </div>
+                </AppModalFooter>
             </div>
         );
     }
@@ -1087,18 +1088,18 @@ export function ContactFormDrawer({
                 title="Discard unsaved changes?"
                 description="What you typed will be lost if you leave now."
                 footer={
-                    <div
+                    <AppModalFooter
                         className="
                       flex flex-row flex-wrap items-center justify-end gap-2 inline-full
                     "
-                    >
-                        <Button type="button" variant="ghost" onClick={() => setDiscardOpen(false)}>
-                            Keep editing
-                        </Button>
-                        <Button type="button" variant="destructive" onClick={confirmDiscard}>
-                            Discard changes
-                        </Button>
-                    </div>
+                        secondaryLabel="Keep editing"
+                        secondaryVariant="ghost"
+                        onSecondary={() => setDiscardOpen(false)}
+                        primaryLabel="Discard changes"
+                        primaryType="button"
+                        primaryVariant="destructive"
+                        onPrimary={confirmDiscard}
+                    />
                 }
             >
                 <p className="body text-ink-muted">

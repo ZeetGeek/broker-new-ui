@@ -9,7 +9,8 @@ import {
     type ShortcutPortal,
 } from "@/lib/shortcuts";
 
-import { AppModalHeader } from "@/components/shared/app-modal-header";
+import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import {
     Bell,
     Bookmark,
@@ -32,7 +33,6 @@ import {
     Users,
     Wallet,
 } from "@/components/shared/icons";
-import { Dialog, DialogPopup } from "@/components/ui/dialog";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -138,31 +138,38 @@ export function ShortcutsCheatsheet({
     const groups = groupShortcuts(portal, hiddenIds, contextIds);
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogPopup showCloseButton={false} className="gap-0 p-0 max-inline-sm">
-                <AppModalHeader title="Keyboard shortcuts" />
-
-                <ScrollArea className="max-block-96">
-                    <div className="flex flex-col gap-4 p-4">
-                        {Array.from(groups.entries()).map(([group, shortcuts]) => (
-                            <div key={group} className="flex flex-col gap-0.5">
-                                <p className="eyebrow px-2 pbe-1 text-ink-subtle">{group}</p>
-                                {shortcuts.map((shortcut) => (
-                                    <ShortcutRow key={shortcut.id} shortcut={shortcut} />
-                                ))}
-                            </div>
-                        ))}
-                    </div>
-                </ScrollArea>
-
-                <p
-                    className="
+        <AppModal
+            open={open}
+            onOpenChange={onOpenChange}
+            title="Keyboard shortcuts"
+            bodyClassName="p-0"
+            size="sm"
+            scrollBody={false}
+            className="gap-0 p-0 max-inline-sm"
+            footer={
+                <AppModalFooter className="justify-center">
+                    <p
+                        className="
                       body-xs border-bs border-border-warm px-6 py-3 text-center text-ink-subtle
                     "
-                >
-                    Press <Kbd variant="surface">?</Kbd> outside a text field to reopen this
-                </p>
-            </DialogPopup>
-        </Dialog>
+                    >
+                        Press <Kbd variant="surface">?</Kbd> outside a text field to reopen this
+                    </p>
+                </AppModalFooter>
+            }
+        >
+            <ScrollArea className="max-block-96">
+                <div className="flex flex-col gap-4 p-4">
+                    {Array.from(groups.entries()).map(([group, shortcuts]) => (
+                        <div key={group} className="flex flex-col gap-0.5">
+                            <p className="eyebrow px-2 pbe-1 text-ink-subtle">{group}</p>
+                            {shortcuts.map((shortcut) => (
+                                <ShortcutRow key={shortcut.id} shortcut={shortcut} />
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            </ScrollArea>
+        </AppModal>
     );
 }

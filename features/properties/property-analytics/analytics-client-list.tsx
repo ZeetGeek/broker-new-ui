@@ -30,6 +30,9 @@ import type {
     ClientRow,
     PropertyReport,
 } from "@/features/properties/property-analytics/analytics-math";
+import { isPreviewAnalyticsClient } from "@/features/properties/property-analytics/mock-property-analytics";
+
+import styles from "./analytics.module.css";
 
 type Filter = "all" | ClientGroup;
 
@@ -47,9 +50,9 @@ function StagePill({ client, closedWord }: { client: ClientRow; closedWord: stri
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
     return (
-        <div className="flex items-baseline gap-2 min-inline-0">
-            <dt className="shrink-0 text-ink-muted inline-16">{label}</dt>
-            <dd className="text-ink min-inline-0">{children}</dd>
+        <div className={styles.clientFact}>
+            <dt className="body-xs text-ink-muted">{label}</dt>
+            <dd className="body-sm text-ink min-inline-0">{children}</dd>
         </div>
     );
 }
@@ -90,6 +93,7 @@ function ClientCard({
     propertyTitle: string;
     now: Date;
 }) {
+    const sample = isPreviewAnalyticsClient(client.id);
     const dealHref = brokerPipelineDealHref(client.id);
     const offer = offerText(client);
     const visit = visitText(client, now);
@@ -100,8 +104,8 @@ function ClientCard({
     ].filter(Boolean);
 
     return (
-        <article className="flex flex-col gap-3 p-4 md:p-5">
-            <div className="flex items-start gap-3">
+        <article className={styles.clientRow}>
+            <div className={styles.clientIdentity}>
                 <UserAvatar name={client.name} size="md" />
                 <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -109,24 +113,28 @@ function ClientCard({
                             <ContactName
                                 name={client.name}
                                 contactId={client.clientId}
-                                contactType="buyer"
+                                contactType={sample ? undefined : "buyer"}
                                 className="hover:text-brand-text hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                             />
                         </h3>
                         <StagePill client={client} closedWord={closedWord} />
                     </div>
-                    <p className="body-sm text-ink-muted tabular-nums">{meta.join(" · ")}</p>
+                    <p className="body-sm wrap-anywhere text-ink-muted tabular-nums">
+                        {meta.join(" · ")}
+                    </p>
+                    {client.email ? (
+                        <p className="body-sm wrap-anywhere text-ink-muted">{client.email}</p>
+                    ) : null}
                 </div>
             </div>
 
-            <dl className="body-sm flex flex-col gap-1.5">
+            <dl className={styles.clientFacts}>
                 <Fact label="Offer">
-                    {offer ?? <span className="text-ink-muted">None yet</span>}
+                    {offer ?? <span className="text-ink-muted">No offers yet</span>}
                 </Fact>
                 <Fact label="Visits">
-                    {visit ?? <span className="text-ink-muted">None booked</span>}
+                    {visit ?? <span className="text-ink-muted">No visits booked</span>}
                 </Fact>
-                {client.email ? <Fact label="Email">{client.email}</Fact> : null}
             </dl>
 
             {client.note ? (
@@ -140,15 +148,16 @@ function ClientCard({
                 </p>
             ) : null}
 
-            <div className="flex flex-wrap gap-2">
+            <div className={styles.clientActions}>
                 {client.phone ? (
                     <>
                         <Button
                             variant="outline"
                             size="md"
                             className="flex-1 sm:flex-none"
-                            nativeButton={false}
-                            render={<a href={formatTelUrl(client.phone)} />}
+                            nativeButton={sample}
+                            disabled={sample}
+                            render={sample ? undefined : <a href={formatTelUrl(client.phone)} />}
                         >
                             <CallIcon aria-hidden strokeWidth={1.75} />
                             Call
@@ -157,16 +166,19 @@ function ClientCard({
                             variant="outline"
                             size="md"
                             className="flex-1 sm:flex-none"
-                            nativeButton={false}
+                            nativeButton={sample}
+                            disabled={sample}
                             render={
-                                <a
-                                    href={formatWhatsAppUrl(
-                                        client.phone,
-                                        `Hi ${client.name}, this is about ${propertyTitle}.`,
-                                    )}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                />
+                                sample ? undefined : (
+                                    <a
+                                        href={formatWhatsAppUrl(
+                                            client.phone,
+                                            `Hi ${client.name}, this is about ${propertyTitle}.`,
+                                        )}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    />
+                                )
                             }
                         >
                             <WhatsAppIcon aria-hidden strokeWidth={1.75} />
@@ -177,9 +189,10 @@ function ClientCard({
                 <Button
                     variant="ghost"
                     size="md"
-                    className="max-sm:inline-full sm:ms-auto"
-                    nativeButton={false}
-                    render={<Link href={dealHref} />}
+                    className="ms-auto"
+                    nativeButton={sample}
+                    disabled={sample}
+                    render={sample ? undefined : <Link href={dealHref} />}
                 >
                     Open deal
                     <ArrowRight aria-hidden />
@@ -194,10 +207,12 @@ export function AnalyticsClientList({
     report,
     propertyTitle,
     now,
+    className,
 }: {
     report: PropertyReport;
     propertyTitle: string;
     now: Date;
+    className?: string;
 }) {
     const [filter, setFilter] = useState<Filter>("all");
     const { clients, counts, closedWord } = report;
@@ -213,7 +228,13 @@ export function AnalyticsClientList({
     const visible = filter === "all" ? clients : clients.filter((c) => c.group === filter);
 
     return (
-        <section aria-labelledby="analytics-clients-heading" className="flex flex-col gap-3">
+        <section
+            aria-labelledby="analytics-clients-heading"
+            className={cn(
+                "flex flex-col gap-4 rounded-card bg-surface p-4 shadow-sm ring-1 ring-border-warm/50 min-inline-0 sm:p-5",
+                className,
+            )}
+        >
             <Tabs
                 value={filter}
                 onValueChange={(value) => setFilter(value as Filter)}
@@ -222,12 +243,11 @@ export function AnalyticsClientList({
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex flex-col gap-1">
                         <h2 id="analytics-clients-heading" className="h5 text-ink">
-                            Client details{" "}
+                            Clients{" "}
                             <span className="text-ink-muted tabular-nums">{counts.total}</span>
                         </h2>
                         <p className="body-sm text-ink-muted">
-                            Contact details, visits, offers, notes and the next action for every
-                            client
+                            Every conversation and deal in one place
                         </p>
                     </div>
                     {showTabs ? (
@@ -235,9 +255,9 @@ export function AnalyticsClientList({
                     ) : null}
                 </div>
                 <TabsContent value={filter}>
-                    <ul className="divide-y divide-border-warm overflow-hidden rounded-card bg-surface shadow-sm ring-1 ring-border-warm/50">
+                    <ul className="divide-y divide-border-warm">
                         {visible.map((client) => (
-                            <li key={client.id}>
+                            <li key={client.id} className="py-4 first:pbs-0 last:pbe-0">
                                 <ClientCard
                                     client={client}
                                     closedWord={closedWord}

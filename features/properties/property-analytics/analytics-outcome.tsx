@@ -2,11 +2,13 @@ import { formatCommission } from "@/lib/format/commission";
 import { plural } from "@/lib/format/plural";
 import { cn } from "@/lib/utils";
 
-import { CircleCheck, HandCoins, Info } from "@/components/shared/icons";
+import { HandCoins, Info } from "@/components/shared/icons";
 
 import { formatSideAmount } from "@/features/properties/property-analytics/analytics-labels";
 import type { PropertyReport } from "@/features/properties/property-analytics/analytics-math";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
+
+import styles from "./analytics.module.css";
 
 type ListingCommission = Pick<
     MyListingItem,
@@ -63,97 +65,62 @@ export function AnalyticsOutcome({
     return (
         <section
             aria-labelledby="analytics-outcome-heading"
-            className={cn(
-                "flex flex-col justify-between gap-6 rounded-card bg-brand-deep p-5 text-surface min-inline-0 sm:p-6",
-                className,
-            )}
+            className={cn(styles.commission, className)}
         >
-            <div className="flex flex-col gap-5">
-                <div className="flex items-start justify-between gap-4">
-                    <div className="flex flex-col gap-1">
-                        <h2 id="analytics-outcome-heading" className="h5 text-surface">
-                            {isClosed ? "Deal result" : "Commission opportunity"}
-                        </h2>
-                        <p className="body-sm text-brand-soft">
-                            {isClosed
-                                ? `Based on the ${report.closedWord.toLowerCase()} price`
-                                : "Based on the current asking price"}
-                        </p>
-                    </div>
-                    <span className="flex shrink-0 items-center justify-center rounded-inner bg-surface/10 block-11 inline-11">
-                        {isClosed ? (
-                            <CircleCheck aria-hidden className="block-5 inline-5" />
-                        ) : (
-                            <HandCoins aria-hidden className="block-5 inline-5" />
-                        )}
-                    </span>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    <p
-                        className={cn(
-                            "leading-none tabular-nums",
-                            commission.amountInr != null ? "h1 text-highlight" : "h3 text-surface",
-                        )}
-                    >
-                        {commission.amountInr != null
-                            ? formatCommission(commission.amountInr)
-                            : "Commission not set"}
-                    </p>
-                    <p className="body-sm text-brand-soft">
-                        {commission.amountInr != null
-                            ? isClosed
-                                ? "Estimated commission from this deal"
-                                : "Possible commission if this property closes"
-                            : "Add commission while editing the property to value this opportunity."}
-                    </p>
-                </div>
-
-                {resultPercent != null ? (
-                    <div className="flex flex-col gap-2">
-                        <div className="flex items-baseline justify-between gap-3">
-                            <span className="body-xs font-medium text-brand-soft">
-                                {isClosed ? "Closed price vs asking" : "Best offer vs asking"}
-                            </span>
-                            <span className="body-sm font-semibold text-surface tabular-nums">
-                                {resultPercent}%
-                            </span>
-                        </div>
-                        <span
-                            aria-hidden
-                            className="block overflow-hidden rounded-full bg-surface/12 block-2.5"
-                        >
-                            <span
-                                className="block rounded-full bg-surface/80 block-full"
-                                style={{ inlineSize: `${Math.min(100, resultPercent)}%` }}
-                            />
-                        </span>
-                    </div>
-                ) : null}
+            <div className="flex items-center justify-between gap-3">
+                <h2 id="analytics-outcome-heading" className="h5 text-surface">
+                    {isClosed ? "Deal commission" : "Potential commission"}
+                </h2>
+                <HandCoins aria-hidden className="shrink-0 text-brand-soft block-5 inline-5" />
             </div>
-
-            <div className="grid grid-cols-2 gap-4 border-bs border-surface/15 pbs-5">
+            <div className="flex flex-col gap-2">
+                <p
+                    className={cn(
+                        "leading-none wrap-anywhere tabular-nums",
+                        commission.amountInr != null ? "h1 text-highlight" : "h3 text-surface",
+                    )}
+                >
+                    {commission.amountInr != null
+                        ? formatCommission(commission.amountInr)
+                        : "Commission not set"}
+                </p>
+                <p className="body-sm text-brand-soft">
+                    {commission.amountInr != null
+                        ? isClosed
+                            ? "Estimated from the closed deal"
+                            : "Your estimated earnings if this property closes"
+                        : "Add a commission when editing this property."}
+                </p>
+            </div>
+            <dl className={styles.commissionFooter}>
                 <div className="flex flex-col gap-1 min-inline-0">
-                    <span className="body-xs text-brand-soft">
+                    <dt className="body-sm text-brand-soft">
                         {isClosed ? `${report.closedWord} price` : "Best offer"}
-                    </span>
-                    <strong className="h5 truncate text-surface tabular-nums">
+                    </dt>
+                    <dd className="body font-semibold wrap-anywhere text-surface tabular-nums">
                         {resultInr != null
                             ? formatSideAmount(resultInr, commission.side)
-                            : "None yet"}
-                    </strong>
+                            : "No offers yet"}
+                    </dd>
                 </div>
-                <div className="flex flex-col gap-1 border-s border-surface/15 ps-4 min-inline-0">
-                    <span className="body-xs text-brand-soft">Time on market</span>
-                    <strong className="h5 text-surface tabular-nums">{daysLabel}</strong>
+                <div className="flex flex-col gap-1 min-inline-0">
+                    <dt className="body-sm text-brand-soft">Time on market</dt>
+                    <dd className="body font-semibold text-surface tabular-nums">{daysLabel}</dd>
                 </div>
-                {commission.amountInr == null ? (
-                    <p className="body-xs col-span-2 flex items-start gap-2 text-brand-soft">
-                        <Info aria-hidden className="mbs-px shrink-0 block-4 inline-4" />
-                        This deal is excluded from earnings totals until a commission is set.
-                    </p>
-                ) : null}
-            </div>
+            </dl>
+            {resultPercent != null ? (
+                <p className="body-sm text-brand-soft">
+                    {isClosed ? "Closed price" : "Best offer"} is {resultPercent}% of asking
+                </p>
+            ) : null}
+            <p className="body-xs flex items-start gap-1.5 text-brand-soft">
+                <Info aria-hidden className="mbs-0.5 shrink-0 block-3.5 inline-3.5" />
+                {commission.amountInr == null
+                    ? "Excluded from earnings totals until commission is set."
+                    : isClosed
+                      ? "An estimate, not a record of payment received."
+                      : "Based on the current asking price. Not earned yet."}
+            </p>
         </section>
     );
 }

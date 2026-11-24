@@ -19,6 +19,8 @@ type UseUrlSyncedPrefsOptions<T> = {
     isValid?: (value: unknown) => value is T;
     /** Merge stored prefs with URL parse when URL is clean (defaults to stored). */
     mergeStored?: (stored: T, fromUrl: T) => T;
+    /** Client-fetched lists can update filters without rerunning the server route. */
+    shallow?: boolean;
 };
 
 function urlHasAnyKey(params: URLSearchParams, keys: readonly string[]): boolean {
@@ -40,6 +42,7 @@ export function useUrlSyncedPrefs<T>({
     forStorage,
     isValid,
     mergeStored,
+    shallow = false,
 }: UseUrlSyncedPrefsOptions<T>) {
     const router = useRouter();
     const pathname = usePathname();
@@ -48,6 +51,16 @@ export function useUrlSyncedPrefs<T>({
     const urlHasPrefs = urlHasAnyKey(searchParams, urlKeys);
     const [ready, setReady] = useState(urlHasPrefs);
     const didRestoreRef = useRef(false);
+    const replaceUrl = useCallback(
+        (query: string) => {
+            const href = query ? `${pathname}?${query}` : pathname;
+            // Next copies its history state and updates useSearchParams for external writes.
+            // Passing its internal state back would bypass that URL notification.
+            if (shallow) window.history.replaceState(null, "", href);
+            else router.replace(href, { scroll: false });
+        },
+        [pathname, router, shallow],
+    );
 
     /* Restore stored prefs into a clean URL before the page fetches.
        setReady is the restore-before-fetch gate (avoids a wrong-dataset flash). */
@@ -107,9 +120,9 @@ export function useUrlSyncedPrefs<T>({
                 if (existing && !params.has(key)) params.set(key, existing);
             }
             const query = params.toString();
-            router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+            replaceUrl(query);
         },
-        [forStorage, pathname, preserveUrlKeys, router, searchParams, serialize, storageKey],
+        [forStorage, preserveUrlKeys, replaceUrl, searchParams, serialize, storageKey],
     );
 
     return {

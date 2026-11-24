@@ -31,6 +31,7 @@ export function SavedPropertiesEmpty() {
                         }
                     />
                 }
+                variant="accent"
             >
                 {FEATURE_PLATFORM_OWNER ? "Browse Marketplace" : "View My Listings"}
             </Button>

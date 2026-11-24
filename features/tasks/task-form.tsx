@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { AppTimePicker } from "@/components/shared/app-time-picker";
 import { CharacterCount } from "@/components/shared/character-count";
 import { revealDrawerSections } from "@/components/shared/drawer-section";
@@ -266,17 +267,15 @@ export function TaskForm({
             busy={busy}
             dirty={dirty}
             footer={
-                <div className="flex flex-wrap items-center justify-end gap-2 inline-full">
-                    <Button
-                        variant="accent"
-                        type="submit"
-                        form={formId}
-                        disabled={busy}
-                        loading={busy}
-                    >
-                        {primary}
-                    </Button>
-                </div>
+                <AppModalFooter
+                    className="flex flex-wrap items-center justify-end gap-2 inline-full"
+                    primaryLabel={primary}
+                    primaryVariant="accent"
+                    primaryType="submit"
+                    primaryFormId={formId}
+                    primaryDisabled={busy}
+                    primaryLoading={busy}
+                />
             }
         >
             <form id={formId} onSubmit={submit} className="inline-full" noValidate>

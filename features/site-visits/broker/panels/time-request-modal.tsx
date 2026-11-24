@@ -18,6 +18,7 @@ import { useCreateTimeRequest } from "@/hooks/use-time-requests";
 
 import { AppDateTimePicker } from "@/components/shared/app-date-time-picker";
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import { IconButton } from "@/components/shared/icon-button";
@@ -189,7 +190,7 @@ export function TimeRequestModal({
             description="Give the owner one preferred time and up to two backups."
             size="lg"
             footer={
-                <div
+                <AppModalFooter
                     className="
                   flex flex-row flex-wrap items-center justify-between gap-2 inline-full
                 "
@@ -207,7 +208,7 @@ export function TimeRequestModal({
                     >
                         Send time request
                     </Button>
-                </div>
+                </AppModalFooter>
             }
         >
             <form id="time-request-form" onSubmit={submit} className="space-y-5">
