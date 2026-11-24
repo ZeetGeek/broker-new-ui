@@ -14,9 +14,11 @@ import { Skeleton } from "@/components/shared/skeleton";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
+import { PREVIEW_PROPERTY_ANALYTICS, PREVIEW_PROPERTY_ATTENTION, USE_MOCK_DATA } from "@/config";
 import { useVisitsLive, VISITS_KEY } from "@/features/new-site-visits/use-visits";
 import { DEFAULT_DEALS_FILTERS } from "@/features/pipeline/types";
 import { AnalyticsCard } from "@/features/properties/property-analytics/analytics-card";
+import { BrokerAttentionPreview } from "@/features/properties/property-analytics/broker-attention-preview";
 import { buildPropertyAttention } from "@/features/properties/property-analytics/property-attention-model";
 import { useTasks } from "@/features/tasks/task-store";
 import { useAppSelector } from "@/store/hooks";
@@ -24,6 +26,12 @@ import { useAppSelector } from "@/store/hooks";
 import styles from "./broker-property-analytics.module.css";
 
 export function PropertyAttention({ propertyId }: { propertyId: string }) {
+    if (PREVIEW_PROPERTY_ATTENTION || PREVIEW_PROPERTY_ANALYTICS || USE_MOCK_DATA)
+        return <BrokerAttentionPreview />;
+    return <LivePropertyAttention propertyId={propertyId} />;
+}
+
+function LivePropertyAttention({ propertyId }: { propertyId: string }) {
     const accountId = useAppSelector((state) => state.auth.user?.id) ?? "design-preview";
     const taskData = useTasks(accountId);
     const queryClient = useQueryClient();

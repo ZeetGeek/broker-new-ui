@@ -24,7 +24,7 @@ import { AnalyticsFunnel } from "@/features/properties/property-analytics/analyt
 import { AnalyticsSkeleton } from "@/features/properties/property-analytics/analytics-skeleton";
 import { AnalyticsStatStrip } from "@/features/properties/property-analytics/analytics-stat-strip";
 import { AnalyticsVisits } from "@/features/properties/property-analytics/analytics-visits";
-import { BrokerPropertyAnalytics } from "@/features/properties/property-analytics/broker-property-analytics";
+import { getBrokerAnalyticsPreview } from "@/features/properties/property-analytics/broker-analytics-preview-data";
 import { PropertyAttention } from "@/features/properties/property-analytics/property-attention";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
@@ -45,10 +45,6 @@ export function PropertyAnalyticsContent({
     propertyId: string;
     listing: MyListingItem;
 }) {
-    // The broker-only report is a static design preview until its API is connected.
-    if (PREVIEW_PROPERTY_ANALYTICS || USE_MOCK_DATA) {
-        return <BrokerPropertyAnalytics propertyId={propertyId} propertyTitle={listing.title} />;
-    }
     return <LivePropertyAnalyticsContent propertyId={propertyId} listing={listing} />;
 }
 
@@ -59,14 +55,21 @@ function usePropertyAnalyticsReport({
     propertyId: string;
     listing: MyListingItem;
 }) {
+    const preview = PREVIEW_PROPERTY_ANALYTICS || USE_MOCK_DATA;
     const query = useQuery({
         queryKey: [
             "property-analytics",
             propertyId,
-            PREVIEW_PROPERTY_ANALYTICS ? "preview" : "live",
+            preview ? "broker-preview" : "live",
+            listing.transactionType,
+            listing.saleAmountInr,
+            listing.rentAmountInr,
         ],
-        queryFn: ({ signal }) => propertyAnalyticsApi.property(propertyId, signal),
-        enabled: Boolean(propertyId) && !PREVIEW_PROPERTY_ANALYTICS && !USE_MOCK_DATA,
+        queryFn: ({ signal }) =>
+            preview
+                ? getBrokerAnalyticsPreview(propertyId, listing)
+                : propertyAnalyticsApi.property(propertyId, signal),
+        enabled: Boolean(propertyId),
         // Arriving from a card should show a visit or offer logged a moment ago.
         staleTime: 0,
     });
@@ -198,16 +201,16 @@ function LivePropertyAnalyticsContent({
 
     return (
         <div className={styles.report}>
-            {PREVIEW_PROPERTY_ANALYTICS ? (
+            {PREVIEW_PROPERTY_ANALYTICS || USE_MOCK_DATA ? (
                 <p
                     role="status"
                     className="body-sm flex items-start gap-2 rounded-inner bg-brand-soft px-4 py-3 text-brand-text"
                 >
                     <Info aria-hidden className="mbs-0.5 shrink-0 block-4 inline-4" />
                     <span>
-                        <strong className="font-semibold">Sample data.</strong> 40 demo clients for
-                        reviewing analytics. Contact and deal actions are disabled; your saved
-                        records are unchanged.
+                        <strong className="font-semibold">Sample broker data.</strong> 60 clients
+                        with visits, offers and deal progress. Contact and deal actions are disabled
+                        for these samples.
                     </span>
                 </p>
             ) : null}

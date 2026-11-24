@@ -9,9 +9,9 @@ import {
     HandCoins,
 } from "@/components/shared/icons";
 
-import { OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
 import { AnalyticsCard } from "@/features/properties/property-analytics/analytics-card";
 import {
+    analyticsOfferStatusLabel,
     formatSideAmount,
     offerGapLabel,
 } from "@/features/properties/property-analytics/analytics-labels";
@@ -36,7 +36,7 @@ const STATUS_STYLE: Record<OfferStatus, { icon: AppIcon; pill: string; bar: stri
     },
 };
 
-function StatusPill({ status }: { status: OfferStatus }) {
+function StatusPill({ status, sample }: { status: OfferStatus; sample: boolean }) {
     const style = STATUS_STYLE[status];
     return (
         <span
@@ -46,7 +46,7 @@ function StatusPill({ status }: { status: OfferStatus }) {
             )}
         >
             <style.icon aria-hidden className="block-3.5 inline-3.5" strokeWidth={2} />
-            {OFFER_STATUS_LABEL[status]}
+            {analyticsOfferStatusLabel(status, sample)}
         </span>
     );
 }
@@ -119,7 +119,7 @@ function OfferRow({
                         {gap ? <span className="tabular-nums">{gap}</span> : null}
                     </p>
                 </div>
-                {offer.status ? <StatusPill status={offer.status} /> : null}
+                {offer.status ? <StatusPill status={offer.status} sample={sample} /> : null}
             </div>
             <OfferBar offer={offer} scaleMax={scaleMax} amountMax={amountMax} />
         </li>

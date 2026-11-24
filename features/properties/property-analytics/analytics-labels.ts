@@ -2,13 +2,21 @@ import { formatRelativePast } from "@/lib/format/date";
 import { formatPrice, formatRent } from "@/lib/format/price";
 
 import { stageTitle } from "@/features/pipeline/stage-history";
-import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
+import { DEAL_STAGE_META, OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
 import { type DealStatus, isLiveStage } from "@/features/pipeline/types";
 import type {
     FunnelStep,
     OfferInfo,
     Side,
 } from "@/features/properties/property-analytics/analytics-math";
+
+/** Sample broker offers describe the client's negotiation without an approval workflow. */
+export function analyticsOfferStatusLabel(
+    status: NonNullable<OfferInfo["status"]>,
+    sample = false,
+): string {
+    return sample && status === "pending" ? "In discussion" : OFFER_STATUS_LABEL[status];
+}
 
 /** Offers and closed amounts — not a listing ask, so plain formatting. Rent reads per month. */
 export function formatSideAmount(amountInr: number, side: Side): string {

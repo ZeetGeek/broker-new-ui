@@ -16,9 +16,9 @@ import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 
-import { OFFER_STATUS_LABEL } from "@/features/pipeline/stage-meta";
 import {
     agoLabel,
+    analyticsOfferStatusLabel,
     formatSideAmount,
     offerGapLabel,
     statusDotClass,
@@ -65,7 +65,9 @@ function offerText(client: ClientRow): string | null {
     if (!offer) return null;
     return [
         formatSideAmount(offer.amountInr, offer.side),
-        offer.status ? OFFER_STATUS_LABEL[offer.status] : null,
+        offer.status
+            ? analyticsOfferStatusLabel(offer.status, isPreviewAnalyticsClient(client.id))
+            : null,
         offerGapLabel(offer),
     ]
         .filter(Boolean)
