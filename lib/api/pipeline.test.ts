@@ -159,7 +159,7 @@ test("pipeline sends the filter sheet to the leads API as query params", async (
     assert.equal(params.get("page"), "1");
 });
 
-test("pipeline search finds deals by client, owner and area", async (t) => {
+test("pipeline search is sent to the API and its results are kept as returned", async (t) => {
     const previous = api.defaults.adapter;
     t.after(() => {
         api.defaults.adapter = previous;
@@ -167,77 +167,42 @@ test("pipeline search finds deals by client, owner and area", async (t) => {
     const sale = { salePrice: "5000000", transactionType: "sale" };
     const leads = [
         {
-            id: "andheri",
-            stage: "new",
-            property: { id: "p1", ...sale, address: "Andheri West", city: "Mumbai" },
-            client: { id: "c1", name: "Ravi Kumar", phone: "+91 98765 43210" },
-            owner: { id: "o1", fullName: "Sunita Sharma" },
-        },
-        {
             id: "baner",
-            stage: "contacted",
+            stage: "new",
             property: { id: "p2", ...sale, address: "Baner", city: "Pune" },
             client: { id: "c2", name: "Meera Iyer", phone: "9123456789" },
-            exclusiveOwner: { id: "o2", fullName: "Arjun Mehta" },
         },
         {
-            id: "no-owner",
-            stage: "new",
+            // The server matched this one on a field the card does not show
+            // as text (e.g. the BHK); the browser must not filter it out again.
+            id: "wakad",
+            stage: "contacted",
             property: { id: "p3", ...sale, address: "Wakad", city: "Pune" },
             client: { id: "c3", name: "Anil Rao" },
         },
-        {
-            id: "noida",
-            stage: "visit",
-            property: { id: "p4", ...sale, address: "Sector-62", city: "Noida" },
-            client: { id: "c4", name: "Kavya Singh", phone: "9000011111" },
-        },
     ];
-    // Mirrors the real API: its `search` matches names only, never the area.
+    const searches: (string | null)[] = [];
     api.defaults.adapter = async (config) => {
-        const search = new URL(config.url ?? "", "http://x").searchParams
-            .get("search")
-            ?.toLowerCase();
-        const items = search
-            ? leads.filter((lead) =>
-                  [lead.client.name, lead.owner?.fullName, lead.exclusiveOwner?.fullName].some(
-                      (name) => name?.toLowerCase().includes(search),
-                  ),
-              )
-            : leads;
+        const params = new URL(config.url ?? "", "http://x").searchParams;
+        searches.push(params.get("search"));
         return {
-            data: { items, totalPages: 1 },
+            data: { items: params.get("search") ? leads : [], totalPages: 1 },
             status: 200,
             statusText: "OK",
             headers: {},
             config,
         };
     };
-    const search = async (q: string) =>
-        (await pipelineApi.list({ ...DEFAULT_DEALS_FILTERS, q })).items.map((d) => d.id).sort();
 
-    assert.deepEqual(await search("ravi"), ["andheri"], "client name");
-    assert.deepEqual(await search("SHARMA"), ["andheri"], "platform owner name");
-    assert.deepEqual(await search("mehta"), ["baner"], "exclusive owner name");
-    assert.deepEqual(await search("andheri"), ["andheri"], "area");
-    assert.deepEqual(await search("pune"), ["baner", "no-owner"], "city");
-    assert.deepEqual(await search("  baner "), ["baner"], "surrounding spaces");
-    assert.deepEqual(await search("98765 43210"), ["andheri"], "phone typed with a space");
-    assert.deepEqual(await search("ravi andheri"), ["andheri"], "client and area together");
-    assert.deepEqual(await search("ravi baner"), [], "every word must match");
-    assert.deepEqual(await search("owner"), [], "the 'Owner' placeholder is not searchable");
-    assert.deepEqual(
-        await search("Andheri West, Mumbai"),
-        ["andheri"],
-        "area as the card shows it",
-    );
-    assert.deepEqual(await search("62"), ["noida"], "a number in the area");
-    assert.deepEqual(await search("sector 62"), ["noida"], "area typed without the dash");
-    assert.deepEqual(await search("sector-62 noida"), ["noida"], "area typed with the dash");
+    const result = await pipelineApi.list({ ...DEFAULT_DEALS_FILTERS, q: "  ravi andheri " });
+    assert.deepEqual(searches, ["ravi andheri"], "trimmed search goes to the API");
+    assert.deepEqual(result.items.map((deal) => deal.id).sort(), ["baner", "wakad"]);
+    assert.equal(result.summary.counts.new, 1, "stage counts follow the search");
+    assert.equal(result.summary.counts.contacted, 1);
 
-    const { summary } = await pipelineApi.list({ ...DEFAULT_DEALS_FILTERS, q: "pune" });
-    assert.equal(summary.counts.new, 1, "stage counts follow the search");
-    assert.equal(summary.counts.contacted, 1);
+    searches.length = 0;
+    await pipelineApi.list({ ...DEFAULT_DEALS_FILTERS, q: "   " });
+    assert.deepEqual(searches, [null], "a blank search is not sent");
 });
 
 test("pipeline filter state: whitespace search and empty sheet are not filters", () => {

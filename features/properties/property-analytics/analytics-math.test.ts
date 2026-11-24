@@ -207,3 +207,95 @@ test("days listed stop counting once sold", () => {
     assert.equal(report.daysListed, 30);
     assert.equal(report.lastUpdateAt, null);
 });
+
+test("a visit in progress is running, not waiting for an update", () => {
+    const report = buildPropertyReport(
+        analytics([
+            lead({
+                id: "running",
+                showings: 1,
+                latestShowing: {
+                    status: "scheduled",
+                    scheduledDate: "2026-11-18T11:45:00+05:30",
+                    endAt: "2026-11-18T12:30:00+05:30",
+                },
+            }),
+            lead({
+                id: "ended",
+                showings: 1,
+                latestShowing: {
+                    status: "confirmed",
+                    scheduledDate: "2026-11-18T10:00:00+05:30",
+                    endAt: "2026-11-18T10:30:00+05:30",
+                },
+            }),
+        ]),
+        NOW,
+    );
+    const running = report.clients.find((c) => c.id === "running")!.visit!;
+    assert.equal(running.running, true);
+    assert.equal(running.needsUpdate, false);
+    assert.equal(report.clients.find((c) => c.id === "ended")!.visit!.needsUpdate, true);
+    assert.equal(report.visits.needsUpdate, 1);
+});
+
+test("a visit with no stored end is assumed to last 30 minutes", () => {
+    const report = buildPropertyReport(
+        analytics([
+            lead({
+                id: "a",
+                showings: 1,
+                latestShowing: { status: "scheduled", scheduledDate: "2026-11-18T11:40:00+05:30" },
+            }),
+        ]),
+        NOW,
+    );
+    assert.equal(report.clients[0].visit!.running, true);
+});
+
+test("visit totals come from the API's per-state counts when present", () => {
+    const data = analytics([
+        lead({
+            id: "a",
+            showings: 2,
+            latestShowing: {
+                status: "scheduled",
+                scheduledDate: "2026-11-19T11:00:00+05:30",
+                endAt: "2026-11-19T11:30:00+05:30",
+            },
+        }),
+    ]);
+    data.summary.showings = 2;
+    data.summary.clientsVisited = 1;
+    data.summary.visits = {
+        upcoming: 2,
+        running: 0,
+        needs_update: 0,
+        completed: 0,
+        not_attended: 0,
+        cancelled: 3,
+    };
+    const report = buildPropertyReport(data, NOW);
+    assert.equal(report.visits.total, 2);
+    assert.equal(report.visits.upcoming, 2);
+    assert.equal(report.visits.clientsVisited, 1);
+});
+
+test("a closed deal reports the commission locked at close", () => {
+    const data = analytics([
+        lead({
+            id: "won",
+            stage: "closed_won",
+            closedAmount: "8500000",
+            commissionInrAtClose: "170000",
+        }),
+    ]);
+    data.summary.closedWonAmount = "8500000";
+    assert.equal(buildPropertyReport(data, NOW).closedCommissionInr, 170000);
+    data.summary.closedCommissionInr = "170000";
+    assert.equal(buildPropertyReport(data, NOW).closedCommissionInr, 170000);
+    assert.equal(
+        buildPropertyReport(analytics([lead({ id: "x" })]), NOW).closedCommissionInr,
+        null,
+    );
+});

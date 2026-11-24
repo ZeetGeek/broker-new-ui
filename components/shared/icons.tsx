@@ -16,7 +16,7 @@
  * Generated via: node scripts/generate-icons-module.mjs
  */
 
-import { forwardRef } from "react";
+import { forwardRef, memo } from "react";
 
 export { IconFlag as Flag, IconFlagFilled as FlagFilled } from "@tabler/icons-react";
 
@@ -31,25 +31,36 @@ import toastStatusIcons from "./toast-status-icons.json";
 
 export type ToastStatusGlyph = keyof typeof toastStatusIcons.icons;
 
-/** Explicit Fluent Color toast glyphs, bundled locally for offline rendering. */
-export function ToastStatusIcon({
+const TOAST_STATUS_ICON_DATA = Object.fromEntries(
+    Object.entries(toastStatusIcons.icons).map(([name, icon]) => [
+        name,
+        { ...icon, width: toastStatusIcons.width, height: toastStatusIcons.height },
+    ]),
+) as Record<ToastStatusGlyph, IconifyProps["icon"]>;
+
+/**
+ * Explicit Fluent Color toast glyphs, bundled locally for offline rendering.
+ *
+ * Memoised on purpose. These glyphs carry gradient ids, and Iconify rewrites
+ * them to fresh unique ids on every render. Inside a react-hot-toast that DOM
+ * change re-triggers the toast's height observer, which re-renders the toast:
+ * a loop that hogs the main thread for the toast's whole lifetime and stalls
+ * route changes (e.g. login → dashboard).
+ */
+export const ToastStatusIcon = memo(function ToastStatusIcon({
     name,
     ...props
 }: Omit<IconifyProps, "icon"> & { name: ToastStatusGlyph }) {
     return (
         <OfflineIcon
-            icon={{
-                ...toastStatusIcons.icons[name],
-                width: toastStatusIcons.width,
-                height: toastStatusIcons.height,
-            }}
+            icon={TOAST_STATUS_ICON_DATA[name]}
             width={24}
             height={24}
             data-icon={`fluent-color:${name}`}
             {...props}
         />
     );
-}
+});
 
 export type NotificationGlyph = keyof typeof notificationIcons;
 

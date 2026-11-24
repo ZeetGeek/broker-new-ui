@@ -507,11 +507,7 @@ function leadFilterParams(filters: DealsFilters): URLSearchParams {
     return params;
 }
 
-/**
- * Every lead matching the filter sheet. The search box is applied afterwards
- * by `matchesQuery`: the API's `search` skips area and phone, so sending it
- * would drop those matches before the client ever sees them.
- */
+/** Every lead matching the filter sheet and search, across all API pages. */
 async function fetchAllLeads(
     filterParams?: URLSearchParams,
     signal?: AbortSignal,
@@ -691,15 +687,18 @@ export const pipelineApi = withTestNetwork({
     },
     async list(filters: DealsFilters, signal?: AbortSignal): Promise<DealsResult> {
         if (isMockMode()) return mockList(filters);
-        const leads = await fetchAllLeads(leadFilterParams(filters), signal);
-        // Stage counts follow the search, as they did when the API filtered it.
+        const params = leadFilterParams(filters);
+        // Searched on the server: every word must match a name, phone, area,
+        // property type, BHK or note shown on the deal card.
+        const search = filters.q.trim();
+        if (search) params.set("search", search);
+        const leads = await fetchAllLeads(params, signal);
+        // Stage counts follow the search.
         const all = leads
             .map(mapLeadToDeal)
             .filter(
                 (deal): deal is DealItem =>
-                    deal != null &&
-                    matchesQuery(deal, filters.q) &&
-                    matchesPeopleFilters(deal.owner.id, [deal.buyer], filters),
+                    deal != null && matchesPeopleFilters(deal.owner.id, [deal.buyer], filters),
             );
 
         const items = filters.stage ? all.filter((deal) => deal.status === filters.stage) : all;

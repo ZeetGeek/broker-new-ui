@@ -1,6 +1,6 @@
 "use client";
 
-import { type ComponentProps, useEffect, useState } from "react";
+import { type ComponentProps, useEffect, useRef, useState } from "react";
 
 import type { SearchHelp } from "@/lib/search/search-help";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
@@ -49,7 +49,11 @@ type ListSearchFieldProps = Omit<
 > & {
     value: string;
     onChange: (value: string) => void;
-    /** Use 0 when the page already debounces requests or filters local records. */
+    /**
+     * Wait after the last keystroke before searching. Use 0 when the page
+     * already debounces requests or filters local records. Enter and clearing
+     * always apply at once.
+     */
     debounceMs?: number;
     /** Let a page's responsive layout size the search field. */
     fullWidth?: boolean;
@@ -68,21 +72,36 @@ export function ListSearchField({
     className,
     wrapperClassName,
     "aria-label": ariaLabel,
+    onKeyDown,
     ...props
 }: ListSearchFieldProps) {
     const [draft, setDraft] = useState(value);
     const [previousValue, setPreviousValue] = useState(value);
+    // Parents usually pass an inline handler; a ref keeps their re-renders
+    // from restarting the debounce timer mid-word.
+    const onChangeRef = useRef(onChange);
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    });
 
     if (value !== previousValue) {
         setPreviousValue(value);
         setDraft(value);
     }
 
+    // Spaces at either end never change the results, so they never search.
+    const isPending = draft.trim() !== value.trim();
+
     useEffect(() => {
-        if (debounceMs === 0 || draft === value) return;
-        const timer = window.setTimeout(() => onChange(draft), debounceMs);
+        if (debounceMs === 0 || !isPending) return;
+        const timer = window.setTimeout(() => onChangeRef.current(draft), debounceMs);
         return () => window.clearTimeout(timer);
-    }, [debounceMs, draft, onChange, value]);
+    }, [debounceMs, draft, isPending]);
+
+    function commit(next: string) {
+        setDraft(next);
+        if (next.trim() !== value.trim()) onChange(next);
+    }
 
     const field = (
         <Input
@@ -91,7 +110,16 @@ export function ListSearchField({
             value={debounceMs === 0 ? value : draft}
             onValueChange={(next) => {
                 if (debounceMs === 0) onChange(next);
+                // Clearing is deliberate: show every record again at once.
+                else if (next === "") commit(next);
                 else setDraft(next);
+            }}
+            onKeyDown={(event) => {
+                onKeyDown?.(event);
+                // Enter searches now instead of waiting out the debounce.
+                if (event.key === "Enter" && debounceMs !== 0 && !event.defaultPrevented) {
+                    commit(draft);
+                }
             }}
             placeholder={placeholder}
             aria-label={ariaLabel ?? placeholder ?? "Search this list"}

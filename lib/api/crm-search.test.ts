@@ -10,47 +10,22 @@ import { siteVisitsApi, type VisitListQuery } from "@/lib/api/site-visits";
 
 import { DEFAULT_CONTACTS_FILTERS } from "@/features/contacts/types";
 
-test("client search checks later API pages and reuses its collection for another search", async (t) => {
+test("client search is sent to the API and pages normally", async (t) => {
     const previous = api.defaults.adapter;
-    const cache = new QueryClient();
     t.after(() => {
         api.defaults.adapter = previous;
-        cache.clear();
     });
-    let calls = 0;
+    const requests: URL[] = [];
     api.defaults.adapter = async (config) => {
-        calls++;
         const url = new URL(config.url!, "https://test.invalid");
-        assert.equal(url.pathname, "/clients");
-        assert.equal(url.searchParams.has("search"), false);
+        requests.push(url);
         const page = Number(url.searchParams.get("page"));
         return {
             data: {
-                items: [
-                    {
-                        id: `c${page}`,
-                        name: page === 2 ? "Ravi Patel" : "Other client",
-                        phone: "9876543210",
-                        leads:
-                            page === 2
-                                ? [
-                                      {
-                                          id: "l1",
-                                          propertyId: "p1",
-                                          stage: "new",
-                                          property: {
-                                              id: "p1",
-                                              title: "Orchid Heights",
-                                              photos: ["/cover.jpg"],
-                                          },
-                                      },
-                                  ]
-                                : [],
-                    },
-                ],
+                items: [{ id: `c${page}`, name: "Ravi Patel", phone: "9876543210", leads: [] }],
                 page,
                 totalPages: 2,
-                total: 2,
+                total: 21,
             },
             status: 200,
             statusText: "OK",
@@ -58,31 +33,23 @@ test("client search checks later API pages and reuses its collection for another
             config,
         };
     };
-    const source = () =>
-        cache.fetchQuery({
-            queryKey: ["clients-search"],
-            queryFn: () => contactsApi.buyerSearchSource(),
-            staleTime: Infinity,
-        });
-    const first = await contactsApi.listBuyersPage(
-        { ...DEFAULT_CONTACTS_FILTERS, q: "Ravi Orchid" },
-        null,
-        undefined,
-        source,
-    );
+    const filters = { ...DEFAULT_CONTACTS_FILTERS, q: " Ravi Orchid ", sort: "name" as const };
+    const first = await contactsApi.listBuyersPage(filters, null);
     assert.deepEqual(
         first.items.map((item) => item.id),
-        ["c2"],
+        ["c1"],
     );
-    assert.equal(first.total, 1);
-    const next = await contactsApi.listBuyersPage(
-        { ...DEFAULT_CONTACTS_FILTERS, q: "+91 98765 43210" },
-        null,
-        undefined,
-        source,
-    );
-    assert.equal(next.total, 2);
-    assert.equal(calls, 2);
+    assert.equal(first.total, 21);
+    assert.equal(first.nextCursor, "2");
+    const next = await contactsApi.listBuyersPage(filters, first.nextCursor);
+    assert.equal(next.nextCursor, null);
+    assert.equal(requests.length, 2);
+    for (const url of requests) {
+        assert.equal(url.pathname, "/clients");
+        assert.equal(url.searchParams.get("search"), "Ravi Orchid");
+        assert.equal(url.searchParams.get("sort"), "name");
+        assert.equal(url.searchParams.get("limit"), "20");
+    }
 });
 
 test("owner search finds a linked property on a later owner page", async (t) => {
@@ -136,39 +103,72 @@ test("owner search finds a linked property on a later owner page", async (t) => 
     assert.equal(result.total, 1);
 });
 
-test("listing search joins people and checks every filtered property page before pagination", async (t) => {
+test("listing search is sent to the API and pages normally instead of collecting every page", async (t) => {
     const previous = propertiesApi.list;
     t.after(() => {
         propertiesApi.list = previous;
     });
-    const requests: number[] = [];
+    const requests: { search?: string; page?: number }[] = [];
     propertiesApi.list = async (query) => {
-        assert.equal(query?.search, undefined);
         assert.equal(query?.publishStatus, "published");
-        requests.push(query!.page!);
-        const page = query?.page ?? 1;
+        requests.push({ search: query?.search, page: query?.page });
         const listing: PropertyListing = {
-            id: `p${page}`,
-            title: page === 2 ? "Orchid Heights" : "Other property",
+            id: "p2",
+            title: "Orchid Heights",
             subtype: "apartment",
             city: "Mumbai",
             publishStatus: "published",
             status: "available",
             exclusiveOwner: { id: "o1", fullName: "Meera Shah", phone: "+919876543210" },
         };
-        return { items: [listing], page, total: 2, totalPages: 2, limit: 20 };
+        return { items: [listing], page: 1, total: 25, totalPages: 2, limit: 20 };
     };
     const result = await myListingsApi.list(
-        { q: "Ravi Orchid Meera", status: "published" },
+        { q: "  Ravi Orchid Meera ", status: "published" },
         undefined,
         { attachedClients: async () => new Map([["p2", [{ id: "c1", name: "Ravi Patel" }]]]) },
     );
-    assert.deepEqual(requests, [1, 2]);
+    // One request for the page asked for; the server does the matching.
+    assert.deepEqual(requests, [{ search: "Ravi Orchid Meera", page: 1 }]);
     assert.deepEqual(
         result.items.map((item) => item.id),
         ["p2"],
     );
-    assert.equal(result.total, 1);
+    assert.equal(result.total, 25);
+    assert.equal(result.totalPages, 2);
+    assert.deepEqual(result.items[0].attachedClients, [{ id: "c1", name: "Ravi Patel" }]);
+});
+
+test("listing search still applies with local-only filters", async (t) => {
+    const previous = propertiesApi.list;
+    t.after(() => {
+        propertiesApi.list = previous;
+    });
+    const searches: (string | undefined)[] = [];
+    propertiesApi.list = async (query) => {
+        searches.push(query?.search);
+        const page = query?.page ?? 1;
+        const listing: PropertyListing = {
+            id: `p${page}`,
+            title: "Orchid Heights",
+            subtype: "apartment",
+            city: "Mumbai",
+            publishStatus: "published",
+            status: "available",
+        };
+        return { items: [listing], page, total: 2, totalPages: 2, limit: 20 };
+    };
+    const result = await myListingsApi.list(
+        { q: "Orchid", status: "published", clientId: "c1" },
+        undefined,
+        { attachedClients: async () => new Map([["p2", [{ id: "c1", name: "Ravi Patel" }]]]) },
+    );
+    // The client filter is still local, so every page is checked — each one searched.
+    assert.deepEqual(searches, ["Orchid", "Orchid"]);
+    assert.deepEqual(
+        result.items.map((item) => item.id),
+        ["p2"],
+    );
 });
 
 test("visit search retains status/date/person filters, searches later pages and paginates matches", async (t) => {
@@ -241,30 +241,24 @@ test("visit search retains status/date/person filters, searches later pages and 
     assert.equal(calls, 2);
 });
 
-test("cancelled client and visit scans stop before fetching another page", async (t) => {
+test("a cancelled visit scan stops before fetching another page", async (t) => {
     const previous = api.defaults.adapter;
     t.after(() => {
         api.defaults.adapter = previous;
     });
-    for (const kind of ["clients", "visits"] as const) {
-        const controller = new AbortController();
-        let calls = 0;
-        api.defaults.adapter = async (config) => {
-            calls++;
-            controller.abort();
-            return {
-                data: { items: [], totalPages: 5 },
-                status: 200,
-                statusText: "OK",
-                headers: {},
-                config,
-            };
+    const controller = new AbortController();
+    let calls = 0;
+    api.defaults.adapter = async (config) => {
+        calls++;
+        controller.abort();
+        return {
+            data: { items: [], totalPages: 5 },
+            status: 200,
+            statusText: "OK",
+            headers: {},
+            config,
         };
-        await assert.rejects(
-            kind === "clients"
-                ? contactsApi.buyerSearchSource(controller.signal)
-                : siteVisitsApi.searchSource({ tab: "upcoming" }, controller.signal),
-        );
-        assert.equal(calls, 1);
-    }
+    };
+    await assert.rejects(siteVisitsApi.searchSource({ tab: "upcoming" }, controller.signal));
+    assert.equal(calls, 1);
 });

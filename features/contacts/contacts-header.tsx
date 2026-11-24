@@ -111,6 +111,8 @@ export function ContactsHeader({
                             searchHelp={isBuyers ? CRM_SEARCH_HELP.clients : CRM_SEARCH_HELP.owners}
                             aria-label={isBuyers ? "Search clients" : "Search owners"}
                             value={filters.q}
+                            // Clients are searched on the server, so wait for a pause in typing.
+                            debounceMs={isBuyers ? 500 : undefined}
                             onChange={(q) => onFiltersChange({ ...filters, q })}
                         />
                     }

@@ -25,9 +25,10 @@ import { isPreviewAnalyticsClient } from "@/features/properties/property-analyti
 import styles from "./analytics.module.css";
 
 function visitPriority(client: ClientRow): number {
-    if (client.visit?.upcoming) return 0;
-    if (client.visit?.needsUpdate) return 1;
-    return 2;
+    if (client.visit?.running) return 0;
+    if (client.visit?.upcoming) return 1;
+    if (client.visit?.needsUpdate) return 2;
+    return 3;
 }
 
 /** A compact visit row, prioritising upcoming and unresolved appointments. */
@@ -37,10 +38,13 @@ function VisitRow({ client, now }: { client: ClientRow; now: Date }) {
     const label = visit.upcoming
         ? formatShowingWhen(visit.at, now)
         : `On ${formatDateShort(visit.at)}`;
-    const status = visit.needsUpdate
-        ? "Outcome needed"
-        : (visitStatusLabel(visit.status) ?? (visit.upcoming ? "Booked" : "Visit logged"));
-    const Icon = visit.upcoming ? CalendarClock : visit.needsUpdate ? Clock : CircleCheck;
+    const status = visit.running
+        ? "Happening now"
+        : visit.needsUpdate
+          ? "Needs update"
+          : (visitStatusLabel(visit.status) ?? (visit.upcoming ? "Booked" : "Visit logged"));
+    const Icon =
+        visit.upcoming || visit.running ? CalendarClock : visit.needsUpdate ? Clock : CircleCheck;
 
     return (
         <li className={styles.visitRow}>
@@ -48,7 +52,7 @@ function VisitRow({ client, now }: { client: ClientRow; now: Date }) {
                 aria-hidden
                 className={cn(
                     "flex shrink-0 items-center justify-center rounded-inner block-10 inline-10",
-                    visit.upcoming
+                    visit.upcoming || visit.running
                         ? "bg-brand-soft text-brand-text"
                         : visit.needsUpdate
                           ? "bg-urgent-soft text-urgent"
@@ -103,7 +107,7 @@ export function AnalyticsVisits({
     const visitedShare =
         report.counts.total > 0 ? report.visits.clientsVisited / report.counts.total : 0;
     const visitedPercent = Math.round(visitedShare * 100);
-    const needsUpdate = report.clients.filter((client) => client.visit?.needsUpdate).length;
+    const needsUpdate = report.visits.needsUpdate;
     const visitRows = report.clients
         .filter((client) => client.visit != null)
         .sort((a, b) => {
