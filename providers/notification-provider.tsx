@@ -27,6 +27,7 @@ type NotificationContextValue = {
     items: NotificationItem[];
     unreadCount: number;
     loading: boolean;
+    error: string | null;
     refresh: () => Promise<void>;
     markRead: (id: string) => Promise<void>;
     markAllRead: () => Promise<void>;
@@ -46,14 +47,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     const [items, setItems] = useState<NotificationItem[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const refresh = useCallback(async () => {
         if (!accessToken) return;
         setLoading(true);
+        setError(null);
         try {
             const data = await notificationsApi.list({ page: 1, limit: 20 });
             setItems(data.items);
             setUnreadCount(data.unreadCount);
+        } catch {
+            setError("Couldn't load notifications. Check your connection and try again.");
         } finally {
             setLoading(false);
         }
@@ -159,6 +164,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
         const socket = getNotificationSocket(accessToken);
 
+        // Recover any notifications delivered while the connection was offline.
+        const onConnect = () => void refresh();
+
         const onCreated = (item: NotificationItem) => {
             if (!isLaunchEventVisible(item)) return;
             setItems((prev) => [item, ...prev.filter((entry) => entry.id !== item.id)]);
@@ -196,12 +204,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             if (!FEATURE_PLATFORM_OWNER) void refresh();
         };
 
+        socket.on("connect", onConnect);
         socket.on("notification.created", onCreated);
         socket.on("notification.updated", onUpdated);
         socket.on("notification.unread_count", onUnread);
         socket.on("notification.read", onRead);
 
         return () => {
+            socket.off("connect", onConnect);
             socket.off("notification.created", onCreated);
             socket.off("notification.updated", onUpdated);
             socket.off("notification.unread_count", onUnread);
@@ -214,6 +224,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             items: isAuthenticated ? items : [],
             unreadCount: isAuthenticated ? unreadCount : 0,
             loading: isAuthenticated ? loading : false,
+            error: isAuthenticated ? error : null,
             refresh,
             markRead,
             markAllRead,
@@ -224,6 +235,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             items,
             unreadCount,
             loading,
+            error,
             refresh,
             markRead,
             markAllRead,

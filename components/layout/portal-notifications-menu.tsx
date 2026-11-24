@@ -24,7 +24,6 @@ import {
 } from "@/lib/notifications/display-content";
 import { cn } from "@/lib/utils";
 
-import { buildDemoNotifications } from "@/components/layout/notification-demo-items";
 import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import { CheckCheck, NotificationIcon, Trash2 } from "@/components/shared/icons";
@@ -473,50 +472,6 @@ function NotificationRow({
 }
 
 /**
- * DESIGN-ONLY: show static sample notifications instead of the live feed.
- * Set to `false` (and delete `notification-demo-items.ts`) to go back to the API.
- */
-const USE_DEMO_NOTIFICATIONS = true;
-
-/** Local, in-memory stand-in for `useNotifications()` so the demo rows stay clickable. */
-function useDemoNotifications() {
-    const [baseItems] = useState(() => buildDemoNotifications(new Date()));
-    const [readIds, setReadIds] = useState<ReadonlySet<string>>(() => new Set());
-    const [decisions, setDecisions] = useState<Record<string, string>>({});
-
-    const items = useMemo(
-        () =>
-            baseItems.map((item) => ({
-                ...item,
-                isRead: item.isRead || readIds.has(item.id),
-                representationStatus: decisions[item.id] ?? item.representationStatus,
-            })),
-        [baseItems, readIds, decisions],
-    );
-
-    return {
-        items,
-        unreadCount: items.filter((item) => !item.isRead).length,
-        loading: false,
-        markRead: async (id: string) => {
-            setReadIds((prev) => new Set(prev).add(id));
-        },
-        markAllRead: async () => {
-            setReadIds(new Set(baseItems.map((item) => item.id)));
-        },
-        respondToRepresentation: async (
-            notificationId: string,
-            _representationId: string,
-            status: "accepted" | "rejected",
-        ) => {
-            await new Promise((resolve) => setTimeout(resolve, 600));
-            setDecisions((prev) => ({ ...prev, [notificationId]: status }));
-            setReadIds((prev) => new Set(prev).add(notificationId));
-        },
-    };
-}
-
-/**
  * True while the list has rows hidden below the fold, so the footer can cast
  * the same lift shadow as the dashboard listings footer ("more to scroll").
  */
@@ -563,16 +518,16 @@ export function PortalNotificationsMenu({
     triggerClassName,
     tooltipLabel,
 }: PortalNotificationsMenuProps) {
-    const live = useNotifications();
-    const demo = useDemoNotifications();
     const {
         items: feedItems,
         unreadCount,
         loading,
+        error,
+        refresh,
         markRead,
         markAllRead,
         respondToRepresentation,
-    } = USE_DEMO_NOTIFICATIONS ? demo : live;
+    } = useNotifications();
     // "Clear all" hides what is in the list for this session only — there is no
     // delete endpoint yet. Anything that arrives afterwards still shows.
     const [clearedIds, setClearedIds] = useState<ReadonlySet<string>>(() => new Set());
@@ -612,9 +567,16 @@ export function PortalNotificationsMenu({
     };
 
     const handleClearAll = () => {
-        setClearedIds((prev) => new Set([...prev, ...items.map((item) => item.id)]));
-        // Cleared items should not keep the bell badge lit.
-        if (unreadCount > 0) handleMarkAllRead();
+        const idsToClear = items.map((item) => item.id);
+        void (async () => {
+            // Keep the list visible if saving the read state fails.
+            if (unreadCount > 0) await markAllRead();
+            setClearedIds((prev) => new Set([...prev, ...idsToClear]));
+        })().catch(() => {
+            toast.error("Couldn't clear notifications. Try again.", {
+                id: "notifications-clear-error",
+            });
+        });
     };
 
     const trigger = (
@@ -641,6 +603,8 @@ export function PortalNotificationsMenu({
     let list: ReactNode;
     if (loading && items.length === 0) {
         list = <NotificationsSkeleton />;
+    } else if (error && items.length === 0) {
+        list = null;
     } else if (items.length === 0) {
         list = <NotificationsEmpty />;
     } else if (filteredItems.length === 0) {
@@ -677,7 +641,11 @@ export function PortalNotificationsMenu({
     }
 
     return (
-        <DropdownMenu>
+        <DropdownMenu
+            onOpenChange={(open) => {
+                if (open) void refresh();
+            }}
+        >
             {tooltipLabel ? (
                 <Tooltip>
                     <TooltipTrigger render={trigger} />
@@ -699,6 +667,23 @@ export function PortalNotificationsMenu({
                 />
 
                 <div aria-hidden className="shrink-0 border-be border-border-warm" />
+
+                {error ? (
+                    <div className="flex shrink-0 flex-col items-center gap-3 p-6 text-center">
+                        <p className="body-sm text-ink-muted" role="alert">
+                            {error}
+                        </p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            loading={loading}
+                            onClick={() => void refresh()}
+                        >
+                            Try again
+                        </Button>
+                    </div>
+                ) : null}
 
                 {list}
 

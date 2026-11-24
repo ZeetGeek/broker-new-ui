@@ -14,6 +14,12 @@
 
 **Verification:** ESLint, formatting, notification launch-policy tests, and TypeScript checks. Browser inspection requires a connected authenticated preview; no browser was available in this session.
 
+## Data and actions
+
+The header dropdown reads items, unread counts, and read actions from `NotificationProvider`, which uses the notifications HTTP API and Socket.IO events. It refreshes when opened and when the socket connects again. Failed loads show a retry action and retain any previously loaded items. The dropdown has no separate demo feed; the shared `NEXT_PUBLIC_USE_MOCK_DATA` setting still applies to intentional design previews.
+
+“Clear all” saves the read state through the backend before hiding the current rows for this mounted session. It does not delete notifications; hidden rows return after a reload because the API has no delete endpoint.
+
 ## Motion
 
 Uses transitions-dev recipes 05 (origin-aware dropdown), 16 (sliding white tab indicator), and 03 (unread badge). Open uses 250ms; close uses 150ms. Filter results use the existing short tab-panel reveal and reset the list to its start. First paint and resize position the tab indicator without animation. All effects honor reduced motion; row hover continues to change only the background.

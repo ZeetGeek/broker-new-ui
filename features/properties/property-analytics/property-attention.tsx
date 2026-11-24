@@ -86,17 +86,17 @@ export function PropertyAttention({ propertyId }: { propertyId: string }) {
         <AnalyticsCard
             title="Needs your attention"
             titleId="broker-attention-heading"
-            description="Your Tasks, Pipeline and Visits for this property."
+            description="Tasks due, visit outcomes and client follow-ups."
             action={
                 loading ? (
                     <Skeleton className="block-7 inline-7" />
                 ) : (
                     <span
                         className={styles.count}
-                        aria-label={`${items.length} items${failed.length ? " from available sources" : ""}`}
+                        aria-label={`${items.length} ${items.length === 1 ? "item" : "items"}${failed.length ? " from available sources" : ""}`}
                     >
                         {items.length}
-                        {failed.length ? "+" : ""}
+                        {failed.length ? "+" : ""} {items.length === 1 ? "item" : "items"}
                     </span>
                 )
             }
@@ -136,34 +136,34 @@ export function PropertyAttention({ propertyId }: { propertyId: string }) {
                     <ul className={styles.attentionList}>
                         {items.map((item) => (
                             <li key={item.id}>
-                                <span
-                                    className={cn(
-                                        styles.taskIcon,
-                                        item.urgent && styles.taskUrgent,
-                                    )}
-                                >
-                                    {item.source === "Visits" ? (
-                                        <CalendarCheck size={18} aria-hidden />
-                                    ) : (
-                                        <Clock size={18} aria-hidden />
-                                    )}
-                                </span>
-                                <div className={styles.taskCopy}>
-                                    <Link href={item.href} className={styles.attentionTitle}>
-                                        {item.title}
-                                    </Link>
-                                    <p>{item.detail}</p>
-                                    <span className={styles.attentionSource}>{item.source}</span>
-                                </div>
-                                <Button
-                                    nativeButton={false}
-                                    render={<Link href={item.href} />}
-                                    variant="ghost"
-                                    size="icon"
-                                    aria-label={`Open ${item.source}: ${item.title}`}
-                                >
-                                    <ChevronRight aria-hidden />
-                                </Button>
+                                <Link href={item.href} className={styles.attentionRow}>
+                                    <span
+                                        className={cn(
+                                            styles.taskIcon,
+                                            item.urgent && styles.taskUrgent,
+                                        )}
+                                    >
+                                        {item.source === "Visits" ? (
+                                            <CalendarCheck size={18} aria-hidden />
+                                        ) : (
+                                            <Clock size={18} aria-hidden />
+                                        )}
+                                    </span>
+                                    <div className={styles.taskCopy}>
+                                        <span className={styles.attentionTitle}>{item.title}</span>
+                                        <p>{item.detail}</p>
+                                    </div>
+                                    <span className={styles.attentionAction}>
+                                        <span>
+                                            {item.source === "Tasks"
+                                                ? "Open task"
+                                                : item.source === "Visits"
+                                                  ? "Open visit"
+                                                  : "Open deal"}
+                                        </span>
+                                        <ChevronRight aria-hidden />
+                                    </span>
+                                </Link>
                             </li>
                         ))}
                     </ul>
@@ -173,8 +173,8 @@ export function PropertyAttention({ propertyId }: { propertyId: string }) {
                         <div>
                             <strong>You’re up to date</strong>
                             <p>
-                                No tasks due today, visits awaiting an outcome or quiet deals for
-                                this property.
+                                No tasks, visits or client follow-ups need attention for this
+                                property.
                             </p>
                         </div>
                     </div>
