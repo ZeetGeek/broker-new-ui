@@ -31,7 +31,7 @@ import { useAppSelector } from "@/store/hooks";
 
 type DealTarget = Extract<WorkflowTarget, { kind: "deal" }>;
 type SaveIntent =
-    | { kind: "note"; note: string }
+    | { kind: "note"; note: string; keepOpen?: boolean }
     | { kind: "offer"; amount: number; notes: string }
     | { kind: "stage"; request: StageMoveRequest; note: string; details: StageMoveDetails };
 
@@ -88,7 +88,13 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
                 ? "Sent to the owner to confirm."
                 : intent.request.successMessage;
         },
-        onSuccess: (message) => {
+        onSuccess: (message, intent) => {
+            if (intent.kind === "note") {
+                queryClient.setQueryData<NonNullable<typeof deal>>(
+                    ["workflow-deal", accountId, target.id],
+                    (current) => (current ? { ...current, note: intent.note } : current),
+                );
+            }
             void queryClient.invalidateQueries({
                 predicate: (item) =>
                     /^(workflow-deal|pipeline|my-listings|owned-property-detail|dashboard-listings|property-attached-buyers|property-analytics|broker)/.test(
@@ -97,7 +103,7 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
             });
             notifyWorkflowSaved("deal");
             toast.success(message);
-            onClose();
+            if (intent.kind !== "note" || !intent.keepOpen) onClose();
         },
     });
     useWorkflowWorking(mode !== "detail" || move != null || save.isPending);
@@ -217,7 +223,16 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
                 }}
                 isBusy={save.isPending}
                 onStageAction={requestStage}
-                onEditNote={() => openMode("note")}
+                onSaveNote={async (note) => {
+                    if (saving.current)
+                        throw new Error("Another change is still saving. Try again in a moment.");
+                    saving.current = true;
+                    try {
+                        await save.mutateAsync({ kind: "note", note, keepOpen: true });
+                    } finally {
+                        saving.current = false;
+                    }
+                }}
                 onMakeOffer={
                     FEATURE_PLATFORM_OWNER && deal && isLiveStage(deal.status)
                         ? () => openMode("offer")

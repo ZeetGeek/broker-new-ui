@@ -296,6 +296,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     const [isLoadingView, setIsLoadingView] = useState(false);
     const [viewError, setViewError] = useState<string | null>(null);
     const [noteDealId, setNoteDealId] = useState<string | null>(null);
+    const [noteFallback, setNoteFallback] = useState<DealItem | null>(null);
     const [isSavingNote, setIsSavingNote] = useState(false);
     const [stageGate] = useState(() => new StageOperationGate());
     const mounted = useRef(true);
@@ -615,7 +616,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     const handleConfirmNote = useCallback(
         async (note: string) => {
             if (!noteDealId) return;
-            const current = (deals ?? []).find((deal) => deal.id === noteDealId);
+            const current = (deals ?? []).find((deal) => deal.id === noteDealId) ?? noteFallback;
             if (!current) return;
             if (stageGate.begin(noteDealId) == null) return;
 
@@ -625,6 +626,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 setNoteError(null);
                 await pipelineApi.setNote(noteDealId, current.status, note);
                 setNoteDealId(null);
+                setNoteFallback(null);
                 toast.success("Note saved");
             } catch (saveError) {
                 setNoteError(
@@ -639,7 +641,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 setRevision((value) => value + 1);
             }
         },
-        [deals, noteDealId, stageGate],
+        [deals, noteDealId, noteFallback, stageGate],
     );
 
     const handlers = useMemo<DealCardHandlers>(
@@ -700,6 +702,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             },
             onNote: (dealId) => {
                 setNoteError(null);
+                setNoteFallback(null);
                 setNoteDealId(dealId);
             },
         }),
@@ -770,7 +773,9 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             : null;
 
     const noteDeal =
-        noteDealId != null ? ((deals ?? []).find((deal) => deal.id === noteDealId) ?? null) : null;
+        noteDealId != null
+            ? ((deals ?? []).find((deal) => deal.id === noteDealId) ?? noteFallback)
+            : null;
 
     const isFirstLoad = deals === null;
     // Describes the deals on screen, so a pending clear never flashes first-run copy.
@@ -1002,7 +1007,10 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     void handleConfirmNote(note);
                 }}
                 onCancel={() => {
-                    if (!isSavingNote) setNoteDealId(null);
+                    if (!isSavingNote) {
+                        setNoteDealId(null);
+                        setNoteFallback(null);
+                    }
                 }}
             />
 
@@ -1015,6 +1023,47 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     if (viewDealId) openLeadView(viewDealId);
                 }}
                 isBusy={busyId != null || isSavingMove}
+                onSaveNote={
+                    viewDetail
+                        ? async (note) => {
+                              const deal = viewDetail;
+                              const version = stageGate.begin(deal.id);
+                              if (version == null)
+                                  throw new Error(
+                                      "Another change is still saving. Try again in a moment.",
+                                  );
+                              setBusyId(deal.id);
+                              try {
+                                  await pipelineApi.setNote(deal.id, deal.status, note);
+                                  setViewDetail((current) =>
+                                      current?.id === deal.id ? { ...current, note } : current,
+                                  );
+                                  setDeals(
+                                      (current) =>
+                                          current?.map((item) =>
+                                              item.id === deal.id ? { ...item, note } : item,
+                                          ) ?? null,
+                                  );
+                                  toast.success("Notes saved");
+                              } finally {
+                                  stageGate.end();
+                                  setBusyId(null);
+                                  setRevision((current) => current + 1);
+                              }
+                              const refreshRevision = stageGate.revision;
+                              // Refresh activity without treating a failed read as a failed save.
+                              void pipelineApi
+                                  .get(deal.id)
+                                  .then((latest) => {
+                                      if (stageGate.revision === refreshRevision)
+                                          setViewDetail((current) =>
+                                              current?.id === deal.id ? latest : current,
+                                          );
+                                  })
+                                  .catch(() => {});
+                          }
+                        : undefined
+                }
                 onMakeOffer={
                     viewDetail && isLiveStage(viewDetail.status) && !viewDetail.property.isSold
                         ? () => {

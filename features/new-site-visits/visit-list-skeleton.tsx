@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/shared/skeleton";
 import styles from "./visits.module.css";
 
 /** Keep the visit toolbar mounted while its chronological rows are loading. */
-export function VisitListSkeleton() {
+export function VisitListSkeleton({ actionCount = 2 }: { actionCount?: number }) {
     return (
         <div role="status" aria-busy="true" className={styles.groups}>
             <span className="sr-only">Finding your visits</span>
@@ -14,16 +14,18 @@ export function VisitListSkeleton() {
                 <div className={styles.list}>
                     {Array.from({ length: 5 }, (_, index) => (
                         <div key={index} className={styles.visitCard}>
-                            <div className={styles.visitRow}>
+                            <div className={styles.visitRow} data-action-count={actionCount}>
                                 <div className={styles.rowProperty}>
-                                    <Skeleton className="shrink-0 block-16 inline-16" />
+                                    <Skeleton
+                                        className={`${styles.propertyCover} shrink-0 block-16 inline-16`}
+                                    />
                                     <div className="flex flex-1 flex-col gap-2 min-inline-0">
                                         <Skeleton className="block-4 inline-4/5" />
                                         <Skeleton className="block-3 inline-3/5" />
                                     </div>
                                 </div>
                                 <div className={styles.rowTime}>
-                                    <Skeleton className="shrink-0 block-9 inline-9" />
+                                    <Skeleton className={`${styles.detailIcon} shrink-0`} />
                                     <div className="flex flex-1 flex-col gap-2 min-inline-0">
                                         <Skeleton className="block-3 inline-3/4" />
                                         <Skeleton className="block-4 inline-full" />
@@ -42,8 +44,12 @@ export function VisitListSkeleton() {
                                 </div>
                                 <Skeleton className={`${styles.rowStatus} block-6 inline-20`} />
                                 <div className={styles.rowActions}>
-                                    <Skeleton className="block-8 inline-8" />
-                                    <Skeleton className="block-8 inline-8" />
+                                    {Array.from({ length: actionCount }, (_, action) => (
+                                        <Skeleton
+                                            key={action}
+                                            className={styles.actionPlaceholder}
+                                        />
+                                    ))}
                                 </div>
                             </div>
                         </div>

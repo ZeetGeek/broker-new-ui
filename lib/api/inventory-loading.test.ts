@@ -3,12 +3,76 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { api } from "@/lib/api/client";
+import type { AttachedClientRef } from "@/lib/api/clients";
 import { myListingsApi } from "@/lib/api/my-listings";
 import { pipelineApi } from "@/lib/api/pipeline";
-import type { PropertyListing, PropertyListQuery } from "@/lib/api/properties";
+import { propertiesApi, type PropertyListing, type PropertyListQuery } from "@/lib/api/properties";
 import { EMPTY_PROPERTY_CRITERIA } from "@/lib/properties/list-criteria";
 
 import { DEFAULT_DEALS_FILTERS } from "@/features/pipeline/types";
+
+test(
+    "inventory loads before optional client details, while client filters wait for complete data",
+    { timeout: 5_000 },
+    async (t) => {
+        const previous = propertiesApi.list;
+        t.after(() => {
+            propertiesApi.list = previous;
+        });
+        propertiesApi.list = async () => ({
+            items: [{ id: "property", title: "Property", publishStatus: "published" }],
+            total: 1,
+            page: 1,
+            totalPages: 1,
+            limit: 20,
+        });
+        const cache = new QueryClient();
+        t.after(() => cache.clear());
+        let resolveClients!: (value: Map<string, AttachedClientRef[]>) => void;
+        const clients = new Promise<Map<string, AttachedClientRef[]>>((resolve) => {
+            resolveClients = resolve;
+        });
+        t.after(() => resolveClients(new Map()));
+        let scans = 0;
+        const attachedClients = () =>
+            cache.fetchQuery({
+                queryKey: ["inventory-lead-summary", "account"],
+                queryFn: () => {
+                    scans++;
+                    return clients;
+                },
+                staleTime: 30_000,
+            });
+        // The page starts this request independently of the property request.
+        const summary = attachedClients();
+        const options = { withAttachedClients: false, attachedClients };
+        const first = await myListingsApi.list({}, undefined, options);
+        const filtered = await myListingsApi.list(
+            { propertyFilters: { ...EMPTY_PROPERTY_CRITERIA, minAreaSqft: "500" } },
+            undefined,
+            { ...options, propertyCollection: async () => [{ id: "property", areaSqft: 1200 }] },
+        );
+        assert.equal(first.items[0].id, "property");
+        assert.equal(filtered.items[0].id, "property");
+        assert.equal(cache.getQueryState(["inventory-lead-summary", "account"])?.status, "pending");
+
+        let filteredSettled = false;
+        const clientFiltered = myListingsApi
+            .list({ clientId: "buyer" }, undefined, options)
+            .then((result) => {
+                filteredSettled = true;
+                return result;
+            });
+        await new Promise<void>((resolve) => setImmediate(resolve));
+        assert.equal(filteredSettled, false);
+        assert.equal(scans, 1);
+        resolveClients(new Map([["property", [{ id: "buyer", name: "Buyer" }]]]));
+        const [enrichment, result] = await Promise.all([summary, clientFiltered]);
+        assert.equal(enrichment.get(first.items[0].id)?.[0].name, "Buyer");
+        assert.equal(result.total, 1);
+        assert.equal(result.items[0].attachedClients?.[0].id, "buyer");
+    },
+);
 
 test("inventory pages share collection/lead scans, refresh invalidates them, and a second session gets its own cache", async () => {
     let leadScans = 0;

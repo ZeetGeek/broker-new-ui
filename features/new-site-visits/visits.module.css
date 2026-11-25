@@ -84,6 +84,10 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    min-inline-size: 0;
+}
+.visitPanel {
+    min-inline-size: 0;
 }
 .group {
     min-inline-size: 0;
@@ -97,8 +101,10 @@
     margin-block-end: 0.7rem;
 }
 .groupHeading h2 {
+    min-inline-size: 0;
     font-size: 0.875rem;
     font-weight: 650;
+    overflow-wrap: anywhere;
 }
 .groupCount {
     flex-shrink: 0;
@@ -112,6 +118,7 @@
     display: flex;
     flex-direction: column;
     gap: 0;
+    min-inline-size: 0;
     container-type: inline-size;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -154,9 +161,11 @@
 }
 .visitRow {
     display: grid;
-    grid-template-columns: 1.5fr 1.2fr 1fr 1fr 0.4fr 0.8fr;
+    grid-template-columns:
+        minmax(0, 1.5fr) minmax(0, 1.2fr) minmax(0, 1fr)
+        minmax(0, 1fr) max-content max-content;
     align-items: center;
-    column-gap: 2rem;
+    column-gap: 1.25rem;
     min-inline-size: 0;
     min-block-size: 96px;
     padding: 1rem 1.25rem;
@@ -173,21 +182,50 @@
 }
 .rowActions {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.625rem;
+    gap: max(0.75rem, calc(var(--touch-target-min, 44px) - var(--size-control-sm)));
+    min-block-size: 44px;
+}
+.rowActions > * {
+    flex-shrink: 0;
+}
+/* A compact face with a larger hit area, without inflating the card controls. */
+.rowActions .visitAction[data-icon-button] {
+    --icon-button-size: var(--size-control-sm);
+
+    position: relative;
+    min-inline-size: var(--icon-button-size);
+    min-block-size: var(--icon-button-size);
+}
+.visitAction::after {
+    position: absolute;
+    inset: min(-6px, calc((var(--size-control-sm) - var(--touch-target-min, 44px)) / 2));
+    content: "";
+}
+.actionPlaceholder {
+    inline-size: var(--size-control-sm);
+    block-size: var(--size-control-sm);
 }
 .rowStatus {
     justify-self: center;
+    max-inline-size: 100%;
 }
 .propertyLink {
+    position: relative;
     display: block;
     text-align: start;
     font-size: 14px;
     letter-spacing: 0;
     line-height: 1.55;
     overflow-wrap: anywhere;
+}
+.propertyLink::after {
+    position: absolute;
+    inset: -4px 0;
+    min-block-size: 44px;
+    content: "";
 }
 .propertyLink:hover {
     color: var(--color-ink);
@@ -218,7 +256,7 @@
 .rowTime {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     font-variant-numeric: tabular-nums;
 }
 .rowTime time {
@@ -252,14 +290,26 @@
 .rowClient {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.625rem;
     min-inline-size: 0;
+    min-block-size: 44px;
 }
 .rowClient > div {
     min-inline-size: 0;
 }
 .rowClient [data-missing] {
     color: var(--color-ink-muted);
+}
+.rowClient [data-person-link] {
+    display: inline;
+    min-inline-size: 0;
+    min-block-size: 0;
+    overflow-wrap: anywhere;
+}
+.rowClient [data-person-link]::after {
+    position: absolute;
+    inset: -12px 0;
+    content: "";
 }
 .rowProperty {
     display: flex;
@@ -268,6 +318,9 @@
     min-inline-size: 0;
 }
 .rowProperty > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
     min-inline-size: 0;
 }
 .propertyMeta {
@@ -275,7 +328,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-    margin-block-start: 0.25rem;
+    margin-block-start: 0;
 }
 .propertyMeta > span[aria-hidden] {
     color: var(--color-ink-subtle);
@@ -300,10 +353,18 @@
     min-inline-size: 0;
 }
 .rowTime small {
-    margin-block-start: 0.25rem;
+    margin-block-start: 0;
 }
 .rowTime time {
     font-size: 0.875rem;
+}
+.rowTime .detailIcon {
+    inline-size: 24px;
+    block-size: 24px;
+}
+.rowTime .detailIcon svg {
+    inline-size: 18px;
+    block-size: 18px;
 }
 .searchField {
     display: flex;
@@ -374,8 +435,10 @@
     text-align: center;
 }
 .pageFooter p {
+    min-inline-size: 0;
     max-inline-size: 60ch;
     text-wrap: balance;
+    overflow-wrap: anywhere;
 }
 .footerLine {
     flex-shrink: 0;
@@ -388,43 +451,51 @@
         padding-block-start: 2.5rem;
     }
 }
-@container visit-card (max-width: 1100px) {
+@container visit-card (max-width: 1200px) {
     .visitRow {
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 1rem;
+        grid-template-columns: minmax(0, 1.35fr) minmax(12.5rem, 1fr) auto;
+        gap: 0.75rem 1rem;
+        min-block-size: 0;
+        padding: 1rem;
     }
     .rowProperty {
         grid-column: 1;
         grid-row: 1;
     }
     .rowTime {
-        grid-column: 1;
-        grid-row: 2;
+        grid-column: 2;
+        grid-row: 1;
+    }
+    .rowProperty .propertyCover {
+        --property-cover-size: 56px;
+
+        inline-size: var(--property-cover-size);
+        block-size: var(--property-cover-size);
     }
     .rowProfiles {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-column: 1 / -1;
-        grid-row: 3;
-        gap: 1rem;
+        grid-template-columns: repeat(2, minmax(0, 12rem));
+        grid-column: 1 / 3;
+        grid-row: 2;
+        gap: 1.5rem;
     }
     .rowStatus {
-        grid-column: 2;
+        grid-column: 3;
         grid-row: 1;
         align-self: center;
         justify-self: end;
     }
     .rowActions {
-        grid-column: 2;
+        grid-column: 3;
         grid-row: 2;
     }
 }
-@container visit-card (max-width: 480px) {
+@container visit-card (max-width: 639px) {
     .visitRow {
         grid-template-columns: minmax(0, 1fr) auto;
         min-block-size: 0;
         padding: 0.75rem;
-        gap: 0.875rem 0.75rem;
+        gap: 0.75rem;
     }
     .rowProperty,
     .rowTime,
@@ -434,16 +505,13 @@
     .rowProperty {
         grid-row: 1;
         gap: 0.75rem;
-        align-items: flex-start;
+        align-items: center;
     }
     .rowProperty .propertyCover {
-        inline-size: 48px;
-        block-size: 48px;
-    }
-    .propertyLink {
-        display: flex;
-        align-items: center;
-        min-block-size: 44px;
+        --property-cover-size: 48px;
+
+        inline-size: var(--property-cover-size);
+        block-size: var(--property-cover-size);
     }
     .propertyLocation {
         align-items: flex-start;
@@ -456,18 +524,12 @@
         gap: 0.5rem;
     }
     .rowProfiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         grid-row: 3;
         gap: 0.75rem;
     }
     .rowClient {
         gap: 0.5rem;
-    }
-    .rowClient [data-person-link] {
-        display: inline-flex;
-        align-items: center;
-        min-block-size: 44px;
-        max-inline-size: 100%;
-        overflow-wrap: anywhere;
     }
     .rowStatus {
         grid-column: 1;
@@ -477,25 +539,18 @@
     .rowActions {
         grid-column: 2;
         grid-row: 4;
-        gap: 0.5rem;
     }
 }
-/* Keep long names and four touch actions comfortable at 320px and below. */
-@container visit-card (max-width: 360px) {
-    .rowStatus,
-    .rowActions {
+/* Four actions get their own line only where the badge would crowd them. */
+@container visit-card (max-width: 400px) {
+    .visitRow[data-action-count="4"] .rowStatus,
+    .visitRow[data-action-count="4"] .rowActions {
         grid-column: 1 / -1;
     }
-    .rowActions {
+    .visitRow[data-action-count="4"] .rowActions {
         grid-row: 5;
         border-block-start: 1px solid var(--color-border-warm);
         padding-block-start: 0.75rem;
-    }
-}
-@container visit-card (max-width: 280px) {
-    .rowProfiles {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0.5rem;
     }
 }
 @container visits (max-width: 639px) {

@@ -38,6 +38,7 @@ export type MyListingsGridProps = {
     isSaved?: (listing: MyListingItem) => boolean;
     pinnedIds?: readonly string[];
     clientsUnavailable?: boolean;
+    clientsLoading?: boolean;
     onTogglePin?: (listing: MyListingItem) => void;
     /** Deleted tab: cards become read-only with Restore / Delete permanently. */
     deletedActions?: {
@@ -81,6 +82,7 @@ export function MyListingsGrid({
     isSaved,
     pinnedIds,
     clientsUnavailable,
+    clientsLoading,
     onTogglePin,
     deletedActions,
 }: MyListingsGridProps) {
@@ -129,6 +131,7 @@ export function MyListingsGrid({
                         variant="owned"
                         isPinned={pinnedIds?.includes(item.id)}
                         clientsUnavailable={clientsUnavailable}
+                        clientsLoading={clientsLoading}
                         onTogglePin={onTogglePin ? () => onTogglePin(item) : undefined}
                         showStatus={portal !== "broker"}
                         ownerRowStyle={portal === "broker" ? "linked" : "inline"}

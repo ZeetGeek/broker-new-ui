@@ -64,6 +64,7 @@ function VisitAction({
                 <TooltipTrigger
                     render={
                         <IconButton
+                            className={styles.visitAction}
                             tone={danger ? "danger" : "neutral"}
                             size="sm"
                             type="button"
@@ -322,7 +323,12 @@ export function VisitList({
                     )}
                 </ResponsiveListToolbar>
             )}
-            <TabsContent value={tab} aria-label={LIST_COPY[tab]} aria-busy={loading}>
+            <TabsContent
+                value={tab}
+                className={styles.visitPanel}
+                aria-label={LIST_COPY[tab]}
+                aria-busy={loading}
+            >
                 {loadError && !loading ? (
                     <EmptyState
                         size="page"
@@ -336,7 +342,15 @@ export function VisitList({
                         </Button>
                     </EmptyState>
                 ) : loading ? (
-                    <VisitListSkeleton />
+                    <VisitListSkeleton
+                        actionCount={
+                            tab === "running" || tab === "needs_update"
+                                ? 4
+                                : tab === "upcoming"
+                                  ? 2
+                                  : 1
+                        }
+                    />
                 ) : visits.length === 0 && filtered ? (
                     <EmptyState
                         size="page"
@@ -392,7 +406,7 @@ export function VisitList({
                                         </time>
                                     </h2>
                                     <span className={styles.groupCount}>
-                                        {rows.length} {plural(rows.length)}
+                                        {rows.length} {rows.length === 1 ? "Visit" : "Visits"}
                                     </span>
                                 </div>
                                 <div className={styles.list}>
@@ -440,9 +454,10 @@ function VisitRow({
 }) {
     const state = visitState(visit, now);
     const waitingForOwner = visit.status === "scheduled" && !visit.isExclusive;
+    const actions = getVisitActions(visit, now);
     return (
         <div className={styles.visitCard}>
-            <article className={styles.visitRow}>
+            <article className={styles.visitRow} data-action-count={actions.length}>
                 <div className={styles.rowProperty}>
                     <PropertyCoverImage
                         src={null}
@@ -497,7 +512,7 @@ function VisitRow({
                         <UserAvatar
                             name={visit.ownerName ?? "Owner"}
                             imageUrl={visit.ownerAvatarUrl ?? undefined}
-                            size="sm"
+                            size="xs"
                             className="shadow-sm ring-2 ring-surface"
                         />
                         <div>
@@ -518,7 +533,7 @@ function VisitRow({
                     <div className={styles.rowClient}>
                         <UserAvatar
                             name={visit.clientName}
-                            size="sm"
+                            size="xs"
                             className="shadow-sm ring-2 ring-surface"
                         />
                         <div>
@@ -544,7 +559,7 @@ function VisitRow({
                     role="group"
                     aria-label={`Actions for ${visit.propertyTitle} with ${visit.clientName}`}
                 >
-                    {getVisitActions(visit, now).map((action) => (
+                    {actions.map((action) => (
                         <VisitAction
                             key={action}
                             {...VISIT_ACTIONS[action]}

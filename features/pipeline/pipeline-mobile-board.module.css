@@ -1,8 +1,32 @@
 .board {
     display: flex;
     flex-direction: column;
+    gap: 0.5rem;
     min-inline-size: 0;
 }
+
+.stageNav {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+    min-inline-size: 0;
+}
+
+.stageName {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    gap: 0.375rem;
+    min-inline-size: 0;
+    color: var(--color-ink);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+}
+
 .rail {
     position: relative;
     display: grid;

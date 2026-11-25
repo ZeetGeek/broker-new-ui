@@ -502,6 +502,7 @@ export type PropertyCardProps = {
     /** Owned inventory: keep this property ahead of unpinned listings. */
     isPinned?: boolean;
     clientsUnavailable?: boolean;
+    clientsLoading?: boolean;
     onTogglePin?: () => void;
     /** Browse grid cards: listed this week in the broker's service areas — highlighted card. */
     isNewInYourArea?: boolean;
@@ -989,6 +990,7 @@ function OwnedOverlayPropertyCard({
     onToggleSave,
     isPinned = false,
     clientsUnavailable = false,
+    clientsLoading = false,
     onTogglePin,
     audience = "broker",
     className,
@@ -1252,7 +1254,14 @@ function OwnedOverlayPropertyCard({
                     ) : null}
                     {ownerRowStyle === "linked" && audience === "broker" ? (
                         <div className="inline-full min-inline-0">
-                            {clientsUnavailable ? (
+                            {clientsLoading ? (
+                                <p
+                                    role="status"
+                                    className="body-sm rounded-control bg-surface-muted px-3 py-2 text-center text-ink-muted"
+                                >
+                                    Loading clients…
+                                </p>
+                            ) : clientsUnavailable ? (
                                 <p className="body-sm rounded-control bg-surface-muted px-3 py-2 text-center text-ink-muted">
                                     Client details unavailable
                                 </p>

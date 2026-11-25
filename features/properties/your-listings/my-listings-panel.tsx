@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { attachedClientsByProperty } from "@/lib/api/clients";
 import { loadPinnedProperties, myListingsApi, type MyListingsSummary } from "@/lib/api/my-listings";
@@ -102,6 +102,15 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
           ? "loading"
           : "ready";
 
+    const clientSummaryOptions = queryOptions({
+        queryKey: ["inventory-lead-summary", userId],
+        queryFn: ({ signal }) => attachedClientsByProperty(signal),
+        staleTime: 30_000,
+    });
+    const clientSummary = useQuery({
+        ...clientSummaryOptions,
+        enabled: scopeReady && !isOwnerPortal && !isDeletedView,
+    });
     const infiniteFilters = useMemo(() => ({ ...filters, page: 1 }), [filters]);
     const query = useInfiniteItems({
         queryKey: ["my-listings", portal, userId, infiniteFilters, pinnedIds],
@@ -111,7 +120,9 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                 { ...infiniteFilters, page: cursor ? Number(cursor) : 1 },
                 signal,
                 {
-                    withAttachedClients: !isOwnerPortal,
+                    // Client details load independently. A client filter still waits
+                    // for the shared summary so matching and pagination stay correct.
+                    withAttachedClients: false,
                     pinnedIds,
                     pinnedProperties: () =>
                         queryClient.fetchQuery({
@@ -119,12 +130,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                             queryFn: ({ signal }) => loadPinnedProperties(pinnedIds, signal),
                             staleTime: 30_000,
                         }),
-                    attachedClients: () =>
-                        queryClient.fetchQuery({
-                            queryKey: ["inventory-lead-summary", userId],
-                            queryFn: ({ signal }) => attachedClientsByProperty(signal),
-                            staleTime: 30_000,
-                        }),
+                    attachedClients: () => queryClient.fetchQuery(clientSummaryOptions),
                     propertyCollection: (propertyQuery) =>
                         queryClient.fetchQuery({
                             queryKey: [
@@ -148,6 +154,16 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         },
     });
 
+    const items = useMemo(
+        () =>
+            !isOwnerPortal && clientSummary.data
+                ? query.items.map((item) => ({
+                      ...item,
+                      attachedClients: clientSummary.data.get(item.id) ?? [],
+                  }))
+                : query.items,
+        [isOwnerPortal, clientSummary.data, query.items],
+    );
     const summaryQuery = useQuery<MyListingsSummary>({
         queryKey: ["my-listings-summary", portal],
         queryFn: () => myListingsApi.summary(),
@@ -197,7 +213,8 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
     );
 
     const loading = !scopeReady || query.isPending;
-    const clientsUnavailable = query.data?.pages.some((page) => page.clientsUnavailable) ?? false;
+    const clientsUnavailable = !isOwnerPortal && !isDeletedView && clientSummary.isError;
+    const clientsLoading = !isOwnerPortal && clientSummary.isPending;
     const pinsUnavailable = query.data?.pages.some((page) => page.pinsUnavailable) ?? false;
     // Sorting changes order, not whether properties match this view.
     const hasActiveFilters = hasActiveMyListingsFilters({ ...filters, sort: "newest" });
@@ -258,8 +275,14 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                         <Button
                             variant="outline"
                             size="sm"
-                            disabled={query.isFetching}
-                            onClick={() => void query.refetch()}
+                            disabled={
+                                (pinsUnavailable && query.isFetching) ||
+                                (clientsUnavailable && clientSummary.isFetching)
+                            }
+                            onClick={() => {
+                                if (clientsUnavailable) void clientSummary.refetch();
+                                if (pinsUnavailable) void query.refetch();
+                            }}
                         >
                             Try again
                         </Button>
@@ -313,7 +336,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                                     history stays in Pipeline.
                                 </p>
                                 <MyListingsGrid
-                                    items={query.items}
+                                    items={items}
                                     portal={portal}
                                     deletedActions={{
                                         onRestore: (listing) => void restoreListing(listing),
@@ -325,10 +348,11 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                             </div>
                         ) : (
                             <MyListingsGrid
-                                items={query.items}
+                                items={items}
                                 portal={portal}
                                 pinnedIds={pinnedIds}
                                 clientsUnavailable={clientsUnavailable}
+                                clientsLoading={clientsLoading}
                                 onTogglePin={!isOwnerPortal && userId ? togglePin : undefined}
                                 brokersByProperty={isOwnerPortal ? brokersByProperty : undefined}
                                 brokerSummaryState={isOwnerPortal ? brokerSummaryState : undefined}

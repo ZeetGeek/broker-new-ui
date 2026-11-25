@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { PropertyListing } from "@/lib/api/properties";
+import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { matchesPropertyCriteria } from "@/lib/properties/list-criteria";
 
 import {
@@ -9,6 +10,11 @@ import {
     myListingInputToCreatePayload,
     myListingInputToUpdatePayload,
 } from "@/features/properties/your-listings/map-my-listing";
+import {
+    applyListingUpdate,
+    listingFromCreateInput,
+} from "@/features/properties/your-listings/mock-my-listings";
+import { toOwnedPropertyCardListing } from "@/features/properties/your-listings/to-owned-property-card";
 import type { CreateMyListingInput } from "@/features/properties/your-listings/types";
 
 function input(overrides: Partial<CreateMyListingInput> = {}): CreateMyListingInput {
@@ -55,6 +61,62 @@ function input(overrides: Partial<CreateMyListingInput> = {}): CreateMyListingIn
         ...overrides,
     } as CreateMyListingInput;
 }
+
+test("inventory cards retain specific property types in their headlines", () => {
+    for (const [category, subtype, expected] of [
+        ["industrial", "cold_storage", "Cold storage"],
+        ["residential", "studio", "Studio"],
+        ["residential", "row_house", "Row house"],
+        ["commercial", "restaurant_space", "Restaurant space"],
+        ["land", "commercial_plot", "Commercial plot"],
+    ] as const) {
+        const listing = mapPropertyListingToMyItem({
+            id: subtype,
+            propertyType: category,
+            subtype,
+            areaSqft: 1200,
+        });
+        const card = toOwnedPropertyCardListing(listing);
+        assert.equal(card.propertyTypeLabel, subtype);
+        assert.equal(
+            formatPropertyCardName(card.propertyTypeLabel, card.areaSqft),
+            `${expected} · 1,200 Sqft`,
+        );
+    }
+    const legacy = mapPropertyListingToMyItem({ id: "legacy", propertyType: "industrial" });
+    assert.equal(toOwnedPropertyCardListing(legacy).propertyTypeLabel, "warehouse");
+});
+
+test("sample listings preserve publication dates and specific types when creating and publishing", () => {
+    const old = new Date(Date.now() - 40 * 86_400_000).toISOString();
+    const draft = listingFromCreateInput(
+        "draft",
+        input({
+            publish: false,
+            category: "industrial",
+            propertyType: "warehouse",
+            subtype: "cold_storage",
+            bhk: 0,
+        }),
+        old,
+    );
+    assert.equal(draft.publishedAt, null);
+    assert.equal(toOwnedPropertyCardListing(draft).propertyTypeLabel, "cold_storage");
+    const published = applyListingUpdate(draft, { status: "published" });
+    assert.equal(published.publishedAt, published.updatedAt);
+    assert.equal(published.createdAt, old);
+    assert.equal(published.listedDaysAgo, 0);
+    assert.equal(listingFromCreateInput("published", input(), old).publishedAt, old);
+});
+
+test("saving incomplete furnishing data does not invent an unfurnished answer", () => {
+    const empty = input({ furnishing: "" });
+    assert.equal(myListingInputToCreatePayload(empty).furnishingStatus, undefined);
+    assert.equal(myListingInputToUpdatePayload({ furnishing: "" }).furnishingStatus, undefined);
+    const sample = listingFromCreateInput("empty-furnishing", empty);
+    assert.equal(sample.furnishing, "");
+    assert.equal(sample.furnishingLabel, "");
+});
 
 const details = {
     unitNumber: " B-402 ",

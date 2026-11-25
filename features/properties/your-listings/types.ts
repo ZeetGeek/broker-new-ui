@@ -5,7 +5,8 @@ export type MyListingStatus = "draft" | "published" | "unpublished";
 /** Inventory lifecycle is independent of deal outcomes. */
 export type MyListingsStatusTab = "published" | "draft" | "sold" | "deleted";
 
-export type MyListingFurnishing = "furnished" | "semi" | "unfurnished";
+/** Empty means the listing has no furnishing information yet. */
+export type MyListingFurnishing = "" | "furnished" | "semi" | "unfurnished";
 
 export type MyListingSecurityDepositMode = "amount" | "months_of_rent";
 
@@ -109,6 +110,7 @@ export type MyListingItem = {
     photoCount: number;
     imageSrc: string;
     imageSrcs: string[];
+    publishedAt?: string | null;
     createdAt: string;
     updatedAt: string;
     /** Contact linkage for broker-owned inventory. Legacy listings may not have it yet. */

@@ -1962,7 +1962,9 @@ function listingToDraft(
             ? "fully_furnished"
             : listing.furnishing === "semi"
               ? "semi_furnished"
-              : "unfurnished";
+              : listing.furnishing === "unfurnished"
+                ? "unfurnished"
+                : "";
     draft.amenities.society = listing.amenities;
     draft.location.nearbyPlaces = listing.nearbyPlaces ?? [];
     draft.details.commercial.suitableFor = listing.suitableFor ?? [];
@@ -2110,7 +2112,9 @@ function draftToLegacyInput(
                 ? "furnished"
                 : values.furnishing.status === "semi_furnished"
                   ? "semi"
-                  : "unfurnished",
+                  : values.furnishing.status === "unfurnished"
+                    ? "unfurnished"
+                    : "",
         imageSrcs,
         photoFiles,
         bathrooms: values.details.bathrooms,

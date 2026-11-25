@@ -15,7 +15,9 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
     const locality = formatPlaceName(item.locality);
     const city = formatPlaceName(item.city);
     const place = [locality, city].filter(Boolean).join(", ");
-    const typeLabel = PROPERTY_TYPE_LABELS[item.propertyType] ?? "Property";
+    const propertyType = item.subtype?.trim() || item.propertyType;
+    const typeLabel =
+        item.propertyTypeLabel || PROPERTY_TYPE_LABELS[item.propertyType] || "Property";
     // Saved titles already name the place ("Shop in Baner, Pune"); never append it again.
     const title = item.title?.trim() || (place ? `${typeLabel} in ${place}` : typeLabel);
 
@@ -23,8 +25,7 @@ export function toOwnedPropertyCardListing(item: MyListingItem): OwnedPropertyCa
         id: item.id,
         title,
         configLabel: item.configLabel,
-        /** Lowercase type key — matches browse cards / residential checks. */
-        propertyTypeLabel: item.propertyType,
+        propertyTypeLabel: propertyType,
         areaSqft: item.areaSqft,
         amountInr,
         isRent,

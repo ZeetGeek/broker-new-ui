@@ -4,6 +4,8 @@ import { type ReactNode, useId, useLayoutEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { IconButton } from "@/components/shared/icon-button";
+import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import { PipelineStageHeader } from "@/features/pipeline/pipeline-stage-header";
@@ -84,6 +86,43 @@ export function PipelineMobileBoard({
 
     return (
         <div className={styles.board}>
+            {stages.length > 1 ? (
+                <nav className={styles.stageNav} aria-label="Pipeline stages">
+                    <IconButton
+                        size="md"
+                        appearance="outline"
+                        aria-label="Previous stage"
+                        disabled={index === 0}
+                        onClick={() => navigate(index - 1)}
+                    >
+                        <ChevronLeft aria-hidden size={18} />
+                    </IconButton>
+                    <span
+                        className={styles.stageName}
+                        role="status"
+                        aria-live="polite"
+                        aria-atomic="true"
+                    >
+                        <span
+                            aria-hidden
+                            className={cn(
+                                "shrink-0 rounded-full block-2 inline-2",
+                                DEAL_STAGE_META[stages[index]].dotClass,
+                            )}
+                        />
+                        {DEAL_STAGE_META[stages[index]].label}
+                    </span>
+                    <IconButton
+                        size="md"
+                        appearance="outline"
+                        aria-label="Next stage"
+                        disabled={index === stages.length - 1}
+                        onClick={() => navigate(index + 1)}
+                    >
+                        <ChevronRight aria-hidden size={18} />
+                    </IconButton>
+                </nav>
+            ) : null}
             <p id={`${id}-hint`} className="sr-only">
                 Swipe left or right to browse stages, or focus the board and use the left and right
                 arrow keys. Scroll down the page to see more deals. Open a deal for its full
@@ -138,6 +177,7 @@ export function PipelineMobileBoard({
                     return (
                         <section
                             key={stage}
+                            id={`${id}-column-${stage}`}
                             data-stage={stage}
                             className={cn(styles.column, meta.columnClass)}
                             aria-labelledby={`${id}-${stage}`}

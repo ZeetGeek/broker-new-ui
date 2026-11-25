@@ -24,6 +24,7 @@ import type {
 } from "@/features/properties/your-listings/types";
 
 const FURNISHING_LABELS: Record<MyListingFurnishing, string> = {
+    "": "",
     furnished: "Furnished",
     semi: "Semi-furnished",
     unfurnished: "Unfurnished",
@@ -73,6 +74,7 @@ export function listingFromCreateInput(
         configLabel: configLabelFor(input.bhk, input.propertyType),
         category,
         propertyType: input.propertyType,
+        subtype: input.subtype ?? null,
         propertyTypeLabel: PROPERTY_TYPE_LABELS[input.propertyType as PropertyType],
         bhk: input.bhk,
         locality: input.locality,
@@ -115,6 +117,7 @@ export function listingFromCreateInput(
         photoCount: imageSrcs.length,
         imageSrc: imageSrcs[0] ?? "",
         imageSrcs,
+        publishedAt: input.publish ? now : null,
         createdAt: now,
         updatedAt: now,
     };
@@ -136,6 +139,7 @@ export function applyListingUpdate(
         }
     }
     if (input.bhk != null) next.bhk = input.bhk;
+    if (input.subtype != null) next.subtype = input.subtype;
     if (input.locality != null) next.locality = input.locality;
     if (input.city != null) next.city = input.city;
     if (input.address != null) next.address = input.address;
@@ -191,6 +195,10 @@ export function applyListingUpdate(
         city: next.city,
     });
     next.updatedAt = new Date().toISOString();
+    if (next.status === "published" && item.status !== "published") {
+        next.publishedAt = next.updatedAt;
+        next.listedDaysAgo = 0;
+    }
 
     return next;
 }

@@ -87,6 +87,7 @@ const UI_TO_SUBTYPE: Partial<Record<MyListingPropertyType, string>> = {
 };
 
 const FURNISHING_LABELS: Record<MyListingFurnishing, string> = {
+    "": "",
     furnished: "Furnished",
     semi: "Semi-furnished",
     unfurnished: "Unfurnished",
@@ -120,7 +121,7 @@ function mapFurnishing(value: string | null | undefined): MyListingFurnishing {
     if (value === "furnished" || value === "semi" || value === "unfurnished") {
         return value;
     }
-    return "unfurnished";
+    return "";
 }
 
 function mapPropertyType(listing: PropertyListing): MyListingPropertyType {
@@ -302,7 +303,7 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
             return Number.isFinite(value) && value > 0 ? value : null;
         })(),
         furnishing,
-        furnishingLabel: listing.furnishingStatus?.trim() ? FURNISHING_LABELS[furnishing] : "",
+        furnishingLabel: FURNISHING_LABELS[furnishing],
         bathrooms: listing.bathrooms ?? null,
         balconies: listing.balconyCount ?? null,
         floorNumber: listing.floorNumber ?? null,
@@ -354,6 +355,7 @@ export function mapPropertyListingToMyItem(listing: PropertyListing): MyListingI
         photoCount: photos.length,
         imageSrc: photos[0] ?? "",
         imageSrcs: photos,
+        publishedAt: listing.publishedAt ?? null,
         createdAt: listing.createdAt ?? new Date().toISOString(),
         updatedAt: listing.updatedAt ?? listing.createdAt ?? new Date().toISOString(),
         exclusiveOwnerId: listing.exclusiveOwnerId ?? listing.exclusiveOwner?.id ?? null,
@@ -433,7 +435,7 @@ export function myListingInputToCreatePayload(input: CreateMyListingInput) {
             input.transactionType === "rent" || input.transactionType === "both"
                 ? (input.commissionAmount ?? undefined)
                 : undefined,
-        furnishingStatus: input.furnishing,
+        furnishingStatus: input.furnishing || undefined,
         facingDirection: input.facing ?? undefined,
         parkingSpaces: parkingToSpaces(input.parking),
         availableFrom: input.availableFrom || undefined,
@@ -505,7 +507,7 @@ export function myListingInputToUpdatePayload(input: UpdateMyListingInput) {
     if (input.commissionAmount !== undefined) {
         payload.commissionAmount = input.commissionAmount ?? undefined;
     }
-    if (input.furnishing != null) payload.furnishingStatus = input.furnishing;
+    if (input.furnishing != null) payload.furnishingStatus = input.furnishing || undefined;
     if (input.bathrooms !== undefined) payload.bathrooms = input.bathrooms ?? undefined;
     if (input.balconies !== undefined) payload.balconyCount = input.balconies ?? undefined;
     if (input.floorNumber !== undefined) payload.floorNumber = input.floorNumber ?? undefined;

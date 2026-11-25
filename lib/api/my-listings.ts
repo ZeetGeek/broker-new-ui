@@ -113,7 +113,7 @@ function matchesListingCriteria(item: MyListingItem, filters: MyListingsFilters)
         {
             ...item,
             propertyAge: item.propertyAge == null ? null : String(item.propertyAge),
-            listedAt: item.createdAt,
+            listedAt: item.publishedAt ?? item.createdAt,
             parkingSpaces:
                 item.parkingSpaces ??
                 (item.parking === "3plus" ? 3 : item.parking === "none" ? 0 : Number(item.parking)),
@@ -396,6 +396,7 @@ export const myListingsApi = withTestNetwork({
                 configLabel: input.bhk > 0 ? `${input.bhk} BHK` : input.propertyType,
                 category: input.category,
                 propertyType: input.propertyType,
+                subtype: input.subtype ?? null,
                 propertyTypeLabel: input.propertyType,
                 bhk: input.bhk,
                 locality: input.locality,
@@ -414,7 +415,9 @@ export const myListingsApi = withTestNetwork({
                         ? "Furnished"
                         : input.furnishing === "semi"
                           ? "Semi-furnished"
-                          : "Unfurnished",
+                          : input.furnishing === "unfurnished"
+                            ? "Unfurnished"
+                            : "",
                 bathrooms: input.bathrooms,
                 balconies: input.balconies,
                 floorNumber: input.floorNumber,
@@ -443,6 +446,7 @@ export const myListingsApi = withTestNetwork({
                 photoCount: input.imageSrcs.length,
                 imageSrc: input.imageSrcs[0] ?? "",
                 imageSrcs: input.imageSrcs,
+                publishedAt: input.publish ? new Date().toISOString() : null,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
             };

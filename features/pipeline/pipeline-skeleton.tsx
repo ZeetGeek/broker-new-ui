@@ -5,6 +5,7 @@ import { ListPageHeading } from "@/components/shared/list-page-heading";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
 import { Skeleton } from "@/components/shared/skeleton";
+import { Separator } from "@/components/ui/separator";
 
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { DEAL_STAGE_ORDER, type DealStage, type DealsView } from "@/features/pipeline/types";
@@ -146,6 +147,11 @@ export function PipelineBoardSkeleton({
                             </div>
                         </div>
                         <div className={boardStyles.board}>
+                            <div className={boardStyles.stageNav}>
+                                <Bone className="rounded-full block-11 inline-11" />
+                                <Bone className="justify-self-center block-4 inline-24" />
+                                <Bone className="rounded-full block-11 inline-11" />
+                            </div>
                             <div className={boardStyles.rail}>
                                 {[
                                     mobileStage,
@@ -245,62 +251,61 @@ export function PipelineDetailSkeleton() {
             aria-busy="true"
         >
             <span className="sr-only">Loading deal details</span>
-            <div className={detailStyles.leftColumn} aria-hidden>
-                <div className={detailStyles.gallery}>
-                    <div className={detailStyles.carouselViewport}>
-                        <div className={detailStyles.carouselTrack}>
-                            <div className={detailStyles.carouselSlide}>
-                                <Bone className="absolute inset-0 block-full inline-full" />
-                            </div>
+            <div className={detailStyles.property} aria-hidden>
+                <Bone className="block-6 inline-3/4" />
+                <Bone className="block-4 inline-1/2" />
+                <Bone className="block-7 inline-24" />
+            </div>
+            <Separator />
+            <div className={detailStyles.figuresSection} aria-hidden>
+                <Bone className="block-5 inline-28" />
+                <div className={detailStyles.facts}>
+                    {[0, 1].map((index) => (
+                        <div key={index} className="flex flex-col gap-2">
+                            <Bone className="block-3 inline-20 max-inline-full" />
+                            <Bone className="block-5 inline-16" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <Separator />
+            <div className={detailStyles.gallery} aria-hidden>
+                <div className={detailStyles.carouselViewport}>
+                    <div className={detailStyles.carouselTrack}>
+                        <div className={detailStyles.carouselSlide}>
+                            <Bone className="absolute inset-0 block-full inline-full" />
                         </div>
                     </div>
-                    <div className={detailStyles.thumbnails}>
-                        {Array.from({ length: 4 }, (_, index) => (
-                            <Bone key={index} className={detailStyles.thumbnail} />
-                        ))}
-                    </div>
                 </div>
-                <div className={detailStyles.property}>
-                    <div className={detailStyles.propertySummary}>
-                        <Bone className="block-5 inline-3/4" />
-                        <Bone className="block-4 inline-2/3" />
-                        <Bone className="block-6 inline-18" />
-                    </div>
+                <div className={detailStyles.thumbnails}>
+                    {[0, 1, 2].map((index) => (
+                        <Bone key={index} className={detailStyles.thumbnail} />
+                    ))}
                 </div>
-                <div className={detailStyles.details}>
-                    <Bone className="block-6 inline-28" />
-                    <div className={detailStyles.contacts}>
-                        {[0, 1].map((index) => (
-                            <div key={index} className="flex gap-2.5">
-                                <Bone className="shrink-0 rounded-full block-10 inline-10" />
-                                <div className="flex flex-1 flex-col gap-2">
-                                    <Bone className="block-3 inline-12" />
-                                    <Bone className="block-4 inline-3/4" />
-                                    <Bone className="block-3 inline-full" />
-                                </div>
+            </div>
+            <div className={detailStyles.peopleSection} aria-hidden>
+                <Bone className="block-5 inline-28" />
+                <div className={detailStyles.contacts}>
+                    {[0, 1].map((index) => (
+                        <div key={index} className={detailStyles.person}>
+                            <Bone className="shrink-0 rounded-full block-8 inline-8" />
+                            <div className="flex flex-1 flex-col gap-2 min-inline-0">
+                                <Bone className="block-3 inline-12" />
+                                <Bone className="block-4 inline-3/4" />
+                                <Bone className="block-3 inline-1/2" />
                             </div>
-                        ))}
-                    </div>
-                    <Bone className="block-6 inline-28" />
-                    <div className={detailStyles.facts}>
-                        {[0, 1].map((index) => (
-                            <div key={index} className="flex flex-col gap-2">
-                                <Bone className="block-3 inline-24 max-inline-full" />
-                                <Bone className="block-4 inline-16" />
-                            </div>
-                        ))}
-                    </div>
+                            <Bone className="shrink-0 rounded-control block-9 inline-9" />
+                        </div>
+                    ))}
                 </div>
             </div>
             <div className={detailStyles.rightColumn} aria-hidden>
                 <div className={detailStyles.notes}>
-                    <Bone className="block-6 inline-14" />
-                    <div className={detailStyles.noteBody}>
-                        <Bone className="block-3 inline-3/4" />
-                    </div>
+                    <Bone className="block-5 inline-14" />
+                    <Bone className="rounded-control block-32 inline-full" />
                 </div>
                 <div className={detailStyles.history}>
-                    <Bone className="block-6 inline-28" />
+                    <Bone className="block-5 inline-24" />
                     <PipelineHistorySkeleton />
                 </div>
             </div>
