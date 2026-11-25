@@ -546,7 +546,7 @@ type PropertyPickerFieldChrome = {
     /** Loading errors belong to the picker; errorText is field validation. */
     pickerErrorText?: string;
     helperText?: string;
-    triggerSize?: "default" | "lg";
+    triggerSize?: "default" | "md" | "lg";
 };
 
 export type PropertyPickerFieldProps =
@@ -610,7 +610,7 @@ export function PropertyPickerField(props: PropertyPickerFieldProps) {
                 onClick={() => setOpen(true)}
                 className={cn(
                     `
-                      flex items-center gap-2.5 rounded-control border-2 border-border-warm
+                      flex items-center rounded-control border-2 border-border-warm
                       bg-surface text-start transition-[border-color,box-shadow] duration-160
                       outline-none inline-full
                       hover:border-ring/50
@@ -621,24 +621,43 @@ export function PropertyPickerField(props: PropertyPickerFieldProps) {
                       data-invalid:hover:border-danger-mid
                       data-invalid:focus-visible:ring-danger/20
                     `,
-                    triggerSize === "lg" ? "px-4 block-control-xl" : "px-3.5 block-control-md",
+                    triggerSize === "lg"
+                        ? "gap-2.5 px-4 block-control-xl"
+                        : triggerSize === "md"
+                          ? "gap-1.5 px-4 block-control-lg"
+                          : "gap-2.5 px-3.5 block-control-md",
                 )}
             >
                 {face ? (
                     <PropertyCoverImage src={face.imageUrl} alt="" size={28} />
                 ) : (
                     <Building2
-                        className="shrink-0 text-ink-subtle block-4.5 inline-4.5"
+                        className={cn(
+                            "shrink-0 text-ink-subtle",
+                            triggerSize === "md" ? "block-4 inline-4" : "block-4.5 inline-4.5",
+                        )}
                         aria-hidden
                         strokeWidth={1.75}
                     />
                 )}
                 <span className="flex-1 min-inline-0">
                     {selectedProperties.length === 0 ? (
-                        <span className="body truncate text-ink-subtle">{placeholder}</span>
+                        <span
+                            className={cn(
+                                "truncate text-ink-subtle",
+                                triggerSize === "md" ? "text-sm" : "body",
+                            )}
+                        >
+                            {placeholder}
+                        </span>
                     ) : selectedProperties.length === 1 ? (
                         <span className="flex flex-col min-inline-0">
-                            <span className="body truncate font-medium text-ink">
+                            <span
+                                className={cn(
+                                    "truncate font-medium text-ink",
+                                    triggerSize === "md" ? "text-sm" : "body",
+                                )}
+                            >
                                 {propertyInfoLine(face!)}
                             </span>
                             {place ? (
@@ -654,7 +673,10 @@ export function PropertyPickerField(props: PropertyPickerFieldProps) {
                     )}
                 </span>
                 <ChevronDown
-                    className="shrink-0 text-ink-subtle block-4.5 inline-4.5"
+                    className={cn(
+                        "shrink-0 text-ink-subtle",
+                        triggerSize === "md" ? "block-4 inline-4" : "block-4.5 inline-4.5",
+                    )}
                     aria-hidden
                 />
             </button>

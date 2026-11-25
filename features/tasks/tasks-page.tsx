@@ -476,6 +476,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                     }
                     actions={
                         <ListToolbarSelect
+                            className={styles.sortControl}
                             mobileDrawer
                             defaultValue={defaultSort}
                             label="Sort tasks"

@@ -48,6 +48,10 @@
     align-items: center;
     gap: 0.125rem;
 }
+.shortMonth,
+.planner[data-columns="1"] .pageStepButton {
+    display: none;
+}
 .todayButton {
     display: inline-grid;
     place-items: center;
@@ -598,6 +602,7 @@
 }
 .nameActions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.75rem;
 }
@@ -738,293 +743,281 @@
     cursor: default;
     opacity: 0.5;
 }
-@container (max-width: 1000px) {
-    .dayGrid,
-    .somedayGrid {
-        gap: 3.25rem;
-        padding-inline: var(--planner-inline-padding);
+/* Planner density follows the task workspace, without changing dashboard embeds. */
+@container tasks-page (max-width: 1000px) {
+    .planner {
+        --planner-inline-padding: 1.25rem;
     }
-}
-@container (min-width: 600px) and (max-width: 799px) {
     .plannerNav {
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 0.5rem 1rem;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        min-block-size: 52px;
+        gap: 0.5rem;
         padding-block: 0.5rem;
     }
-    .columnPicker {
-        grid-column: 1 / -1;
-        grid-row: 2;
-    }
-    .dateControls {
-        grid-column: 2;
-        grid-row: 1;
-    }
-}
-@container (max-width: 599px) {
-    .plannerNav {
-        display: flex;
-        justify-content: space-between;
-        padding-inline: 0.75rem;
-        flex-wrap: wrap;
-        gap: 0.25rem 0.5rem;
-    }
-    .navButton,
-    .todayButton,
-    .dateJump,
-    .dateJump button {
-        min-inline-size: var(--touch-target-min);
-        inline-size: var(--touch-target-min);
-        min-block-size: var(--touch-target-min);
-    }
-    .todayButton {
-        inline-size: auto;
-        font-size: 0.875rem;
-    }
-    .dateControls {
-        gap: 0.25rem;
-        margin-inline-start: auto;
-    }
-    .plannerNav :global(button[data-icon-button]) {
-        --icon-button-size: var(--touch-target-min);
-    }
-    .dateControls > button:nth-child(2),
-    .dateControls > button:nth-child(5) {
-        display: none;
-    }
     .dateRange {
-        font-size: 0.875rem;
+        font-size: 0.8125rem;
         padding-inline-start: 0;
-        overflow-wrap: anywhere;
     }
     .dayGrid,
     .somedayGrid {
-        padding-inline: 0.75rem;
-        padding-block-start: 0.75rem;
+        gap: 1.25rem;
+        padding: 0.875rem var(--planner-inline-padding);
     }
-    .dayColumn {
-        --line-height: calc(3rem / var(--layout-font-scale));
+    .dayHeading h2 {
+        font-size: 1.0625rem;
+        line-height: 1.35;
     }
-    .taskLine {
-        --task-action-size: 44px;
-        --task-action-gutter: 48px;
+    .ruledList,
+    .somedayGrid .ruledList {
+        min-block-size: 0;
     }
-    .ruledList {
-        min-block-size: calc(4 * var(--line-height));
-    }
-    .ruledList > .blankLine:nth-child(n + 5) {
+    .dayGrid .blankLine,
+    .somedayGrid .blankLine {
         display: none;
     }
-    .dayGrid .taskLine,
-    .somedayGrid .taskLine {
+    .somedayGrid {
+        min-block-size: 0;
+        padding-block-end: 1rem;
+    }
+    .customList::before,
+    .customList:first-child::before {
+        inset-inline: -0.625rem;
+    }
+    .customList > .dayColumn > .dayHeading {
+        padding-block-start: 0.25rem;
+    }
+    .archive {
+        min-block-size: 0;
+        padding: 1rem 1.25rem;
+    }
+}
+@container tasks-page (max-width: 599px) {
+    .planner {
+        --planner-inline-padding: 0.75rem;
+    }
+    .plannerNav {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 0.25rem;
+        min-block-size: var(--touch-target-min);
+        padding: 0.25rem 0.5rem;
+    }
+    .dateRange {
+        flex: 1;
+        min-inline-size: 0;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+    .fullMonth {
+        display: none;
+    }
+    .shortMonth {
+        display: inline;
+    }
+    .dateControls {
+        flex-shrink: 0;
         gap: 0;
+        margin-inline-start: auto;
+    }
+    .todayButton {
+        min-inline-size: var(--touch-target-min);
+        min-block-size: var(--touch-target-min);
+        padding-inline: 0.25rem;
+        font-size: 0.75rem;
+    }
+    .dateJump {
+        display: grid;
+        place-items: center;
+        inline-size: var(--touch-target-min);
+    }
+    .plannerNav :global(button[data-icon-button]) {
+        --icon-button-size: 2rem;
+        position: relative;
+        min-inline-size: 2rem;
+        min-block-size: 2rem;
+        margin-inline: calc((var(--touch-target-min) - 2rem) / 2);
+        box-shadow: none;
+    }
+    .plannerNav :global(button[data-icon-button])::after {
+        content: "";
+        position: absolute;
+        inset: calc((2rem - var(--touch-target-min)) / 2);
+    }
+    .pageStepButton,
+    .columnPicker {
+        display: none;
+    }
+    .dayGrid,
+    .somedayGrid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
+        padding-block: 0.625rem;
+    }
+    .dayColumn {
+        --line-height: var(--touch-target-min);
+    }
+    .dayHeading {
+        padding-inline: 0.25rem;
+    }
+    .dayHeading h2 {
+        font-size: 0.875rem;
+        line-height: 1.4;
+    }
+    .dayHeading time {
+        font-size: 0.6875rem;
+        margin-block-end: 0.125rem;
+    }
+    :is(.dayGrid, .somedayGrid, .archive) .taskLine {
+        gap: 0;
+        min-block-size: var(--touch-target-min);
         padding-inline: 0;
     }
-    .dayGrid .lineCheck,
-    .somedayGrid .lineCheck {
+    :is(.dayGrid, .somedayGrid, .archive) .lineCheck {
         position: relative;
         inset: auto;
         transform: none;
         flex-shrink: 0;
-        inline-size: 1.25rem;
-        block-size: 1.25rem;
-        margin-inline: calc((var(--touch-target-min) - 1.25rem) / 2);
+        inline-size: 1rem;
+        block-size: 1rem;
+        margin-inline: 0.5rem;
+        opacity: 1;
     }
-    .dayGrid .lineCheck::after,
-    .somedayGrid .lineCheck::after {
-        inset: calc((1.25rem - var(--touch-target-min)) / 2);
+    :is(.dayGrid, .somedayGrid, .archive) .lineCheck::after {
+        inset: calc((1rem - var(--touch-target-min)) / 2);
     }
-    .dayGrid .taskLine .lineAction,
-    .somedayGrid .taskLine .lineAction,
-    .dayGrid .taskLine .restoreAction,
-    .somedayGrid .taskLine .restoreAction {
-        --icon-button-size: var(--touch-target-min);
+    :is(.dayGrid, .somedayGrid, .archive) .taskLine .lineAction[data-icon-button],
+    :is(.dayGrid, .somedayGrid, .archive) .taskLine .restoreAction[data-icon-button] {
+        --icon-button-size: 2rem;
         position: relative;
         inset: auto;
         transform: none;
-        inline-size: var(--touch-target-min);
-        block-size: var(--touch-target-min);
-    }
-    .lineCheck {
-        inset-inline-start: -23px;
+        flex-shrink: 0;
+        inline-size: 2rem;
+        block-size: 2rem;
+        min-inline-size: 2rem;
+        min-block-size: 2rem;
         opacity: 1;
     }
-    .lineCheck::after {
-        inset: -15px;
+    :is(.dayGrid, .somedayGrid, .archive) .lineAction::after,
+    :is(.dayGrid, .somedayGrid, .archive) .restoreAction::after {
+        content: "";
+        position: absolute;
+        inset: calc((2rem - var(--touch-target-min)) / 2);
     }
-    .lineAction,
-    .restoreAction {
-        inline-size: 44px;
-        block-size: 44px;
-        opacity: 1;
-    }
-    .dayGrid .lineTitle,
-    .somedayGrid .lineTitle {
-        font-size: var(--input-font-min);
+    :is(.dayGrid, .somedayGrid, .archive) .lineTitle {
+        font-size: 0.8125rem;
         font-weight: 500;
-        padding-inline: 0.25rem;
+        line-height: 1.4;
+        padding: 0.25rem 0.5rem;
     }
-    .dayGrid .overdueMark,
-    .somedayGrid .overdueMark {
-        margin-inline: 0.25rem;
+    .listTaskDate {
+        gap: 0.25rem;
+        margin-block-start: 0.125rem;
+        font-weight: 500;
+        line-height: 1.3;
     }
-    .somedayGrid {
-        min-block-size: 0;
-    }
-    .somedayGrid .ruledList {
-        min-block-size: calc(4 * var(--line-height));
-    }
-    .somedayGrid .ruledList > .blankLine:nth-child(n + 5) {
-        display: none;
+    .overdueMark {
+        margin-inline: 0.125rem 0.5rem;
     }
     .somedayBar {
-        padding-inline: 0.5rem;
+        min-block-size: var(--touch-target-min);
+        padding: 0.125rem 0.5rem;
         gap: 0.25rem;
     }
     .somedayBarStart {
         gap: 0.25rem;
     }
-    .somedayBar :global(button[data-icon-button]),
-    .listHeadingTools :global(button[data-icon-button]) {
-        --icon-button-size: var(--touch-target-min);
-    }
     .notebookTabPicker {
-        flex: 1;
+        flex: 0 1 auto;
+        background: transparent;
         overscroll-behavior-inline: contain;
     }
     .slidingTabName {
-        max-inline-size: 7rem;
+        max-inline-size: 5rem;
     }
-    .notebookTabMenu {
-        min-inline-size: var(--touch-target-min);
-        min-block-size: var(--touch-target-min);
+    .notebookTab {
+        min-block-size: 2rem;
+        padding-inline: 0.5rem;
     }
-    .listTabs {
-        gap: 0.5rem;
+    .somedayBar :global(button[data-icon-button]) {
+        --icon-button-size: 2rem;
+        position: relative;
+        min-inline-size: 2rem;
+        min-block-size: 2rem;
     }
-    .listTabButton {
-        font-size: 0.8125rem;
+    .somedayBar :global(button[data-icon-button])::after {
+        content: "";
+        position: absolute;
+        inset: calc((2rem - var(--touch-target-min)) / 2);
     }
-    .tabMenu,
+    .addTabButton {
+        margin-inline-start: auto;
+    }
     .addTabButton,
     .collapseLists {
-        inline-size: 44px;
-    }
-    .listTabButton > span {
-        max-inline-size: 120px;
-    }
-    .customList .listHeadingRow .listMenu {
-        opacity: 1;
-        pointer-events: auto;
-        min-inline-size: 44px;
-        inline-size: 44px;
-        block-size: 44px;
-        min-block-size: 44px;
-    }
-    .customList::before {
-        inset-block-start: -0.75rem;
-        inset-inline: -0.75rem;
-    }
-    .customList:first-child::before {
-        inset-inline-start: -0.75rem;
+        margin-inline: calc((var(--touch-target-min) - 2rem) / 2);
     }
     .customList > .dayColumn > .dayHeading {
-        padding-block-start: 1.75rem;
+        padding: 0 0 0.25rem 2rem;
+    }
+    .listDragHandle {
+        inset-block-start: 0;
+        inset-inline-start: 0;
+        transform: none;
+        inline-size: 2rem;
+        block-size: var(--touch-target-min);
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .listDragHandle::after {
+        content: "";
+        position: absolute;
+        inset-block: 0;
+        inset-inline: calc((2rem - var(--touch-target-min)) / 2);
     }
     .listHeadingRow {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        gap: 0.25rem;
+        min-block-size: var(--touch-target-min);
     }
     .listHeadingRow > h2 {
-        flex-basis: 100%;
+        flex: 1;
+        min-inline-size: 0;
         white-space: normal;
         overflow-wrap: anywhere;
     }
     .listHeadingTools {
-        flex: 1 1 100%;
-        justify-content: flex-end;
+        flex: 0 0 auto;
+        gap: 0;
     }
     .listHeadingNewList {
-        margin-inline-end: auto;
+        margin: 0;
     }
     .listHeadingNewList button {
+        position: relative;
+        display: grid;
+        place-items: center;
+        inline-size: var(--touch-target-min);
+        min-inline-size: var(--touch-target-min);
         min-block-size: var(--touch-target-min);
+        padding: 0;
     }
-    .newListColumn > .dayHeading {
-        padding-block: 0.85rem 0.5rem;
+    .listHeadingNewList .newListLabel {
+        display: none;
     }
-    .listDragHandle {
-        inset-block-start: 0;
+    .listHeadingTools :global(button[data-icon-button]) {
+        --icon-button-size: var(--touch-target-min);
+    }
+    .customList .listHeadingRow .listMenu {
         opacity: 1;
         pointer-events: auto;
-    }
-    .listDragHandle,
-    .listMenu {
-        min-inline-size: 44px;
-        block-size: 44px;
-    }
-    .somedayGrid .customList + .customList {
-        margin-block-start: 1rem;
     }
     .newListColumn > .ruledList {
         display: none;
     }
-    .columnPicker {
-        display: none;
-    }
-}
-@container (max-width: 359px) {
-    .plannerNav {
-        padding-block: 0.625rem;
-    }
-    .dateRange {
-        flex-basis: 100%;
-        padding-inline: 0.5rem;
-    }
-    .dateControls {
-        inline-size: 100%;
-        justify-content: space-between;
-        margin-inline-start: 0;
-    }
-}
-@media (max-width: 640px) {
     .archive {
-        padding: 1.25rem 0.75rem;
-    }
-    .archive .taskLine {
-        --line-height: 44px;
-        --task-action-size: 44px;
-        --task-action-gutter: 48px;
-    }
-    .archive .lineCheck,
-    .archive .lineAction {
-        opacity: 1;
-    }
-    .archive .lineCheck {
-        position: relative;
-        inset: auto;
-        transform: none;
-        inline-size: 1.25rem;
-        block-size: 1.25rem;
-        margin-inline: calc((var(--touch-target-min) - 1.25rem) / 2);
-    }
-    .archive .lineCheck::after {
-        inset: calc((1.25rem - var(--touch-target-min)) / 2);
-    }
-    .archive .lineAction,
-    .archive .restoreAction {
-        --icon-button-size: var(--touch-target-min);
-        position: relative;
-        inset: auto;
-        transform: none;
-        inline-size: var(--touch-target-min);
-        block-size: var(--touch-target-min);
-    }
-    .archive .taskLine {
-        gap: 0;
-        padding-inline: 0;
-    }
-    .archive .lineTitle {
-        font-size: var(--input-font-min);
-        font-weight: 500;
+        padding: 0.75rem;
     }
 }
 @media (hover: none) {
@@ -1044,7 +1037,7 @@
 }
 @media (pointer: coarse), (max-width: 767px) {
     .dragPreview {
-        font-size: var(--input-font-min);
+        font-size: 0.8125rem;
     }
 }
 

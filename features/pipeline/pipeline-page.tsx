@@ -8,6 +8,7 @@ import { PREF_KEYS } from "@/lib/prefs/keys";
 import { EMPTY_PROPERTY_CRITERIA } from "@/lib/properties/list-criteria";
 import { pipelineStageFromQuery } from "@/lib/properties/pipeline-stage-query";
 import { StageOperationGate } from "@/lib/properties/stage-operation-gate";
+import { saveWorkflowDealStage } from "@/lib/workflows/deal-actions";
 import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 import { useDebouncedValue } from "@/hooks/use-locations";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
@@ -43,7 +44,6 @@ import { PipelineToolbar } from "@/features/pipeline/pipeline-toolbar";
 import {
     findDealForMove,
     markSoldBlockedReason,
-    otherLiveClientCount,
     type SaleConfirmMode,
     saleConfirmMode,
 } from "@/features/pipeline/sale-mode";
@@ -460,8 +460,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             setActionError(null);
             applyLocalStage(dealId, status);
 
-            void pipelineApi
-                .setStage(dealId, status)
+            void saveWorkflowDealStage(current, status, "", {}, FEATURE_PLATFORM_OWNER)
                 .then(() => {
                     if (!mounted.current) return;
                     showAppToast(
@@ -480,8 +479,13 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                     }
                                     setBusyId(dealId);
                                     // Keep the confirmed stage visible until Undo actually saves.
-                                    void pipelineApi
-                                        .setStage(dealId, previous)
+                                    void saveWorkflowDealStage(
+                                        { ...current, status },
+                                        previous,
+                                        "",
+                                        {},
+                                        FEATURE_PLATFORM_OWNER,
+                                    )
                                         .then(() => {
                                             if (mounted.current) applyLocalStage(dealId, previous);
                                         })
@@ -533,30 +537,29 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             if (stageGate.begin(moveRequest.dealId) == null) return;
 
             const deal = findDealForMove(deals, moveRequest.deal ?? null, moveRequest.dealId);
-            const sendToOwner =
-                moveRequest.status === "closed" &&
-                deal != null &&
-                saleModeFor(deal) === "owner" &&
-                details.closedAmountInr != null;
 
             setIsSavingMove(true);
             setBusyId(moveRequest.dealId);
             try {
                 setMoveError(null);
-                if (sendToOwner) {
-                    // The owner confirms: the final price goes to them as an offer.
-                    await pipelineApi.makeOffer(moveRequest.dealId, details.closedAmountInr!, note);
-                } else {
-                    await pipelineApi.setStage(moveRequest.dealId, moveRequest.status, {
-                        note,
-                        closedAmountInr: details.closedAmountInr,
-                        lostReason: details.lostReason,
-                        closedAs: details.closedAs,
-                    });
-                }
+                if (!deal) throw new Error("Reload this deal before changing its stage.");
+                const result = await saveWorkflowDealStage(
+                    moveRequest.deal ?? deal,
+                    moveRequest.status,
+                    note,
+                    details,
+                    FEATURE_PLATFORM_OWNER,
+                );
                 setMoveRequest(null);
                 toast.success(
-                    sendToOwner ? "Sent to the owner to confirm." : moveRequest.successMessage,
+                    result === "owner"
+                        ? "Sent to the owner to confirm."
+                        : moveRequest.status === "closed"
+                          ? details.closedAs === "rent" ||
+                            (!details.closedAs && deal.property.isRent)
+                              ? "Marked as rented"
+                              : "Marked as sold"
+                          : moveRequest.successMessage,
                 );
             } catch (saveError) {
                 setMoveError(
@@ -583,6 +586,11 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             setBusyId(offerDealId);
             try {
                 setOfferError(null);
+                const latest = await pipelineApi.get(offerDealId);
+                if (!isLiveStage(latest.status) || latest.property.isSold)
+                    throw new Error(
+                        "This deal is finished. Review its latest details before adding an offer.",
+                    );
                 await pipelineApi.makeOffer(offerDealId, offerAmount, notes);
                 // Show the saved amount immediately; the refresh below reconciles
                 // the server's stage, history and summary counts.
@@ -736,6 +744,13 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         }
     }, [setFilters, setPrefs, searchParams, router, pathname]);
 
+    const clearStage = () => {
+        setFilters((previous) => ({ ...previous, stage: "" }));
+        const query = new URLSearchParams(searchParams.toString());
+        query.delete("stage");
+        router.replace(`${pathname}${query.size ? `?${query}` : ""}`, { scroll: false });
+    };
+
     // The API already applied the filter sheet.
     const filteredDeals = useMemo(() => deals ?? [], [deals]);
 
@@ -783,7 +798,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     // Only changed criteria replace the results; stage-save refreshes keep the board usable.
     const isStale = !isFirstLoad && loadedKey !== requestKey;
     const resultsLoading =
-        (isFirstLoad && isFetching) || (!error && (isStale || filters.q.trim() !== searchTerm));
+        (isFirstLoad && isFetching) || isStale || filters.q.trim() !== searchTerm;
     const isFirstRun =
         !hasSearch &&
         summary != null &&
@@ -835,7 +850,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                             <span>Showing {DEAL_STAGE_META[filters.stage].label} deals</span>
                             <button
                                 type="button"
-                                onClick={handleClearSearch}
+                                onClick={clearStage}
                                 className="font-medium text-brand underline"
                             >
                                 Show all stages
@@ -865,9 +880,12 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             )}
 
             {error && !isFirstLoad ? (
-                <p role="alert" className="body-sm text-danger">
-                    {error}
-                </p>
+                <div role="alert" className="body-sm flex flex-wrap items-center gap-3 text-danger">
+                    <p>{error}</p>
+                    <Button variant="outline" onClick={() => setRevision((value) => value + 1)}>
+                        Try again
+                    </Button>
+                </div>
             ) : null}
 
             {actionError ? (
@@ -889,13 +907,25 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 </div>
             ) : null}
 
-            <TabsContent key={view} value={view} aria-busy={resultsLoading || isFetching}>
+            <TabsContent
+                key={view}
+                value={view}
+                aria-busy={!error && (resultsLoading || isFetching)}
+            >
                 {isFetching && !isFirstLoad && !resultsLoading ? (
                     <span role="status" className="sr-only">
                         Updating your deals
                     </span>
                 ) : null}
-                {resultsLoading ? (
+                {error && isStale ? (
+                    <EmptyState
+                        size="page"
+                        variant="error"
+                        icon={AlertCircle}
+                        heading="Could not load these results"
+                        description="Try again to see deals matching your current filters."
+                    />
+                ) : resultsLoading ? (
                     <PipelineBoardSkeleton view={view} mobileStage={mobileStage} />
                 ) : isFirstLoad && error ? (
                     <EmptyState
@@ -970,7 +1000,6 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 open={moveRequest != null}
                 deal={moveDeal}
                 saleMode={moveDeal ? saleModeFor(moveDeal) : "immediate"}
-                otherClientCount={moveDeal ? otherLiveClientCount(deals ?? [], moveDeal) : 0}
                 request={moveRequest}
                 isSaving={isSavingMove}
                 submitError={moveError}

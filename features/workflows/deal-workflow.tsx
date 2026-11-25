@@ -142,7 +142,9 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
             deal,
             successMessage:
                 status === "closed"
-                    ? "Marked as sold"
+                    ? deal.property.isRent
+                        ? "Marked as rented"
+                        : "Marked as sold"
                     : status === "lost"
                       ? "Marked as lost"
                       : `Moved to ${DEAL_STAGE_META[status].label.toLowerCase()}`,

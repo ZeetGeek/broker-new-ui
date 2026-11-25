@@ -1,10 +1,11 @@
 "use client";
 
-import { type ReactNode, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 import { formatDateIn, formatDateShort, formatTimeIn } from "@/lib/format/date";
 import { formatTelUrl } from "@/lib/format/phone";
 import { formatPrice, formatRent } from "@/lib/format/price";
+import { useRouter } from "@/lib/navigation";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
@@ -13,6 +14,7 @@ import { EmptyState } from "@/components/empty-state";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ContactName } from "@/components/shared/contact-name";
 import { IconButton } from "@/components/shared/icon-button";
 import {
@@ -153,10 +155,12 @@ function DealNotes({
     note,
     onSave,
     isBusy,
+    onDirtyChange,
 }: {
     note: string;
     onSave?: (note: string) => Promise<void>;
     isBusy: boolean;
+    onDirtyChange: (dirty: boolean) => void;
 }) {
     const id = useId();
     const fieldRef = useRef<HTMLTextAreaElement>(null);
@@ -165,6 +169,10 @@ function DealNotes({
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    useEffect(() => {
+        onDirtyChange(editing && draft.trim() !== note.trim());
+        return () => onDirtyChange(false);
+    }, [draft, editing, note, onDirtyChange]);
     if (sourceNote !== note) {
         setSourceNote(note);
         if (!editing) setDraft(note);
@@ -366,7 +374,15 @@ export function DealDetailModal({
     onMakeOffer?: () => void;
 }) {
     const deal = detail;
+    const router = useRouter();
     const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [dirtyNotes, setDirtyNotes] = useState(false);
+    const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+    function leaveNotes(action: () => void) {
+        if (isBusy) return;
+        if (dirtyNotes) setPendingAction(() => action);
+        else action();
+    }
     const next = deal && isLiveStage(deal.status) ? nextStage(deal.status) : null;
     const target: DealStatus | null = next ?? (deal?.status === "negotiation" ? "closed" : null);
     const actionLabel =
@@ -376,7 +392,11 @@ export function DealDetailModal({
               ? "Move to site visit"
               : target === "negotiation"
                 ? "Start negotiating"
-                : "Mark as sold";
+                : deal?.property.saleAndRent
+                  ? "Close deal"
+                  : deal?.property.isRent
+                    ? "Mark as rented"
+                    : "Mark as sold";
     const ActionIcon = target && isLiveStage(target) ? DEAL_STAGE_META[target].icon : BadgeCheck;
     const title = deal ? `Deal with ${deal.buyer.name}` : "Deal details";
     const location = deal
@@ -392,253 +412,294 @@ export function DealDetailModal({
         : null;
 
     return (
-        <AppModal
-            open={open}
-            modal={!lightboxOpen}
-            onOpenChange={(next) => {
-                if (!next && !lightboxOpen) onClose();
-            }}
-            size="xl"
-            padding="md"
-            nativeScroll
-            footer={
-                isLoading ? (
-                    <AppModalFooter className={styles.footer} aria-hidden>
-                        <Skeleton className="block-8 inline-28" />
-                        <Skeleton className="block-8 inline-36" />
-                    </AppModalFooter>
-                ) : deal ? (
-                    <AppModalFooter className={styles.footer}>
-                        <Button
-                            variant="link"
-                            size="sm"
-                            className={cn(styles.propertyLink, "font-medium")}
-                            nativeButton={false}
-                            render={<Link href={brokerPropertyDetailHref(deal.property.id)} />}
-                        >
-                            View full property <ExternalLink size={16} aria-hidden />
-                        </Button>
-                        {onMakeOffer && isLiveStage(deal.status) && !deal.property.isSold ? (
+        <>
+            <AppModal
+                open={open}
+                modal={!lightboxOpen}
+                onOpenChange={(next) => {
+                    if (!next && !lightboxOpen) leaveNotes(onClose);
+                }}
+                closeDisabled={isBusy}
+                size="xl"
+                padding="md"
+                nativeScroll
+                footer={
+                    isLoading ? (
+                        <AppModalFooter className={styles.footer} aria-hidden>
+                            <Skeleton className="block-8 inline-28" />
+                            <Skeleton className="block-8 inline-36" />
+                        </AppModalFooter>
+                    ) : deal ? (
+                        <AppModalFooter className={styles.footer}>
                             <Button
-                                size="default"
-                                variant="outline"
-                                className="font-medium"
-                                disabled={isBusy}
-                                onClick={onMakeOffer}
+                                variant="link"
+                                size="sm"
+                                className={cn(styles.propertyLink, "font-medium")}
+                                nativeButton={false}
+                                render={
+                                    <Link
+                                        href={brokerPropertyDetailHref(deal.property.id)}
+                                        onNavigate={(event) => {
+                                            if (!dirtyNotes) return;
+                                            event.preventDefault();
+                                            leaveNotes(() =>
+                                                router.push(
+                                                    brokerPropertyDetailHref(deal.property.id),
+                                                ),
+                                            );
+                                        }}
+                                    />
+                                }
                             >
-                                <HandCoins aria-hidden size={16} />
-                                {deal.offerAmountInr != null ? "Update offer" : "Record offer"}
+                                View full property <ExternalLink size={16} aria-hidden />
                             </Button>
-                        ) : null}
-                        {target ? (
-                            <Button
-                                size="default"
-                                variant="accent"
-                                className="font-medium"
-                                disabled={isBusy || isLoading}
-                                onClick={() => onStageAction(target)}
-                            >
-                                <ActionIcon size={16} aria-hidden />
-                                {isBusy ? "Please wait..." : actionLabel}
-                            </Button>
-                        ) : null}
-                    </AppModalFooter>
-                ) : undefined
-            }
-            className={styles.modal}
-            bodyClassName={styles.body}
-            headerClassName={styles.header}
-            footerClassName={styles.footerBar}
-            title={
-                <span className={styles.modalTitle}>
-                    {isLoading ? (
-                        <>
-                            <span className="sr-only">Deal details</span>
-                            <Skeleton className="block-6 inline-32" />
-                            <Skeleton className="rounded-full block-6 inline-24" />
-                        </>
-                    ) : (
-                        title
-                    )}
-                    {!isLoading && statusLabel ? (
-                        <Badge
-                            variant={deal?.status === "closed" ? "brand" : "neutral"}
-                            className={cn(
-                                "font-medium",
-                                deal && isLiveStage(deal.status)
-                                    ? cn(
-                                          DEAL_STAGE_META[deal.status].pillClass,
-                                          "[--badge-dot:currentColor]",
-                                      )
-                                    : undefined,
-                            )}
-                        >
-                            {statusLabel}
-                        </Badge>
-                    ) : null}
-                </span>
-            }
-            descriptionClassName="font-medium"
-            description={
-                isLoading ? (
-                    <Skeleton className="block-5 inline-28" />
-                ) : deal ? (
-                    `${deal.property.isRent ? "Rental" : "Sale"} deal${location ? ` - ${location}` : ""}`
-                ) : (
-                    "Property, people and progress in one place."
-                )
-            }
-        >
-            {isLoading ? (
-                <PipelineDetailSkeleton />
-            ) : error && !deal ? (
-                <EmptyState
-                    size="card"
-                    variant="error"
-                    icon={Briefcase}
-                    heading="Could not load this deal"
-                    description="Check your connection and try again."
-                    action={
-                        onRetry
-                            ? { label: "Try again", icon: RefreshCw, onClick: onRetry }
-                            : undefined
-                    }
-                />
-            ) : deal ? (
-                <div className={styles.layout}>
-                    {error ? (
-                        <p role="alert" className="body-xs text-urgent">
-                            {error}
-                        </p>
-                    ) : null}
-
-                    <section className={styles.property} aria-label="Property overview">
-                        <div className={styles.propertyHeading}>
-                            <h2>{deal.property.title}</h2>
+                            {onMakeOffer && isLiveStage(deal.status) && !deal.property.isSold ? (
+                                <Button
+                                    size="default"
+                                    variant="outline"
+                                    className="font-medium"
+                                    disabled={isBusy}
+                                    onClick={() => leaveNotes(onMakeOffer)}
+                                >
+                                    <HandCoins aria-hidden size={16} />
+                                    {deal.offerAmountInr != null ? "Update offer" : "Record offer"}
+                                </Button>
+                            ) : null}
+                            {target ? (
+                                <Button
+                                    size="default"
+                                    variant="accent"
+                                    className="font-medium"
+                                    disabled={isBusy || isLoading}
+                                    onClick={() => leaveNotes(() => onStageAction(target))}
+                                >
+                                    <ActionIcon size={16} aria-hidden />
+                                    {isBusy ? "Please wait..." : actionLabel}
+                                </Button>
+                            ) : null}
+                        </AppModalFooter>
+                    ) : undefined
+                }
+                className={styles.modal}
+                bodyClassName={styles.body}
+                headerClassName={styles.header}
+                footerClassName={styles.footerBar}
+                title={
+                    <span className={styles.modalTitle}>
+                        {isLoading ? (
+                            <>
+                                <span className="sr-only">Deal details</span>
+                                <Skeleton className="block-6 inline-32" />
+                                <Skeleton className="rounded-full block-6 inline-24" />
+                            </>
+                        ) : (
+                            title
+                        )}
+                        {!isLoading && statusLabel ? (
                             <Badge
-                                color={deal.property.isRent ? "orange" : "emerald"}
-                                className="font-medium"
+                                variant={deal?.status === "closed" ? "brand" : "neutral"}
+                                className={cn(
+                                    "font-medium",
+                                    deal && isLiveStage(deal.status)
+                                        ? cn(
+                                              DEAL_STAGE_META[deal.status].pillClass,
+                                              "[--badge-dot:currentColor]",
+                                          )
+                                        : undefined,
+                                )}
                             >
-                                {deal.property.isRent ? "For rent" : "For sale"}
+                                {statusLabel}
                             </Badge>
-                        </div>
-                        {location ? (
-                            <p className={styles.location}>
-                                <MapPin aria-hidden size={15} />
-                                <span>{location}</span>
+                        ) : null}
+                    </span>
+                }
+                descriptionClassName="font-medium"
+                description={
+                    isLoading ? (
+                        <Skeleton className="block-5 inline-28" />
+                    ) : deal ? (
+                        `${deal.property.isRent ? "Rental" : "Sale"} deal${location ? ` - ${location}` : ""}`
+                    ) : (
+                        "Property, people and progress in one place."
+                    )
+                }
+            >
+                {isLoading ? (
+                    <PipelineDetailSkeleton />
+                ) : error && !deal ? (
+                    <EmptyState
+                        size="card"
+                        variant="error"
+                        icon={Briefcase}
+                        heading="Could not load this deal"
+                        description="Check your connection and try again."
+                        action={
+                            onRetry
+                                ? { label: "Try again", icon: RefreshCw, onClick: onRetry }
+                                : undefined
+                        }
+                    />
+                ) : deal ? (
+                    <div className={styles.layout}>
+                        {error ? (
+                            <p role="alert" className="body-xs text-urgent">
+                                {error}
                             </p>
                         ) : null}
-                        <div className={styles.askRow}>
-                            <PriceWithCommission
-                                amountInr={deal.property.amountInr}
-                                isRent={deal.property.isRent}
-                                commissionPercent={deal.property.commissionPercent}
-                                commissionAmountInr={deal.property.commissionAmountInr}
-                                audience="broker"
-                                size="xl"
-                                className="font-medium"
-                            />
-                            <span className="body-xs font-semibold text-ink-muted">
-                                {deal.property.isRent ? "Monthly rent" : "Asking price"}
-                            </span>
-                        </div>
-                    </section>
-                    <Separator />
-                    <section className={styles.figuresSection} aria-label="Deal figures and dates">
-                        <h2 className={styles.sectionTitle}>Deal details</h2>
-                        <div className={styles.facts}>
-                            <DetailField label="Client budget" icon={Wallet}>
-                                {formatMoney(deal.buyer.budgetMaxInr, deal.property.isRent)}
-                            </DetailField>
-                            <DetailField
-                                label={FEATURE_PLATFORM_OWNER ? "Latest offer" : "Recorded offer"}
-                                icon={HandCoins}
-                            >
-                                {deal.offerAmountInr != null ? (
-                                    <>
-                                        <span>
-                                            {formatMoney(deal.offerAmountInr, deal.property.isRent)}
-                                        </span>
-                                        {FEATURE_PLATFORM_OWNER && deal.offerStatus ? (
-                                            <Badge variant="neutral" className="font-medium">
-                                                {OFFER_STATUS_LABEL[deal.offerStatus]}
-                                            </Badge>
-                                        ) : null}
-                                    </>
-                                ) : (
-                                    <span className="text-ink-muted">No offer yet</span>
-                                )}
-                            </DetailField>
-                            {deal.status === "closed" && deal.closedAmountInr != null ? (
-                                <DetailField label="Closed at" icon={BadgeCheck}>
-                                    {formatMoney(deal.closedAmountInr, deal.property.isRent)}
-                                </DetailField>
-                            ) : null}
-                            {deal.status === "lost" && deal.lostReason ? (
-                                <DetailField label="Reason for loss" icon={CircleX}>
-                                    {lostReasonLabel(deal.lostReason)}
-                                </DetailField>
-                            ) : null}
-                            {deal.nextVisitAt ? (
-                                <DetailField label="Scheduled visit" icon={CalendarCheck}>
-                                    {formatWhen(deal.nextVisitAt)}
-                                </DetailField>
-                            ) : null}
-                        </div>
-                    </section>
-                    <Separator />
-                    <div className={styles.gallery}>
-                        <PropertyPhotoGallery
-                            onLightboxChange={setLightboxOpen}
-                            key={deal.id}
-                            property={deal.property}
-                        />
-                    </div>
-                    <section className={styles.peopleSection} aria-label="People in this deal">
-                        <h2 className={styles.sectionTitle}>Client & owner</h2>
-                        <div className={styles.contacts}>
-                            <DealPerson
-                                role="Client"
-                                person={deal.buyer}
-                                phone={deal.buyer.phoneDigits}
-                            />
-                            <DealPerson
-                                role="Owner"
-                                person={deal.owner}
-                                phone={
-                                    deal.owner.isRepresentationActive
-                                        ? deal.owner.phoneDigits
-                                        : undefined
-                                }
-                                phoneMessage={
-                                    deal.owner.isRepresentationActive
-                                        ? "Phone number not added"
-                                        : "Phone number not shared"
-                                }
-                            />
-                        </div>
-                    </section>
-                    <div className={styles.rightColumn}>
-                        <DealNotes
-                            key={`notes-${deal.id}`}
-                            note={deal.note}
-                            onSave={onSaveNote}
-                            isBusy={isBusy}
-                        />
-                        <section className={styles.history} aria-label="Deal activity">
-                            <div className={styles.sectionHeading}>
-                                <h2 className={styles.sectionTitle}>Activity</h2>
-                                <span className="body-xs text-ink-muted">Newest first</span>
+
+                        <section className={styles.property} aria-label="Property overview">
+                            <div className={styles.propertyHeading}>
+                                <h2>{deal.property.title}</h2>
+                                <Badge
+                                    color={deal.property.isRent ? "orange" : "emerald"}
+                                    className="font-medium"
+                                >
+                                    {deal.property.isRent ? "For rent" : "For sale"}
+                                </Badge>
                             </div>
-                            <HistoryList
-                                key={deal.id}
-                                history={deal.history}
-                                isRent={deal.property.isRent}
-                            />
+                            {location ? (
+                                <p className={styles.location}>
+                                    <MapPin aria-hidden size={15} />
+                                    <span>{location}</span>
+                                </p>
+                            ) : null}
+                            <div className={styles.askRow}>
+                                <PriceWithCommission
+                                    amountInr={deal.property.amountInr}
+                                    isRent={deal.property.isRent}
+                                    commissionPercent={deal.property.commissionPercent}
+                                    commissionAmountInr={deal.property.commissionAmountInr}
+                                    audience="broker"
+                                    size="xl"
+                                    className="font-medium"
+                                />
+                                <span className="body-xs font-semibold text-ink-muted">
+                                    {deal.property.isRent ? "Monthly rent" : "Asking price"}
+                                </span>
+                            </div>
                         </section>
+                        <Separator />
+                        <section
+                            className={styles.figuresSection}
+                            aria-label="Deal figures and dates"
+                        >
+                            <h2 className={styles.sectionTitle}>Deal details</h2>
+                            <div className={styles.facts}>
+                                <DetailField label="Client budget" icon={Wallet}>
+                                    {formatMoney(deal.buyer.budgetMaxInr, deal.property.isRent)}
+                                </DetailField>
+                                <DetailField
+                                    label={
+                                        FEATURE_PLATFORM_OWNER ? "Latest offer" : "Recorded offer"
+                                    }
+                                    icon={HandCoins}
+                                >
+                                    {deal.offerAmountInr != null ? (
+                                        <>
+                                            <span>
+                                                {formatMoney(
+                                                    deal.offerAmountInr,
+                                                    deal.property.isRent,
+                                                )}
+                                            </span>
+                                            {FEATURE_PLATFORM_OWNER && deal.offerStatus ? (
+                                                <Badge variant="neutral" className="font-medium">
+                                                    {OFFER_STATUS_LABEL[deal.offerStatus]}
+                                                </Badge>
+                                            ) : null}
+                                        </>
+                                    ) : (
+                                        <span className="text-ink-muted">No offer yet</span>
+                                    )}
+                                </DetailField>
+                                {deal.status === "closed" && deal.closedAmountInr != null ? (
+                                    <DetailField label="Closed at" icon={BadgeCheck}>
+                                        {formatMoney(deal.closedAmountInr, deal.property.isRent)}
+                                    </DetailField>
+                                ) : null}
+                                {deal.status === "lost" && deal.lostReason ? (
+                                    <DetailField label="Reason for loss" icon={CircleX}>
+                                        {lostReasonLabel(deal.lostReason)}
+                                    </DetailField>
+                                ) : null}
+                                {deal.nextVisitAt ? (
+                                    <DetailField label="Scheduled visit" icon={CalendarCheck}>
+                                        {formatWhen(deal.nextVisitAt)}
+                                    </DetailField>
+                                ) : null}
+                            </div>
+                        </section>
+                        <Separator />
+                        <div className={styles.gallery}>
+                            <PropertyPhotoGallery
+                                onLightboxChange={setLightboxOpen}
+                                key={deal.id}
+                                property={deal.property}
+                            />
+                        </div>
+                        <section className={styles.peopleSection} aria-label="People in this deal">
+                            <h2 className={styles.sectionTitle}>Client & owner</h2>
+                            <div className={styles.contacts}>
+                                <DealPerson
+                                    role="Client"
+                                    person={deal.buyer}
+                                    phone={deal.buyer.phoneDigits}
+                                />
+                                <DealPerson
+                                    role="Owner"
+                                    person={deal.owner}
+                                    phone={
+                                        deal.owner.isRepresentationActive
+                                            ? deal.owner.phoneDigits
+                                            : undefined
+                                    }
+                                    phoneMessage={
+                                        deal.owner.isRepresentationActive
+                                            ? "Phone number not added"
+                                            : "Phone number not shared"
+                                    }
+                                />
+                            </div>
+                        </section>
+                        <div className={styles.rightColumn}>
+                            <DealNotes
+                                key={`notes-${deal.id}`}
+                                note={deal.note}
+                                onSave={onSaveNote}
+                                isBusy={isBusy}
+                                onDirtyChange={setDirtyNotes}
+                            />
+                            <section className={styles.history} aria-label="Deal activity">
+                                <div className={styles.sectionHeading}>
+                                    <h2 className={styles.sectionTitle}>Activity</h2>
+                                    <span className="body-xs text-ink-muted">Newest first</span>
+                                </div>
+                                <HistoryList
+                                    key={deal.id}
+                                    history={deal.history}
+                                    isRent={deal.property.isRent}
+                                />
+                            </section>
+                        </div>
                     </div>
-                </div>
-            ) : null}
-        </AppModal>
+                ) : null}
+            </AppModal>
+            <ConfirmDialog
+                open={pendingAction != null}
+                title="Discard unsaved notes?"
+                description="Your note changes have not been saved. Keep editing to save them first."
+                confirmLabel="Discard changes"
+                cancelLabel="Keep editing"
+                onOpenChange={(next) => {
+                    if (!next) setPendingAction(null);
+                }}
+                onConfirm={() => {
+                    const action = pendingAction;
+                    setPendingAction(null);
+                    setDirtyNotes(false);
+                    action?.();
+                }}
+            />
+        </>
     );
 }

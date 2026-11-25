@@ -111,6 +111,7 @@ export function TaskLine({
         <IconButton
             size="xs"
             type="button"
+            appearance={mobile ? "ghost" : "outline"}
             className={styles.lineAction}
             disabled={busy}
             aria-label={`Actions for ${rowTitle}`}

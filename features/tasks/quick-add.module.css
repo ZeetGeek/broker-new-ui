@@ -369,23 +369,38 @@
 
 @media (pointer: coarse), (max-width: 767px) {
     .root {
-        font-size: var(--input-font-min);
-        --qa-line: max(var(--line-height, 3rem), var(--touch-target-min));
+        font-size: 0.8125rem;
+        --qa-line: max(var(--line-height, 2.5rem), var(--touch-target-min));
     }
-    .mirror,
-    .input {
-        font-size: var(--input-font-min);
+    .root .mirror,
+    .root .input {
+        font-size: 0.8125rem;
         font-weight: 500;
     }
     .propertyOptions,
     .peopleOptions {
-        inline-size: 100cqi;
+        /* Anchor to the field, which is narrower than the row when Save is visible. */
+        inline-size: 100%;
         min-inline-size: 0;
-        max-inline-size: 100cqi;
+        max-inline-size: 100%;
         max-block-size: min(18rem, 40dvh);
+    }
+    .peopleTabs {
+        min-inline-size: 0;
+        padding: 0.5rem;
+    }
+    .peopleList {
+        padding: 0.25rem;
     }
     .peopleOption {
         min-block-size: var(--touch-target-min);
+        gap: 0.5rem;
+        padding-inline: 0.5rem;
+    }
+    .placeholder {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        text-overflow: clip;
     }
     .helpButton {
         min-block-size: var(--touch-target-min);
@@ -400,9 +415,16 @@
         padding-block-end: 0.4rem;
     }
     .submit {
-        inline-size: var(--touch-target-min);
-        block-size: var(--touch-target-min);
-        margin-block-start: calc((var(--qa-line) - var(--touch-target-min)) / 2);
+        position: relative;
+        inline-size: 1.875rem;
+        block-size: 1.875rem;
+        margin-block-start: calc((var(--qa-line) - 1.875rem) / 2);
+        margin-inline: calc((var(--touch-target-min) - 1.875rem) / 2);
+    }
+    .submit::after {
+        content: "";
+        position: absolute;
+        inset: calc((1.875rem - var(--touch-target-min)) / 2);
     }
 }
 @media (prefers-reduced-motion: reduce) {

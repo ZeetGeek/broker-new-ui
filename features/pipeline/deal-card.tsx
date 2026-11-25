@@ -293,7 +293,11 @@ function DealCardMenu({
                                     }
                                 >
                                     <PropertyMenuIcon name="check" aria-hidden />
-                                    Mark as sold
+                                    {deal.property.saleAndRent
+                                        ? "Close deal"
+                                        : deal.property.isRent
+                                          ? "Mark as rented"
+                                          : "Mark as sold"}
                                 </button>
                             </>
                         ) : (
@@ -437,7 +441,11 @@ function DealCardMenu({
                                     aria-hidden
                                     className={DEAL_MENU_ICON_CLASS}
                                 />
-                                Mark as sold
+                                {deal.property.saleAndRent
+                                    ? "Close deal"
+                                    : deal.property.isRent
+                                      ? "Mark as rented"
+                                      : "Mark as sold"}
                             </DropdownMenuItem>
                         </>
                     ) : !canPutBackOnBoard(deal) ? null : (

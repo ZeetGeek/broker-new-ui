@@ -512,21 +512,27 @@ async function fetchAllLeads(
     filterParams?: URLSearchParams,
     signal?: AbortSignal,
 ): Promise<ApiLead[]> {
-    const items: ApiLead[] = [];
-    let page = 1;
-    let totalPages = 1;
-
-    while (page <= totalPages) {
+    async function fetchPage(page: number) {
         const qs = new URLSearchParams(filterParams);
         qs.set("page", String(page));
         qs.set("limit", "100");
-        const response = await apiFetch<LeadsListResponse>(`/clients/leads?${qs}`, { signal });
-        items.push(...(response.items ?? []));
-        totalPages = Math.max(1, response.totalPages ?? 1);
-        page += 1;
+        return apiFetch<LeadsListResponse>(`/clients/leads?${qs}`, { signal });
     }
-
-    return items;
+    const first = await fetchPage(1);
+    const items = [...(first.items ?? [])];
+    const totalPages = Math.max(1, first.totalPages ?? 1);
+    // Keep complete stage totals while avoiding a serial round trip per API page.
+    // At most three requests run together, including on slower mobile connections.
+    for (let page = 2; page <= totalPages; page += 3) {
+        if (signal?.aborted) throw new DOMException("Request aborted", "AbortError");
+        const pages = await Promise.all(
+            Array.from({ length: Math.min(3, totalPages - page + 1) }, (_, offset) =>
+                fetchPage(page + offset),
+            ),
+        );
+        for (const response of pages) items.push(...(response.items ?? []));
+    }
+    return [...new Map(items.map((item) => [item.id, item])).values()];
 }
 
 export type SetStageOptions = {

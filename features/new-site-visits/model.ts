@@ -165,7 +165,7 @@ export function validateVisitDraft(draft: VisitDraft, now: number): DraftErrors 
     const errors: DraftErrors = {};
     if (!draft.clientId) errors.clientId = "Choose a client.";
     if (!draft.propertyId || !draft.leadId) errors.propertyId = "Choose a property.";
-    if (!draft.durationMinutes) errors.durationMinutes = "Choose how long the visit is.";
+    if (!draft.durationMinutes) errors.durationMinutes = "Choose a visit length.";
     if (!draft.date) errors.date = "Choose a visit date.";
     if (!draft.startAt) errors.startAt = "Choose a start time.";
     else if (Date.parse(draft.startAt) <= now) errors.startAt = "Pick a time in the future.";

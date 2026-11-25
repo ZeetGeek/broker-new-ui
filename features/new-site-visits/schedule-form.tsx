@@ -17,6 +17,7 @@ import {
     Briefcase,
     Building2,
     CalendarPlus,
+    Clock,
     RefreshCw,
     UserRound,
 } from "@/components/shared/icons";
@@ -216,7 +217,7 @@ export function ScheduleForm({
                     description={
                         leadsQuery.isError
                             ? "Check your connection and try again."
-                            : "Link a client to one of your own listings in Pipeline, then schedule their visit."
+                            : "Link a client to one of your listings in Pipeline, then return here."
                     }
                     action={
                         leadsQuery.isError
@@ -260,16 +261,16 @@ export function ScheduleForm({
                     <div className={FORM_SECTIONS_CLASS}>
                         {intentMissed && (
                             <p role="alert" className={styles.conflict}>
-                                This deal can&apos;t be booked here. Visits can be booked for open
-                                deals on your own listings. Choose a client below.
+                                This deal cannot be scheduled. Choose a client with an open deal on
+                                one of your listings.
                             </p>
                         )}
                         <WizardSection
                             title="Client and property"
                             description={
                                 visit
-                                    ? "The client and property for this visit."
-                                    : "Choose who is visiting and the property they want to see."
+                                    ? "Client and property for this visit."
+                                    : "Choose the client, then their property."
                             }
                         >
                             {visit ? (
@@ -289,7 +290,7 @@ export function ScheduleForm({
                                         {visit.propertyTitle}, {visit.locality}
                                     </p>
                                     <p className="body-xs text-ink-muted">
-                                        Now {formatVisitDate(visit.startsAt)},{" "}
+                                        Current: {formatVisitDate(visit.startsAt)},{" "}
                                         {formatVisitTime(visit.startsAt)} IST
                                     </p>
                                 </div>
@@ -320,7 +321,7 @@ export function ScheduleForm({
                                             size="md"
                                         />
                                     </div>
-                                    <div className={styles.field}>
+                                    <div className={`${styles.field} ${styles.propertyField}`}>
                                         <label
                                             htmlFor={`${formId}-property`}
                                             className="text-sm font-semibold text-ink"
@@ -343,11 +344,11 @@ export function ScheduleForm({
                                             errorText={show("propertyId")}
                                             helperText={
                                                 !draft.clientId
-                                                    ? "Choose a client first."
+                                                    ? "Choose a client first to see properties."
                                                     : undefined
                                             }
                                             placeholder="Select a property"
-                                            triggerSize="default"
+                                            triggerSize="md"
                                         />
                                     </div>
                                 </div>
@@ -357,7 +358,7 @@ export function ScheduleForm({
                         {!noLeads && (
                             <WizardSection
                                 title="Visit date and time"
-                                description="Choose how long, the date and a free start time. All times are in India time (IST)."
+                                description="Choose the length, date, and start time. Times are in IST."
                             >
                                 <div className="flex flex-col gap-4">
                                     <div className={styles.field}>
@@ -365,7 +366,7 @@ export function ScheduleForm({
                                             id={`${formId}-length`}
                                             className="text-sm font-semibold text-ink"
                                         >
-                                            How long
+                                            Visit length
                                             <span
                                                 aria-label="required"
                                                 className="ms-1 text-danger"
@@ -402,6 +403,7 @@ export function ScheduleForm({
                                                         })
                                                     }
                                                 >
+                                                    <Clock aria-hidden />
                                                     {chip.label}
                                                 </Button>
                                             ))}
@@ -440,7 +442,7 @@ export function ScheduleForm({
                                             id={`${formId}-start`}
                                             className="text-sm font-semibold text-ink"
                                         >
-                                            Start time (IST)
+                                            Available start time (IST)
                                             <span
                                                 aria-label="required"
                                                 className="ms-1 text-danger"
@@ -474,7 +476,7 @@ export function ScheduleForm({
                         {!noLeads && (
                             <WizardSection
                                 title="Reminders"
-                                description="Choose when you want to be reminded before the visit starts."
+                                description="Choose when to be reminded."
                             >
                                 <div className="flex flex-col gap-4">
                                     {draft.date && draft.startAt ? (
@@ -487,12 +489,12 @@ export function ScheduleForm({
                                             disabled={busy}
                                         />
                                     ) : (
-                                        <p className="body-sm flex items-center gap-2 text-ink-muted">
+                                        <p className={styles.reminderHint}>
                                             <Bell
                                                 aria-hidden="true"
                                                 className="shrink-0 block-4 inline-4"
                                             />
-                                            Pick a start time to set reminders.
+                                            Choose a start time first to set a reminder.
                                         </p>
                                     )}
                                     {draft.date && draft.startAt && show("reminders") && (
@@ -507,7 +509,7 @@ export function ScheduleForm({
                         {!noLeads && (
                             <WizardSection
                                 title="Visit notes"
-                                description="Add a meeting point or anything to remember for this visit."
+                                description="Add a meeting point or useful detail."
                             >
                                 <div className={styles.field}>
                                     <label
@@ -522,8 +524,8 @@ export function ScheduleForm({
                                         value={draft.notes}
                                         onChange={(event) => patch({ notes: event.target.value })}
                                         maxLength={MAX_CHARS.visitNote}
-                                        rows={4}
-                                        placeholder="Meeting point or anything to remember"
+                                        rows={3}
+                                        placeholder="e.g. Meet at the main gate"
                                         aria-invalid={Boolean(show("notes")) || undefined}
                                         aria-describedby={`${formId}-notes-count`}
                                     />

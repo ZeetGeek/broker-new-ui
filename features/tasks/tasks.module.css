@@ -21,6 +21,9 @@
 .workspace {
     gap: 1.5rem;
 }
+.sortControl {
+    inline-size: 100%;
+}
 .smallCount {
     display: inline-flex;
     align-items: center;

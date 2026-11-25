@@ -164,6 +164,8 @@ export function TaskLists({
     const newListLinkButton = (
         <Button
             type="button"
+            aria-label="Create list"
+            title="Create list"
             variant="link"
             size="sm"
             className="
@@ -174,7 +176,7 @@ export function TaskLists({
             onClick={openNewListEditor}
         >
             <Plus aria-hidden size={14} />
-            New list
+            <span className={styles.newListLabel}>New list</span>
         </Button>
     );
     const showListPageNav = listCount > listStride;
@@ -184,6 +186,7 @@ export function TaskLists({
                 type="button"
                 size="sm"
                 tone="brand"
+                appearance="ghost"
                 className="text-brand hover:text-brand-text disabled:opacity-35"
                 aria-label="Previous lists"
                 disabled={!canPrevList}
@@ -195,6 +198,7 @@ export function TaskLists({
                 type="button"
                 size="sm"
                 tone="brand"
+                appearance="ghost"
                 className="text-brand hover:text-brand-text disabled:opacity-35"
                 aria-label="Next lists"
                 disabled={!canNextList}
@@ -211,6 +215,7 @@ export function TaskLists({
                     <IconButton
                         size="sm"
                         type="button"
+                        appearance="ghost"
                         className={styles.addTabButton}
                         aria-label="Create tab"
                         title="Create tab"
@@ -284,12 +289,14 @@ export function TaskLists({
                         panelId="task-someday"
                         height={36}
                         className={styles.notebookTabPicker}
+                        tabClassName={styles.notebookTab}
                     />
                 </div>
                 <div className={styles.somedayBarEnd}>
                     <IconButton
                         size="sm"
                         type="button"
+                        appearance="ghost"
                         className={styles.collapseLists}
                         aria-label={open ? "Collapse lists" : "Expand lists"}
                         aria-expanded={open}
@@ -673,6 +680,7 @@ function SortableList({
         <IconButton
             size="sm"
             type="button"
+            appearance={mobile ? "ghost" : "outline"}
             className={styles.listMenu}
             disabled={busy}
             aria-label={`Manage list ${list.name}`}

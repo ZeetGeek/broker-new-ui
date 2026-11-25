@@ -72,6 +72,7 @@ export function TaskHistoryPlanner({
         <section
             ref={frame}
             className={styles.planner}
+            data-columns={columns}
             aria-label={`${label} tasks by ${dateKind} date`}
             style={{ "--planner-columns": columns } as CSSProperties}
         >
@@ -109,7 +110,7 @@ export function TaskHistoryPlanner({
                     <IconButton
                         size="sm"
                         type="button"
-                        className={styles.navButton}
+                        className={`${styles.navButton} ${styles.pageStepButton}`}
                         disabled={!previous}
                         aria-label={`Previous ${columns} dates with tasks`}
                         onClick={() => shift(-columns)}
@@ -139,7 +140,7 @@ export function TaskHistoryPlanner({
                     <IconButton
                         size="sm"
                         type="button"
-                        className={styles.navButton}
+                        className={`${styles.navButton} ${styles.pageStepButton}`}
                         disabled={!next}
                         aria-label={`Next ${columns} dates with tasks`}
                         onClick={() => shift(columns)}

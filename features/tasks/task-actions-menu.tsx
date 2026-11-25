@@ -193,6 +193,7 @@ export function TaskActionsMenu({
                     <IconButton
                         size="xs"
                         type="button"
+                        appearance="ghost"
                         className={planner.lineAction}
                         disabled={busy}
                         aria-label={`Actions for ${task.title}`}

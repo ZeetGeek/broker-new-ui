@@ -46,6 +46,11 @@
     border-color: var(--color-danger);
 }
 
+.propertyField > button:disabled {
+    background: var(--color-surface);
+    opacity: 1;
+}
+
 .twoColumns {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -690,10 +695,10 @@
     resize: vertical;
     border: 2px solid var(--color-border-warm);
     background: var(--color-surface);
-    min-block-size: 6.75rem;
+    min-block-size: 5.5rem;
     padding: 0.625rem 1rem;
-    font-size: 0.875rem;
-    line-height: 1.5rem;
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
     font-weight: 400;
     color: var(--color-ink);
 }
@@ -702,6 +707,22 @@
 }
 .notesInput:focus-visible {
     border-color: var(--ring);
+}
+.reminderHint {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: 8px;
+    background: var(--color-brand-soft);
+    color: var(--color-brand-text);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+.reminderHint svg {
+    flex-shrink: 0;
+    margin-block-start: 0.125rem;
+    color: var(--color-brand);
 }
 .entityOption {
     display: flex;

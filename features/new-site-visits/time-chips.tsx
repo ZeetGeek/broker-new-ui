@@ -32,14 +32,14 @@ export function TimeChips({
     if (!ready) {
         return (
             <p className="body-sm text-ink-muted">
-                Choose the client, property, length and date to see free times.
+                Choose a client, property, length, and date to see available times.
             </p>
         );
     }
     if (loading && starts.length === 0) {
         return (
             <p role="status" className="body-sm text-ink-muted">
-                Finding free times…
+                Finding times…
             </p>
         );
     }
@@ -62,8 +62,8 @@ export function TimeChips({
             <EmptyState
                 size="card"
                 icon={CalendarCheck}
-                heading="No times available"
-                description="Choose another date or a shorter visit to check for available times."
+                heading="No times are available"
+                description="Try another date or a shorter visit length."
             />
         );
     }

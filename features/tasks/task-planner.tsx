@@ -263,10 +263,16 @@ export function TaskPlanner({
         }
     };
     return (
-        <section ref={frame} className={styles.planner} aria-label="Task planner">
+        <section
+            ref={frame}
+            className={styles.planner}
+            data-columns={columns}
+            aria-label="Task planner"
+        >
             <nav className={styles.plannerNav} aria-label="Planner dates">
                 <p className={styles.dateRange} aria-live="polite">
-                    {dateText(anchor, "MMMM yyyy")}
+                    <span className={styles.fullMonth}>{dateText(anchor, "MMMM yyyy")}</span>
+                    <span className={styles.shortMonth}>{dateText(anchor, "MMM yyyy")}</span>
                 </p>
                 {pickerOptions.length > 0 && (
                     <SlidingTabs
@@ -293,7 +299,7 @@ export function TaskPlanner({
                     <IconButton
                         size="sm"
                         type="button"
-                        className={styles.navButton}
+                        className={cn(styles.navButton, styles.pageStepButton)}
                         aria-label={`Previous ${columns} days`}
                         onClick={() => shift(-columns)}
                     >
@@ -320,7 +326,7 @@ export function TaskPlanner({
                     <IconButton
                         size="sm"
                         type="button"
-                        className={styles.navButton}
+                        className={cn(styles.navButton, styles.pageStepButton)}
                         aria-label={`Next ${columns} days`}
                         onClick={() => shift(columns)}
                     >

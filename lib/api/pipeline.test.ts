@@ -7,6 +7,73 @@ import { EMPTY_PROPERTY_CRITERIA } from "@/lib/properties/list-criteria";
 
 import { DEFAULT_DEALS_FILTERS, hasActiveDealsFilters } from "@/features/pipeline/types";
 
+test("pipeline loads remaining pages with bounded concurrency and keeps every deal", async (t) => {
+    const previous = api.defaults.adapter;
+    t.after(() => {
+        api.defaults.adapter = previous;
+    });
+    let active = 0;
+    let peak = 0;
+    const requested: number[] = [];
+    api.defaults.adapter = async (config) => {
+        const page = Number(new URL(config.url!, "https://example.test").searchParams.get("page"));
+        requested.push(page);
+        active += 1;
+        peak = Math.max(peak, active);
+        await new Promise((resolve) => setTimeout(resolve, (8 - page) * 2));
+        active -= 1;
+        return {
+            data: {
+                items: [
+                    {
+                        id: `deal-${page}`,
+                        stage: "new",
+                        createdAt: "2026-11-01T00:00:00Z",
+                        property: {
+                            id: `property-${page}`,
+                            salePrice: "1000000",
+                            transactionType: "sale",
+                        },
+                        client: { id: `client-${page}`, name: `Client ${page}` },
+                    },
+                ],
+                totalPages: 7,
+            },
+            status: 200,
+            statusText: "OK",
+            headers: {},
+            config,
+        };
+    };
+    const result = await pipelineApi.list(DEFAULT_DEALS_FILTERS);
+    assert.equal(peak, 3);
+    assert.deepEqual(requested, [1, 2, 3, 4, 5, 6, 7]);
+    assert.deepEqual(
+        result.items.map((item) => item.id),
+        Array.from({ length: 7 }, (_, i) => `deal-${i + 1}`),
+    );
+    assert.equal(result.summary.liveTotal, 7);
+});
+
+test("pipeline does not publish partial results when a later API page fails", async (t) => {
+    const previous = api.defaults.adapter;
+    t.after(() => {
+        api.defaults.adapter = previous;
+    });
+    api.defaults.adapter = async (config) => {
+        const page = Number(new URL(config.url!, "https://example.test").searchParams.get("page"));
+        if (page === 3) throw new Error("Page unavailable");
+        return {
+            data: { items: [], totalPages: 4 },
+            status: 200,
+            statusText: "OK",
+            headers: {},
+            config,
+        };
+    };
+    await assert.rejects(pipelineApi.list(DEFAULT_DEALS_FILTERS));
+});
+
 test("pipeline uses API records without inventing contact dates, locations or closed amounts", async (t) => {
     const previous = api.defaults.adapter;
     t.after(() => {

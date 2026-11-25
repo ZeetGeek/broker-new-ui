@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 
+import { useQuery } from "@tanstack/react-query";
+
+import { clientsApi } from "@/lib/api/clients";
 import { amountFormatFor, formatAmountWithSymbol } from "@/lib/format/amount-input";
 import { getActiveCurrency } from "@/lib/format/currency";
 import {
@@ -14,6 +17,7 @@ import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
 import { BadgeCheck, Info, LostIcon, StickyNote } from "@/components/shared/icons";
+import { Button } from "@/components/ui/button";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -32,6 +36,7 @@ import type { SaleConfirmMode } from "@/features/pipeline/sale-mode";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import type { DealItem, DealLostReason, DealStatus } from "@/features/pipeline/types";
 import { isLiveStage } from "@/features/pipeline/types";
+import { useAppSelector } from "@/store/hooks";
 
 export type StageMoveRequest = {
     dealId: string;
@@ -58,11 +63,17 @@ export type StageMoveDetails = {
 
 const CLOSED_AS_REQUIRED = "Choose Sold or Rented.";
 
-function moveTitle(status: DealStatus): string {
+function moveTitle(status: DealStatus, isRent: boolean, dual: boolean): string {
     if (isLiveStage(status)) {
         return `Move to ${DEAL_STAGE_META[status].label.toLowerCase()}`;
     }
-    return status === "closed" ? "Mark as sold" : "Mark as lost";
+    return status === "closed"
+        ? dual
+            ? "Close deal"
+            : isRent
+              ? "Mark as rented"
+              : "Mark as sold"
+        : "Mark as lost";
 }
 
 /**
@@ -76,7 +87,7 @@ function moveDescription(deal: DealItem | null): string {
 /** What else happens when this sale goes through, in one line. */
 function saleConsequence(mode: SaleConfirmMode, otherClientCount: number): string | null {
     if (mode === "owner") {
-        return "The owner confirms the sale. Once they do, the property closes for every other client.";
+        return "The owner confirms the deal. Once they do, the property closes for every other client.";
     }
     if (otherClientCount <= 0) return null;
     return otherClientCount === 1
@@ -99,7 +110,7 @@ export function StageNoteModal({
     open,
     deal,
     saleMode = "immediate",
-    otherClientCount = 0,
+    otherClientCount,
     request,
     isSaving,
     submitError,
@@ -119,6 +130,20 @@ export function StageNoteModal({
     onConfirm: (note: string, details: StageMoveDetails) => void;
     onCancel: () => void;
 }) {
+    const accountId = useAppSelector((state) => state.auth.user?.id);
+    const needsClientCheck =
+        open && request?.status === "closed" && deal != null && otherClientCount == null;
+    const clients = useQuery({
+        queryKey: ["pipeline-close-clients", accountId, deal?.property.id],
+        queryFn: () => clientsApi.listOpenLeadClientIds(deal!.property.id),
+        enabled: needsClientCheck,
+        staleTime: 0,
+        retry: 1,
+    });
+    const checkingClients = needsClientCheck && (clients.isPending || clients.isFetching);
+    const clientCheckFailed = needsClientCheck && clients.isError;
+    const affectedClients =
+        otherClientCount ?? clients.data?.filter((id) => id !== deal?.buyer.id).length ?? 0;
     const [note, setNote] = useState("");
     const [priceChoice, setPriceChoice] = useState<FinalPriceChoice>("listed");
     const [customPrice, setCustomPrice] = useState("");
@@ -201,6 +226,7 @@ export function StageNoteModal({
     const noteMax = MAX_CHARS.pipelineStageNote - (commissionLine ? commissionLine.length + 2 : 0);
 
     const confirm = () => {
+        if (checkingClients || clientCheckFailed) return;
         if (asksFinalPrice) {
             if (asksClosedAs && !closedAs) {
                 setClosedAsError(CLOSED_AS_REQUIRED);
@@ -243,7 +269,10 @@ export function StageNoteModal({
     };
 
     const sendsToOwner = asksFinalPrice && saleMode === "owner";
-    const consequence = asksFinalPrice ? saleConsequence(saleMode, otherClientCount) : null;
+    const consequence =
+        asksFinalPrice && !checkingClients && !clientCheckFailed
+            ? saleConsequence(saleMode, affectedClients)
+            : null;
     const primaryLabel = isSaving
         ? sendsToOwner
             ? "Sending…"
@@ -251,7 +280,9 @@ export function StageNoteModal({
         : asksFinalPrice
           ? sendsToOwner
               ? "Send to owner"
-              : "Mark as sold"
+              : closedAs === "rent" || (!asksClosedAs && deal?.property.isRent)
+                ? "Mark as rented"
+                : "Mark as sold"
           : asksLostReason
             ? "Mark as lost"
             : "Confirm";
@@ -264,14 +295,23 @@ export function StageNoteModal({
                 if (!next && !isSaving) onCancel();
             }}
             size="sm"
-            title={moveTitle(request.status)}
+            title={moveTitle(
+                request.status,
+                Boolean(deal?.property.isRent),
+                Boolean(deal?.property.saleAndRent),
+            )}
             description={moveDescription(deal)}
             footer={
                 <AppModalFooter
                     primaryLabel={primaryLabel}
                     primaryIcon={<PrimaryIcon aria-hidden strokeWidth={1.75} />}
                     onPrimary={confirm}
-                    primaryDisabled={isSaving || (asksFinalPrice && commission.error != null)}
+                    primaryDisabled={
+                        isSaving ||
+                        checkingClients ||
+                        clientCheckFailed ||
+                        (asksFinalPrice && commission.error != null)
+                    }
                     secondaryLabel="Cancel"
                     onSecondary={onCancel}
                     secondaryDisabled={isSaving}
@@ -279,6 +319,24 @@ export function StageNoteModal({
             }
         >
             <div className="flex flex-col gap-5">
+                {checkingClients ? (
+                    <p role="status" className="body-sm text-ink-muted">
+                        Checking other clients on this property…
+                    </p>
+                ) : null}
+                {clientCheckFailed ? (
+                    <div
+                        role="alert"
+                        className="body-sm flex flex-col items-start gap-2 text-danger"
+                    >
+                        <p>
+                            Could not check the other clients. Try again before closing this deal.
+                        </p>
+                        <Button variant="outline" onClick={() => void clients.refetch()}>
+                            Try again
+                        </Button>
+                    </div>
+                ) : null}
                 {asksClosedAs ? (
                     <fieldset className="flex flex-col gap-3" disabled={isSaving}>
                         <legend className="body-sm mbe-3 font-semibold text-ink">
