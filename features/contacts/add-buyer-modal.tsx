@@ -40,7 +40,10 @@ import {
     NotesField,
     TextField,
 } from "@/features/contacts/contact-form-ui";
-import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
+import {
+    contactLocationDefaults,
+    contactLocationValues,
+} from "@/features/contacts/contact-location-defaults";
 import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
 import { ContactPhotoField } from "@/features/contacts/contact-photo-field";
 import type { BuyerRow } from "@/features/contacts/types";
@@ -85,9 +88,7 @@ function valuesFromBuyer(
         email: buyer.email ?? "",
         lookingFor,
         propertyKind: buyer.propertyKind || "any",
-        country: buyer.country?.trim() || location.country,
-        state: buyer.state?.trim() || location.state,
-        city: buyer.city?.trim() || location.city,
+        ...contactLocationValues(buyer, location),
         localities: buyer.preferredLocalities.join(", "),
         saleBudgetMin: buyer.budgetMinInr ? String(buyer.budgetMinInr) : "",
         saleBudgetMax: buyer.budgetMaxInr ? String(buyer.budgetMaxInr) : "",

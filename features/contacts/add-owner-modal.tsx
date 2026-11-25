@@ -27,7 +27,10 @@ import {
     NotesField,
     TextField,
 } from "@/features/contacts/contact-form-ui";
-import { contactLocationDefaults } from "@/features/contacts/contact-location-defaults";
+import {
+    contactLocationDefaults,
+    contactLocationValues,
+} from "@/features/contacts/contact-location-defaults";
 import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
 import { ContactPhotoField } from "@/features/contacts/contact-photo-field";
 import type { OwnerRow } from "@/features/contacts/types";
@@ -79,9 +82,7 @@ function valuesFromOwner(
                 : "individual",
         society: details?.societyName ?? "",
         area: details?.locality ?? owner.localities[0] ?? "",
-        country: details?.country?.trim() || location.country,
-        state: details?.state?.trim() || location.state,
-        city: details?.city?.trim() || location.city,
+        ...contactLocationValues(details ?? {}, location),
         pincode: details?.pincode ?? "",
         fullAddress: details?.fullAddress ?? details?.address ?? "",
         reraNumber: details?.reraNumber ?? "",
