@@ -57,6 +57,8 @@
     --portal-max-inline: 100rem;
     /* Shared gap between cards; opt in with gap-card-grid. */
     --card-grid-gap: 0.75rem;
+    /* List controls keep the desktop height on every screen. */
+    --list-control-height: 2.375rem;
     /* Right-side working surfaces: forms and compact record/booking panels. */
     --drawer-width: 36rem;
     --drawer-detail-width: 26rem;
@@ -304,8 +306,23 @@
     --shadow-danger-glow-soft: var(--shadow-danger-glow-soft);
 }
 
-::-webkit-scrollbar {
-    display: none;
+/* Hide scrollbar chrome globally without changing scrollable overflow.
+   Keep this stronger than component and mobile scrollbar overrides. */
+* {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+}
+
+*::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* SimpleBar and Base UI draw their own tracks instead of native scrollbars. */
+.simplebar-track,
+[data-slot="scroll-area-scrollbar"] {
+    display: none !important;
 }
 
 /* Control height utilities — Tailwind's block/inline logical-size utilities
@@ -320,6 +337,12 @@
 }
 @utility min-inline-control-* {
     min-inline-size: --value(--size-control-*);
+}
+
+/* List chrome deliberately stays compact, including on touch devices. */
+@utility list-control {
+    block-size: var(--list-control-height) !important;
+    min-block-size: var(--list-control-height) !important;
 }
 
 /* Logical 100% sizing. Tailwind ships size-full (width/height) but no

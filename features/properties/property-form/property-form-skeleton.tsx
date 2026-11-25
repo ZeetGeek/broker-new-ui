@@ -14,7 +14,7 @@ function FormSectionSkeleton() {
         <div>
             <Skeleton className="block-6 inline-44 max-inline-full" />
             <Skeleton className="mbs-2 block-3.5 inline-80 max-inline-full" />
-            <div className="mbs-6 grid gap-4 sm:grid-cols-2">
+            <div className="mbs-6 grid grid-cols-1 gap-4 min-inline-0 sm:grid-cols-2">
                 <FormFieldSkeleton />
                 <FormFieldSkeleton />
                 <FormFieldSkeleton wide />
@@ -98,7 +98,21 @@ export function PropertyFormSkeleton() {
             className="flex flex-1 flex-col overflow-hidden min-block-0"
         >
             <span className="sr-only">Loading saved property draft…</span>
-            <div className="shrink-0 border-be border-border-warm bg-surface xl:hidden">
+            <div
+                className="shrink-0 border-be border-border-warm bg-surface px-4 py-2 sm:hidden"
+                aria-hidden
+            >
+                <div className="flex items-center justify-between gap-3">
+                    <Skeleton className="block-4 inline-24" />
+                    <Skeleton className="block-3 inline-16" />
+                </div>
+                <div className="flex justify-around py-2">
+                    {Array.from({ length: 5 }, (_, index) => (
+                        <Skeleton key={index} className="rounded-full block-6 inline-6" />
+                    ))}
+                </div>
+            </div>
+            <div className="hidden shrink-0 border-be border-border-warm bg-surface sm:block xl:hidden">
                 <div className="flex gap-2 overflow-hidden px-4 py-2" aria-hidden>
                     <Skeleton className="shrink-0 block-9 inline-24" />
                     <Skeleton className="shrink-0 block-9 inline-24" />
@@ -119,16 +133,18 @@ export function PropertyFormSkeleton() {
                 </div>
             </div>
             <div
+                data-property-form-workspace
                 className="
-                  grid flex-1 gap-4 bg-surface-muted p-4 min-block-0
+                  grid flex-1 grid-cols-1 gap-4 bg-surface-muted p-2 min-block-0 min-inline-0 sm:p-4
                   xl:grid-cols-[256px_minmax(0,1fr)_320px]
                 "
             >
                 <DesktopStepRailSkeleton />
                 <main className="overflow-hidden bg-surface-muted min-block-0 min-inline-0">
                     <div
+                        data-property-form-content
                         className="
-                          rounded-card border border-border-warm bg-surface p-5 shadow-sm
+                          rounded-card border border-border-warm bg-surface p-3 shadow-sm
                           min-block-full
                           sm:p-6
                           xl:p-7

@@ -1,0 +1,10 @@
+/* These retained visit panels are bottom sheets below sm and side panels above it. */
+@media (max-width: 639.98px) {
+    .sections > section,
+    .sections > :global([data-slot="dialog-footer"]) {
+        inline-size: auto;
+        margin-inline: -1.25rem;
+        padding-inline: 1.25rem;
+        border-color: var(--dialog-divider);
+    }
+}

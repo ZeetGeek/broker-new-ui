@@ -5,12 +5,14 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
 import type { AppIcon } from "@/components/shared/icons";
 import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
+import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Skeleton } from "@/components/shared/skeleton";
 import { SmartPriceInput } from "@/components/shared/smart-price-input";
@@ -34,6 +36,8 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { ContactFormSkeleton } from "@/features/contacts/contacts-skeleton";
 import { useShortcut } from "@/features/shortcuts/use-shortcut";
+
+import styles from "./contacts-responsive.module.css";
 
 /** Same control height and type as Add property fields (44px, text-sm). */
 export const nativeControlClass = `
@@ -201,6 +205,7 @@ export function ComboboxField({
     startIcon?: AppIcon;
     loading?: boolean;
 }) {
+    const mobile = useMobileMenu();
     const id = `combobox-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`;
     const flat = groups?.flatMap((group) => group.options) ?? options ?? [];
     const itemValues = flat.map((option) => option.value);
@@ -212,6 +217,29 @@ export function ComboboxField({
                 <span role="status" aria-label={`Loading ${label.toLowerCase()}`} aria-busy="true">
                     <Skeleton className="border-2 border-border-warm block-control-lg inline-full" />
                 </span>
+            ) : mobile ? (
+                <MobileSelectDrawer
+                    id={id}
+                    label={label}
+                    value={value}
+                    options={[
+                        ...(!required ? [{ value: "", label: "No selection" }] : []),
+                        ...(groups
+                            ? groups.flatMap((group) =>
+                                  group.options.map((option) => ({
+                                      ...option,
+                                      detail: group.label,
+                                  })),
+                              )
+                            : flat),
+                    ]}
+                    onChange={onChange}
+                    placeholder={placeholder}
+                    startIcon={startIcon}
+                    disabled={disabled}
+                    errorText={error}
+                    emptyText={emptyText}
+                />
             ) : (
                 <Combobox
                     value={value || null}
@@ -349,7 +377,9 @@ export function ChoiceRadioField<T extends string>({
                 aria-invalid={Boolean(error) || undefined}
                 className={cn(
                     "grid gap-4",
-                    columns === 3 ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2",
+                    columns === 3
+                        ? "grid-cols-1 @min-[28rem]/contact-drawer:grid-cols-3"
+                        : "grid-cols-1 @min-[28rem]/contact-drawer:grid-cols-2",
                 )}
             >
                 {options.map((option) => {
@@ -576,7 +606,7 @@ export function BudgetRangeField({
 
     return (
         <div className="space-y-3">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 @min-[28rem]/contact-drawer:grid-cols-2">
                 <FormField label={`${title} min`}>
                     <ContactCurrencyInput
                         id={`${idPrefix}-min`}
@@ -873,7 +903,7 @@ export type EmbeddedContactForm = {
     onStateChange: (state: { isDirty: boolean; busy: boolean }) => void;
 };
 
-export const CONTACT_FORM_DRAWER_CLASS = `
+export const CONTACT_FORM_DRAWER_CLASS = `${styles.drawer}
     contacts-form-drawer inset-s-auto! inset-e-0! inset-bs-0! translate-0!
     rounded-none! block-dvh! inline-dvw! max-block-dvh! max-inline-dvw!
     sm:inline-[min(var(--drawer-width),100vw)]!
@@ -986,16 +1016,16 @@ export function ContactFormDrawer({
                     {footerError}
                 </p>
             ) : null}
-            <AppModalFooter>
+            <AppModalFooter className={styles.formActions}>
                 {loading ? (
                     <div
                         role="status"
                         aria-label="Loading form actions"
                         aria-busy="true"
-                        className="flex gap-2"
+                        className="contents"
                     >
-                        {onSaveAnother ? <Skeleton className="block-control-md inline-40" /> : null}
-                        <Skeleton className="block-control-md inline-28" />
+                        {onSaveAnother ? <Skeleton className="block-11 inline-full" /> : null}
+                        <Skeleton className="block-11 inline-full" />
                     </div>
                 ) : (
                     <>
@@ -1034,7 +1064,7 @@ export function ContactFormDrawer({
     if (embedded) {
         if (!embedded.active) return null;
         return (
-            <div className="flex flex-col block-full min-block-0">
+            <div className="flex flex-1 flex-col min-block-0">
                 <div
                     ref={bodyRef}
                     className="flex-1 overflow-y-auto overscroll-contain p-(--dialog-pad) min-block-0"
@@ -1045,7 +1075,12 @@ export function ContactFormDrawer({
                         children
                     )}
                 </div>
-                <AppModalFooter className="shrink-0 border-bs border-border-warm p-(--dialog-pad)">
+                <AppModalFooter
+                    className={cn(
+                        styles.drawerFooter,
+                        "shrink-0 border-bs border-border-warm p-(--dialog-pad)",
+                    )}
+                >
                     {footer}
                 </AppModalFooter>
             </div>
@@ -1066,9 +1101,9 @@ export function ContactFormDrawer({
                 headerClassName="
                   !space-y-0 !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-b border-border-warm
                 "
-                footerClassName="
+                footerClassName={`${styles.drawerFooter}
                   !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
-                "
+                `}
                 header={header}
                 footer={footer}
             >

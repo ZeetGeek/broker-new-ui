@@ -18,6 +18,7 @@ import toast from "@/components/shared/app-toast";
 import { PropertyCard } from "@/components/shared/property-card";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
+import { FEATURE_SAVED_PROPERTIES } from "@/config";
 import { useChat } from "@/features/chat/chat-provider";
 import type { ChatPeer } from "@/features/chat/types";
 import { REMINDER_LIMIT } from "@/features/properties/my-requests/types";
@@ -127,6 +128,7 @@ export function OwnerListingsGrid({
 
     const handleToggleSave = useCallback(
         async (item: OwnerListingItem) => {
+            if (!FEATURE_SAVED_PROPERTIES) return;
             if (busyId === item.id && busyKind === "bookmark") return;
 
             const nextSaved = !isSaved(item);
@@ -455,7 +457,9 @@ export function OwnerListingsGrid({
                                 invitePending ? () => void handleCancelInvite(item) : undefined
                             }
                             isSaved={isSaved(item)}
-                            onToggleSave={() => handleToggleSave(item)}
+                            onToggleSave={
+                                FEATURE_SAVED_PROPERTIES ? () => handleToggleSave(item) : undefined
+                            }
                             isNewInYourArea={isNewInServiceAreas(item, serviceAreaSet)}
                         />
                     );

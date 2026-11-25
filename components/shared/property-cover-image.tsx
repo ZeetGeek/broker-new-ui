@@ -1,9 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 
+import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { cn } from "@/lib/utils";
 
 import { AppImage, type AppImageProps } from "@/components/shared/app-image";
-import { Building2 } from "@/components/shared/icons";
+import { PropertyPlaceholderImage } from "@/components/shared/property-placeholder-image";
 
 import styles from "./property-cover-image.module.css";
 
@@ -46,7 +47,6 @@ export function PropertyCoverImage({
             aria-label={!hasImage && alt ? alt : undefined}
             aria-hidden={!hasImage && !alt ? true : undefined}
         >
-            <Building2 aria-hidden className={styles.placeholder} strokeWidth={1.75} />
             {hasImage && src ? (
                 <AppImage
                     {...imageProps}
@@ -55,8 +55,11 @@ export function PropertyCoverImage({
                     fill
                     sizes={sizes}
                     className={imageClassName}
+                    fallbackSrc={PROPERTY_PLACEHOLDER_SRC}
                 />
-            ) : null}
+            ) : (
+                <PropertyPlaceholderImage sizes={sizes} />
+            )}
             {children}
         </span>
     );

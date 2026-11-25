@@ -4,6 +4,7 @@ import { ApiError } from "@/lib/api/client";
 import { dashboardApi, type DashboardResponse } from "@/lib/api/dashboard";
 import { isMockMode, MOCK_PROFILE } from "@/lib/api/mock-mode";
 import { profileApi, type UserProfile } from "@/lib/api/profile";
+import { simulateTestRequest } from "@/lib/testing/test-network";
 
 type DashboardState = {
     data: DashboardResponse | null;
@@ -24,10 +25,11 @@ const initialState: DashboardState = {
 export const fetchBrokerDashboard = createAsyncThunk(
     "dashboard/fetchBroker",
     async (_options: { background?: boolean } | undefined, { rejectWithValue }) => {
-        if (isMockMode()) {
-            return { data: null, profile: MOCK_PROFILE };
-        }
         try {
+            if (isMockMode()) {
+                await simulateTestRequest();
+                return { data: null, profile: MOCK_PROFILE };
+            }
             const [data, profile] = await Promise.all([dashboardApi.get(), profileApi.get()]);
             return { data, profile };
         } catch (err) {

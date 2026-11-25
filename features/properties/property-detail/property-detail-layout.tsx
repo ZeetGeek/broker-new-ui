@@ -50,6 +50,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+import { FEATURE_SAVED_PROPERTIES } from "@/config";
 import { NEARBY_PLACE_TYPE_OPTIONS, toLabel } from "@/constants/property";
 import {
     NEARBY_PLACE_FALLBACK_ICON,
@@ -99,6 +100,7 @@ export function PropertyDetailLayout({
     revealAddress = true,
     navigation,
     analytics,
+    headerMetadata,
     panelLabelId,
 }: {
     item: MyListingItem;
@@ -114,6 +116,7 @@ export function PropertyDetailLayout({
     revealAddress?: boolean;
     navigation?: ReactNode;
     analytics?: ReactNode;
+    headerMetadata?: ReactNode;
     panelLabelId?: string;
 }) {
     const { amountInr, isRent } = toLegacyAmountFields(item);
@@ -125,7 +128,7 @@ export function PropertyDetailLayout({
     const isDraft = item.status === "draft";
     // Only browse (owner listing) responses carry bookmark state. The caller's
     // own property has none and cannot be saved, so Save is not shown there.
-    const canBookmark = typeof item.isBookmarked === "boolean";
+    const canBookmark = FEATURE_SAVED_PROPERTIES && typeof item.isBookmarked === "boolean";
     const headerFacts = buildPropertyFacts(item);
     const headerLocation = item.locality || item.city;
     const summaryLines = [
@@ -142,7 +145,7 @@ export function PropertyDetailLayout({
         headerFacts.find((fact) => fact.key === "condition")?.value,
     ].filter((line): line is string => Boolean(line));
     async function toggleSave() {
-        if (saving) return;
+        if (!FEATURE_SAVED_PROPERTIES || saving) return;
         setSaving(true);
         try {
             if (saved) await propertiesApi.unbookmark(item.id);
@@ -192,10 +195,12 @@ export function PropertyDetailLayout({
                             </span>
                         </span>
                         <Badge color={statusColor}>{status}</Badge>
-                        <span className={styles.listed}>
-                            <Clock size={15} strokeWidth={1.75} aria-hidden />
-                            Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
-                        </span>
+                        {headerMetadata ?? (
+                            <span className={styles.listed}>
+                                <Clock size={15} strokeWidth={1.75} aria-hidden />
+                                Listed {listedAgoLabel(item.listedDaysAgo).toLowerCase()}
+                            </span>
+                        )}
                     </div>
                 </div>
                 <div className={styles.headerActions}>

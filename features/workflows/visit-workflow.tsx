@@ -11,8 +11,10 @@ import { matchWorkflowVisitIntent, resolveWorkflowVisitIntent } from "@/lib/visi
 import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 import type { WorkflowTarget } from "@/lib/workflows/target";
 
+import { EmptyState } from "@/components/empty-state";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import toast from "@/components/shared/app-toast";
+import { CalendarCheck } from "@/components/shared/icons";
 import { useWorkflowWorking } from "@/components/shared/workflow-context";
 import { Button } from "@/components/ui/button";
 
@@ -277,13 +279,30 @@ export function VisitWorkflow({
                 </AppModalFooter>
             )}
         >
-            <p className="body text-ink-muted" role={query.isError || missing ? "alert" : "status"}>
-                {query.isError
-                    ? "Could not load this visit. Check your connection and try again."
-                    : missing
-                      ? "This visit could not be found in your account. It may have been removed."
-                      : "Loading visit details…"}
-            </p>
+            {query.isError || missing ? (
+                <EmptyState
+                    size="card"
+                    icon={CalendarCheck}
+                    variant={query.isError ? "error" : "default"}
+                    heading={
+                        query.isError ? "Could not load this visit" : "Visit no longer available"
+                    }
+                    description={
+                        query.isError
+                            ? "Check your connection and try again."
+                            : "It may have been removed. Open Visits to choose another visit."
+                    }
+                    action={
+                        missing
+                            ? { label: "Open visits", icon: CalendarCheck, href: "/broker/visits" }
+                            : undefined
+                    }
+                />
+            ) : (
+                <p className="body text-ink-muted" role="status">
+                    Loading visit details…
+                </p>
+            )}
         </VisitOverlay>
     );
 }

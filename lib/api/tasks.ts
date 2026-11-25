@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 export type TaskOwnerTypeDto = "platform" | "exclusive";
 export type TaskPriorityDto = "low" | "medium" | "high" | "urgent";
@@ -89,7 +90,7 @@ const json = (method: string, body?: unknown) => ({
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
 });
 
-export const tasksApi = {
+export const tasksApi = withTestNetwork({
     list: () => apiFetch<TaskDto[]>("/tasks"),
     create: (task: TaskWriteDto & { id: string }) =>
         apiFetch<TaskDto>("/tasks", json("POST", task)),
@@ -115,4 +116,4 @@ export const tasksApi = {
     replaceNotebook: (notebook: TaskNotebookDto) =>
         apiFetch<TaskNotebookDto>("/tasks/notebook", json("PUT", notebook)),
     linkOptions: () => apiFetch<TaskLinkOptionsDto>("/tasks/link-options"),
-};
+});

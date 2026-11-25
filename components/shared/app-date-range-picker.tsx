@@ -6,9 +6,11 @@ import type { Matcher } from "react-day-picker";
 import { startOfDay } from "date-fns";
 
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { DateInput } from "@/components/shared/date-input";
 import { Check, ChevronDown, ChevronUpIcon } from "@/components/shared/icons";
+import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
@@ -130,6 +132,7 @@ export function AppDateRangePicker({
     className,
     triggerClassName,
 }: AppDateRangePickerProps) {
+    const mobile = useMobileMenu();
     const compareId = useId();
     const today = startOfDay(new Date());
     const upperBound = maxDate === undefined ? today : maxDate;
@@ -289,6 +292,170 @@ export function AppDateRangePicker({
                 })}
             </div>
         ) : null;
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={handleOpenChange}
+                title={triggerLabel ?? "Choose period"}
+                description={triggerDates}
+                trigger={
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="md"
+                        aria-expanded={open}
+                        aria-label={
+                            triggerLabel
+                                ? `Period: ${triggerLabel}, ${triggerDates}. Change period`
+                                : `Period: ${triggerDates}. Change period`
+                        }
+                        className={cn(
+                            "justify-between gap-2 rounded-control border border-border-warm bg-surface px-3.5 font-normal text-ink shadow-none inline-full hover:border-ink-subtle hover:bg-surface aria-expanded:border-ring",
+                            triggerClassName,
+                        )}
+                    >
+                        <span className="flex flex-col items-start gap-0.5 text-start min-inline-0">
+                            <span className="truncate font-medium">
+                                {triggerLabel ?? triggerDates}
+                            </span>
+                        </span>
+                        {open ? (
+                            <ChevronUpIcon aria-hidden className="shrink-0 block-4 inline-4" />
+                        ) : (
+                            <ChevronDown aria-hidden className="shrink-0 block-4 inline-4" />
+                        )}
+                    </Button>
+                }
+                bodyClassName={className}
+            >
+                <div className="flex flex-col gap-4">
+                    {showCompare ? (
+                        <div className="flex items-center gap-2">
+                            <Switch
+                                id={compareId}
+                                size="sm"
+                                checked={Boolean(rangeCompare)}
+                                onCheckedChange={(checked) => {
+                                    if (checked) {
+                                        setRangeCompare({
+                                            from: new Date(
+                                                range.from.getFullYear() - 1,
+                                                range.from.getMonth(),
+                                                range.from.getDate(),
+                                            ),
+                                            to: new Date(
+                                                range.to.getFullYear() - 1,
+                                                range.to.getMonth(),
+                                                range.to.getDate(),
+                                            ),
+                                        });
+                                    } else {
+                                        setRangeCompare(undefined);
+                                    }
+                                }}
+                            />
+                            <Label htmlFor={compareId} className="body-sm font-medium">
+                                Compare
+                            </Label>
+                        </div>
+                    ) : null}
+
+                    <div className="flex flex-col gap-2.5">
+                        <DateInput
+                            value={range.from}
+                            onChange={(date) =>
+                                setDraftRange({
+                                    from: date,
+                                    to: !range.to || date > range.to ? date : range.to,
+                                })
+                            }
+                        />
+                        <span className="body-sm text-ink-muted">to</span>
+                        <DateInput
+                            value={range.to}
+                            onChange={(date) =>
+                                setDraftRange({
+                                    from: date < range.from ? date : range.from,
+                                    to: date,
+                                })
+                            }
+                        />
+                    </div>
+
+                    {rangeCompare ? (
+                        <div className="flex flex-col gap-2.5 border-bs border-border-warm pbs-3">
+                            <p className="body-sm font-medium text-ink">Compare with</p>
+                            <DateInput
+                                value={rangeCompare.from}
+                                onChange={(date) =>
+                                    setRangeCompare({
+                                        from: date,
+                                        to:
+                                            !rangeCompare.to || date > rangeCompare.to
+                                                ? date
+                                                : rangeCompare.to,
+                                    })
+                                }
+                            />
+                            <span className="body-sm text-ink-muted">to</span>
+                            <DateInput
+                                value={rangeCompare.to}
+                                onChange={(date) =>
+                                    setRangeCompare({
+                                        from: date < rangeCompare.from ? date : rangeCompare.from,
+                                        to: date,
+                                    })
+                                }
+                            />
+                        </div>
+                    ) : null}
+
+                    {hasSidebar ? (sidebar ?? presetList) : null}
+
+                    <Calendar
+                        mode="range"
+                        selected={range}
+                        onSelect={(next) => {
+                            if (next?.from) {
+                                setDraftRange({ from: next.from, to: next.to ?? next.from });
+                            }
+                        }}
+                        month={month}
+                        onMonthChange={setMonth}
+                        numberOfMonths={1}
+                        disabled={disabled.length ? disabled : undefined}
+                        endMonth={upperBound ?? undefined}
+                        startMonth={minDate ?? undefined}
+                        className="bg-transparent p-0 [--cell-size:min(--spacing(11),calc((100vw-3rem)/7))] inline-full **:data-[slot=button]:min-inline-0"
+                        classNames={{
+                            months: "relative flex flex-col gap-6",
+                            month: "flex flex-col gap-3.5 inline-full",
+                            month_caption:
+                                "flex items-center justify-center px-(--cell-size) block-10 inline-full",
+                            caption_label: "text-[15px] font-semibold text-ink",
+                            month_grid: "flex w-full flex-col",
+                            weeks: "flex flex-col gap-3",
+                            weekdays: "mb-2 flex w-full",
+                            weekday:
+                                "flex-1 rounded-(--cell-radius) text-xs font-medium text-ink-muted select-none",
+                            week: "flex w-full",
+                        }}
+                    />
+
+                    <div className="sticky inset-be-0 flex justify-end gap-2 border-bs border-border-warm bg-surface pbs-3">
+                        <Button type="button" variant="ghost" size="sm" onClick={handleCancel}>
+                            Cancel
+                        </Button>
+                        <Button type="button" variant="accent" size="sm" onClick={handleUpdate}>
+                            Update
+                        </Button>
+                    </div>
+                </div>
+            </MobileActionDrawer>
+        );
+    }
 
     return (
         <Popover open={open} onOpenChange={handleOpenChange}>

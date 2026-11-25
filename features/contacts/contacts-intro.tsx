@@ -1,5 +1,6 @@
 "use client";
 
+import { ListPageHeading } from "@/components/shared/list-page-heading";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config/index";
@@ -48,8 +49,7 @@ export function ContactsIntro({
     const lines = buildLines(summary, tab);
     return (
         <div className="flex flex-wrap items-center justify-between gap-3 text-start">
-            <h1 className="h3 min-inline-0">
-                <span className="text-ink">{buildFact(hasError ? null : summary, tab)}.</span>{" "}
+            <ListPageHeading title={`${buildFact(hasError ? null : summary, tab)}.`}>
                 <RotatingHeaderSummary
                     key={`${tab}:${lines.join("|")}`}
                     lines={lines}
@@ -62,7 +62,7 @@ export function ContactsIntro({
                     }
                     errorMessage={hasError ? "Could not load your client counts." : undefined}
                 />
-            </h1>
+            </ListPageHeading>
         </div>
     );
 }

@@ -7,10 +7,12 @@ import { useReducedMotion } from "motion/react";
 import { spring } from "@/lib/motion/tokens";
 import { getVisiblePages } from "@/lib/pagination/get-visible-pages";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { AnimatedBackground } from "@/components/motion-primitives/animated-background";
 import { IconButton } from "@/components/shared/icon-button";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
+import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import {
     Select,
     SelectContent,
@@ -92,6 +94,7 @@ export function AppPagination({
     onPageSizeChange,
 }: AppPaginationProps) {
     const pageInputId = useId();
+    const mobile = useMobileMenu();
     const reduceMotion = useReducedMotion();
     const safeTotal = Math.max(0, totalPages);
     const current = safeTotal === 0 ? 1 : Math.min(Math.max(1, page), safeTotal);
@@ -280,37 +283,52 @@ export function AppPagination({
                     <label htmlFor={`${pageInputId}-rows`} className="whitespace-nowrap">
                         Rows per page
                     </label>
-                    <Select
-                        value={String(pageSize)}
-                        onValueChange={(next) => {
-                            if (next == null) return;
-                            onPageSizeChange(Number(next));
-                        }}
-                    >
-                        <SelectTrigger
-                            id={`${pageInputId}-rows`}
-                            size="sm"
-                            aria-label="Rows per page"
-                            wrapperClassName="inline-auto shrink-0"
-                            className={cn(
-                                controlChipClass,
-                                `
+                    {mobile ? (
+                        <div className="inline-24">
+                            <MobileSelectDrawer
+                                id={`${pageInputId}-rows`}
+                                label="Rows per page"
+                                value={String(pageSize)}
+                                options={pageSizeOptions.map((option) => ({
+                                    value: String(option),
+                                    label: String(option),
+                                }))}
+                                onChange={(next) => onPageSizeChange(Number(next))}
+                            />
+                        </div>
+                    ) : (
+                        <Select
+                            value={String(pageSize)}
+                            onValueChange={(next) => {
+                                if (next == null) return;
+                                onPageSizeChange(Number(next));
+                            }}
+                        >
+                            <SelectTrigger
+                                id={`${pageInputId}-rows`}
+                                size="sm"
+                                aria-label="Rows per page"
+                                wrapperClassName="inline-auto shrink-0"
+                                className={cn(
+                                    controlChipClass,
+                                    `
                                   gap-1.5 border-border-warm bg-surface px-3 font-semibold text-ink
                                   tabular-nums shadow-sm block-9.5 inline-19!
                                   data-[size=sm]:block-9.5
                                 `,
-                            )}
-                        >
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent align="end" className="min-inline-24">
-                            {pageSizeOptions.map((option) => (
-                                <SelectItem key={option} value={String(option)}>
-                                    {option}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                                )}
+                            >
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent align="end" className="min-inline-24">
+                                {pageSizeOptions.map((option) => (
+                                    <SelectItem key={option} value={String(option)}>
+                                        {option}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
             ) : (
                 <div className="hidden lg:block" aria-hidden />

@@ -1,3 +1,5 @@
+import { testData } from "@/lib/testing/test-data";
+
 import type { DealItem } from "@/features/pipeline/types";
 
 const HOUR_MS = 3_600_000;
@@ -177,7 +179,7 @@ const BUYERS = {
  * buyer over budget, one buyer on two properties, and a property whose
  * representation lapsed so the owner's number is gone.
  */
-export const MOCK_DEALS: DealItem[] = [
+export const MOCK_DEALS: DealItem[] = testData([
     // Ankit appears twice — keen on the villa, cold on the Andheri flat. This is
     // the case a buyer-per-card board could not represent.
     {
@@ -379,4 +381,4 @@ export const MOCK_DEALS: DealItem[] = [
         offerAmountInr: null,
         offerStatus: null,
     },
-];
+]);

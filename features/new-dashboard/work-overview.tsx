@@ -9,7 +9,9 @@ import { Label, PolarAngleAxis, PolarRadiusAxis, RadialBar, RadialBarChart } fro
 import type { BrokerVisit } from "@/lib/api/site-visits";
 import { formatBudgetAmount } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
+import { EmptyState, LoadingState } from "@/components/empty-state";
 import {
     portalProfileMenuItemClass,
     portalProfileMenuSurfaceClass,
@@ -30,11 +32,16 @@ import {
     MapPin,
     MoreHorizontal,
     Trash2,
+    UserRoundPlus,
     X,
 } from "@/components/shared/icons";
+import {
+    mobileActionClass,
+    MobileActionDrawer,
+    mobileActionGroupClass,
+} from "@/components/shared/mobile-action-drawer";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
-import { Skeleton } from "@/components/shared/skeleton";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
@@ -53,9 +60,14 @@ import { DashboardTasksCard } from "@/features/tasks/dashboard-tasks-card";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchBrokerDashboard } from "@/store/slices/dashboard-slice";
 
-import { CardEmpty, CardError } from "./card-states";
+import { CardError } from "./card-states";
 import { DASHBOARD_DEFAULT_MONTHS } from "./commission-window";
 import { refreshDashboardQueries } from "./dashboard-refresh";
+import {
+    DashboardVisitListSkeleton,
+    NextVisitSkeleton,
+    PipelineSkeleton,
+} from "./dashboard-skeleton";
 import {
     type DashboardVisitPhase,
     dashboardVisitPhase,
@@ -85,7 +97,7 @@ const CARD =
 const LINK =
     "body-sm inline-flex min-block-11 items-center gap-2 rounded-control font-semibold text-brand outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring";
 /** Track remaining content so fixed footers only cast a shadow over a scrollable list. */
-function useScrollFooter() {
+function useScrollFooter(contentKey: string) {
     const viewportRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const [hasMore, setHasMore] = useState(false);
@@ -102,7 +114,7 @@ function useScrollFooter() {
         if (viewportRef.current) observer.observe(viewportRef.current);
         if (contentRef.current) observer.observe(contentRef.current);
         return () => observer.disconnect();
-    }, [measure]);
+    }, [measure, contentKey]);
     return { viewportRef, contentRef, hasMore, scrolled, measure };
 }
 
@@ -133,15 +145,9 @@ function PipelineOverview({ now, onAddClient }: { now: Date; onAddClient?: () =>
             <section className={cn(CARD, "block-full")} aria-labelledby="dashboard-pipeline-title">
                 <PipelineHeader />
                 {report.isPending ? (
-                    <div
-                        aria-busy="true"
-                        aria-label="Loading your pipeline"
-                        className="grid gap-4 pbs-4"
-                    >
-                        <Skeleton className="mx-auto block-36 inline-64" />
-                        <Skeleton className="mx-auto block-10 inline-56" />
-                        <Skeleton className="block-10 inline-full" />
-                    </div>
+                    <LoadingState label="Loading your pipeline">
+                        <PipelineSkeleton />
+                    </LoadingState>
                 ) : (
                     <CardError
                         what="your pipeline"
@@ -157,21 +163,16 @@ function PipelineOverview({ now, onAddClient }: { now: Date; onAddClient?: () =>
     if (view.total === 0) {
         return (
             <section className={cn(CARD, "block-full")} aria-labelledby="dashboard-pipeline-title">
-                <PipelineHeader />
-                <CardEmpty
+                <EmptyState
+                    size="card"
                     icon={Briefcase}
-                    title="No active deals yet"
-                    description="Add a client and attach a property to start a deal. It shows here stage by stage."
+                    headingId="dashboard-pipeline-title"
+                    heading="No active deals yet"
+                    description="Add a client and link a property to track your first deal."
                     action={
-                        onAddClient ? (
-                            <button
-                                type="button"
-                                className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                                onClick={onAddClient}
-                            >
-                                Add client
-                            </button>
-                        ) : null
+                        onAddClient
+                            ? { label: "Add client", icon: UserRoundPlus, onClick: onAddClient }
+                            : undefined
                     }
                 />
             </section>
@@ -336,6 +337,9 @@ function VisitCard({
     onMarkOutcome,
     onCancel,
 }: VisitCardProps) {
+    const mobile = useMobileMenu();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const afterMenuClose = useRef<(() => void) | null>(null);
     const s = featured ? nextVisitStyles : visitStyles;
     const titleId = `visit-card-${featured ? "next" : visit.id}`;
     const needsUpdate = phase === "needs_update";
@@ -346,48 +350,104 @@ function VisitCard({
 
     const menu =
         canReschedule || canCancel ? (
-            <DropdownMenu>
-                <DropdownMenuTrigger
-                    render={
+            mobile ? (
+                <MobileActionDrawer
+                    open={menuOpen}
+                    onOpenChange={setMenuOpen}
+                    onOpenChangeComplete={(open) => {
+                        if (!open) {
+                            const action = afterMenuClose.current;
+                            afterMenuClose.current = null;
+                            action?.();
+                        }
+                    }}
+                    title="Visit actions"
+                    description={`${visit.propertyTitle} · ${visit.clientName}`}
+                    trigger={
                         <IconButton
                             size="sm"
                             appearance={featured ? "inverse" : "outline"}
                             className={s.menuTrigger}
                             aria-label={`More actions for visit with ${visit.clientName}`}
                             disabled={busy}
-                        />
+                        >
+                            <MoreHorizontal aria-hidden />
+                        </IconButton>
                     }
                 >
-                    <MoreHorizontal aria-hidden />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                    align="end"
-                    className={cn(portalProfileMenuSurfaceClass, "inline-auto min-inline-44")}
-                >
                     {canReschedule ? (
-                        <DropdownMenuItem
-                            className={portalProfileMenuItemClass}
-                            render={<Link href={visitHref(visit, "reschedule")} />}
-                        >
-                            <CalendarClock aria-hidden />
-                            Reschedule
-                        </DropdownMenuItem>
+                        <div className={mobileActionGroupClass}>
+                            <Link
+                                href={visitHref(visit, "reschedule")}
+                                className={mobileActionClass}
+                                onClick={() => setMenuOpen(false)}
+                            >
+                                <CalendarClock aria-hidden />
+                                Reschedule
+                            </Link>
+                        </div>
                     ) : null}
                     {canCancel ? (
-                        <>
-                            {canReschedule ? <DropdownMenuSeparator className="my-1" /> : null}
-                            <DropdownMenuItem
-                                variant="destructive"
-                                className={portalProfileMenuItemClass}
-                                onClick={onCancel}
+                        <div className={mobileActionGroupClass}>
+                            <button
+                                type="button"
+                                className={mobileActionClass}
+                                data-destructive="true"
+                                onClick={() => {
+                                    afterMenuClose.current = onCancel;
+                                    setMenuOpen(false);
+                                }}
                             >
                                 <Trash2 aria-hidden />
                                 Cancel visit
-                            </DropdownMenuItem>
-                        </>
+                            </button>
+                        </div>
                     ) : null}
-                </DropdownMenuContent>
-            </DropdownMenu>
+                </MobileActionDrawer>
+            ) : (
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        render={
+                            <IconButton
+                                size="sm"
+                                appearance={featured ? "inverse" : "outline"}
+                                className={s.menuTrigger}
+                                aria-label={`More actions for visit with ${visit.clientName}`}
+                                disabled={busy}
+                            />
+                        }
+                    >
+                        <MoreHorizontal aria-hidden />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                        align="end"
+                        className={cn(portalProfileMenuSurfaceClass, "inline-auto min-inline-44")}
+                    >
+                        {canReschedule ? (
+                            <DropdownMenuItem
+                                className={portalProfileMenuItemClass}
+                                render={<Link href={visitHref(visit, "reschedule")} />}
+                            >
+                                <CalendarClock aria-hidden />
+                                Reschedule
+                            </DropdownMenuItem>
+                        ) : null}
+                        {canCancel ? (
+                            <>
+                                {canReschedule ? <DropdownMenuSeparator className="my-1" /> : null}
+                                <DropdownMenuItem
+                                    variant="destructive"
+                                    className={portalProfileMenuItemClass}
+                                    onClick={onCancel}
+                                >
+                                    <Trash2 aria-hidden />
+                                    Cancel visit
+                                </DropdownMenuItem>
+                            </>
+                        ) : null}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )
         ) : null;
 
     return (
@@ -421,7 +481,12 @@ function VisitCard({
                     sizes="64px"
                 />
                 <div className={s.property}>
-                    <p data-card-title id={titleId} className={s.propertyName}>
+                    <p
+                        data-card-title
+                        id={titleId}
+                        className={s.propertyName}
+                        title={visit.propertyTitle}
+                    >
                         {visit.propertyTitle}
                     </p>
                     {location ? (
@@ -564,17 +629,9 @@ function NextVisit({
 }: VisitActions & { visit: BrokerVisit | undefined; query: VisitQuery }) {
     if (query.isPending) {
         return (
-            <NextVisitShell>
-                <div
-                    aria-busy="true"
-                    aria-label="Loading your next visit"
-                    className="grid gap-3 pbs-3"
-                >
-                    <Skeleton className="block-8 inline-40" />
-                    <Skeleton className="block-16 inline-full" />
-                    <Skeleton className="block-11 inline-full" />
-                </div>
-            </NextVisitShell>
+            <LoadingState label="Loading your next visit">
+                <NextVisitSkeleton />
+            </LoadingState>
         );
     }
     if (query.isError && !visit) {
@@ -590,21 +647,25 @@ function NextVisit({
     }
     if (!visit) {
         return (
-            <NextVisitShell>
-                <CardEmpty
+            <section
+                className={cn(nextVisitStyles.card, "flex flex-col block-full")}
+                data-empty="true"
+                aria-labelledby="dashboard-next-visit-title"
+            >
+                <EmptyState
+                    size="card"
+                    tone="inverse"
                     icon={CalendarPlus}
-                    title="No upcoming visits"
-                    description="Book a site visit for a client and it shows here."
-                    action={
-                        <Link
-                            href="/broker/visits?tab=slots"
-                            className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                        >
-                            Schedule visit
-                        </Link>
-                    }
+                    headingId="dashboard-next-visit-title"
+                    heading="No upcoming visits"
+                    description="Schedule a property visit with a client. Your next visit will appear here."
+                    action={{
+                        label: "Schedule visit",
+                        icon: CalendarPlus,
+                        href: "/broker/visits?view=schedule",
+                    }}
                 />
-            </NextVisitShell>
+            </section>
         );
     }
     return (
@@ -637,7 +698,11 @@ function TodayVisits({
         hasMore: visitsHaveMore,
         scrolled: visitsScrolled,
         measure: measureVisits,
-    } = useScrollFooter();
+    } = useScrollFooter(
+        `${query.isPending}:${query.isError}:${Object.values(groups)
+            .map((items) => items.length)
+            .join(":")}`,
+    );
     const [filter, setFilter] = useState<DashboardVisitPhase>("upcoming");
     const needsUpdate = needsUpdateCount(groups.needs_update.length, needsUpdateTotal);
     const visible = groups[filter];
@@ -648,9 +713,38 @@ function TodayVisits({
         measureVisits();
     }, [filter, measureVisits, visitViewportRef]);
 
+    const empty =
+        !query.isPending &&
+        !query.isError &&
+        Object.values(groups).every((items) => !items.length) &&
+        !needsUpdate;
+    if (empty) {
+        return (
+            <section
+                className={cn(CARD, taskStyles.card, taskStyles.fixedCard)}
+                data-empty="true"
+                aria-labelledby="dashboard-today-visits-title"
+            >
+                <EmptyState
+                    size="card"
+                    icon={CalendarPlus}
+                    headingId="dashboard-today-visits-title"
+                    heading="No visits today"
+                    description="Schedule a visit to show a property to a client."
+                    action={{
+                        label: "Schedule visit",
+                        icon: CalendarPlus,
+                        href: "/broker/visits?view=schedule",
+                    }}
+                />
+            </section>
+        );
+    }
+
     return (
         <section
             className={cn(CARD, taskStyles.card, taskStyles.fixedCard)}
+            data-empty={!query.isPending && !query.isError && !visible.length}
             aria-labelledby="dashboard-today-visits-title"
         >
             <header className={visitStyles.header}>
@@ -674,16 +768,19 @@ function TodayVisits({
             <div className={visitStyles.tabsBar} data-scrolled={visitsScrolled ? "true" : "false"}>
                 <SlidingTabs
                     value={filter}
-                    options={VISIT_FILTER_TABS.map((tab) => ({
-                        id: `dashboard-visits-tab-${tab.value}`,
-                        value: tab.value,
-                        label: tab.label,
-                        count: query.isPending
+                    options={VISIT_FILTER_TABS.map((tab) => {
+                        const count = query.isPending
                             ? undefined
                             : tab.value === "needs_update"
                               ? needsUpdate
-                              : groups[tab.value].length,
-                    }))}
+                              : groups[tab.value].length;
+                        return {
+                            id: `dashboard-visits-tab-${tab.value}`,
+                            value: tab.value,
+                            label: tab.label,
+                            count,
+                        };
+                    })}
                     onValueChange={setFilter}
                     label="Filter visits"
                     panelId="visit-list-panel"
@@ -707,14 +804,9 @@ function TodayVisits({
                         aria-labelledby={`dashboard-visits-tab-${filter}`}
                     >
                         {query.isPending ? (
-                            <div
-                                aria-busy="true"
-                                aria-label="Loading today's visits"
-                                className="grid gap-3 py-3"
-                            >
-                                <Skeleton className="block-40 inline-full" />
-                                <Skeleton className="block-40 inline-full" />
-                            </div>
+                            <LoadingState label="Loading today's visits">
+                                <DashboardVisitListSkeleton />
+                            </LoadingState>
                         ) : query.isError && !visible.length ? (
                             <CardError
                                 what="today's visits"
@@ -744,13 +836,39 @@ function TodayVisits({
                                 ))}
                             </ul>
                         ) : (
-                            <p className="body-sm py-8 text-center text-ink-muted">
-                                {filter === "needs_update"
-                                    ? "All visits are marked. Nothing waiting for an update."
-                                    : filter === "running"
-                                      ? "No visit is happening right now."
-                                      : "No more visits today. Select Schedule visit to book one."}
-                            </p>
+                            <EmptyState
+                                size="card"
+                                icon={
+                                    filter === "needs_update"
+                                        ? Check
+                                        : filter === "running"
+                                          ? Clock
+                                          : CalendarPlus
+                                }
+                                heading={
+                                    filter === "needs_update"
+                                        ? "No visits need an update"
+                                        : filter === "running"
+                                          ? "No visits in progress"
+                                          : "No upcoming visits today"
+                                }
+                                description={
+                                    filter === "needs_update"
+                                        ? "Visits waiting for attendance or an outcome will appear here."
+                                        : filter === "running"
+                                          ? "When a scheduled visit starts, you will find it here."
+                                          : "Schedule a visit to show a property to a client."
+                                }
+                                action={
+                                    filter === "upcoming"
+                                        ? {
+                                              label: "Schedule visit",
+                                              icon: CalendarPlus,
+                                              href: "/broker/visits?view=schedule",
+                                          }
+                                        : undefined
+                                }
+                            />
                         )}
                     </div>
                 </div>
@@ -760,7 +878,7 @@ function TodayVisits({
                 className={cn(
                     taskStyles.fixedFooter,
                     visitStyles.footer,
-                    "flex flex-wrap items-center justify-between gap-2 border-bs border-border-warm",
+                    "flex items-center justify-between gap-2 border-bs border-border-warm",
                 )}
             >
                 <Link href="/broker/visits" className={LINK}>
@@ -770,12 +888,17 @@ function TodayVisits({
                 {needsUpdate > 0 ? (
                     <p className={visitStyles.footerNote}>
                         <Clock aria-hidden />
-                        {needsUpdate === 1
-                            ? "1 visit needs an update"
-                            : `${needsUpdate} visits need an update`}
+                        <span className="sr-only">
+                            {needsUpdate === 1
+                                ? "1 visit needs an update"
+                                : `${needsUpdate} visits need an update`}
+                        </span>
+                        <span aria-hidden>
+                            {needsUpdate === 1 ? "1 needs update" : `${needsUpdate} need update`}
+                        </span>
                     </p>
                 ) : query.isPending ? null : (
-                    <p className="caption text-ink-muted">No attendance updates pending</p>
+                    <p className="caption whitespace-nowrap text-ink-muted">All up to date</p>
                 )}
             </footer>
         </section>

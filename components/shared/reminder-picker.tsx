@@ -3,9 +3,11 @@ import { useId, useState } from "react";
 
 import { MAX_REMINDER_MINUTES } from "@/lib/reminders";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { IconButton } from "@/components/shared/icon-button";
 import { Bell, Check, Plus, X } from "@/components/shared/icons";
+import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -43,6 +45,7 @@ export function ReminderPicker({
     onChange,
     disabled = false,
     maxReminders,
+    minReminders = 0,
 }: {
     reminders: number[];
     getReminderAt: (minutes: number) => string | null;
@@ -55,8 +58,10 @@ export function ReminderPicker({
     onChange: (reminders: number[]) => void;
     disabled?: boolean;
     maxReminders?: number;
+    minReminders?: number;
 }) {
     const id = useId();
+    const mobile = useMobileMenu();
     const [open, setOpen] = useState(false);
     const [amount, setAmount] = useState("30");
     const [unit, setUnit] = useState("1");
@@ -66,6 +71,14 @@ export function ReminderPicker({
     const atLimit = maxReminders !== undefined && reminders.length >= maxReminders;
     const remove = (minutes: number) => {
         if (disabled) return;
+        if (reminders.length <= minReminders) {
+            setError(
+                minReminders === 1
+                    ? `Keep at least one reminder for this ${subjectLabel}.`
+                    : `Keep at least ${minReminders} reminders.`,
+            );
+            return;
+        }
         onChange(reminders.filter((value) => value !== minutes));
         setError("");
         setNotice(`Removed: ${getReminderLabel(minutes)}.`);
@@ -103,6 +116,158 @@ export function ReminderPicker({
         }
         add(Number(amount) * Number(unit));
     };
+    const changeOpen = (next: boolean) => {
+        setOpen(next);
+        setError("");
+        setNotice("");
+    };
+    const addTrigger = (
+        <Button
+            type="button"
+            variant="outline"
+            size="md"
+            disabled={disabled}
+            className={styles.addTrigger}
+        >
+            <Plus aria-hidden="true" /> Add reminder
+        </Button>
+    );
+    const formContent = (
+        <>
+            <div className={styles.presets} aria-label="Quick reminder times">
+                {presets.map((reminder) => {
+                    const selected = reminders.includes(reminder.value);
+                    return (
+                        <button
+                            type="button"
+                            key={reminder.value}
+                            className={styles.preset}
+                            disabled={disabled}
+                            aria-pressed={selected}
+                            onClick={() =>
+                                selected ? remove(reminder.value) : add(reminder.value)
+                            }
+                        >
+                            <Bell aria-hidden="true" />
+                            <span>{reminder.label}</span>
+                            {selected ? (
+                                <Check aria-hidden="true" className={styles.check} />
+                            ) : (
+                                <Plus aria-hidden="true" className={styles.presetPlus} />
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
+            <div className={styles.custom}>
+                <label htmlFor={`${id}-amount`} className={styles.label}>
+                    Custom reminder
+                </label>
+                <div className={styles.customRow}>
+                    <Input
+                        id={`${id}-amount`}
+                        type="number"
+                        disabled={disabled}
+                        inputMode="numeric"
+                        min={0}
+                        max={Math.floor(MAX_REMINDER_MINUTES / Number(unit))}
+                        step={1}
+                        size="md"
+                        value={amount}
+                        aria-label="Custom reminder amount"
+                        onValueChange={(value) => {
+                            setAmount(value);
+                            setError("");
+                        }}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                addCustom();
+                            }
+                        }}
+                    />
+                    {mobile ? (
+                        <div className="grid grid-cols-3 gap-1 rounded-control bg-surface-muted p-1 inline-full">
+                            {UNITS.map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    className={
+                                        unit === option.value
+                                            ? "body-xs rounded-inner bg-surface p-2 font-semibold text-ink shadow-sm"
+                                            : "body-xs rounded-inner p-2 font-medium text-ink-muted"
+                                    }
+                                    aria-pressed={unit === option.value}
+                                    onClick={() => {
+                                        setUnit(option.value);
+                                        setError("");
+                                    }}
+                                >
+                                    {option.value === "1"
+                                        ? "Minutes"
+                                        : option.value === "60"
+                                          ? "Hours"
+                                          : "Days"}
+                                </button>
+                            ))}
+                        </div>
+                    ) : (
+                        <Select
+                            items={UNITS}
+                            value={unit}
+                            disabled={disabled}
+                            onValueChange={(value) => {
+                                if (value) {
+                                    setUnit(value);
+                                    setError("");
+                                }
+                            }}
+                        >
+                            <SelectTrigger size="md" aria-label="Custom reminder unit">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {UNITS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                </div>
+                <Button
+                    type="button"
+                    variant="accent"
+                    size="md"
+                    disabled={disabled}
+                    onClick={addCustom}
+                >
+                    <Plus aria-hidden="true" /> Add custom reminder
+                </Button>
+            </div>
+            {error ? (
+                <p className={styles.error} role="alert">
+                    {error}
+                </p>
+            ) : null}
+            <p className={styles.notice} role="status">
+                {notice}
+            </p>
+            <div className={styles.footer}>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="md"
+                    onClick={() => setOpen(false)}
+                    className="inline-full"
+                >
+                    Done
+                </Button>
+            </div>
+        </>
+    );
     return (
         <div className={styles.picker}>
             <div className={styles.heading}>
@@ -149,141 +314,30 @@ export function ReminderPicker({
                     No reminders set. Add one or more when you need a nudge.
                 </p>
             )}
-            <Popover
-                open={open}
-                onOpenChange={(next) => {
-                    setOpen(next);
-                    setError("");
-                    setNotice("");
-                }}
-            >
-                <PopoverTrigger
-                    render={
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="md"
-                            disabled={disabled}
-                            className={styles.addTrigger}
-                        />
-                    }
+            {mobile ? (
+                <MobileActionDrawer
+                    open={open}
+                    onOpenChange={changeOpen}
+                    title="Add a reminder"
+                    description="Choose more than one, or set your own."
+                    trigger={addTrigger}
                 >
-                    <Plus aria-hidden="true" /> Add reminder
-                </PopoverTrigger>
-                <PopoverContent align="start" sideOffset={8} className={styles.popover}>
-                    <div className={styles.popoverHeader}>
-                        <PopoverTitle>Add a reminder</PopoverTitle>
-                        <PopoverDescription>
-                            Choose more than one, or set your own.
-                        </PopoverDescription>
-                    </div>
-                    <div className={styles.presets} aria-label="Quick reminder times">
-                        {presets.map((reminder) => {
-                            const selected = reminders.includes(reminder.value);
-                            return (
-                                <button
-                                    type="button"
-                                    key={reminder.value}
-                                    className={styles.preset}
-                                    disabled={disabled}
-                                    aria-pressed={selected}
-                                    onClick={() =>
-                                        selected ? remove(reminder.value) : add(reminder.value)
-                                    }
-                                >
-                                    <Bell aria-hidden="true" />
-                                    <span>{reminder.label}</span>
-                                    {selected ? (
-                                        <Check aria-hidden="true" className={styles.check} />
-                                    ) : (
-                                        <Plus aria-hidden="true" className={styles.presetPlus} />
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-                    <div className={styles.custom}>
-                        <label htmlFor={`${id}-amount`} className={styles.label}>
-                            Custom reminder
-                        </label>
-                        <div className={styles.customRow}>
-                            <Input
-                                id={`${id}-amount`}
-                                type="number"
-                                disabled={disabled}
-                                inputMode="numeric"
-                                min={0}
-                                max={Math.floor(MAX_REMINDER_MINUTES / Number(unit))}
-                                step={1}
-                                size="md"
-                                value={amount}
-                                aria-label="Custom reminder amount"
-                                onValueChange={(value) => {
-                                    setAmount(value);
-                                    setError("");
-                                }}
-                                onKeyDown={(event) => {
-                                    if (event.key === "Enter") {
-                                        event.preventDefault();
-                                        event.stopPropagation();
-                                        addCustom();
-                                    }
-                                }}
-                            />
-                            <Select
-                                items={UNITS}
-                                value={unit}
-                                disabled={disabled}
-                                onValueChange={(value) => {
-                                    if (value) {
-                                        setUnit(value);
-                                        setError("");
-                                    }
-                                }}
-                            >
-                                <SelectTrigger size="md" aria-label="Custom reminder unit">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {UNITS.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                            {option.label}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                    {formContent}
+                </MobileActionDrawer>
+            ) : (
+                <Popover open={open} onOpenChange={changeOpen}>
+                    <PopoverTrigger render={addTrigger} />
+                    <PopoverContent align="start" sideOffset={8} className={styles.popover}>
+                        <div className={styles.popoverHeader}>
+                            <PopoverTitle>Add a reminder</PopoverTitle>
+                            <PopoverDescription>
+                                Choose more than one, or set your own.
+                            </PopoverDescription>
                         </div>
-                        <Button
-                            type="button"
-                            variant="accent"
-                            size="md"
-                            disabled={disabled}
-                            onClick={addCustom}
-                        >
-                            <Plus aria-hidden="true" /> Add custom reminder
-                        </Button>
-                    </div>
-                    {error ? (
-                        <p className={styles.error} role="alert">
-                            {error}
-                        </p>
-                    ) : null}
-                    <p className={styles.notice} role="status">
-                        {notice}
-                    </p>
-                    <div className={styles.footer}>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="md"
-                            onClick={() => setOpen(false)}
-                            className="inline-full"
-                        >
-                            Done
-                        </Button>
-                    </div>
-                </PopoverContent>
-            </Popover>
+                        {formContent}
+                    </PopoverContent>
+                </Popover>
+            )}
             <p className={styles.hint}>{hint}</p>
         </div>
     );

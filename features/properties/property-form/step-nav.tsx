@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { cn } from "@/lib/utils";
 
 import { Check } from "@/components/shared/icons";
@@ -18,14 +20,24 @@ export function StepNav({
     completedSteps: Set<PropertyFormStep>;
     onStepChange: (step: PropertyFormStep) => void;
 }) {
+    const listRef = useRef<HTMLOListElement>(null);
+
+    useEffect(() => {
+        const list = listRef.current;
+        const active = list?.querySelector<HTMLElement>('[aria-current="step"]');
+        if (!list || !active || list.scrollWidth <= list.clientWidth) return;
+        list.scrollLeft = active.offsetLeft - (list.clientWidth - active.offsetWidth) / 2;
+    }, [activeStep]);
+
     return (
         <nav
             aria-label="Property form steps"
-            className="flex flex-1 flex-col min-block-0 xl:block-full"
+            className="flex flex-1 flex-col min-block-0 min-inline-0 xl:block-full"
         >
             <ol
+                ref={listRef}
                 className="
-                  flex gap-1 overflow-x-auto px-4 py-2
+                  relative flex gap-1 overflow-x-auto overscroll-x-contain px-3 py-2 min-inline-0
                   xl:flex-1 xl:flex-col xl:gap-3 xl:overflow-y-auto xl:p-0 xl:min-block-0
                 "
             >

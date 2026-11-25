@@ -1,5 +1,8 @@
 import { cn } from "@/lib/utils";
 
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { ListPageHeading } from "@/components/shared/list-page-heading";
+import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
 import { Skeleton } from "@/components/shared/skeleton";
 
 function Bone({ className }: { className?: string }) {
@@ -11,7 +14,7 @@ function ContactCardSkeleton({ variant }: { variant: "buyer" | "owner" }) {
         <div
             className={cn(
                 "flex flex-col rounded-card border border-border-warm bg-surface p-4 shadow-md sm:p-5",
-                variant === "buyer" ? "min-block-96" : "min-block-80",
+                variant === "buyer" ? "md:min-block-96" : "md:min-block-80",
             )}
         >
             <div className="mbe-3 flex items-center justify-between gap-2">
@@ -74,7 +77,7 @@ export function ContactsSkeleton({
             </span>
             <div
                 aria-hidden
-                className="grid grid-cols-1 gap-card-grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                className="grid grid-cols-1 gap-card-grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             >
                 {Array.from({ length: count }, (_, index) => (
                     <ContactCardSkeleton key={index} variant={variant} />
@@ -86,49 +89,38 @@ export function ContactsSkeleton({
 
 export function ContactsIntroSkeleton() {
     return (
-        <div
-            role="status"
-            aria-busy="true"
-            className="flex flex-wrap items-center gap-2 min-block-8 motion-safe:animate-pulse"
-        >
-            <span className="sr-only">Loading client summary</span>
-            <Bone className="bg-border-warm block-6 inline-28" />
-            <Bone className="bg-border-warm block-6 inline-96 max-inline-full" />
+        <div role="status" aria-busy="true">
+            <ListPageHeading
+                title={
+                    <>
+                        <span className="sr-only">Loading client summary</span>
+                        <Bone className="bg-border-warm block-6 inline-28" />
+                    </>
+                }
+            >
+                <Bone className="bg-border-warm block-5 inline-80 max-inline-full" />
+            </ListPageHeading>
         </div>
     );
 }
 
 export function ContactsHeaderSkeleton() {
     return (
-        <div
-            role="status"
-            aria-busy="true"
-            className="flex flex-col gap-3 min-inline-0 motion-safe:animate-pulse lg:flex-row lg:items-center lg:justify-between lg:gap-4"
-        >
+        <div role="status" aria-busy="true">
             <span className="sr-only">Loading client filters</span>
-            <div className="flex gap-2 overflow-hidden inline-full min-inline-0 lg:flex-1 lg:inline-auto">
-                {[0, 1].map((index) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px]"
-                    >
-                        <Bone className="rounded-full block-3 inline-3" />
-                        <Bone className="block-3 inline-12" />
-                        <Bone className="rounded-full block-4 inline-4" />
-                    </div>
-                ))}
-            </div>
-            <div className="flex gap-2 inline-full min-inline-0 lg:shrink-0 lg:gap-2.5 lg:inline-auto">
-                <div className="flex flex-1 items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-11 min-inline-0 lg:flex-none lg:block-[38px] lg:inline-64">
-                    <Bone className="rounded-full block-3 inline-3" />
-                    <Bone className="block-3 inline-3/4" />
-                </div>
-                <div className="flex shrink-0 items-center rounded-control border border-border-warm bg-surface px-3 shadow-sm block-11 inline-24 lg:block-[38px]">
-                    <Bone className="block-3 inline-full" />
-                </div>
-                <div className="hidden items-center rounded-control bg-surface px-3 block-[38px] inline-32 md:flex">
-                    <Bone className="block-3 inline-full" />
-                </div>
+            <div aria-hidden>
+                <ResponsiveListToolbar
+                    selection={
+                        <Bone className="flex-1 list-control min-inline-0 sm:flex-none sm:inline-48" />
+                    }
+                    search={<Bone className="list-control inline-full" />}
+                    actions={
+                        <>
+                            <Bone className="list-control inline-(--list-control-height) sm:inline-36" />
+                            <Bone className="hidden list-control inline-32 md:block" />
+                        </>
+                    }
+                />
             </div>
         </div>
     );
@@ -136,8 +128,10 @@ export function ContactsHeaderSkeleton() {
 
 export function ContactsPageSkeleton() {
     return (
-        <div className="flex flex-col gap-3 sm:gap-6">
-            <ContactsIntroSkeleton />
+        <div className="flex flex-col gap-4 sm:gap-6">
+            <PortalSectionNav>
+                <ContactsIntroSkeleton />
+            </PortalSectionNav>
             <ContactsHeaderSkeleton />
             <ContactsSkeleton />
         </div>
@@ -178,7 +172,7 @@ export function ContactFormSkeleton({
                             <div className="flex flex-col gap-4 pbs-5">
                                 {section === 2 ? (
                                     <>
-                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                        <div className="grid grid-cols-1 gap-4 @min-[28rem]/contact-drawer:grid-cols-2">
                                             <FieldSkeleton />
                                             <FieldSkeleton />
                                             <FieldSkeleton />
@@ -188,7 +182,10 @@ export function ContactFormSkeleton({
                                     </>
                                 ) : (
                                     <div
-                                        className={cn("grid gap-4", fields > 1 && "sm:grid-cols-2")}
+                                        className={cn(
+                                            "grid gap-4",
+                                            fields > 1 && "@min-[28rem]/contact-drawer:grid-cols-2",
+                                        )}
                                     >
                                         {Array.from({ length: fields }, (_, index) => (
                                             <FieldSkeleton key={index} />
@@ -196,7 +193,7 @@ export function ContactFormSkeleton({
                                     </div>
                                 )}
                                 {section === 0 ? (
-                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div className="grid grid-cols-1 gap-4 @min-[28rem]/contact-drawer:grid-cols-2">
                                         <div />
                                         <Bone className="block-5 inline-44 max-inline-full" />
                                     </div>

@@ -45,6 +45,7 @@ export function PipelineOutcomeTabs({
     return (
         <ResponsiveListStatus
             label="Status"
+            mobileDrawer
             value={view}
             onChange={onChange}
             isLoading={isLoading}

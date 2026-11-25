@@ -23,11 +23,12 @@ import {
     getReminderParts,
 } from "@/lib/notifications/display-content";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
-import { buildDemoNotifications } from "@/components/layout/notification-demo-items";
 import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import { CheckCheck, NotificationIcon, Trash2 } from "@/components/shared/icons";
+import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
@@ -169,7 +170,9 @@ function NotificationsHeader({
     onMarkAllRead,
     onClearAll,
     onTabChange,
+    hideTitle = false,
 }: {
+    hideTitle?: boolean;
     unreadCount: number;
     hasItems: boolean;
     activeTab: NotificationTab;
@@ -182,7 +185,7 @@ function NotificationsHeader({
         <div className="flex shrink-0 flex-col gap-3 px-4 pbs-4 pbe-3">
             <div className="flex items-center justify-between gap-3 min-block-8">
                 <div className="flex items-baseline gap-2">
-                    <h2 className="h6 text-ink">Notifications</h2>
+                    <h2 className={hideTitle ? "sr-only" : "h6 text-ink"}>Notifications</h2>
                     {unreadCount > 0 ? (
                         <span className="tabular body-xs font-semibold text-brand-text">
                             {unreadCount} new
@@ -438,7 +441,11 @@ function NotificationRow({
     now,
     onMarkRead,
     onRespond,
+    mobile = false,
+    onClose,
 }: {
+    mobile?: boolean;
+    onClose?: () => void;
     item: NotificationItem;
     viewAllHref: string;
     userRole: string | null | undefined;
@@ -449,6 +456,29 @@ function NotificationRow({
     const content = (
         <NotificationRowContent item={item} userRole={userRole} now={now} onRespond={onRespond} />
     );
+
+    if (mobile) {
+        if (isActionableRequest(item, userRole)) {
+            return (
+                <div className={rowClass} data-unread={!item.isRead}>
+                    {content}
+                </div>
+            );
+        }
+        return (
+            <Link
+                className={rowClass}
+                data-unread={!item.isRead}
+                href={item.href || viewAllHref}
+                onClick={() => {
+                    if (!item.isRead) onMarkRead(item.id);
+                    onClose?.();
+                }}
+            >
+                {content}
+            </Link>
+        );
+    }
 
     if (isActionableRequest(item, userRole)) {
         return (
@@ -470,50 +500,6 @@ function NotificationRow({
             {content}
         </DropdownMenuItem>
     );
-}
-
-/**
- * DESIGN-ONLY: show static sample notifications instead of the live feed.
- * Set to `false` (and delete `notification-demo-items.ts`) to go back to the API.
- */
-const USE_DEMO_NOTIFICATIONS = true;
-
-/** Local, in-memory stand-in for `useNotifications()` so the demo rows stay clickable. */
-function useDemoNotifications() {
-    const [baseItems] = useState(() => buildDemoNotifications(new Date()));
-    const [readIds, setReadIds] = useState<ReadonlySet<string>>(() => new Set());
-    const [decisions, setDecisions] = useState<Record<string, string>>({});
-
-    const items = useMemo(
-        () =>
-            baseItems.map((item) => ({
-                ...item,
-                isRead: item.isRead || readIds.has(item.id),
-                representationStatus: decisions[item.id] ?? item.representationStatus,
-            })),
-        [baseItems, readIds, decisions],
-    );
-
-    return {
-        items,
-        unreadCount: items.filter((item) => !item.isRead).length,
-        loading: false,
-        markRead: async (id: string) => {
-            setReadIds((prev) => new Set(prev).add(id));
-        },
-        markAllRead: async () => {
-            setReadIds(new Set(baseItems.map((item) => item.id)));
-        },
-        respondToRepresentation: async (
-            notificationId: string,
-            _representationId: string,
-            status: "accepted" | "rejected",
-        ) => {
-            await new Promise((resolve) => setTimeout(resolve, 600));
-            setDecisions((prev) => ({ ...prev, [notificationId]: status }));
-            setReadIds((prev) => new Set(prev).add(notificationId));
-        },
-    };
 }
 
 /**
@@ -563,16 +549,22 @@ export function PortalNotificationsMenu({
     triggerClassName,
     tooltipLabel,
 }: PortalNotificationsMenuProps) {
-    const live = useNotifications();
-    const demo = useDemoNotifications();
+    const mobile = useMobileMenu();
+    const [open, setOpen] = useState(false);
+    const changeOpen = (value: boolean) => {
+        setOpen(value);
+        if (value) void refresh();
+    };
     const {
         items: feedItems,
         unreadCount,
         loading,
+        error,
+        refresh,
         markRead,
         markAllRead,
         respondToRepresentation,
-    } = USE_DEMO_NOTIFICATIONS ? demo : live;
+    } = useNotifications();
     // "Clear all" hides what is in the list for this session only — there is no
     // delete endpoint yet. Anything that arrives afterwards still shows.
     const [clearedIds, setClearedIds] = useState<ReadonlySet<string>>(() => new Set());
@@ -612,9 +604,16 @@ export function PortalNotificationsMenu({
     };
 
     const handleClearAll = () => {
-        setClearedIds((prev) => new Set([...prev, ...items.map((item) => item.id)]));
-        // Cleared items should not keep the bell badge lit.
-        if (unreadCount > 0) handleMarkAllRead();
+        const idsToClear = items.map((item) => item.id);
+        void (async () => {
+            // Keep the list visible if saving the read state fails.
+            if (unreadCount > 0) await markAllRead();
+            setClearedIds((prev) => new Set([...prev, ...idsToClear]));
+        })().catch(() => {
+            toast.error("Couldn't clear notifications. Try again.", {
+                id: "notifications-clear-error",
+            });
+        });
     };
 
     const trigger = (
@@ -641,6 +640,8 @@ export function PortalNotificationsMenu({
     let list: ReactNode;
     if (loading && items.length === 0) {
         list = <NotificationsSkeleton />;
+    } else if (error && items.length === 0) {
+        list = null;
     } else if (items.length === 0) {
         list = <NotificationsEmpty />;
     } else if (filteredItems.length === 0) {
@@ -655,7 +656,7 @@ export function PortalNotificationsMenu({
                 aria-label="Notification list"
                 tabIndex={0}
             >
-                <DropdownMenuGroup className="t-tabs-panel flex flex-col gap-1 px-2 pbe-2">
+                <NotificationListGroup mobile={mobile}>
                     {daySections.map((section) => (
                         <NotificationDayBlock key={section.dayKey} section={section}>
                             {section.items.map((item) => (
@@ -667,17 +668,112 @@ export function PortalNotificationsMenu({
                                     now={now}
                                     onMarkRead={handleMarkRead}
                                     onRespond={respondToRepresentation}
+                                    mobile={mobile}
+                                    onClose={() => setOpen(false)}
                                 />
                             ))}
                         </NotificationDayBlock>
                     ))}
-                </DropdownMenuGroup>
+                </NotificationListGroup>
             </div>
         );
     }
 
+    const panel = (
+        <>
+            <NotificationsHeader
+                hideTitle={mobile}
+                unreadCount={unreadCount}
+                hasItems={items.length > 0}
+                activeTab={activeTab}
+                tabCounts={tabCounts}
+                onMarkAllRead={handleMarkAllRead}
+                onClearAll={handleClearAll}
+                onTabChange={setActiveTab}
+            />
+            <div
+                aria-hidden
+                className={cn(
+                    "shrink-0 border-be",
+                    mobile ? "border-(--dialog-divider)" : "border-border-warm",
+                )}
+            />
+            {error ? (
+                <div className="flex shrink-0 flex-col items-center gap-3 p-6 text-center">
+                    <p className="body-sm text-ink-muted" role="alert">
+                        {error}
+                    </p>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        loading={loading}
+                        onClick={() => void refresh()}
+                    >
+                        Try again
+                    </Button>
+                </div>
+            ) : null}
+            {list}
+            <div
+                data-scroll-shadow={hasMoreBelow}
+                className={cn(
+                    `
+                      relative z-1 shrink-0 border-bs bg-surface p-3
+                      transition-shadow duration-160
+                      data-[scroll-shadow=true]:shadow-[0_-10px_18px_-12px_rgb(25_28_26/28%)]
+                    `,
+                    mobile ? "border-(--dialog-divider)" : "border-border-warm",
+                )}
+            >
+                <Button
+                    variant="outline"
+                    size="default"
+                    nativeButton={false}
+                    render={<Link href={viewAllHref} onClick={() => setOpen(false)} />}
+                    className="font-medium inline-full"
+                >
+                    View all notifications
+                    <NotificationIcon
+                        name="arrow"
+                        aria-hidden
+                        data-icon="inline-end"
+                        className="block-4 inline-4"
+                    />
+                </Button>
+            </div>
+        </>
+    );
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={changeOpen}
+                title="Notifications"
+                edgeToEdge
+                trigger={
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-md"
+                        aria-label={label}
+                        className={cn("relative", triggerClassName)}
+                    >
+                        <NotificationIcon
+                            name={hasUnread ? "bell-ring" : "bell"}
+                            aria-hidden
+                            className="block-5! inline-5!"
+                        />
+                        <UnreadBadge count={unreadCount} />
+                    </Button>
+                }
+            >
+                {panel}
+            </MobileActionDrawer>
+        );
+    }
     return (
-        <DropdownMenu>
+        <DropdownMenu open={open} onOpenChange={changeOpen}>
             {tooltipLabel ? (
                 <Tooltip>
                     <TooltipTrigger render={trigger} />
@@ -686,47 +782,18 @@ export function PortalNotificationsMenu({
             ) : (
                 trigger
             )}
-
             <DropdownMenuContent align="end" sideOffset={12} className={menuSurfaceClass}>
-                <NotificationsHeader
-                    unreadCount={unreadCount}
-                    hasItems={items.length > 0}
-                    activeTab={activeTab}
-                    tabCounts={tabCounts}
-                    onMarkAllRead={handleMarkAllRead}
-                    onClearAll={handleClearAll}
-                    onTabChange={setActiveTab}
-                />
-
-                <div aria-hidden className="shrink-0 border-be border-border-warm" />
-
-                {list}
-
-                <div
-                    data-scroll-shadow={hasMoreBelow}
-                    className="
-                      relative z-1 shrink-0 border-bs border-border-warm bg-surface p-3
-                      transition-shadow duration-160
-                      data-[scroll-shadow=true]:shadow-[0_-10px_18px_-12px_rgb(25_28_26/28%)]
-                    "
-                >
-                    <Button
-                        variant="outline"
-                        size="default"
-                        nativeButton={false}
-                        render={<Link href={viewAllHref} />}
-                        className="font-medium inline-full"
-                    >
-                        View all notifications
-                        <NotificationIcon
-                            name="arrow"
-                            aria-hidden
-                            data-icon="inline-end"
-                            className="block-4 inline-4"
-                        />
-                    </Button>
-                </div>
+                {panel}
             </DropdownMenuContent>
         </DropdownMenu>
+    );
+}
+
+function NotificationListGroup({ mobile, children }: { mobile: boolean; children: ReactNode }) {
+    const className = "t-tabs-panel flex flex-col gap-1 px-2 pbe-2";
+    return mobile ? (
+        <div className={className}>{children}</div>
+    ) : (
+        <DropdownMenuGroup className={className}>{children}</DropdownMenuGroup>
     );
 }

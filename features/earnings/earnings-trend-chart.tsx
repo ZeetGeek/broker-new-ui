@@ -6,6 +6,8 @@ import { Area, CartesianGrid, ComposedChart, XAxis, YAxis } from "recharts";
 
 import { formatCommission, formatCommissionTick } from "@/lib/format/commission";
 
+import { EmptyState } from "@/components/empty-state";
+import { ChartBar } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import {
     type ChartConfig,
@@ -140,16 +142,16 @@ export function EarningsTrendChart({
                 className="flex flex-1 flex-col pbe-2 min-inline-0"
             >
                 {isEmpty ? (
-                    <div className="flex flex-1 flex-col items-center justify-center gap-1.5 px-6 py-12 text-center">
-                        <p className="body font-medium text-ink">
-                            {isMoney
+                    <EmptyState
+                        size="card"
+                        icon={ChartBar}
+                        heading={
+                            isMoney
                                 ? "No commission in this period"
-                                : "No finished deals in this period"}
-                        </p>
-                        <p className="body-sm text-ink-muted max-inline-sm">
-                            Try a longer period, or mark a deal as sold in your pipeline.
-                        </p>
-                    </div>
+                                : "No finished deals in this period"
+                        }
+                        description="Choose a longer period to check earlier deals. Commission appears when a deal closes."
+                    />
                 ) : isMoney ? (
                     <ChartContainer
                         key={`money-${bucketUnit}-${buckets.length}-${showAverage}`}

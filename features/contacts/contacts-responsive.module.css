@@ -1,0 +1,150 @@
+/* Keep contact working surfaces independent of the page toolbar. */
+.drawer {
+    container: contact-drawer / inline-size;
+    --dialog-pad: 1rem !important;
+    min-inline-size: 0;
+}
+
+.drawer :global([data-slot="app-modal-header"]) {
+    padding-block-start: max(0.75rem, env(safe-area-inset-top));
+    padding-inline: max(var(--dialog-pad), env(safe-area-inset-left))
+        max(var(--dialog-pad), env(safe-area-inset-right));
+}
+
+.drawer .drawerFooter {
+    padding-block-end: max(var(--dialog-pad), env(safe-area-inset-bottom)) !important;
+}
+
+/* Preview typography stays readable without borrowing the larger form scale. */
+.preview {
+    --drawer-detail-width: 30rem;
+    --preview-text-sm: calc(0.75rem / var(--layout-font-scale, 1));
+    --preview-text: calc(0.875rem / var(--layout-font-scale, 1));
+    --preview-heading: calc(1rem / var(--layout-font-scale, 1));
+    font-size: var(--preview-text);
+    line-height: 1.5;
+}
+
+.preview :global(.body),
+.preview :global(.body-sm),
+.preview :global([data-slot="button"]),
+.preview textarea,
+.preview dd {
+    font-size: var(--preview-text);
+    line-height: 1.5;
+}
+
+.preview :global(.body-xs),
+.preview dt,
+.preview .caption {
+    font-size: var(--preview-text-sm);
+    line-height: 1.5;
+}
+
+.preview :global([data-slot="dialog-title"]) {
+    font-size: var(--preview-text);
+    font-weight: 600;
+}
+
+.preview :global([data-drawer-section] > summary [role="heading"]) {
+    font-size: var(--preview-heading);
+    line-height: 1.4;
+}
+
+.preview :global([data-drawer-section] > summary [role="heading"] + span) {
+    font-size: var(--preview-text-sm);
+    line-height: 1.5;
+}
+
+.preview :global(section:has(> [data-drawer-section])) {
+    padding-block: 1.25rem;
+}
+
+.preview :global(section:has(> [data-drawer-section]):first-child) {
+    padding-block-start: 0;
+}
+
+.preview :global([data-drawer-section] > div) {
+    padding-block-start: 1rem;
+}
+
+.previewHeader {
+    padding-block: 0.5rem 0.75rem;
+    border-block-end: 1px solid var(--color-border-warm);
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    min-inline-size: 0;
+}
+
+.summaryName {
+    min-inline-size: 0;
+    overflow: hidden;
+    font-size: var(--preview-text);
+    font-weight: 600;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.preview .summaryPhone {
+    display: inline-block;
+    margin-block-start: 0.125rem;
+    font-size: var(--preview-text-sm);
+    line-height: 1.5;
+}
+
+.factGrid {
+    column-gap: 1rem;
+    row-gap: 1rem;
+}
+
+.factValue {
+    overflow-wrap: anywhere;
+}
+
+.formActions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+}
+
+.formActions > button,
+.callActions > a {
+    min-inline-size: 0;
+    min-block-size: var(--touch-target-min, 2.75rem);
+    block-size: auto;
+    padding-block: 0.75rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.formActions > :only-child {
+    grid-column: 1 / -1;
+}
+
+.propertyCover {
+    --property-cover-size: 3rem;
+}
+
+@container contact-drawer (min-width: 22rem) {
+    .formActions {
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    }
+}
+
+@container contact-drawer (min-width: 24rem) {
+    .propertyCover {
+        --property-cover-size: 4.5rem;
+    }
+}
+
+@media (min-width: 640px) {
+    .drawer {
+        --dialog-pad: 1.25rem !important;
+    }
+}

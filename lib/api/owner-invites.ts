@@ -6,6 +6,7 @@ import {
     representativeApi,
 } from "@/lib/api/representative";
 import { type DealListingApiQuery, dealListingApiQuery } from "@/lib/properties/deal-listing-query";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import {
     filterInvites,
@@ -72,7 +73,7 @@ async function loadInvites(filters?: InvitesFilters): Promise<InviteItem[]> {
         .map((item) => withClients(item, attachedByProperty));
 }
 
-export const ownerInvitesApi = {
+export const ownerInvitesApi = withTestNetwork({
     async list(filters: InvitesFilters): Promise<InvitesResult> {
         if (isMockMode()) {
             const matched = sortInvites(filterInvites(MOCK_INVITES, filters), filters.sort);
@@ -111,4 +112,4 @@ export const ownerInvitesApi = {
         if (isMockMode()) return;
         await representativeApi.brokerRespond(_inviteId, { status: "rejected" });
     },
-};
+});

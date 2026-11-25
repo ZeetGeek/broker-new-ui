@@ -6,13 +6,13 @@ import { PREF_KEYS } from "@/lib/prefs/keys";
 import { useUrlSyncedPrefs } from "@/hooks/use-url-synced-prefs";
 
 import {
+    clearMyListingsFilters,
     hasActiveMyListingsFilters,
     normalizeMyListingsStoredFilters,
     parseMyListingsFilters,
     serializeMyListingsFilters,
 } from "@/features/properties/your-listings/filter-my-listings";
 import type { MyListingsFilters } from "@/features/properties/your-listings/types";
-import { DEFAULT_MY_LISTINGS_FILTERS } from "@/features/properties/your-listings/types";
 
 const MY_LISTINGS_URL_KEYS = [
     "q",
@@ -79,8 +79,8 @@ export function useMyListingsFilters(peopleEnabled = false) {
     );
 
     const clearFilters = useCallback(() => {
-        replace({ ...DEFAULT_MY_LISTINGS_FILTERS });
-    }, [replace]);
+        replace(clearMyListingsFilters(filters));
+    }, [filters, replace]);
 
     const normalizedFilters = useMemo(
         () =>

@@ -1,6 +1,7 @@
 import { fontVariables } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 
+import { TestLab } from "@/components/dev-tools/test-lab";
 import { ThemeProvider } from "@/components/theme-provider";
 
 import { ProgressProvider } from "@/providers/progress-provider";
@@ -25,7 +26,10 @@ export default function RootLayout({
                 <StoreProvider>
                     <QueryProvider>
                         <ThemeProvider>
-                            <ProgressProvider>{children}</ProgressProvider>
+                            <ProgressProvider>
+                                {children}
+                                <TestLab />
+                            </ProgressProvider>
                         </ThemeProvider>
                     </QueryProvider>
                 </StoreProvider>

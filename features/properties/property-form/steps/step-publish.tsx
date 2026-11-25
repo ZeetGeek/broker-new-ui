@@ -191,14 +191,16 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                                     aria-label={`Detach ${buyer.name}`}
                                     onClick={() => setBuyerToDetach(buyer)}
                                     className="
-                                      inline-flex items-center gap-2 rounded-full border
-                                      border-border-warm bg-surface px-3 py-2 text-sm text-ink
+                                      inline-flex items-center gap-2 rounded-full border border-border-warm bg-surface
+                                      px-3 py-2 text-sm text-ink max-inline-full min-inline-0
                                     "
                                 >
                                     <span aria-hidden>
                                         <UserAvatar name={buyer.name} size="2xs" framed={false} />
                                     </span>
-                                    <span className="truncate max-inline-48">{buyer.name}</span>
+                                    <span className="truncate max-inline-48 min-inline-0">
+                                        {buyer.name}
+                                    </span>
                                     <X
                                         className="text-ink-muted block-3.5 inline-3.5"
                                         aria-hidden
@@ -262,7 +264,9 @@ export function StepPublish({ propertyId }: { propertyId?: string }) {
                                     <span aria-hidden>
                                         <UserAvatar name={buyer.name} size="2xs" framed={false} />
                                     </span>
-                                    <span className="truncate max-inline-48">{buyer.name}</span>
+                                    <span className="truncate max-inline-48 min-inline-0">
+                                        {buyer.name}
+                                    </span>
                                     <X
                                         className="ms-1.5 text-ink-muted block-3.5 inline-3.5"
                                         aria-hidden
@@ -461,7 +465,7 @@ function ContactSearchPanel({
                       border-border-warm bg-surface p-4
                     "
                 >
-                    <div className="flex items-center gap-3 min-inline-0">
+                    <div className="flex items-center gap-3 max-inline-full min-inline-0">
                         <span aria-hidden>
                             <UserAvatar
                                 name={selectedLabel.name}

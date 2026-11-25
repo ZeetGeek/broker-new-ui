@@ -6,6 +6,7 @@ import { formatCommission } from "@/lib/format/commission";
 import { DEFAULT_CURRENCY } from "@/lib/format/currency";
 import { formatPrice } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import {
     CalendarCheck,
@@ -19,6 +20,7 @@ import {
     Users,
 } from "@/components/shared/icons";
 import { ListSearchField } from "@/components/shared/list-toolbar";
+import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { Badge } from "@/components/ui/badge";
@@ -114,6 +116,7 @@ export function BrokerPropertyAnalytics({
     propertyTitle: string;
     propertyId: string;
 }) {
+    const mobile = useMobileMenu();
     const [closed, setClosed] = useState(false);
     const [query, setQuery] = useState("");
     const [clientFilter, setClientFilter] = useState("all");
@@ -160,27 +163,41 @@ export function BrokerPropertyAnalytics({
                 </div>
                 <div className={styles.scenario}>
                     <span>Demo scenario</span>
-                    <Select
-                        value={closed ? "closed" : "active"}
-                        items={[
-                            { value: "active", label: "In progress" },
-                            { value: "closed", label: "Closed deal" },
-                        ]}
-                        onValueChange={(value) => setClosed(value === "closed")}
-                    >
-                        <SelectTrigger
-                            size="sm"
-                            aria-label="Demo scenario"
-                            wrapperClassName="inline-36"
-                            className="border font-medium shadow-sm"
+                    {mobile ? (
+                        <div className="inline-40">
+                            <MobileSelectDrawer
+                                label="Demo scenario"
+                                value={closed ? "closed" : "active"}
+                                options={[
+                                    { value: "active", label: "In progress" },
+                                    { value: "closed", label: "Closed deal" },
+                                ]}
+                                onChange={(value) => setClosed(value === "closed")}
+                            />
+                        </div>
+                    ) : (
+                        <Select
+                            value={closed ? "closed" : "active"}
+                            items={[
+                                { value: "active", label: "In progress" },
+                                { value: "closed", label: "Closed deal" },
+                            ]}
+                            onValueChange={(value) => setClosed(value === "closed")}
                         >
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="active">In progress</SelectItem>
-                            <SelectItem value="closed">Closed deal</SelectItem>
-                        </SelectContent>
-                    </Select>
+                            <SelectTrigger
+                                size="sm"
+                                aria-label="Demo scenario"
+                                wrapperClassName="inline-36"
+                                className="border font-medium shadow-sm"
+                            >
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="active">In progress</SelectItem>
+                                <SelectItem value="closed">Closed deal</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
             </div>
 

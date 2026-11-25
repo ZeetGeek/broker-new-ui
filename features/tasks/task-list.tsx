@@ -3,10 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { CardLink } from "@/components/shared/card-link";
 import { IconButton } from "@/components/shared/icon-button";
 import { AlertCircle, Calendar, MoreHorizontal, RotateCcw } from "@/components/shared/icons";
+import {
+    mobileActionClass,
+    MobileActionDrawer,
+    mobileActionGroupClass,
+} from "@/components/shared/mobile-action-drawer";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     DropdownMenu,
@@ -60,8 +66,10 @@ export function TaskLine({
     onRename,
     onQuickChange,
 }: TaskRowActions & { task: Task; archive?: boolean; showDate?: boolean }) {
+    const mobile = useMobileMenu();
     const [editing, setEditing] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
+    const afterMenuClose = useRef<(() => void) | null>(null);
     const titleRef = useRef<HTMLButtonElement>(null);
     const refocusRef = useRef(false);
     useEffect(() => {
@@ -98,6 +106,18 @@ export function TaskLine({
         catalogs,
         now,
         task.startDate,
+    );
+    const deletedTaskMenuTrigger = (
+        <IconButton
+            size="xs"
+            type="button"
+            className={styles.lineAction}
+            disabled={busy}
+            aria-label={`Actions for ${rowTitle}`}
+            title="Task actions"
+        >
+            <MoreHorizontal aria-hidden size={14} />
+        </IconButton>
     );
 
     return (
@@ -169,28 +189,46 @@ export function TaskLine({
                 </Tooltip>
             )}
             {task.deletedAt ? (
-                <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
-                    <DropdownMenuTrigger
-                        render={
-                            <IconButton
-                                size="xs"
-                                type="button"
-                                className={styles.lineAction}
-                                disabled={busy}
-                                aria-label={`Actions for ${rowTitle}`}
-                                title="Task actions"
-                            />
-                        }
+                mobile ? (
+                    <MobileActionDrawer
+                        open={menuOpen}
+                        onOpenChange={setMenuOpen}
+                        onOpenChangeComplete={(nextOpen) => {
+                            if (nextOpen) return;
+                            const action = afterMenuClose.current;
+                            afterMenuClose.current = null;
+                            action?.();
+                        }}
+                        title="Task actions"
+                        description={rowTitle}
+                        trigger={deletedTaskMenuTrigger}
                     >
-                        <MoreHorizontal aria-hidden size={14} />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem disabled={busy} onClick={() => onRestore(task)}>
-                            <RotateCcw aria-hidden />
-                            Restore task
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                        <div className={mobileActionGroupClass}>
+                            <button
+                                type="button"
+                                className={mobileActionClass}
+                                disabled={busy}
+                                onClick={() => {
+                                    afterMenuClose.current = () => onRestore(task);
+                                    setMenuOpen(false);
+                                }}
+                            >
+                                <RotateCcw aria-hidden />
+                                Restore task
+                            </button>
+                        </div>
+                    </MobileActionDrawer>
+                ) : (
+                    <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
+                        <DropdownMenuTrigger render={deletedTaskMenuTrigger} />
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem disabled={busy} onClick={() => onRestore(task)}>
+                                <RotateCcw aria-hidden />
+                                Restore task
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )
             ) : (
                 <TaskActionsMenu
                     task={task}

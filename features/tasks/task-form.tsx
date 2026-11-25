@@ -4,6 +4,7 @@ import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
@@ -12,6 +13,7 @@ import { CharacterCount } from "@/components/shared/character-count";
 import { revealDrawerSections } from "@/components/shared/drawer-section";
 import { Bell, LockKeyhole, Pencil } from "@/components/shared/icons";
 import { ListToolbarSelect } from "@/components/shared/list-toolbar";
+import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import {
     mapTaskClientToPicker,
     mapTaskOwnerToPicker,
@@ -69,9 +71,11 @@ export function TaskSelect({
     toolbar?: boolean;
 }) {
     const id = useId();
+    const mobile = useMobileMenu();
     if (toolbar) {
         return (
             <ListToolbarSelect
+                mobileDrawer
                 label={label}
                 value={value}
                 options={options}
@@ -79,6 +83,20 @@ export function TaskSelect({
                 active
                 disabled={disabled}
             />
+        );
+    }
+    if (mobile) {
+        return (
+            <FormField label={label} htmlFor={id}>
+                <MobileSelectDrawer
+                    id={id}
+                    label={label}
+                    value={value}
+                    options={options}
+                    onChange={onChange}
+                    disabled={disabled}
+                />
+            </FormField>
         );
     }
     return (

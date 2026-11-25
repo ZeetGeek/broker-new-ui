@@ -17,7 +17,7 @@ export function filterChipClassName(isActive: boolean, { interactive = true } = 
     return cn(
         `
           touch-target inline-flex shrink-0 items-center gap-1.5 rounded-control border px-3.5
-          text-sm font-semibold whitespace-nowrap block-[38px] [&_svg]:text-inherit!
+          text-sm font-semibold whitespace-nowrap list-control [&_svg]:text-inherit!
         `,
         interactive && CHIP_HOVER_TRANSITION,
         isActive

@@ -1,11 +1,20 @@
-import Link from "next/link";
+import { EmptyState, type EmptyStateProps } from "@/components/shared/empty-state";
+import { Building2, CheckCircle2, FileText, Plus, Search, Trash2 } from "@/components/shared/icons";
 
-import { EmptyState } from "@/components/shared/empty-state";
-import { Building2, FileText, Search } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
+import type { MyListingsStatusTab } from "@/features/properties/your-listings/types";
+
+/** Match the Contacts empty card at phone, tablet and desktop widths. */
+function ListingsEmptyCard(props: Omit<EmptyStateProps, "size">) {
+    return (
+        <div className="flex items-center rounded-card border border-border-warm bg-surface p-3 inline-full min-block-80 min-inline-0 sm:p-4 sm:min-block-96 lg:p-6 lg:min-block-[max(25rem,calc(100dvh-17rem))]">
+            <EmptyState {...props} size="card" />
+        </div>
+    );
+}
 
 export type MyListingsEmptyProps = {
     variant: "filtered" | "first_run" | "no_deleted" | "no_sold" | "no_draft" | "no_published";
+    status?: MyListingsStatusTab | "";
     searchQuery?: string;
     onClearFilters?: () => void;
     onAddProperty?: () => void;
@@ -13,101 +22,108 @@ export type MyListingsEmptyProps = {
 
 export function MyListingsEmpty({
     variant,
+    status,
     searchQuery,
     onClearFilters,
     onAddProperty,
 }: MyListingsEmptyProps) {
+    const addPropertyAction = onAddProperty
+        ? { label: "Add property", icon: Plus, onClick: onAddProperty }
+        : undefined;
+
     if (variant === "filtered") {
+        const subject =
+            status === "published"
+                ? "published listings"
+                : status === "draft"
+                  ? "draft listings"
+                  : status === "sold"
+                    ? "sold properties"
+                    : status === "deleted"
+                      ? "deleted properties"
+                      : "properties";
         return (
-            <EmptyState
-                size="page"
+            <ListingsEmptyCard
                 variant="filtered"
                 icon={Search}
-                heading="No properties match these filters"
+                heading={`No ${subject} match these filters`}
                 description={
                     searchQuery?.trim()
-                        ? `No results for "${searchQuery.trim()}". Try clearing a filter or searching another locality.`
-                        : "Try clearing a filter or searching another locality."
+                        ? `No results for "${searchQuery.trim()}" in this view. Try another search or clear your filters.`
+                        : "Try changing your filters, or clear them to see all properties in this view."
                 }
-            >
-                {onClearFilters ? (
-                    <Button variant="accent" onClick={onClearFilters}>
-                        Clear filters
-                    </Button>
-                ) : null}
-            </EmptyState>
+                action={
+                    onClearFilters
+                        ? { label: "Clear filters", icon: Search, onClick: onClearFilters }
+                        : undefined
+                }
+            />
         );
     }
 
     if (variant === "no_deleted") {
         return (
-            <EmptyState
-                icon={Building2}
-                heading="No properties in Deleted"
-                description="Deleted properties appear here. Restore them when needed, or delete them permanently."
-                size="page"
+            <ListingsEmptyCard
+                icon={Trash2}
+                heading="No deleted properties"
+                description="Properties you delete appear here. You can restore them as drafts or delete them permanently."
             />
         );
     }
 
     if (variant === "no_sold") {
         return (
-            <EmptyState
-                icon={Building2}
+            <ListingsEmptyCard
+                icon={CheckCircle2}
                 heading="No sold properties yet"
-                description="Properties you mark as sold will appear here."
-                size="page"
+                description="Properties marked as sold appear here, so you can keep track of your past listings."
             />
         );
     }
 
     if (variant === "no_draft") {
         return (
-            <EmptyState
+            <ListingsEmptyCard
                 icon={FileText}
-                heading="No drafts"
-                description="Save a listing as a draft and it will show here until you publish."
-                size="page"
+                heading="No draft listings"
+                description="Save a property as a draft to finish its details and publish it later."
+                action={addPropertyAction}
             />
         );
     }
 
     if (variant === "no_published") {
         return (
-            <EmptyState
+            <ListingsEmptyCard
                 icon={Building2}
-                heading="Nothing published yet"
-                description="Publish a draft when it is ready — it will show up here."
-                size="page"
+                heading="No published listings"
+                description="Publish a draft or add a new property to see it here. You can then link clients and track deals."
+                action={addPropertyAction}
             />
         );
     }
 
     return (
-        <EmptyState
+        <ListingsEmptyCard
             icon={Building2}
             heading="No properties yet"
             description="Add a property, then link a client to start tracking a deal."
-            size="page"
-        >
-            <Button size="md" variant="accent" onClick={onAddProperty}>
-                Add property
-            </Button>
-        </EmptyState>
+            action={addPropertyAction}
+        />
     );
 }
 
 export function MyListingsRequestsEmpty() {
     return (
-        <EmptyState
+        <ListingsEmptyCard
             icon={Search}
             heading="No requests sent yet"
             description="Find a property you'd like to sell and ask the owner."
-            size="page"
-        >
-            <Button size="lg" variant="accent" render={<Link href="/broker/owner-listings" />}>
-                Browse Marketplace
-            </Button>
-        </EmptyState>
+            action={{
+                label: "Browse Marketplace",
+                icon: Search,
+                href: "/broker/owner-listings",
+            }}
+        />
     );
 }

@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import {
     portalProfileMenuItemClass,
@@ -26,6 +27,11 @@ import {
     Trash2,
     X,
 } from "@/components/shared/icons";
+import {
+    mobileActionClass,
+    MobileActionDrawer,
+    mobileActionGroupClass,
+} from "@/components/shared/mobile-action-drawer";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -67,6 +73,7 @@ export function TaskActionsMenu({
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
 }) {
+    const mobile = useMobileMenu();
     const [localOpen, setLocalOpen] = useState(false);
     const open = controlledOpen ?? localOpen;
     const setOpen = (value: boolean) => {
@@ -104,23 +111,204 @@ export function TaskActionsMenu({
         { label: "Next week", date: shiftTaskDate(today, 7)!, icon: CalendarClock },
         { label: "No date", date: null, icon: CircleSlash },
     ];
+    const quickControls = (
+        <>
+            <fieldset className={styles.section} disabled={disabled}>
+                <legend>
+                    Date{" "}
+                    <span>{task.dueDate ? taskDateLabel(task.dueDate, now) : "Not scheduled"}</span>
+                </legend>
+                <div className={styles.dateOptions}>
+                    {dates.map(({ label, date, icon: Icon }) => (
+                        <Tooltip key={label}>
+                            <TooltipTrigger
+                                render={
+                                    <button
+                                        type="button"
+                                        aria-pressed={task.dueDate === date}
+                                        aria-label={label}
+                                        onClick={() => void save({ dueDate: date })}
+                                    />
+                                }
+                            >
+                                <Icon aria-hidden />
+                                <span className={styles.dateOptionLabel}>{label}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>{label}</TooltipContent>
+                        </Tooltip>
+                    ))}
+                </div>
+                {task.reminders.length > 0 && (
+                    <p className={styles.hint}>
+                        Removing the date or time also removes due-time reminders.
+                    </p>
+                )}
+            </fieldset>
+            <fieldset className={styles.section} disabled={disabled}>
+                <legend>
+                    Priority <span>{TASK_PRIORITY_LABELS[task.priority]}</span>
+                </legend>
+                <div className={styles.priorities}>
+                    {(["urgent", "high", "medium", "low"] as const).map((priority) => (
+                        <button
+                            key={priority}
+                            type="button"
+                            aria-label={TASK_PRIORITY_LABELS[priority]}
+                            title={TASK_PRIORITY_LABELS[priority]}
+                            aria-pressed={task.priority === priority}
+                            data-priority={priority}
+                            onClick={() => void save({ priority })}
+                        >
+                            {priority === "low" ? <Flag aria-hidden /> : <FlagFilled aria-hidden />}
+                            <span className={styles.priorityLabel}>
+                                {TASK_PRIORITY_LABELS[priority]}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </fieldset>
+        </>
+    );
+    const finishClose = (value: boolean) => {
+        if (!value) {
+            const action = afterClose.current;
+            afterClose.current = null;
+            action?.();
+        }
+    };
+    const changeOpen = (value: boolean) => {
+        setOpen(value);
+        if (value) setError("");
+    };
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={changeOpen}
+                onOpenChangeComplete={finishClose}
+                title="Task actions"
+                description={task.title}
+                bodyClassName={styles.drawerBody}
+                trigger={
+                    <IconButton
+                        size="xs"
+                        type="button"
+                        className={planner.lineAction}
+                        disabled={busy}
+                        aria-label={`Actions for ${task.title}`}
+                    >
+                        <MoreHorizontal aria-hidden size={14} />
+                    </IconButton>
+                }
+            >
+                <div className={mobileActionGroupClass}>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        disabled={disabled}
+                        onClick={() => act(() => onComplete(task))}
+                    >
+                        {task.completedAt ? <RotateCcw aria-hidden /> : <Check aria-hidden />}
+                        {task.completedAt ? "Reopen task" : "Mark complete"}
+                    </button>
+                </div>
+                <div className={mobileActionGroupClass}>{quickControls}</div>
+                <div className={mobileActionGroupClass}>
+                    <fieldset className={styles.section} disabled={disabled}>
+                        <legend>Reminders</legend>
+                        <div className={styles.mobileReminders}>
+                            {[...new Set([...task.reminders, 0, 15, 30, 60])].map((value) => {
+                                const selected = task.reminders.includes(value);
+                                const label = taskReminderLabel(value);
+                                return (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        aria-pressed={selected}
+                                        disabled={!task.dueDate || !task.dueTime}
+                                        aria-label={
+                                            (selected ? "Remove " : "Add ") +
+                                            label.toLowerCase() +
+                                            " reminder"
+                                        }
+                                        onClick={() =>
+                                            void save({
+                                                reminders: selected
+                                                    ? task.reminders.filter(
+                                                          (offset) => offset !== value,
+                                                      )
+                                                    : [...task.reminders, value],
+                                            })
+                                        }
+                                    >
+                                        {label}
+                                        {selected ? <Check aria-hidden /> : <Plus aria-hidden />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {!task.dueDate || !task.dueTime ? (
+                            <p className={styles.hint}>Set a due date and time to use reminders.</p>
+                        ) : null}
+                    </fieldset>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        disabled={disabled}
+                        onClick={() => act(() => onIntent(task, "reminder"))}
+                    >
+                        <Bell aria-hidden />
+                        Custom reminders
+                    </button>
+                </div>
+                <div className={mobileActionGroupClass}>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        disabled={disabled}
+                        onClick={() => act(() => onOpen(task))}
+                    >
+                        <FileText aria-hidden />
+                        Task details
+                    </button>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        disabled={disabled}
+                        onClick={() => act(() => onIntent(task, "edit"))}
+                    >
+                        <Pencil aria-hidden />
+                        Edit all details
+                    </button>
+                </div>
+                <div className={mobileActionGroupClass}>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        data-destructive="true"
+                        disabled={disabled}
+                        onClick={() => act(() => onIntent(task, "delete"))}
+                    >
+                        <Trash2 aria-hidden />
+                        Delete task
+                    </button>
+                </div>
+                <p
+                    className={error || saving ? styles.feedback : "sr-only"}
+                    role={error ? "alert" : "status"}
+                    data-error={!!error}
+                >
+                    {error || (saving ? "Saving?" : "Changes save automatically")}
+                </p>
+            </MobileActionDrawer>
+        );
+    }
     return (
         <DropdownMenu
             modal={false}
             open={open}
-            onOpenChangeComplete={(value) => {
-                if (!value) {
-                    const action = afterClose.current;
-                    afterClose.current = null;
-                    action?.();
-                }
-            }}
-            onOpenChange={(value) => {
-                setOpen(value);
-                if (value) {
-                    setError("");
-                }
-            }}
+            onOpenChangeComplete={finishClose}
+            onOpenChange={changeOpen}
         >
             <DropdownMenuTrigger
                 render={
@@ -155,66 +343,7 @@ export function TaskActionsMenu({
                     </DropdownMenuItem>
                 </div>
                 <PortalProfileMenuSeparator />
-                <fieldset className={styles.section} disabled={disabled}>
-                    <legend>
-                        Date{" "}
-                        <span>
-                            {task.dueDate ? taskDateLabel(task.dueDate, now) : "Not scheduled"}
-                        </span>
-                    </legend>
-                    <div className={styles.dateOptions}>
-                        {dates.map(({ label, date, icon: Icon }) => (
-                            <Tooltip key={label}>
-                                <TooltipTrigger
-                                    render={
-                                        <button
-                                            type="button"
-                                            aria-pressed={task.dueDate === date}
-                                            aria-label={label}
-                                            onClick={() => void save({ dueDate: date })}
-                                        />
-                                    }
-                                >
-                                    <Icon aria-hidden />
-                                    <span className={styles.dateOptionLabel}>{label}</span>
-                                </TooltipTrigger>
-                                <TooltipContent>{label}</TooltipContent>
-                            </Tooltip>
-                        ))}
-                    </div>
-                    {task.reminders.length > 0 && (
-                        <p className={styles.hint}>
-                            Removing the date or time also removes due-time reminders.
-                        </p>
-                    )}
-                </fieldset>
-                <fieldset className={styles.section} disabled={disabled}>
-                    <legend>
-                        Priority <span>{TASK_PRIORITY_LABELS[task.priority]}</span>
-                    </legend>
-                    <div className={styles.priorities}>
-                        {(["urgent", "high", "medium", "low"] as const).map((priority) => (
-                            <button
-                                key={priority}
-                                type="button"
-                                aria-label={TASK_PRIORITY_LABELS[priority]}
-                                title={TASK_PRIORITY_LABELS[priority]}
-                                aria-pressed={task.priority === priority}
-                                data-priority={priority}
-                                onClick={() => void save({ priority })}
-                            >
-                                {priority === "low" ? (
-                                    <Flag aria-hidden />
-                                ) : (
-                                    <FlagFilled aria-hidden />
-                                )}
-                                <span className={styles.priorityLabel}>
-                                    {TASK_PRIORITY_LABELS[priority]}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                </fieldset>
+                {quickControls}
                 <PortalProfileMenuSeparator />
                 <DropdownMenuSub>
                     <DropdownMenuSubTrigger className={portalProfileMenuItemClass}>

@@ -10,6 +10,7 @@ import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
 import { pipelineApi } from "@/lib/api/pipeline";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import {
     bucketLabels,
@@ -147,7 +148,7 @@ export function mapEarningsReport(
     };
 }
 
-export const earningsApi = {
+export const earningsApi = withTestNetwork({
     async report(
         selection: EarningsSelection,
         signal?: AbortSignal,
@@ -171,7 +172,7 @@ export const earningsApi = {
         const raw = await apiFetch<EarningsReportApi>(`/earnings/report?${qs}`, { signal });
         return mapEarningsReport(raw, { window, comparison });
     },
-};
+});
 
 /**
  * The report for one period. The key carries the resolved dates, and the

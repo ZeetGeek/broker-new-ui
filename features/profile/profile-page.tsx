@@ -670,6 +670,8 @@ export function ProfilePage() {
                                                 <OptionCombobox
                                                     id="profile-state"
                                                     size="lg"
+                                                    mobileDrawer
+                                                    mobileLabel="State"
                                                     value={field.value}
                                                     options={stateOptions}
                                                     placeholder={
@@ -712,6 +714,8 @@ export function ProfilePage() {
                                                 <OptionCombobox
                                                     id="profile-city"
                                                     size="lg"
+                                                    mobileDrawer
+                                                    mobileLabel="City"
                                                     value={field.value}
                                                     options={cityOptions}
                                                     searchDebounceMs={CITY_SEARCH_DEBOUNCE_MS}
@@ -757,7 +761,10 @@ export function ProfilePage() {
                                             <LocalityCombobox
                                                 id="profile-areas"
                                                 inputRef={field.ref}
+                                                mobileTriggerRef={field.ref}
                                                 multiple
+                                                mobileDrawer
+                                                mobileLabel="Areas you work"
                                                 size="lg"
                                                 cityId={selectedCity?.id}
                                                 value={field.value}
@@ -902,8 +909,11 @@ export function ProfilePage() {
                                         <LocalityCombobox
                                             id="profile-preferred-localities"
                                             multiple
+                                            mobileDrawer
+                                            mobileLabel="Preferred localities"
                                             size="lg"
                                             inputRef={field.ref}
+                                            mobileTriggerRef={field.ref}
                                             value={parseCommaList(field.value)}
                                             options={(
                                                 profile?.owner?.preferredLocalities ?? []

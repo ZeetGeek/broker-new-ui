@@ -10,6 +10,7 @@ import {
 } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 import { useMarketCurrency } from "@/hooks/use-market";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import {
     type AppIcon,
@@ -25,6 +26,8 @@ import {
     Search,
     Trees,
 } from "@/components/shared/icons";
+import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
+import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import { EditableRangeValuePill } from "@/components/shared/range-value-pill";
 import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Button } from "@/components/ui/button";
@@ -72,6 +75,7 @@ function DiscoveryWhereMenu({
     value: string;
     onChange: (value: string) => void;
 }) {
+    const mobile = useMobileMenu();
     const [open, setOpen] = useState(false);
     const [draft, setDraft] = useState(value);
 
@@ -79,6 +83,81 @@ function DiscoveryWhereMenu({
         onChange(draft.trim());
         setOpen(false);
     };
+
+    const trigger = (
+        <button
+            type="button"
+            className={cn(
+                "flex items-center gap-3 rounded-control border border-border-warm bg-surface px-4 py-3 text-start shadow-sm transition-[border-color,background-color,box-shadow] duration-160 inline-full min-block-12 hover:border-ink/25 hover:bg-surface-muted/50 focus-visible:ring-2 focus-visible:ring-brand",
+                value && "border-brand/45 bg-brand-soft/35",
+            )}
+        >
+            <MapPin
+                aria-hidden
+                className="shrink-0 text-brand block-5 inline-5"
+                strokeWidth={1.75}
+            />
+            <span className="flex flex-1 flex-col min-inline-0">
+                <span className="text-xs font-medium text-ink-muted">Where</span>
+                <span className="truncate text-sm font-medium text-ink">
+                    {formatPlaceName(value) || "Anywhere"}
+                </span>
+            </span>
+        </button>
+    );
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={(next) => {
+                    setOpen(next);
+                    if (next) setDraft(value);
+                }}
+                title="Where"
+                description="Pick a city or locality"
+                trigger={trigger}
+            >
+                <div className="sticky inset-bs-0 z-10 bg-surface pbe-3">
+                    <Input
+                        size="md"
+                        startIcon={Search}
+                        value={draft}
+                        onValueChange={setDraft}
+                        placeholder="Search places"
+                        aria-label="Search city or locality"
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                event.preventDefault();
+                                commit();
+                            }
+                        }}
+                    />
+                </div>
+                <button
+                    type="button"
+                    onClick={() => {
+                        setDraft("");
+                        onChange("");
+                        setOpen(false);
+                    }}
+                    className="flex items-center gap-3 rounded-inner p-3 text-start inline-full min-block-14 hover:bg-surface-muted"
+                >
+                    <MapPin aria-hidden className="text-brand block-5 inline-5" />
+                    <span className="flex flex-1 flex-col">
+                        <span className="text-sm font-medium text-ink">Anywhere</span>
+                        <span className="text-xs text-ink-muted">All listed properties</span>
+                    </span>
+                    {!value ? <Check aria-hidden className="text-brand" /> : null}
+                </button>
+                {draft.trim() ? (
+                    <Button type="button" className="mbs-2 inline-full" onClick={commit}>
+                        Use “{draft.trim()}”
+                    </Button>
+                ) : null}
+            </MobileActionDrawer>
+        );
+    }
 
     return (
         <DropdownMenu
@@ -88,37 +167,7 @@ function DiscoveryWhereMenu({
                 if (next) setDraft(value);
             }}
         >
-            <DropdownMenuTrigger
-                className="flex inline-full min-inline-0"
-                render={
-                    <button
-                        type="button"
-                        className={cn(
-                            `
-                              flex items-center gap-3 rounded-control border border-border-warm
-                              bg-surface px-4 py-3 text-start shadow-sm
-                              transition-[border-color,background-color,box-shadow] duration-160
-                              inline-full min-block-12
-                              hover:border-ink/25 hover:bg-surface-muted/50
-                              focus-visible:ring-2 focus-visible:ring-brand
-                            `,
-                            value && "border-brand/45 bg-brand-soft/35",
-                        )}
-                    >
-                        <MapPin
-                            aria-hidden
-                            className="shrink-0 text-brand block-5 inline-5"
-                            strokeWidth={1.75}
-                        />
-                        <span className="flex flex-1 flex-col min-inline-0">
-                            <span className="text-xs font-medium text-ink-muted">Where</span>
-                            <span className="truncate text-sm font-medium text-ink">
-                                {formatPlaceName(value) || "Anywhere"}
-                            </span>
-                        </span>
-                    </button>
-                }
-            />
+            <DropdownMenuTrigger className="flex inline-full min-inline-0" render={trigger} />
             <DropdownMenuContent
                 align="start"
                 sideOffset={8}
@@ -514,23 +563,38 @@ function Choice({
     onChange: (value: string) => void;
 }) {
     const id = useId();
+    const mobile = useMobileMenu();
     return (
         <div className="flex flex-col gap-2 min-inline-0">
             <label id={id} className="text-sm font-medium text-ink">
                 {label}
             </label>
-            <Select items={options} value={value} onValueChange={(next) => onChange(next ?? "")}>
-                <SelectTrigger size="md" aria-labelledby={id}>
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectPopup>
-                    {options.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                        </SelectItem>
-                    ))}
-                </SelectPopup>
-            </Select>
+            {mobile ? (
+                <MobileSelectDrawer
+                    id={id}
+                    label={label}
+                    value={value}
+                    options={options}
+                    onChange={onChange}
+                />
+            ) : (
+                <Select
+                    items={options}
+                    value={value}
+                    onValueChange={(next) => onChange(next ?? "")}
+                >
+                    <SelectTrigger size="md" aria-labelledby={id}>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectPopup>
+                        {options.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectPopup>
+                </Select>
+            )}
         </div>
     );
 }

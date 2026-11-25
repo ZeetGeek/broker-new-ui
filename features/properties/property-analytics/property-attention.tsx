@@ -4,26 +4,42 @@ import { useEffect, useState } from "react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { isMockMode } from "@/lib/api/mock-mode";
 import { pipelineApi } from "@/lib/api/pipeline";
 import { siteVisitsApi } from "@/lib/api/site-visits";
+import { getTestLabSettings, isTestSampleMode } from "@/lib/testing/test-lab";
 import { cn } from "@/lib/utils";
 import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 
+import { EmptyState } from "@/components/empty-state";
 import { CalendarCheck, CheckCircle2, ChevronRight, Clock, Info } from "@/components/shared/icons";
 import { Skeleton } from "@/components/shared/skeleton";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
+import { PREVIEW_PROPERTY_ANALYTICS, PREVIEW_PROPERTY_ATTENTION } from "@/config";
 import { useVisitsLive, VISITS_KEY } from "@/features/new-site-visits/use-visits";
 import { DEFAULT_DEALS_FILTERS } from "@/features/pipeline/types";
 import { AnalyticsCard } from "@/features/properties/property-analytics/analytics-card";
+import { BrokerAttentionPreview } from "@/features/properties/property-analytics/broker-attention-preview";
 import { buildPropertyAttention } from "@/features/properties/property-analytics/property-attention-model";
+import { TASK_QUERY_ROOT } from "@/features/tasks/preview-store";
 import { useTasks } from "@/features/tasks/task-store";
 import { useAppSelector } from "@/store/hooks";
 
 import styles from "./broker-property-analytics.module.css";
 
 export function PropertyAttention({ propertyId }: { propertyId: string }) {
+    if (
+        (isMockMode() && !isTestSampleMode()) ||
+        (getTestLabSettings().source === "default" &&
+            (PREVIEW_PROPERTY_ATTENTION || PREVIEW_PROPERTY_ANALYTICS))
+    )
+        return <BrokerAttentionPreview />;
+    return <LivePropertyAttention propertyId={propertyId} />;
+}
+
+function LivePropertyAttention({ propertyId }: { propertyId: string }) {
     const accountId = useAppSelector((state) => state.auth.user?.id) ?? "design-preview";
     const taskData = useTasks(accountId);
     const queryClient = useQueryClient();
@@ -76,7 +92,7 @@ export function PropertyAttention({ propertyId }: { propertyId: string }) {
         void queryClient.invalidateQueries({
             predicate: (query) =>
                 query.queryKey[1] === accountId &&
-                ["tasks", "private-tasks-mock-v8"].includes(String(query.queryKey[0])),
+                ["tasks", TASK_QUERY_ROOT].includes(String(query.queryKey[0])),
         });
         void pipeline.refetch();
         void visits.refetch();
@@ -86,17 +102,17 @@ export function PropertyAttention({ propertyId }: { propertyId: string }) {
         <AnalyticsCard
             title="Needs your attention"
             titleId="broker-attention-heading"
-            description="Your Tasks, Pipeline and Visits for this property."
+            description="Tasks due, visit outcomes and client follow-ups."
             action={
                 loading ? (
                     <Skeleton className="block-7 inline-7" />
                 ) : (
                     <span
                         className={styles.count}
-                        aria-label={`${items.length} items${failed.length ? " from available sources" : ""}`}
+                        aria-label={`${items.length} ${items.length === 1 ? "item" : "items"}${failed.length ? " from available sources" : ""}`}
                     >
                         {items.length}
-                        {failed.length ? "+" : ""}
+                        {failed.length ? "+" : ""} {items.length === 1 ? "item" : "items"}
                     </span>
                 )
             }
@@ -136,48 +152,44 @@ export function PropertyAttention({ propertyId }: { propertyId: string }) {
                     <ul className={styles.attentionList}>
                         {items.map((item) => (
                             <li key={item.id}>
-                                <span
-                                    className={cn(
-                                        styles.taskIcon,
-                                        item.urgent && styles.taskUrgent,
-                                    )}
-                                >
-                                    {item.source === "Visits" ? (
-                                        <CalendarCheck size={18} aria-hidden />
-                                    ) : (
-                                        <Clock size={18} aria-hidden />
-                                    )}
-                                </span>
-                                <div className={styles.taskCopy}>
-                                    <Link href={item.href} className={styles.attentionTitle}>
-                                        {item.title}
-                                    </Link>
-                                    <p>{item.detail}</p>
-                                    <span className={styles.attentionSource}>{item.source}</span>
-                                </div>
-                                <Button
-                                    nativeButton={false}
-                                    render={<Link href={item.href} />}
-                                    variant="ghost"
-                                    size="icon"
-                                    aria-label={`Open ${item.source}: ${item.title}`}
-                                >
-                                    <ChevronRight aria-hidden />
-                                </Button>
+                                <Link href={item.href} className={styles.attentionRow}>
+                                    <span
+                                        className={cn(
+                                            styles.taskIcon,
+                                            item.urgent && styles.taskUrgent,
+                                        )}
+                                    >
+                                        {item.source === "Visits" ? (
+                                            <CalendarCheck size={18} aria-hidden />
+                                        ) : (
+                                            <Clock size={18} aria-hidden />
+                                        )}
+                                    </span>
+                                    <div className={styles.taskCopy}>
+                                        <span className={styles.attentionTitle}>{item.title}</span>
+                                        <p>{item.detail}</p>
+                                    </div>
+                                    <span className={styles.attentionAction}>
+                                        <span>
+                                            {item.source === "Tasks"
+                                                ? "Open task"
+                                                : item.source === "Visits"
+                                                  ? "Open visit"
+                                                  : "Open deal"}
+                                        </span>
+                                        <ChevronRight aria-hidden />
+                                    </span>
+                                </Link>
                             </li>
                         ))}
                     </ul>
                 ) : !failed.length ? (
-                    <div className={styles.empty}>
-                        <CheckCircle2 size={26} aria-hidden />
-                        <div>
-                            <strong>You’re up to date</strong>
-                            <p>
-                                No tasks due today, visits awaiting an outcome or quiet deals for
-                                this property.
-                            </p>
-                        </div>
-                    </div>
+                    <EmptyState
+                        size="card"
+                        icon={CheckCircle2}
+                        heading="You're up to date"
+                        description="No tasks, visits or client follow-ups need attention for this property."
+                    />
                 ) : null}
             </div>
         </AnalyticsCard>

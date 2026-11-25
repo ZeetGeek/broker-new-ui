@@ -13,7 +13,6 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding-block: 0.25rem;
     flex-wrap: wrap;
 }
 .header h1 {
@@ -21,35 +20,6 @@
 }
 .workspace {
     gap: 1.5rem;
-}
-.toolbar {
-    container: list-toolbar / inline-size;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    min-inline-size: 0;
-}
-.filterTabs {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-inline-size: 0;
-    max-inline-size: 100%;
-}
-.tools {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-inline-start: auto;
-    min-inline-size: 0;
-    max-inline-size: 100%;
-}
-.searchField {
-    inline-size: min(17.5rem, 100%);
-    min-inline-size: 0;
-    justify-self: end;
 }
 .smallCount {
     display: inline-flex;
@@ -343,66 +313,9 @@
     font-weight: 600;
     margin-block: 1.75rem 0.5rem;
 }
-@container tasks-page (max-width: 959px) {
-    .toolbar {
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 0.75rem;
-    }
-    .filterTabs {
-        grid-column: 1 / -1;
-    }
-    .searchField {
-        inline-size: 100%;
-    }
-}
 @container tasks-page (max-width: 639px) {
     .workspace {
         gap: 1rem;
-    }
-    .toolbar {
-        gap: 0.5rem;
-    }
-    .filterTabs {
-        grid-row: 1;
-        gap: 0.5rem;
-        padding-inline-end: calc(var(--touch-target-min) + 0.5rem);
-    }
-    .filterTabs .filterButton,
-    .filterTabs :global([data-slot="select-trigger"]) {
-        min-block-size: var(--touch-target-min);
-        block-size: auto;
-    }
-    .filterButton[aria-pressed="true"] {
-        padding-inline-end: calc(var(--touch-target-min) + 0.25rem);
-    }
-    .filterTabs :global(button[data-icon-button]) {
-        --icon-button-size: var(--touch-target-min);
-    }
-    .searchField {
-        grid-column: 1;
-        grid-row: 2;
-    }
-    .tools {
-        display: contents;
-    }
-    .sortButton {
-        grid-column: 2;
-        grid-row: 1;
-        justify-self: end;
-        justify-content: center;
-        inline-size: var(--touch-target-min);
-        min-inline-size: var(--touch-target-min);
-        min-block-size: var(--touch-target-min);
-        padding: 0;
-    }
-    .sortButton > span,
-    .sortButton > svg:last-child {
-        display: none;
-    }
-    .addButton {
-        grid-column: 2;
-        grid-row: 2;
-        min-block-size: var(--touch-target-min);
     }
     .loading {
         grid-template-columns: minmax(0, 1fr);

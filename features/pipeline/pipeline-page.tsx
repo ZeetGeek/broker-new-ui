@@ -12,6 +12,7 @@ import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 import { useDebouncedValue } from "@/hooks/use-locations";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import toast, { showAppToast } from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AlertCircle } from "@/components/shared/icons";
@@ -643,7 +644,6 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
 
     const handlers = useMemo<DealCardHandlers>(
         () => ({
-            onQuickAdvance: moveOptimistically,
             onView: (dealId) => {
                 openLeadView(dealId);
             },
@@ -703,7 +703,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 setNoteDealId(dealId);
             },
         }),
-        [moveOptimistically, openLeadView, requestMove, setPrefs, stageGate],
+        [openLeadView, requestMove, setPrefs, stageGate],
     );
 
     const handlePatch = useCallback(
@@ -791,7 +791,6 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 handlers={handlers}
                 isBusy={busyId === deal.id}
                 isPinned={pinnedDealIds.includes(deal.id)}
-                showStageAction={!desktopBoard}
             />
         );
     }
@@ -812,12 +811,12 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     };
 
     return (
-        <Tabs value={view} className="gap-3 min-inline-0 md:gap-5" onValueChange={selectView}>
+        <Tabs value={view} className="gap-4 min-inline-0 md:gap-5" onValueChange={selectView}>
             {isFirstLoad && isFetching ? (
                 <PipelineHeaderSkeleton />
             ) : (
                 <>
-                    <div className="flex items-center justify-between gap-2 min-inline-0">
+                    <PortalSectionNav>
                         <PipelineIntro
                             deals={view === "board" ? liveDeals : outcomeDeals}
                             view={view}
@@ -825,19 +824,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                             isLoading={isFirstLoad && isFetching}
                             hasError={error != null}
                         />
-                        <div className="max-inline-[55%] min-inline-0 md:hidden">
-                            <PipelineOutcomeTabs
-                                compact
-                                onChange={selectView}
-                                view={view}
-                                counts={{
-                                    board: summary?.liveTotal ?? null,
-                                    sold: summary?.closedCount ?? null,
-                                    lost: summary?.lostCount ?? null,
-                                }}
-                            />
-                        </div>
-                    </div>
+                    </PortalSectionNav>
                     {filters.stage ? (
                         <div className="body-sm flex flex-wrap items-center gap-3 text-ink-muted">
                             <span>Showing {DEAL_STAGE_META[filters.stage].label} deals</span>
@@ -856,6 +843,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         leading={
                             <>
                                 <PipelineOutcomeTabs
+                                    compact={!desktopBoard}
                                     onChange={selectView}
                                     view={view}
                                     isLoading={isFirstLoad && isFetching}
@@ -960,6 +948,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                             />
                         ) : (
                             <PipelineMobileBoard
+                                stageFilter={filters.stage}
                                 active={mobileStage}
                                 onChange={setMobileStage}
                                 dealsByStage={dealsByStage}

@@ -1,26 +1,32 @@
 import type { UserProfile } from "@/lib/api/profile";
 import type { AuthUser } from "@/lib/auth/session";
-
-import { USE_MOCK_DATA } from "@/config";
+import { getTestLabSettings, isSampleDataEnabled, isTestSampleMode } from "@/lib/testing/test-lab";
 
 export const MOCK_ACCESS_TOKEN = "design-mock-access-token";
 
 export function isMockMode(): boolean {
-    return USE_MOCK_DATA;
+    return isSampleDataEnabled();
 }
 
+const lab = getTestLabSettings();
+const sample = isTestSampleMode();
+const newAccount = sample && lab.account === "new";
+const emptyWorkspace = sample && lab.volume === "empty";
+const incomplete = sample && (lab.account === "incomplete" || newAccount);
+
 export const MOCK_AUTH_USER: AuthUser = {
-    id: "user_design_broker",
+    id: sample ? `test-lab-${lab.portal}-${lab.accountType}` : "user_design_broker",
     email: "zeet.patel@gmail.com",
-    role: "broker",
+    role: sample ? lab.portal : "broker",
     fullName: "Zeet Patel",
     phone: "9876543210",
     city: "Mumbai",
-    accountType: "individual",
-    orgName: null,
+    accountType: sample ? lab.accountType : "individual",
+    orgName: sample && lab.accountType === "organization" ? "Sample Property Group" : null,
     avatarUrl: null,
     authProvider: "email",
-    isEmailVerified: true,
+    isEmailVerified: !(sample && lab.account === "unverified"),
+    createdAt: new Date(Date.now() - (newAccount ? 0 : 90 * 86_400_000)).toISOString(),
     country: {
         id: "country-in",
         name: "India",
@@ -32,37 +38,49 @@ export const MOCK_AUTH_USER: AuthUser = {
 
 /** Complete enough that owner-listings is not blocked on RERA / service areas. */
 export const MOCK_PROFILE: UserProfile = {
-    id: "user_design_broker",
+    id: MOCK_AUTH_USER.id,
     email: "zeet.patel@gmail.com",
     phone: "+919876543210",
-    role: "broker",
+    role: MOCK_AUTH_USER.role,
     fullName: "Zeet Patel",
     city: "Mumbai",
     state: "Maharashtra",
     country: "India",
-    accountType: "individual",
-    orgName: null,
+    accountType: MOCK_AUTH_USER.accountType ?? "individual",
+    orgName: MOCK_AUTH_USER.orgName,
     avatarUrl: null,
     authProvider: "email",
-    isEmailVerified: true,
-    profileType: "broker",
-    accountLabel: "Independent broker",
+    isEmailVerified: MOCK_AUTH_USER.isEmailVerified ?? true,
+    profileType: sample ? lab.portal : "broker",
+    accountLabel:
+        sample && lab.accountType === "organization"
+            ? lab.portal === "owner"
+                ? "Builder company"
+                : "Broker agency"
+            : sample && lab.portal === "owner"
+              ? "Independent owner"
+              : "Independent broker",
     verified: false,
-    licenseNumber: "MH-RERA-12345",
+    licenseNumber: incomplete ? null : "MH-RERA-12345",
     reraState: "Maharashtra",
     experienceYears: 6,
-    notifications: { unreadCount: 4, whatsapp: true, sms: false, email: true },
+    notifications: {
+        unreadCount: emptyWorkspace ? 0 : 4,
+        whatsapp: true,
+        sms: false,
+        email: true,
+    },
     broker: {
         id: "broker_design",
         experienceYears: 6,
         specializations: ["Residential", "Resale"],
-        serviceAreas: ["Andheri West", "Baner", "Satellite"],
-        licenseNumber: "MH-RERA-12345",
+        serviceAreas: incomplete ? [] : ["Andheri West", "Baner", "Satellite"],
+        licenseNumber: incomplete ? null : "MH-RERA-12345",
         reraState: "Maharashtra",
         bio: "Helping families find homes in Andheri West, Baner and Satellite.",
         publicSlug: "zeet-patel",
         verified: false,
-        dealsClosed: 14,
+        dealsClosed: emptyWorkspace ? 0 : 14,
         avgDaysToClose: 21,
     },
 };

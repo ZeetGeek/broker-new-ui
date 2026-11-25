@@ -1,3 +1,5 @@
+import { testData } from "@/lib/testing/test-data";
+import { getTestLabSettings, isTestSampleMode } from "@/lib/testing/test-lab";
 import { dateAtIstOffset } from "@/lib/visits/time";
 
 import type {
@@ -9,9 +11,12 @@ import type {
 } from "@/features/site-visits/broker/model";
 
 /** Opt in with NEXT_PUBLIC_USE_MOCK_VISITS=true. Real /slots APIs are used by default. */
-export const USE_MOCK_VISITS = process.env.NEXT_PUBLIC_USE_MOCK_VISITS === "true";
+export const USE_MOCK_VISITS =
+    isTestSampleMode() ||
+    (getTestLabSettings().source === "default" &&
+        process.env.NEXT_PUBLIC_USE_MOCK_VISITS === "true");
 
-export const MOCK_BUYERS: PersonSummary[] = [
+export const MOCK_BUYERS: PersonSummary[] = testData([
     {
         id: "b_123",
         name: "Aarav Shah",
@@ -36,7 +41,7 @@ export const MOCK_BUYERS: PersonSummary[] = [
         phoneDigits: "9898123401",
         requirement: "3 BHK on rent · Andheri West · up to ₹45,000/mo",
     },
-];
+]);
 
 const OWNERS: PersonSummary[] = [
     { id: "o_1", name: "Zeet Patel", phoneDigits: "9879012345" },
@@ -45,7 +50,7 @@ const OWNERS: PersonSummary[] = [
     { id: "o_4", name: "Manish Vora", phoneDigits: "9825044556" },
 ];
 
-export const MOCK_PROPERTIES: VisitPropertySummary[] = [
+export const MOCK_PROPERTIES: VisitPropertySummary[] = testData([
     {
         id: "p_1",
         title: "Shreeji Heights",
@@ -121,7 +126,7 @@ export const MOCK_PROPERTIES: VisitPropertySummary[] = [
         latitude: 18.5362,
         longitude: 73.8937,
     },
-];
+]);
 
 function visit(
     index: number,
@@ -163,7 +168,7 @@ function visit(
     };
 }
 
-export const MOCK_SITE_VISITS: BrokerSiteVisit[] = [
+export const MOCK_SITE_VISITS: BrokerSiteVisit[] = testData([
     visit(0, 0, 9, 30, "completed", ["b_123"], { outcome: undefined }),
     visit(1, 0, 12, 0, "confirmed", ["b_204"]),
     visit(2, 0, 16, 0, "confirmed", ["b_318"]),
@@ -185,7 +190,7 @@ export const MOCK_SITE_VISITS: BrokerSiteVisit[] = [
             followUpAt: dateAtIstOffset(1, 11, 0),
         },
     }),
-];
+]);
 
 function makeSlot(
     property: VisitPropertySummary,
@@ -294,7 +299,7 @@ export const MOCK_PROPERTIES_WITH_SLOTS: PropertyWithSlots[] = MOCK_PROPERTIES.m
     },
 );
 
-export const MOCK_TIME_REQUESTS: TimeRequest[] = [
+export const MOCK_TIME_REQUESTS: TimeRequest[] = testData([
     {
         id: "tr_1",
         propertyId: "p_1",
@@ -366,4 +371,4 @@ export const MOCK_TIME_REQUESTS: TimeRequest[] = [
         owner: OWNERS[3],
         buyers: [MOCK_BUYERS[3]],
     },
-];
+]);

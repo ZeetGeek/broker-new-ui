@@ -21,6 +21,8 @@ import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import { FEATURE_SAVED_PROPERTIES } from "@/config";
+
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import type { AreaPropertyItem } from "./mock-data";
@@ -180,28 +182,30 @@ function PropertyRow({
                     >
                         {state.hasRequested ? "Requested" : "Request"}
                     </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-sm"
-                        aria-label={
-                            state.isBookmarked
-                                ? `Remove bookmark for ${property.configLabel} in ${property.locality}`
-                                : `Bookmark ${property.configLabel} in ${property.locality}`
-                        }
-                        aria-pressed={state.isBookmarked}
-                        onClick={onToggleBookmark}
-                        className="border-2 border-border-warm"
-                    >
-                        <Bookmark
-                            aria-hidden
-                            className={cn(
-                                "block-4 inline-4",
-                                state.isBookmarked && "fill-brand text-brand",
-                            )}
-                            strokeWidth={1.75}
-                        />
-                    </Button>
+                    {FEATURE_SAVED_PROPERTIES ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="icon-sm"
+                            aria-label={
+                                state.isBookmarked
+                                    ? `Remove bookmark for ${property.configLabel} in ${property.locality}`
+                                    : `Bookmark ${property.configLabel} in ${property.locality}`
+                            }
+                            aria-pressed={state.isBookmarked}
+                            onClick={onToggleBookmark}
+                            className="border-2 border-border-warm"
+                        >
+                            <Bookmark
+                                aria-hidden
+                                className={cn(
+                                    "block-4 inline-4",
+                                    state.isBookmarked && "fill-brand text-brand",
+                                )}
+                                strokeWidth={1.75}
+                            />
+                        </Button>
+                    ) : null}
                 </div>
             </div>
         </li>
@@ -239,6 +243,7 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
     const [requestingId, setRequestingId] = useState<string | null>(null);
 
     async function toggleBookmark(id: string) {
+        if (!FEATURE_SAVED_PROPERTIES) return;
         const current = rowState[id];
         if (!current) return;
         const nextSaved = !current.isBookmarked;

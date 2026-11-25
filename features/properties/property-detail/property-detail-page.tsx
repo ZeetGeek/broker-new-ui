@@ -9,23 +9,20 @@ import { myListingsApi } from "@/lib/api/my-listings";
 import { representativeApi } from "@/lib/api/representative";
 import { summarizePropertyBrokers } from "@/lib/format/property-brokers";
 import { useParams, useRouter, useSearchParams } from "@/lib/navigation";
-import {
-    BROKER_OWNER_LISTINGS_HREF,
-    BROKER_YOUR_LISTINGS_HREF,
-    brokerPropertyEditHref,
-} from "@/lib/routes/broker";
+import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyEditHref } from "@/lib/routes/broker";
 import {
     OWNER_PROPERTIES_HREF,
     OWNER_REQUESTS_HREF,
     ownerPropertyEditHref,
 } from "@/lib/routes/owner";
 
+import { EmptyState } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
+import { Building2, RefreshCw } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
-import { FEATURE_PLATFORM_OWNER } from "@/config";
 import { AnalyticsSkeleton } from "@/features/properties/property-analytics/analytics-skeleton";
 import { PropertyActionRail } from "@/features/properties/property-detail/property-action-rail";
 import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
@@ -46,6 +43,12 @@ const PropertyAnalyticsContent = dynamic(
             (module) => module.PropertyAnalyticsContent,
         ),
     { loading: () => <AnalyticsSkeleton /> },
+);
+
+const PropertyAnalyticsMetadata = dynamic(() =>
+    import("../property-analytics/property-analytics-content").then(
+        (module) => module.PropertyAnalyticsMetadata,
+    ),
 );
 
 const PROPERTY_TABS = [
@@ -159,6 +162,11 @@ function OwnedPropertyDetail({
                     ) : undefined
                 }
                 panelLabelId={portal === "broker" ? `property-${activeTab}-tab` : undefined}
+                headerMetadata={
+                    activeTab === "analytics" ? (
+                        <PropertyAnalyticsMetadata propertyId={item.id} listing={item} />
+                    ) : undefined
+                }
                 analytics={
                     activeTab === "analytics" ? (
                         <PropertyAnalyticsContent propertyId={item.id} listing={item} />
@@ -227,13 +235,7 @@ function OwnedPropertyDetail({
     );
 }
 
-function BrowsePropertyFallback({
-    propertyId,
-    portal,
-}: {
-    propertyId: string;
-    portal: "broker" | "owner";
-}) {
+function BrowsePropertyFallback({ portal }: { propertyId: string; portal: "broker" | "owner" }) {
     if (portal === "owner") {
         return (
             <div className="flex flex-col items-center gap-4 py-16 text-center">
@@ -253,27 +255,13 @@ function BrowsePropertyFallback({
     }
 
     return (
-        <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <h1 className="h3">Property {propertyId}</h1>
-            <p className="body max-w-prose text-ink-muted">
-                This listing isn&apos;t in your inventory or may have been removed. Go back to Your
-                listings to choose another property.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-                {FEATURE_PLATFORM_OWNER ? (
-                    <Button
-                        variant="accent"
-                        className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-                        render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
-                    >
-                        Browse Marketplace
-                    </Button>
-                ) : null}
-                <Button variant="outline" render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}>
-                    My Listings
-                </Button>
-            </div>
-        </div>
+        <EmptyState
+            size="page"
+            icon={Building2}
+            heading="Property no longer available"
+            description="It may have been removed. Open My Listings to choose another property."
+            action={{ label: "Open My Listings", icon: Building2, href: BROKER_YOUR_LISTINGS_HREF }}
+        />
     );
 }
 
@@ -289,6 +277,22 @@ export function PropertyDetailPage({ portal = "broker" }: { portal?: "broker" | 
 
     if (query.isPending) return <PropertyDetailSkeleton />;
     if (query.isError) {
+        if (portal === "broker")
+            return (
+                <EmptyState
+                    size="page"
+                    variant="error"
+                    icon={Building2}
+                    heading="Could not load this property"
+                    description="Check your connection and try again."
+                    action={{
+                        label: "Try again",
+                        icon: RefreshCw,
+                        onClick: () => void query.refetch(),
+                        disabled: query.isFetching,
+                    }}
+                />
+            );
         return (
             <div role="alert" className="flex flex-col items-start gap-4 py-16">
                 <h1 className="h3">Could not load property</h1>

@@ -6,6 +6,17 @@ export type SearchHelp = {
 
 /** Keep each list aligned with the fields searched by that page's matcher. */
 export const CRM_SEARCH_HELP = {
+    history: {
+        fields: [
+            "Notification or update title",
+            "Message or update details",
+            "Names, properties or areas shown in the text",
+            "Type, such as Visits or Clients",
+        ],
+        example: "Arjun Andheri",
+        filterNote:
+            "Search checks loaded history only. Your selected type and read status still apply.",
+    },
     clients: {
         fields: [
             "Client name",

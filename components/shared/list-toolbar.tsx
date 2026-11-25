@@ -5,17 +5,20 @@ import { type ComponentProps, useEffect, useRef, useState } from "react";
 import type { SearchHelp } from "@/lib/search/search-help";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { filterChipClassName } from "@/components/shared/filter-chip";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     type AppIcon,
     ArrowDownUp,
+    Check,
     ChevronDown,
     Info,
     Plus,
     Search,
 } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -38,6 +41,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useShortcutDisplayKeys } from "@/features/shortcuts/use-shortcut-display-keys";
 
 import searchStyles from "./list-search-field.module.css";
+import toolbarStyles from "./list-toolbar.module.css";
 
 export const LIST_SEARCH_WIDTH_CLASS =
     "min-inline-44 inline-44 sm:min-inline-52 sm:inline-52 lg:min-inline-64 lg:inline-64";
@@ -66,7 +70,7 @@ export function ListSearchField({
     onChange,
     debounceMs = 300,
     fullWidth = false,
-    placeholder = "Search here...",
+    placeholder = "Search",
     searchHelp,
     className,
     wrapperClassName,
@@ -134,7 +138,7 @@ export function ListSearchField({
                 !searchHelp && wrapperClassName,
             )}
             className={cn(
-                "rounded-control border! border-border-warm bg-surface text-sm font-medium shadow-sm block-[38px]! hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20 pointer-coarse:min-block-11",
+                "rounded-control border! border-border-warm bg-surface text-sm! font-medium shadow-sm list-control hover:border-ink/25! focus-visible:border-ring! focus-visible:ring-2 focus-visible:ring-ring/20",
                 className,
             )}
         />
@@ -196,6 +200,7 @@ type ListToolbarSelectProps<T extends string> = {
     /** Explicitly highlight filters such as the visit date range. */
     active?: boolean;
     mobileLabel?: string;
+    mobileDrawer?: boolean;
     tooltip?: string;
     disabled?: boolean;
     className?: string;
@@ -210,11 +215,69 @@ export function ListToolbarSelect<T extends string>({
     defaultValue,
     active = defaultValue !== undefined && value !== defaultValue,
     mobileLabel,
+    mobileDrawer = true,
     tooltip,
     disabled = false,
     className,
 }: ListToolbarSelectProps<T>) {
+    const mobile = useMobileMenu();
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const selectedLabel = options.find((option) => option.value === value)?.label ?? value;
+    if (mobileDrawer && mobile) {
+        return (
+            <MobileActionDrawer
+                open={drawerOpen}
+                onOpenChange={setDrawerOpen}
+                title={label}
+                trigger={
+                    <button
+                        type="button"
+                        disabled={disabled}
+                        aria-label={`${label}: ${selectedLabel}`}
+                        className={cn(
+                            filterChipClassName(active),
+                            "gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:opacity-50",
+                            !active && "text-ink-muted",
+                            mobileLabel && toolbarStyles.compactSelect,
+                            className,
+                        )}
+                    >
+                        <ArrowDownUp
+                            aria-hidden
+                            className="text-brand block-4 inline-4"
+                            strokeWidth={1.75}
+                        />
+                        <span className={cn("truncate", mobileLabel && "hidden sm:inline")}>
+                            {selectedLabel}
+                        </span>
+                        {mobileLabel ? <span className="sm:hidden">{mobileLabel}</span> : null}
+                        <ChevronDown
+                            aria-hidden
+                            className="opacity-60 block-3.5 inline-3.5"
+                            strokeWidth={1.75}
+                        />
+                    </button>
+                }
+            >
+                {options.map((option) => (
+                    <button
+                        key={option.value}
+                        type="button"
+                        className={mobileActionClass}
+                        aria-pressed={value === option.value}
+                        disabled={option.disabled}
+                        onClick={() => {
+                            onChange(option.value);
+                            setDrawerOpen(false);
+                        }}
+                    >
+                        {option.label}
+                        {value === option.value ? <Check aria-hidden className="ms-auto" /> : null}
+                    </button>
+                ))}
+            </MobileActionDrawer>
+        );
+    }
     const trigger = (
         <DropdownMenuTrigger
             render={
@@ -226,6 +289,7 @@ export function ListToolbarSelect<T extends string>({
                         filterChipClassName(active),
                         "gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50",
                         !active && "text-ink-muted",
+                        mobileLabel && toolbarStyles.compactSelect,
                         className,
                     )}
                 />
@@ -268,6 +332,7 @@ export function ListToolbarSelect<T extends string>({
                         <DropdownMenuRadioItem
                             key={option.value}
                             value={option.value}
+                            closeOnClick
                             disabled={option.disabled}
                             className={cn(value === option.value && "font-semibold text-brand")}
                         >
@@ -305,12 +370,12 @@ export function ListAddButton({
             {...props}
             variant={variant}
             size="sm"
-            className={cn("gap-2 px-3.5 block-[38px]!", className)}
+            className={cn("gap-2 px-3.5 list-control", className)}
         >
             <Icon aria-hidden strokeWidth={1.75} />
             {label}
             {shortcut ? (
-                <KbdGroup className="gap-0.5 pointer-coarse:hidden">
+                <KbdGroup className="hidden gap-0.5 sm:inline-flex pointer-coarse:hidden">
                     {displayKeys.map((key) => (
                         <Kbd
                             key={key}

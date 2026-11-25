@@ -1,5 +1,8 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import { testSnapshot } from "@/lib/testing/test-data";
+import { getTestLabSettings } from "@/lib/testing/test-lab";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import { PREVIEW_PROPERTY_ANALYTICS } from "@/config";
 import {
@@ -8,7 +11,9 @@ import {
 } from "@/features/properties/property-analytics/mock-property-analytics";
 
 function shouldMockPropertyAnalytics(): boolean {
-    return isMockMode() || PREVIEW_PROPERTY_ANALYTICS;
+    return (
+        isMockMode() || (getTestLabSettings().source === "default" && PREVIEW_PROPERTY_ANALYTICS)
+    );
 }
 
 export const LEAD_STAGES = [
@@ -131,11 +136,11 @@ export type ListingsAnalytics = {
     properties: ListingsAnalyticsProperty[];
 };
 
-export const propertyAnalyticsApi = {
+export const propertyAnalyticsApi = withTestNetwork({
     /** `GET /properties/analytics` — lead counts for every listing in scope. */
     portfolio(signal?: AbortSignal) {
         if (isMockMode()) {
-            return Promise.resolve(getMockListingsAnalytics());
+            return Promise.resolve(testSnapshot(getMockListingsAnalytics()));
         }
         return apiFetch<ListingsAnalytics>("/properties/analytics", { signal });
     },
@@ -143,8 +148,8 @@ export const propertyAnalyticsApi = {
     /** `GET /properties/:id/analytics` — stages and each lead on one listing. */
     property(propertyId: string, signal?: AbortSignal) {
         if (shouldMockPropertyAnalytics()) {
-            return Promise.resolve(getMockPropertyAnalytics(propertyId));
+            return Promise.resolve(testSnapshot(getMockPropertyAnalytics(propertyId)));
         }
         return apiFetch<PropertyAnalytics>(`/properties/${propertyId}/analytics`, { signal });
     },
-};
+});

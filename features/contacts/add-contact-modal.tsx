@@ -58,9 +58,9 @@ export function AddContactModal({
                 title={tab === "client" ? "Add client" : "Add owner"}
                 size="lg"
                 padding="md"
-                nativeScroll
+                scrollBody={false}
                 className={CONTACT_FORM_DRAWER_CLASS}
-                bodyClassName="p-0! block-full"
+                bodyClassName="p-0!"
                 headerClassName="!space-y-0 !pbs-(--dialog-pad) !pbe-0"
                 header={
                     <div
@@ -105,12 +105,19 @@ export function AddContactModal({
                     id={`${id}-panel`}
                     role="tabpanel"
                     aria-labelledby={`${id}-${tab}`}
-                    className="block-full"
+                    className="flex flex-1 flex-col min-block-0"
                 >
-                    <div data-contact-create-panel hidden={tab !== "client"} className="block-full">
+                    <div
+                        data-contact-create-panel
+                        hidden={tab !== "client"}
+                        className="flex flex-1 flex-col min-block-0 [[hidden]]:hidden"
+                    >
                         <AddBuyerModal
                             open={open}
-                            onOpenChange={onOpenChange}
+                            onOpenChange={(next) => {
+                                if (!next && ownerState.isDirty) setTab("owner");
+                                else onOpenChange(next);
+                            }}
                             onCreated={onClientCreated}
                             embedded={{
                                 active: tab === "client",
@@ -118,10 +125,17 @@ export function AddContactModal({
                             }}
                         />
                     </div>
-                    <div data-contact-create-panel hidden={tab !== "owner"} className="block-full">
+                    <div
+                        data-contact-create-panel
+                        hidden={tab !== "owner"}
+                        className="flex flex-1 flex-col min-block-0 [[hidden]]:hidden"
+                    >
                         <AddOwnerModal
                             open={open}
-                            onOpenChange={onOpenChange}
+                            onOpenChange={(next) => {
+                                if (!next && clientState.isDirty) setTab("client");
+                                else onOpenChange(next);
+                            }}
                             onSaved={onOwnerSaved}
                             embedded={{ active: tab === "owner", onStateChange: updateOwnerState }}
                         />

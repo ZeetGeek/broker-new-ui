@@ -8,10 +8,11 @@ import {
     type ShortcutId,
     type ShortcutPortal,
 } from "@/lib/shortcuts";
+import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import {
+    Activity,
     Bell,
     Bookmark,
     Building2,
@@ -28,13 +29,13 @@ import {
     Plus,
     Send,
     Settings,
+    UserPlus,
     UserRound,
     UserRoundPlus,
     Users,
     Wallet,
 } from "@/components/shared/icons";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { useShortcutDisplayKeys } from "@/features/shortcuts/use-shortcut-display-keys";
 
@@ -61,11 +62,12 @@ const SHORTCUT_ICONS: Partial<Record<ShortcutId, ComponentType<IconProps>>> = {
     earnings: Wallet,
     referrals: Gift,
     notifications: Bell,
+    recent_updates: Activity,
     saved_properties: Bookmark,
     profile: UserRound,
     settings: Settings,
     add_property: Plus,
-    add_contact: Contact,
+    add_contact: UserPlus,
     add_owner: UserRoundPlus,
     schedule_visit: CalendarPlus,
     add_task: CheckCircle2,
@@ -89,42 +91,60 @@ function groupShortcuts(
     return groups;
 }
 
+/** tinykeys separates sequence steps with a space ("g d"); chords use "+". */
+function isSequence(shortcut: ShortcutDef): boolean {
+    return shortcut.keys.trim().includes(" ");
+}
+
 function ShortcutRow({ shortcut }: { shortcut: ShortcutDef }) {
     const Icon = SHORTCUT_ICONS[shortcut.id] ?? Keyboard;
     const displayKeys = useShortcutDisplayKeys(shortcut);
+    const sequence = isSequence(shortcut);
+    // Green marks shortcuts that act on the current page; navigation stays neutral.
+    const isPageAction = shortcut.scope !== "global";
 
     return (
-        <div
-            className="
-              group flex items-center gap-3 rounded-inner p-2 transition-colors duration-160
-              ease-out
-              hover:bg-surface-muted
-            "
-        >
+        <li className="flex items-center gap-3 px-2 py-1.5">
             <span
-                className="
-                      flex shrink-0 items-center justify-center rounded-control bg-surface-muted
-                      text-ink-muted transition-colors duration-160 block-8 inline-8
-                      group-hover:bg-surface
-                    "
+                className={cn(
+                    "flex shrink-0 items-center justify-center rounded-control block-8 inline-8",
+                    isPageAction
+                        ? "bg-brand-soft text-brand-text"
+                        : "bg-surface-muted/50 text-ink-muted",
+                )}
             >
                 <Icon aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
             </span>
 
-            <span className="body-sm flex-1 font-medium text-ink">{shortcut.label}</span>
+            <span className="body-sm flex-1 font-medium text-ink min-inline-0">
+                {shortcut.label}
+            </span>
 
-            <KbdGroup className="gap-1">
-                {displayKeys.map((key) => (
-                    <Kbd
-                        key={key}
-                        variant="surface"
-                        className="justify-center px-1.5 text-[11px] tracking-normal min-inline-6"
-                    >
-                        {key}
-                    </Kbd>
+            <KbdGroup
+                className="shrink-0 gap-1"
+                aria-label={`Shortcut: ${displayKeys.join(sequence ? " then " : " + ")}`}
+            >
+                {displayKeys.map((key, index) => (
+                    <span key={`${key}-${index}`} className="contents">
+                        {sequence && index > 0 ? (
+                            <span aria-hidden className="body-xs px-0.5 text-ink-subtle">
+                                then
+                            </span>
+                        ) : null}
+                        <Kbd
+                            aria-hidden
+                            variant="surface"
+                            className="
+                              justify-center border-border-warm px-1.5 text-xs tracking-normal
+                              text-ink block-6 min-inline-6
+                            "
+                        >
+                            {key}
+                        </Kbd>
+                    </span>
                 ))}
             </KbdGroup>
-        </div>
+        </li>
     );
 }
 
@@ -142,34 +162,43 @@ export function ShortcutsCheatsheet({
             open={open}
             onOpenChange={onOpenChange}
             title="Keyboard shortcuts"
-            bodyClassName="p-0"
             size="sm"
-            scrollBody={false}
-            className="gap-0 p-0 max-inline-sm"
+            padding="md"
+            bodyClassName="px-3 py-3"
+            footerClassName="border-bs border-(--dialog-divider) pbs-3 pbe-3"
             footer={
-                <AppModalFooter className="justify-center">
-                    <p
-                        className="
-                      body-xs border-bs border-border-warm px-6 py-3 text-center text-ink-subtle
-                    "
+                <p className="body-xs text-center text-ink-subtle">
+                    Press{" "}
+                    <Kbd
+                        variant="surface"
+                        className="border-border-warm p-0 align-middle text-ink block-5 inline-5"
                     >
-                        Press <Kbd variant="surface">?</Kbd> outside a text field to reopen this
-                    </p>
-                </AppModalFooter>
+                        ?
+                    </Kbd>{" "}
+                    anytime you are not typing to open this list
+                </p>
             }
         >
-            <ScrollArea className="max-block-96">
-                <div className="flex flex-col gap-4 p-4">
-                    {Array.from(groups.entries()).map(([group, shortcuts]) => (
-                        <div key={group} className="flex flex-col gap-0.5">
-                            <p className="eyebrow px-2 pbe-1 text-ink-subtle">{group}</p>
-                            {shortcuts.map((shortcut) => (
-                                <ShortcutRow key={shortcut.id} shortcut={shortcut} />
-                            ))}
-                        </div>
-                    ))}
-                </div>
-            </ScrollArea>
+            <div className="flex flex-col gap-5">
+                {Array.from(groups.entries()).map(([group, shortcuts]) => {
+                    const headingId = `shortcut-group-${group.toLowerCase().replace(/\s+/g, "-")}`;
+                    return (
+                        <section key={group} aria-labelledby={headingId}>
+                            <h3
+                                id={headingId}
+                                className="eyebrow sticky inset-bs-0 z-1 bg-surface px-2 py-1.5"
+                            >
+                                {group}
+                            </h3>
+                            <ul className="flex flex-col gap-0.5">
+                                {shortcuts.map((shortcut) => (
+                                    <ShortcutRow key={shortcut.id} shortcut={shortcut} />
+                                ))}
+                            </ul>
+                        </section>
+                    );
+                })}
+            </div>
         </AppModal>
     );
 }

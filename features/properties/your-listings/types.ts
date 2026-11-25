@@ -149,6 +149,8 @@ export type MyListingsFilters = {
 };
 
 export type MyListingsResult = {
+    clientsUnavailable?: boolean;
+    pinsUnavailable?: boolean;
     items: MyListingItem[];
     total: number;
     page: number;

@@ -1,9 +1,13 @@
-import { apiFetch } from "@/lib/api/client";
+import { ApiError, apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import { isTestSampleMode } from "@/lib/testing/test-lab";
+import { withTestNetwork } from "@/lib/testing/test-network";
 import {
     type ExclusiveOwnerFormValues,
     normalizeExclusiveOwnerPhone,
 } from "@/lib/validation/exclusive-owner";
+
+import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-my-listings";
 
 export type ExclusiveOwnerProperty = {
     id: string;
@@ -60,7 +64,53 @@ export type ExclusiveOwnerListQuery = {
 
 export type NewExclusiveOwnerInput = ExclusiveOwnerFormValues;
 
-const mockExclusiveOwners: ExclusiveOwnerItem[] = [];
+/** Live owner updates have no documented API contract in this frontend yet. */
+export function canEditExclusiveOwners(): boolean {
+    return isMockMode();
+}
+
+const mockExclusiveOwners: ExclusiveOwnerItem[] = isTestSampleMode()
+    ? MOCK_MY_LISTINGS_SEED.map((listing, index) => ({
+          id: listing.exclusiveOwnerId ?? `sample-owner-${listing.id}`,
+          fullName:
+              listing.ownerName ||
+              ["Aarav Shah", "Priya Desai", "Mehul Patel", "Nisha Mehta"][index % 4] +
+                  (index > 3 ? ` ${index + 1}` : ""),
+          name:
+              listing.ownerName ||
+              ["Aarav Shah", "Priya Desai", "Mehul Patel", "Nisha Mehta"][index % 4] +
+                  (index > 3 ? ` ${index + 1}` : ""),
+          phone: `+91980000${String(index).padStart(4, "0")}`,
+          email: null,
+          ownerType: "individual",
+          society: listing.society || "Sample society",
+          area: listing.locality,
+          country: "India",
+          state: null,
+          city: listing.city,
+          pincode: listing.pinCode,
+          fullAddress: listing.address,
+          reraNumber: null,
+          source: "personal_contact",
+          notes: "Sample owner for testing.",
+          propertyCount: 1,
+          properties: [
+              {
+                  id: listing.id,
+                  title: listing.title,
+                  city: listing.city,
+                  address: listing.address,
+                  photos: listing.imageSrcs,
+                  salePrice: listing.saleAmountInr,
+                  monthlyRent: listing.rentAmountInr,
+                  propertyType: listing.category,
+              },
+          ],
+          origin: "custom",
+          createdAt: listing.createdAt,
+          updatedAt: listing.updatedAt,
+      }))
+    : [];
 
 function digitsOnly(value: string): string {
     return value.replace(/\D/g, "");
@@ -102,14 +152,40 @@ function matchesSearch(item: ExclusiveOwnerItem, search?: string) {
         .includes(needle);
 }
 
-export const exclusiveOwnersApi = {
+export const exclusiveOwnersApi = withTestNetwork({
     async list(
         query: ExclusiveOwnerListQuery = {},
         signal?: AbortSignal,
     ): Promise<ExclusiveOwnerListPage> {
         if (isMockMode()) {
-            const filtered = mockExclusiveOwners.filter((item) =>
-                matchesSearch(item, query.search),
+            const { getMockMyListings } = await import("@/lib/api/my-listings");
+            const inventory = getMockMyListings();
+            const owners = mockExclusiveOwners.map((owner) => {
+                const properties = inventory.filter(
+                    (listing) => listing.exclusiveOwnerId === owner.id && !listing.deletedAt,
+                );
+                return {
+                    ...owner,
+                    propertyCount: properties.length,
+                    properties: properties.map((listing) => ({
+                        id: listing.id,
+                        title: listing.title,
+                        city: listing.city,
+                        address: listing.address,
+                        photos: listing.imageSrcs,
+                        salePrice: listing.saleAmountInr,
+                        monthlyRent: listing.rentAmountInr,
+                        propertyType: listing.category,
+                        bhkConfig: listing.configLabel,
+                    })),
+                };
+            });
+            const filtered = owners.filter((item) => matchesSearch(item, query.search));
+            filtered.sort((a, b) =>
+                query.sort === "name"
+                    ? a.fullName.localeCompare(b.fullName)
+                    : Date.parse(b.updatedAt || b.createdAt || "") -
+                          Date.parse(a.updatedAt || a.createdAt || "") || 0,
             );
             const page = query.page ?? 1;
             const limit = query.limit ?? 20;
@@ -170,6 +246,43 @@ export const exclusiveOwnersApi = {
         });
     },
 
+    async update(ownerId: string, input: NewExclusiveOwnerInput): Promise<ExclusiveOwnerItem> {
+        if (!isMockMode())
+            throw new Error(
+                "Owner editing is not available yet. Your existing details have not changed.",
+            );
+        const index = mockExclusiveOwners.findIndex((owner) => owner.id === ownerId);
+        if (index < 0) throw new ApiError("Owner not found", 404);
+        const payload = toPayload(input);
+        const current = mockExclusiveOwners[index];
+        const updated: ExclusiveOwnerItem = {
+            ...current,
+            ...payload,
+            name: payload.fullName,
+            email: payload.email ?? null,
+            society: payload.society ?? "",
+            area: payload.area ?? null,
+            country: payload.country ?? null,
+            state: payload.state ?? null,
+            city: payload.city ?? null,
+            pincode: payload.pincode ?? null,
+            fullAddress: payload.fullAddress ?? null,
+            reraNumber: payload.reraNumber ?? null,
+            source: payload.source ?? null,
+            notes: payload.notes ?? null,
+            updatedAt: new Date().toISOString(),
+        };
+        mockExclusiveOwners[index] = updated;
+        const { getMockMyListings } = await import("@/lib/api/my-listings");
+        for (const listing of getMockMyListings()) {
+            if (listing.exclusiveOwnerId === ownerId) {
+                listing.ownerName = updated.fullName;
+                listing.ownerPhoneDigits = exclusiveOwnerPhoneDigits(updated.phone);
+            }
+        }
+        return updated;
+    },
+
     async remove(ownerId: string): Promise<void> {
         if (isMockMode()) {
             const index = mockExclusiveOwners.findIndex((item) => item.id === ownerId);
@@ -178,7 +291,7 @@ export const exclusiveOwnersApi = {
         }
         await apiFetch<void>(`/exclusive-owners/${ownerId}`, { method: "DELETE" });
     },
-};
+});
 
 export function exclusiveOwnerPhoneDigits(phone: string): string {
     const digits = digitsOnly(phone);

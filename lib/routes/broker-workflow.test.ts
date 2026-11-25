@@ -59,4 +59,10 @@ test("account menu and broker shortcuts no longer expose unimplemented destinati
     assert.match(shell, /tasks: "\/broker\/tasks"/);
     assert.match(shell, /earnings: BROKER_EARNINGS_HREF/);
     assert.match(shell, /saved_properties: "\/broker\/saved-properties"/);
+    assert.match(shell, /FEATURE_SAVED_PROPERTIES \? \{ saved_properties:/);
+    const savedRoute = source("app/(role)/broker/saved-properties/page.tsx");
+    assert.match(
+        savedRoute,
+        /if \(!FEATURE_SAVED_PROPERTIES\) redirect\("\/broker\/my-listings"\)/,
+    );
 });

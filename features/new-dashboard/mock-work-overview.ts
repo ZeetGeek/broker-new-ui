@@ -1,3 +1,4 @@
+import { testData } from "@/lib/testing/test-data";
 /** Sample visits for the visit workflow's read-only "Sample visit" view. */
 export type PreviewVisitPhase = "upcoming" | "running" | "needs_update";
 
@@ -20,7 +21,7 @@ export type PreviewVisit = {
     commissionAmountInr?: number | null;
 };
 
-export const MOCK_VISITS: PreviewVisit[] = [
+export const MOCK_VISITS: PreviewVisit[] = testData([
     {
         id: "visit-1",
         coverImage: "/properties/1.jpg",
@@ -138,4 +139,4 @@ export const MOCK_VISITS: PreviewVisit[] = [
         isRent: false,
         commissionPercent: null,
     },
-];
+]);

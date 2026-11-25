@@ -4,6 +4,7 @@ import {
     propertiesApi,
     type PropertyBrowseCitiesResponse,
 } from "@/lib/api/properties";
+import { simulateTestRequest } from "@/lib/testing/test-network";
 
 import { buildOwnerListingsLocationTree } from "@/features/properties/owner-listings/build-owner-listings-location-tree";
 import { commissionRanges } from "@/features/properties/owner-listings/filter-owner-listings";
@@ -271,6 +272,7 @@ export async function fetchOwnerListings(
     context: OwnerListingsFilterContext = {},
     signal?: AbortSignal,
 ): Promise<OwnerListingsResult> {
+    await simulateTestRequest(signal);
     const limit = filters.limit || DEFAULT_OWNER_LISTINGS_FILTERS.limit;
     const cursor = filters.cursor?.trim() || null;
 
@@ -322,6 +324,7 @@ export async function fetchOwnerListings(
 }
 
 export async function fetchOwnerListingCities(signal?: AbortSignal) {
+    await simulateTestRequest(signal);
     if (isMockMode()) {
         return mockOwnerListingsCities();
     }

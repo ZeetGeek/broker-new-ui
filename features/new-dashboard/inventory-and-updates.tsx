@@ -8,7 +8,10 @@ import { isMockMode } from "@/lib/api/mock-mode";
 import { myListingsApi } from "@/lib/api/my-listings";
 import { formatRelativePast } from "@/lib/format/date";
 import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
+import { isTestSampleMode } from "@/lib/testing/test-lab";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
+import { EmptyState, LoadingState } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
 import { AvatarStack } from "@/components/shared/avatar-stack";
 import { CardLink } from "@/components/shared/card-link";
@@ -28,16 +31,17 @@ import {
     MapPin,
     Pencil,
     Plus,
+    RefreshCw,
     Trash2,
     UserRoundPlus,
     UserRoundSearch,
 } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import {
     listingCommissionTip,
     PriceWithCommission,
 } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
-import { Skeleton } from "@/components/shared/skeleton";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
@@ -50,6 +54,7 @@ import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
 import { activityIcon } from "./activity-icon";
+import { DashboardListingRowsSkeleton } from "./dashboard-skeleton";
 
 import styles from "./inventory-and-updates.module.css";
 
@@ -134,6 +139,8 @@ function AskingPrice({ listing }: { listing: MyListingItem }) {
 }
 
 function ListingClients({ listing }: { listing: MyListingItem }) {
+    const mobile = useMobileMenu();
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const clients = listing.attachedClients ?? [];
     if (listing.status === "draft") return <span className={styles.secondary}>Not published</span>;
     if (!clients.length) {
@@ -164,7 +171,29 @@ function ListingClients({ listing }: { listing: MyListingItem }) {
                 size="sm"
                 avatarClassName={styles.clientAvatar}
             />
-            {remaining.length ? (
+            {remaining.length && mobile ? (
+                <MobileActionDrawer
+                    open={drawerOpen}
+                    onOpenChange={setDrawerOpen}
+                    title="More clients"
+                    description={`${remaining.length} more ${remaining.length === 1 ? "client" : "clients"}`}
+                    trigger={
+                        <button
+                            type="button"
+                            className={styles.moreClients}
+                            aria-label={`View ${remaining.length} more clients`}
+                        >
+                            +{remaining.length} {remaining.length === 1 ? "Client" : "Clients"}
+                        </button>
+                    }
+                >
+                    {remaining.map((client) => (
+                        <div key={client.id} className={mobileActionClass}>
+                            {person(client)}
+                        </div>
+                    ))}
+                </MobileActionDrawer>
+            ) : remaining.length ? (
                 <Popover>
                     <PopoverTrigger
                         className={styles.moreClients}
@@ -222,7 +251,11 @@ function ListingRow({
                         className={styles.thumbnail}
                     />
                     <span className={styles.propertyText}>
-                        <span data-card-title className={styles.propertyTitle}>
+                        <span
+                            data-card-title
+                            className={styles.propertyTitle}
+                            title={listing.title}
+                        >
                             {listing.title}
                         </span>
                         <span className={styles.location}>
@@ -485,7 +518,7 @@ function previewListings(now: Date): MyListingItem[] {
 
 export function InventoryAndUpdates({ activity, now }: { activity: ActivityData; now: Date }) {
     // Demo mode has no API data, so it shows the sample listings and updates.
-    const preview = isMockMode();
+    const preview = isMockMode() && !isTestSampleMode();
     const [selectedTab, setSelectedTab] = useState<InventoryTab>("published");
     const queryClient = useQueryClient();
     const [deletingListing, setDeletingListing] = useState<MyListingItem | null>(null);
@@ -523,45 +556,6 @@ export function InventoryAndUpdates({ activity, now }: { activity: ActivityData;
     const [hasMoreUpdates, setHasMoreUpdates] = useState(false);
     const [updatesScrolled, setUpdatesScrolled] = useState(false);
 
-    useEffect(() => {
-        const viewport = updateViewportRef.current;
-        const content = updateContentRef.current;
-        if (!viewport || !content) return;
-        const measure = () => {
-            setHasMoreUpdates(
-                viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1,
-            );
-            setUpdatesScrolled(viewport.scrollTop > 1);
-        };
-        const observer = new ResizeObserver(measure);
-        observer.observe(viewport);
-        observer.observe(content);
-        viewport.addEventListener("scroll", measure, { passive: true });
-        return () => {
-            observer.disconnect();
-            viewport.removeEventListener("scroll", measure);
-        };
-    }, []);
-
-    useEffect(() => {
-        const viewport = listingViewportRef.current;
-        const content = listingContentRef.current;
-        if (!viewport || !content) return;
-        const measure = () => {
-            setHasMoreListings(
-                viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1,
-            );
-            setListingsScrolled(viewport.scrollTop > 1);
-        };
-        const observer = new ResizeObserver(measure);
-        observer.observe(viewport);
-        observer.observe(content);
-        viewport.addEventListener("scroll", measure, { passive: true });
-        return () => {
-            observer.disconnect();
-            viewport.removeEventListener("scroll", measure);
-        };
-    }, [selectedTab]);
     const summary = useQuery({
         queryKey: ["my-listings-summary", "broker"],
         queryFn: () => myListingsApi.summary(),
@@ -600,212 +594,320 @@ export function InventoryAndUpdates({ activity, now }: { activity: ActivityData;
               .slice(0, 4)
               .map((item) => ({ ...item, icon: activityIcon(item.category) }));
 
+    const inventoryEmpty =
+        !items.length &&
+        (preview || (!listings.isPending && !listings.isError)) &&
+        counts != null &&
+        counts.published === 0 &&
+        counts.draft === 0;
+
+    useEffect(() => {
+        const viewport = updateViewportRef.current;
+        const content = updateContentRef.current;
+        if (!viewport || !content) return;
+        const measure = () => {
+            setHasMoreUpdates(
+                viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1,
+            );
+            setUpdatesScrolled(viewport.scrollTop > 1);
+        };
+        const observer = new ResizeObserver(measure);
+        observer.observe(viewport);
+        observer.observe(content);
+        viewport.addEventListener("scroll", measure, { passive: true });
+        return () => {
+            observer.disconnect();
+            viewport.removeEventListener("scroll", measure);
+        };
+    }, [updates.length]);
+
+    useEffect(() => {
+        const viewport = listingViewportRef.current;
+        const content = listingContentRef.current;
+        if (!viewport || !content) return;
+        const measure = () => {
+            setHasMoreListings(
+                viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 1,
+            );
+            setListingsScrolled(viewport.scrollTop > 1);
+        };
+        const observer = new ResizeObserver(measure);
+        observer.observe(viewport);
+        observer.observe(content);
+        viewport.addEventListener("scroll", measure, { passive: true });
+        return () => {
+            observer.disconnect();
+            viewport.removeEventListener("scroll", measure);
+        };
+    }, [selectedTab, inventoryEmpty]);
+
     return (
         <div className={styles.layout}>
             <section
                 className={`${styles.panel} ${styles.listingsPanel}`}
+                data-empty={inventoryEmpty}
                 aria-labelledby="dashboard-listings-heading"
             >
-                <header className={styles.listingsHeader}>
-                    <h2 id="dashboard-listings-heading" className="h5 text-ink">
-                        Your listings
-                    </h2>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        nativeButton={false}
-                        render={<Link href="/broker/properties/new" />}
-                    >
-                        <Plus aria-hidden /> Add listing
-                    </Button>
-                </header>
-                <div className={styles.inventorySummary}>
-                    <InventoryTabs value={selectedTab} onChange={setSelectedTab} counts={counts} />
-                </div>
-                <div
-                    id="dashboard-listings-panel"
-                    role="tabpanel"
-                    aria-labelledby={`dashboard-listings-tab-${selectedTab}`}
-                    className={styles.inventoryContent}
-                >
-                    <div
-                        ref={listingViewportRef}
-                        className={styles.scrollViewport}
-                        data-scrolled={listingsScrolled}
-                        role="region"
-                        aria-label={`${selectedTab === "draft" ? "Draft" : "Active"} listing list`}
-                        tabIndex={0}
-                    >
-                        <div key={selectedTab} ref={listingContentRef} className="t-tabs-panel">
-                            {!preview && listings.isPending ? (
-                                <div
-                                    role="status"
-                                    aria-label="Loading your listings"
-                                    className={styles.loading}
-                                >
-                                    {[0, 1, 2].map((key) => (
-                                        <Skeleton key={key} className="block-16 inline-full" />
-                                    ))}
-                                </div>
-                            ) : !preview && listings.isError ? (
-                                <div className={styles.empty}>
-                                    <Building2 aria-hidden />
-                                    <h3 className="body font-semibold">
-                                        Couldn&apos;t load your listings
-                                    </h3>
-                                    <p>Try again to see your latest inventory.</p>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => void listings.refetch()}
-                                    >
-                                        Try again
-                                    </Button>
-                                </div>
-                            ) : !items.length ? (
-                                <div className={styles.empty}>
-                                    <Building2 aria-hidden />
-                                    <h3 className="body font-semibold">
-                                        {selectedTab === "draft"
-                                            ? "No draft listings"
-                                            : "Your next deal starts with a listing"}
-                                    </h3>
-                                    <p>
-                                        {selectedTab === "draft"
-                                            ? "Listings you save as drafts will appear here, ready to finish later."
-                                            : "Add a property to keep its details and interested clients together."}
-                                    </p>
-                                    <Button
-                                        variant="accent"
-                                        nativeButton={false}
-                                        render={<Link href="/broker/properties/new" />}
-                                    >
-                                        Add listing
-                                    </Button>
-                                </div>
-                            ) : (
-                                <>
-                                    <table className={styles.table}>
-                                        <caption className="sr-only">
-                                            Your latest{" "}
-                                            {selectedTab === "draft" ? "draft" : "active"} listings,
-                                            asking prices, interested clients and last update
-                                        </caption>
-                                        <colgroup>
-                                            <col />
-                                            <col />
-                                            <col />
-                                            <col />
-                                            <col />
-                                        </colgroup>
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">Property</th>
-                                                <th scope="col">Asking price</th>
-                                                <th scope="col">Clients interested</th>
-                                                <th scope="col">Last updated</th>
-                                                <th scope="col" className={styles.actionsHeading}>
-                                                    Actions
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {items.map((listing) => (
-                                                <ListingRow
-                                                    key={listing.id}
-                                                    listing={listing}
-                                                    now={now}
-                                                    onDelete={setDeletingListing}
-                                                />
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </>
-                            )}
+                {inventoryEmpty ? (
+                    <EmptyState
+                        size="card"
+                        icon={Building2}
+                        headingId="dashboard-listings-heading"
+                        heading="No listings yet"
+                        description="Add a property to keep its details and interested clients together."
+                        action={{
+                            label: "Add listing",
+                            icon: Plus,
+                            href: "/broker/properties/new",
+                        }}
+                    />
+                ) : (
+                    <>
+                        <header className={styles.listingsHeader}>
+                            <h2 id="dashboard-listings-heading" className="h5 text-ink">
+                                Your listings
+                            </h2>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                nativeButton={false}
+                                render={<Link href="/broker/properties/new" />}
+                            >
+                                <Plus aria-hidden /> Add listing
+                            </Button>
+                        </header>
+                        <div className={styles.inventorySummary}>
+                            <InventoryTabs
+                                value={selectedTab}
+                                onChange={setSelectedTab}
+                                counts={counts}
+                            />
                         </div>
-                    </div>
-                    <footer className={styles.footer} data-scroll-shadow={hasMoreListings}>
-                        <Link href="/broker/my-listings" className={styles.footerLink}>
-                            Open listings <ArrowRight aria-hidden />
-                        </Link>
-                        {items.length > 0 &&
-                        !(!preview && (listings.isPending || listings.isError)) ? (
-                            <p className={styles.footerNote}>
-                                Showing {items.length} of{" "}
-                                {counts?.[selectedTab] ?? listings.data?.total ?? items.length}{" "}
-                                {selectedTab === "draft" ? "draft" : "active"} listings
-                            </p>
-                        ) : null}
-                    </footer>
-                </div>
+                        <div
+                            id="dashboard-listings-panel"
+                            role="tabpanel"
+                            aria-labelledby={`dashboard-listings-tab-${selectedTab}`}
+                            className={styles.inventoryContent}
+                        >
+                            <div
+                                ref={listingViewportRef}
+                                className={styles.scrollViewport}
+                                data-scrolled={listingsScrolled}
+                                role="region"
+                                aria-label={`${selectedTab === "draft" ? "Draft" : "Active"} listing list`}
+                                tabIndex={0}
+                            >
+                                <div
+                                    key={selectedTab}
+                                    ref={listingContentRef}
+                                    className="t-tabs-panel"
+                                >
+                                    {!preview && listings.isPending ? (
+                                        <LoadingState label="Loading your listings">
+                                            <DashboardListingRowsSkeleton />
+                                        </LoadingState>
+                                    ) : !preview && listings.isError ? (
+                                        <EmptyState
+                                            size="card"
+                                            variant="error"
+                                            icon={Building2}
+                                            heading="Could not load your listings"
+                                            description="Check your connection and try again."
+                                            action={{
+                                                icon: RefreshCw,
+                                                label: listings.isFetching
+                                                    ? "Trying again..."
+                                                    : "Try again",
+                                                disabled: listings.isFetching,
+                                                onClick: () => void listings.refetch(),
+                                            }}
+                                        />
+                                    ) : !items.length ? (
+                                        <EmptyState
+                                            size="card"
+                                            icon={Building2}
+                                            heading={
+                                                selectedTab === "draft"
+                                                    ? "No draft listings"
+                                                    : "No active listings yet"
+                                            }
+                                            description={
+                                                selectedTab === "draft"
+                                                    ? "Properties you save as drafts will appear here, ready to finish later."
+                                                    : "Add a property to keep its details and interested clients together."
+                                            }
+                                            action={{
+                                                label: "Add listing",
+                                                icon: Plus,
+                                                href: "/broker/properties/new",
+                                            }}
+                                        />
+                                    ) : (
+                                        <>
+                                            <table className={styles.table}>
+                                                <caption className="sr-only">
+                                                    Your latest{" "}
+                                                    {selectedTab === "draft" ? "draft" : "active"}{" "}
+                                                    listings, asking prices, interested clients and
+                                                    last update
+                                                </caption>
+                                                <colgroup>
+                                                    <col />
+                                                    <col />
+                                                    <col />
+                                                    <col />
+                                                    <col />
+                                                </colgroup>
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">Property</th>
+                                                        <th scope="col">Asking price</th>
+                                                        <th scope="col">Clients interested</th>
+                                                        <th scope="col">Last updated</th>
+                                                        <th
+                                                            scope="col"
+                                                            className={styles.actionsHeading}
+                                                        >
+                                                            Actions
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {items.map((listing) => (
+                                                        <ListingRow
+                                                            key={listing.id}
+                                                            listing={listing}
+                                                            now={now}
+                                                            onDelete={setDeletingListing}
+                                                        />
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            <footer className={styles.footer} data-scroll-shadow={hasMoreListings}>
+                                <Link
+                                    href={`/broker/my-listings?status=${selectedTab}`}
+                                    className={styles.footerLink}
+                                >
+                                    Open listings <ArrowRight aria-hidden />
+                                </Link>
+                                {items.length > 0 &&
+                                !(!preview && (listings.isPending || listings.isError)) ? (
+                                    <p className={styles.footerNote}>
+                                        Showing {items.length} of{" "}
+                                        {counts?.[selectedTab] ??
+                                            listings.data?.total ??
+                                            items.length}{" "}
+                                        {selectedTab === "draft" ? "draft" : "active"} listings
+                                    </p>
+                                ) : null}
+                            </footer>
+                        </div>
+                    </>
+                )}
             </section>
             <section
                 className={`${styles.panel} ${styles.updatesPanel}`}
+                data-empty={!updates.length}
                 data-scroll-fade={hasMoreUpdates}
                 aria-labelledby="dashboard-updates-heading"
             >
-                <header className={styles.header} data-scrolled={updatesScrolled}>
-                    <h2 id="dashboard-updates-heading" className="h5 text-ink">
-                        Recent updates
-                    </h2>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        nativeButton={false}
-                        render={<Link href="/broker/notifications" />}
-                    >
-                        View all <ArrowRight aria-hidden />
-                    </Button>
-                </header>
-                <div
-                    className={styles.scrollViewport}
-                    role="region"
-                    aria-label="Recent update list"
-                    ref={updateViewportRef}
-                    tabIndex={0}
-                >
-                    <div ref={updateContentRef}>
-                        {updates.length ? (
-                            <ol className={styles.updates}>
-                                {updates.map((item) => (
-                                    <li key={item.id}>
-                                        <Link
-                                            data-linked-card
-                                            href={item.href || "/broker/notifications"}
-                                            className={styles.updateLink}
-                                        >
-                                            <span className={styles.eventIcon}>
-                                                <item.icon aria-hidden strokeWidth={1.75} />
-                                            </span>
-                                            <span className={styles.updateText}>
-                                                <span data-card-title className={styles.eventTitle}>
-                                                    {item.title}
-                                                </span>
-                                                <span className={styles.secondary}>
-                                                    {item.subtitle}
-                                                </span>
-                                            </span>
-                                            <time
-                                                dateTime={item.occurredAt}
-                                                className={styles.eventTime}
-                                            >
-                                                {formatRelativePast(new Date(item.occurredAt), now)}
-                                            </time>
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ol>
-                        ) : (
-                            <div className={styles.empty}>
-                                <Activity aria-hidden />
-                                <h3 className="body font-semibold">You&apos;re up to date</h3>
-                                <p>
-                                    Updates to your listings, clients and visits will appear here.
-                                </p>
+                {!updates.length ? (
+                    <EmptyState
+                        size="card"
+                        icon={Activity}
+                        headingId="dashboard-updates-heading"
+                        heading="No recent updates"
+                        description="Updates to your listings, clients and visits will appear here."
+                        action={{
+                            label: "View all updates",
+                            icon: Activity,
+                            href: "/broker/recent-updates",
+                        }}
+                    />
+                ) : (
+                    <>
+                        <header className={styles.header} data-scrolled={updatesScrolled}>
+                            <h2 id="dashboard-updates-heading" className="h5 text-ink">
+                                Recent updates
+                            </h2>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                nativeButton={false}
+                                render={<Link href="/broker/recent-updates" />}
+                            >
+                                View all <ArrowRight aria-hidden />
+                            </Button>
+                        </header>
+                        <div
+                            className={styles.scrollViewport}
+                            role="region"
+                            aria-label="Recent update list"
+                            ref={updateViewportRef}
+                            tabIndex={0}
+                        >
+                            <div ref={updateContentRef}>
+                                {updates.length ? (
+                                    <ol className={styles.updates}>
+                                        {updates.map((item) => (
+                                            <li key={item.id}>
+                                                <Link
+                                                    data-linked-card
+                                                    href={item.href || "/broker/recent-updates"}
+                                                    className={styles.updateLink}
+                                                >
+                                                    <span className={styles.eventIcon}>
+                                                        <item.icon aria-hidden strokeWidth={1.75} />
+                                                    </span>
+                                                    <span className={styles.updateText}>
+                                                        <span
+                                                            data-card-title
+                                                            className={styles.eventTitle}
+                                                            title={item.title}
+                                                        >
+                                                            {item.title}
+                                                        </span>
+                                                        <span
+                                                            className={styles.secondary}
+                                                            title={item.subtitle}
+                                                        >
+                                                            {item.subtitle}
+                                                        </span>
+                                                    </span>
+                                                    <time
+                                                        dateTime={item.occurredAt}
+                                                        className={styles.eventTime}
+                                                    >
+                                                        {formatRelativePast(
+                                                            new Date(item.occurredAt),
+                                                            now,
+                                                        )}
+                                                    </time>
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ol>
+                                ) : (
+                                    <EmptyState
+                                        size="card"
+                                        icon={Activity}
+                                        heading="No recent updates"
+                                        description="Updates to your listings, clients and visits will appear here."
+                                        action={{
+                                            label: "View all updates",
+                                            icon: Activity,
+                                            href: "/broker/recent-updates",
+                                        }}
+                                    />
+                                )}
                             </div>
-                        )}
-                    </div>
-                </div>
+                        </div>
+                    </>
+                )}
             </section>
             <PropertyDeleteDialog
                 open={deletingListing != null}

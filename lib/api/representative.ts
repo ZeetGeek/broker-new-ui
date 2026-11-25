@@ -4,6 +4,7 @@ import {
     appendDealListingQuery,
     type DealListingApiQuery,
 } from "@/lib/properties/deal-listing-query";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 export type RepresentationRespondStatus = "accepted" | "rejected";
 
@@ -191,7 +192,7 @@ function queueQuery(params?: OwnerRepQueueQuery): string {
     return q.toString();
 }
 
-export const representativeApi = {
+export const representativeApi = withTestNetwork({
     requestRepresentation(propertyId: string, message?: string) {
         if (isMockMode()) {
             return Promise.resolve({
@@ -477,7 +478,7 @@ export const representativeApi = {
             body: JSON.stringify(body),
         });
     },
-};
+});
 
 export function representationListItems(
     result: RepresentationItem[] | RepresentationListPage | unknown,

@@ -54,7 +54,8 @@ function DialogPopup({
 }) {
     return (
         <DialogPortal>
-            <DialogBackdrop />
+            {/* Nested drawers need their own scrim over the parent dialog. */}
+            <DialogBackdrop forceRender />
             <DialogPrimitive.Popup
                 data-slot="dialog-popup"
                 style={

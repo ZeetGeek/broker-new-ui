@@ -8,6 +8,7 @@ import { plural } from "@/lib/format/plural";
 import { brokerPipelineDealHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import { ContactName } from "@/components/shared/contact-name";
 import {
     type AppIcon,
@@ -208,11 +209,12 @@ export function AnalyticsAttention({
             className={className}
         >
             {items.length === 0 ? (
-                // Cleared state: quiet, positive, no button.
-                <p className="body-sm flex items-center gap-2 text-ink-muted">
-                    <CircleCheck aria-hidden className="shrink-0 text-brand block-4 inline-4" />
-                    Nothing waiting on you. Every active client was updated in the last two weeks.
-                </p>
+                <EmptyState
+                    size="card"
+                    icon={CircleCheck}
+                    heading="No follow-ups pending"
+                    description="Every active client was updated in the last two weeks."
+                />
             ) : (
                 <>
                     <ul className="flex flex-col divide-y divide-border-warm">

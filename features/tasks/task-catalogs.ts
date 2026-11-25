@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 import { type TaskLinkOptionsDto, tasksApi } from "@/lib/api/tasks";
+import { testSnapshot } from "@/lib/testing/test-data";
 
 import { TASK_CLIENTS, TASK_OWNERS, TASK_PROPERTIES } from "./preview-store";
 
@@ -43,7 +44,7 @@ export function useTaskCatalogs(): TaskCatalogs {
         enabled: !mock,
         staleTime: 60_000,
     });
-    if (mock) return MOCK_CATALOGS;
+    if (mock) return testSnapshot(MOCK_CATALOGS);
     return query.data
         ? { ...query.data, ready: true }
         : { ...EMPTY_CATALOGS, loadError: query.error };

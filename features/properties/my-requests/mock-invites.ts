@@ -1,3 +1,5 @@
+import { testData } from "@/lib/testing/test-data";
+
 import type { InviteItem } from "@/features/properties/my-requests/invite-types";
 
 const DAY_MS = 86_400_000;
@@ -15,7 +17,7 @@ const IMAGES = [
 ] as const;
 
 /** Owners who picked this broker. Covers every stage the tab must render. */
-export const MOCK_INVITES: InviteItem[] = [
+export const MOCK_INVITES: InviteItem[] = testData([
     {
         id: "inv_004",
         propertyId: "pr_210",
@@ -152,4 +154,4 @@ export const MOCK_INVITES: InviteItem[] = [
         brokerSlotsTotal: 2,
         imageSrc: IMAGES[4],
     },
-];
+]);

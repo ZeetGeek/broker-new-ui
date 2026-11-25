@@ -1,6 +1,11 @@
 "use client";
 
+import { useRef, useState } from "react";
+
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
+
 import { ContactName } from "@/components/shared/contact-name";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import type { OtherBuyer } from "@/features/pipeline/deal-attention";
@@ -15,19 +20,60 @@ export function MoreBuyersPopover({
     buyers: OtherBuyer[];
     onView: (dealId: string) => void;
 }) {
+    const mobile = useMobileMenu();
+    const [open, setOpen] = useState(false);
+    const afterClose = useRef<null | (() => void)>(null);
     const label = `${count} more ${count === 1 ? "client" : "clients"} on this property`;
+    const trigger = (
+        <button
+            type="button"
+            className="body-xs rounded-sm bg-surface-muted px-2 py-0.5 font-medium text-ink hover:bg-brand-soft hover:text-brand-text"
+            onClick={(event) => event.stopPropagation()}
+        >
+            {label}
+        </button>
+    );
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={setOpen}
+                onOpenChangeComplete={(nextOpen) => {
+                    if (nextOpen) return;
+                    const action = afterClose.current;
+                    afterClose.current = null;
+                    action?.();
+                }}
+                title="Other clients"
+                description={label}
+                trigger={trigger}
+            >
+                {buyers.map((buyer) => (
+                    <button
+                        key={buyer.dealId}
+                        type="button"
+                        className={mobileActionClass}
+                        onClick={() => {
+                            afterClose.current = () => onView(buyer.dealId);
+                            setOpen(false);
+                        }}
+                    >
+                        <span className="flex flex-1 flex-col text-start min-inline-0">
+                            <span className="truncate font-medium">{buyer.name}</span>
+                            <span className="caption text-ink-muted">
+                                {DEAL_STAGE_META[buyer.stage].label}
+                            </span>
+                        </span>
+                    </button>
+                ))}
+            </MobileActionDrawer>
+        );
+    }
 
     return (
         <Popover>
-            <PopoverTrigger
-                className="
-                  body-xs rounded-sm bg-surface-muted px-2 py-0.5 font-medium text-ink
-                  hover:bg-brand-soft hover:text-brand-text
-                "
-                onClick={(event) => event.stopPropagation()}
-            >
-                {label}
-            </PopoverTrigger>
+            <PopoverTrigger render={trigger} />
             <PopoverContent align="start" className="gap-2 p-3 inline-64">
                 <p className="body-xs font-semibold text-ink">Other clients</p>
                 <ul className="flex flex-col gap-1.5">

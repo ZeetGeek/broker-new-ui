@@ -6,7 +6,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { ApiError } from "@/lib/api/client";
-import { exclusiveOwnersApi } from "@/lib/api/exclusive-owners";
+import { canEditExclusiveOwners, exclusiveOwnersApi } from "@/lib/api/exclusive-owners";
 import {
     exclusiveOwnerFormSchema,
     type ExclusiveOwnerFormValues,
@@ -175,14 +175,21 @@ export function AddOwnerModal({
     };
 
     const save = handleSubmit(async (parsed) => {
-        if (isEdit) {
-            setSubmitError("Editing owners is not available yet.");
+        if (isEdit && !canEditExclusiveOwners()) {
+            setSubmitError(
+                "Owner editing is not available yet. Your existing details have not changed.",
+            );
             return;
         }
         setBusy(true);
         setSubmitError("");
         try {
-            await createOwner(parsed);
+            if (owner) {
+                const saved = await exclusiveOwnersApi.update(owner.id, parsed);
+                onSaved(saved.fullName, "updated", saved.id);
+            } else {
+                await createOwner(parsed);
+            }
             setPhoto(null);
             reset(emptyValues(locationDefaults));
             onOpenChange(false);
@@ -247,7 +254,7 @@ export function AddOwnerModal({
                         onChange={setPhoto}
                         disabled={busy}
                     />
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 @min-[28rem]/contact-drawer:grid-cols-2">
                         <TextField
                             label="Full name"
                             startIcon={UserRound}

@@ -14,10 +14,16 @@ import {
     type PropertyShareInput,
 } from "@/lib/share/property";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import { Check, Link2, Share2 } from "@/components/shared/icons";
+import {
+    mobileActionClass,
+    MobileActionDrawer,
+    mobileActionGroupClass,
+} from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -94,6 +100,7 @@ export function PropertySharePopover({
     disabledReason = "Publish this property to share it",
     className,
 }: PropertySharePopoverProps) {
+    const mobile = useMobileMenu();
     const [open, setOpen] = useState(false);
     const [copiedAt, setCopiedAt] = useState<number | null>(null);
     const copied = copiedAt !== null;
@@ -188,18 +195,14 @@ export function PropertySharePopover({
     );
 
     const ActionButton = iconOnly ? IconButton : Button;
-    const trigger = (
-        <DropdownMenuTrigger
-            render={
-                <ActionButton
-                    type="button"
-                    {...(!iconOnly ? { variant: "link" as const } : {})}
-                    size={iconOnly ? "md" : "sm"}
-                    aria-label="Share listing"
-                    aria-haspopup="menu"
-                    className={cn(!iconOnly && "gap-1.5 p-0 font-medium block-auto", className)}
-                />
-            }
+    const triggerButton = (
+        <ActionButton
+            type="button"
+            {...(!iconOnly ? { variant: "link" as const } : {})}
+            size={iconOnly ? "md" : "sm"}
+            aria-label="Share listing"
+            aria-haspopup="menu"
+            className={cn(!iconOnly && "gap-1.5 p-0 font-medium block-auto", className)}
         >
             <Share2
                 aria-hidden
@@ -207,7 +210,7 @@ export function PropertySharePopover({
                 strokeWidth={1.75}
             />
             {iconOnly ? null : "Share"}
-        </DropdownMenuTrigger>
+        </ActionButton>
     );
 
     if (disabled) {
@@ -235,6 +238,100 @@ export function PropertySharePopover({
             </Tooltip>
         );
     }
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={handleOpenChange}
+                title="Share property"
+                description={listing.title}
+                trigger={triggerButton}
+            >
+                <div className={mobileActionGroupClass}>
+                    {channels.map((channel) => {
+                        const mark = channel.icon ? (
+                            <span
+                                className="flex shrink-0 items-center justify-center block-5 inline-5"
+                                aria-hidden
+                            >
+                                <Icon
+                                    icon={channel.icon}
+                                    width={channel.iconSize ?? 20}
+                                    height={channel.iconSize ?? 20}
+                                />
+                            </span>
+                        ) : (
+                            <Share2
+                                aria-hidden
+                                className="shrink-0 text-ink-muted block-5 inline-5"
+                                strokeWidth={1.75}
+                            />
+                        );
+
+                        if (channel.action === "native-share") {
+                            return (
+                                <button
+                                    key={channel.id}
+                                    type="button"
+                                    className={mobileActionClass}
+                                    onClick={() => void handleNativeShare()}
+                                >
+                                    {mark}
+                                    {channel.label}
+                                </button>
+                            );
+                        }
+                        if (channel.action === "copy") {
+                            return (
+                                <button
+                                    key={channel.id}
+                                    type="button"
+                                    className={mobileActionClass}
+                                    onClick={() => void handleCopyLink()}
+                                >
+                                    {mark}
+                                    {channel.label}
+                                </button>
+                            );
+                        }
+                        return (
+                            <a
+                                key={channel.id}
+                                href={channel.href}
+                                target={channel.id === "email" ? undefined : "_blank"}
+                                rel={channel.id === "email" ? undefined : "noopener noreferrer"}
+                                className={mobileActionClass}
+                                onClick={() => setOpen(false)}
+                            >
+                                {mark}
+                                {channel.label}
+                            </a>
+                        );
+                    })}
+                </div>
+                <div className={mobileActionGroupClass}>
+                    <button
+                        type="button"
+                        onClick={() => void handleCopyLink()}
+                        className={cn(mobileActionClass, copied && "text-ink")}
+                    >
+                        {copied ? (
+                            <Check aria-hidden className="shrink-0 text-ink block-5 inline-5" />
+                        ) : (
+                            <Link2
+                                aria-hidden
+                                className="shrink-0 text-ink-muted block-5 inline-5"
+                            />
+                        )}
+                        {copied ? "Link copied" : "Copy link"}
+                    </button>
+                </div>
+            </MobileActionDrawer>
+        );
+    }
+
+    const trigger = <DropdownMenuTrigger render={triggerButton} />;
 
     return (
         <DropdownMenu open={open} onOpenChange={handleOpenChange}>

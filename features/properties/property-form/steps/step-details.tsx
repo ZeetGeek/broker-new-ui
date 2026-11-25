@@ -110,7 +110,7 @@ export function StepDetails() {
                     title={<>Rooms and layout</>}
                     description="Record the configuration people compare first."
                 >
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-4 min-inline-0 sm:grid-cols-2 lg:grid-cols-4">
                         <CounterField
                             name="details.bedrooms"
                             label="BHK"
@@ -150,6 +150,7 @@ export function StepDetails() {
                     <TextField
                         name="basics.title"
                         label="Listing title"
+                        mobileTextarea
                         placeholder={suggestedTitle || "e.g. 2 BHK Apartment in Green Park, Mumbai"}
                         hint="Auto-filled from BHK, type, locality, and city. You can edit it anytime."
                         startIcon={Type}

@@ -1,5 +1,7 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
+import { testSnapshot } from "@/lib/testing/test-data";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 export type DashboardVisit = {
     id: string;
@@ -207,33 +209,35 @@ export type DashboardResponse = {
     newInAreas?: DashboardAreaProperty[];
 };
 
-export const dashboardApi = {
+export const dashboardApi = withTestNetwork({
     get() {
         if (isMockMode()) {
-            return Promise.resolve({
-                portal: "broker",
-                greeting: { firstName: "Zeet", fullName: "Zeet Patel" },
-                dayStreak: 2,
-                summary: {
-                    pendingBrokerRequests: 4,
-                    requestQuota: {
-                        limit: 10,
-                        used: 8,
-                        remaining: 2,
-                        resetsOn: new Date(Date.now() + 9 * 86_400_000).toISOString(),
+            return Promise.resolve(
+                testSnapshot({
+                    portal: "broker",
+                    greeting: { firstName: "Zeet", fullName: "Zeet Patel" },
+                    dayStreak: 2,
+                    summary: {
+                        pendingBrokerRequests: 4,
+                        requestQuota: {
+                            limit: 10,
+                            used: 8,
+                            remaining: 2,
+                            resetsOn: new Date(Date.now() + 9 * 86_400_000).toISOString(),
+                        },
                     },
-                },
-                quickActions: [],
-                charts: {
-                    pipelineFunnel: [
-                        { stage: "new", label: "New", count: 5 },
-                        { stage: "contacted", label: "Contacted", count: 3 },
-                        { stage: "site_visit", label: "Site visit", count: 3 },
-                        { stage: "negotiation", label: "Negotiation", count: 1 },
-                    ],
-                },
-            } satisfies DashboardResponse);
+                    quickActions: [],
+                    charts: {
+                        pipelineFunnel: [
+                            { stage: "new", label: "New", count: 5 },
+                            { stage: "contacted", label: "Contacted", count: 3 },
+                            { stage: "site_visit", label: "Site visit", count: 3 },
+                            { stage: "negotiation", label: "Negotiation", count: 1 },
+                        ],
+                    },
+                } satisfies DashboardResponse),
+            );
         }
         return apiFetch<DashboardResponse>("/dashboard");
     },
-};
+});

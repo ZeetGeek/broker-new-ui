@@ -842,7 +842,7 @@ their specialized viewer. Do not compose the primitive directly in feature code
 or use browser-native alerts or confirmations. Product screens use
 `AppModal` from `components/shared/app-modal.tsx` â€” same visual system: one
 `bg-surface` shell, content-height (`max-block` not forced full viewport), no
-header/footer dividers, quiet close. `AppModalFooter`: ghost cancel + default
+inset header/footer dividers, quiet close. `AppModalFooter`: ghost cancel + default
 primary, `Button` `size="default"`, auto width, right-aligned.
 
 All dialog chrome uses `AppModalHeader` and `AppModalFooter`, backed by the
@@ -855,6 +855,13 @@ separate header/footer shells in feature code.
 Backdrop is `bg-ink/50` + light blur. Motion is transitions.dev **06-modal**:
 `.t-modal` / `.t-modal-backdrop`. Prefer `sm` or `md` on phones; override
 height via `className` only for working surfaces (chat, long forms).
+
+Mobile bottom drawers use full-width section dividers and the shared
+`--dialog-divider` colour from the drawer header. Keep action content padded,
+but extend group, tab and footer separators to the surface edges. Panels with
+their own insets (notifications) use `MobileActionDrawer edgeToEdge` so padding
+does not shorten their dividers. Nested drawers retain their own dimmed, blurred
+backdrop over the parent dialog; the shared dialog backdrop must render when nested.
 
 Copy follows `docs/MESSAGES.md`. Destructive confirms use
 `Button variant="destructive"`. Never open a dialog for information the user

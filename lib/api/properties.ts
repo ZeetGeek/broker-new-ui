@@ -1,9 +1,12 @@
 import { ApiError, apiFetch } from "@/lib/api/client";
-import { isMockMode } from "@/lib/api/mock-mode";
+import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
 import type { Currency } from "@/lib/format/currency";
+import { testStorageKey } from "@/lib/testing/test-lab";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import { MOCK_OWNER_LISTINGS } from "@/features/properties/owner-listings/mock-owner-listings";
 import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-my-listings";
+import type { MyListingItem } from "@/features/properties/your-listings/types";
 
 export type PropertyBrowseSort = "newest" | "price_asc" | "price_desc";
 export type PropertyPublishStatus = "draft" | "published";
@@ -510,6 +513,10 @@ function mockListingById(id: string): PropertyListing | null {
 
     const mine = MOCK_MY_LISTINGS_SEED.find((item) => item.id === id);
     if (!mine) return null;
+    return mockInventoryListing(mine);
+}
+
+function mockInventoryListing(mine: MyListingItem): PropertyListing {
     return {
         id: mine.id,
         title: mine.title,
@@ -540,10 +547,14 @@ function mockListingById(id: string): PropertyListing | null {
         createdAt: mine.createdAt,
         updatedAt: mine.updatedAt,
         maintenanceCharges: mine.maintenanceInr,
+        exclusiveOwnerId: mine.exclusiveOwnerId ?? undefined,
+        status: mine.isSold ? "sold" : "available",
+        commissionPercent: mine.commissionPercent,
+        commissionAmount: mine.commissionAmount,
     };
 }
 
-const MOCK_BOOKMARKS_KEY = "broker_mock_bookmarks";
+const MOCK_BOOKMARKS_KEY = testStorageKey("broker_mock_bookmarks");
 
 function seedMockBookmarkIds(): string[] {
     return MOCK_OWNER_LISTINGS.filter((item) => item.isBookmarked).map((item) => item.id);
@@ -606,7 +617,7 @@ function mockBookmarkedPage(params?: PropertyListQuery): PropertyListPage {
     };
 }
 
-export const propertiesApi = {
+export const propertiesApi = withTestNetwork({
     browse(params?: PropertyBrowseQuery, signal?: AbortSignal) {
         return apiFetch<PropertyBrowsePage>(`/properties/browse${buildBrowseQuery(params)}`, {
             signal,
@@ -639,26 +650,60 @@ export const propertiesApi = {
     },
 
     /** Caller's inventory listings (My listings). */
-    list(params?: PropertyListQuery, signal?: AbortSignal) {
+    async list(params?: PropertyListQuery, signal?: AbortSignal) {
+        if (isMockMode()) {
+            const { getMockMyListings } = await import("@/lib/api/my-listings");
+            const items = getMockMyListings()
+                .filter(
+                    (item) =>
+                        (params?.deleted === "only" ? !!item.deletedAt : !item.deletedAt) &&
+                        (!params?.publishStatus || item.status === params.publishStatus) &&
+                        (!params?.excludeSold || !item.isSold) &&
+                        (params?.status !== "sold" || item.isSold) &&
+                        (!params?.transactionType ||
+                            item.transactionType === params.transactionType ||
+                            item.transactionType === "both"),
+                )
+                .map(mockInventoryListing);
+            return paginateItems(items, params?.page ?? 1, params?.limit ?? 20);
+        }
         return apiFetch<PropertyListPage>(
             `${params?.deleted === "only" ? "/properties/deleted" : "/properties"}${buildListQuery(params)}`,
             { signal },
         );
     },
 
-    options() {
+    async options() {
+        if (isMockMode()) {
+            const { myListingsApi } = await import("@/lib/api/my-listings");
+            const summary = await myListingsApi.summary();
+            return {
+                counts: {
+                    total: summary.total,
+                    assigned: 0,
+                    unassigned: summary.total,
+                    draft: summary.draft,
+                    published: summary.published,
+                    sold: summary.sold,
+                    deleted: summary.deleted,
+                },
+                capabilities: { canView: true, canManage: true, canPublish: true },
+            };
+        }
         return apiFetch<PropertyListingOptions>("/properties/options");
     },
 
-    get(id: string) {
+    async get(id: string, signal?: AbortSignal) {
         if (isMockMode()) {
-            const listing = mockListingById(id);
+            const { getMockMyListings } = await import("@/lib/api/my-listings");
+            const mine = getMockMyListings().find((item) => item.id === id);
+            const listing = mine ? mockInventoryListing(mine) : mockListingById(id);
             if (!listing) {
                 return Promise.reject(new Error("Listing not found"));
             }
             return Promise.resolve(listing);
         }
-        return apiFetch<PropertyListing>(`/properties/${id}`);
+        return apiFetch<PropertyListing>(`/properties/${id}`, { signal });
     },
 
     create(input: CreatePropertyInput) {
@@ -706,7 +751,26 @@ export const propertiesApi = {
     },
 
     /** Attach or replace the exclusive owner on a broker listing. */
-    attachExclusiveOwner(id: string, exclusiveOwnerId: string) {
+    async attachExclusiveOwner(id: string, exclusiveOwnerId: string) {
+        if (isMockMode()) {
+            const { getMockMyListings } = await import("@/lib/api/my-listings");
+            const { exclusiveOwnersApi, exclusiveOwnerPhoneDigits } =
+                await import("@/lib/api/exclusive-owners");
+            const listing = getMockMyListings().find((item) => item.id === id && !item.deletedAt);
+            if (!listing) throw new ApiError("Listing not found", 404);
+            const owners = await exclusiveOwnersApi.list({ limit: Number.MAX_SAFE_INTEGER });
+            const owner = owners.items.find((item) => item.id === exclusiveOwnerId);
+            if (!owner) throw new ApiError("Owner not found", 404);
+            Object.assign(listing, {
+                exclusiveOwnerId,
+                ownerId: exclusiveOwnerId,
+                ownerOrigin: "custom",
+                ownerName: owner.fullName,
+                ownerPhoneDigits: exclusiveOwnerPhoneDigits(owner.phone),
+                updatedAt: new Date().toISOString(),
+            });
+            return mockInventoryListing(listing);
+        }
         return apiFetch<PropertyListing>(`/properties/${id}/exclusive-owner`, {
             method: "PATCH",
             body: JSON.stringify({ exclusiveOwnerId }),
@@ -810,4 +874,4 @@ export const propertiesApi = {
             method: "POST",
         });
     },
-};
+});

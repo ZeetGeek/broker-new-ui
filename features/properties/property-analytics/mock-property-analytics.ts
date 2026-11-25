@@ -5,6 +5,7 @@ import type {
     PropertyAnalyticsLead,
     StageCounts,
 } from "@/lib/api/property-analytics";
+import { testData } from "@/lib/testing/test-data";
 
 /**
  * Filled listing-analytics fixtures for UI testing.
@@ -114,95 +115,99 @@ function buildFilledLeads(): PropertyAnalyticsLead[] {
         "Sameer Khan",
         "Divya Nair",
     ];
-    return names.map((name, index) => {
-        const stage: LeadStageKey =
-            index < 8
-                ? "new"
-                : index < 16
-                  ? "contacted"
-                  : index < 26
-                    ? "site_visit"
-                    : index < 32
-                      ? "negotiation"
-                      : index < 36
-                        ? "offer_made"
-                        : index === 36
-                          ? "closed_won"
-                          : "closed_lost";
-        const hasOffer = index >= 29 && index <= 37;
-        const offerStatus: PropertyAnalyticsLead["offerStatus"] = !hasOffer
-            ? null
-            : index === 36 || index === 35
-              ? "accepted"
-              : index === 33 || index === 37
-                ? "rejected"
-                : "pending";
-        const hasVisit = index >= 16;
-        const upcoming = index >= 16 && index <= 19;
-        const needsUpdate = index === 20 || index === 21;
-        const visitStatus = upcoming
-            ? index % 2
-                ? "scheduled"
-                : "confirmed"
-            : needsUpdate
-              ? "scheduled"
-              : index === 22
-                ? "cancelled"
-                : index === 23
-                  ? "no_show"
-                  : "completed";
-        const offerAmount = hasOffer ? String(23_000_000 + (index - 29) * 350_000) : null;
-        const note =
-            stage === "new"
-                ? "New client. Call to understand their requirements."
-                : upcoming
-                  ? "Visit booked. Confirm the meeting point before leaving."
-                  : needsUpdate
-                    ? "Visit time has passed. Record the outcome and next step."
-                    : offerStatus === "pending"
-                      ? "Offer shared with the owner. Follow up on their response."
-                      : stage === "closed_won"
-                        ? "Deal closed. Documents handed over."
-                        : stage === "closed_lost"
-                          ? "Client chose another property closer to their workplace."
-                          : index % 3 === 0
-                            ? "Comparing nearby properties. Follow up with the latest availability and documents."
-                            : index % 3 === 1
-                              ? "Interested in the location. Discuss access, paperwork and the expected timeline."
-                              : null;
-        return lead({
-            id: `preview_analytics_${index + 1}`,
-            clientId: null,
-            buyerName: name,
-            // Deliberately non-dialable sample numbers; preview contact actions are disabled.
-            buyerPhone: index === 14 ? null : `+910000000${String(index + 1).padStart(3, "0")}`,
-            buyerEmail:
-                index % 4 === 0 ? null : `${name.toLowerCase().replaceAll(" ", ".")}@example.test`,
-            stage,
-            offerAmount,
-            offerStatus,
-            listPrice: "25000000",
-            closedAmount: stage === "closed_won" ? offerAmount : null,
-            notes: note,
-            createdAt: atDays(-18 + (index % 4)),
-            updatedAt:
-                stage === "contacted" && index % 2 === 0
-                    ? atDays(-15)
-                    : index % 6 === 0
-                      ? new Date().toISOString()
-                      : atDays(-(index % 6)),
-            showings: hasVisit ? 1 + (index % 3) : 0,
-            latestShowing: hasVisit
-                ? {
-                      status: visitStatus,
-                      scheduledDate: atDays(
-                          upcoming ? index - 15 : -(1 + (index % 7)),
-                          10 + (index % 7),
-                      ),
-                  }
-                : null,
-        });
-    });
+    return testData(
+        names.map((name, index) => {
+            const stage: LeadStageKey =
+                index < 8
+                    ? "new"
+                    : index < 16
+                      ? "contacted"
+                      : index < 26
+                        ? "site_visit"
+                        : index < 32
+                          ? "negotiation"
+                          : index < 36
+                            ? "offer_made"
+                            : index === 36
+                              ? "closed_won"
+                              : "closed_lost";
+            const hasOffer = index >= 29 && index <= 37;
+            const offerStatus: PropertyAnalyticsLead["offerStatus"] = !hasOffer
+                ? null
+                : index === 36 || index === 35
+                  ? "accepted"
+                  : index === 33 || index === 37
+                    ? "rejected"
+                    : "pending";
+            const hasVisit = index >= 16;
+            const upcoming = index >= 16 && index <= 19;
+            const needsUpdate = index === 20 || index === 21;
+            const visitStatus = upcoming
+                ? index % 2
+                    ? "scheduled"
+                    : "confirmed"
+                : needsUpdate
+                  ? "scheduled"
+                  : index === 22
+                    ? "cancelled"
+                    : index === 23
+                      ? "no_show"
+                      : "completed";
+            const offerAmount = hasOffer ? String(23_000_000 + (index - 29) * 350_000) : null;
+            const note =
+                stage === "new"
+                    ? "New client. Call to understand their requirements."
+                    : upcoming
+                      ? "Visit booked. Confirm the meeting point before leaving."
+                      : needsUpdate
+                        ? "Visit time has passed. Record the outcome and next step."
+                        : offerStatus === "pending"
+                          ? "Offer shared with the owner. Follow up on their response."
+                          : stage === "closed_won"
+                            ? "Deal closed. Documents handed over."
+                            : stage === "closed_lost"
+                              ? "Client chose another property closer to their workplace."
+                              : index % 3 === 0
+                                ? "Comparing nearby properties. Follow up with the latest availability and documents."
+                                : index % 3 === 1
+                                  ? "Interested in the location. Discuss access, paperwork and the expected timeline."
+                                  : null;
+            return lead({
+                id: `preview_analytics_${index + 1}`,
+                clientId: null,
+                buyerName: name,
+                // Deliberately non-dialable sample numbers; preview contact actions are disabled.
+                buyerPhone: index === 14 ? null : `+910000000${String(index + 1).padStart(3, "0")}`,
+                buyerEmail:
+                    index % 4 === 0
+                        ? null
+                        : `${name.toLowerCase().replaceAll(" ", ".")}@example.test`,
+                stage,
+                offerAmount,
+                offerStatus,
+                listPrice: "25000000",
+                closedAmount: stage === "closed_won" ? offerAmount : null,
+                notes: note,
+                createdAt: atDays(-18 + (index % 4)),
+                updatedAt:
+                    stage === "contacted" && index % 2 === 0
+                        ? atDays(-15)
+                        : index % 6 === 0
+                          ? new Date().toISOString()
+                          : atDays(-(index % 6)),
+                showings: hasVisit ? 1 + (index % 3) : 0,
+                latestShowing: hasVisit
+                    ? {
+                          status: visitStatus,
+                          scheduledDate: atDays(
+                              upcoming ? index - 15 : -(1 + (index % 7)),
+                              10 + (index % 7),
+                          ),
+                      }
+                    : null,
+            });
+        }),
+    );
 }
 
 export function isPreviewAnalyticsClient(id: string): boolean {

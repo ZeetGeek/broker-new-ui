@@ -1,26 +1,24 @@
 import { cn } from "@/lib/utils";
 
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { ListPageHeading } from "@/components/shared/list-page-heading";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
+import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
 import { Skeleton } from "@/components/shared/skeleton";
 
+import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { DEAL_STAGE_ORDER, type DealStage, type DealsView } from "@/features/pipeline/types";
 
 import cardStyles from "./deal-card.module.css";
 import detailStyles from "./deal-detail-modal.module.css";
+import desktopBoardStyles from "./pipeline-board.module.css";
+import boardStyles from "./pipeline-mobile-board.module.css";
 
 function Bone({ className }: { className?: string }) {
     return <Skeleton className={cn("animate-none", className)} />;
 }
 
-function DealCardSkeleton({
-    stage,
-    outcome = false,
-    showStageAction = false,
-}: {
-    stage?: DealStage;
-    outcome?: boolean;
-    showStageAction?: boolean;
-}) {
+function DealCardSkeleton({ stage, outcome = false }: { stage?: DealStage; outcome?: boolean }) {
     return (
         <div
             className={cn(
@@ -84,12 +82,19 @@ function DealCardSkeleton({
                         </div>
                     ))}
                 </div>
-                {!outcome && showStageAction ? (
-                    <Bone className="rounded-control inline-full min-block-(--touch-target-min)" />
-                ) : null}
                 <div className={cardStyles.contactActions}>
-                    <Bone className="flex-1 rounded-control block-control-lg" />
-                    <Bone className="flex-1 rounded-control block-control-lg" />
+                    <Bone
+                        className={cn(
+                            "flex-1 rounded-control block-control-lg",
+                            cardStyles.contactButton,
+                        )}
+                    />
+                    <Bone
+                        className={cn(
+                            "flex-1 rounded-control block-control-lg",
+                            cardStyles.contactButton,
+                        )}
+                    />
                 </div>
             </div>
         </div>
@@ -116,44 +121,53 @@ export function PipelineBoardSkeleton({
                     </div>
                 ) : (
                     <>
-                        <div className="hidden snap-x snap-mandatory items-stretch gap-3 overflow-x-auto md:flex lg:grid lg:snap-none lg:grid-cols-4 lg:gap-card-grid lg:overflow-visible">
-                            {DEAL_STAGE_ORDER.map((stage) => (
-                                <div
-                                    key={stage}
-                                    className={cn(
-                                        "flex snap-start flex-col gap-3 rounded-card border p-3 min-inline-72 lg:min-inline-0",
-                                        "border-border-warm bg-border-warm/40",
-                                    )}
-                                >
-                                    <div className="flex flex-col gap-1">
-                                        <Bone className="rounded-sm bg-border-warm block-3 inline-20" />
-                                        <div className="flex items-center justify-between gap-2 block-7">
-                                            <Bone className="rounded-sm bg-border-warm block-5 inline-32" />
-                                            <Bone className="rounded-sm bg-border-warm block-3 inline-12" />
-                                        </div>
-                                    </div>
-                                    {Array.from({ length: 6 }, (_, index) => (
-                                        <DealCardSkeleton key={index} stage={stage} />
-                                    ))}
-                                </div>
-                            ))}
-                        </div>
-                        <div className="flex flex-col gap-4 md:hidden">
-                            <div className="-mx-4 flex gap-2 overflow-hidden px-4 pbe-1">
+                        <div className={desktopBoardStyles.viewport}>
+                            <div className={desktopBoardStyles.rail}>
                                 {DEAL_STAGE_ORDER.map((stage) => (
-                                    <Bone
+                                    <div
                                         key={stage}
-                                        className="shrink-0 rounded-control block-control-lg inline-32"
-                                    />
+                                        className={cn(
+                                            "flex snap-start flex-col gap-3 rounded-card border p-3 min-inline-0",
+                                            "border-border-warm bg-border-warm/40",
+                                        )}
+                                    >
+                                        <div className="flex flex-col gap-1">
+                                            <Bone className="rounded-sm bg-border-warm block-3 inline-20" />
+                                            <div className="flex items-center justify-between gap-2 block-7">
+                                                <Bone className="rounded-sm bg-border-warm block-5 inline-32" />
+                                                <Bone className="rounded-sm bg-border-warm block-3 inline-12" />
+                                            </div>
+                                        </div>
+                                        {Array.from({ length: 6 }, (_, index) => (
+                                            <DealCardSkeleton key={index} stage={stage} />
+                                        ))}
+                                    </div>
                                 ))}
                             </div>
-                            <div className="flex flex-col gap-3">
-                                {Array.from({ length: 6 }, (_, index) => (
-                                    <DealCardSkeleton
-                                        key={index}
-                                        stage={mobileStage}
-                                        showStageAction
-                                    />
+                        </div>
+                        <div className={boardStyles.board}>
+                            <div className={boardStyles.rail}>
+                                {[
+                                    mobileStage,
+                                    ...DEAL_STAGE_ORDER.filter((stage) => stage !== mobileStage),
+                                ].map((stage) => (
+                                    <div
+                                        key={stage}
+                                        className={cn(
+                                            boardStyles.column,
+                                            DEAL_STAGE_META[stage].columnClass,
+                                        )}
+                                    >
+                                        <div className={boardStyles.columnHeader}>
+                                            <Bone className="block-5 inline-28" />
+                                            <Bone className="block-3 inline-32" />
+                                        </div>
+                                        <div className={boardStyles.deals}>
+                                            {[0, 1, 2].map((index) => (
+                                                <DealCardSkeleton key={index} stage={stage} />
+                                            ))}
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -168,62 +182,27 @@ export function PipelineBoardSkeleton({
 export function PipelineHeaderSkeleton() {
     return (
         <>
-            <div aria-hidden className="flex flex-col gap-3 md:hidden">
-                <div className="flex items-center justify-between gap-3">
-                    <Bone className="rounded-sm block-7 inline-24" />
-                    <Bone className="rounded-control inline-36 min-block-(--touch-target-min)" />
-                </div>
-                <div className="flex gap-2">
-                    <Bone className="flex-1 rounded-control min-block-(--touch-target-min) min-inline-0" />
-                    <Bone className="rounded-control inline-24 min-block-(--touch-target-min)" />
-                </div>
-            </div>
-            <h1 className="h3 hidden min-inline-0 md:block">
-                <span className="sr-only">Loading pipeline</span>
-                <span aria-hidden className="relative inline-block align-bottom">
-                    <span className="invisible">Pipeline.</span>
-                    <Bone className="absolute inset-s-0 inset-bs-[0.12em] bg-border-warm block-[0.8em] inline-full" />
-                </span>{" "}
-                <span aria-hidden className="relative inline-block align-bottom max-inline-full">
-                    <span className="invisible">Your deals, from first contact to close</span>
-                    <Bone className="absolute inset-s-0 inset-bs-[0.12em] bg-border-warm block-[0.8em] inline-full" />
-                </span>
-            </h1>
-            <div
-                className="hidden flex-wrap items-center gap-x-3 gap-y-2 motion-safe:animate-pulse md:flex"
-                aria-hidden
-            >
-                <div className="flex items-center gap-1.5 rounded-control border border-border-warm bg-surface px-3.5 shadow-sm block-[38px] inline-24">
-                    <Bone className="shrink-0 rounded-full block-3 inline-3" />
-                    <Bone className="rounded-full block-3 inline-10" />
-                </div>
-                <div className="flex gap-3">
-                    {[
-                        "inline-20 sm:inline-36",
-                        "inline-24 sm:inline-40",
-                        "inline-20 sm:inline-32",
-                    ].map((width, index) => (
-                        <div
-                            key={index}
-                            className={cn(
-                                "flex items-center gap-1.5 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px]",
-                                width,
-                            )}
-                        >
-                            <Bone className="flex-1 rounded-full block-3" />
-                            <Bone className="shrink-0 rounded-full block-4 inline-5" />
-                        </div>
-                    ))}
-                </div>
-                <div className="ms-auto flex gap-2">
-                    <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px] inline-44 sm:inline-52 lg:inline-64">
-                        <Bone className="shrink-0 rounded-full block-3 inline-3" />
-                        <Bone className="rounded-full block-3 inline-2/3" />
-                    </div>
-                    <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px] inline-20 sm:inline-36">
-                        <Bone className="shrink-0 rounded-full block-3 inline-3" />
-                        <Bone className="flex-1 rounded-full block-3" />
-                    </div>
+            <PortalSectionNav>
+                <ListPageHeading title="Pipeline.">
+                    <span className="sr-only">Loading pipeline summary</span>
+                    <Bone className="bg-border-warm block-5 inline-80 max-inline-full" />
+                </ListPageHeading>
+            </PortalSectionNav>
+            <div role="status" aria-busy="true">
+                <span className="sr-only">Loading deal controls</span>
+                <div aria-hidden>
+                    <ResponsiveListToolbar
+                        selection={
+                            <>
+                                <Bone className="list-control inline-20" />
+                                <Bone className="flex-1 list-control min-inline-0 sm:flex-none sm:inline-40" />
+                            </>
+                        }
+                        search={<Bone className="list-control inline-full" />}
+                        actions={
+                            <Bone className="list-control inline-(--list-control-height) sm:inline-36" />
+                        }
+                    />
                 </div>
             </div>
         </>
@@ -233,7 +212,7 @@ export function PipelineHeaderSkeleton() {
 /** App Router/Suspense fallback reserves the same header slots as the page. */
 export function PipelinePageSkeleton() {
     return (
-        <div className="flex flex-col gap-3 min-inline-0 md:gap-5" aria-busy="true">
+        <div className="flex flex-col gap-4 min-inline-0 md:gap-5" aria-busy="true">
             <PipelineHeaderSkeleton />
             <PipelineBoardSkeleton />
         </div>

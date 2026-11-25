@@ -9,6 +9,8 @@ import { myListingsApi } from "@/lib/api/my-listings";
 import { BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
 import { OWNER_PROPERTIES_HREF } from "@/lib/routes/owner";
 
+import { EmptyState } from "@/components/empty-state";
+import { Building2, RefreshCw } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import { PropertyForm } from "@/features/properties/property-form";
@@ -33,6 +35,22 @@ export function PropertyEditPage({ portal = "broker" }: { portal?: "broker" | "o
         );
     }
     if (query.isError) {
+        if (portal === "broker")
+            return (
+                <EmptyState
+                    size="page"
+                    variant="error"
+                    icon={Building2}
+                    heading="Could not load this property"
+                    description="Check your connection and try again."
+                    action={{
+                        label: "Try again",
+                        icon: RefreshCw,
+                        onClick: () => void query.refetch(),
+                        disabled: query.isFetching,
+                    }}
+                />
+            );
         return (
             <div role="alert" className="flex flex-col items-start gap-4 py-16">
                 <h1 className="h3">Could not load property</h1>
@@ -48,6 +66,20 @@ export function PropertyEditPage({ portal = "broker" }: { portal?: "broker" | "o
     }
 
     if (!listing) {
+        if (portal === "broker")
+            return (
+                <EmptyState
+                    size="page"
+                    icon={Building2}
+                    heading="Property no longer available"
+                    description="It may have been removed. Open My Listings to choose another property."
+                    action={{
+                        label: "Open My Listings",
+                        icon: Building2,
+                        href: BROKER_YOUR_LISTINGS_HREF,
+                    }}
+                />
+            );
         return (
             <div className="flex flex-col items-center gap-4 py-16 text-center">
                 <h1 className="display-md">Property not found</h1>

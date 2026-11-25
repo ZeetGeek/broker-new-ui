@@ -1,5 +1,6 @@
 "use client";
 
+import { canEditExclusiveOwners } from "@/lib/api/exclusive-owners";
 import { formatWhatsAppUrl } from "@/lib/format/phone";
 
 import { CardLink } from "@/components/shared/card-link";
@@ -77,7 +78,11 @@ export function OwnerCard({
                         editLabel="Edit owner"
                         name={owner.name}
                         onOpen={open}
-                        onEdit={!isPlatform && onEdit ? () => onEdit(owner) : undefined}
+                        onEdit={
+                            !isPlatform && canEditExclusiveOwners() && onEdit
+                                ? () => onEdit(owner)
+                                : undefined
+                        }
                         onDelete={!isPlatform && onDelete ? () => onDelete(owner) : undefined}
                         editLocked={isPlatform}
                         density="menu"
@@ -91,7 +96,7 @@ export function OwnerCard({
                         framed={false}
                         className="shrink-0 border-2 border-white shadow-sm"
                     />
-                    <div className="min-inline-0">
+                    <div className="flex-1 min-inline-0">
                         <h2 className="body font-semibold text-ink">
                             <ContactName
                                 name={owner.name}
@@ -100,7 +105,7 @@ export function OwnerCard({
                                 onOpen={open}
                                 data-card-title
                                 data-contact-id={owner.id}
-                                className="wrap-anywhere max-inline-full"
+                                className="block truncate max-inline-full"
                             />
                         </h2>
                         {homeLocation ? (
@@ -125,7 +130,9 @@ export function OwnerCard({
                                     <ContactAreaChips
                                         areas={areas}
                                         onEditAreas={
-                                            !isPlatform && onEdit ? () => onEdit(owner) : undefined
+                                            !isPlatform && canEditExclusiveOwners() && onEdit
+                                                ? () => onEdit(owner)
+                                                : undefined
                                         }
                                         editLabel="Edit owner area"
                                     />
@@ -180,7 +187,7 @@ export function OwnerCard({
                     ) : null}
                     {canContact && owner.phoneDigits ? (
                         <div
-                            className="grid grid-cols-1 gap-2 @[17rem]/contact-card:grid-cols-2"
+                            className="grid grid-cols-1 gap-2 @[16rem]/contact-card:grid-cols-2"
                             onClick={(event) => event.stopPropagation()}
                         >
                             <Button

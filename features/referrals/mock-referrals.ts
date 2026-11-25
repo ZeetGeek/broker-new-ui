@@ -1,3 +1,5 @@
+import { testData } from "@/lib/testing/test-data";
+
 import { SITE_URL } from "@/config";
 import {
     type CreditEntry,
@@ -33,7 +35,7 @@ function daysAhead(days: number): string {
  *
  * Names and localities match the India-wide fixtures used by pipeline and visits.
  */
-export const MOCK_REFERRALS: ReferralItem[] = [
+export const MOCK_REFERRALS: ReferralItem[] = testData([
     {
         id: "rf_301",
         status: "sent",
@@ -319,7 +321,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
             { id: "re_3065", at: daysAgo(18), label: "The invite link expired", kind: "expired" },
         ],
     },
-];
+]);
 
 /**
  * The ledger, newest first. Every earn line points back at the invite that
@@ -328,7 +330,7 @@ export const MOCK_REFERRALS: ReferralItem[] = [
  * Spend lines are here too — a statement that only shows credits coming in is
  * not a statement, and the balance would not add up without them.
  */
-export const MOCK_CREDIT_LEDGER: CreditEntry[] = [
+export const MOCK_CREDIT_LEDGER: CreditEntry[] = testData([
     {
         id: "cl_407",
         kind: "listing_published",
@@ -369,7 +371,7 @@ export const MOCK_CREDIT_LEDGER: CreditEntry[] = [
         at: daysAgo(60),
         referralId: null,
     },
-];
+]);
 
 /**
  * The broker's own code. Server-owned in production — the client cannot

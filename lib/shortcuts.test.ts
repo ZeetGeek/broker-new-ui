@@ -20,7 +20,7 @@ test("broker navigation shortcuts cover every top-level module with mnemonic key
         owner_listings: "KeyG KeyM",
         my_deals: "KeyG KeyR",
         notifications: "KeyG KeyN",
-        saved_properties: "KeyG KeyS",
+        recent_updates: "KeyG KeyH",
         profile: "KeyG KeyU",
         referrals: "KeyG KeyF",
     } as const;
@@ -28,6 +28,20 @@ test("broker navigation shortcuts cover every top-level module with mnemonic key
     for (const [id, keys] of Object.entries(expected)) {
         assert.equal(getShortcut(id as keyof typeof expected)?.keys, keys);
     }
+});
+
+test("history shortcuts have profile hints and unique navigation bindings", () => {
+    for (const id of ["notifications", "recent_updates"] as const) {
+        assert.equal(getShortcut(id)?.showInProfileMenu, true);
+    }
+    const keys = BROKER_SHORTCUTS.filter((shortcut) => shortcut.scope === "global").map(
+        (shortcut) => shortcut.keys,
+    );
+    assert.equal(new Set(keys).size, keys.length);
+});
+
+test("saved-property navigation is absent from the broker shortcut registry", () => {
+    assert.equal(getShortcut("saved_properties"), undefined);
 });
 
 test("broker page actions are contextual two-key sequences", () => {

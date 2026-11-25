@@ -3,10 +3,12 @@
 import { useMemo } from "react";
 
 import type { ApiLeadOption, ApiOwnerOption } from "@/lib/api/broker-visits-map";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import type { AppIcon } from "@/components/shared/icons";
 import { Building2 } from "@/components/shared/icons";
 import { mapFilterPersonToPicker } from "@/components/shared/map-to-people-picker-person";
+import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
 import {
     Select,
@@ -77,6 +79,23 @@ function FilterSelect({
     emptyLabel?: string;
     onChange: (value?: string) => void;
 }) {
+    const mobile = useMobileMenu();
+    if (mobile) {
+        return (
+            <label className="space-y-1.5">
+                <span className="body-xs font-semibold text-ink-muted">{label}</span>
+                <MobileSelectDrawer
+                    label={label}
+                    value={value ?? "all"}
+                    options={[{ value: "all", label: placeholder }, ...options]}
+                    onChange={(next) => onChange(next === "all" ? undefined : next)}
+                    startIcon={icon}
+                    emptyText={emptyLabel}
+                />
+            </label>
+        );
+    }
+
     return (
         <label className="space-y-1.5">
             <span className="body-xs font-semibold text-ink-muted">{label}</span>

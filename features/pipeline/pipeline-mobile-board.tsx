@@ -2,17 +2,22 @@
 
 import { type ReactNode, useId, useLayoutEffect, useRef } from "react";
 
-import { EmptyState } from "@/components/shared/empty-state";
-import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
+import { cn } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
 
-import { columnValue } from "@/features/pipeline/deal-attention";
+import { PipelineStageHeader } from "@/features/pipeline/pipeline-stage-header";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
-import { StageTabs } from "@/features/pipeline/stage-tabs";
 import { DEAL_STAGE_ORDER, type DealItem, type DealStage } from "@/features/pipeline/types";
 
 import styles from "./pipeline-mobile-board.module.css";
 
+/** Column offsets are relative to the positioned rail, not its parent's page inset. */
+function stageOffset(rail: HTMLElement, lane: HTMLElement) {
+    return lane.offsetLeft - Number.parseFloat(getComputedStyle(rail).paddingInlineStart || "0");
+}
+
+/** Swipe between stages; the page handles vertical scrolling at the cards' natural height. */
 export function PipelineMobileBoard({
     active,
     onChange,
@@ -20,6 +25,7 @@ export function PipelineMobileBoard({
     stageLimits,
     onLoadMore,
     renderCard,
+    stageFilter = "",
 }: {
     active: DealStage;
     onChange: (stage: DealStage) => void;
@@ -27,109 +33,152 @@ export function PipelineMobileBoard({
     stageLimits: Record<DealStage, number>;
     onLoadMore: (stage: DealStage) => void;
     renderCard: (deal: DealItem) => ReactNode;
+    stageFilter?: DealStage | "";
 }) {
     const id = useId();
-    const navRef = useRef<HTMLDivElement>(null);
-    const positions = useRef<Partial<Record<DealStage, number>>>({});
-    const previousStage = useRef(active);
-    const deals = dealsByStage[active];
-    const totals = columnValue(deals);
-    const remaining = deals.length - stageLimits[active];
-    const counts = Object.fromEntries(
-        DEAL_STAGE_ORDER.map((stage) => [stage, dealsByStage[stage].length]),
-    ) as Record<DealStage, number>;
+    const railRef = useRef<HTMLDivElement>(null);
+    const syncedStage = useRef<DealStage | null>(null);
+    const activeRef = useRef(active);
+    const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const stages = stageFilter ? [stageFilter] : DEAL_STAGE_ORDER;
+    const index = Math.max(0, stages.indexOf(active));
 
     useLayoutEffect(() => {
-        const nav = navRef.current;
-        const header = document.querySelector<HTMLElement>("[data-portal-shell] > header");
-        if (!nav || !header) return;
-        const measure = () => {
-            nav.style.setProperty(
-                "--pipeline-header-offset",
-                `${header.getBoundingClientRect().height}px`,
-            );
+        activeRef.current = active;
+    }, [active]);
+
+    useLayoutEffect(() => {
+        const rail = railRef.current;
+        if (!rail) return;
+        const alignStage = () => {
+            const lane = rail.querySelector<HTMLElement>(`[data-stage="${activeRef.current}"]`);
+            if (lane) rail.scrollLeft = stageOffset(rail, lane);
         };
-        measure();
-        const observer = new ResizeObserver(measure);
-        observer.observe(header);
-        return () => observer.disconnect();
+        window.addEventListener("resize", alignStage);
+        return () => {
+            window.removeEventListener("resize", alignStage);
+            if (scrollTimer.current) clearTimeout(scrollTimer.current);
+        };
     }, []);
 
     useLayoutEffect(() => {
-        if (previousStage.current === active) return;
-        previousStage.current = active;
-        const nav = navRef.current;
-        if (!nav || nav.getClientRects().length === 0) return;
-        const saved = positions.current[active];
-        const offset = Number.parseFloat(getComputedStyle(nav).top) || 0;
-        const navTop = (nav.parentElement?.getBoundingClientRect().top ?? 0) + window.scrollY;
-        // On a first visit, start at the cards only if already scrolled down.
-        window.scrollTo({
-            top: saved ?? Math.min(window.scrollY, navTop - offset),
-            behavior: "instant",
+        const rail = railRef.current;
+        if (syncedStage.current === active && !stageFilter) return;
+        syncedStage.current = active;
+        const lane = rail?.querySelector<HTMLElement>(`[data-stage="${active}"]`);
+        if (rail && lane) rail.scrollLeft = stageOffset(rail, lane);
+    }, [active, stageFilter]);
+
+    function navigate(nextIndex: number) {
+        const stage = stages[nextIndex];
+        const rail = railRef.current;
+        const lane = rail?.querySelector<HTMLElement>(`[data-stage="${stage}"]`);
+        if (!stage || !rail || !lane) return;
+        rail.scrollTo({
+            left: stageOffset(rail, lane),
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+                ? "instant"
+                : "smooth",
         });
-    }, [active]);
+    }
 
     return (
         <div className={styles.board}>
-            <div ref={navRef} className={styles.navigation}>
-                <StageTabs
-                    active={active}
-                    counts={counts}
-                    onChange={(stage) => {
-                        positions.current[active] = window.scrollY;
-                        onChange(stage);
-                    }}
-                    panelId={`${id}-panel`}
-                    idPrefix={id}
-                    className="mx-0 px-0 pbe-0"
-                />
-                <p className={styles.summary}>
-                    <span>
-                        {deals.length} {deals.length === 1 ? "deal" : "deals"}
-                    </span>
-                    {totals.sale ? <span>Sale {totals.sale}</span> : null}
-                    {totals.rent ? <span>Rent {totals.rent}</span> : null}
-                </p>
-            </div>
-
+            <p id={`${id}-hint`} className="sr-only">
+                Swipe left or right to browse stages, or focus the board and use the left and right
+                arrow keys. Scroll down the page to see more deals. Open a deal for its full
+                details.
+            </p>
             <div
-                id={`${id}-panel`}
-                role="tabpanel"
-                aria-labelledby={`${id}-${active}`}
+                ref={railRef}
+                className={styles.rail}
+                role="region"
+                aria-label="Pipeline stages"
+                aria-describedby={`${id}-hint`}
                 tabIndex={0}
-                className={styles.panel}
+                onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget) return;
+                    if (event.key === "ArrowRight" && index < stages.length - 1) {
+                        event.preventDefault();
+                        navigate(index + 1);
+                    } else if (event.key === "ArrowLeft" && index > 0) {
+                        event.preventDefault();
+                        navigate(index - 1);
+                    }
+                }}
+                onScroll={() => {
+                    if (scrollTimer.current) clearTimeout(scrollTimer.current);
+                    scrollTimer.current = setTimeout(() => {
+                        const rail = railRef.current;
+                        if (!rail) return;
+                        const lanes = Array.from(
+                            rail.querySelectorAll<HTMLElement>("[data-stage]"),
+                        );
+                        const nearest = lanes.reduce<HTMLElement | null>(
+                            (best, lane) =>
+                                !best ||
+                                Math.abs(stageOffset(rail, lane) - rail.scrollLeft) <
+                                    Math.abs(stageOffset(rail, best) - rail.scrollLeft)
+                                    ? lane
+                                    : best,
+                            null,
+                        );
+                        const stage = nearest?.dataset.stage as DealStage | undefined;
+                        if (stage && stage !== activeRef.current) {
+                            syncedStage.current = stage;
+                            onChange(stage);
+                        }
+                    }, 120);
+                }}
             >
-                {deals.length > 0 ? (
-                    <>
-                        <WindowVirtualGrid
-                            key={active}
-                            items={deals.slice(0, stageLimits[active])}
-                            getKey={(deal) => deal.id}
-                            estimateRowHeight={390}
-                            gap={12}
-                            ariaLabel={`${DEAL_STAGE_META[active].label} deals`}
-                            renderItem={renderCard}
-                        />
-                        {remaining > 0 ? (
-                            <Button
-                                variant="outline"
-                                size="lg"
-                                className="inline-full"
-                                onClick={() => onLoadMore(active)}
+                {stages.map((stage) => {
+                    const deals = dealsByStage[stage];
+                    const meta = DEAL_STAGE_META[stage];
+                    const remaining = deals.length - stageLimits[stage];
+                    return (
+                        <section
+                            key={stage}
+                            data-stage={stage}
+                            className={cn(styles.column, meta.columnClass)}
+                            aria-labelledby={`${id}-${stage}`}
+                        >
+                            <PipelineStageHeader
+                                stage={stage}
+                                deals={deals}
+                                labelId={`${id}-${stage}`}
+                            />
+                            <div
+                                className={styles.deals}
+                                role="region"
+                                aria-label={`${meta.label} deals`}
                             >
-                                Load more deals <span className="tabular">({remaining})</span>
-                            </Button>
-                        ) : null}
-                    </>
-                ) : (
-                    <EmptyState
-                        size="page"
-                        icon={DEAL_STAGE_META[active].icon}
-                        heading={`No deals in ${DEAL_STAGE_META[active].label.toLowerCase()}`}
-                        description={`${DEAL_STAGE_META[active].emptyHint}. Choose another stage above to see its deals.`}
-                    />
-                )}
+                                {deals.length ? (
+                                    <>
+                                        {deals.slice(0, stageLimits[stage]).map((deal) => (
+                                            <div key={deal.id}>{renderCard(deal)}</div>
+                                        ))}
+                                        {remaining > 0 ? (
+                                            <Button
+                                                variant="outline"
+                                                className={styles.loadMore}
+                                                onClick={() => onLoadMore(stage)}
+                                            >
+                                                Load more{" "}
+                                                <span className="tabular">({remaining})</span>
+                                            </Button>
+                                        ) : null}
+                                    </>
+                                ) : (
+                                    <div className={styles.empty}>
+                                        <meta.icon aria-hidden size={22} strokeWidth={1.5} />
+                                        <h3>No deals here yet</h3>
+                                        <p>{meta.emptyHint}.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+                    );
+                })}
             </div>
         </div>
     );

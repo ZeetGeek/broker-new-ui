@@ -3,6 +3,22 @@
 Single source of truth for making things common. `.claude/rules/` and
 `.cursor/rules/` only point here.
 
+## CRM list headers
+
+Use `ListPageHeading` from `components/shared/list-page-heading.tsx` for the
+title and summary, mounted through `PortalSectionNav`. It preserves the desktop
+heading and puts a readable, wrapping summary below the title on phones.
+
+Use `ResponsiveListToolbar` for list controls. On phones, selection takes the
+first row; search and compact sorting share the second row. Pass a visible
+Add or Schedule action through `primaryAction` for a full-width third row and
+an inline desktop action. Keep existing floating Add actions on pages that use
+them. `ListToolbarSelect` retains its accessible label when `mobileLabel`
+collapses the phone trigger to an icon. Search, sort, filter/status chips and
+Add/Schedule buttons use `list-control` and `--list-control-height` (2.375rem)
+on every screen, including mobile. Keep form fields and dialog actions on their
+existing sizes.
+
 ## Card grid spacing
 
 Use `gap-card-grid` for card grids: 12px below 640px and 16px from 640px upward
@@ -655,3 +671,25 @@ zero is hidden and values above 99 show `99+`. `stretch` fills the available wid
 `id`s when linking tabs to panels. Arrow keys, Home, End, Enter, and Space work;
 reduced motion snaps the pill. Task planner day selectors and notebook tabs use
 the compact surface pill. CRM filter chips remain a separate control.
+
+### Empty and loading states
+
+New screens import `EmptyState`, `LoadingState`, and `ListSkeleton` from
+`@/components/empty-state`. Use `size="card"` inside dashboard cards,
+`size="compact"` for embedded sections, and `size="page"` for page results.
+Pass the next action as `action={{ label, icon, href }}` or
+`action={{ label, icon, onClick }}`. The component renders the same compact outline button
+with a leading Tabler icon for both navigation and callbacks; do not supply custom action
+markup for new empty states. Existing imports from
+`@/components/shared/empty-state` remain supported. Wrap skeleton groups in
+one `LoadingState` with a descriptive label; Skeleton respects reduced motion.
+
+The broker dashboard uses `features/new-dashboard/dashboard-skeleton.tsx` for
+its route fallback and individual card loads. Reuse its visit, task, pipeline,
+commission, and listing placeholders so loading follows the same card anatomy,
+container queries, and grid as the populated dashboard. The pulse is scoped to
+these placeholders and disabled for reduced motion.
+
+Dashboard cards with no data render `EmptyState` as their full content, replacing
+headers, tabs, and footers. Keep tab controls when another tab contains records.
+The card retains its grid size and the message fills and centers within it.

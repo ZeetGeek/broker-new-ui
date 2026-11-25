@@ -5,16 +5,18 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { ApiError } from "@/lib/api/client";
+import { isMockMode } from "@/lib/api/mock-mode";
 import { propertyAnalyticsApi } from "@/lib/api/property-analytics";
 import { plural } from "@/lib/format/plural";
 import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
+import { getTestLabSettings } from "@/lib/testing/test-lab";
 
 import { EmptyState } from "@/components/shared/empty-state";
 import { AlertCircle, Building2, Clock, Info, Users } from "@/components/shared/icons";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
-import { PREVIEW_PROPERTY_ANALYTICS, USE_MOCK_DATA } from "@/config";
+import { PREVIEW_PROPERTY_ANALYTICS } from "@/config";
 import { AnalyticsClientList } from "@/features/properties/property-analytics/analytics-client-list";
 import { agoLabel } from "@/features/properties/property-analytics/analytics-labels";
 import { buildPropertyReport } from "@/features/properties/property-analytics/analytics-math";
@@ -24,7 +26,7 @@ import { AnalyticsFunnel } from "@/features/properties/property-analytics/analyt
 import { AnalyticsSkeleton } from "@/features/properties/property-analytics/analytics-skeleton";
 import { AnalyticsStatStrip } from "@/features/properties/property-analytics/analytics-stat-strip";
 import { AnalyticsVisits } from "@/features/properties/property-analytics/analytics-visits";
-import { BrokerPropertyAnalytics } from "@/features/properties/property-analytics/broker-property-analytics";
+import { getBrokerAnalyticsPreview } from "@/features/properties/property-analytics/broker-analytics-preview-data";
 import { PropertyAttention } from "@/features/properties/property-analytics/property-attention";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
@@ -45,27 +47,31 @@ export function PropertyAnalyticsContent({
     propertyId: string;
     listing: MyListingItem;
 }) {
-    // The broker-only report is a static design preview until its API is connected.
-    if (PREVIEW_PROPERTY_ANALYTICS || USE_MOCK_DATA) {
-        return <BrokerPropertyAnalytics propertyId={propertyId} propertyTitle={listing.title} />;
-    }
     return <LivePropertyAnalyticsContent propertyId={propertyId} listing={listing} />;
 }
 
-function LivePropertyAnalyticsContent({
+function usePropertyAnalyticsReport({
     propertyId,
     listing,
 }: {
     propertyId: string;
     listing: MyListingItem;
 }) {
+    const preview =
+        isMockMode() || (getTestLabSettings().source === "default" && PREVIEW_PROPERTY_ANALYTICS);
     const query = useQuery({
         queryKey: [
             "property-analytics",
             propertyId,
-            PREVIEW_PROPERTY_ANALYTICS ? "preview" : "live",
+            preview ? "broker-preview" : "live",
+            listing.transactionType,
+            listing.saleAmountInr,
+            listing.rentAmountInr,
         ],
-        queryFn: ({ signal }) => propertyAnalyticsApi.property(propertyId, signal),
+        queryFn: ({ signal }) =>
+            preview
+                ? getBrokerAnalyticsPreview(propertyId, listing)
+                : propertyAnalyticsApi.property(propertyId, signal),
         enabled: Boolean(propertyId),
         // Arriving from a card should show a visit or offer logged a moment ago.
         staleTime: 0,
@@ -104,6 +110,45 @@ function LivePropertyAnalyticsContent({
     const fetchedAt = query.dataUpdatedAt;
     const now = useMemo(() => new Date(fetchedAt), [fetchedAt]);
     const report = useMemo(() => (data ? buildPropertyReport(data, now) : null), [data, now]);
+
+    return { query, data, report, now };
+}
+
+/** Header and report share the same query so dates stay in sync. */
+export function PropertyAnalyticsMetadata({
+    propertyId,
+    listing,
+}: {
+    propertyId: string;
+    listing: MyListingItem;
+}) {
+    const { report, now } = usePropertyAnalyticsReport({ propertyId, listing });
+    const daysListed = report?.daysListed ?? listing.listedDaysAgo;
+
+    return (
+        <>
+            <span className={styles.metadataItem}>
+                <Clock aria-hidden className="block-4 inline-4" />
+                {plural(daysListed, "day")} on the market
+            </span>
+            {report?.lastUpdateAt ? (
+                <span className={styles.metadataItem}>
+                    <Info aria-hidden className="block-4 inline-4" />
+                    Updated {agoLabel(report.lastUpdateAt, now)}
+                </span>
+            ) : null}
+        </>
+    );
+}
+
+function LivePropertyAnalyticsContent({
+    propertyId,
+    listing,
+}: {
+    propertyId: string;
+    listing: MyListingItem;
+}) {
+    const { query, data, report, now } = usePropertyAnalyticsReport({ propertyId, listing });
 
     if (query.isPending) return <AnalyticsSkeleton />;
 
@@ -159,16 +204,17 @@ function LivePropertyAnalyticsContent({
 
     return (
         <div className={styles.report}>
-            {PREVIEW_PROPERTY_ANALYTICS ? (
+            {isMockMode() ||
+            (getTestLabSettings().source === "default" && PREVIEW_PROPERTY_ANALYTICS) ? (
                 <p
                     role="status"
                     className="body-sm flex items-start gap-2 rounded-inner bg-brand-soft px-4 py-3 text-brand-text"
                 >
                     <Info aria-hidden className="mbs-0.5 shrink-0 block-4 inline-4" />
                     <span>
-                        <strong className="font-semibold">Sample data.</strong> 40 demo clients for
-                        reviewing analytics. Contact and deal actions are disabled; your saved
-                        records are unchanged.
+                        <strong className="font-semibold">Sample broker data.</strong>{" "}
+                        {report.counts.total} clients with visits, offers and deal progress. Contact
+                        and deal actions are disabled for these samples.
                     </span>
                 </p>
             ) : null}
@@ -192,26 +238,6 @@ function LivePropertyAnalyticsContent({
                 </>
             ) : (
                 <>
-                    <header className={styles.heading}>
-                        <div className="flex flex-col gap-1.5 min-inline-0">
-                            <h2 className="h3 text-ink">Property performance</h2>
-                            <p className="body-sm wrap-anywhere text-ink-muted">{propertyTitle}</p>
-                        </div>
-                        <div className={styles.metadata}>
-                            {report.daysListed != null ? (
-                                <span className="body-sm">
-                                    <Clock aria-hidden className="block-4 inline-4" />
-                                    {plural(report.daysListed, "day")} on the market
-                                </span>
-                            ) : null}
-                            {report.lastUpdateAt ? (
-                                <span className="body-sm">
-                                    <Info aria-hidden className="block-4 inline-4" />
-                                    Updated {agoLabel(report.lastUpdateAt, now)}
-                                </span>
-                            ) : null}
-                        </div>
-                    </header>
                     <div className={styles.workspace}>
                         <div className={styles.main}>
                             <AnalyticsStatStrip

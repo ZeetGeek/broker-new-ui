@@ -22,10 +22,6 @@ function CardSkeleton({ rows }: { rows: number }) {
 export function AnalyticsSkeleton() {
     return (
         <div role="status" aria-label="Loading property performance" className={styles.report}>
-            <div className="flex flex-col gap-2">
-                <Skeleton className="block-8 inline-64" />
-                <Skeleton className="block-4 inline-48" />
-            </div>
             <div className={styles.workspace}>
                 <div className={styles.main}>
                     <div className={styles.stats}>

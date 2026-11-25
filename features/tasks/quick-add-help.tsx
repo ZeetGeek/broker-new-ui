@@ -78,6 +78,7 @@ export function QuickAddHelp({ fieldRef, onOpenChange }: QuickAddHelpProps) {
     return (
         <>
             <button
+                data-quick-add-help
                 type="button"
                 className={styles.helpButton}
                 aria-label="Quick add shortcuts"

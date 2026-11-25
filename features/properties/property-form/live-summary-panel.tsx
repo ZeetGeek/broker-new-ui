@@ -10,6 +10,7 @@ import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { derive } from "@/lib/visibility/derive";
 import { FIELD_RULES } from "@/lib/visibility/rules";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { AppImage } from "@/components/shared/app-image";
 import toast from "@/components/shared/app-toast";
@@ -20,7 +21,6 @@ import {
     Check,
     CircleHelp,
     Copy,
-    ImageIcon,
     List,
     LockKeyhole,
     MapPin,
@@ -29,9 +29,15 @@ import {
     Upload,
     X,
 } from "@/components/shared/icons";
+import {
+    mobileActionClass,
+    MobileActionDrawer,
+    mobileActionGroupClass,
+} from "@/components/shared/mobile-action-drawer";
 import { OVERLAY_ICON_BUTTON_COLORS } from "@/components/shared/overlay-card";
 import { ListingAskPrices } from "@/components/shared/price-with-commission";
 import { PropertyOwnerContactActions } from "@/components/shared/property-owner-contact-actions";
+import { PropertyPlaceholderImage } from "@/components/shared/property-placeholder-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -81,6 +87,7 @@ export function LiveSummaryPanel({
     compact = false,
     onGoToMedia,
     photoFilesRef,
+    view = "all",
 }: {
     audience?: "owner" | "broker";
     values: PropertyDraftValues;
@@ -88,9 +95,12 @@ export function LiveSummaryPanel({
     compact?: boolean;
     onGoToMedia?: () => void;
     photoFilesRef?: MutableRefObject<Map<string, File>>;
+    view?: "all" | "listing" | "deal";
 }) {
+    const mobile = useMobileMenu();
     const { setValue, getValues } = useFormContext<PropertyDraftValues>();
     const coverInputRef = useRef<HTMLInputElement>(null);
+    const [coverActionsOpen, setCoverActionsOpen] = useState(false);
     const [copiedSummary, setCopiedSummary] = useState<string | null>(null);
     const flags = derive(values);
     const showBedrooms = FIELD_RULES["details.bedrooms"].visible(flags);
@@ -275,348 +285,405 @@ export function LiveSummaryPanel({
 
     return (
         <aside
-            className="flex flex-col gap-4 min-inline-0"
+            className={cn("flex flex-col gap-4 min-inline-0", view !== "all" && styles.focusedView)}
             aria-label="Property preview and deal summary"
         >
-            <article
-                className={cn(
-                    "overflow-hidden rounded-card bg-surface shadow-md min-inline-0",
-                    cardStyles.ownedCard,
-                    styles.previewCard,
-                )}
-            >
-                <h2 className="sr-only">Listing preview</h2>
-                {photoFilesRef ? (
-                    <input
-                        ref={coverInputRef}
-                        type="file"
-                        aria-label="Upload listing cover photo"
-                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                        className="sr-only"
-                        onChange={(event) => {
-                            void handleReplaceCover(event.target.files?.[0]);
-                            event.currentTarget.value = "";
-                        }}
-                    />
-                ) : null}
-                <div
+            {view !== "deal" ? (
+                <article
                     className={cn(
-                        "relative overflow-hidden min-inline-0",
-                        cover?.url
-                            ? "aspect-4/3 bg-surface-muted"
-                            : "mx-3 mbs-3 rounded-inner border-2 border-dashed border-brand/35 bg-brand-soft/40",
+                        "overflow-hidden rounded-card bg-surface shadow-md min-inline-0",
+                        cardStyles.ownedCard,
+                        styles.previewCard,
                     )}
                 >
-                    <div className="absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap gap-1.5 pe-14">
-                        {isSale ? (
-                            <Badge color="emerald" blur={cover?.url ? "dark" : false}>
-                                For sale
-                            </Badge>
+                    <h2 className="sr-only">Listing preview</h2>
+                    {photoFilesRef ? (
+                        <input
+                            ref={coverInputRef}
+                            type="file"
+                            aria-label="Upload listing cover photo"
+                            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                            className="sr-only"
+                            onChange={(event) => {
+                                void handleReplaceCover(event.target.files?.[0]);
+                                event.currentTarget.value = "";
+                            }}
+                        />
+                    ) : null}
+                    <div
+                        className={cn(
+                            "relative overflow-hidden min-inline-0",
+                            cover?.url
+                                ? "aspect-4/3 bg-surface-muted"
+                                : "mx-3 mbs-3 rounded-inner border-2 border-dashed border-brand/35 bg-brand-soft/40",
+                        )}
+                    >
+                        <div className="absolute inset-s-3 inset-bs-3 z-10 flex flex-wrap gap-1.5 pe-14">
+                            {isSale ? (
+                                <Badge color="emerald" blur={cover?.url ? "dark" : false}>
+                                    For sale
+                                </Badge>
+                            ) : null}
+                            {values.basics.listingFor !== "sell" ? (
+                                <Badge color="orange" blur={cover?.url ? "dark" : false}>
+                                    {values.basics.listingFor === "lease"
+                                        ? "For lease"
+                                        : values.basics.listingFor === "pg"
+                                          ? "PG"
+                                          : "For rent"}
+                                </Badge>
+                            ) : null}
+                        </div>
+                        {cover?.url && photoFilesRef ? (
+                            <div className="absolute inset-e-3 inset-bs-3 z-20">
+                                {mobile ? (
+                                    <MobileActionDrawer
+                                        open={coverActionsOpen}
+                                        onOpenChange={setCoverActionsOpen}
+                                        title="Cover photo options"
+                                        trigger={
+                                            <IconButton
+                                                type="button"
+                                                size="sm"
+                                                appearance="inverse"
+                                                style={OVERLAY_ICON_BUTTON_COLORS}
+                                                aria-label="Cover photo options"
+                                            >
+                                                <MoreHorizontal aria-hidden />
+                                            </IconButton>
+                                        }
+                                    >
+                                        <div className={mobileActionGroupClass}>
+                                            <button
+                                                type="button"
+                                                className={mobileActionClass}
+                                                onClick={() => {
+                                                    setCoverActionsOpen(false);
+                                                    coverInputRef.current?.click();
+                                                }}
+                                            >
+                                                <RefreshCw aria-hidden /> Replace cover
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={mobileActionClass}
+                                                data-destructive="true"
+                                                onClick={() => {
+                                                    setCoverActionsOpen(false);
+                                                    handleRemoveCover();
+                                                }}
+                                            >
+                                                <X aria-hidden /> Remove cover
+                                            </button>
+                                        </div>
+                                    </MobileActionDrawer>
+                                ) : (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger
+                                            render={
+                                                <IconButton
+                                                    type="button"
+                                                    size="sm"
+                                                    appearance="inverse"
+                                                    style={OVERLAY_ICON_BUTTON_COLORS}
+                                                    aria-label="Cover photo options"
+                                                />
+                                            }
+                                        >
+                                            <MoreHorizontal aria-hidden />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                onClick={() => coverInputRef.current?.click()}
+                                            >
+                                                <RefreshCw aria-hidden /> Replace cover
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={handleRemoveCover}>
+                                                <X aria-hidden /> Remove cover
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
+                            </div>
                         ) : null}
-                        {values.basics.listingFor !== "sell" ? (
-                            <Badge color="orange" blur={cover?.url ? "dark" : false}>
-                                {values.basics.listingFor === "lease"
-                                    ? "For lease"
-                                    : values.basics.listingFor === "pg"
-                                      ? "PG"
-                                      : "For rent"}
-                            </Badge>
+                        {cover?.url ? (
+                            <AppImage
+                                src={cover.url}
+                                alt={cover.alt || title}
+                                fill
+                                sizes="(max-width: 1279px) 100vw, 320px"
+                                className="object-cover"
+                                unoptimized={/^(blob:|https?:)/.test(cover.url)}
+                            />
+                        ) : (
+                            <div
+                                className={cn(
+                                    "relative flex items-end justify-center px-5 py-4 text-center min-block-60 min-inline-0",
+                                    styles.emptyCover,
+                                )}
+                            >
+                                <PropertyPlaceholderImage sizes="(max-width: 1279px) 100vw, 320px" />
+                                {photoFilesRef || onGoToMedia ? (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="relative z-1 gap-1.5 border-brand/25 bg-surface text-brand-text hover:border-brand/50 hover:bg-surface"
+                                        onClick={() =>
+                                            photoFilesRef
+                                                ? coverInputRef.current?.click()
+                                                : onGoToMedia?.()
+                                        }
+                                    >
+                                        <Upload className="block-4 inline-4" aria-hidden /> Add
+                                        cover photo
+                                    </Button>
+                                ) : null}
+                            </div>
+                        )}
+                    </div>
+                    <div className={cn("flex flex-col", cardStyles.panel)}>
+                        <div className="flex items-center gap-2">
+                            <span className="body-sm text-ink-muted">Status</span>
+                            <Badge color="stone">Draft</Badge>
+                        </div>
+                        <div className="flex flex-col gap-2 min-inline-0">
+                            {hasPreviewPrice ? (
+                                <div className={cardStyles.prices}>
+                                    <ListingAskPrices
+                                        listing={previewPricing}
+                                        audience={audience}
+                                    />
+                                </div>
+                            ) : (
+                                <p className="h5 font-semibold tracking-wide text-brand">
+                                    Price not set
+                                </p>
+                            )}
+                            <h3 className="body font-semibold tracking-wide wrap-break-word text-ink">
+                                {cardHeadline || title}
+                            </h3>
+                            <p className="body-sm flex items-start gap-1.5 tracking-wide text-ink-muted">
+                                <MapPin
+                                    className="mbs-0.5 shrink-0 block-3.5 inline-3.5"
+                                    aria-hidden
+                                />
+                                <span className="wrap-break-word min-inline-0">
+                                    {locationLabel}
+                                </span>
+                            </p>
+                        </div>
+                        {audience === "broker" ? (
+                            <div className="flex flex-col gap-2 border-bs border-border-warm pbs-3 min-inline-0">
+                                <div
+                                    className={cn(
+                                        "body-sm rounded-control border border-dashed border-brand/40 font-semibold text-brand-text",
+                                        cardStyles.ownerRow,
+                                        styles.peopleRow,
+                                    )}
+                                >
+                                    <span className="shrink-0 text-ink-muted">Owner</span>
+                                    {ownerName ? (
+                                        <span className={cardStyles.person}>
+                                            <UserAvatar
+                                                name={ownerName}
+                                                size="2xs"
+                                                framed={false}
+                                            />
+                                            <span
+                                                className={cn(cardStyles.personName, styles.name)}
+                                            >
+                                                {ownerName}
+                                            </span>
+                                        </span>
+                                    ) : (
+                                        <span className="font-normal text-ink-muted">
+                                            Not attached
+                                        </span>
+                                    )}
+                                </div>
+                                <div
+                                    className={cn(
+                                        "rounded-control border border-dashed border-brand/40",
+                                        cardStyles.clientsRow,
+                                    )}
+                                >
+                                    {hasClients ? (
+                                        <span
+                                            aria-hidden
+                                            className={cn(
+                                                "flex items-center justify-center text-brand-text",
+                                                cardStyles.pipelineButton,
+                                            )}
+                                        >
+                                            <List className="block-4 inline-4" />
+                                        </span>
+                                    ) : null}
+                                    <div
+                                        className={cn(
+                                            "body-sm",
+                                            cardStyles.clientButton,
+                                            styles.peopleRow,
+                                            !hasClients && styles.emptyClients,
+                                        )}
+                                    >
+                                        <span className="shrink-0 font-semibold text-ink-muted">
+                                            Clients
+                                        </span>
+                                        {hasClients ? (
+                                            <AttachedClientsSummary
+                                                clients={values.attachedBuyers}
+                                                maxAvatars={3}
+                                                className={cn(
+                                                    cardStyles.clientSummary,
+                                                    styles.summary,
+                                                )}
+                                                labelClassName={cn(
+                                                    "text-brand-text",
+                                                    cardStyles.clientName,
+                                                    styles.name,
+                                                )}
+                                                interactive={false}
+                                            />
+                                        ) : (
+                                            <span className="text-ink-muted">None attached</span>
+                                        )}
+                                    </div>
+                                </div>
+                                {ownerName ? (
+                                    <TooltipProvider>
+                                        <PropertyOwnerContactActions
+                                            ownerName={ownerName}
+                                            ownerPhoneDigits={values.owner.phone}
+                                        />
+                                    </TooltipProvider>
+                                ) : null}
+                            </div>
                         ) : null}
                     </div>
-                    {cover?.url && photoFilesRef ? (
-                        <div className="absolute inset-e-3 inset-bs-3 z-20">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger
-                                    render={
-                                        <IconButton
-                                            type="button"
-                                            size="sm"
-                                            appearance="inverse"
-                                            style={OVERLAY_ICON_BUTTON_COLORS}
-                                            aria-label="Cover photo options"
-                                        />
-                                    }
-                                >
-                                    <MoreHorizontal aria-hidden />
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                        onClick={() => coverInputRef.current?.click()}
-                                    >
-                                        <RefreshCw aria-hidden /> Replace cover
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={handleRemoveCover}>
-                                        <X aria-hidden /> Remove cover
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                </article>
+            ) : null}
+
+            {view !== "listing" ? (
+                <article
+                    className={cn(
+                        "overflow-hidden rounded-card bg-surface min-inline-0",
+                        showDealBreakdown ? "shadow-md" : "border border-border-warm",
+                    )}
+                >
+                    <header className="flex items-start justify-between gap-2 px-4 pbs-4">
+                        <div className="min-inline-0">
+                            <h2 className="text-sm font-semibold text-ink">
+                                {isSale ? "Sale deal summary" : "Rent deal summary"}
+                            </h2>
+                            <p className="mbs-1 text-xs/5 text-ink-muted">Updates as you type</p>
                         </div>
-                    ) : null}
-                    {cover?.url ? (
-                        <AppImage
-                            src={cover.url}
-                            alt={cover.alt || title}
-                            fill
-                            sizes="(max-width: 1279px) 100vw, 320px"
-                            className="object-cover"
-                            unoptimized={/^(blob:|https?:)/.test(cover.url)}
-                        />
-                    ) : (
-                        <div className="flex flex-col items-center justify-center gap-4 px-5 pbs-12 pbe-6 text-center min-block-60 min-inline-0">
-                            <div className="flex flex-col items-center gap-3">
-                                <span className="flex items-center justify-center rounded-full border-2 border-dashed border-brand/35 text-brand block-12 inline-12">
-                                    <ImageIcon
-                                        className="block-6 inline-6"
-                                        strokeWidth={1.5}
-                                        aria-hidden
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-control bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted">
+                            <LockKeyhole className="block-3.5 inline-3.5" aria-hidden /> Private
+                        </span>
+                    </header>
+                    {showDealBreakdown ? (
+                        <>
+                            <div className="px-4 py-3">
+                                {isSale && "ownerNet" in result ? (
+                                    <>
+                                        <MoneyRow
+                                            label="Sale price"
+                                            value={values.sale.expectedPrice}
+                                            title="The current asking price."
+                                        />
+                                        {values.area.areaSqft ? (
+                                            <MoneyRow
+                                                label="Rate per sq ft"
+                                                value={money(result.effectiveRatePerSqft)}
+                                                title="Sale price divided by area."
+                                            />
+                                        ) : null}
+                                    </>
+                                ) : "ownerFirstPayout" in result ? (
+                                    <>
+                                        <MoneyRow
+                                            label="Monthly rent"
+                                            value={values.rent.monthlyRent}
+                                            title="The agreed monthly asking rent."
+                                        />
+                                        {deposit > 0 ? (
+                                            <MoneyRow
+                                                label="Deposit"
+                                                value={money(deposit)}
+                                                title="The security deposit in rupees."
+                                            />
+                                        ) : null}
+                                    </>
+                                ) : null}
+                                <MoneyRow
+                                    label={isSale ? "Gross commission" : "Gross brokerage"}
+                                    value={money(result.gross)}
+                                    title="Agreed fee before any co-broker split."
+                                />
+                                {coBrokerShare > 0 ? (
+                                    <MoneyRow
+                                        label={`Co-broker (${coBrokerPercent}%)`}
+                                        value={money(coBrokerShare)}
+                                        prefix="−"
+                                        title="Share paid to the co-broker."
                                     />
-                                </span>
-                                <p className="text-sm/5 font-semibold text-ink">
-                                    Add a cover photo
-                                </p>
-                                <p className="body-xs text-ink-muted">
-                                    Help people recognise your property.
-                                </p>
+                                ) : null}
                             </div>
-                            {photoFilesRef || onGoToMedia ? (
+                            <div className="border-bs border-border-warm bg-surface p-4">
+                                <p className="text-xs font-medium text-ink-muted">
+                                    Estimated commission
+                                </p>
+                                <AnimatedMoney
+                                    value={money(brokerAfterSplit)}
+                                    className="mbs-1 block text-3xl tracking-[-0.02em] text-brand-text"
+                                />
+                                <p className="mbs-2 text-xs/5 text-ink-muted">
+                                    Before applicable taxes and deductions.
+                                </p>
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    size="sm"
-                                    className="gap-1.5 border-brand/25 bg-surface text-brand-text hover:border-brand/50 hover:bg-surface"
-                                    onClick={() =>
-                                        photoFilesRef
-                                            ? coverInputRef.current?.click()
-                                            : onGoToMedia?.()
-                                    }
+                                    disabled={!hasPrice}
+                                    onClick={() => void copySummary()}
+                                    className="mbs-4 gap-2 inline-full min-block-11"
                                 >
-                                    <Upload className="block-4 inline-4" aria-hidden /> Add cover
-                                    photo
+                                    {copiedSummary === summaryText ? (
+                                        <Check className="block-4 inline-4" aria-hidden />
+                                    ) : (
+                                        <Copy className="block-4 inline-4" aria-hidden />
+                                    )}
+                                    <span role="status">
+                                        {copiedSummary === summaryText
+                                            ? "Summary copied"
+                                            : "Copy deal summary"}
+                                    </span>
                                 </Button>
-                            ) : null}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex flex-col items-center gap-3 px-5 py-6 text-center">
+                            <span className="flex items-center justify-center rounded-full border border-brand/20 bg-brand-soft text-brand-text block-12 inline-12">
+                                <BadgePercent className="block-6 inline-6" aria-hidden />
+                            </span>
+                            <div className="flex flex-col gap-1.5 max-inline-64">
+                                <p className="text-sm font-semibold text-ink">
+                                    {audience === "owner"
+                                        ? "Broker commission estimate"
+                                        : "Your commission estimate"}
+                                </p>
+                                <p className="text-xs/5 text-ink-muted">
+                                    Add the price and commission in{" "}
+                                    <span className="font-semibold text-ink">Price &amp; deal</span>
+                                    {audience === "owner"
+                                        ? " to see the broker's estimated fee."
+                                        : " to see your estimated earnings."}
+                                </p>
+                            </div>
                         </div>
                     )}
-                </div>
-                <div className={cn("flex flex-col", cardStyles.panel)}>
-                    <div className="flex items-center gap-2">
-                        <span className="body-sm text-ink-muted">Status</span>
-                        <Badge color="stone">Draft</Badge>
-                    </div>
-                    <div className="flex flex-col gap-2 min-inline-0">
-                        {hasPreviewPrice ? (
-                            <div className={cardStyles.prices}>
-                                <ListingAskPrices listing={previewPricing} audience={audience} />
-                            </div>
-                        ) : (
-                            <p className="h5 font-semibold tracking-wide text-brand">
-                                Price not set
-                            </p>
-                        )}
-                        <h3 className="body font-semibold tracking-wide wrap-break-word text-ink">
-                            {cardHeadline || title}
-                        </h3>
-                        <p className="body-sm flex items-start gap-1.5 tracking-wide text-ink-muted">
-                            <MapPin className="mbs-0.5 shrink-0 block-3.5 inline-3.5" aria-hidden />
-                            <span className="wrap-break-word min-inline-0">{locationLabel}</span>
-                        </p>
-                    </div>
-                    {audience === "broker" ? (
-                        <div className="flex flex-col gap-2 border-bs border-border-warm pbs-3 min-inline-0">
-                            <div
-                                className={cn(
-                                    "body-sm rounded-control border border-dashed border-brand/40 font-semibold text-brand-text",
-                                    cardStyles.ownerRow,
-                                    styles.peopleRow,
-                                )}
-                            >
-                                <span className="shrink-0 text-ink-muted">Owner</span>
-                                {ownerName ? (
-                                    <span className={cardStyles.person}>
-                                        <UserAvatar name={ownerName} size="2xs" framed={false} />
-                                        <span className={cn(cardStyles.personName, styles.name)}>
-                                            {ownerName}
-                                        </span>
-                                    </span>
-                                ) : (
-                                    <span className="font-normal text-ink-muted">Not attached</span>
-                                )}
-                            </div>
-                            <div
-                                className={cn(
-                                    "rounded-control border border-dashed border-brand/40",
-                                    cardStyles.clientsRow,
-                                )}
-                            >
-                                {hasClients ? (
-                                    <span
-                                        aria-hidden
-                                        className={cn(
-                                            "flex items-center justify-center text-brand-text",
-                                            cardStyles.pipelineButton,
-                                        )}
-                                    >
-                                        <List className="block-4 inline-4" />
-                                    </span>
-                                ) : null}
-                                <div
-                                    className={cn(
-                                        "body-sm",
-                                        cardStyles.clientButton,
-                                        styles.peopleRow,
-                                        !hasClients && styles.emptyClients,
-                                    )}
-                                >
-                                    <span className="shrink-0 font-semibold text-ink-muted">
-                                        Clients
-                                    </span>
-                                    {hasClients ? (
-                                        <AttachedClientsSummary
-                                            clients={values.attachedBuyers}
-                                            maxAvatars={3}
-                                            className={cn(cardStyles.clientSummary, styles.summary)}
-                                            labelClassName={cn(
-                                                "text-brand-text",
-                                                cardStyles.clientName,
-                                                styles.name,
-                                            )}
-                                            interactive={false}
-                                        />
-                                    ) : (
-                                        <span className="text-ink-muted">None attached</span>
-                                    )}
-                                </div>
-                            </div>
-                            {ownerName ? (
-                                <TooltipProvider>
-                                    <PropertyOwnerContactActions
-                                        ownerName={ownerName}
-                                        ownerPhoneDigits={values.owner.phone}
-                                    />
-                                </TooltipProvider>
-                            ) : null}
-                        </div>
-                    ) : null}
-                </div>
-            </article>
-
-            <article
-                className={cn(
-                    "overflow-hidden rounded-card bg-surface min-inline-0",
-                    showDealBreakdown ? "shadow-md" : "border border-border-warm",
-                )}
-            >
-                <header className="flex items-start justify-between gap-2 px-4 pbs-4">
-                    <div className="min-inline-0">
-                        <h2 className="text-sm font-semibold text-ink">
-                            {isSale ? "Sale deal summary" : "Rent deal summary"}
-                        </h2>
-                        <p className="mbs-1 text-xs/5 text-ink-muted">Updates as you type</p>
-                    </div>
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-control bg-surface-muted px-2 py-1 text-xs font-medium text-ink-muted">
-                        <LockKeyhole className="block-3.5 inline-3.5" aria-hidden /> Private
-                    </span>
-                </header>
-                {showDealBreakdown ? (
-                    <>
-                        <div className="px-4 py-3">
-                            {isSale && "ownerNet" in result ? (
-                                <>
-                                    <MoneyRow
-                                        label="Sale price"
-                                        value={values.sale.expectedPrice}
-                                        title="The current asking price."
-                                    />
-                                    {values.area.areaSqft ? (
-                                        <MoneyRow
-                                            label="Rate per sq ft"
-                                            value={money(result.effectiveRatePerSqft)}
-                                            title="Sale price divided by area."
-                                        />
-                                    ) : null}
-                                </>
-                            ) : "ownerFirstPayout" in result ? (
-                                <>
-                                    <MoneyRow
-                                        label="Monthly rent"
-                                        value={values.rent.monthlyRent}
-                                        title="The agreed monthly asking rent."
-                                    />
-                                    {deposit > 0 ? (
-                                        <MoneyRow
-                                            label="Deposit"
-                                            value={money(deposit)}
-                                            title="The security deposit in rupees."
-                                        />
-                                    ) : null}
-                                </>
-                            ) : null}
-                            <MoneyRow
-                                label={isSale ? "Gross commission" : "Gross brokerage"}
-                                value={money(result.gross)}
-                                title="Agreed fee before any co-broker split."
-                            />
-                            {coBrokerShare > 0 ? (
-                                <MoneyRow
-                                    label={`Co-broker (${coBrokerPercent}%)`}
-                                    value={money(coBrokerShare)}
-                                    prefix="−"
-                                    title="Share paid to the co-broker."
-                                />
-                            ) : null}
-                        </div>
-                        <div className="border-bs border-border-warm bg-surface p-4">
-                            <p className="text-xs font-medium text-ink-muted">
-                                Estimated commission
-                            </p>
-                            <AnimatedMoney
-                                value={money(brokerAfterSplit)}
-                                className="mbs-1 block text-3xl tracking-[-0.02em] text-brand-text"
-                            />
-                            <p className="mbs-2 text-xs/5 text-ink-muted">
-                                Before applicable taxes and deductions.
-                            </p>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                disabled={!hasPrice}
-                                onClick={() => void copySummary()}
-                                className="mbs-4 gap-2 inline-full min-block-11"
-                            >
-                                {copiedSummary === summaryText ? (
-                                    <Check className="block-4 inline-4" aria-hidden />
-                                ) : (
-                                    <Copy className="block-4 inline-4" aria-hidden />
-                                )}
-                                <span role="status">
-                                    {copiedSummary === summaryText
-                                        ? "Summary copied"
-                                        : "Copy deal summary"}
-                                </span>
-                            </Button>
-                        </div>
-                    </>
-                ) : (
-                    <div className="flex flex-col items-center gap-3 px-5 py-6 text-center">
-                        <span className="flex items-center justify-center rounded-full border border-brand/20 bg-brand-soft text-brand-text block-12 inline-12">
-                            <BadgePercent className="block-6 inline-6" aria-hidden />
-                        </span>
-                        <div className="flex flex-col gap-1.5 max-inline-64">
-                            <p className="text-sm font-semibold text-ink">
-                                {audience === "owner"
-                                    ? "Broker commission estimate"
-                                    : "Your commission estimate"}
-                            </p>
-                            <p className="text-xs/5 text-ink-muted">
-                                Add the price and commission in{" "}
-                                <span className="font-semibold text-ink">Price &amp; deal</span>
-                                {audience === "owner"
-                                    ? " to see the broker's estimated fee."
-                                    : " to see your estimated earnings."}
-                            </p>
-                        </div>
-                    </div>
-                )}
-            </article>
+                </article>
+            ) : null}
         </aside>
     );
 }

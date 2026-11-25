@@ -274,7 +274,7 @@ export function StepMedia({
                 <div id="media-photos" tabIndex={-1} className={FORM_STACK_CLASS}>
                     <div
                         className="
-                          grid gap-4
+                          grid grid-cols-1 gap-4 min-inline-0
                           md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] md:items-stretch
                         "
                     >
@@ -431,7 +431,11 @@ export function StepMedia({
                         <p>JPG, PNG, WebP, HEIC · Max 10 MB per photo</p>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-3" role="status" aria-live="polite">
+                    <div
+                        className="grid grid-cols-1 gap-3 min-inline-0 sm:grid-cols-3"
+                        role="status"
+                        aria-live="polite"
+                    >
                         <div
                             className="
                               space-y-1 rounded-control border border-border-warm bg-surface p-4

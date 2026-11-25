@@ -1,6 +1,9 @@
 .section {
+    --commission-section-height: 48rem;
+    block-size: var(--commission-section-height);
     display: grid;
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 0.9fr) minmax(0, 1fr);
     overflow: hidden;
     border-radius: var(--radius-card);
     background: var(--color-surface);
@@ -14,6 +17,8 @@
     flex-direction: column;
     gap: 1.5rem;
     min-inline-size: 0;
+    min-block-size: 0;
+    overflow-y: auto;
     padding: 1.5rem;
     background: var(--color-surface);
     color: var(--color-ink);
@@ -26,6 +31,8 @@
 }
 
 .period {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     color: var(--color-ink-subtle);
     font-size: 0.875rem;
     line-height: 1.5;
@@ -110,6 +117,8 @@
     justify-content: space-between;
     gap: 1rem;
     min-inline-size: 0;
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
 }
 
 .breakdown dt {
@@ -142,6 +151,8 @@
 
 .detail {
     min-inline-size: 0;
+    min-block-size: 0;
+    overflow-y: auto;
     padding: 1.25rem;
     container-type: inline-size;
 }
@@ -164,14 +175,14 @@
     inline-size: 100%;
 }
 
-.range {
+.range[data-slot="select-trigger"] {
     min-block-size: 2rem;
     border-width: 1px;
     background: var(--color-surface);
     box-shadow: var(--shadow-sm);
     color: var(--color-ink);
-    font-weight: 600;
-    font-size: 0.875rem;
+    font-weight: 400;
+    font-size: calc(0.8125rem / var(--layout-font-scale, 1));
     line-height: 1.5;
 }
 
@@ -196,6 +207,8 @@
 }
 
 .chartViewport {
+    min-inline-size: 0;
+    max-inline-size: 100%;
     overflow-x: auto;
     padding: 0.25rem;
     margin-inline: -0.25rem;
@@ -209,10 +222,15 @@
 }
 
 .yearChart {
-    min-inline-size: 36rem;
+    min-inline-size: 54rem;
+}
+
+.chart[data-months="6"] {
+    min-inline-size: 27rem;
 }
 
 .legend {
+    flex-wrap: wrap;
     color: var(--color-ink-muted);
     font-size: 0.8125rem;
     line-height: 1.5;
@@ -242,6 +260,7 @@
     font-variant-numeric: tabular-nums;
 }
 .tooltip {
+    max-inline-size: calc(100vw - 2rem);
     font-size: 0.8125rem;
     padding: 0.75rem;
 }
@@ -250,7 +269,8 @@
     flex: 1;
     justify-content: space-between;
     align-items: center;
-    gap: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
     color: var(--color-ink-muted);
 }
 .tooltipRow strong {
@@ -291,9 +311,19 @@
 }
 
 @media (max-width: 639.98px) {
+    .section {
+        block-size: auto;
+        min-block-size: 0;
+        grid-template-rows: auto auto;
+    }
+
+    .stateSection {
+        min-block-size: 18rem;
+    }
     .summary,
     .detail {
         padding: 1rem;
+        overflow-y: visible;
     }
 
     .summary {
@@ -303,11 +333,25 @@
     .snapshotHeader {
         gap: 0.25rem 0.75rem;
     }
+
+    .detail {
+        border-block-start: 1px solid var(--color-border-warm);
+    }
+    .chartHeader {
+        align-items: center;
+        gap: 0.75rem 0.5rem;
+    }
+    .chartHeader > :last-child {
+        flex-shrink: 1;
+        white-space: normal;
+    }
 }
 
 @media (min-width: 64rem) {
     .section {
+        --commission-section-height: 28rem;
         grid-template-columns: minmax(17.5rem, 0.9fr) minmax(0, 3fr);
+        grid-template-rows: minmax(0, 1fr);
     }
     .summary {
         justify-content: space-between;
@@ -325,4 +369,14 @@
     .detail {
         padding: 1.5rem 1.75rem;
     }
+}
+
+/* Loading, error and empty copy span the chart surface as well. */
+.stateSection {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+}
+
+.stateSection .summary::after {
+    content: none;
 }

@@ -2,10 +2,12 @@
 import { type DragEvent, useCallback, useId, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { IconButton } from "@/components/shared/icon-button";
 import type { AppIcon } from "@/components/shared/icons";
-import { Paperclip, Trash2, Upload } from "@/components/shared/icons";
+import { Check, Paperclip, Trash2, Upload } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -51,6 +53,17 @@ function DocumentRow({
     onRemove: (id: string) => void;
     disabled?: boolean;
 }) {
+    const mobile = useMobileMenu();
+    const [kindOpen, setKindOpen] = useState(false);
+    const kindTrigger = (
+        <button
+            type="button"
+            disabled={disabled}
+            className="body-xs shrink-0 rounded-control border border-border-warm bg-surface px-3 py-1.5 font-medium text-ink-muted transition-colors duration-160 hover:border-brand/40 hover:text-ink"
+        >
+            {BUYER_DOCUMENT_KIND_LABEL[doc.kind]}
+        </button>
+    );
     return (
         <li
             className="
@@ -95,34 +108,46 @@ function DocumentRow({
                 </p>
             </div>
 
-            <DropdownMenu>
-                <DropdownMenuTrigger
-                    render={
-                        <button
-                            type="button"
-                            disabled={disabled}
-                            className="
-                              body-xs shrink-0 rounded-control border border-border-warm bg-surface
-                              px-3 py-1.5 font-medium text-ink-muted transition-colors duration-160
-                              hover:border-brand/40 hover:text-ink
-                            "
-                        />
-                    }
+            {mobile ? (
+                <MobileActionDrawer
+                    open={kindOpen}
+                    onOpenChange={setKindOpen}
+                    title="Document type"
+                    description={doc.fileName}
+                    trigger={kindTrigger}
                 >
-                    {BUYER_DOCUMENT_KIND_LABEL[doc.kind]}
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
                     {BUYER_DOCUMENT_KINDS.map((kind) => (
-                        <DropdownMenuItem
+                        <button
                             key={kind}
-                            onClick={() => onKindChange(doc.id, kind)}
-                            className={cn(doc.kind === kind && "font-semibold")}
+                            type="button"
+                            className={mobileActionClass}
+                            aria-pressed={doc.kind === kind}
+                            onClick={() => {
+                                onKindChange(doc.id, kind);
+                                setKindOpen(false);
+                            }}
                         >
                             {BUYER_DOCUMENT_KIND_LABEL[kind]}
-                        </DropdownMenuItem>
+                            {doc.kind === kind ? <Check aria-hidden className="ms-auto" /> : null}
+                        </button>
                     ))}
-                </DropdownMenuContent>
-            </DropdownMenu>
+                </MobileActionDrawer>
+            ) : (
+                <DropdownMenu>
+                    <DropdownMenuTrigger render={kindTrigger} />
+                    <DropdownMenuContent align="end">
+                        {BUYER_DOCUMENT_KINDS.map((kind) => (
+                            <DropdownMenuItem
+                                key={kind}
+                                onClick={() => onKindChange(doc.id, kind)}
+                                className={cn(doc.kind === kind && "font-semibold")}
+                            >
+                                {BUYER_DOCUMENT_KIND_LABEL[kind]}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
 
             <Tooltip>
                 <TooltipTrigger

@@ -7,11 +7,19 @@ import { formatPersonName } from "@/lib/format/person-name";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
 import { formatVisitDate, formatVisitTime, inputValueInIst } from "@/lib/visits/time";
 
+import { EmptyState } from "@/components/empty-state";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import toast from "@/components/shared/app-toast";
 import { CharacterCount } from "@/components/shared/character-count";
 import { revealDrawerSections } from "@/components/shared/drawer-section";
-import { Bell, Building2, UserRound } from "@/components/shared/icons";
+import {
+    Bell,
+    Briefcase,
+    Building2,
+    CalendarPlus,
+    RefreshCw,
+    UserRound,
+} from "@/components/shared/icons";
 import { mapFilterPersonToPicker } from "@/components/shared/map-to-people-picker-person";
 import { mapVisitLeadPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
 import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
@@ -190,6 +198,41 @@ export function ScheduleForm({
     const show = (key: keyof VisitDraft) => (submitted ? errors[key] : undefined);
     const noLeads = !visit && leadsQuery.isSuccess && leads.length === 0;
 
+    if (noLeads || (!visit && leadsQuery.isError && leads.length === 0)) {
+        return (
+            <VisitOverlay
+                title="Schedule a visit"
+                onClose={onBack}
+                dirty={dirty}
+                footer={(close) => <AppModalFooter secondaryLabel="Close" onSecondary={close} />}
+            >
+                <EmptyState
+                    size="card"
+                    icon={leadsQuery.isError ? RefreshCw : CalendarPlus}
+                    variant={leadsQuery.isError ? "error" : "default"}
+                    heading={
+                        leadsQuery.isError ? "Could not load clients" : "No deals ready for a visit"
+                    }
+                    description={
+                        leadsQuery.isError
+                            ? "Check your connection and try again."
+                            : "Link a client to one of your own listings in Pipeline, then schedule their visit."
+                    }
+                    action={
+                        leadsQuery.isError
+                            ? {
+                                  label: "Try again",
+                                  icon: RefreshCw,
+                                  onClick: () => void leadsQuery.refetch(),
+                                  disabled: leadsQuery.isFetching,
+                              }
+                            : { label: "Open pipeline", icon: Briefcase, href: "/broker/pipeline" }
+                    }
+                />
+            </VisitOverlay>
+        );
+    }
+
     return (
         <VisitOverlay
             title={visit ? "Reschedule visit" : "Schedule a visit"}
@@ -229,12 +272,7 @@ export function ScheduleForm({
                                     : "Choose who is visiting and the property they want to see."
                             }
                         >
-                            {noLeads ? (
-                                <p className="body-sm text-ink-muted">
-                                    No clients to book for yet. A visit can be booked once a client
-                                    has an open deal on one of your own listings.
-                                </p>
-                            ) : visit ? (
+                            {visit ? (
                                 <div className="flex flex-col gap-2">
                                     <p className="body-sm flex items-center gap-2 text-ink">
                                         <UserRound
@@ -417,6 +455,7 @@ export function ScheduleForm({
                                             )}
                                             loading={free.isFetching}
                                             failed={free.isError}
+                                            onRetry={() => void free.refetch()}
                                             starts={free.data ?? []}
                                             value={draft.startAt}
                                             onChange={(startAt) => patch({ startAt })}

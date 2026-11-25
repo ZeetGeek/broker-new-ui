@@ -13,10 +13,17 @@ import { PREF_KEYS } from "@/lib/prefs/keys";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
-import { AddFab } from "@/components/shared/add-fab";
+import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
-import { AlertCircle, ClientsTabIcon, OwnersTabIcon, Search } from "@/components/shared/icons";
+import {
+    AlertCircle,
+    ClientsTabIcon,
+    OwnersTabIcon,
+    Plus,
+    Search,
+    UserRoundPlus,
+} from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
@@ -57,9 +64,9 @@ import {
 import { useShortcut } from "@/features/shortcuts/use-shortcut";
 import { useAppSelector } from "@/store/hooks";
 
-/** Contacts grid: 1 → 2 → 3 → 4 columns, capped at four on desktop. */
+/** Keep phone cards full-width; tablets and desktops get 2 → 3 → 4 columns. */
 const CONTACT_GRID_BREAKPOINTS = [
-    { minWidth: 640, columns: 2 },
+    { minWidth: 768, columns: 2 },
     { minWidth: 1024, columns: 3 },
     { minWidth: 1280, columns: 4 },
 ];
@@ -433,7 +440,11 @@ export function ContactsPage({
     const quickUpdateBuyer = useCallback(
         async (buyer: BuyerRow, patch: Partial<BuyerContactForm>) => {
             const row = await updateBuyerContact(buyer, patch);
-            setSelectedContact({ type: "buyer", row });
+            setSelectedContact((current) =>
+                current?.type === "buyer" && current.row.id === row.id
+                    ? { type: "buyer", row }
+                    : current,
+            );
             setRevision((value) => value + 1);
         },
         [],
@@ -442,7 +453,11 @@ export function ContactsPage({
     const quickUpdateOwner = useCallback(
         async (owner: OwnerRow, patch: Partial<OwnerContactForm>) => {
             const row = await updateOwnerContact(owner, patch);
-            setSelectedContact({ type: "owner", row });
+            setSelectedContact((current) =>
+                current?.type === "owner" && current.row.id === row.id
+                    ? { type: "owner", row }
+                    : current,
+            );
             setRevision((value) => value + 1);
         },
         [],
@@ -450,17 +465,19 @@ export function ContactsPage({
 
     return (
         <TooltipProvider>
-            <div className="flex flex-col gap-3 min-inline-0 sm:gap-6">
-                {summaryQuery.isPending ? (
-                    <ContactsIntroSkeleton />
-                ) : (
-                    <ContactsIntro
-                        summary={summary}
-                        tab={filters.tab}
-                        isLoading={summaryQuery.isPending}
-                        hasError={summaryQuery.isError}
-                    />
-                )}
+            <div className="flex flex-col gap-4 min-inline-0 sm:gap-6">
+                <PortalSectionNav>
+                    {summaryQuery.isPending ? (
+                        <ContactsIntroSkeleton />
+                    ) : (
+                        <ContactsIntro
+                            summary={summary}
+                            tab={filters.tab}
+                            isLoading={summaryQuery.isPending}
+                            hasError={summaryQuery.isError}
+                        />
+                    )}
+                </PortalSectionNav>
                 {addDealFlow ? (
                     <div
                         className="
@@ -539,36 +556,26 @@ export function ContactsPage({
                                 Clear search & filters
                             </Button>
                         </EmptyState>
-                    ) : isBuyers ? (
-                        <EmptyState
-                            icon={ClientsTabIcon}
-                            heading="No clients yet"
-                            description="Add the people looking to buy or rent. You can link them to a property once they are on your list."
-                            size="page"
-                        >
-                            <Button size="md" variant="accent" onClick={() => setIsAddOpen(true)}>
-                                Add your first client
-                            </Button>
-                        </EmptyState>
                     ) : (
-                        <EmptyState
-                            icon={OwnersTabIcon}
-                            heading="No owners yet"
-                            description={
-                                FEATURE_PLATFORM_OWNER
-                                    ? "Platform owners appear after accepting your request. You can also add an owner for a private listing."
-                                    : "Add an owner to start linking their properties to your listings."
-                            }
-                            size="page"
-                        >
-                            <Button
-                                size="md"
-                                variant="accent"
-                                onClick={() => setIsOwnerAddOpen(true)}
-                            >
-                                Add your first owner
-                            </Button>
-                        </EmptyState>
+                        <div className="flex items-center rounded-card border border-border-warm bg-surface p-3 min-block-80 sm:p-4 sm:min-block-96 lg:p-6 lg:min-block-[max(25rem,calc(100dvh-17rem))]">
+                            <EmptyState
+                                size="card"
+                                icon={isBuyers ? ClientsTabIcon : OwnersTabIcon}
+                                heading={isBuyers ? "No clients yet" : "No owners yet"}
+                                description={
+                                    isBuyers
+                                        ? "Add the people looking to buy or rent. You can link them to a property once they are on your list."
+                                        : FEATURE_PLATFORM_OWNER
+                                          ? "Platform owners appear after accepting your request. You can also add an owner for a private listing."
+                                          : "Add an owner to start linking their properties to your listings."
+                                }
+                                action={{
+                                    label: isBuyers ? "Add client" : "Add owner",
+                                    icon: isBuyers ? UserRoundPlus : Plus,
+                                    onClick: openAdd,
+                                }}
+                            />
+                        </div>
                     )
                 ) : (
                     <div className="flex flex-col">
@@ -578,7 +585,7 @@ export function ContactsPage({
                                 getKey={(buyer) => buyer.id}
                                 estimateRowHeight={384}
                                 gap="card-grid"
-                                gridClassName="grid grid-cols-1 inline-full sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                                gridClassName="grid grid-cols-1 inline-full md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
                                 ariaLabel="Clients"
                                 renderItem={(buyer) => (
@@ -600,7 +607,7 @@ export function ContactsPage({
                                 getKey={(owner) => owner.id}
                                 estimateRowHeight={320}
                                 gap="card-grid"
-                                gridClassName="grid grid-cols-1 inline-full sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                                gridClassName="grid grid-cols-1 inline-full md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                                 breakpoints={CONTACT_GRID_BREAKPOINTS}
                                 ariaLabel="Owners"
                                 renderItem={(owner) => (
@@ -624,19 +631,6 @@ export function ContactsPage({
                             onLoadMore={() => void activeQuery.fetchNextPage()}
                         />
                     </div>
-                )}
-
-                {isFirstRunEmpty ? null : (
-                    <AddFab
-                        onClick={openAdd}
-                        label={isBuyers ? "Add client" : "Add owner"}
-                        hint={
-                            isBuyers
-                                ? "Add someone you’re helping find a property"
-                                : "Add an owner for a private listing"
-                        }
-                        className="md:hidden"
-                    />
                 )}
 
                 <AddContactModal
@@ -694,6 +688,7 @@ export function ContactsPage({
                         }}
                         buyer={attachingBuyer}
                         onSaved={handleAttached}
+                        onChanged={() => setRevision((value) => value + 1)}
                     />
                 ) : null}
 

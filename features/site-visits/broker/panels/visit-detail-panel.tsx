@@ -1,5 +1,6 @@
 "use client";
 
+import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { VISIT_STATUS } from "@/lib/visits/status";
 import { formatVisitDate, formatVisitDayHeading, formatVisitTime } from "@/lib/visits/time";
 
@@ -18,6 +19,8 @@ import { APP_NAME } from "@/config";
 import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
 import { USE_MOCK_VISITS } from "@/mocks/visits";
 import { useAppSelector } from "@/store/hooks";
+
+import styles from "./visit-drawer.module.css";
 
 function ContactBlock({
     label,
@@ -118,7 +121,7 @@ export function VisitDetailPanel({
                     {formatVisitTime(visit.endsAt)}
                 </p>
             </div>
-            <div className="flex-1 overflow-y-auto p-5">
+            <div className={`flex-1 overflow-y-auto p-5 ${styles.sections}`}>
                 <DrawerSection
                     title="Property"
                     description="Review the property, asking price and address."
@@ -130,11 +133,9 @@ export function VisitDetailPanel({
                             "
                         >
                             <AppImage
-                                src={
-                                    visit.property.coverUrl ??
-                                    "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-                                }
+                                src={visit.property.coverUrl ?? PROPERTY_PLACEHOLDER_SRC}
                                 alt=""
+                                fallbackSrc={PROPERTY_PLACEHOLDER_SRC}
                                 fill
                                 sizes="96px"
                             />

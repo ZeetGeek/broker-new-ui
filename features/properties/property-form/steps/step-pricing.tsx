@@ -102,7 +102,7 @@ function RentAndDepositSection({
                 <ConditionalField path="rent.securityDepositMode">
                     <div
                         className="
-                          space-y-4 rounded-card border border-border-warm bg-surface-muted/35 p-4
+                          space-y-4 rounded-card border border-border-warm bg-surface-muted/35 p-3
                           sm:p-5
                         "
                     >
@@ -132,7 +132,7 @@ function RentAndDepositSection({
                         </div>
 
                         {depositMode === "months_of_rent" ? (
-                            <div className="grid gap-4 sm:grid-cols-2 sm:items-stretch">
+                            <div className="grid grid-cols-1 gap-4 min-inline-0 sm:grid-cols-2 sm:items-stretch">
                                 <CounterField
                                     name="rent.securityDeposit"
                                     label="Months of rent"
@@ -146,7 +146,7 @@ function RentAndDepositSection({
                                 />
                                 <div
                                     className="
-                                      flex flex-row items-center justify-between gap-3
+                                      flex flex-wrap items-center justify-between gap-3
                                       rounded-control border-2 border-dashed border-border-warm
                                       bg-surface px-3 py-2 block-full min-block-14
                                     "
@@ -154,7 +154,7 @@ function RentAndDepositSection({
                                     <p className="text-xs text-ink-muted min-inline-0">
                                         Tenant pays upfront
                                     </p>
-                                    <p className="tabular shrink-0 text-base font-bold text-ink">
+                                    <p className="tabular text-base font-bold wrap-anywhere text-ink">
                                         {depositInRupees != null
                                             ? formatMoney(depositInRupees)
                                             : "Add rent to see total"}

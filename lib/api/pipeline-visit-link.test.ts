@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { DealItem } from "@/features/pipeline/types";
-import { canScheduleVisit, scheduleVisitHref } from "@/features/pipeline/visit-link";
+import {
+    canOpenVisitAction,
+    canScheduleVisit,
+    scheduleVisitHref,
+} from "@/features/pipeline/visit-link";
 
 function deal(id: string, clientId: string, propertyId: string): DealItem {
     return { id, buyer: { id: clientId }, property: { id: propertyId } } as DealItem;
@@ -31,4 +35,19 @@ test("only deals on the broker's own exclusive listings offer scheduling", () =>
     assert.equal(canScheduleVisit(exclusive), true);
     assert.equal(canScheduleVisit(ownerListed), false);
     assert.equal(canScheduleVisit(unknown), false);
+});
+
+test("booked visits expose their workflow even when the listing omits the exclusive flag", () => {
+    const booked = { property: {}, nextVisitAt: "2026-11-27T12:00:00Z" } as DealItem;
+    assert.equal(canOpenVisitAction(booked), true);
+    assert.equal(canOpenVisitAction({ ...booked, nextVisitAt: null }), false);
+    assert.equal(canOpenVisitAction({ ...booked, nextVisitAt: "invalid" }), false);
+    assert.equal(
+        canOpenVisitAction({
+            ...booked,
+            property: { ...booked.property, isExclusiveProperty: true },
+            nextVisitAt: null,
+        }),
+        true,
+    );
 });

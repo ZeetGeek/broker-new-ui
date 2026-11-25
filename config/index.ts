@@ -9,10 +9,15 @@ export const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL?.replace(/\/$/, "")
  */
 export const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true";
 
-/** Filled single-property analytics for deliberate UI review only. */
+/** Broker-only sample analytics in development; set to false to review live figures. */
 export const PREVIEW_PROPERTY_ANALYTICS =
     process.env.NODE_ENV !== "production" &&
-    process.env.NEXT_PUBLIC_PREVIEW_PROPERTY_ANALYTICS === "true";
+    process.env.NEXT_PUBLIC_PREVIEW_PROPERTY_ANALYTICS !== "false";
+
+/** Broker attention-card samples only; the rest of analytics keeps its normal data. */
+export const PREVIEW_PROPERTY_ATTENTION =
+    process.env.NODE_ENV !== "production" &&
+    process.env.NEXT_PUBLIC_PREVIEW_PROPERTY_ATTENTION !== "false";
 
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "YesBroker";
 
@@ -31,3 +36,6 @@ export const FEATURE_RERA_VERIFICATION = false;
 
 /** Public profile URL controls are temporarily hidden; keep their code and saved values. */
 export const FEATURE_PUBLIC_PROFILE_URL = false;
+
+/** Saved-property UI and actions are temporarily hidden throughout the broker portal. */
+export const FEATURE_SAVED_PROPERTIES = false;

@@ -9,6 +9,7 @@ import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { formatPersonName } from "@/lib/format/person-name";
 import { formatPhoneIn } from "@/lib/format/phone";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
+import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
 import { AppImage } from "@/components/shared/app-image";
@@ -25,6 +26,7 @@ import {
     UserRound,
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { PropertyPlaceholderImage } from "@/components/shared/property-placeholder-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
@@ -71,8 +73,17 @@ function PropertyCard({ property }: { property: OwnerProfileProperty }) {
             <CardLink href={brokerOwnerListingDetailHref(property.id)} label={`Open ${name}`} />
             <div className="relative aspect-4/3 bg-surface-muted">
                 {photo ? (
-                    <AppImage src={photo} alt="" fill className="object-cover" sizes="320px" />
-                ) : null}
+                    <AppImage
+                        src={photo}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="320px"
+                        fallbackSrc={PROPERTY_PLACEHOLDER_SRC}
+                    />
+                ) : (
+                    <PropertyPlaceholderImage sizes="320px" />
+                )}
             </div>
             <div className="flex flex-col gap-1 p-4">
                 <p data-card-title className="body truncate font-semibold text-ink">
@@ -270,7 +281,12 @@ export function OwnerProfileView({
             <section className="flex flex-col gap-3">
                 <h2 className="eyebrow">Listed properties</h2>
                 {profile.properties.length === 0 ? (
-                    <p className="body-sm text-ink-muted">No published listings yet.</p>
+                    <EmptyState
+                        size="card"
+                        icon={Building2}
+                        heading="No published listings"
+                        description="This owner's properties will appear here once they publish a listing."
+                    />
                 ) : (
                     <div
                         className={

@@ -8,6 +8,7 @@ import {
 } from "@/lib/properties/list-criteria";
 import { collectPeopleFilterOptions, matchesPeopleFilters } from "@/lib/properties/people-filters";
 import { matchesDealSearch } from "@/lib/search/crm-search";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import type { ClosedAs } from "@/features/pipeline/closed-as";
 import { MOCK_DEALS } from "@/features/pipeline/mock-deals";
@@ -670,7 +671,7 @@ function mockCloseProperty(sold: DealItem) {
     }
 }
 
-export const pipelineApi = {
+export const pipelineApi = withTestNetwork({
     async peopleOptions(signal?: AbortSignal) {
         const deals = isMockMode()
             ? getMockStore().deals
@@ -807,4 +808,4 @@ export const pipelineApi = {
     async reopen(dealId: string, stage: DealStage, note?: string): Promise<void> {
         await this.setStage(dealId, stage, { note });
     },
-};
+});

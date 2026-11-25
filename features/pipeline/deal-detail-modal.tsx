@@ -6,6 +6,7 @@ import { formatDateIn, formatDateShort, formatTimeIn } from "@/lib/format/date";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { brokerPropertyDetailHref } from "@/lib/routes/broker";
 
+import { EmptyState } from "@/components/empty-state";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { ContactName } from "@/components/shared/contact-name";
@@ -13,12 +14,14 @@ import {
     type AppIcon,
     ArrowRight,
     BadgeCheck,
+    Briefcase,
     CalendarCheck,
     CallIcon,
     CircleX,
     ExternalLink,
     HandCoins,
     Plus,
+    RefreshCw,
     StickyNote,
     Wallet,
 } from "@/components/shared/icons";
@@ -318,17 +321,18 @@ export function DealDetailModal({
             {isLoading ? (
                 <PipelineDetailSkeleton />
             ) : error && !deal ? (
-                <div className="flex flex-col items-center gap-3 py-10 text-center">
-                    <p role="alert" className="body-sm text-urgent">
-                        Could not load deal details.
-                    </p>
-                    <p className="body-sm text-ink-muted">
-                        Try again. If the problem continues, close this window and reopen the deal.
-                    </p>
-                    <Button variant="outline" onClick={onRetry}>
-                        Try again
-                    </Button>
-                </div>
+                <EmptyState
+                    size="card"
+                    variant="error"
+                    icon={Briefcase}
+                    heading="Could not load this deal"
+                    description="Check your connection and try again."
+                    action={
+                        onRetry
+                            ? { label: "Try again", icon: RefreshCw, onClick: onRetry }
+                            : undefined
+                    }
+                />
             ) : deal ? (
                 <div className={styles.layout}>
                     {error ? (

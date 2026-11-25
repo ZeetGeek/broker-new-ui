@@ -21,9 +21,17 @@ import {
     brokerOwnerProfileHref,
 } from "@/lib/routes/broker";
 
+import { EmptyState } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
 import { ContactName } from "@/components/shared/contact-name";
-import { CallIcon, Lock, WhatsAppIcon } from "@/components/shared/icons";
+import {
+    Building2,
+    CallIcon,
+    Lock,
+    RefreshCw,
+    Search,
+    WhatsAppIcon,
+} from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
@@ -464,19 +472,17 @@ function OwnerListingDetailView({
 
 function NotFoundState() {
     return (
-        <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <h1 className="h3">Listing not found</h1>
-            <p className="body max-w-prose text-ink-muted">
-                This owner listing may be private, unpublished, or no longer available.
-            </p>
-            <Button
-                variant="accent"
-                className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-                render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
-            >
-                Back to Marketplace
-            </Button>
-        </div>
+        <EmptyState
+            size="page"
+            icon={Building2}
+            heading="Listing no longer available"
+            description="The owner may have made this listing private or unpublished it. Browse other owner listings."
+            action={{
+                label: "Browse owner listings",
+                icon: Search,
+                href: BROKER_OWNER_LISTINGS_HREF,
+            }}
+        />
     );
 }
 
@@ -522,19 +528,19 @@ export function OwnerListingDetailPage() {
     if (query.isError) {
         if (query.error instanceof ApiError && query.error.status === 404) return <NotFoundState />;
         return (
-            <div role="alert" className="flex flex-col items-center gap-4 py-16 text-center">
-                <h1 className="h3 text-ink">Could not load this property</h1>
-                <p className="body text-ink-muted">Check your connection and try again.</p>
-                <Button variant="outline" onClick={() => void query.refetch()}>
-                    Try again
-                </Button>
-                <Link
-                    href={BROKER_OWNER_LISTINGS_HREF}
-                    className="body-sm inline-flex items-center text-brand min-block-11"
-                >
-                    Back to Marketplace
-                </Link>
-            </div>
+            <EmptyState
+                size="page"
+                variant="error"
+                icon={Building2}
+                heading="Could not load this property"
+                description="Check your connection and try again."
+                action={{
+                    label: "Try again",
+                    icon: RefreshCw,
+                    onClick: () => void query.refetch(),
+                    disabled: query.isFetching,
+                }}
+            />
         );
     }
 

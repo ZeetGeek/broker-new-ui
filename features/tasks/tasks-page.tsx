@@ -15,17 +15,22 @@ import { FilterChip } from "@/components/shared/filter-chip";
 import {
     AlertCircle,
     CheckCircle2,
+    List,
     Search,
     SlidersHorizontal,
     Trash2,
     X,
 } from "@/components/shared/icons";
+import { ListPageHeading } from "@/components/shared/list-page-heading";
 import {
     ListAddButton,
     ListSearchField,
     ListToolbarSelect,
 } from "@/components/shared/list-toolbar";
-import { ResponsiveListStatus } from "@/components/shared/responsive-list-toolbar";
+import {
+    ResponsiveListStatus,
+    ResponsiveListToolbar,
+} from "@/components/shared/responsive-list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { StatusTabs } from "@/components/shared/status-tabs";
 import { Button } from "@/components/ui/button";
@@ -399,15 +404,14 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         <div className={styles.page}>
             <PortalSectionNav>
                 <header className={styles.header}>
-                    <h1 className="h3 text-start min-inline-0">
-                        <span className="text-ink">Tasks.</span>{" "}
+                    <ListPageHeading title="Tasks.">
                         <RotatingHeaderSummary
                             key={summaryLines.join("|")}
                             lines={summaryLines}
                             isLoading={isLoading}
                             loadingPlaceholder="Your tasks at a glance"
                         />
-                    </h1>
+                    </ListPageHeading>
                 </header>
             </PortalSectionNav>
             <Tabs
@@ -420,40 +424,46 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                 }
                 className={styles.workspace}
             >
-                <div className={styles.toolbar}>
-                    <div className={styles.filterTabs}>
-                        <FilterChip
-                            className={styles.filterButton}
-                            label="Filters"
-                            icon={SlidersHorizontal}
-                            count={Number(!!due) + Number(!!linked)}
-                            isActive={!!(due || linked)}
-                            clearable={!!(due || linked)}
-                            onClick={() => updateWorkspace({ view: "filters", task: undefined })}
-                            onClear={() => updateWorkspace({ due: undefined, linked: undefined })}
-                        />
-
-                        <ResponsiveListStatus
-                            value={tab}
-                            options={tabs}
-                            label="Status"
-                            isLoading={isLoading}
-                            onChange={(value) =>
-                                updateWorkspace({
-                                    tab: value === "all" ? undefined : value,
-                                    due: undefined,
-                                })
-                            }
-                        >
-                            <StatusTabs
-                                tabs={tabs}
-                                value={tab}
-                                label="Task views"
-                                isLoading={isLoading}
+                <ResponsiveListToolbar
+                    selection={
+                        <>
+                            <FilterChip
+                                label="Filters"
+                                icon={SlidersHorizontal}
+                                count={Number(!!due) + Number(!!linked)}
+                                isActive={!!(due || linked)}
+                                clearable={!!(due || linked)}
+                                onClick={() =>
+                                    updateWorkspace({ view: "filters", task: undefined })
+                                }
+                                onClear={() =>
+                                    updateWorkspace({ due: undefined, linked: undefined })
+                                }
                             />
-                        </ResponsiveListStatus>
-                    </div>
-                    <div className={styles.searchField}>
+
+                            <ResponsiveListStatus
+                                mobileDrawer
+                                value={tab}
+                                options={tabs}
+                                label="Status"
+                                isLoading={isLoading}
+                                onChange={(value) =>
+                                    updateWorkspace({
+                                        tab: value === "all" ? undefined : value,
+                                        due: undefined,
+                                    })
+                                }
+                            >
+                                <StatusTabs
+                                    tabs={tabs}
+                                    value={tab}
+                                    label="Task views"
+                                    isLoading={isLoading}
+                                />
+                            </ResponsiveListStatus>
+                        </>
+                    }
+                    search={
                         <ListSearchField
                             searchHelp={CRM_SEARCH_HELP.tasks}
                             aria-label="Search tasks"
@@ -463,13 +473,13 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                             debounceMs={0}
                             fullWidth
                         />
-                    </div>
-                    <div className={styles.tools}>
+                    }
+                    actions={
                         <ListToolbarSelect
-                            active
+                            mobileDrawer
+                            defaultValue={defaultSort}
                             label="Sort tasks"
                             mobileLabel="Sort"
-                            className={styles.sortButton}
                             value={sort}
                             options={[
                                 ...(tab === "all"
@@ -494,14 +504,11 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                 })
                             }
                         />
-                        <ListAddButton
-                            className={styles.addButton}
-                            label="Add task"
-                            shortcutId="add_task"
-                            onClick={create}
-                        />
-                    </div>
-                </div>
+                    }
+                    primaryAction={
+                        <ListAddButton label="Add task" shortcutId="add_task" onClick={create} />
+                    }
+                />
                 <div className={styles.board}>
                     {(due || linked) && (
                         <div className={styles.activeFilters}>
@@ -761,14 +768,14 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                 />
             )}
             {panelMissing && (
-                <TaskPanel
-                    title="Task not found"
-                    description="This task may have been deleted in this tab."
-                    onClose={close}
-                >
-                    <Button variant="outline" onClick={close}>
-                        Back to tasks
-                    </Button>
+                <TaskPanel title="Task not found" onClose={close}>
+                    <EmptyState
+                        size="card"
+                        icon={List}
+                        heading="Task no longer available"
+                        description="It may have been deleted. Choose another task from your list."
+                        action={{ label: "Back to tasks", icon: List, onClick: close }}
+                    />
                 </TaskPanel>
             )}
         </div>

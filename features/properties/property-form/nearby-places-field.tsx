@@ -236,15 +236,16 @@ export function NearbyPlacesField() {
 
     return (
         <div className={FORM_STACK_CLASS}>
-            <div className="flex gap-2">
+            <div className="flex items-start gap-2 min-inline-0">
                 <Input
                     size="lg"
                     value={query}
                     onValueChange={setQuery}
                     startIcon={Search}
-                    placeholder="Search places or add a name"
+                    placeholder="Search nearby places"
                     aria-label="Search or add nearby place"
                     className="flex-1 text-sm block-control-lg min-inline-0"
+                    wrapperClassName="flex-1 inline-auto min-inline-0"
                     maxLength={48}
                     onKeyDown={(event) => {
                         if (event.key === "Enter") {
@@ -263,15 +264,16 @@ export function NearbyPlacesField() {
                     variant="accent"
                     size="lg"
                     onClick={addCustom}
+                    aria-label="Add nearby place"
                     disabled={!canAddCustom}
                     className="
-                      shrink-0 rounded-control px-5 text-sm font-semibold
-                      focus-visible:ring-3 focus-visible:ring-ring/30
-                      disabled:opacity-40
+                      shrink-0 rounded-control px-3 text-sm font-semibold min-inline-11 focus-visible:ring-3
+                      focus-visible:ring-ring/30 disabled:opacity-40
+                      sm:px-5
                     "
                 >
                     <Plus aria-hidden />
-                    Add
+                    <span className="hidden sm:inline">Add</span>
                 </Button>
             </div>
 

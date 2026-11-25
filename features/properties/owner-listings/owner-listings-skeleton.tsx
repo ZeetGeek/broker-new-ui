@@ -55,7 +55,7 @@ function OwnerListingsToolbarSkeleton({ filters }: { filters: OwnerListingsFilte
                 <div
                     className="
                       flex items-center gap-2 rounded-control border border-border-warm bg-surface
-                      px-3 shadow-sm block-[38px] inline-44 min-inline-44
+                      px-3 shadow-sm list-control inline-44 min-inline-44
                       sm:inline-52 sm:min-inline-52
                       lg:inline-64 lg:min-inline-64
                     "

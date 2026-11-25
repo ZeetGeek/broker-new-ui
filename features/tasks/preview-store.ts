@@ -2,6 +2,9 @@
 
 import { z } from "zod";
 
+import { testData } from "@/lib/testing/test-data";
+import { testStorageKey } from "@/lib/testing/test-lab";
+import { withTestNetwork } from "@/lib/testing/test-network";
 import { inputValueInIst, inputValueToUtc } from "@/lib/visits/time";
 
 import { PREVIEW_CLIENTS, PREVIEW_PROPERTIES } from "@/features/new-site-visits/preview-store";
@@ -37,9 +40,10 @@ export const TASK_OWNERS = [
             ]),
     ).values(),
 ];
-export const TASK_QUERY_KEY = (accountId: string) => ["private-tasks-mock-v8", accountId] as const;
+export const TASK_QUERY_ROOT = "private-tasks-mock-v10";
+export const TASK_QUERY_KEY = (accountId: string) => [TASK_QUERY_ROOT, accountId] as const;
 /** Bumped so the planner reseeds with quick-add chip titles. */
-const keyFor = (accountId: string) => `crm.private-tasks.mock.v4.${accountId}`;
+const keyFor = (accountId: string) => testStorageKey(`crm.private-tasks.mock.v4.${accountId}`);
 const envelope = z.object({
     version: z.union([z.literal(2), z.literal(3), z.literal(4)]),
     tasks: z.array(taskSchema),
@@ -461,9 +465,9 @@ export type TaskUpdater = (current: Task[]) => Task[];
  * Storage reads and writes happen synchronously in one turn, so updater mutations
  * always see the latest tasks even when a reminder and an edit happen together.
  */
-export const taskPreviewStore = {
+export const taskPreviewStore = withTestNetwork({
     async list(accountId: string): Promise<Task[]> {
-        return readSaved(accountId) ?? writeTasks(accountId, placeholderTasks());
+        return readSaved(accountId) ?? writeTasks(accountId, testData(placeholderTasks()));
     },
     async save(accountId: string, tasks: Task[]): Promise<Task[]> {
         const latest = readSaved(accountId) ?? [];
@@ -488,9 +492,9 @@ export const taskPreviewStore = {
         return writeTasks(accountId, merged);
     },
     async update(accountId: string, updater: TaskUpdater): Promise<Task[]> {
-        return writeTasks(accountId, updater(readSaved(accountId) ?? placeholderTasks()));
+        return writeTasks(accountId, updater(readSaved(accountId) ?? testData(placeholderTasks())));
     },
     async reset(accountId: string): Promise<Task[]> {
         return writeTasks(accountId, []);
     },
-};
+});

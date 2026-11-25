@@ -1,10 +1,14 @@
 "use client";
+import { useState } from "react";
+
 import { formatRelativePast } from "@/lib/format/date";
 import { buildWhatsAppInviteUrl } from "@/lib/share/referral";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { IconButton } from "@/components/shared/icon-button";
 import { ArrowRight, BellRing, MessageSquare, MoreHorizontal } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +49,53 @@ type ReferralRowProps = {
     now: Date;
     className?: string;
 };
+
+function ReferralMoreMenu({ name, href }: { name: string; href: string }) {
+    const mobile = useMobileMenu();
+    const [open, setOpen] = useState(false);
+    const trigger = (
+        <IconButton size="sm" aria-label={`More for ${name}`}>
+            <MoreHorizontal aria-hidden />
+        </IconButton>
+    );
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={setOpen}
+                title="Referral actions"
+                description={name}
+                trigger={trigger}
+            >
+                <a
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className={mobileActionClass}
+                    onClick={() => setOpen(false)}
+                >
+                    <MessageSquare aria-hidden />
+                    Message on WhatsApp
+                </a>
+            </MobileActionDrawer>
+        );
+    }
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger render={trigger} />
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                    render={<a href={href} target="_blank" rel="noreferrer noopener" />}
+                >
+                    <MessageSquare aria-hidden />
+                    Message on WhatsApp
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
 
 /**
  * One invite, as a task-list row.
@@ -195,32 +246,10 @@ export function ReferralRow({
                     )
                 ) : null}
 
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <IconButton size="sm" aria-label={`More for ${referral.person.name}`}>
-                                <MoreHorizontal aria-hidden />
-                            </IconButton>
-                        }
-                    />
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                            render={
-                                <a
-                                    href={buildWhatsAppInviteUrl(
-                                        message,
-                                        referral.person.phoneDigits || undefined,
-                                    )}
-                                    target="_blank"
-                                    rel="noreferrer noopener"
-                                />
-                            }
-                        >
-                            <MessageSquare aria-hidden />
-                            Message on WhatsApp
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <ReferralMoreMenu
+                    name={referral.person.name}
+                    href={buildWhatsAppInviteUrl(message, referral.person.phoneDigits || undefined)}
+                />
             </div>
         </article>
     );

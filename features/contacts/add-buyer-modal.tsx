@@ -365,7 +365,7 @@ export function AddBuyerModal({
                         onChange={setPhoto}
                         disabled={busy}
                     />
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 @min-[28rem]/contact-drawer:grid-cols-2">
                         <TextField
                             label="Full name"
                             startIcon={UserRound}

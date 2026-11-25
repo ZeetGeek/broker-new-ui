@@ -1,6 +1,8 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode, MOCK_PROFILE } from "@/lib/api/mock-mode";
 import type { UserMarket } from "@/lib/auth/session";
+import { isTestSampleMode } from "@/lib/testing/test-lab";
+import { simulateTestRequest } from "@/lib/testing/test-network";
 
 export type NotificationPreferences = {
     unreadCount?: number;
@@ -149,7 +151,8 @@ export const profileApi = {
      * holds what the server actually stored — a slug the server had to
      * de-duplicate, say — instead of what the client hoped it stored.
      */
-    update(input: UpdateProfileInput) {
+    async update(input: UpdateProfileInput) {
+        await simulateTestRequest();
         if (isMockMode()) {
             return Promise.resolve({ ...MOCK_PROFILE, ...input });
         }
@@ -180,6 +183,10 @@ export const profileApi = {
      * Returns the updated profile (or a minimal stub with the new avatarUrl).
      */
     async uploadAvatar(file: File): Promise<UserProfile> {
+        if (isTestSampleMode()) {
+            await simulateTestRequest();
+            return { ...MOCK_PROFILE, avatarUrl: URL.createObjectURL(file) };
+        }
         const contentType = file.type === "image/jpg" ? "image/jpeg" : file.type;
         const { key, uploadUrl } = await this.createAvatarUploadUrl(file.name, contentType);
 

@@ -1,0 +1,12 @@
+.drawerList {
+    margin-inline: calc(-1 * var(--dialog-pad));
+}
+
+.drawerItem {
+    min-block-size: var(--touch-target-min);
+    padding: 0.875rem var(--dialog-pad);
+}
+
+.drawerItem + .drawerItem {
+    border-block-start: 1px solid var(--dialog-divider);
+}

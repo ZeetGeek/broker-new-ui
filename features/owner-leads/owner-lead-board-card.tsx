@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
@@ -14,11 +15,13 @@ import { useRouter } from "@/lib/navigation";
 import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
 import { CardLink } from "@/components/shared/card-link";
 import { IconButton } from "@/components/shared/icon-button";
 import { Check, Eye, MapPin, MoreHorizontal, Phone, X } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { OVERLAY_GLASS_BUTTON_CLASS, OverlayCardActions } from "@/components/shared/overlay-card";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
@@ -172,6 +175,8 @@ export function OwnerLeadBoardCard({
     onReject: () => void;
 }) {
     const router = useRouter();
+    const mobile = useMobileMenu();
+    const [menuOpen, setMenuOpen] = useState(false);
     const isFinished = isFinishedLead(lead);
     const pendingOffer = lead.offerStatus === "pending" && !isFinished;
     const propertyLabel = leadPropertyLabel(lead);
@@ -196,6 +201,16 @@ export function OwnerLeadBoardCard({
         facts.configLabel ||
         leadPropertyLabel(lead);
     const locationLabel = [facts.locality, facts.city].filter(Boolean).join(", ");
+    const menuTrigger = (
+        <IconButton
+            size="sm"
+            disabled={busy}
+            aria-label={`More actions for ${propertyLabel}`}
+            className={CHROME_ICON_BUTTON_CLASS}
+        >
+            <MoreHorizontal aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+        </IconButton>
+    );
 
     return (
         <article
@@ -278,41 +293,48 @@ export function OwnerLeadBoardCard({
                         </span>
                     </div>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            render={
-                                <IconButton
-                                    size="sm"
-                                    disabled={busy}
-                                    aria-label={`More actions for ${propertyLabel}`}
-                                    className={CHROME_ICON_BUTTON_CLASS}
-                                />
-                            }
+                    {mobile ? (
+                        <MobileActionDrawer
+                            open={menuOpen}
+                            onOpenChange={setMenuOpen}
+                            title="Lead actions"
+                            description={propertyLabel}
+                            trigger={menuTrigger}
                         >
-                            <MoreHorizontal
-                                aria-hidden
-                                className="block-4 inline-4"
-                                strokeWidth={1.75}
-                            />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            align="end"
-                            sideOffset={8}
-                            className={DEAL_MENU_SURFACE_CLASS}
-                        >
-                            <DropdownMenuItem
-                                className={DEAL_MENU_ITEM_CLASS}
-                                onClick={() => router.push(detailHref)}
+                            <button
+                                type="button"
+                                className={mobileActionClass}
+                                onClick={() => {
+                                    setMenuOpen(false);
+                                    router.push(detailHref);
+                                }}
                             >
-                                <Eye
-                                    aria-hidden
-                                    className={DEAL_MENU_ICON_CLASS}
-                                    strokeWidth={1.75}
-                                />
+                                <Eye aria-hidden />
                                 View property
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                            </button>
+                        </MobileActionDrawer>
+                    ) : (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger render={menuTrigger} />
+                            <DropdownMenuContent
+                                align="end"
+                                sideOffset={8}
+                                className={DEAL_MENU_SURFACE_CLASS}
+                            >
+                                <DropdownMenuItem
+                                    className={DEAL_MENU_ITEM_CLASS}
+                                    onClick={() => router.push(detailHref)}
+                                >
+                                    <Eye
+                                        aria-hidden
+                                        className={DEAL_MENU_ICON_CLASS}
+                                        strokeWidth={1.75}
+                                    />
+                                    View property
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-3 min-inline-0">

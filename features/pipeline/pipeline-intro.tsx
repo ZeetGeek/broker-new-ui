@@ -4,6 +4,7 @@ import { useMemo } from "react";
 
 import { formatDateIn } from "@/lib/format/date";
 
+import { ListPageHeading } from "@/components/shared/list-page-heading";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
@@ -93,19 +94,16 @@ export function PipelineIntro({
     }, [deals, view, hasActiveFilters]);
 
     return (
-        <h1 className="h3 text-start min-inline-0">
-            <span className="text-ink">Pipeline.</span>{" "}
-            <span className="hidden md:inline">
-                <RotatingHeaderSummary
-                    key={`${view}:${lines.join("|")}`}
-                    lines={lines}
-                    isLoading={isLoading}
-                    loadingLabel="Loading your pipeline summary"
-                    loadingPlaceholder="Your deals, from first contact to close"
-                    errorMessage={hasError ? "Could not load your pipeline summary." : undefined}
-                    reservePlaceholder
-                />
-            </span>
-        </h1>
+        <ListPageHeading title="Pipeline.">
+            <RotatingHeaderSummary
+                key={`${view}:${lines.join("|")}`}
+                lines={lines.slice(0, 1)}
+                isLoading={isLoading}
+                loadingLabel="Loading your pipeline summary"
+                loadingPlaceholder="Your deals, from first contact to close"
+                errorMessage={hasError ? "Could not load your pipeline summary." : undefined}
+                reservePlaceholder
+            />
+        </ListPageHeading>
     );
 }

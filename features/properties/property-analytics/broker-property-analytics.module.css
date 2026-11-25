@@ -1081,14 +1081,27 @@
 .liveAttention {
     --report-caption-size: calc(0.75rem / var(--layout-font-scale));
     --report-body-size: calc(0.875rem / var(--layout-font-scale));
+    inline-size: 100%;
+    block-size: auto;
     min-block-size: 0;
+    align-self: start;
+}
+.liveAttention > header {
+    flex-wrap: nowrap;
+}
+.liveAttention .count {
+    background: var(--color-surface-muted);
+    color: var(--color-ink-muted);
+    font-size: var(--report-caption-size);
+    white-space: nowrap;
 }
 .attentionViewport {
-    block-size: 21rem;
+    block-size: auto;
+    max-block-size: 24rem;
     min-block-size: 0;
     overflow-y: auto;
     overscroll-behavior-y: contain;
-    padding-inline-end: 6px;
+    scrollbar-gutter: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--color-border-warm) transparent;
 }
@@ -1112,28 +1125,72 @@
     justify-content: flex-start;
 }
 .attentionViewport .attentionList > li {
-    align-items: flex-start;
-    padding-block: 18px;
+    display: block;
+    padding-block: 4px;
 }
 .attentionViewport .attentionList > li:first-child {
-    padding-block-start: 4px;
+    padding-block-start: 0;
+}
+.attentionViewport .attentionList > li:last-child {
+    padding-block-end: 0;
+}
+.attentionRow {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    align-items: flex-start;
+    gap: 12px;
+    min-block-size: 44px;
+    padding: 12px 8px;
+    border-radius: var(--radius-inner);
+    color: var(--color-ink);
+}
+.attentionRow .taskIcon {
+    width: 38px;
+    height: 38px;
+}
+.attentionRow:hover {
+    background: var(--color-surface-muted);
+}
+.attentionRow:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: -2px;
+    background: var(--color-surface-muted);
+}
+.attentionRow .taskCopy p {
+    font-size: var(--report-body-size);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 .attentionTitle {
+    display: block;
     color: var(--color-ink);
     font-size: var(--report-body-size);
     font-weight: 600;
     overflow-wrap: anywhere;
     border-radius: 4px;
 }
-.attentionTitle:hover {
+.attentionAction {
+    display: inline-flex;
+    align-items: center;
+    align-self: center;
+    gap: 4px;
+    flex-shrink: 0;
     color: var(--color-brand-text);
-    text-decoration: underline;
-}
-.attentionSource {
-    display: inline-block;
-    margin-block-start: 6px;
-    color: var(--color-ink-subtle);
     font-size: var(--report-caption-size);
+    font-weight: 600;
+}
+.attentionAction svg {
+    width: 16px;
+    height: 16px;
+}
+@media (max-width: 639px) {
+    .attentionRow {
+        grid-template-columns: 38px minmax(0, 1fr);
+        row-gap: 8px;
+    }
+    .attentionAction {
+        grid-column: 2;
+    }
 }
 .attentionLoading {
     display: grid;

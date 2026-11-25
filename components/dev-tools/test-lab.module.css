@@ -1,0 +1,287 @@
+.root {
+    position: fixed;
+    inset: auto 1rem 1rem auto;
+    z-index: 80;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.45;
+}
+.launcher {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    max-width: calc(100vw - 2rem);
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--color-border-warm);
+    border-radius: 12px;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 12%);
+    font-weight: 600;
+    cursor: pointer;
+}
+.launcher:hover {
+    background: var(--color-surface-muted);
+}
+.launcher[data-active="true"] {
+    background: var(--color-ink);
+    color: var(--color-surface);
+    border-color: transparent;
+}
+.launcherState {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-inline-start: 0.6rem;
+    border-inline-start: 1px solid currentColor;
+    font-size: 12px;
+    font-weight: 400;
+}
+.panel {
+    display: flex;
+    flex-direction: column;
+    width: min(420px, calc(100vw - 2rem));
+    max-height: min(860px, calc(100dvh - 2rem));
+    overflow: hidden;
+    border: 1px solid var(--color-border-warm);
+    border-radius: 16px;
+    background: var(--color-surface);
+    box-shadow: 0 12px 48px rgb(0 0 0 / 16%);
+    outline: none;
+}
+.header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.2rem 1.25rem 1rem;
+}
+.header h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+}
+.header p {
+    margin: 0.15rem 0 0;
+    color: var(--color-ink-muted);
+    font-size: 13px;
+}
+.close {
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    height: 44px;
+    margin: -0.25rem -0.5rem 0 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-ink-muted);
+    cursor: pointer;
+}
+.close:hover {
+    background: var(--color-surface-muted);
+    color: var(--color-ink);
+}
+.activeState {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    border-block: 1px solid var(--color-border-warm);
+    background: var(--color-surface-muted);
+    font-size: 12px;
+}
+.statusDot {
+    flex: 0 0 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-ink-muted);
+}
+.statusDot[data-active="true"] {
+    background: var(--color-brand);
+}
+.body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-warm) transparent;
+}
+.intro {
+    margin: 0 0 1.5rem;
+    color: var(--color-ink-muted);
+    font-size: 13px;
+}
+.fieldset {
+    min-width: 0;
+    margin: 0 0 1.5rem;
+    padding: 0;
+    border: 0;
+}
+.fieldset legend {
+    margin-bottom: 0.65rem;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 650;
+}
+.sourceChoices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+}
+.sourceChoice,
+.volume {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    padding: 0.75rem;
+    border: 1px solid var(--color-border-warm);
+    border-radius: 10px;
+    cursor: pointer;
+}
+.sourceChoice:has(input:checked),
+.volume:has(input:checked) {
+    border-color: var(--color-brand);
+    background: var(--color-surface-muted);
+}
+.sourceChoice:hover,
+.volume:hover {
+    border-color: var(--color-ink-muted);
+}
+.root input {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-brand);
+}
+.root input:focus-visible,
+.root select:focus-visible,
+.root button:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
+}
+.volumes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+}
+.volume {
+    align-items: flex-start;
+}
+.volume input {
+    margin-top: 0.2rem;
+}
+.volume strong,
+.edgeCases strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+}
+.volume small,
+.edgeCases small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--color-ink-muted);
+    font-size: 12px;
+}
+.hint {
+    margin: 0.65rem 0 0;
+    color: var(--color-ink-muted);
+    font-size: 12px;
+}
+.field {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 0.75rem;
+    font-size: 13px;
+}
+.fieldset legend + .field {
+    margin-top: 0;
+}
+.field select {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--color-border-warm);
+    border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font: inherit;
+}
+.edgeCases {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding-block: 0.5rem;
+    cursor: pointer;
+}
+.edgeCases input {
+    margin-top: 0.15rem;
+}
+.liveNote {
+    margin: 0;
+    padding: 1rem;
+    border-radius: 10px;
+    background: var(--color-surface-muted);
+    color: var(--color-ink-muted);
+}
+.error {
+    color: var(--color-danger);
+    font-size: 13px;
+}
+.footer {
+    flex-shrink: 0;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--color-border-warm);
+    background: var(--color-surface);
+}
+.footerActions {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+}
+.footerActions button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 44px;
+    padding: 0.25rem 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-ink-muted);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    text-underline-offset: 3px;
+}
+.footerActions button:hover {
+    color: var(--color-ink);
+    text-decoration: underline;
+}
+.footer p {
+    margin: 0;
+    color: var(--color-ink-muted);
+    font-size: 11px;
+    text-align: center;
+}
+@media (width < 48rem) {
+    .root {
+        inset: auto 0.75rem calc(5rem + env(safe-area-inset-bottom)) auto;
+    }
+    .panel {
+        position: fixed;
+        inset: 0.5rem;
+        width: auto;
+        max-height: calc(100dvh - 1rem);
+    }
+    .field select {
+        font-size: 16px;
+    }
+}

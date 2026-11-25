@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode } from "@/lib/api/mock-mode";
 import type { InfinitePage } from "@/lib/pagination/infinite-page";
+import { withTestNetwork } from "@/lib/testing/test-network";
 
 import {
     MOCK_CREDIT_LEDGER,
@@ -361,7 +362,7 @@ export function buildReferralPresentation(
     };
 }
 
-export const referralsApi = {
+export const referralsApi = withTestNetwork({
     overview(_signal?: AbortSignal) {
         if (isMockMode()) {
             const balance = MOCK_CREDIT_LEDGER.reduce((sum, entry) => sum + entry.amount, 0);
@@ -478,4 +479,4 @@ export const referralsApi = {
             referralCode,
         };
     },
-};
+});

@@ -1,5 +1,6 @@
 import { apiFetch } from "@/lib/api/client";
 import { isMockMode, paginateItems } from "@/lib/api/mock-mode";
+import { withTestNetwork } from "@/lib/testing/test-network";
 import type { BuyerPropertyKind, BuyerSource } from "@/lib/validation/buyer";
 
 import { MOCK_CLIENTS, MOCK_PROPERTY_CLIENTS } from "@/features/clients/mock-clients";
@@ -41,6 +42,24 @@ export type NewBuyerInput = {
     notes?: string | null;
     documents?: BuyerDocument[];
 };
+
+/** All requests have settled; callers can refresh successful links and retry only failures. */
+export class PartialClientAttachError extends Error {
+    constructor(
+        public readonly attachedPropertyIds: string[],
+        public readonly failedPropertyIds: string[],
+        cause?: unknown,
+    ) {
+        super(
+            attachedPropertyIds.length
+                ? `${attachedPropertyIds.length} ${attachedPropertyIds.length === 1 ? "property linked" : "properties linked"}. ${failedPropertyIds.length} could not be linked. Try the remaining properties again.`
+                : cause instanceof Error
+                  ? cause.message
+                  : "Could not link properties. Try again.",
+        );
+        this.name = "PartialClientAttachError";
+    }
+}
 
 /** Nested lead on `/clients` list items — active properties live here. */
 export type ApiClientLead = {
@@ -532,6 +551,11 @@ export async function listClientsPageWithLeadSummary(options: {
 }): Promise<ClientListPageWithLeadSummary> {
     if (isMockMode()) {
         const all = mockClientsWithLeads(options.search);
+        all.sort((a, b) => {
+            if (options.sort === "name") return a.name.localeCompare(b.name);
+            if (options.sort === "most_active") return b.liveDealCount - a.liveDealCount;
+            return Date.parse(b.lastContactedAt ?? "") - Date.parse(a.lastContactedAt ?? "") || 0;
+        });
         const paged = paginateItems(all, options.page, options.limit);
         return {
             items: paged.items,
@@ -709,7 +733,7 @@ export async function attachedClientsByProperty(
     return map;
 }
 
-export const clientsApi = {
+export const clientsApi = withTestNetwork({
     /** Every buyer on the broker's book. */
     async list(options?: { search?: string }): Promise<ClientItem[]> {
         if (isMockMode()) {
@@ -810,7 +834,7 @@ export const clientsApi = {
         }
         const contact = await apiFetch<ApiClientContact>(`/clients/${clientId}`, {
             method: "PATCH",
-            body: JSON.stringify(toClientPayload(input)),
+            body: JSON.stringify(toClientPayload(input, true)),
         });
         return mapContact(contact);
     },
@@ -893,21 +917,26 @@ export const clientsApi = {
 
     /** Attach one buyer to one or more properties (skips already-linked pairs). */
     async attachClientToProperties(clientId: string, propertyIds: string[]): Promise<void> {
-        if (isMockMode()) return;
         const unique = [...new Set(propertyIds.filter(Boolean))];
         if (unique.length === 0) return;
-
-        await Promise.all(
+        const results = await Promise.allSettled(
             unique.map((propertyId) =>
-                apiFetch<AttachClientsResponse>("/clients/leads", {
-                    method: "POST",
-                    body: JSON.stringify({
-                        propertyId,
-                        clientIds: [clientId],
-                    }),
-                }),
+                isMockMode()
+                    ? import("@/lib/testing/sample-client-links").then(({ attachSampleClients }) =>
+                          attachSampleClients(propertyId, [clientId]),
+                      )
+                    : apiFetch<AttachClientsResponse>("/clients/leads", {
+                          method: "POST",
+                          body: JSON.stringify({ propertyId, clientIds: [clientId] }),
+                      }),
             ),
         );
+        const attached = unique.filter((_, index) => results[index].status === "fulfilled");
+        const failed = unique.filter((_, index) => results[index].status === "rejected");
+        if (failed.length) {
+            const firstFailure = results.find((result) => result.status === "rejected");
+            throw new PartialClientAttachError(attached, failed, firstFailure?.reason);
+        }
     },
 
     /** Unlink only this buyer/property pair, leaving the contact and other properties intact. */
@@ -954,13 +983,16 @@ export const clientsApi = {
         }
         await apiFetch<void>(`/clients/leads/${leadId}`, { method: "DELETE" });
     },
-};
+});
 
-function toClientPayload(input: NewBuyerInput) {
+function toClientPayload(input: NewBuyerInput, updating = false) {
     return {
         name: input.name,
         phone: input.phoneDigits.startsWith("+") ? input.phoneDigits : `+91${input.phoneDigits}`,
-        email: input.email?.trim() || undefined,
+        email:
+            input.email === undefined
+                ? undefined
+                : input.email?.trim() || (updating ? null : undefined),
         clientType: clientTypeFromLookingFor(input.lookingFor),
         propertyKind: input.propertyKind,
         preferredLocalities: input.preferredLocalities,
@@ -973,6 +1005,9 @@ function toClientPayload(input: NewBuyerInput) {
         rentBudgetMax: input.lookingFor === "buy" ? null : input.rentBudgetMaxInr,
         bhk: input.bhk ?? undefined,
         source: input.source,
-        notes: input.notes?.trim() || undefined,
+        notes:
+            input.notes === undefined
+                ? undefined
+                : input.notes?.trim() || (updating ? null : undefined),
     };
 }

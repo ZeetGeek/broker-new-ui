@@ -10,6 +10,7 @@ import {
     getStoredUser,
     setSession,
 } from "@/lib/auth/session";
+import { getTestLabSettings, isTestSampleMode } from "@/lib/testing/test-lab";
 
 type AuthState = {
     user: AuthUser | null;
@@ -36,6 +37,10 @@ const initialState: AuthState = {
 
 export const hydrateAuth = createAsyncThunk("auth/hydrate", async () => {
     if (isMockMode()) {
+        if (isTestSampleMode() && getTestLabSettings().account === "signed-out") {
+            clearSession();
+            return { accessToken: null, user: null };
+        }
         const session = { accessToken: MOCK_ACCESS_TOKEN, user: MOCK_AUTH_USER };
         setSession(session);
         return session;

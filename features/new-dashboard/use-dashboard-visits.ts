@@ -16,7 +16,7 @@ import { useAppSelector } from "@/store/hooks";
  */
 export function useDashboardVisits(now: Date | null) {
     const hydrated = useAppSelector((state) => state.auth.hydrated);
-    // Demo mode answers every call with an empty list, like the Visits page.
+    // The dashboard and Visits page use the same date-filtered source, including test samples.
     const enabled = hydrated && now !== null;
     const today = now ? visitDateBounds("today", now.getTime()) : { from: "", to: "" };
     const base = [...VISITS_KEY, "list", "dashboard"] as const;
@@ -24,7 +24,8 @@ export function useDashboardVisits(now: Date | null) {
     const todayQuery = useQuery({
         queryKey: [...base, "today", today.from],
         queryFn: ({ signal }) =>
-            siteVisitsApi.list({ tab: "active", ...today, sort: "start_asc", limit: 50 }, signal),
+            // Read every page so earlier unmarked visits cannot hide later appointments.
+            siteVisitsApi.searchSource({ tab: "active", ...today, sort: "start_asc" }, signal),
         enabled,
         refetchInterval: 30_000,
     });

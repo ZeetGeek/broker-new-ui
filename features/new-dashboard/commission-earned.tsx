@@ -10,10 +10,19 @@ import {
     formatCommissionPeriod,
 } from "@/lib/format/commission";
 import { BROKER_EARNINGS_HREF } from "@/lib/routes/broker";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
+import { EmptyState, LoadingState } from "@/components/empty-state";
 import { IconButton } from "@/components/shared/icon-button";
-import { ChevronLeft, ChevronRight, HandCoins } from "@/components/shared/icons";
-import { Skeleton } from "@/components/shared/skeleton";
+import {
+    ChartBar,
+    Check,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    HandCoins,
+} from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
 import {
     type ChartConfig,
@@ -31,7 +40,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-import { CardEmpty, CardError } from "./card-states";
+import { CardError } from "./card-states";
 import {
     closedDealsLabel,
     type CommissionMonths,
@@ -39,6 +48,7 @@ import {
     DASHBOARD_DEFAULT_MONTHS,
     maxCommissionPage,
 } from "./commission-window";
+import { CommissionSkeleton } from "./dashboard-skeleton";
 import { useDashboardEarnings } from "./use-dashboard-earnings";
 
 import styles from "./commission-earned.module.css";
@@ -56,7 +66,10 @@ const PERIOD_OPTIONS = [
 
 function CommissionShell({ children }: { children: React.ReactNode }) {
     return (
-        <section aria-labelledby="commission-earned-heading" className={styles.section}>
+        <section
+            aria-labelledby="commission-earned-heading"
+            className={`${styles.section} ${styles.stateSection}`}
+        >
             <div className={styles.summary}>
                 <h2 id="commission-earned-heading" className="h6">
                     Commission earned
@@ -68,6 +81,8 @@ function CommissionShell({ children }: { children: React.ReactNode }) {
 }
 
 export function CommissionEarned({ now }: { now: Date }) {
+    const mobile = useMobileMenu();
+    const [periodOpen, setPeriodOpen] = useState(false);
     const [months, setMonths] = useState<CommissionMonths>(DASHBOARD_DEFAULT_MONTHS);
     const [page, setPage] = useState(0);
     const report = useDashboardEarnings(months, page, now);
@@ -75,13 +90,9 @@ export function CommissionEarned({ now }: { now: Date }) {
 
     if (report.isPending) {
         return (
-            <CommissionShell>
-                <div aria-busy="true" aria-label="Loading your commission" className="grid gap-3">
-                    <Skeleton className="block-12 inline-48" />
-                    <Skeleton className="block-9 inline-40" />
-                    <Skeleton className="block-48 inline-full" />
-                </div>
-            </CommissionShell>
+            <LoadingState label="Loading your commission">
+                <CommissionSkeleton />
+            </LoadingState>
         );
     }
     if (report.isError && !report.data) {
@@ -97,21 +108,19 @@ export function CommissionEarned({ now }: { now: Date }) {
     }
     if (!report.data.hasResolvedDeals) {
         return (
-            <CommissionShell>
-                <CardEmpty
+            <section
+                className={`${styles.section} ${styles.stateSection}`}
+                aria-labelledby="commission-earned-heading"
+            >
+                <EmptyState
+                    size="card"
                     icon={HandCoins}
-                    title="No commission earned yet"
-                    description="Mark a deal as sold in your pipeline and your commission shows here, month by month."
-                    action={
-                        <Link
-                            href="/broker/pipeline"
-                            className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                        >
-                            Open pipeline
-                        </Link>
-                    }
+                    headingId="commission-earned-heading"
+                    heading="No commission earned yet"
+                    description="Commission from closed deals will appear here, month by month."
+                    action={{ label: "Open pipeline", icon: ChartBar, href: "/broker/pipeline" }}
                 />
-            </CommissionShell>
+            </section>
         );
     }
 
@@ -198,32 +207,74 @@ export function CommissionEarned({ now }: { now: Date }) {
             <div className={styles.detail}>
                 <header className={styles.chartHeader}>
                     <div className={styles.rangeControl}>
-                        <Select
-                            items={PERIOD_OPTIONS}
-                            value={months}
-                            onValueChange={(value) => {
-                                if (value === 3 || value === 6 || value === 12) {
-                                    setMonths(value);
-                                    setPage(0);
+                        {mobile ? (
+                            <MobileActionDrawer
+                                open={periodOpen}
+                                onOpenChange={setPeriodOpen}
+                                title="Commission period"
+                                trigger={
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        data-slot="select-trigger"
+                                        aria-label={`Commission period length: ${PERIOD_OPTIONS.find((option) => option.value === months)?.label}`}
+                                        className={styles.range}
+                                    >
+                                        {
+                                            PERIOD_OPTIONS.find((option) => option.value === months)
+                                                ?.label
+                                        }
+                                        <ChevronDown aria-hidden className="block-3 inline-3" />
+                                    </Button>
                                 }
-                            }}
-                        >
-                            <SelectTrigger
-                                size="xs"
-                                aria-label="Commission period length"
-                                className={styles.range}
-                                wrapperClassName={styles.rangeWrapper}
                             >
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
                                 {PERIOD_OPTIONS.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        className={mobileActionClass}
+                                        aria-pressed={months === option.value}
+                                        onClick={() => {
+                                            setMonths(option.value as CommissionMonths);
+                                            setPage(0);
+                                            setPeriodOpen(false);
+                                        }}
+                                    >
                                         {option.label}
-                                    </SelectItem>
+                                        {months === option.value ? (
+                                            <Check aria-hidden className="ms-auto" />
+                                        ) : null}
+                                    </button>
                                 ))}
-                            </SelectContent>
-                        </Select>
+                            </MobileActionDrawer>
+                        ) : (
+                            <Select
+                                items={PERIOD_OPTIONS}
+                                value={months}
+                                onValueChange={(value) => {
+                                    if (value === 3 || value === 6 || value === 12) {
+                                        setMonths(value);
+                                        setPage(0);
+                                    }
+                                }}
+                            >
+                                <SelectTrigger
+                                    size="xs"
+                                    aria-label="Commission period length"
+                                    className={styles.range}
+                                    wrapperClassName={styles.rangeWrapper}
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {PERIOD_OPTIONS.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
                     </div>
                     <Button
                         variant="outline"
@@ -238,11 +289,12 @@ export function CommissionEarned({ now }: { now: Date }) {
                     className={styles.chartViewport}
                     role="region"
                     aria-label="Monthly commission chart"
-                    tabIndex={months === 12 ? 0 : undefined}
+                    tabIndex={0}
                 >
                     <ChartContainer
                         key={`${months}-${page}`}
                         config={CHART_CONFIG}
+                        data-months={months}
                         className={`${styles.chart} ${months === 12 ? styles.yearChart : ""} ${report.isPlaceholderData ? "opacity-60" : ""}`}
                         aria-label={`Monthly sale and rent commission, ${period}`}
                     >

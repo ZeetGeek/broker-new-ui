@@ -7,6 +7,7 @@ import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
 import { parseMoney } from "@/lib/format/money";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/property-card-name";
+import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ import {
 } from "@/components/shared/icons";
 import { Price } from "@/components/shared/price";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
+import { PropertyPlaceholderImage } from "@/components/shared/property-placeholder-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
@@ -123,22 +125,13 @@ export function OwnerLeadCard({
                         fill
                         sizes="(max-width: 1024px) 100vw, 50vw"
                         className="object-cover"
+                        fallbackSrc={PROPERTY_PLACEHOLDER_SRC}
                     />
                 ) : (
-                    // Designed empty state, never a broken image — docs/DESIGN.md §4.5.
-                    <div
-                        className="
-                          flex flex-col items-center justify-center gap-1 bg-surface-muted
-                          block-full
-                        "
-                    >
-                        <Images
-                            aria-hidden
-                            className="text-ink-subtle block-6 inline-6"
-                            strokeWidth={1.5}
-                        />
-                        <p className="body-xs text-ink-subtle">No photos yet</p>
-                    </div>
+                    <PropertyPlaceholderImage
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        alt={`${propertyLabel} — no photos yet`}
+                    />
                 )}
 
                 <div

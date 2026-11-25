@@ -179,7 +179,6 @@ export function MyListingsToolbarSkeleton({
             <span className="sr-only">Loading listing controls</span>
             <div aria-hidden>
                 <ResponsiveListToolbar
-                    inlineMobileActions
                     selection={
                         <>
                             <div
@@ -203,7 +202,7 @@ export function MyListingsToolbarSkeleton({
                         </>
                     }
                     search={
-                        <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm block-[38px] min-inline-0 pointer-coarse:min-block-11">
+                        <div className="flex items-center gap-2 rounded-control border border-border-warm bg-surface px-3 shadow-sm list-control min-inline-0">
                             <Skeleton className="shrink-0 block-4 inline-4" />
                             <Skeleton className="block-3 inline-1/2" />
                         </div>
@@ -227,7 +226,7 @@ export function MyListingsToolbarSkeleton({
                                 <div
                                     className="
                               hidden items-center gap-2 rounded-control bg-surface px-3.5 text-sm
-                              font-semibold shadow-sm block-[38px]
+                              font-semibold shadow-sm list-control
                               md:inline-flex
                             "
                                 >
@@ -284,7 +283,6 @@ export function MyListingsHeader({
             <div className="sticky inset-bs-0 z-10">
                 <TooltipProvider>
                     <ResponsiveListToolbar
-                        inlineMobileActions
                         selection={
                             <>
                                 <FilterChip
@@ -310,6 +308,7 @@ export function MyListingsHeader({
                                 />
                                 <ResponsiveListStatus
                                     label="Status"
+                                    mobileDrawer
                                     value={filters.status}
                                     options={STATUS_TABS.map((tab) => ({
                                         value: tab.key,
@@ -370,6 +369,7 @@ export function MyListingsHeader({
                             <>
                                 <ListToolbarSelect
                                     label="Sort listings"
+                                    mobileDrawer
                                     options={SORT_OPTIONS}
                                     defaultValue="newest"
                                     mobileLabel="Sort"

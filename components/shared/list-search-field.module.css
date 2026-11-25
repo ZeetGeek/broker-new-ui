@@ -11,6 +11,11 @@
     transform: translateY(-50%);
     z-index: 20;
 }
+/* Keep the embedded action inside the compact search face on touch screens. */
+.withHelp .helpButton.helpButton {
+    min-block-size: var(--size-control-sm);
+    min-inline-size: var(--size-control-sm);
+}
 @media (pointer: coarse) {
     .withHelp [data-slot="input"] {
         padding-inline-end: 5.75rem;

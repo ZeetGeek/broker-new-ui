@@ -8,6 +8,7 @@ import { addMonths, startOfDay } from "date-fns";
 
 import { formatDateIn, formatDateIso } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { IconButton } from "@/components/shared/icon-button";
 import {
@@ -16,6 +17,7 @@ import {
     ChevronRightIcon,
     ChevronsUpDownIcon,
 } from "@/components/shared/icons";
+import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -169,6 +171,7 @@ function CalendarCaption({
     endYear,
     startMonth,
     endMonth,
+    mobile = false,
 }: {
     month: Date;
     onMonthChange: (next: Date) => void;
@@ -176,6 +179,7 @@ function CalendarCaption({
     endYear: number;
     startMonth: Date;
     endMonth: Date;
+    mobile?: boolean;
 }) {
     const years = useMemo(
         () => Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i),
@@ -185,6 +189,69 @@ function CalendarCaption({
     const canGoPrev = month.getTime() > startMonth.getTime();
     const canGoNext = month.getTime() < endMonth.getTime();
     const clampMonth = (next: Date) => (next < startMonth ? startMonth : next);
+
+    if (mobile) {
+        return (
+            <div className="flex items-center justify-between gap-1">
+                <IconButton
+                    type="button"
+                    size="sm"
+                    disabled={!canGoPrev}
+                    aria-label="Previous month"
+                    onClick={() => onMonthChange(addMonths(month, -1))}
+                >
+                    <ChevronLeftIcon aria-hidden />
+                </IconButton>
+                <div className="flex items-center gap-1.5">
+                    <select
+                        aria-label="Month"
+                        value={String(month.getMonth())}
+                        className={captionSelectTriggerClassName}
+                        onChange={(event) =>
+                            onMonthChange(
+                                clampMonth(
+                                    new Date(month.getFullYear(), Number(event.target.value), 1),
+                                ),
+                            )
+                        }
+                    >
+                        {MONTH_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                    <select
+                        aria-label="Year"
+                        value={String(month.getFullYear())}
+                        className={captionSelectTriggerClassName}
+                        onChange={(event) =>
+                            onMonthChange(
+                                clampMonth(
+                                    new Date(Number(event.target.value), month.getMonth(), 1),
+                                ),
+                            )
+                        }
+                    >
+                        {years.map((year) => (
+                            <option key={year} value={year}>
+                                {year}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <IconButton
+                    type="button"
+                    size="sm"
+                    disabled={!canGoNext}
+                    aria-label="Next month"
+                    onClick={() => onMonthChange(addMonths(month, 1))}
+                >
+                    <ChevronRightIcon aria-hidden />
+                </IconButton>
+            </div>
+        );
+    }
 
     return (
         <div className="flex items-center justify-between gap-1">
@@ -326,6 +393,7 @@ export function AppDatePicker({
     iconOnly?: boolean;
     "aria-describedby"?: string;
 } & VariantProps<typeof datePickerTriggerVariants>) {
+    const mobile = useMobileMenu();
     const [open, setOpen] = useState(false);
     const { startYear, endYear, startMonth, endMonth } = useMemo(
         () => calendarBounds(allowPast),
@@ -348,6 +416,87 @@ export function AppDatePicker({
     }
 
     const TriggerButton = iconOnly ? IconButton : Button;
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={setOpen}
+                title="Choose date"
+                trigger={
+                    <TriggerButton
+                        id={id}
+                        type="button"
+                        {...(iconOnly ? { size: "md" as const } : { variant: "outline" as const })}
+                        aria-label={iconOnly ? "Jump to a date" : undefined}
+                        disabled={disabled}
+                        aria-invalid={invalid || undefined}
+                        aria-describedby={describedBy}
+                        aria-expanded={open}
+                        onBlur={onBlur}
+                        className={cn(
+                            !iconOnly && datePickerTriggerVariants({ size }),
+                            !iconOnly && !hasValidDate && "text-ink-subtle",
+                            className,
+                        )}
+                    >
+                        <span className={iconOnly ? "sr-only" : "truncate"}>
+                            {hasValidDate ? formatDateIn(selected) : placeholder}
+                        </span>
+                        <CalendarIcon
+                            aria-hidden
+                            data-icon="inline-end"
+                            className={datePickerIconVariants({ size })}
+                        />
+                    </TriggerButton>
+                }
+            >
+                <div className="flex flex-col gap-3 p-1">
+                    <CalendarCaption
+                        month={month}
+                        onMonthChange={setMonth}
+                        startYear={startYear}
+                        endYear={endYear}
+                        startMonth={startMonth}
+                        endMonth={endMonth}
+                        mobile
+                    />
+                    <Calendar
+                        mode="single"
+                        month={month}
+                        onMonthChange={setMonth}
+                        hideNavigation
+                        disabled={[
+                            ...(!allowPast ? [{ before: today }] : []),
+                            ...(min ? [{ before: new Date(`${min}T00:00:00`) }] : []),
+                            ...(max ? [{ after: new Date(`${max}T23:59:59`) }] : []),
+                        ]}
+                        selected={hasValidDate ? selected : undefined}
+                        onSelect={(next) => {
+                            onChange(next ? formatDateIso(next) : null);
+                            setOpen(false);
+                        }}
+                        className="bg-transparent p-0 [--cell-radius:9999px] [--cell-size:--spacing(8)]"
+                        classNames={{
+                            months: "relative flex flex-col",
+                            month: "flex flex-col gap-3 inline-full",
+                            month_caption: "hidden",
+                            nav: "hidden",
+                            weekdays: "flex inline-full",
+                            weekday:
+                                "flex-1 pb-1 text-center text-[0.7rem] font-normal text-ink-subtle select-none",
+                            week: "mt-0.5 flex inline-full",
+                            day: "group/day relative aspect-square p-0 text-center select-none",
+                            today: "bg-transparent",
+                            outside: "text-ink-subtle/60",
+                            selected: "bg-transparent",
+                        }}
+                        components={{ DayButton: DatePickerDayButton }}
+                    />
+                </div>
+            </MobileActionDrawer>
+        );
+    }
+
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger

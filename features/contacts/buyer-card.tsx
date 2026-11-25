@@ -78,7 +78,7 @@ export function BuyerCard({
                 data-linked-card
                 className={cn(
                     "contact-card flex flex-1 cursor-pointer flex-col rounded-card border border-border-warm bg-surface p-3 shadow-md transition-[box-shadow,border-color] duration-160 min-inline-0 hover:shadow-lg @[17rem]/contact-card:p-4 @[22rem]/contact-card:p-5",
-                    (saleBudget || rentBudget) && "min-block-96",
+                    (saleBudget || rentBudget) && "md:min-block-96",
                 )}
             >
                 <CardLink
@@ -126,7 +126,7 @@ export function BuyerCard({
                             framed={false}
                             className="shrink-0 border-2 border-white shadow-sm"
                         />
-                        <div className="min-inline-0">
+                        <div className="flex-1 min-inline-0">
                             <h2 className="body font-semibold text-ink">
                                 <ContactName
                                     name={buyer.name}
@@ -135,7 +135,7 @@ export function BuyerCard({
                                     onOpen={open}
                                     data-card-title
                                     data-contact-id={buyer.id}
-                                    className="wrap-anywhere max-inline-full"
+                                    className="block truncate max-inline-full"
                                 />
                             </h2>
                             {homeLocation ? (
@@ -177,7 +177,7 @@ export function BuyerCard({
                             className={cn(
                                 "relative grid gap-4 min-inline-0 @[25rem]/contact-card:gap-8",
                                 saleBudget && rentBudget
-                                    ? "grid-cols-1 @[25rem]/contact-card:grid-cols-2 @[25rem]/contact-card:after:pointer-events-none @[25rem]/contact-card:after:absolute @[25rem]/contact-card:after:inset-y-0 @[25rem]/contact-card:after:inset-s-1/2 @[25rem]/contact-card:after:bg-border-warm @[25rem]/contact-card:after:inline-px"
+                                    ? "grid-cols-1 @[20rem]/contact-card:grid-cols-2 @[20rem]/contact-card:after:pointer-events-none @[20rem]/contact-card:after:absolute @[20rem]/contact-card:after:inset-y-0 @[20rem]/contact-card:after:inset-s-1/2 @[20rem]/contact-card:after:bg-border-warm @[20rem]/contact-card:after:inline-px"
                                     : "grid-cols-1",
                             )}
                         >
@@ -248,7 +248,7 @@ export function BuyerCard({
                     </div>
                     {canContact ? (
                         <div
-                            className="grid grid-cols-1 gap-2 @[17rem]/contact-card:grid-cols-2"
+                            className="grid grid-cols-1 gap-2 @[16rem]/contact-card:grid-cols-2"
                             onClick={(event) => event.stopPropagation()}
                         >
                             <Button

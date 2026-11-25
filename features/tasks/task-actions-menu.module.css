@@ -10,6 +10,49 @@
     scrollbar-width: thin;
     scrollbar-color: var(--color-border-warm) transparent;
 }
+
+.drawerBody button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.drawerBody .section {
+    padding: 0.75rem;
+}
+
+.mobileReminders {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    clear: both;
+}
+
+.mobileReminders button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: 2.75rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--color-border-warm);
+    border-radius: var(--radius-control);
+    font-size: 0.8125rem;
+    cursor: pointer;
+}
+
+.mobileReminders button[aria-pressed="true"] {
+    color: var(--color-brand-text);
+    background: var(--color-brand-soft);
+}
+
+.mobileReminders svg {
+    inline-size: 1rem;
+    block-size: 1rem;
+}
+
+.drawerBody button:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: -2px;
+}
 .menu ::selection {
     background: var(--color-brand-soft);
     color: var(--color-brand-text);

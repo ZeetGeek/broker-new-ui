@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState as SharedEmptyState } from "@/components/empty-state";
 import { CalendarDays, Clock3, RotateCw, SlidersHorizontal } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
@@ -215,14 +216,14 @@ export function EmptyState({
     const content = {
         "no-visits": {
             icon: CalendarDays,
-            title: "No visits booked yet.",
+            title: "No visits booked yet",
             detail: "Open slots to book your first one.",
             primary: "Browse open slots",
         },
         "no-today": {
             icon: Clock3,
-            title: "Nothing today.",
-            detail: "Next visit is tomorrow at 10:00 AM, Shreeji Heights.",
+            title: "No visits today",
+            detail: "Your booked visits will appear here when they are scheduled for today.",
             primary: "View next visit",
         },
         "no-slots": {
@@ -260,32 +261,25 @@ export function EmptyState({
     const Icon = content.icon;
 
     return (
-        <section
-            className="
-              flex flex-col items-center justify-center rounded-card border border-dashed
-              border-border-warm bg-surface px-6 py-10 text-center min-block-72
-            "
+        <SharedEmptyState
+            size="card"
+            icon={Icon}
+            heading={content.title.replace(/\.$/, "")}
+            description={detail ?? content.detail}
+            variant={
+                kind === "slots-error" ? "error" : kind.includes("slots") ? "filtered" : "default"
+            }
+            action={
+                onPrimary
+                    ? { label: primary ?? content.primary, icon: Icon, onClick: onPrimary }
+                    : undefined
+            }
         >
-            <span
-                className="
-                  mbe-4 grid place-items-center rounded-inner bg-brand-soft text-brand-text block-12
-                  inline-12
-                "
-            >
-                <Icon aria-hidden />
-            </span>
-            <h2 className="h5 text-ink">{content.title}</h2>
-            <p className="body-sm mbs-1 text-ink-muted max-inline-md">{detail ?? content.detail}</p>
-            <div className="mbs-5 flex flex-wrap justify-center gap-2">
-                {(primary ?? content.primary) && onPrimary ? (
-                    <Button onClick={onPrimary}>{primary ?? content.primary}</Button>
-                ) : null}
-                {content.secondary && onSecondary ? (
-                    <Button variant="surface" onClick={onSecondary}>
-                        {content.secondary}
-                    </Button>
-                ) : null}
-            </div>
-        </section>
+            {content.secondary && onSecondary ? (
+                <Button variant="link" onClick={onSecondary}>
+                    {content.secondary}
+                </Button>
+            ) : null}
+        </SharedEmptyState>
     );
 }

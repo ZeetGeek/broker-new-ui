@@ -9,7 +9,9 @@ import { representativeApi } from "@/lib/api/representative";
 import type { PersonDetailsTarget } from "@/lib/contacts/person-details-target";
 import { formatPersonName } from "@/lib/format/person-name";
 
+import { EmptyState } from "@/components/empty-state";
 import { AppModal } from "@/components/shared/app-modal";
+import { RefreshCw, UserRound } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import { ContactDetailsOverlay } from "@/features/contacts/contact-details-overlay";
@@ -83,7 +85,21 @@ function ProfileOverlay({
             size="md"
             className="contacts-detail-drawer"
         >
-            {query.isError ? (
+            {query.isError && target.kind === "owner-profile" ? (
+                <EmptyState
+                    size="card"
+                    variant="error"
+                    icon={UserRound}
+                    heading="Could not load this owner"
+                    description="Check your connection and try again."
+                    action={{
+                        label: "Try again",
+                        icon: RefreshCw,
+                        onClick: () => void query.refetch(),
+                        disabled: query.isFetching,
+                    }}
+                />
+            ) : query.isError ? (
                 <div role="alert" className="flex flex-col items-start gap-3">
                     <p className="body-sm text-ink-muted">
                         Could not load this profile. Check your connection and try again.
