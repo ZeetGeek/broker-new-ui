@@ -22,7 +22,6 @@ import { useAppDispatch } from "@/store/hooks";
 import { login } from "@/store/slices/auth-slice";
 
 import { AuthFormFrame } from "./auth-back-link";
-import { AuthBusyState } from "./auth-busy-state";
 import { AuthHeading } from "./auth-heading";
 import { OrDivider } from "./or-divider";
 import { SocialAuthButtons } from "./social-auth-buttons";
@@ -118,22 +117,9 @@ export function LoginForm() {
         }
     }
 
+    // Keep the form on screen; the button carries the pending state until the
+    // dashboard replaces this page.
     const isBusy = isSubmitting || isRedirecting;
-
-    if (isBusy) {
-        return (
-            <AuthFormFrame>
-                <AuthBusyState
-                    title={isRedirecting ? "Signed in" : "Signing in"}
-                    description={
-                        isRedirecting
-                            ? "Taking you to your dashboard."
-                            : "Checking your email and password."
-                    }
-                />
-            </AuthFormFrame>
-        );
-    }
 
     return (
         <AuthFormFrame>
@@ -275,9 +261,9 @@ export function LoginForm() {
                         variant="accent"
                         type="submit"
                         className="inline-full"
-                        loading={isSubmitting}
+                        loading={isBusy}
                     >
-                        {isSubmitting ? "Signing in" : "Sign in"}
+                        {isBusy ? "Signing in…" : "Sign in"}
                     </Button>
                 </form>
 
