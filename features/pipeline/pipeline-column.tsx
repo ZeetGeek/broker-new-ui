@@ -16,6 +16,8 @@ import { DraggableDealCard } from "@/features/pipeline/draggable-deal-card";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import type { DealItem, DealStage } from "@/features/pipeline/types";
 
+import styles from "./pipeline-board.module.css";
+
 /**
  * Rent sits beside the sale total, deliberately quieter — the two are
  * different units (per month vs outright) and summing them would be a lie, so
@@ -63,9 +65,9 @@ export function PipelineColumn({
             className={cn(
                 `
                   flex snap-start flex-col gap-3 rounded-card border p-3 transition-colors
-                  duration-160 min-inline-72
-                  lg:min-inline-0
+                  duration-160
                 `,
+                styles.column,
                 // Dashed only while it is a live drop target. A permanent
                 // dashed edge on a filled column reads as an empty slot.
                 highlighted ? "border-dashed border-brand bg-brand-soft/40" : meta.columnClass,

@@ -5,12 +5,14 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { CharacterCount } from "@/components/shared/character-count";
 import type { AppIcon } from "@/components/shared/icons";
 import { Check, ChevronDown, MapPin, X } from "@/components/shared/icons";
+import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Skeleton } from "@/components/shared/skeleton";
 import { SmartPriceInput } from "@/components/shared/smart-price-input";
@@ -203,6 +205,7 @@ export function ComboboxField({
     startIcon?: AppIcon;
     loading?: boolean;
 }) {
+    const mobile = useMobileMenu();
     const id = `combobox-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`;
     const flat = groups?.flatMap((group) => group.options) ?? options ?? [];
     const itemValues = flat.map((option) => option.value);
@@ -214,6 +217,29 @@ export function ComboboxField({
                 <span role="status" aria-label={`Loading ${label.toLowerCase()}`} aria-busy="true">
                     <Skeleton className="border-2 border-border-warm block-control-lg inline-full" />
                 </span>
+            ) : mobile ? (
+                <MobileSelectDrawer
+                    id={id}
+                    label={label}
+                    value={value}
+                    options={[
+                        ...(!required ? [{ value: "", label: "No selection" }] : []),
+                        ...(groups
+                            ? groups.flatMap((group) =>
+                                  group.options.map((option) => ({
+                                      ...option,
+                                      detail: group.label,
+                                  })),
+                              )
+                            : flat),
+                    ]}
+                    onChange={onChange}
+                    placeholder={placeholder}
+                    startIcon={startIcon}
+                    disabled={disabled}
+                    errorText={error}
+                    emptyText={emptyText}
+                />
             ) : (
                 <Combobox
                     value={value || null}

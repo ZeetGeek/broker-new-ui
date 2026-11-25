@@ -9,6 +9,7 @@ import { Label, PolarAngleAxis, PolarRadiusAxis, RadialBar, RadialBarChart } fro
 import type { BrokerVisit } from "@/lib/api/site-visits";
 import { formatBudgetAmount } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import {
@@ -34,6 +35,11 @@ import {
     UserRoundPlus,
     X,
 } from "@/components/shared/icons";
+import {
+    mobileActionClass,
+    MobileActionDrawer,
+    mobileActionGroupClass,
+} from "@/components/shared/mobile-action-drawer";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
@@ -331,6 +337,9 @@ function VisitCard({
     onMarkOutcome,
     onCancel,
 }: VisitCardProps) {
+    const mobile = useMobileMenu();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const afterMenuClose = useRef<(() => void) | null>(null);
     const s = featured ? nextVisitStyles : visitStyles;
     const titleId = `visit-card-${featured ? "next" : visit.id}`;
     const needsUpdate = phase === "needs_update";
@@ -341,48 +350,104 @@ function VisitCard({
 
     const menu =
         canReschedule || canCancel ? (
-            <DropdownMenu>
-                <DropdownMenuTrigger
-                    render={
+            mobile ? (
+                <MobileActionDrawer
+                    open={menuOpen}
+                    onOpenChange={setMenuOpen}
+                    onOpenChangeComplete={(open) => {
+                        if (!open) {
+                            const action = afterMenuClose.current;
+                            afterMenuClose.current = null;
+                            action?.();
+                        }
+                    }}
+                    title="Visit actions"
+                    description={`${visit.propertyTitle} · ${visit.clientName}`}
+                    trigger={
                         <IconButton
                             size="sm"
                             appearance={featured ? "inverse" : "outline"}
                             className={s.menuTrigger}
                             aria-label={`More actions for visit with ${visit.clientName}`}
                             disabled={busy}
-                        />
+                        >
+                            <MoreHorizontal aria-hidden />
+                        </IconButton>
                     }
                 >
-                    <MoreHorizontal aria-hidden />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                    align="end"
-                    className={cn(portalProfileMenuSurfaceClass, "inline-auto min-inline-44")}
-                >
                     {canReschedule ? (
-                        <DropdownMenuItem
-                            className={portalProfileMenuItemClass}
-                            render={<Link href={visitHref(visit, "reschedule")} />}
-                        >
-                            <CalendarClock aria-hidden />
-                            Reschedule
-                        </DropdownMenuItem>
+                        <div className={mobileActionGroupClass}>
+                            <Link
+                                href={visitHref(visit, "reschedule")}
+                                className={mobileActionClass}
+                                onClick={() => setMenuOpen(false)}
+                            >
+                                <CalendarClock aria-hidden />
+                                Reschedule
+                            </Link>
+                        </div>
                     ) : null}
                     {canCancel ? (
-                        <>
-                            {canReschedule ? <DropdownMenuSeparator className="my-1" /> : null}
-                            <DropdownMenuItem
-                                variant="destructive"
-                                className={portalProfileMenuItemClass}
-                                onClick={onCancel}
+                        <div className={mobileActionGroupClass}>
+                            <button
+                                type="button"
+                                className={mobileActionClass}
+                                data-destructive="true"
+                                onClick={() => {
+                                    afterMenuClose.current = onCancel;
+                                    setMenuOpen(false);
+                                }}
                             >
                                 <Trash2 aria-hidden />
                                 Cancel visit
-                            </DropdownMenuItem>
-                        </>
+                            </button>
+                        </div>
                     ) : null}
-                </DropdownMenuContent>
-            </DropdownMenu>
+                </MobileActionDrawer>
+            ) : (
+                <DropdownMenu>
+                    <DropdownMenuTrigger
+                        render={
+                            <IconButton
+                                size="sm"
+                                appearance={featured ? "inverse" : "outline"}
+                                className={s.menuTrigger}
+                                aria-label={`More actions for visit with ${visit.clientName}`}
+                                disabled={busy}
+                            />
+                        }
+                    >
+                        <MoreHorizontal aria-hidden />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                        align="end"
+                        className={cn(portalProfileMenuSurfaceClass, "inline-auto min-inline-44")}
+                    >
+                        {canReschedule ? (
+                            <DropdownMenuItem
+                                className={portalProfileMenuItemClass}
+                                render={<Link href={visitHref(visit, "reschedule")} />}
+                            >
+                                <CalendarClock aria-hidden />
+                                Reschedule
+                            </DropdownMenuItem>
+                        ) : null}
+                        {canCancel ? (
+                            <>
+                                {canReschedule ? <DropdownMenuSeparator className="my-1" /> : null}
+                                <DropdownMenuItem
+                                    variant="destructive"
+                                    className={portalProfileMenuItemClass}
+                                    onClick={onCancel}
+                                >
+                                    <Trash2 aria-hidden />
+                                    Cancel visit
+                                </DropdownMenuItem>
+                            </>
+                        ) : null}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )
         ) : null;
 
     return (

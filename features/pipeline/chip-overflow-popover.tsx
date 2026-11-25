@@ -1,7 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { useState } from "react";
 
+import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
+
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 /**
@@ -29,19 +33,47 @@ const DOT_TONE_CLASS: Record<ChipTone, string> = {
  * — it is one tap away instead of gone.
  */
 export function ChipOverflowPopover({ items }: { items: OverflowChipItem[] }) {
+    const mobile = useMobileMenu();
+    const [open, setOpen] = useState(false);
     if (items.length === 0) return null;
+
+    const trigger = (
+        <button
+            type="button"
+            className="body-xs rounded-sm bg-surface-muted px-2 py-0.5 font-semibold text-ink-muted hover:bg-brand-soft hover:text-brand-text"
+            onClick={(event) => event.stopPropagation()}
+        >
+            +{items.length}
+        </button>
+    );
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={setOpen}
+                title="More on this deal"
+                trigger={trigger}
+            >
+                {items.map((item) => (
+                    <div key={item.key} className={mobileActionClass}>
+                        <span
+                            aria-hidden
+                            className={cn(
+                                "shrink-0 rounded-full block-2 inline-2",
+                                DOT_TONE_CLASS[item.tone],
+                            )}
+                        />
+                        <span>{item.label}</span>
+                    </div>
+                ))}
+            </MobileActionDrawer>
+        );
+    }
 
     return (
         <Popover>
-            <PopoverTrigger
-                className="
-                  body-xs rounded-sm bg-surface-muted px-2 py-0.5 font-semibold text-ink-muted
-                  hover:bg-brand-soft hover:text-brand-text
-                "
-                onClick={(event) => event.stopPropagation()}
-            >
-                +{items.length}
-            </PopoverTrigger>
+            <PopoverTrigger render={trigger} />
             <PopoverContent align="start" className="gap-1.5 p-3 inline-56">
                 <p className="body-xs font-semibold text-ink">More on this deal</p>
                 <ul className="flex flex-col gap-1.5">

@@ -4,9 +4,11 @@ import { useState } from "react";
 
 import { formatDateIso, formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { AppDateRangeFields } from "@/components/shared/app-date-range-fields";
 import { CalendarRange } from "@/components/shared/icons";
+import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -51,6 +53,7 @@ type VisitsDateRangeProps = {
  * inputs and apply only once both dates form a valid window.
  */
 export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeProps) {
+    const mobile = useMobileMenu();
     const [open, setOpen] = useState(false);
 
     const from = parseKey(dateFrom);
@@ -95,6 +98,107 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
         return formatDateShort((from ?? to) as Date);
     })();
 
+    const changeOpen = (next: boolean) => {
+        if (next) {
+            setMode(isRangeFilter ? "range" : "single");
+            setDraftRange({ from: dateFrom, to: dateTo });
+        }
+        setOpen(next);
+    };
+    const trigger = (
+        <button
+            type="button"
+            className={cn(
+                "body-sm flex shrink-0 items-center gap-2 rounded-control border px-3 py-1.5 transition-colors duration-160",
+                hasRange
+                    ? "border-brand-ink bg-brand-ink text-white"
+                    : "border-border-warm bg-surface text-ink hover:border-ink/25",
+            )}
+        >
+            <CalendarRange className="block-4 inline-4" strokeWidth={1.75} />
+            {label}
+        </button>
+    );
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={changeOpen}
+                title="Visit dates"
+                description={label}
+                trigger={trigger}
+            >
+                <div
+                    role="group"
+                    aria-label="How to pick dates"
+                    className="flex gap-1 border-be border-border-warm pbe-3"
+                >
+                    <ModeButton
+                        isActive={mode === "single"}
+                        onClick={() => handleModeChange("single")}
+                    >
+                        Single date
+                    </ModeButton>
+                    <ModeButton
+                        isActive={mode === "range"}
+                        onClick={() => handleModeChange("range")}
+                    >
+                        Date range
+                    </ModeButton>
+                </div>
+                {mode === "single" ? (
+                    <Calendar
+                        mode="single"
+                        selected={from}
+                        onSelect={(day) => {
+                            handleSelectSingle(day);
+                            setOpen(false);
+                        }}
+                        defaultMonth={from ?? new Date()}
+                        numberOfMonths={1}
+                    />
+                ) : (
+                    <AppDateRangeFields
+                        className="py-3"
+                        from={draftRange.from}
+                        to={draftRange.to}
+                        onChange={setDraftRange}
+                    />
+                )}
+                {mode === "range" ? (
+                    <div className="sticky inset-be-0 flex justify-end gap-2 border-bs border-border-warm bg-surface pbs-3">
+                        <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => {
+                                setDraftRange({ from: "", to: "" });
+                                onChange({ dateFrom: "", dateTo: "" });
+                                setOpen(false);
+                            }}
+                        >
+                            Clear selection
+                        </Button>
+                        <Button
+                            size="sm"
+                            disabled={!validRange}
+                            onClick={() => {
+                                if (!validRange) return;
+                                onChange({
+                                    dateFrom: draftRange.from,
+                                    dateTo: draftRange.to,
+                                });
+                                setOpen(false);
+                            }}
+                        >
+                            Apply range
+                        </Button>
+                    </div>
+                ) : null}
+            </MobileActionDrawer>
+        );
+    }
+
     return (
         <div className="flex items-center gap-1">
             <Popover
@@ -103,33 +207,9 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
                 // selection the way it was made. The filter also moves from
                 // outside this component — the week strip writes the same two
                 // fields — so the mode cannot be settled once at mount.
-                onOpenChange={(next) => {
-                    if (next) {
-                        setMode(isRangeFilter ? "range" : "single");
-                        setDraftRange({ from: dateFrom, to: dateTo });
-                    }
-                    setOpen(next);
-                }}
+                onOpenChange={changeOpen}
             >
-                <PopoverTrigger
-                    render={
-                        <button
-                            type="button"
-                            className={cn(
-                                `
-                                  body-sm flex shrink-0 items-center gap-2 rounded-control border
-                                  px-3 py-1.5 transition-colors duration-160
-                                `,
-                                hasRange
-                                    ? "border-brand-ink bg-brand-ink text-white"
-                                    : "border-border-warm bg-surface text-ink hover:border-ink/25",
-                            )}
-                        >
-                            <CalendarRange className="block-4 inline-4" strokeWidth={1.75} />
-                            {label}
-                        </button>
-                    }
-                />
+                <PopoverTrigger render={trigger} />
 
                 <PopoverContent
                     align="end"

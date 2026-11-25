@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { areaColorClassName } from "@/lib/styles/area-color";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { MapPin, Pencil, Plus } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 
@@ -21,7 +23,9 @@ export function ContactAreaChips({
     onEditAreas?: () => void;
     editLabel?: string;
 }) {
+    const mobile = useMobileMenu();
     const [open, setOpen] = useState(false);
+    const afterClose = useRef<null | (() => void)>(null);
     const remainingAreas = areas.slice(PREVIEW_COUNT);
     const chipClassName =
         "body-xs inline-flex rounded-full px-2.5 py-1 font-semibold wrap-break-word max-inline-full min-inline-0";
@@ -35,7 +39,55 @@ export function ContactAreaChips({
                     {formatPlaceName(area)}
                 </span>
             ))}
-            {remainingAreas.length > 0 ? (
+            {remainingAreas.length > 0 && mobile ? (
+                <MobileActionDrawer
+                    open={open}
+                    onOpenChange={setOpen}
+                    onOpenChangeComplete={(nextOpen) => {
+                        if (nextOpen) return;
+                        const action = afterClose.current;
+                        afterClose.current = null;
+                        action?.();
+                    }}
+                    title="More areas"
+                    description={`${remainingAreas.length} more ${remainingAreas.length === 1 ? "area" : "areas"}`}
+                    trigger={
+                        <button
+                            type="button"
+                            onClick={(event) => event.stopPropagation()}
+                            className={moreClassName}
+                            aria-label={`View ${remainingAreas.length} more areas`}
+                        >
+                            +{remainingAreas.length} more
+                        </button>
+                    }
+                >
+                    {remainingAreas.map((area) => (
+                        <div key={area} className={mobileActionClass}>
+                            <MapPin
+                                aria-hidden
+                                className="shrink-0 text-ink-muted block-4 inline-4"
+                            />
+                            <span className={cn(chipClassName, areaColorClassName(area))}>
+                                {formatPlaceName(area)}
+                            </span>
+                        </div>
+                    ))}
+                    {onEditAreas ? (
+                        <button
+                            type="button"
+                            className={mobileActionClass}
+                            onClick={() => {
+                                afterClose.current = onEditAreas;
+                                setOpen(false);
+                            }}
+                        >
+                            <Pencil aria-hidden />
+                            {editLabel}
+                        </button>
+                    ) : null}
+                </MobileActionDrawer>
+            ) : remainingAreas.length > 0 ? (
                 <Popover open={open} onOpenChange={setOpen}>
                     <PopoverTrigger
                         onClick={(event) => event.stopPropagation()}

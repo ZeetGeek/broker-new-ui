@@ -7,3 +7,25 @@
     z-index: 1;
     box-shadow: 0 -6px 16px -8px color-mix(in srgb, var(--color-ink) 20%, transparent);
 }
+
+.scrollFade {
+    position: absolute;
+    z-index: 2;
+    inset-inline: 0;
+    inset-block-end: 0;
+    block-size: 4rem;
+    background: linear-gradient(to bottom, transparent, var(--color-surface) 88%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms ease-out;
+}
+
+.body[data-scroll-below] + .scrollFade {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .scrollFade {
+        transition: none;
+    }
+}

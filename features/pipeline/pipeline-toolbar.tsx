@@ -12,11 +12,12 @@ import { CRM_SEARCH_HELP } from "@/lib/search/search-help";
 import { FilterChip } from "@/components/shared/filter-chip";
 import { SlidersHorizontal } from "@/components/shared/icons";
 import { ListSearchField, ListToolbarSelect } from "@/components/shared/list-toolbar";
-import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
 
 import type { DealsFilters, DealSort } from "@/features/pipeline/types";
 import { OwnerListingsFilterSheet } from "@/features/properties/owner-listings/owner-listings-filter-sheet";
 import { DEFAULT_OWNER_LISTINGS_FILTERS } from "@/features/properties/owner-listings/types";
+
+import styles from "./pipeline-toolbar.module.css";
 
 const SORT_OPTIONS: { value: DealSort; label: string }[] = [
     { value: "recent", label: "Newest first" },
@@ -62,76 +63,56 @@ export function PipelineToolbar({
 
     return (
         <>
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 md:hidden">
-                <ListSearchField
-                    fullWidth
-                    placeholder="Search deals"
-                    aria-label="Search deals"
-                    searchHelp={CRM_SEARCH_HELP.deals}
-                    // Searched on the server, so wait for a pause in typing.
-                    debounceMs={500}
-                    value={filters.q}
-                    onChange={(q) => onPatch({ q })}
-                    className="text-base! min-block-(--touch-target-min)!"
-                />
-                <FilterChip
-                    label="Filters"
-                    icon={SlidersHorizontal}
-                    count={filterCount}
-                    isActive={filterCount > 0 || filters.sort !== "recent"}
-                    onClick={openFilters}
-                    description="Filter and sort deals"
-                />
-            </div>
-            <div className="hidden md:block">
-                <ResponsiveListToolbar
-                    selection={
-                        <>
-                            <FilterChip
-                                label="Filters"
-                                icon={SlidersHorizontal}
-                                count={filterCount}
-                                isActive={filterCount > 0}
-                                clearable={filterCount > 0}
-                                onClick={openFilters}
-                                onClear={() =>
-                                    onPatch({
-                                        propertyFilters: { ...EMPTY_PROPERTY_CRITERIA },
-                                        dealType: "",
-                                        locality: "",
-                                        ownerName: "",
-                                        ownerId: "",
-                                        clientId: "",
-                                    })
-                                }
-                                description="Location, budget and property filters"
-                            />
-
-                            {leading}
-                        </>
-                    }
-                    search={
-                        <ListSearchField
-                            fullWidth
-                            searchHelp={CRM_SEARCH_HELP.deals}
-                            aria-label="Search your deals"
-                            debounceMs={500}
-                            value={filters.q}
-                            onChange={(q) => onPatch({ q })}
-                        />
-                    }
-                    actions={
-                        <ListToolbarSelect
-                            label="Sort deals"
-                            value={filters.sort}
-                            options={SORT_OPTIONS}
-                            defaultValue="recent"
-                            mobileLabel="Sort"
-                            tooltip="Change the order of the cards."
-                            onChange={(sort) => onPatch({ sort })}
-                        />
-                    }
-                />
+            <div className={styles.toolbar}>
+                <div className={styles.status}>{leading}</div>
+                <div className={styles.filters}>
+                    <FilterChip
+                        label="Filters"
+                        mobileLabel={<span className="sr-only">Filters</span>}
+                        aria-label={filterCount ? `Filters, ${filterCount} applied` : "Filters"}
+                        icon={SlidersHorizontal}
+                        count={filterCount}
+                        isActive={filterCount > 0}
+                        clearable={false}
+                        onClick={openFilters}
+                        onClear={() =>
+                            onPatch({
+                                propertyFilters: { ...EMPTY_PROPERTY_CRITERIA },
+                                dealType: "",
+                                locality: "",
+                                ownerName: "",
+                                ownerId: "",
+                                clientId: "",
+                            })
+                        }
+                        description="Location, budget and property filters"
+                    />
+                </div>
+                <div className={styles.search}>
+                    <ListSearchField
+                        fullWidth
+                        searchHelp={CRM_SEARCH_HELP.deals}
+                        aria-label="Search your deals"
+                        // Searched on the server, so wait for a pause in typing.
+                        debounceMs={0}
+                        placeholder="Search clients or properties"
+                        value={filters.q}
+                        onChange={(q) => onPatch({ q })}
+                    />
+                </div>
+                <div className={styles.sort}>
+                    <ListToolbarSelect
+                        mobileDrawer
+                        label="Sort deals"
+                        value={filters.sort}
+                        options={SORT_OPTIONS}
+                        defaultValue="recent"
+                        mobileLabel="Sort"
+                        className={styles.sortButton}
+                        tooltip="Change the order of the cards."
+                        onChange={(sort) => onPatch({ sort })}
+                    />
+                </div>
             </div>
             <OwnerListingsFilterSheet
                 applyLabel="Show deals"

@@ -1,11 +1,13 @@
 "use client";
 
-import type { ComponentProps, SyntheticEvent } from "react";
+import { type ComponentProps, type SyntheticEvent, useState } from "react";
 
 import { formatTelUrl } from "@/lib/format/phone";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { CallIcon, ChevronDown } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -57,6 +59,69 @@ export function CallContactMenu({
     side = "bottom",
 }: CallContactMenuProps) {
     const people = contacts.filter((contact) => contact.name.trim());
+    const mobile = useMobileMenu();
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const trigger = (
+        <Button
+            type="button"
+            variant={variant}
+            size={size}
+            disabled={!people.length}
+            className={cn("min-inline-0", className)}
+            aria-label={label}
+            onClick={stop}
+            onPointerDown={stop}
+            onKeyDown={stop}
+        >
+            <CallIcon aria-hidden />
+            Call
+            <ChevronDown aria-hidden className="opacity-70" />
+        </Button>
+    );
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={drawerOpen}
+                onOpenChange={setDrawerOpen}
+                title="Call"
+                description="Choose who you want to call"
+                trigger={trigger}
+            >
+                {people.map((contact) => {
+                    const callable = hasPhone(contact.phoneDigits);
+                    const key = contact.id ?? `${contact.role}-${contact.name}`;
+                    const content = (
+                        <>
+                            <CallIcon aria-hidden />
+                            <span className="flex flex-col min-inline-0">
+                                <span className="truncate font-semibold text-ink">
+                                    {contact.name}
+                                </span>
+                                <span className="caption text-ink-muted">
+                                    {callable ? contact.role : `${contact.role} · No phone number`}
+                                </span>
+                            </span>
+                        </>
+                    );
+                    return callable ? (
+                        <a
+                            key={key}
+                            href={formatTelUrl(contact.phoneDigits as string)}
+                            className={mobileActionClass}
+                            onClick={() => setDrawerOpen(false)}
+                        >
+                            {content}
+                        </a>
+                    ) : (
+                        <button key={key} type="button" disabled className={mobileActionClass}>
+                            {content}
+                        </button>
+                    );
+                })}
+            </MobileActionDrawer>
+        );
+    }
 
     return (
         <DropdownMenu>

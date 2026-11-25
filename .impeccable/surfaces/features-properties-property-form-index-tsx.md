@@ -21,6 +21,14 @@ FORM: Warm workspace (user-locked, code-led). Signature interaction: step conten
 
 FINISH: Warm workspace source review retains neutral Draft, surface mobile listing-score chrome, flattened nested FormSection cards and sentence-case SectionLabel. `docs/DESIGN.md` remains system source of truth; no new global tokens. Current verification limits are recorded below.
 
+## Mobile form contract
+
+USER CHOICE: At 320px, secondary actions live in a single More menu. The mobile header shows the form title, quiet save status, More and Close. Full details uses a numbered stepper that fits without horizontal scrolling. The active step owns a flat white editing surface; generic section descriptions and the surrounding desktop cards recede on mobile. Continue is the only primary footer action; Back appears after the first step. Save as draft, Quick add, preview, listing score and Start fresh remain available in More. Every existing form field, visibility rule and validation path is retained.
+
+SECONDARY VIEWS: Preview separates Listing and Deal summary into tabs. The listing score appears once, without a nested card or repeated title. Both views scroll independently inside the shared modal shell. More closes completely before opening a secondary view. Input text remains 14px on mobile; controls and step targets remain at least 44px.
+
+VERIFICATION: TypeScript, lint and formatting pass. Live mobile layout and gestures still require browser verification. The existing form tests could not start in this run because the local TSX loader failed on the Windows user-info call (`uv_os_get_passwd`, `ENOMEM`); this is not a passing test run.
+
 ## Quick add contract
 
 LAYOUT: Bounded form-and-preview layout: maximum width 1280px at XL with a 320px preview; maximum width 896px below XL. Keep the compact draft action row. ConditionalField panels allow inline shrinking and responsive width to prevent overlap.

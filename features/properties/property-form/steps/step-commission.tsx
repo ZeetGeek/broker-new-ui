@@ -109,7 +109,7 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
                 }
                 tone={isOwner ? undefined : "private"}
             >
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 min-inline-0 md:grid-cols-2">
                     {showSale ? (
                         <NumberField
                             name="commission.sale.value"
@@ -160,7 +160,7 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
                     >
                         <div
                             className={cn(
-                                "grid grid-cols-2 gap-x-6 gap-y-4 p-5",
+                                "grid grid-cols-1 gap-x-6 gap-y-4 p-3 min-inline-0 min-[400px]:grid-cols-2 sm:p-5",
                                 primaryIsSale ? "lg:grid-cols-4" : "sm:grid-cols-3",
                             )}
                         >
@@ -213,7 +213,7 @@ export function StepCommission({ portal = "broker" }: { portal?: "broker" | "own
                             </div>
                             <p
                                 className="
-                              tabular ms-auto text-2xl font-bold tracking-tight text-brand-text
+                              tabular ms-auto text-2xl font-bold tracking-tight wrap-anywhere text-brand-text
                             "
                             >
                                 {formatMoney(estimatedCommission)}
@@ -264,12 +264,14 @@ function IncomeRow({ label, value, muted }: { label: string; value: string; mute
     return (
         <div
             className="
-              flex items-start justify-between gap-4 border-bs border-border-warm py-3
+              flex flex-wrap items-start justify-between gap-4 border-bs border-border-warm py-3
               first:border-bs-0
             "
         >
             <dt className={cn("text-sm", muted ? "text-ink-muted" : "text-ink")}>{label}</dt>
-            <dd className="tabular text-sm font-semibold text-ink">{value}</dd>
+            <dd className="tabular ms-auto text-sm font-semibold wrap-anywhere text-ink">
+                {value}
+            </dd>
         </div>
     );
 }

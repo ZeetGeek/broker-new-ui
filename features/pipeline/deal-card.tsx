@@ -5,12 +5,12 @@ import { formatDateIn } from "@/lib/format/date";
 import { formatPhoneIn, formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { CardLink } from "@/components/shared/card-link";
 import { DangerMenuItem } from "@/components/shared/danger-menu-item";
 import { IconButton } from "@/components/shared/icon-button";
 import {
-    ArrowRight,
     CallIcon,
     CircleCheck,
     LostIcon,
@@ -20,6 +20,11 @@ import {
     PropertyMenuIcon,
     WhatsAppIcon,
 } from "@/components/shared/icons";
+import {
+    mobileActionClass,
+    MobileActionDrawer,
+    mobileActionGroupClass,
+} from "@/components/shared/mobile-action-drawer";
 import { OverlayCardActions } from "@/components/shared/overlay-card";
 import { Price } from "@/components/shared/price";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
@@ -51,14 +56,12 @@ import {
     type DealStatus,
     isLiveStage,
 } from "@/features/pipeline/types";
-import { canScheduleVisit, scheduleVisitHref } from "@/features/pipeline/visit-link";
 
 import styles from "./deal-card.module.css";
 
 export type DealCardHandlers = {
     onView: (dealId: string) => void;
     onAdvance: (dealId: string, stage: DealStage) => void;
-    onQuickAdvance?: (dealId: string, stage: DealStage) => void;
     onLogContact: (dealId: string, currentStatus: DealStatus) => void;
     onClose: (dealId: string) => void;
     onLose: (dealId: string) => void;
@@ -139,15 +142,25 @@ function DealCardMenu({
     handlers,
     isBusy,
     onMenuAction,
+    isPinned = false,
 }: {
     deal: DealItem;
     handlers: DealCardHandlers;
     isBusy: boolean;
+    isPinned?: boolean;
     /** Called before every menu action so the card can ignore the click-through. */
     onMenuAction?: () => void;
 }) {
     const live = isLiveStage(deal.status);
+    const mobile = useMobileMenu();
     const [open, setOpen] = useState(false);
+    const afterClose = useRef<(() => void) | null>(null);
+
+    function selectMobileAction(action: () => void) {
+        onMenuAction?.();
+        afterClose.current = action;
+        setOpen(false);
+    }
 
     function act(event: { stopPropagation: () => void }, action: () => void) {
         runMenuAction(event, () => {
@@ -156,21 +169,170 @@ function DealCardMenu({
         });
     }
 
+    const trigger = (
+        <IconButton
+            size="sm"
+            disabled={isBusy}
+            aria-label={`More actions for ${deal.buyer.name}`}
+            className={CHROME_ICON_BUTTON_CLASS}
+            onClick={stopCard}
+        >
+            <PropertyMenuIcon name="dots" aria-hidden className="block-4 inline-4" />
+        </IconButton>
+    );
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={setOpen}
+                onOpenChangeComplete={(nextOpen) => {
+                    if (nextOpen) return;
+                    const action = afterClose.current;
+                    afterClose.current = null;
+                    action?.();
+                }}
+                title="Deal actions"
+                description={`${deal.buyer.name} · ${deal.property.title}`}
+                trigger={trigger}
+            >
+                <div className={mobileActionGroupClass}>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        onClick={() => selectMobileAction(() => handlers.onView(deal.id))}
+                    >
+                        <PropertyMenuIcon name="view" aria-hidden />
+                        View details
+                    </button>
+                    {live ? (
+                        <button
+                            type="button"
+                            className={mobileActionClass}
+                            onClick={() =>
+                                selectMobileAction(() =>
+                                    handlers.onLogContact(deal.id, deal.status),
+                                )
+                            }
+                        >
+                            <PropertyMenuIcon name="phone" aria-hidden />
+                            Log a call
+                        </button>
+                    ) : null}
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        onClick={() => selectMobileAction(() => handlers.onNote(deal.id))}
+                    >
+                        <PropertyMenuIcon name="note" aria-hidden />
+                        Add a note
+                    </button>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        onClick={() => selectMobileAction(() => handlers.onPin(deal.id))}
+                    >
+                        {isPinned ? <PinOff aria-hidden /> : <Pin aria-hidden />}
+                        {isPinned ? "Unpin deal" : "Pin deal to top"}
+                    </button>
+                    {live ? (
+                        <button
+                            type="button"
+                            className={mobileActionClass}
+                            disabled={isBusy || deal.property.isSold}
+                            onClick={() => selectMobileAction(() => handlers.onMakeOffer(deal.id))}
+                        >
+                            <PropertyMenuIcon name="handshake" aria-hidden />
+                            {FEATURE_PLATFORM_OWNER
+                                ? isRevisingOffer(deal.offerStatus)
+                                    ? "Revise offer"
+                                    : "Make offer"
+                                : deal.offerAmountInr != null
+                                  ? "Update offer"
+                                  : "Record offer"}
+                        </button>
+                    ) : null}
+                </div>
+
+                {live || canPutBackOnBoard(deal) ? (
+                    <div className={mobileActionGroupClass}>
+                        {live ? (
+                            <>
+                                {DEAL_STAGE_ORDER.filter((stage) => stage !== deal.status).map(
+                                    (stage) => (
+                                        <button
+                                            key={stage}
+                                            type="button"
+                                            className={mobileActionClass}
+                                            onClick={() =>
+                                                selectMobileAction(() =>
+                                                    handlers.onAdvance(deal.id, stage),
+                                                )
+                                            }
+                                        >
+                                            <span
+                                                aria-hidden
+                                                className="flex shrink-0 items-center justify-center block-4.5 inline-4.5"
+                                            >
+                                                <span
+                                                    className={cn(
+                                                        "rounded-full block-2 inline-2",
+                                                        DEAL_STAGE_META[stage].dotClass,
+                                                    )}
+                                                />
+                                            </span>
+                                            Move to {DEAL_STAGE_META[stage].label.toLowerCase()}
+                                        </button>
+                                    ),
+                                )}
+                                <button
+                                    type="button"
+                                    className={mobileActionClass}
+                                    onClick={() =>
+                                        selectMobileAction(() => handlers.onClose(deal.id))
+                                    }
+                                >
+                                    <PropertyMenuIcon name="check" aria-hidden />
+                                    Mark as sold
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                type="button"
+                                className={mobileActionClass}
+                                onClick={() =>
+                                    selectMobileAction(() =>
+                                        handlers.onReopen(deal.id, "contacted"),
+                                    )
+                                }
+                            >
+                                <PropertyMenuIcon name="reopen" aria-hidden />
+                                Put back on the board
+                            </button>
+                        )}
+                    </div>
+                ) : null}
+
+                {live ? (
+                    <div className={mobileActionGroupClass}>
+                        <button
+                            type="button"
+                            className={mobileActionClass}
+                            data-destructive="true"
+                            onClick={() => selectMobileAction(() => handlers.onLose(deal.id))}
+                        >
+                            <PropertyMenuIcon name="lost" aria-hidden />
+                            Mark as lost
+                        </button>
+                    </div>
+                ) : null}
+            </MobileActionDrawer>
+        );
+    }
+
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
-            <DropdownMenuTrigger
-                render={
-                    <IconButton
-                        size="sm"
-                        disabled={isBusy}
-                        aria-label={`More actions for ${deal.buyer.name}`}
-                        className={CHROME_ICON_BUTTON_CLASS}
-                        onClick={stopCard}
-                    />
-                }
-            >
-                <PropertyMenuIcon name="dots" aria-hidden className="block-4 inline-4" />
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger render={trigger} />
 
             <DropdownMenuContent
                 align="end"
@@ -341,22 +503,15 @@ export function DealCard({
     isBusy = false,
     isDragging = false,
     isPinned = false,
-    showStageAction = false,
 }: {
     deal: DealItem;
     handlers: DealCardHandlers;
     isBusy?: boolean;
     isDragging?: boolean;
     isPinned?: boolean;
-    /** The single-stage list needs a visible move action; board cards retain drag and menu actions. */
-    showStageAction?: boolean;
 }) {
     const live = isLiveStage(deal.status);
     const resolved = deal.resolvedAt ? new Date(deal.resolvedAt) : null;
-    const nextStage = live
-        ? DEAL_STAGE_ORDER[DEAL_STAGE_ORDER.indexOf(deal.status as DealStage) + 1]
-        : undefined;
-    const scheduleNext = nextStage === "visit" && canScheduleVisit(deal);
     const hasResolvedDate = resolved != null && Number.isFinite(resolved.getTime());
     const stageMeta = live ? DEAL_STAGE_META[deal.status as DealStage] : null;
     const canCall = Boolean(deal.buyer.phoneDigits);
@@ -475,6 +630,7 @@ export function DealCard({
                             handlers={handlers}
                             isBusy={isBusy}
                             onMenuAction={guardMenuAction}
+                            isPinned={isPinned}
                         />
                     </div>
                 </div>
@@ -608,39 +764,6 @@ export function DealCard({
                 />
 
                 <OverlayCardActions className="flex-col gap-2">
-                    {live && showStageAction ? (
-                        <Button
-                            size="lg"
-                            className={styles.stageAction}
-                            disabled={isBusy}
-                            nativeButton={!scheduleNext}
-                            render={
-                                scheduleNext ? (
-                                    <Link href={scheduleVisitHref(deal)} onClick={stopCard} />
-                                ) : undefined
-                            }
-                            onClick={
-                                scheduleNext
-                                    ? undefined
-                                    : (event) => {
-                                          event.stopPropagation();
-                                          if (nextStage)
-                                              (handlers.onQuickAdvance ?? handlers.onAdvance)(
-                                                  deal.id,
-                                                  nextStage,
-                                              );
-                                          else handlers.onClose(deal.id);
-                                      }
-                            }
-                        >
-                            {scheduleNext
-                                ? "Schedule visit"
-                                : nextStage
-                                  ? `Move to ${DEAL_STAGE_META[nextStage].label.toLowerCase()}`
-                                  : "Close deal"}
-                            <ArrowRight aria-hidden className="shrink-0 block-4 inline-4" />
-                        </Button>
-                    ) : null}
                     {/* The owner's phone does not depend on the client's: a
                         client with no number must not hide "Call owner". */}
                     {canCall || ownerPhone ? (

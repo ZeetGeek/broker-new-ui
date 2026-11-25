@@ -3,8 +3,10 @@
 import { type ReactNode, useMemo, useState } from "react";
 
 import { useDebouncedValue } from "@/hooks/use-locations";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import type { AppIcon } from "@/components/shared/icons";
+import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import {
     Combobox,
     ComboboxContent,
@@ -38,6 +40,8 @@ export function OptionCombobox({
     size,
     textClassName,
     searchDebounceMs,
+    mobileDrawer = false,
+    mobileLabel = "Options",
 }: {
     id?: string;
     value: string;
@@ -62,7 +66,11 @@ export function OptionCombobox({
      * lists (a state's cities) so typing stays smooth on low-end phones.
      */
     searchDebounceMs?: number;
+    /** Replace the portalled desktop combobox with a searchable bottom drawer on phones. */
+    mobileDrawer?: boolean;
+    mobileLabel?: string;
 }) {
+    const mobile = useMobileMenu();
     const labelFor = (item: string) =>
         options.find((option) => option.value === item)?.label ?? item;
 
@@ -82,6 +90,35 @@ export function OptionCombobox({
             .filter((option) => option.label.toLowerCase().includes(term))
             .map((option) => option.value);
     }, [debounced, debouncedQuery, selectedLabel, options, allValues]);
+
+    if (mobileDrawer && mobile) {
+        return (
+            <MobileSelectDrawer
+                id={id}
+                label={mobileLabel}
+                value={value}
+                options={filteredValues.map((item) => {
+                    const option = options.find((candidate) => candidate.value === item);
+                    return { value: item, label: option?.label ?? item };
+                })}
+                onChange={onValueChange}
+                onBlur={onBlur}
+                placeholder={placeholder}
+                startIcon={startIcon}
+                loading={loading}
+                disabled={disabled}
+                emptyText={emptyText}
+                errorText={errorText}
+                helperText={helperText}
+                {...(debounced
+                    ? {
+                          onSearchChange: setQuery,
+                          searching: query.trim() !== debouncedQuery.trim(),
+                      }
+                    : {})}
+            />
+        );
+    }
 
     return (
         <Combobox

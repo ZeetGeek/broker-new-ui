@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useRef, useState } from "react";
 
 import { formatPersonName } from "@/lib/format/person-name";
 import { formatTelUrl, formatWhatsAppUrl } from "@/lib/format/phone";
@@ -9,6 +9,7 @@ import { brokerOwnerListingDetailHref, brokerPropertyDetailHref } from "@/lib/ro
 import { cn } from "@/lib/utils";
 import { VISIT_STATUS } from "@/lib/visits/status";
 import { durationMinutes, formatVisitDate, formatVisitTime } from "@/lib/visits/time";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { PartyMeetRow } from "@/components/shared/attached-people-row";
 import { CardLink } from "@/components/shared/card-link";
@@ -21,6 +22,7 @@ import {
     MoreHorizontal,
     WhatsAppIcon,
 } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
@@ -35,6 +37,103 @@ import {
 
 import type { BrokerSiteVisit, PersonSummary } from "@/features/site-visits/broker/model";
 
+function VisitContactMenu({
+    channel,
+    propertyTitle,
+    contacts,
+    onSelect,
+}: {
+    channel: "call" | "whatsapp";
+    propertyTitle: string;
+    contacts: { person: PersonSummary; label: string }[];
+    onSelect: (person: PersonSummary) => void;
+}) {
+    const mobile = useMobileMenu();
+    const [open, setOpen] = useState(false);
+    const isWhatsApp = channel === "whatsapp";
+    const ActionIcon = isWhatsApp ? WhatsAppIcon : CallIcon;
+    const actionLabel = isWhatsApp ? "WhatsApp" : "Call";
+    const trigger = (
+        <Button
+            type="button"
+            variant={isWhatsApp ? "accent" : "outline"}
+            size="md"
+            className="flex-1 min-inline-0"
+            aria-label={`${actionLabel} clients for ${propertyTitle}`}
+        >
+            <ActionIcon aria-hidden />
+            {actionLabel}
+        </Button>
+    );
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={setOpen}
+                title={actionLabel}
+                description={propertyTitle}
+                trigger={trigger}
+            >
+                {contacts.map(({ person, label }) => (
+                    <button
+                        key={`${label}-${person.id}`}
+                        type="button"
+                        disabled={!person.phoneDigits}
+                        className={mobileActionClass}
+                        onClick={() => {
+                            if (!person.phoneDigits) return;
+                            setOpen(false);
+                            onSelect(person);
+                        }}
+                    >
+                        <ActionIcon aria-hidden />
+                        <span className="flex flex-col text-start min-inline-0">
+                            <span>
+                                {actionLabel} {label.toLowerCase()}
+                            </span>
+                            <span className="body-xs truncate text-ink-muted">
+                                {formatPersonName(person.name)}
+                                {!person.phoneDigits ? " · No phone number" : ""}
+                            </span>
+                        </span>
+                    </button>
+                ))}
+            </MobileActionDrawer>
+        );
+    }
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger render={trigger} />
+            <DropdownMenuContent
+                align={isWhatsApp ? "end" : "start"}
+                side="top"
+                className="min-inline-56"
+            >
+                {contacts.map(({ person, label }) => (
+                    <DropdownMenuItem
+                        key={`${label}-${person.id}`}
+                        disabled={!person.phoneDigits}
+                        onClick={() => person.phoneDigits && onSelect(person)}
+                    >
+                        <ActionIcon aria-hidden />
+                        <span className="flex flex-col min-inline-0">
+                            <span>
+                                {actionLabel} {label.toLowerCase()}
+                            </span>
+                            <span className="body-xs truncate text-ink-muted">
+                                {formatPersonName(person.name)}
+                                {!person.phoneDigits ? " · No phone number" : ""}
+                            </span>
+                        </span>
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
 export const VisitCard = memo(function VisitCard({
     visit,
     onAction,
@@ -42,6 +141,9 @@ export const VisitCard = memo(function VisitCard({
     visit: BrokerSiteVisit;
     onAction: (action: "outcome" | "reschedule" | "withdraw", id: string) => void;
 }) {
+    const mobile = useMobileMenu();
+    const [actionsOpen, setActionsOpen] = useState(false);
+    const afterClose = useRef<null | (() => void)>(null);
     const status = VISIT_STATUS[visit.status];
     const cancelled =
         visit.status === "cancelled_by_broker" || visit.status === "cancelled_by_owner";
@@ -66,6 +168,16 @@ export const VisitCard = memo(function VisitCard({
                 "noopener,noreferrer",
             );
     };
+    const actionTrigger = (
+        <IconButton
+            type="button"
+            size="sm"
+            className="shrink-0"
+            aria-label={`Actions for ${visit.property.title}, ${when}`}
+        >
+            <MoreHorizontal aria-hidden className="block-4 inline-4" />
+        </IconButton>
+    );
 
     return (
         <article
@@ -93,27 +205,43 @@ export const VisitCard = memo(function VisitCard({
                     {status.label}
                 </Badge>
                 {canCancel ? (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            render={
-                                <IconButton
-                                    type="button"
-                                    size="sm"
-                                    className="shrink-0"
-                                    aria-label={`Actions for ${visit.property.title}, ${when}`}
-                                >
-                                    <MoreHorizontal aria-hidden className="block-4 inline-4" />
-                                </IconButton>
-                            }
-                        />
-                        <DropdownMenuContent align="end" className="min-inline-56">
-                            <DangerMenuItem
-                                icon="trash"
-                                label="Cancel visit"
-                                onSelect={() => onAction("withdraw", visit.id)}
-                            />
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    mobile ? (
+                        <MobileActionDrawer
+                            open={actionsOpen}
+                            onOpenChange={setActionsOpen}
+                            onOpenChangeComplete={(nextOpen) => {
+                                if (nextOpen) return;
+                                const action = afterClose.current;
+                                afterClose.current = null;
+                                action?.();
+                            }}
+                            title="Visit actions"
+                            description={when}
+                            trigger={actionTrigger}
+                        >
+                            <button
+                                type="button"
+                                className={cn(mobileActionClass, "text-danger")}
+                                onClick={() => {
+                                    afterClose.current = () => onAction("withdraw", visit.id);
+                                    setActionsOpen(false);
+                                }}
+                            >
+                                Cancel visit
+                            </button>
+                        </MobileActionDrawer>
+                    ) : (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger render={actionTrigger} />
+                            <DropdownMenuContent align="end" className="min-inline-56">
+                                <DangerMenuItem
+                                    icon="trash"
+                                    label="Cancel visit"
+                                    onSelect={() => onAction("withdraw", visit.id)}
+                                />
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )
                 ) : null}
             </header>
 
@@ -202,67 +330,23 @@ export const VisitCard = memo(function VisitCard({
 
             <footer className="mbs-auto flex gap-2">
                 {(["call", "whatsapp"] as const).map((channel) => {
-                    const isWhatsApp = channel === "whatsapp";
-                    const ActionIcon = isWhatsApp ? WhatsAppIcon : CallIcon;
-                    const actionLabel = isWhatsApp ? "WhatsApp" : "Call";
                     const contacts = [
                         { person: visit.owner, label: "Owner" },
                         ...visit.buyers.map((person) => ({ person, label: "Client" })),
                     ];
                     return (
-                        <DropdownMenu key={channel}>
-                            <DropdownMenuTrigger
-                                render={
-                                    <Button
-                                        type="button"
-                                        variant={isWhatsApp ? "accent" : "outline"}
-                                        size="md"
-                                        className="flex-1 min-inline-0"
-                                        aria-label={`${actionLabel} clients for ${visit.property.title}`}
-                                    >
-                                        <ActionIcon aria-hidden />
-                                        {actionLabel}
-                                    </Button>
+                        <VisitContactMenu
+                            key={channel}
+                            channel={channel}
+                            propertyTitle={visit.property.title}
+                            contacts={contacts}
+                            onSelect={(person) => {
+                                if (channel === "whatsapp") openWhatsApp(person);
+                                else if (person.phoneDigits) {
+                                    window.location.href = formatTelUrl(person.phoneDigits);
                                 }
-                            />
-                            <DropdownMenuContent
-                                align={isWhatsApp ? "end" : "start"}
-                                side="top"
-                                className="min-inline-56"
-                            >
-                                {contacts.map(({ person, label }) => (
-                                    <DropdownMenuItem
-                                        key={`${label}-${person.id}`}
-                                        disabled={!person.phoneDigits}
-                                        onClick={() => {
-                                            if (!person.phoneDigits) return;
-                                            if (isWhatsApp) openWhatsApp(person);
-                                            else
-                                                window.location.href = formatTelUrl(
-                                                    person.phoneDigits,
-                                                );
-                                        }}
-                                    >
-                                        <ActionIcon aria-hidden />
-                                        <span className="flex flex-col min-inline-0">
-                                            <span>
-                                                {actionLabel} {label.toLowerCase()}
-                                            </span>
-                                            <span className="body-xs truncate text-ink-muted">
-                                                {formatPersonName(person.name)}
-                                                {!person.phoneDigits ? " ? No phone number" : ""}
-                                            </span>
-                                        </span>
-                                    </DropdownMenuItem>
-                                ))}
-                                {visit.buyers.length === 0 ? (
-                                    <DropdownMenuItem disabled>
-                                        <ActionIcon aria-hidden />
-                                        No client linked
-                                    </DropdownMenuItem>
-                                ) : null}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                            }}
+                        />
                     );
                 })}
             </footer>

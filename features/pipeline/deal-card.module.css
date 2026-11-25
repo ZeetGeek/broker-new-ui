@@ -148,14 +148,6 @@
     white-space: normal;
 }
 
-.stageAction {
-    inline-size: 100%;
-    min-block-size: calc(3rem / var(--layout-font-scale));
-    block-size: auto;
-    padding: 0.625rem 0.75rem;
-    white-space: normal;
-}
-
 .visitBlock,
 .negotiationBlock {
     display: grid;
@@ -227,8 +219,46 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .stageAction {
-        padding-inline: 0.5rem;
+    .personRow {
+        grid-template-columns: max-content max-content minmax(0, 1fr);
+        justify-content: start;
+    }
+
+    .outcomeAmount {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.25rem;
+    }
+
+    .outcomeAmount > :last-child {
+        text-align: start;
+    }
+}
+
+/* Phone cards keep the desktop content with shorter rows and contact controls. */
+@media (max-width: 47.999rem) {
+    .people {
+        gap: 0.375rem;
+        padding-block-start: 0.5rem;
+    }
+
+    .personRow {
+        min-block-size: calc(2.25rem / var(--layout-font-scale));
+        padding: 0.25rem 0.5rem;
+    }
+
+    .card .personName[data-person-link] {
+        min-block-size: 0;
+        min-inline-size: 0;
+    }
+
+    .contactActions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .card .contactButton {
+        min-block-size: calc(2.25rem / var(--layout-font-scale));
+        padding: 0.375rem 0.5rem;
     }
 }
 

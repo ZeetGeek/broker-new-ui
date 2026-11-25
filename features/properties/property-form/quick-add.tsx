@@ -103,7 +103,7 @@ export function QuickAdd({
     }, [setValue, suggestedTitle, titleTouched]);
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 min-inline-0">
             <header className="flex flex-col gap-1.5">
                 <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-ink">
                     Quick add

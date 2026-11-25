@@ -10,10 +10,19 @@ import {
     formatCommissionPeriod,
 } from "@/lib/format/commission";
 import { BROKER_EARNINGS_HREF } from "@/lib/routes/broker";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import { IconButton } from "@/components/shared/icon-button";
-import { ChartBar, ChevronLeft, ChevronRight, HandCoins } from "@/components/shared/icons";
+import {
+    ChartBar,
+    Check,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    HandCoins,
+} from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
 import {
     type ChartConfig,
@@ -72,6 +81,8 @@ function CommissionShell({ children }: { children: React.ReactNode }) {
 }
 
 export function CommissionEarned({ now }: { now: Date }) {
+    const mobile = useMobileMenu();
+    const [periodOpen, setPeriodOpen] = useState(false);
     const [months, setMonths] = useState<CommissionMonths>(DASHBOARD_DEFAULT_MONTHS);
     const [page, setPage] = useState(0);
     const report = useDashboardEarnings(months, page, now);
@@ -196,32 +207,74 @@ export function CommissionEarned({ now }: { now: Date }) {
             <div className={styles.detail}>
                 <header className={styles.chartHeader}>
                     <div className={styles.rangeControl}>
-                        <Select
-                            items={PERIOD_OPTIONS}
-                            value={months}
-                            onValueChange={(value) => {
-                                if (value === 3 || value === 6 || value === 12) {
-                                    setMonths(value);
-                                    setPage(0);
+                        {mobile ? (
+                            <MobileActionDrawer
+                                open={periodOpen}
+                                onOpenChange={setPeriodOpen}
+                                title="Commission period"
+                                trigger={
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        data-slot="select-trigger"
+                                        aria-label={`Commission period length: ${PERIOD_OPTIONS.find((option) => option.value === months)?.label}`}
+                                        className={styles.range}
+                                    >
+                                        {
+                                            PERIOD_OPTIONS.find((option) => option.value === months)
+                                                ?.label
+                                        }
+                                        <ChevronDown aria-hidden className="block-3 inline-3" />
+                                    </Button>
                                 }
-                            }}
-                        >
-                            <SelectTrigger
-                                size="xs"
-                                aria-label="Commission period length"
-                                className={styles.range}
-                                wrapperClassName={styles.rangeWrapper}
                             >
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
                                 {PERIOD_OPTIONS.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        className={mobileActionClass}
+                                        aria-pressed={months === option.value}
+                                        onClick={() => {
+                                            setMonths(option.value as CommissionMonths);
+                                            setPage(0);
+                                            setPeriodOpen(false);
+                                        }}
+                                    >
                                         {option.label}
-                                    </SelectItem>
+                                        {months === option.value ? (
+                                            <Check aria-hidden className="ms-auto" />
+                                        ) : null}
+                                    </button>
                                 ))}
-                            </SelectContent>
-                        </Select>
+                            </MobileActionDrawer>
+                        ) : (
+                            <Select
+                                items={PERIOD_OPTIONS}
+                                value={months}
+                                onValueChange={(value) => {
+                                    if (value === 3 || value === 6 || value === 12) {
+                                        setMonths(value);
+                                        setPage(0);
+                                    }
+                                }}
+                            >
+                                <SelectTrigger
+                                    size="xs"
+                                    aria-label="Commission period length"
+                                    className={styles.range}
+                                    wrapperClassName={styles.rangeWrapper}
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {PERIOD_OPTIONS.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
                     </div>
                     <Button
                         variant="outline"

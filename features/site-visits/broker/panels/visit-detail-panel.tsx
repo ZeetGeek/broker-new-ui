@@ -20,6 +20,8 @@ import type { BrokerSiteVisit } from "@/features/site-visits/broker/model";
 import { USE_MOCK_VISITS } from "@/mocks/visits";
 import { useAppSelector } from "@/store/hooks";
 
+import styles from "./visit-drawer.module.css";
+
 function ContactBlock({
     label,
     person,
@@ -119,7 +121,7 @@ export function VisitDetailPanel({
                     {formatVisitTime(visit.endsAt)}
                 </p>
             </div>
-            <div className="flex-1 overflow-y-auto p-5">
+            <div className={`flex-1 overflow-y-auto p-5 ${styles.sections}`}>
                 <DrawerSection
                     title="Property"
                     description="Review the property, asking price and address."

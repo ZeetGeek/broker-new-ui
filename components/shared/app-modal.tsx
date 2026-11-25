@@ -1,6 +1,13 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
+import {
+    type ComponentProps,
+    type CSSProperties,
+    type ReactElement,
+    type ReactNode,
+    useEffect,
+    useState,
+} from "react";
 
 import SimpleBar from "simplebar-react";
 
@@ -9,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 import { AppModalHeader } from "@/components/shared/app-modal-header";
 import { useWorkflowDismiss } from "@/components/shared/workflow-context";
-import { Dialog, DialogFooter, DialogPopup } from "@/components/ui/dialog";
+import { Dialog, DialogFooter, DialogPopup, DialogTrigger } from "@/components/ui/dialog";
 
 import "simplebar-react/dist/simplebar.min.css";
 import styles from "./app-modal.module.css";
@@ -58,11 +65,15 @@ function hasVisibleDescription(description: ReactNode | undefined): boolean {
 
 export type AppModalProps = {
     open: boolean;
+    trigger?: ReactElement;
+    onOpenChangeComplete?: ComponentProps<typeof Dialog>["onOpenChangeComplete"];
     /** Existing URL-owned drawers can retain their own Back behavior. */
     manageBrowserHistory?: boolean;
     nativeScroll?: boolean;
     /** Working surfaces with their own scrolling (chat, property editor, filter sheets). */
     scrollBody?: boolean;
+    /** Show a bottom fade while the native scroll viewport has more content below. */
+    scrollFade?: boolean;
     /** Temporarily release modal focus when a nested external lightbox owns it. */
     modal?: boolean;
     onOpenChange: (open: boolean) => void;
@@ -97,9 +108,12 @@ export type AppModalProps = {
  */
 export function AppModal({
     open,
+    trigger,
+    onOpenChangeComplete,
     manageBrowserHistory = true,
     nativeScroll = false,
     scrollBody = true,
+    scrollFade = false,
     modal = true,
     onOpenChange,
     title,
@@ -139,7 +153,13 @@ export function AppModal({
     const titleClass = cn("font-display text-lg font-medium text-ink", titleClassName);
 
     return (
-        <Dialog open={open} modal={modal} onOpenChange={onOpenChange}>
+        <Dialog
+            open={open}
+            modal={modal}
+            onOpenChange={onOpenChange}
+            onOpenChangeComplete={onOpenChangeComplete}
+        >
+            {trigger ? <DialogTrigger render={trigger} /> : null}
             <DialogPopup
                 showCloseButton={false}
                 style={{ "--dialog-pad": pad, ...style } as CSSProperties}
@@ -201,6 +221,10 @@ export function AppModal({
                         )}
                     </div>
                 )}
+
+                {scrollFade ? (
+                    <div aria-hidden data-slot="dialog-scroll-fade" className={styles.scrollFade} />
+                ) : null}
 
                 {footer ? (
                     <DialogFooter

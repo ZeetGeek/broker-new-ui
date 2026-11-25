@@ -10,20 +10,14 @@ import { DEAL_STAGE_ORDER, type DealStage, type DealsView } from "@/features/pip
 
 import cardStyles from "./deal-card.module.css";
 import detailStyles from "./deal-detail-modal.module.css";
+import desktopBoardStyles from "./pipeline-board.module.css";
+import boardStyles from "./pipeline-mobile-board.module.css";
 
 function Bone({ className }: { className?: string }) {
     return <Skeleton className={cn("animate-none", className)} />;
 }
 
-function DealCardSkeleton({
-    stage,
-    outcome = false,
-    showStageAction = false,
-}: {
-    stage?: DealStage;
-    outcome?: boolean;
-    showStageAction?: boolean;
-}) {
+function DealCardSkeleton({ stage, outcome = false }: { stage?: DealStage; outcome?: boolean }) {
     return (
         <div
             className={cn(
@@ -87,12 +81,19 @@ function DealCardSkeleton({
                         </div>
                     ))}
                 </div>
-                {!outcome && showStageAction ? (
-                    <Bone className="rounded-control inline-full min-block-(--touch-target-min)" />
-                ) : null}
                 <div className={cardStyles.contactActions}>
-                    <Bone className="flex-1 rounded-control block-control-lg" />
-                    <Bone className="flex-1 rounded-control block-control-lg" />
+                    <Bone
+                        className={cn(
+                            "flex-1 rounded-control block-control-lg",
+                            cardStyles.contactButton,
+                        )}
+                    />
+                    <Bone
+                        className={cn(
+                            "flex-1 rounded-control block-control-lg",
+                            cardStyles.contactButton,
+                        )}
+                    />
                 </div>
             </div>
         </div>
@@ -119,12 +120,12 @@ export function PipelineBoardSkeleton({
                     </div>
                 ) : (
                     <>
-                        <div className="hidden snap-x snap-mandatory items-stretch gap-3 overflow-x-auto md:flex lg:grid lg:snap-none lg:grid-cols-4 lg:gap-card-grid lg:overflow-visible">
+                        <div className={desktopBoardStyles.rail}>
                             {DEAL_STAGE_ORDER.map((stage) => (
                                 <div
                                     key={stage}
                                     className={cn(
-                                        "flex snap-start flex-col gap-3 rounded-card border p-3 min-inline-72 lg:min-inline-0",
+                                        "flex snap-start flex-col gap-3 rounded-card border p-3 min-inline-0",
                                         "border-border-warm bg-border-warm/40",
                                     )}
                                 >
@@ -141,22 +142,23 @@ export function PipelineBoardSkeleton({
                                 </div>
                             ))}
                         </div>
-                        <div className="flex flex-col gap-4 md:hidden">
-                            <div className="-mx-4 flex gap-2 overflow-hidden px-4 pbe-1">
-                                {DEAL_STAGE_ORDER.map((stage) => (
-                                    <Bone
-                                        key={stage}
-                                        className="shrink-0 rounded-control block-control-lg inline-32"
-                                    />
-                                ))}
-                            </div>
-                            <div className="flex flex-col gap-3">
-                                {Array.from({ length: 6 }, (_, index) => (
-                                    <DealCardSkeleton
-                                        key={index}
-                                        stage={mobileStage}
-                                        showStageAction
-                                    />
+                        <div className={boardStyles.board}>
+                            <div className={boardStyles.rail}>
+                                {[
+                                    mobileStage,
+                                    ...DEAL_STAGE_ORDER.filter((stage) => stage !== mobileStage),
+                                ].map((stage) => (
+                                    <div key={stage} className={boardStyles.column}>
+                                        <div className={boardStyles.columnHeader}>
+                                            <Bone className="block-5 inline-28" />
+                                            <Bone className="block-3 inline-32" />
+                                        </div>
+                                        <div className={boardStyles.deals}>
+                                            {[0, 1, 2].map((index) => (
+                                                <DealCardSkeleton key={index} stage={stage} />
+                                            ))}
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         </div>

@@ -1,12 +1,14 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
-import { ChevronDown } from "@/components/shared/icons";
+import { Check, ChevronDown } from "@/components/shared/icons";
 import { ListSearchField, ListToolbarSelect } from "@/components/shared/list-toolbar";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -43,43 +45,70 @@ const CHIP_CLASS = `
   hover:border-ink/25
 `;
 
-function FilterMenu({
+function FilterMenu<T extends string>({
     label,
     valueLabel,
     isDefault,
-    children,
+    value,
+    options,
+    onChange,
 }: {
     label: string;
     valueLabel: string;
     isDefault: boolean;
-    children: ReactNode;
+    value: T;
+    options: readonly { value: T; label: string }[];
+    onChange: (value: T) => void;
 }) {
+    const mobile = useMobileMenu();
+    const [open, setOpen] = useState(false);
+    const trigger = (
+        <button type="button" className={cn(CHIP_CLASS, isDefault && "text-ink-muted")}>
+            <span className="hidden sm:inline">{valueLabel}</span>
+            <span className="sm:hidden">{label}</span>
+            <ChevronDown aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+        </button>
+    );
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer open={open} onOpenChange={setOpen} title={label} trigger={trigger}>
+                {options.map((option) => (
+                    <button
+                        key={option.value || "all"}
+                        type="button"
+                        className={mobileActionClass}
+                        aria-pressed={value === option.value}
+                        onClick={() => {
+                            onChange(option.value);
+                            setOpen(false);
+                        }}
+                    >
+                        {option.label}
+                        {value === option.value ? <Check aria-hidden className="ms-auto" /> : null}
+                    </button>
+                ))}
+            </MobileActionDrawer>
+        );
+    }
+
     return (
         <DropdownMenu>
             <Tooltip>
-                <TooltipTrigger
-                    render={
-                        <DropdownMenuTrigger
-                            render={
-                                <button
-                                    type="button"
-                                    className={cn(CHIP_CLASS, isDefault && "text-ink-muted")}
-                                />
-                            }
-                        >
-                            <span className="hidden sm:inline">{valueLabel}</span>
-                            <span className="sm:hidden">{label}</span>
-                            <ChevronDown
-                                aria-hidden
-                                className="block-4 inline-4"
-                                strokeWidth={1.75}
-                            />
-                        </DropdownMenuTrigger>
-                    }
-                />
+                <TooltipTrigger render={<DropdownMenuTrigger render={trigger} />} />
                 <TooltipContent side="bottom">{label}</TooltipContent>
             </Tooltip>
-            <DropdownMenuContent align="start">{children}</DropdownMenuContent>
+            <DropdownMenuContent align="start">
+                {options.map((option) => (
+                    <DropdownMenuItem
+                        key={option.value || "all"}
+                        onClick={() => onChange(option.value)}
+                        className={cn(value === option.value && "font-semibold")}
+                    >
+                        {option.label}
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
         </DropdownMenu>
     );
 }
@@ -106,61 +135,37 @@ export function OwnerLeadsToolbar({
                     "All types"
                 }
                 isDefault={filters.dealType === ""}
-            >
-                {TYPE_OPTIONS.map((option) => (
-                    <DropdownMenuItem
-                        key={option.value || "all"}
-                        onClick={() => onPatch({ dealType: option.value })}
-                        className={cn(filters.dealType === option.value && "font-semibold")}
-                    >
-                        {option.label}
-                    </DropdownMenuItem>
-                ))}
-            </FilterMenu>
+                value={filters.dealType}
+                options={TYPE_OPTIONS}
+                onChange={(dealType) => onPatch({ dealType })}
+            />
 
             <FilterMenu
                 label="Area"
                 valueLabel={formatPlaceName(filters.locality) || "Area"}
                 isDefault={!filters.locality}
-            >
-                <DropdownMenuItem
-                    onClick={() => onPatch({ locality: "" })}
-                    className={cn(!filters.locality && "font-semibold")}
-                >
-                    All areas
-                </DropdownMenuItem>
-                {localities.map((locality) => (
-                    <DropdownMenuItem
-                        key={locality}
-                        onClick={() => onPatch({ locality })}
-                        className={cn(filters.locality === locality && "font-semibold")}
-                    >
-                        {formatPlaceName(locality)}
-                    </DropdownMenuItem>
-                ))}
-            </FilterMenu>
+                value={filters.locality}
+                options={[
+                    { value: "", label: "All areas" },
+                    ...localities.map((locality) => ({
+                        value: locality,
+                        label: formatPlaceName(locality),
+                    })),
+                ]}
+                onChange={(locality) => onPatch({ locality })}
+            />
 
             <FilterMenu
                 label="Broker"
                 valueLabel={filters.brokerName || "Broker"}
                 isDefault={!filters.brokerName}
-            >
-                <DropdownMenuItem
-                    onClick={() => onPatch({ brokerName: "" })}
-                    className={cn(!filters.brokerName && "font-semibold")}
-                >
-                    All brokers
-                </DropdownMenuItem>
-                {brokers.map((broker) => (
-                    <DropdownMenuItem
-                        key={broker}
-                        onClick={() => onPatch({ brokerName: broker })}
-                        className={cn(filters.brokerName === broker && "font-semibold")}
-                    >
-                        {broker}
-                    </DropdownMenuItem>
-                ))}
-            </FilterMenu>
+                value={filters.brokerName}
+                options={[
+                    { value: "", label: "All brokers" },
+                    ...brokers.map((broker) => ({ value: broker, label: broker })),
+                ]}
+                onChange={(brokerName) => onPatch({ brokerName })}
+            />
 
             <ListToolbarSelect
                 label="Sort leads"

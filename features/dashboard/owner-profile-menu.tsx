@@ -6,12 +6,13 @@ import { OWNER_PROFILE_HREF, OWNER_REFERRALS_HREF } from "@/lib/routes/owner";
 
 import {
     PortalProfileMenu,
+    PortalProfileMenuGroup as DropdownMenuGroup,
+    PortalProfileMenuItem as DropdownMenuItem,
     portalProfileMenuItemClass,
     PortalProfileMenuSeparator,
     PortalProfileShortcutHint,
 } from "@/components/layout/portal-profile-menu";
 import { PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
-import { DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import { SUPPORT_WHATSAPP_URL } from "@/config/constants";
 

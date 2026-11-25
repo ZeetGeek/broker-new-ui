@@ -9,6 +9,7 @@ import { myListingsApi } from "@/lib/api/my-listings";
 import { formatRelativePast } from "@/lib/format/date";
 import { brokerPropertyDetailHref, brokerPropertyEditHref } from "@/lib/routes/broker";
 import { isTestSampleMode } from "@/lib/testing/test-lab";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { EmptyState, LoadingState } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
@@ -35,6 +36,7 @@ import {
     UserRoundPlus,
     UserRoundSearch,
 } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import {
     listingCommissionTip,
     PriceWithCommission,
@@ -137,6 +139,8 @@ function AskingPrice({ listing }: { listing: MyListingItem }) {
 }
 
 function ListingClients({ listing }: { listing: MyListingItem }) {
+    const mobile = useMobileMenu();
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const clients = listing.attachedClients ?? [];
     if (listing.status === "draft") return <span className={styles.secondary}>Not published</span>;
     if (!clients.length) {
@@ -167,7 +171,29 @@ function ListingClients({ listing }: { listing: MyListingItem }) {
                 size="sm"
                 avatarClassName={styles.clientAvatar}
             />
-            {remaining.length ? (
+            {remaining.length && mobile ? (
+                <MobileActionDrawer
+                    open={drawerOpen}
+                    onOpenChange={setDrawerOpen}
+                    title="More clients"
+                    description={`${remaining.length} more ${remaining.length === 1 ? "client" : "clients"}`}
+                    trigger={
+                        <button
+                            type="button"
+                            className={styles.moreClients}
+                            aria-label={`View ${remaining.length} more clients`}
+                        >
+                            +{remaining.length} {remaining.length === 1 ? "Client" : "Clients"}
+                        </button>
+                    }
+                >
+                    {remaining.map((client) => (
+                        <div key={client.id} className={mobileActionClass}>
+                            {person(client)}
+                        </div>
+                    ))}
+                </MobileActionDrawer>
+            ) : remaining.length ? (
                 <Popover>
                     <PopoverTrigger
                         className={styles.moreClients}

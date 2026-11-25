@@ -1,21 +1,36 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import {
+    type ComponentProps,
+    createContext,
+    type ReactElement,
+    type ReactNode,
+    useContext,
+    useRef,
+    useState,
+} from "react";
 
 import { useRouter } from "@/lib/navigation";
 import { getShortcut, type ShortcutId, type ShortcutPortal } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { LogoutMenuItem } from "@/components/layout/logout-menu-item";
 import toast from "@/components/shared/app-toast";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
+import {
+    mobileActionClass,
+    MobileActionDrawer,
+    mobileActionGroupClass,
+} from "@/components/shared/mobile-action-drawer";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
+    DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -48,7 +63,66 @@ export const portalProfileMenuSurfaceClass = `
   **:data-[slot=dropdown-menu-separator]:-mx-1.5!
 `;
 
+const MobileProfileContext = createContext<{
+    close: () => void;
+    act: (action: () => void) => void;
+} | null>(null);
+
+export function PortalProfileMenuGroup({ children }: { children: ReactNode }) {
+    const mobile = useContext(MobileProfileContext);
+    return mobile ? (
+        <div className={mobileActionGroupClass}>{children}</div>
+    ) : (
+        <DropdownMenuGroup>{children}</DropdownMenuGroup>
+    );
+}
+
+export function PortalProfileMenuItem({
+    children,
+    render,
+    onClick,
+    disabled,
+    className,
+    ...props
+}: Omit<ComponentProps<typeof DropdownMenuItem>, "render" | "onClick"> & {
+    render?: ReactElement;
+    onClick?: () => void;
+}) {
+    const mobile = useContext(MobileProfileContext);
+    if (!mobile)
+        return (
+            <DropdownMenuItem
+                {...props}
+                render={render}
+                onClick={onClick}
+                disabled={disabled}
+                className={className}
+            >
+                {children}
+            </DropdownMenuItem>
+        );
+    return (
+        <Button
+            variant="ghost"
+            nativeButton={!render}
+            render={render}
+            disabled={disabled}
+            className={cn(mobileActionClass, "justify-start")}
+            onClick={() => {
+                if (render) {
+                    mobile.close();
+                    onClick?.();
+                } else mobile.act(() => onClick?.());
+            }}
+        >
+            {children}
+        </Button>
+    );
+}
+
 export function PortalProfileMenuSeparator() {
+    const mobile = useContext(MobileProfileContext);
+    if (mobile) return null;
     return <DropdownMenuSeparator className="my-1" />;
 }
 
@@ -245,6 +319,83 @@ export function PortalProfileMenu({
     open,
     onOpenChange,
 }: PortalProfileMenuProps) {
+    const mobile = useMobileMenu();
+    const [localOpen, setLocalOpen] = useState(false);
+    const [confirmLogout, setConfirmLogout] = useState(false);
+    const afterClose = useRef<(() => void) | null>(null);
+    const { handleLogout, isLoggingOut } = useLogoutHandler();
+    const drawerOpen = open ?? localOpen;
+    const setOpen = (value: boolean) => {
+        setLocalOpen(value);
+        onOpenChange?.(value);
+    };
+    if (mobile) {
+        return (
+            <>
+                <MobileActionDrawer
+                    open={drawerOpen}
+                    onOpenChange={setOpen}
+                    onOpenChangeComplete={(value) => {
+                        if (!value) {
+                            const action = afterClose.current;
+                            afterClose.current = null;
+                            action?.();
+                        }
+                    }}
+                    title="Account"
+                    description={`${userName} · ${roleLabel}`}
+                    trigger={
+                        <Button
+                            variant="ghost"
+                            size="icon-md"
+                            className="shrink-0 rounded-full p-0"
+                            aria-label={`Account menu for ${userName}`}
+                        >
+                            <UserAvatar name={userName} imageUrl={userAvatarUrl} size="md" />
+                        </Button>
+                    }
+                >
+                    <MobileProfileContext.Provider
+                        value={{
+                            close: () => setOpen(false),
+                            act: (action) => {
+                                afterClose.current = action;
+                                setOpen(false);
+                            },
+                        }}
+                    >
+                        {children}
+                    </MobileProfileContext.Provider>
+                    <div className={mobileActionGroupClass}>
+                        <button
+                            type="button"
+                            className={mobileActionClass}
+                            data-destructive="true"
+                            disabled={isLoggingOut}
+                            onClick={() => {
+                                afterClose.current = () => setConfirmLogout(true);
+                                setOpen(false);
+                            }}
+                        >
+                            <AccountMenuIcon name="logout" aria-hidden />
+                            Log out
+                        </button>
+                    </div>
+                </MobileActionDrawer>
+                <ConfirmDialog
+                    open={confirmLogout}
+                    onOpenChange={setConfirmLogout}
+                    title="Log out?"
+                    confirmLabel="Log out"
+                    cancelLabel="Stay signed in"
+                    busy={isLoggingOut}
+                    onConfirm={() => void handleLogout()}
+                >
+                    <p className="body text-ink-muted">You can sign back in any time.</p>
+                </ConfirmDialog>
+            </>
+        );
+    }
     return (
         <DesktopProfileDropdown
             userName={userName}

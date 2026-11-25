@@ -7,6 +7,7 @@ import {
     type ReactNode,
     useEffect,
     useId,
+    useRef,
     useState,
 } from "react";
 
@@ -15,6 +16,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import { measuredCssToRem } from "@/lib/styles/rem";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
@@ -31,6 +33,11 @@ import {
     Plus,
     Trash2,
 } from "@/components/shared/icons";
+import {
+    mobileActionClass,
+    MobileActionDrawer,
+    mobileActionGroupClass,
+} from "@/components/shared/mobile-action-drawer";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -503,25 +510,92 @@ function NotebookTabManageMenu({
     onMoveRight: () => void;
     onDelete: () => void;
 }) {
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <IconButton
-                        size="xs"
-                        type="button"
-                        className={triggerClassName}
-                        appearance="ghost"
-                        disabled={busy}
-                        aria-label={`Manage tab ${tab.name}`}
-                        data-sliding-tab-action=""
-                        onClick={(event) => event.stopPropagation()}
-                        onPointerDown={(event) => event.stopPropagation()}
-                    />
-                }
+    const mobile = useMobileMenu();
+    const [open, setOpen] = useState(false);
+    const afterClose = useRef<(() => void) | null>(null);
+    const runAfterClose = (action: () => void) => {
+        afterClose.current = action;
+        setOpen(false);
+    };
+    const trigger = (
+        <IconButton
+            size="xs"
+            type="button"
+            className={triggerClassName}
+            appearance="ghost"
+            disabled={busy}
+            aria-label={`Manage tab ${tab.name}`}
+            data-sliding-tab-action=""
+            onClick={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+        >
+            <MoreHorizontal className="rotate-90" aria-hidden size={12} />
+        </IconButton>
+    );
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={setOpen}
+                onOpenChangeComplete={(nextOpen) => {
+                    if (nextOpen) return;
+                    const action = afterClose.current;
+                    afterClose.current = null;
+                    action?.();
+                }}
+                title="Tab actions"
+                description={tab.name}
+                trigger={trigger}
             >
-                <MoreHorizontal className="rotate-90" aria-hidden size={12} />
-            </DropdownMenuTrigger>
+                <div className={mobileActionGroupClass}>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        disabled={busy}
+                        onClick={() => runAfterClose(onRename)}
+                    >
+                        <Pencil aria-hidden />
+                        Rename tab
+                    </button>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        disabled={busy || tabIndex === 0}
+                        onClick={() => runAfterClose(onMoveLeft)}
+                    >
+                        <ArrowLeft aria-hidden />
+                        Move tab left
+                    </button>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        disabled={busy || tabIndex === tabCount - 1}
+                        onClick={() => runAfterClose(onMoveRight)}
+                    >
+                        <ArrowRight aria-hidden />
+                        Move tab right
+                    </button>
+                </div>
+                <div className={mobileActionGroupClass}>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        data-destructive="true"
+                        disabled={busy || tabCount === 1}
+                        onClick={() => runAfterClose(onDelete)}
+                    >
+                        <Trash2 aria-hidden />
+                        Delete tab{tabCount === 1 ? " (last tab)" : ""}
+                    </button>
+                </div>
+            </MobileActionDrawer>
+        );
+    }
+
+    return (
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+            <DropdownMenuTrigger render={trigger} />
             <DropdownMenuContent align={menuAlign}>
                 <DropdownMenuItem
                     onClick={(event) => {
@@ -583,26 +657,105 @@ function SortableList({
     onShift: (direction: -1 | 1) => void;
     onMoveTab: (tabId: string) => void;
 }) {
+    const mobile = useMobileMenu();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const afterMenuClose = useRef<(() => void) | null>(null);
+    const runAfterMenuClose = (action: () => void) => {
+        afterMenuClose.current = action;
+        setMenuOpen(false);
+    };
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: `list:${list.id}`,
         data: { kind: "list", listId: list.id, tabId: list.tabId },
         disabled: busy,
     });
-    const listMenu = (
-        <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <IconButton
-                        size="sm"
-                        type="button"
-                        className={styles.listMenu}
-                        disabled={busy}
-                        aria-label={`Manage list ${list.name}`}
-                    />
-                }
-            >
-                <MoreHorizontal className="rotate-90" aria-hidden size={14} />
-            </DropdownMenuTrigger>
+    const listMenuTrigger = (
+        <IconButton
+            size="sm"
+            type="button"
+            className={styles.listMenu}
+            disabled={busy}
+            aria-label={`Manage list ${list.name}`}
+        >
+            <MoreHorizontal className="rotate-90" aria-hidden size={14} />
+        </IconButton>
+    );
+    const otherTabs = tabs.filter((tab) => tab.id !== list.tabId);
+    const listMenu = mobile ? (
+        <MobileActionDrawer
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+            onOpenChangeComplete={(nextOpen) => {
+                if (nextOpen) return;
+                const action = afterMenuClose.current;
+                afterMenuClose.current = null;
+                action?.();
+            }}
+            title="List actions"
+            description={list.name}
+            trigger={listMenuTrigger}
+        >
+            <div className={mobileActionGroupClass}>
+                <button
+                    type="button"
+                    className={mobileActionClass}
+                    disabled={busy}
+                    onClick={() => runAfterMenuClose(onRename)}
+                >
+                    <Pencil aria-hidden />
+                    Rename list
+                </button>
+                <button
+                    type="button"
+                    className={mobileActionClass}
+                    disabled={busy || isFirst}
+                    onClick={() => runAfterMenuClose(() => onShift(-1))}
+                >
+                    <ArrowLeft aria-hidden />
+                    Move list left
+                </button>
+                <button
+                    type="button"
+                    className={mobileActionClass}
+                    disabled={busy || isLast}
+                    onClick={() => runAfterMenuClose(() => onShift(1))}
+                >
+                    <ArrowRight aria-hidden />
+                    Move list right
+                </button>
+            </div>
+            {otherTabs.length ? (
+                <div className={mobileActionGroupClass}>
+                    {otherTabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            className={mobileActionClass}
+                            disabled={busy}
+                            onClick={() => runAfterMenuClose(() => onMoveTab(tab.id))}
+                        >
+                            <ArrowRight aria-hidden />
+                            Move to {tab.name}
+                        </button>
+                    ))}
+                </div>
+            ) : null}
+            <div className={mobileActionGroupClass}>
+                <button
+                    type="button"
+                    className={mobileActionClass}
+                    data-destructive="true"
+                    disabled={busy || onlyList}
+                    onClick={() => runAfterMenuClose(onDelete)}
+                >
+                    <Trash2 aria-hidden />
+                    Delete list{onlyList ? " (last list)" : ""}
+                </button>
+            </div>
+        </MobileActionDrawer>
+    ) : (
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+            <DropdownMenuTrigger render={listMenuTrigger} />
             <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={onRename}>
                     <Pencil aria-hidden />
@@ -616,13 +769,11 @@ function SortableList({
                     <ArrowRight aria-hidden />
                     Move list right
                 </DropdownMenuItem>
-                {tabs
-                    .filter((tab) => tab.id !== list.tabId)
-                    .map((tab) => (
-                        <DropdownMenuItem key={tab.id} onClick={() => onMoveTab(tab.id)}>
-                            Move to {tab.name}
-                        </DropdownMenuItem>
-                    ))}
+                {otherTabs.map((tab) => (
+                    <DropdownMenuItem key={tab.id} onClick={() => onMoveTab(tab.id)}>
+                        Move to {tab.name}
+                    </DropdownMenuItem>
+                ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive" disabled={onlyList} onClick={onDelete}>
                     <Trash2 aria-hidden />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
@@ -22,17 +23,14 @@ import {
     UserRoundSearch,
     Users,
 } from "@/components/shared/icons";
-import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+    mobileActionClass,
+    MobileActionDrawer,
+    mobileActionGroupClass,
+} from "@/components/shared/mobile-action-drawer";
+import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 
 import type { NavItem } from "@/config/nav";
-
-const MORE_MENU_EDGE_GAP = 8;
 
 export type PortalMobileCenterAction = {
     href: string;
@@ -174,6 +172,7 @@ export function PortalMobileNav({
     const activeHref = resolveActiveNavHref(pathname, items);
     const { left, right, overflow } = pickPrimaryItems(items, primaryHrefs);
     const profileActive = Boolean(profileHref && pathname.startsWith(profileHref));
+    const [moreOpen, setMoreOpen] = useState(false);
     const activeOverflow =
         overflow.find((item) => item.href === activeHref) ??
         (profileActive && profileHref ? { label: "Profile", href: profileHref } : undefined);
@@ -228,53 +227,44 @@ export function PortalMobileNav({
                     if (slot.type === "more") {
                         return (
                             <li key="more" className="min-inline-0">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger
-                                        className={cn(
-                                            `
-                                              flex flex-col items-center justify-center gap-0.5
-                                              rounded-inner px-0.5 py-1.5 text-center
-                                              outline-none inline-full min-block-12 min-inline-0
-                                              focus-visible:ring-2 focus-visible:ring-ring
-                                            `,
-                                            activeOverflow ? "text-brand" : "text-ink-subtle",
-                                        )}
-                                        aria-label="More pages"
-                                    >
-                                        <MoreHorizontal aria-hidden className="block-5 inline-5" />
-                                        <span className="body-xs truncate font-medium inline-full">
-                                            {activeOverflow?.mobileLabel ??
-                                                activeOverflow?.label ??
-                                                "More"}
-                                        </span>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                        side="top"
-                                        align="end"
-                                        // Compensate for the bar's top padding/border and list gutter.
-                                        sideOffset={() =>
-                                            MORE_MENU_EDGE_GAP +
-                                            parseFloat(
-                                                getComputedStyle(document.documentElement).fontSize,
-                                            ) *
-                                                0.375 +
-                                            1
-                                        }
-                                        alignOffset={() =>
-                                            MORE_MENU_EDGE_GAP -
-                                            parseFloat(
-                                                getComputedStyle(document.documentElement).fontSize,
-                                            ) *
-                                                0.25
-                                        }
-                                        className="gap-0.5 p-1.5 min-inline-40"
-                                    >
+                                <MobileActionDrawer
+                                    open={moreOpen}
+                                    onOpenChange={setMoreOpen}
+                                    title="More"
+                                    trigger={
+                                        <button
+                                            type="button"
+                                            className={cn(
+                                                `
+                                                  flex flex-col items-center justify-center gap-0.5
+                                                  rounded-inner px-0.5 py-1.5 text-center
+                                                  outline-none inline-full min-block-12 min-inline-0
+                                                  focus-visible:ring-2 focus-visible:ring-ring
+                                                `,
+                                                activeOverflow ? "text-brand" : "text-ink-subtle",
+                                            )}
+                                            aria-label="More pages"
+                                        >
+                                            <MoreHorizontal
+                                                aria-hidden
+                                                className="block-5 inline-5"
+                                            />
+                                            <span className="body-xs truncate font-medium inline-full">
+                                                {activeOverflow?.mobileLabel ??
+                                                    activeOverflow?.label ??
+                                                    "More"}
+                                            </span>
+                                        </button>
+                                    }
+                                >
+                                    <div className={mobileActionGroupClass}>
                                         {overflow.map((item) => (
-                                            <DropdownMenuItem
+                                            <Link
                                                 key={item.href}
-                                                render={<Link href={item.href} />}
+                                                href={item.href}
+                                                onClick={() => setMoreOpen(false)}
                                                 className={cn(
-                                                    "gap-3 px-3 py-2.5 min-block-11",
+                                                    mobileActionClass,
                                                     item.href === activeHref &&
                                                         "bg-brand-soft text-brand-text",
                                                 )}
@@ -284,13 +274,14 @@ export function PortalMobileNav({
                                             >
                                                 <NavIcon href={item.href} size="md" />
                                                 {item.mobileLabel ?? item.label}
-                                            </DropdownMenuItem>
+                                            </Link>
                                         ))}
                                         {profileHref ? (
-                                            <DropdownMenuItem
-                                                render={<Link href={profileHref} />}
+                                            <Link
+                                                href={profileHref}
+                                                onClick={() => setMoreOpen(false)}
                                                 className={cn(
-                                                    "gap-3 px-3 py-2.5 min-block-11",
+                                                    mobileActionClass,
                                                     profileActive &&
                                                         "bg-brand-soft text-brand-text",
                                                 )}
@@ -298,10 +289,10 @@ export function PortalMobileNav({
                                             >
                                                 <NavIcon href={profileHref} size="md" />
                                                 Profile
-                                            </DropdownMenuItem>
+                                            </Link>
                                         ) : null}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                    </div>
+                                </MobileActionDrawer>
                             </li>
                         );
                     }

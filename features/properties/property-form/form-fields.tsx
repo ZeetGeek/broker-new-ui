@@ -7,6 +7,7 @@ import type { PropertyDraftValues } from "@/lib/schemas/property";
 import { cn } from "@/lib/utils";
 import { type FieldVisibility, visibilityForField } from "@/lib/visibility/property";
 import { useFieldRules } from "@/lib/visibility/use-field-rules";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { ConditionalField } from "@/components/property/fields/conditional-field";
 import { FieldLabel } from "@/components/property/fields/field-label";
@@ -16,6 +17,7 @@ import { DrawerSection } from "@/components/shared/drawer-section";
 import { IconButton } from "@/components/shared/icon-button";
 import { type AppIcon, Check, Minus, Plus, X } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
+import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import { SmartPriceInput } from "@/components/shared/smart-price-input";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,7 +76,10 @@ function FieldShell({
     const resolvedLabel = labelOf(name, label);
     return (
         <ConditionalField path={name} className={className}>
-            <div className="-m-1 flex flex-col gap-2 p-1 min-inline-0">
+            <div
+                data-property-field
+                className="-m-1 flex flex-col gap-1.5 p-1 min-inline-0 sm:gap-2"
+            >
                 <div className="flex items-center justify-between gap-3 min-block-5">
                     <Label
                         id={`${fieldId}-label`}
@@ -98,6 +103,7 @@ export function TextField({
     hint,
     visibility,
     className,
+    mobileTextarea = false,
     onBlur: onInputBlur,
     onChange: onInputChange,
     endAction,
@@ -108,6 +114,8 @@ export function TextField({
     hint?: ReactNode;
     visibility?: FieldVisibility;
     className?: string;
+    /** Lets long values wrap on narrow screens while preserving the desktop input. */
+    mobileTextarea?: boolean;
     endAction?: ReactNode;
 } & Omit<ComponentProps<typeof Input>, "name" | "errorText" | "size">) {
     const {
@@ -116,9 +124,75 @@ export function TextField({
     } = useFormContext<PropertyDraftValues>();
     const error = errorAt(errors, name);
     const registration = register(name);
+    const mobile = useMobileMenu();
+    const fieldId = name.replace(/\./g, "-");
+
+    if (mobileTextarea && mobile) {
+        const StartIcon = props.startIcon;
+        return (
+            <FieldShell
+                name={name}
+                label={label}
+                hint={hint}
+                visibility={visibility}
+                className={className}
+            >
+                <div className="relative">
+                    {StartIcon ? (
+                        <StartIcon
+                            className="absolute inset-s-3.5 inset-bs-3.5 z-10 block-4 inline-4 text-ink-subtle"
+                            aria-hidden
+                        />
+                    ) : null}
+                    <Textarea
+                        id={fieldId}
+                        rows={2}
+                        placeholder={props.placeholder}
+                        disabled={props.disabled}
+                        readOnly={props.readOnly}
+                        maxLength={props.maxLength}
+                        aria-invalid={Boolean(error) || undefined}
+                        className={cn(
+                            `
+                              field-sizing-content resize-none rounded-control border-2
+                              border-border-warm bg-surface py-3 text-sm/5 text-ink outline-none
+                              min-block-18 placeholder:text-ink-subtle hover:border-ink-subtle
+                              focus-visible:border-ring focus-visible:ring-3
+                              focus-visible:ring-ring/30 aria-invalid:border-danger-mid
+                            `,
+                            StartIcon ? "ps-10" : "ps-4",
+                            endAction ? "pe-24" : "pe-4",
+                        )}
+                        {...registration}
+                        onChange={(event) => {
+                            void registration.onChange(event);
+                            onInputChange?.(
+                                event as unknown as React.ChangeEvent<HTMLInputElement>,
+                            );
+                        }}
+                        onBlur={(event) => {
+                            void registration.onBlur(event);
+                            onInputBlur?.(event as unknown as React.FocusEvent<HTMLInputElement>);
+                        }}
+                    />
+                    {endAction ? (
+                        <div className="absolute inset-e-1.5 inset-bs-1.5 z-10 flex items-center">
+                            {endAction}
+                        </div>
+                    ) : null}
+                </div>
+                {error ? (
+                    <p role="alert" className="text-sm text-danger">
+                        {error}
+                    </p>
+                ) : null}
+            </FieldShell>
+        );
+    }
+
     const input = (
         <Input
-            id={name.replace(/\./g, "-")}
+            id={fieldId}
             size="lg"
             errorText={error}
             className={cn("text-sm block-control-lg", endAction && "pe-40 sm:pe-44")}
@@ -334,6 +408,7 @@ export function SelectField({
     } = useFormContext<PropertyDraftValues>();
     const error = errorAt(errors, name);
     const optionValues = options.map((option) => option.value);
+    const mobile = useMobileMenu();
     const labelFor = (value: string) =>
         options.find((option) => option.value === value)?.label ?? value;
 
@@ -348,49 +423,73 @@ export function SelectField({
             <Controller
                 name={name}
                 control={control}
-                render={({ field }) => (
-                    <Combobox
-                        value={String(field.value ?? "") || null}
-                        disabled={disabled}
-                        onValueChange={(value) => {
-                            if (disabled) return;
-                            const next = value ?? "";
-                            field.onChange(next);
-                            onValueChange?.(next);
-                        }}
-                        onOpenChange={(open) => {
-                            if (!open) {
+                render={({ field }) =>
+                    mobile ? (
+                        <MobileSelectDrawer
+                            id={name.replace(/\./g, "-")}
+                            triggerRef={field.ref}
+                            label={label}
+                            value={String(field.value ?? "")}
+                            options={options}
+                            placeholder={placeholder}
+                            startIcon={startIcon}
+                            disabled={disabled}
+                            loading={loading}
+                            errorText={error}
+                            emptyText={emptyText}
+                            onChange={(next) => {
+                                field.onChange(next);
+                                onValueChange?.(next);
+                            }}
+                            onBlur={() => {
                                 field.onBlur();
                                 onInputBlur?.();
-                            }
-                        }}
-                        items={optionValues}
-                        itemToStringLabel={labelFor}
-                        {...(limit == null ? {} : { limit })}
-                    >
-                        <ComboboxInput
-                            className="text-sm"
-                            id={name.replace(/\./g, "-")}
-                            ref={field.ref}
-                            size="md"
-                            startIcon={startIcon}
-                            placeholder={placeholder}
-                            errorText={error}
-                            loading={loading}
-                            disabled={disabled}
+                            }}
                         />
-                        <ComboboxContent>
-                            <ComboboxEmpty>{emptyText}</ComboboxEmpty>
-                            <ComboboxList>
-                                {(item: string) => (
-                                    <ComboboxItem key={item} value={item}>
-                                        {labelFor(item)}
-                                    </ComboboxItem>
-                                )}
-                            </ComboboxList>
-                        </ComboboxContent>
-                    </Combobox>
-                )}
+                    ) : (
+                        <Combobox
+                            value={String(field.value ?? "") || null}
+                            disabled={disabled}
+                            onValueChange={(value) => {
+                                if (disabled) return;
+                                const next = value ?? "";
+                                field.onChange(next);
+                                onValueChange?.(next);
+                            }}
+                            onOpenChange={(open) => {
+                                if (!open) {
+                                    field.onBlur();
+                                    onInputBlur?.();
+                                }
+                            }}
+                            items={optionValues}
+                            itemToStringLabel={labelFor}
+                            {...(limit == null ? {} : { limit })}
+                        >
+                            <ComboboxInput
+                                className="text-sm"
+                                id={name.replace(/\./g, "-")}
+                                ref={field.ref}
+                                size="md"
+                                startIcon={startIcon}
+                                placeholder={placeholder}
+                                errorText={error}
+                                loading={loading}
+                                disabled={disabled}
+                            />
+                            <ComboboxContent>
+                                <ComboboxEmpty>{emptyText}</ComboboxEmpty>
+                                <ComboboxList>
+                                    {(item: string) => (
+                                        <ComboboxItem key={item} value={item}>
+                                            {labelFor(item)}
+                                        </ComboboxItem>
+                                    )}
+                                </ComboboxList>
+                            </ComboboxContent>
+                        </Combobox>
+                    )
+                }
             />
         </FieldShell>
     );
@@ -436,6 +535,9 @@ export function LocalityField({
                 control={control}
                 render={({ field }) => (
                     <LocalityCombobox
+                        mobileDrawer
+                        mobileLabel={label}
+                        mobileTriggerRef={field.ref}
                         id={name.replace(/\./g, "-")}
                         inputRef={field.ref}
                         cityId={cityId}
@@ -722,10 +824,10 @@ export function ChoiceField({
                             columns === 2
                                 ? "grid-cols-1 sm:grid-cols-2"
                                 : columns === 4
-                                  ? "grid-cols-2 sm:grid-cols-4"
+                                  ? "grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-4"
                                   : columns === 5
-                                    ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5"
-                                    : "grid-cols-2 sm:grid-cols-3",
+                                    ? "grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-5"
+                                    : "grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-3",
                         )}
                     >
                         {options.map((option) => {
@@ -739,9 +841,9 @@ export function ChoiceField({
                                     className={cn(
                                         `
                                           flex cursor-pointer gap-3 rounded-control border-2 px-4
-                                          py-3 text-start leading-normal font-normal
-                                          transition-[background-color,border-color,color,box-shadow]
-                                          duration-160 min-block-11
+                                          py-3 text-start leading-normal font-normal transition-[background-color,border-color,color,box-shadow]
+                                          duration-160
+                                          min-block-11 min-inline-0
                                           has-focus-visible:ring-3 has-focus-visible:ring-ring/30
                                         `,
                                         icon || !hasDescription ? "items-center" : "items-start",
@@ -1341,15 +1443,22 @@ export function WizardSection({
     tone?: "default" | "private";
 }) {
     return (
-        <DrawerSection title={title} description={description} tone={tone} className="py-0">
+        <DrawerSection
+            title={title}
+            description={description}
+            tone={tone}
+            className="py-0"
+            contentClassName="pbs-4 sm:pbs-5"
+        >
             {children}
         </DrawerSection>
     );
 }
 
 /** Field groups inside a section. */
-export const FORM_STACK_CLASS = "flex flex-col gap-4";
+export const FORM_STACK_CLASS = "flex flex-col gap-3 min-inline-0 sm:gap-4";
 /** Consistent spacing and subtle dividers between wizard sections. */
-export const FORM_SECTIONS_CLASS = "flex flex-col [&>*:not(:last-child)]:pbe-6 [&>*+*]:pbs-6";
-export const FORM_GRID_CLASS = "grid gap-4 md:grid-cols-2";
-export const FORM_GRID_3_CLASS = "grid gap-4 sm:grid-cols-3";
+export const FORM_SECTIONS_CLASS =
+    "flex flex-col min-inline-0 [&>*:not(:last-child)]:pbe-4 [&>*+*]:pbs-4 sm:[&>*:not(:last-child)]:pbe-6 sm:[&>*+*]:pbs-6";
+export const FORM_GRID_CLASS = "grid grid-cols-1 gap-3 min-inline-0 sm:gap-4 md:grid-cols-2";
+export const FORM_GRID_3_CLASS = "grid grid-cols-1 gap-3 min-inline-0 sm:grid-cols-3 sm:gap-4";

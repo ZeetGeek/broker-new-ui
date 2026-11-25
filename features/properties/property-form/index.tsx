@@ -58,7 +58,7 @@ import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { AppModalHeader } from "@/components/shared/app-modal-header";
 import toast from "@/components/shared/app-toast";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { ArrowRight, Check, ChevronDown, RotateCcw } from "@/components/shared/icons";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, RotateCcw } from "@/components/shared/icons";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Skeleton } from "@/components/shared/skeleton";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
@@ -70,6 +70,8 @@ import { Progress, ProgressLabel } from "@/components/ui/progress";
 import { FORM_STEPS, PROPERTY_TYPES, type PropertyFormStep, toLabel } from "@/constants/property";
 import { ListingScoreCard } from "@/features/properties/property-form/listing-score-card";
 import { LiveSummaryPanel } from "@/features/properties/property-form/live-summary-panel";
+import { MobileFormHeader } from "@/features/properties/property-form/mobile-form-header";
+import { MobileFormStepper } from "@/features/properties/property-form/mobile-form-stepper";
 import { PropertyFormSkeleton } from "@/features/properties/property-form/property-form-skeleton";
 import { QuickAdd } from "@/features/properties/property-form/quick-add";
 import { StepNav } from "@/features/properties/property-form/step-nav";
@@ -87,6 +89,8 @@ import type {
     MyListingItem,
     MyListingPropertyType,
 } from "@/features/properties/your-listings/types";
+
+import styles from "./property-form.module.css";
 
 // v2: nearbyPlaces changed from {id,type,name,distanceKm}[] to a plain string[] of place types.
 // v3: area units went international; bigha/guntha/kanal/marla/cent/ground no longer exist.
@@ -383,7 +387,7 @@ export function PropertyForm({
     }, [entryMode, step]);
 
     async function startFreshListing(confirmed = false) {
-        if (methods.formState.isDirty && !confirmed) {
+        if ((methods.formState.isDirty || savedAt !== null) && !confirmed) {
             setConfirmation({
                 action: "fresh",
                 description: "This removes the current draft and its photos from this device.",
@@ -928,7 +932,8 @@ export function PropertyForm({
                     noValidate
                     aria-busy={restoringDraft || undefined}
                     className={cn(
-                        `relative flex flex-1 flex-col overflow-clip bg-surface min-block-0`,
+                        `relative flex flex-1 flex-col overflow-clip bg-surface min-block-0 min-inline-0`,
+                        styles.surface,
                         className,
                     )}
                 >
@@ -936,21 +941,66 @@ export function PropertyForm({
                         disabled={restoringDraft || saving || attachmentRetry != null}
                         className="contents"
                     >
-                        <PropertyFormHeader
-                            mode={mode}
+                        <MobileFormHeader
+                            title={mode === "edit" ? "Edit property" : "Add property"}
+                            isDialog={isDialog}
                             entryMode={entryMode}
-                            onEntryModeChange={setEntryMode}
-                            isSaved={Boolean(savedAt) && !draftSavePending && !storageError}
-                            savingIntent={savingIntent}
-                            onSaveDraft={() => {
-                                void persistProperty("draft");
-                            }}
-                            onPublish={() => {
-                                void persistProperty("publish");
-                            }}
-                            showClose={isDialog}
+                            saved={Boolean(savedAt) && !draftSavePending && !storageError}
                             restoring={restoringDraft}
+                            busy={saving || attachmentRetry !== null}
+                            showStartFresh={mode === "create"}
+                            onClose={() => void requestClose()}
+                            onSaveDraft={() => void persistProperty("draft")}
+                            onModeChange={setEntryMode}
+                            onPreview={() => setMobileSummaryOpen(true)}
+                            onScore={() => setMobileScoreOpen(true)}
+                            onStartFresh={() => void startFreshListing()}
                         />
+                        <div className="hidden sm:contents">
+                            <PropertyFormHeader
+                                mode={mode}
+                                entryMode={entryMode}
+                                onEntryModeChange={setEntryMode}
+                                isSaved={Boolean(savedAt) && !draftSavePending && !storageError}
+                                savingIntent={savingIntent}
+                                onSaveDraft={() => {
+                                    void persistProperty("draft");
+                                }}
+                                onPublish={() => {
+                                    void persistProperty("publish");
+                                }}
+                                showClose={isDialog}
+                                restoring={restoringDraft}
+                            />
+                        </div>
+                        {!restoringDraft ? (
+                            <div className="hidden shrink-0 border-be border-border-warm bg-surface min-inline-0 sm:flex xl:hidden">
+                                <MobileListingScore
+                                    score={listingScore.score}
+                                    tasks={listingScore.tasks}
+                                    open={mobileScoreOpen}
+                                    onOpenChange={(next) => {
+                                        setMobileScoreOpen(next);
+                                        if (next) setMobileSummaryOpen(false);
+                                    }}
+                                    onTip={(tipStep) => {
+                                        changeStep(tipStep);
+                                        setMobileScoreOpen(false);
+                                    }}
+                                />
+                                <MobileDealSummary
+                                    audience={portal}
+                                    values={values}
+                                    stepIndex={entryMode === "quick" ? 2 : stepIndex}
+                                    photoFilesRef={photoFilesRef}
+                                    open={mobileSummaryOpen}
+                                    onOpenChange={(next) => {
+                                        setMobileSummaryOpen(next);
+                                        if (next) setMobileScoreOpen(false);
+                                    }}
+                                />
+                            </div>
+                        ) : null}
                         {restoringDraft ? (
                             <PropertyFormSkeleton />
                         ) : entryMode === "full" ? (
@@ -962,8 +1012,8 @@ export function PropertyForm({
                                 ) : null}
                                 <div
                                     className="
-                                      shrink-0 border-be border-border-warm bg-surface
-                                      xl:hidden
+                                      hidden shrink-0 border-be border-border-warm bg-surface
+                                      sm:block xl:hidden
                                     "
                                 >
                                     <StepNav
@@ -972,24 +1022,17 @@ export function PropertyForm({
                                         completedSteps={completedSteps}
                                         onStepChange={changeStep}
                                     />
-                                    <MobileListingScore
-                                        score={listingScore.score}
-                                        tips={listingScore.tips}
-                                        tasks={listingScore.tasks}
-                                        open={mobileScoreOpen}
-                                        onOpenChange={(next) => {
-                                            setMobileScoreOpen(next);
-                                            if (next) setMobileSummaryOpen(false);
-                                        }}
-                                        onTip={(tipStep) => {
-                                            changeStep(tipStep);
-                                            setMobileScoreOpen(false);
-                                        }}
-                                    />
                                 </div>
+                                <MobileFormStepper
+                                    steps={activeSteps}
+                                    step={step}
+                                    completed={completedSteps}
+                                    onChange={changeStep}
+                                />
                                 <div
+                                    data-property-form-workspace
                                     className="
-                                      grid flex-1 gap-4 bg-surface-muted p-4 min-block-0
+                                      grid flex-1 grid-cols-1 gap-4 bg-surface-muted p-2 min-block-0 min-inline-0 sm:p-4
                                       xl:grid-cols-[256px_minmax(0,1fr)_320px]
                                     "
                                 >
@@ -1018,9 +1061,10 @@ export function PropertyForm({
                                         "
                                     >
                                         <div
+                                            data-property-form-content
                                             className="
-                                              rounded-card border border-border-warm bg-surface p-5
-                                              min-block-full
+                                              rounded-card border border-border-warm bg-surface p-3
+                                              min-block-full min-inline-0
                                               sm:p-6
                                               xl:p-7
                                             "
@@ -1052,8 +1096,8 @@ export function PropertyForm({
                                             </div>
                                             <div
                                                 className="
-                                                  mbs-6 border-bs border-border-warm pbs-5
-                                                  xl:hidden
+                                                  mbs-6 hidden border-bs border-border-warm pbs-5
+                                                  sm:block xl:hidden
                                                 "
                                             >
                                                 {formActions}
@@ -1087,20 +1131,10 @@ export function PropertyForm({
                                         </div>
                                     </aside>
                                 </div>
-                                <MobileDealSummary
-                                    audience={portal}
-                                    values={values}
-                                    stepIndex={stepIndex}
-                                    photoFilesRef={photoFilesRef}
-                                    open={mobileSummaryOpen}
-                                    onOpenChange={(next) => {
-                                        setMobileSummaryOpen(next);
-                                        if (next) setMobileScoreOpen(false);
-                                    }}
-                                />
                             </>
                         ) : (
                             <main
+                                data-property-form-workspace
                                 data-property-form-scroll
                                 className="
                                   flex flex-1 flex-col overflow-y-auto bg-surface-muted p-3
@@ -1115,9 +1149,10 @@ export function PropertyForm({
                                 ) : null}
                                 <div className="mx-auto grid items-start gap-4 inline-full max-inline-4xl xl:grid-cols-[minmax(0,1fr)_320px] xl:max-inline-7xl">
                                     <div
+                                        data-property-form-content
                                         className="
                                       flex flex-col rounded-card border border-border-warm
-                                      bg-surface p-5 shadow-md min-inline-0
+                                      bg-surface p-3 shadow-md min-inline-0
                                       sm:p-6
                                       xl:p-7
                                     "
@@ -1139,7 +1174,7 @@ export function PropertyForm({
                                             portal={portal}
                                             propertyId={propertyId}
                                         />
-                                        <div className="mbs-6 border-bs border-border-warm pbs-5">
+                                        <div className="mbs-6 hidden border-bs border-border-warm pbs-5 sm:block">
                                             {formActions}
                                         </div>
                                     </div>
@@ -1154,6 +1189,37 @@ export function PropertyForm({
                                 </div>
                             </main>
                         )}
+                        {!restoringDraft ? (
+                            <AppModalFooter className={styles.mobileFooter}>
+                                <div className={styles.mobileButtons}>
+                                    {entryMode === "full" && stepIndex > 0 ? (
+                                        <Button type="button" variant="ghost" onClick={goBack}>
+                                            <ArrowLeft aria-hidden /> Back
+                                        </Button>
+                                    ) : null}
+                                    <Button
+                                        className={styles.mobilePrimary}
+                                        type="button"
+                                        variant="accent"
+                                        loading={savingIntent === "publish"}
+                                        onClick={() => {
+                                            if (entryMode === "quick" || isLastStep)
+                                                void persistProperty("publish");
+                                            else goNext();
+                                        }}
+                                    >
+                                        {entryMode === "quick" || isLastStep
+                                            ? "Publish"
+                                            : "Continue"}
+                                        {entryMode === "quick" || isLastStep ? (
+                                            <Check aria-hidden />
+                                        ) : (
+                                            <ArrowRight aria-hidden />
+                                        )}
+                                    </Button>
+                                </div>
+                            </AppModalFooter>
+                        ) : null}
                     </fieldset>
                     {attachmentRetry ? (
                         <div
@@ -1216,8 +1282,12 @@ export function PropertyForm({
             title={mode === "edit" ? "Edit property" : "Add property"}
             showHeader={false}
             scrollBody={false}
+            bodyClassName="min-inline-0"
             size="full"
-            className="inset-0 translate-none overflow-clip rounded-none border-0 p-0 shadow-none block-dvh inline-dvw max-block-none max-inline-none sm:inline-dvw sm:max-inline-none"
+            className={cn(
+                "inset-0 translate-none overflow-clip rounded-none border-0 p-0 shadow-none block-dvh inline-dvw max-block-none max-inline-none sm:inline-dvw sm:max-inline-none",
+                styles.fullscreen,
+            )}
             onOpenChange={(next) => {
                 if (!next) void requestClose();
             }}
@@ -1274,7 +1344,7 @@ function PropertyFormHeader({
     // Edits are not kept on the device, so only a new listing shows the draft badge.
     const savedHint =
         mode === "edit" ? null : (
-            <div className="flex items-center min-block-5 min-inline-34">
+            <div className="flex items-center min-block-5 min-inline-0 sm:min-inline-34">
                 {restoring ? (
                     <Skeleton className="rounded-full block-5 inline-full" />
                 ) : (
@@ -1586,8 +1656,8 @@ function StepContent({
             <div
                 className="
                   flex flex-col divide-y divide-border-warm
-                  [&>*+*]:pbs-6
-                  [&>*:not(:last-child)]:pbe-6
+                  [&>*+*]:pbs-4 sm:[&>*+*]:pbs-6
+                  [&>*:not(:last-child)]:pbe-4 sm:[&>*:not(:last-child)]:pbe-6
                 "
             >
                 <StepBasics />
@@ -1600,8 +1670,8 @@ function StepContent({
             <div
                 className="
                   flex flex-col divide-y divide-border-warm
-                  [&>*+*]:pbs-6
-                  [&>*:not(:last-child)]:pbe-6
+                  [&>*+*]:pbs-4 sm:[&>*+*]:pbs-6
+                  [&>*:not(:last-child)]:pbe-4 sm:[&>*:not(:last-child)]:pbe-6
                 "
             >
                 <StepDetails />
@@ -1614,8 +1684,8 @@ function StepContent({
             <div
                 className="
                   flex flex-col divide-y divide-border-warm
-                  [&>*+*]:pbs-6
-                  [&>*:not(:last-child)]:pbe-6
+                  [&>*+*]:pbs-4 sm:[&>*+*]:pbs-6
+                  [&>*:not(:last-child)]:pbe-4 sm:[&>*:not(:last-child)]:pbe-6
                 "
             >
                 <StepPricing />
@@ -1630,8 +1700,8 @@ function StepContent({
         <div
             className="
               flex flex-col divide-y divide-border-warm
-              [&>*+*]:pbs-6
-              [&>*:not(:last-child)]:pbe-6
+              [&>*+*]:pbs-4 sm:[&>*+*]:pbs-6
+              [&>*:not(:last-child)]:pbe-4 sm:[&>*:not(:last-child)]:pbe-6
             "
         >
             <StepMedia photoFilesRef={photoFilesRef} />
@@ -1651,78 +1721,48 @@ function StepTransition({ step, children }: { step: PropertyFormStep; children: 
 
 function MobileListingScore({
     score,
-    tips,
     tasks,
     open,
     onOpenChange,
     onTip,
 }: {
     score: number;
-    tips: { label: string; step: PropertyFormStep; points: number }[];
     tasks: ListingScoreTask[];
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onTip: (step: PropertyFormStep) => void;
 }) {
     return (
-        <div className="border-bs border-border-warm bg-surface xl:hidden">
+        <div className="flex-1 min-inline-0">
             <Button
                 type="button"
                 variant="ghost"
+                aria-haspopup="dialog"
                 aria-expanded={open}
-                aria-controls="mobile-listing-score-panel"
-                onClick={() => onOpenChange(!open)}
-                className="
-                  flex items-center justify-between gap-3 px-4 text-start text-ink inline-full
-                  min-block-11
-                  hover:bg-brand-soft/50
-                  focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:ring-inset
-                "
+                onClick={() => onOpenChange(true)}
+                className="gap-2 px-3 text-xs text-ink inline-full min-block-11"
             >
-                <span className="flex items-center gap-2 text-xs font-semibold text-ink">
-                    <span
-                        className="
-                          tabular flex items-center justify-center rounded-full bg-brand
-                          text-surface block-7 inline-7
-                        "
-                    >
-                        {score}%
-                    </span>
-                    Listing score
-                </span>
-                <span className="flex items-center gap-2 text-xs text-ink-muted min-inline-0">
-                    <span className="hidden truncate sm:block">
-                        {tips[0]?.label ?? "Score complete"}
-                    </span>
-                    <ChevronDown
-                        className={cn(
-                            "shrink-0 transition-transform duration-160 block-4 inline-4",
-                            open && `rotate-180`,
-                        )}
-                        aria-hidden
-                    />
-                </span>
+                <span className="tabular shrink-0 font-semibold text-brand-text">{score}%</span>
+                Listing score
+                <ChevronDown aria-hidden className="shrink-0 block-4 inline-4" />
             </Button>
-            {open ? (
-                <div
-                    id="mobile-listing-score-panel"
-                    data-open={open}
-                    className="
-                      t-panel-slide absolute inset-x-0
-                      inset-be-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 overflow-y-auto
-                      border-bs border-border-warm bg-surface p-4 shadow-xl max-block-[60dvh]
-                    "
-                >
-                    <div className="mx-auto max-inline-md">
-                        <ListingScoreCard
-                            score={score}
-                            tasks={tasks}
-                            onTip={onTip}
-                            className="p-0 shadow-none"
-                        />
-                    </div>
-                </div>
-            ) : null}
+            <AppModal
+                open={open}
+                onOpenChange={onOpenChange}
+                title="Listing score"
+                description={`${score}% complete`}
+                nativeScroll
+                padding="sm"
+                className={styles.mobilePanel}
+            >
+                <ListingScoreCard
+                    score={score}
+                    tasks={tasks}
+                    onTip={onTip}
+                    showHeading={false}
+                    className="border-0 p-0 shadow-none"
+                />
+            </AppModal>
         </div>
     );
 }
@@ -1742,58 +1782,48 @@ function MobileDealSummary({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
-    if (stepIndex < 4) return null;
+    const [view, setView] = useState<"listing" | "deal">("listing");
     return (
-        <div className="shrink-0 xl:hidden">
+        <div className="flex-1 border-s border-border-warm min-inline-0">
             <Button
                 type="button"
                 variant="ghost"
+                aria-haspopup="dialog"
                 aria-expanded={open}
-                aria-controls="mobile-deal-summary-panel"
-                onClick={() => onOpenChange(!open)}
-                className="
-                  flex items-center justify-between gap-4 border-bs border-border-warm bg-brand-soft/40 px-4 text-start inline-full
-                  min-block-14
-                  hover:bg-brand-soft
-                  focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset
-                "
+                onClick={() => onOpenChange(true)}
+                className="gap-2 px-3 text-xs text-ink inline-full min-block-11"
             >
-                <div className="flex-1 min-inline-0">
-                    <LiveSummaryPanel
-                        audience={audience}
-                        values={values}
-                        stepIndex={stepIndex}
-                        compact
-                    />
-                </div>
-                <ChevronDown
-                    className={cn(
-                        `text-brand-text transition-transform duration-160 block-5 inline-5`,
-                        open && `rotate-180`,
-                    )}
-                    aria-hidden
-                />
+                Preview &amp; deal
+                <ChevronDown aria-hidden className="shrink-0 block-4 inline-4" />
             </Button>
-            {open ? (
-                <div
-                    id="mobile-deal-summary-panel"
-                    className="
-                      t-panel-slide absolute inset-x-0
-                      inset-be-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 overflow-y-auto
-                      bg-surface-muted shadow-xl max-block-[72dvh]
-                    "
-                    data-open={open}
-                >
-                    <div className="mx-auto p-4 max-inline-md">
-                        <LiveSummaryPanel
-                            audience={audience}
-                            values={values}
-                            stepIndex={stepIndex}
-                            photoFilesRef={photoFilesRef}
-                        />
-                    </div>
-                </div>
-            ) : null}
+            <AppModal
+                open={open}
+                onOpenChange={onOpenChange}
+                title="Property preview"
+                header={
+                    <SlidingTabs
+                        value={view}
+                        onValueChange={setView}
+                        label="Preview view"
+                        stretch
+                        options={[
+                            { value: "listing" as const, label: "Listing" },
+                            { value: "deal" as const, label: "Deal summary" },
+                        ]}
+                    />
+                }
+                nativeScroll
+                padding="sm"
+                className={styles.mobilePanel}
+            >
+                <LiveSummaryPanel
+                    audience={audience}
+                    values={values}
+                    stepIndex={stepIndex}
+                    photoFilesRef={photoFilesRef}
+                    view={view}
+                />
+            </AppModal>
         </div>
     );
 }

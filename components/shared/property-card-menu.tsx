@@ -1,5 +1,13 @@
 "use client";
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import {
+    type ComponentProps,
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+    useSyncExternalStore,
+} from "react";
 
 import { addCollection, Icon } from "@iconify/react/offline";
 
@@ -23,6 +31,10 @@ import {
     OVERLAY_ICON_BUTTON_CLASS,
     OVERLAY_ICON_BUTTON_COLORS,
 } from "@/components/shared/overlay-card";
+import {
+    PropertyActionsDrawer,
+    type PropertyDrawerAction,
+} from "@/components/shared/property-actions-drawer";
 import shareBrands from "@/components/shared/thesvg-color-share.json";
 import {
     DropdownMenu,
@@ -169,6 +181,15 @@ const DISABLED_ITEM_CLASS =
     "data-disabled:pointer-events-auto data-disabled:cursor-not-allowed data-disabled:opacity-50";
 const DRAFT_SHARE_HINT = "Publish this property to share or save it";
 
+const MOBILE_MENU_QUERY = "(max-width: 767px)";
+function subscribeToMobileMenu(onChange: () => void) {
+    const media = window.matchMedia(MOBILE_MENU_QUERY);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+}
+const isMobileMenu = () => window.matchMedia(MOBILE_MENU_QUERY).matches;
+const serverMobileMenu = () => false;
+
 /**
  * Listing actions grouped by sharing, people, management, and destructive actions.
  */
@@ -198,6 +219,7 @@ export function PropertyCardMenu({
     className,
 }: PropertyCardMenuProps) {
     const [open, setOpen] = useState(false);
+    const mobile = useSyncExternalStore(subscribeToMobileMenu, isMobileMenu, serverMobileMenu);
     const [copiedAt, setCopiedAt] = useState<number | null>(null);
     const copied = copiedAt !== null;
 
@@ -298,6 +320,144 @@ export function PropertyCardMenu({
     const remindUsed = Math.max(0, Math.min(remindersUsed, remindersLimit));
     const contactPhoneLabel = contact?.phoneDigits ? formatPhoneIn(contact.phoneDigits) : null;
 
+    if (mobile) {
+        const action = (
+            label: string,
+            name: ComponentProps<typeof PropertyMenuIcon>["name"],
+            onSelect: () => void,
+            options: Partial<PropertyDrawerAction> = {},
+        ): PropertyDrawerAction => ({
+            label,
+            icon: (
+                <PropertyMenuIcon
+                    name={name}
+                    aria-hidden
+                    className={
+                        options.destructive
+                            ? "menu-stroke-icon is-danger shrink-0 block-4.5 inline-4.5"
+                            : ICON_CLASS
+                    }
+                />
+            ),
+            onSelect,
+            ...options,
+        });
+        const manage: PropertyDrawerAction[] = [];
+        const owner: PropertyDrawerAction[] = [];
+        const activity: PropertyDrawerAction[] = [];
+        const destructive: PropertyDrawerAction[] = [];
+        if (onEdit) manage.push(action("Edit property", "edit", onEdit));
+        if (onAddBuyer)
+            manage.push(
+                action("Attach client", "client", onAddBuyer, {
+                    disabled: isAddBuyerBlocked,
+                    hint: isAddBuyerBlocked ? "Attach an owner first to attach clients" : undefined,
+                }),
+            );
+        if (contact?.phoneDigits)
+            owner.push(
+                action("Call owner", "phone", () => {
+                    window.location.assign(formatTelUrl(contact.phoneDigits!));
+                }),
+            );
+        if (contact?.onMessage) owner.push(action("Chat here", "message", contact.onMessage));
+        if (onRemind)
+            owner.push(
+                action(`Remind owner (${remindUsed}/${remindersLimit})`, "bell", onRemind, {
+                    disabled: !canRemind,
+                    keepOpen: true,
+                }),
+            );
+        if (onAttachOwner) owner.push(action(attachOwnerLabel, "owner", onAttachOwner));
+        if (onAnalytics) activity.push(action("View analytics", "analytics", onAnalytics));
+        if (onOpenTimeline) activity.push(action("View timeline", "history", onOpenTimeline));
+        if (FEATURE_SAVED_PROPERTIES && onToggleSave)
+            activity.push(
+                action(
+                    isSaved ? "Unsave property" : "Save property",
+                    isSaved ? "bookmark-filled" : "bookmark",
+                    onToggleSave,
+                    {
+                        disabled: isDraft,
+                        hint: isDraft ? DRAFT_SHARE_HINT : undefined,
+                        keepOpen: true,
+                    },
+                ),
+            );
+        if (onCancelRequest)
+            destructive.push(
+                action("Cancel request", "cancel", onCancelRequest, { destructive: true }),
+            );
+        if (onStopRepresenting)
+            destructive.push(
+                action(stopRepresentingLabel, "cancel", onStopRepresenting, { destructive: true }),
+            );
+        if (onDelete)
+            destructive.push(action("Delete listing", "trash", onDelete, { destructive: true }));
+
+        const shareActions = channels.map((channel): PropertyDrawerAction => ({
+            label: channel.label,
+            icon: channel.icon ? (
+                <Icon
+                    icon={channel.icon}
+                    width={channel.iconSize ?? 18}
+                    height={channel.iconSize ?? 18}
+                    aria-hidden
+                />
+            ) : (
+                <PropertyMenuIcon name="share" aria-hidden className={ICON_CLASS} />
+            ),
+            keepOpen: Boolean(channel.action),
+            onSelect: () => {
+                if (channel.action === "copy") void handleCopyLink();
+                else if (channel.action === "native-share") void handleNativeShare();
+                else if (channel.href) {
+                    if (channel.id === "email") window.location.href = channel.href;
+                    else window.open(channel.href, "_blank", "noopener,noreferrer");
+                }
+            },
+        }));
+        shareActions.push(
+            action(
+                copied ? "Link copied" : "Copy link",
+                copied ? "check" : "link",
+                () => void handleCopyLink(),
+                { keepOpen: true },
+            ),
+        );
+
+        return (
+            <PropertyActionsDrawer
+                open={open}
+                onOpenChange={handleOpenChange}
+                title={listing.title}
+                groups={[manage, owner, activity]}
+                destructiveActions={destructive}
+                shareActions={shareActions}
+                shareDisabled={isDraft}
+                shareHint={DRAFT_SHARE_HINT}
+                shareIcon={<PropertyMenuIcon name="share" aria-hidden className={ICON_CLASS} />}
+                trigger={
+                    <IconButton
+                        type="button"
+                        size="sm"
+                        appearance={tone === "overlay" ? "inverse" : "outline"}
+                        style={tone === "overlay" ? OVERLAY_ICON_BUTTON_COLORS : undefined}
+                        aria-label="Property actions"
+                        className={cn(
+                            tone === "overlay"
+                                ? OVERLAY_ICON_BUTTON_CLASS
+                                : "mbs-0.5 self-start text-ink-muted",
+                            className,
+                        )}
+                    >
+                        <PropertyMenuIcon name="dots" aria-hidden className="block-4 inline-4" />
+                    </IconButton>
+                }
+            />
+        );
+    }
+
     return (
         <DropdownMenu open={open} onOpenChange={handleOpenChange}>
             <DropdownMenuTrigger
@@ -372,7 +532,7 @@ export function PropertyCardMenu({
                         <DropdownMenuItem
                             className={ITEM_CLASS}
                             onClick={() => {
-                                window.location.href = formatTelUrl(contact.phoneDigits!);
+                                window.location.assign(formatTelUrl(contact.phoneDigits!));
                                 setOpen(false);
                             }}
                         >

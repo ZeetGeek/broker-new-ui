@@ -644,7 +644,6 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
 
     const handlers = useMemo<DealCardHandlers>(
         () => ({
-            onQuickAdvance: moveOptimistically,
             onView: (dealId) => {
                 openLeadView(dealId);
             },
@@ -704,7 +703,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 setNoteDealId(dealId);
             },
         }),
-        [moveOptimistically, openLeadView, requestMove, setPrefs, stageGate],
+        [openLeadView, requestMove, setPrefs, stageGate],
     );
 
     const handlePatch = useCallback(
@@ -792,7 +791,6 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 handlers={handlers}
                 isBusy={busyId === deal.id}
                 isPinned={pinnedDealIds.includes(deal.id)}
-                showStageAction={!desktopBoard}
             />
         );
     }
@@ -845,6 +843,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         leading={
                             <>
                                 <PipelineOutcomeTabs
+                                    compact={!desktopBoard}
                                     onChange={selectView}
                                     view={view}
                                     isLoading={isFirstLoad && isFetching}
@@ -949,6 +948,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                             />
                         ) : (
                             <PipelineMobileBoard
+                                stageFilter={filters.stage}
                                 active={mobileStage}
                                 onChange={setMobileStage}
                                 dealsByStage={dealsByStage}

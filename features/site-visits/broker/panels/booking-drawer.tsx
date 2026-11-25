@@ -32,6 +32,8 @@ import { BuyerPicker } from "@/features/site-visits/broker/panels/buyer-picker";
 import { ConflictPanel } from "@/features/site-visits/broker/panels/conflict-panel";
 import { type BookingFormValues, bookingSchema } from "@/schemas/visits";
 
+import styles from "./visit-drawer.module.css";
+
 function conflictFromApiError(error: unknown): ConflictResult | null {
     if (!(error instanceof ApiError) || error.status !== 400) return null;
     const body = error.body;
@@ -248,7 +250,7 @@ export function BookingDrawer({
                 <AppModalFooter
                     className="
                   sticky inset-be-0 flex shrink-0 items-center justify-between gap-4 border-bs
-                  border-border-warm bg-surface p-4
+                  border-(--dialog-divider) bg-surface p-4
                 "
                 >
                     <p className="body-xs text-ink-muted max-inline-48">
@@ -269,7 +271,7 @@ export function BookingDrawer({
             }
             footerClassName="p-0"
         >
-            <div className="shrink-0 border-be border-border-warm p-5">
+            <div className="shrink-0 border-be border-(--dialog-divider) p-5">
                 <p className="body-sm text-ink-muted">
                     One screen. Your client, the timing, and any clash.
                 </p>
@@ -306,7 +308,7 @@ export function BookingDrawer({
                     revealDrawerSections(event.currentTarget);
                     void submit(event);
                 }}
-                className="flex-1 overflow-y-auto p-5 min-block-0"
+                className={`flex-1 overflow-y-auto p-5 min-block-0 ${styles.sections}`}
             >
                 {!hasBookingAccess ? (
                     <p

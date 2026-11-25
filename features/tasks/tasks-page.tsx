@@ -442,6 +442,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                             />
 
                             <ResponsiveListStatus
+                                mobileDrawer
                                 value={tab}
                                 options={tabs}
                                 label="Status"
@@ -475,6 +476,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                     }
                     actions={
                         <ListToolbarSelect
+                            mobileDrawer
                             defaultValue={defaultSort}
                             label="Sort tasks"
                             mobileLabel="Sort"

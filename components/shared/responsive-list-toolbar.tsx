@@ -1,10 +1,13 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { filterChipClassName, FilterChipCount } from "@/components/shared/filter-chip";
+import { Check, ChevronDown } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import {
     Select,
     SelectContent,
@@ -30,6 +33,7 @@ export function ListStatusSelect({
     label = "Status",
     isLoading = false,
     hideLabel = false,
+    mobileDrawer = true,
 }: {
     options: ListStatusOption[];
     value: string;
@@ -37,8 +41,79 @@ export function ListStatusSelect({
     label?: string;
     isLoading?: boolean;
     hideLabel?: boolean;
+    mobileDrawer?: boolean;
 }) {
+    const mobile = useMobileMenu();
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const selected = options.find((option) => option.value === value);
+    if (mobileDrawer && mobile) {
+        return (
+            <MobileActionDrawer
+                open={drawerOpen}
+                onOpenChange={setDrawerOpen}
+                title={label}
+                trigger={
+                    <button
+                        type="button"
+                        aria-label={`${label}: ${selected?.label ?? value}${selected?.count ? `, ${selected.count}` : ""}`}
+                        className={cn(
+                            filterChipClassName(true),
+                            "border! text-sm! outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
+                            styles.trigger,
+                        )}
+                    >
+                        {!hideLabel ? <span className={styles.label}>{label}:</span> : null}
+                        <span
+                            aria-hidden
+                            className={cn(
+                                "shrink-0 rounded-full block-1.5 inline-1.5",
+                                selected?.dotClassName,
+                            )}
+                        />
+                        <span className="truncate">{selected?.label ?? value}</span>
+                        <FilterChipCount
+                            count={selected?.count ?? undefined}
+                            isActive
+                            isLoading={isLoading && selected?.count == null}
+                        />
+                        <ChevronDown
+                            aria-hidden
+                            className="shrink-0 opacity-60 block-3.5 inline-3.5"
+                        />
+                    </button>
+                }
+            >
+                {options.map((option) => (
+                    <button
+                        key={option.value}
+                        type="button"
+                        className={mobileActionClass}
+                        aria-pressed={value === option.value}
+                        onClick={() => {
+                            onChange(option.value);
+                            setDrawerOpen(false);
+                        }}
+                    >
+                        <span
+                            aria-hidden
+                            className={cn(
+                                "shrink-0 rounded-full block-1.5 inline-1.5",
+                                option.dotClassName,
+                            )}
+                        />
+                        <span>{option.label}</span>
+                        <FilterChipCount
+                            count={option.count ?? undefined}
+                            isLoading={isLoading && option.count == null}
+                            isActive={value === option.value}
+                            className="ms-auto"
+                        />
+                        {value === option.value ? <Check aria-hidden /> : null}
+                    </button>
+                ))}
+            </MobileActionDrawer>
+        );
+    }
     return (
         <Select
             value={value}

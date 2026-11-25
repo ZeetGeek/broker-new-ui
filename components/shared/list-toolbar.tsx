@@ -5,17 +5,20 @@ import { type ComponentProps, useEffect, useRef, useState } from "react";
 import type { SearchHelp } from "@/lib/search/search-help";
 import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { filterChipClassName } from "@/components/shared/filter-chip";
 import { IconButton } from "@/components/shared/icon-button";
 import {
     type AppIcon,
     ArrowDownUp,
+    Check,
     ChevronDown,
     Info,
     Plus,
     Search,
 } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -197,6 +200,7 @@ type ListToolbarSelectProps<T extends string> = {
     /** Explicitly highlight filters such as the visit date range. */
     active?: boolean;
     mobileLabel?: string;
+    mobileDrawer?: boolean;
     tooltip?: string;
     disabled?: boolean;
     className?: string;
@@ -211,11 +215,69 @@ export function ListToolbarSelect<T extends string>({
     defaultValue,
     active = defaultValue !== undefined && value !== defaultValue,
     mobileLabel,
+    mobileDrawer = true,
     tooltip,
     disabled = false,
     className,
 }: ListToolbarSelectProps<T>) {
+    const mobile = useMobileMenu();
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const selectedLabel = options.find((option) => option.value === value)?.label ?? value;
+    if (mobileDrawer && mobile) {
+        return (
+            <MobileActionDrawer
+                open={drawerOpen}
+                onOpenChange={setDrawerOpen}
+                title={label}
+                trigger={
+                    <button
+                        type="button"
+                        disabled={disabled}
+                        aria-label={`${label}: ${selectedLabel}`}
+                        className={cn(
+                            filterChipClassName(active),
+                            "gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring/30 disabled:opacity-50",
+                            !active && "text-ink-muted",
+                            mobileLabel && toolbarStyles.compactSelect,
+                            className,
+                        )}
+                    >
+                        <ArrowDownUp
+                            aria-hidden
+                            className="text-brand block-4 inline-4"
+                            strokeWidth={1.75}
+                        />
+                        <span className={cn("truncate", mobileLabel && "hidden sm:inline")}>
+                            {selectedLabel}
+                        </span>
+                        {mobileLabel ? <span className="sm:hidden">{mobileLabel}</span> : null}
+                        <ChevronDown
+                            aria-hidden
+                            className="opacity-60 block-3.5 inline-3.5"
+                            strokeWidth={1.75}
+                        />
+                    </button>
+                }
+            >
+                {options.map((option) => (
+                    <button
+                        key={option.value}
+                        type="button"
+                        className={mobileActionClass}
+                        aria-pressed={value === option.value}
+                        disabled={option.disabled}
+                        onClick={() => {
+                            onChange(option.value);
+                            setDrawerOpen(false);
+                        }}
+                    >
+                        {option.label}
+                        {value === option.value ? <Check aria-hidden className="ms-auto" /> : null}
+                    </button>
+                ))}
+            </MobileActionDrawer>
+        );
+    }
     const trigger = (
         <DropdownMenuTrigger
             render={

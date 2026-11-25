@@ -4,12 +4,13 @@ import Link from "next/link";
 
 import {
     PortalProfileMenu,
+    PortalProfileMenuGroup as DropdownMenuGroup,
+    PortalProfileMenuItem as DropdownMenuItem,
     portalProfileMenuItemClass,
     PortalProfileMenuSeparator,
     PortalProfileShortcutHint,
 } from "@/components/layout/portal-profile-menu";
 import { Activity, Bell, PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
-import { DropdownMenuGroup, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import { FEATURE_SAVED_PROPERTIES } from "@/config";
 import { SUPPORT_WHATSAPP_URL } from "@/config/constants";

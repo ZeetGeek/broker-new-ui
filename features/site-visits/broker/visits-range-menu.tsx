@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { parseApiDateOnly } from "@/lib/datetime/api";
 import { formatDateIso, formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { AppDateRangeFields } from "@/components/shared/app-date-range-fields";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
-import { CalendarRange, ChevronDown, Search } from "@/components/shared/icons";
+import { CalendarRange, Check, ChevronDown, Search } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -126,7 +128,10 @@ export function VisitsRangeMenu({
     searchAriaLabel?: string;
     customDescription?: string;
 }) {
+    const mobile = useMobileMenu();
     const [pickerOpen, setPickerOpen] = useState(false);
+    const [rangeOpen, setRangeOpen] = useState(false);
+    const afterRangeClose = useRef<null | (() => void)>(null);
     const isDefault = range === "week";
     const [draft, setDraft] = useState({ from: customFrom, to: customTo });
     const validRange = !!(draft.from && draft.to && draft.from <= draft.to);
@@ -135,6 +140,25 @@ export function VisitsRangeMenu({
         setDraft({ from: customFrom, to: customTo });
         setPickerOpen(true);
     };
+    const rangeTrigger = (
+        <button
+            type="button"
+            className={cn(
+                ownerListingsChipClassName(!isDefault),
+                "gap-2",
+                isDefault && "text-ink-muted",
+            )}
+        >
+            <CalendarRange aria-hidden className="text-brand block-4 inline-4" strokeWidth={1.75} />
+            <span className="hidden sm:inline">{rangeLabel(range, customFrom, customTo)}</span>
+            <span className="sm:hidden">Date</span>
+            <ChevronDown
+                aria-hidden
+                className="opacity-60 block-3.5 inline-3.5"
+                strokeWidth={1.75}
+            />
+        </button>
+    );
 
     return (
         <div className="flex shrink-0 items-center gap-2.5">
@@ -146,42 +170,29 @@ export function VisitsRangeMenu({
                 ariaLabel={searchAriaLabel}
             />
 
-            <DropdownMenu>
-                <DropdownMenuTrigger
-                    render={
-                        <button
-                            type="button"
-                            className={cn(
-                                ownerListingsChipClassName(!isDefault),
-                                "gap-2",
-                                isDefault && "text-ink-muted",
-                            )}
-                        >
-                            <CalendarRange
-                                aria-hidden
-                                className="text-brand block-4 inline-4"
-                                strokeWidth={1.75}
-                            />
-                            <span className="hidden sm:inline">
-                                {rangeLabel(range, customFrom, customTo)}
-                            </span>
-                            <span className="sm:hidden">Date</span>
-                            <ChevronDown
-                                aria-hidden
-                                className="opacity-60 block-3.5 inline-3.5"
-                                strokeWidth={1.75}
-                            />
-                        </button>
-                    }
-                />
-                <DropdownMenuContent align="end" className="min-inline-44">
+            {mobile ? (
+                <MobileActionDrawer
+                    open={rangeOpen}
+                    onOpenChange={setRangeOpen}
+                    onOpenChangeComplete={(nextOpen) => {
+                        if (nextOpen) return;
+                        const action = afterRangeClose.current;
+                        afterRangeClose.current = null;
+                        action?.();
+                    }}
+                    title="Visit dates"
+                    trigger={rangeTrigger}
+                >
                     {RANGE_OPTIONS.map((option) => (
-                        <DropdownMenuItem
+                        <button
                             key={option.value}
-                            className={cn(range === option.value && "font-semibold text-brand")}
+                            type="button"
+                            className={mobileActionClass}
+                            aria-pressed={range === option.value}
                             onClick={() => {
                                 if (option.value === "custom") {
-                                    openCustomPicker();
+                                    afterRangeClose.current = openCustomPicker;
+                                    setRangeOpen(false);
                                     return;
                                 }
                                 onRangeChange({
@@ -189,13 +200,42 @@ export function VisitsRangeMenu({
                                     customFrom: "",
                                     customTo: "",
                                 });
+                                setRangeOpen(false);
                             }}
                         >
                             {option.label}
-                        </DropdownMenuItem>
+                            {range === option.value ? (
+                                <Check aria-hidden className="ms-auto" />
+                            ) : null}
+                        </button>
                     ))}
-                </DropdownMenuContent>
-            </DropdownMenu>
+                </MobileActionDrawer>
+            ) : (
+                <DropdownMenu>
+                    <DropdownMenuTrigger render={rangeTrigger} />
+                    <DropdownMenuContent align="end" className="min-inline-44">
+                        {RANGE_OPTIONS.map((option) => (
+                            <DropdownMenuItem
+                                key={option.value}
+                                className={cn(range === option.value && "font-semibold text-brand")}
+                                onClick={() => {
+                                    if (option.value === "custom") {
+                                        openCustomPicker();
+                                        return;
+                                    }
+                                    onRangeChange({
+                                        range: option.value,
+                                        customFrom: "",
+                                        customTo: "",
+                                    });
+                                }}
+                            >
+                                {option.label}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            )}
 
             <AppModal
                 open={pickerOpen}

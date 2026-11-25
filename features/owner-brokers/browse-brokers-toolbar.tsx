@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
+
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import type { AppIcon } from "@/components/shared/icons";
-import { BadgeCheck, Briefcase, ChevronDown, Tags } from "@/components/shared/icons";
+import { BadgeCheck, Briefcase, Check, ChevronDown, Tags } from "@/components/shared/icons";
 import { ListToolbarSelect } from "@/components/shared/list-toolbar";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -57,36 +61,55 @@ function ChipMenu<T extends string | number>({
     onChange: (value: T) => void;
     align?: "start" | "end";
 }) {
+    const mobile = useMobileMenu();
+    const [open, setOpen] = useState(false);
     const isActive = value !== defaultValue;
+    const trigger = (
+        <button
+            type="button"
+            className={cn(
+                ownerListingsChipClassName(isActive),
+                "gap-2",
+                !isActive && "text-ink-muted",
+            )}
+        >
+            <Icon aria-hidden className="text-brand block-4 inline-4" strokeWidth={1.75} />
+            <span className="truncate max-inline-40">
+                {isActive && activeLabel ? activeLabel : label}
+            </span>
+            <ChevronDown
+                aria-hidden
+                className="opacity-60 block-3.5 inline-3.5"
+                strokeWidth={1.75}
+            />
+        </button>
+    );
+
+    if (mobile) {
+        return (
+            <MobileActionDrawer open={open} onOpenChange={setOpen} title={label} trigger={trigger}>
+                {options.map((option) => (
+                    <button
+                        key={String(option.value)}
+                        type="button"
+                        className={mobileActionClass}
+                        aria-pressed={value === option.value}
+                        onClick={() => {
+                            onChange(option.value);
+                            setOpen(false);
+                        }}
+                    >
+                        {option.label}
+                        {value === option.value ? <Check aria-hidden className="ms-auto" /> : null}
+                    </button>
+                ))}
+            </MobileActionDrawer>
+        );
+    }
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger
-                render={
-                    <button
-                        type="button"
-                        className={cn(
-                            ownerListingsChipClassName(isActive),
-                            "gap-2",
-                            !isActive && "text-ink-muted",
-                        )}
-                    >
-                        <Icon
-                            aria-hidden
-                            className="text-brand block-4 inline-4"
-                            strokeWidth={1.75}
-                        />
-                        <span className="truncate max-inline-40">
-                            {isActive && activeLabel ? activeLabel : label}
-                        </span>
-                        <ChevronDown
-                            aria-hidden
-                            className="opacity-60 block-3.5 inline-3.5"
-                            strokeWidth={1.75}
-                        />
-                    </button>
-                }
-            />
+            <DropdownMenuTrigger render={trigger} />
             <DropdownMenuContent align={align} className="min-inline-48">
                 {options.map((option) => (
                     <DropdownMenuItem

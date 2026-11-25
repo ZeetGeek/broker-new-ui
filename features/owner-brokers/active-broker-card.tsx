@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 
 import { addCollection, Icon } from "@iconify/react/offline";
@@ -8,11 +8,13 @@ import { addCollection, Icon } from "@iconify/react/offline";
 import { formatPhoneIn, formatWhatsAppUrl } from "@/lib/format/phone";
 import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { CardLink } from "@/components/shared/card-link";
 import { ContactName } from "@/components/shared/contact-name";
 import { IconButton } from "@/components/shared/icon-button";
 import { MapPin, MoreHorizontal, Phone, UserMinus } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -47,6 +49,19 @@ export function ActiveBrokerCard({
     const detailsHref = ownerRequestDetailHref(item.propertyId);
     const hasPhone = Boolean(item.brokerPhoneDigits);
     const [isRemoveOpen, setIsRemoveOpen] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const afterMenuClose = useRef<null | (() => void)>(null);
+    const mobile = useMobileMenu();
+    const menuTrigger = (
+        <IconButton
+            type="button"
+            size="sm"
+            aria-label={`More actions for ${item.brokerName}`}
+            className="shrink-0"
+        >
+            <MoreHorizontal aria-hidden className="block-4 inline-4" strokeWidth={1.75} />
+        </IconButton>
+    );
 
     return (
         <article
@@ -108,37 +123,46 @@ export function ActiveBrokerCard({
                         </p>
                     ) : null}
                 </div>
-                <DropdownMenu>
-                    <DropdownMenuTrigger
-                        render={
-                            <IconButton
-                                type="button"
-                                size="sm"
-                                aria-label={`More actions for ${item.brokerName}`}
-                                className="shrink-0"
-                            />
-                        }
+                {mobile ? (
+                    <MobileActionDrawer
+                        open={menuOpen}
+                        onOpenChange={setMenuOpen}
+                        onOpenChangeComplete={(nextOpen) => {
+                            if (nextOpen) return;
+                            const action = afterMenuClose.current;
+                            afterMenuClose.current = null;
+                            action?.();
+                        }}
+                        title="Broker actions"
+                        description={item.brokerName}
+                        trigger={menuTrigger}
                     >
-                        <MoreHorizontal
-                            aria-hidden
-                            className="block-4 inline-4"
-                            strokeWidth={1.75}
-                        />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" sideOffset={6}>
-                        <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => setIsRemoveOpen(true)}
+                        <button
+                            type="button"
+                            className={cn(mobileActionClass, "text-danger")}
+                            onClick={() => {
+                                afterMenuClose.current = () => setIsRemoveOpen(true);
+                                setMenuOpen(false);
+                            }}
                         >
-                            <UserMinus
-                                aria-hidden
-                                className="block-4 inline-4"
-                                strokeWidth={1.75}
-                            />
+                            <UserMinus aria-hidden />
                             Remove broker
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                        </button>
+                    </MobileActionDrawer>
+                ) : (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger render={menuTrigger} />
+                        <DropdownMenuContent align="end" sideOffset={6}>
+                            <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => setIsRemoveOpen(true)}
+                            >
+                                <UserMinus aria-hidden />
+                                Remove broker
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
             </div>
 
             <div className="flex flex-1 flex-col gap-1.5 min-inline-0">

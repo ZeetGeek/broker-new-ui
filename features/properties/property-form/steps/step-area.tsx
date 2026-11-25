@@ -5,8 +5,10 @@ import { useFormContext } from "react-hook-form";
 
 import { areaToSqft, convertArea } from "@/lib/calc/area";
 import type { PropertyDraftValues } from "@/lib/schemas/property";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { ArrowRightLeft, Hash, Ruler, Scale } from "@/components/shared/icons";
+import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import {
     Combobox,
     ComboboxContent,
@@ -27,6 +29,7 @@ import {
 } from "@/features/properties/property-form/form-fields";
 
 export function StepArea() {
+    const mobile = useMobileMenu();
     const { watch, setValue } = useFormContext<PropertyDraftValues>();
     const unit = watch("area.unit");
     const carpet = watch("area.carpetArea");
@@ -97,7 +100,7 @@ export function StepArea() {
                 title={<>Unit converter</>}
                 description="Check another unit without changing the saved property area."
             >
-                <div className="grid items-end gap-4 md:grid-cols-[1fr_1fr_auto_1fr]">
+                <div className="grid grid-cols-1 items-end gap-4 min-inline-0 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_minmax(0,1fr)]">
                     <div className="flex flex-col gap-2">
                         <Label
                             htmlFor="area-converter-value"
@@ -125,35 +128,47 @@ export function StepArea() {
                         >
                             Unit
                         </Label>
-                        <Combobox
-                            value={converterUnit}
-                            onValueChange={(value) => setConverterUnit(value ?? "sqm")}
-                            items={AREA_UNIT_OPTIONS.map((option) => option.value)}
-                            itemToStringLabel={(value) =>
-                                AREA_UNIT_OPTIONS.find((option) => option.value === value)?.label ??
-                                value
-                            }
-                        >
-                            <ComboboxInput
+                        {mobile ? (
+                            <MobileSelectDrawer
                                 id="area-converter-unit"
-                                className="text-sm block-control-lg"
-                                size="lg"
-                                placeholder="Choose a unit"
+                                label="Unit"
+                                value={converterUnit}
+                                options={AREA_UNIT_OPTIONS}
+                                onChange={setConverterUnit}
                                 startIcon={Ruler}
+                                placeholder="Choose a unit"
                             />
-                            <ComboboxContent>
-                                <ComboboxEmpty>No matches</ComboboxEmpty>
-                                <ComboboxList>
-                                    {(item: string) => (
-                                        <ComboboxItem key={item} value={item}>
-                                            {AREA_UNIT_OPTIONS.find(
-                                                (option) => option.value === item,
-                                            )?.label ?? item}
-                                        </ComboboxItem>
-                                    )}
-                                </ComboboxList>
-                            </ComboboxContent>
-                        </Combobox>
+                        ) : (
+                            <Combobox
+                                value={converterUnit}
+                                onValueChange={(value) => setConverterUnit(value ?? "sqm")}
+                                items={AREA_UNIT_OPTIONS.map((option) => option.value)}
+                                itemToStringLabel={(value) =>
+                                    AREA_UNIT_OPTIONS.find((option) => option.value === value)
+                                        ?.label ?? value
+                                }
+                            >
+                                <ComboboxInput
+                                    id="area-converter-unit"
+                                    className="text-sm block-control-lg"
+                                    size="lg"
+                                    placeholder="Choose a unit"
+                                    startIcon={Ruler}
+                                />
+                                <ComboboxContent>
+                                    <ComboboxEmpty>No matches</ComboboxEmpty>
+                                    <ComboboxList>
+                                        {(item: string) => (
+                                            <ComboboxItem key={item} value={item}>
+                                                {AREA_UNIT_OPTIONS.find(
+                                                    (option) => option.value === item,
+                                                )?.label ?? item}
+                                            </ComboboxItem>
+                                        )}
+                                    </ComboboxList>
+                                </ComboboxContent>
+                            </Combobox>
+                        )}
                     </div>
                     <ArrowRightLeft
                         className="mbe-3 hidden text-ink-muted block-5 inline-5 md:block"

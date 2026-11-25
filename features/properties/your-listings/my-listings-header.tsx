@@ -308,6 +308,7 @@ export function MyListingsHeader({
                                 />
                                 <ResponsiveListStatus
                                     label="Status"
+                                    mobileDrawer
                                     value={filters.status}
                                     options={STATUS_TABS.map((tab) => ({
                                         value: tab.key,
@@ -368,6 +369,7 @@ export function MyListingsHeader({
                             <>
                                 <ListToolbarSelect
                                     label="Sort listings"
+                                    mobileDrawer
                                     options={SORT_OPTIONS}
                                     defaultValue="newest"
                                     mobileLabel="Sort"

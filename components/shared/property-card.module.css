@@ -29,11 +29,17 @@
     padding: 0.5rem 0.75rem;
 }
 
+.ownerRow {
+    flex-wrap: wrap;
+    text-align: center;
+}
+
 .person {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     min-inline-size: 0;
+    max-inline-size: 100%;
 }
 
 .personName,
@@ -119,20 +125,10 @@
     .prices > p > [aria-hidden] {
         display: none;
     }
-
-    .ownerRow {
-        justify-content: flex-start;
-    }
 }
 
 /* Keep full action labels and comfortable targets when two buttons stop fitting. */
 @container owned-property-card (max-width: 17rem) {
-    .ownerRow {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-    }
-
     .contactActions {
         grid-template-columns: minmax(0, 1fr);
     }

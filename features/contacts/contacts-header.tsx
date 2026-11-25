@@ -72,6 +72,7 @@ export function ContactsHeader({
                     selection={
                         <ResponsiveListStatus
                             label="Contacts"
+                            mobileDrawer
                             value={filters.tab}
                             options={[
                                 {
@@ -130,6 +131,7 @@ export function ContactsHeader({
                     actions={
                         <>
                             <ListToolbarSelect
+                                mobileDrawer
                                 label={isBuyers ? "Sort clients" : "Sort owners"}
                                 value={
                                     !supportsActivitySort && filters.sort === "most_active"

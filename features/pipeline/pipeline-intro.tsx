@@ -97,7 +97,7 @@ export function PipelineIntro({
         <ListPageHeading title="Pipeline.">
             <RotatingHeaderSummary
                 key={`${view}:${lines.join("|")}`}
-                lines={lines}
+                lines={lines.slice(0, 1)}
                 isLoading={isLoading}
                 loadingLabel="Loading your pipeline summary"
                 loadingPlaceholder="Your deals, from first contact to close"

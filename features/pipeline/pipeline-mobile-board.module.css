@@ -1,39 +1,96 @@
 .board {
     display: flex;
     flex-direction: column;
+    min-inline-size: 0;
+}
+.rail {
+    position: relative;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    align-items: start;
     gap: 0.75rem;
     min-inline-size: 0;
+    max-inline-size: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-warm) transparent;
+    padding: 0.25rem 0.25rem 0.75rem;
+    outline-offset: -2px;
 }
-
-.navigation {
-    position: sticky;
-    inset-block-start: var(--pipeline-header-offset, 0px);
-    z-index: 20;
+.column {
+    display: flex;
+    flex-direction: column;
     min-inline-size: 0;
-    padding-block: 0.5rem;
-    background: var(--color-surface-muted);
-    border-block-end: 1px solid var(--color-border-warm);
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
 }
-
-.summary {
+.columnHeader {
+    display: grid;
+    gap: 0.375rem;
+    padding: 0.25rem 0.125rem 0.875rem;
+}
+.columnTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-ink);
+}
+.columnTitle h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 650;
+    line-height: 1.5;
+}
+.count {
+    color: var(--color-ink-muted);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+}
+.value {
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem 0.75rem;
-    margin-block-start: 0.5rem;
     color: var(--color-ink-muted);
-    font-size: calc(0.8125rem / var(--layout-font-scale));
-    line-height: 1.4;
+    font-size: 0.75rem;
+    line-height: 1.5;
     font-variant-numeric: tabular-nums;
 }
-
-.panel {
+.deals {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    min-inline-size: 0;
-    outline-offset: 2px;
+    gap: 0.625rem;
+    padding-block-end: 0.5rem;
 }
-
+.deals > * {
+    flex-shrink: 0;
+    min-inline-size: 0;
+}
+.loadMore {
+    inline-size: 100%;
+    min-block-size: 2.75rem;
+}
+.empty {
+    display: grid;
+    justify-items: start;
+    gap: 0.5rem;
+    padding: 1.25rem;
+    border: 1px dashed var(--color-border-warm);
+    border-radius: var(--radius-card);
+    color: var(--color-ink-muted);
+}
+.empty h3 {
+    color: var(--color-ink);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+.empty p {
+    font-size: 0.8125rem;
+    line-height: 1.6;
+}
 @media (min-width: 48rem) {
     .board {
         display: none;

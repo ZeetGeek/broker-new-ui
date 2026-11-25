@@ -22,6 +22,8 @@ import {
 } from "@/features/pipeline/types";
 import { applyStageOrder, usePipelineDnd } from "@/features/pipeline/use-pipeline-dnd";
 
+import styles from "./pipeline-board.module.css";
+
 /**
  * The card settles into its new slot instead of vanishing from under the
  * pointer. 220ms on the project's standard ease — docs/MOTION.md — while the
@@ -114,13 +116,7 @@ export function PipelineBoard({
             onDragCancel={dnd.handleDragCancel}
             accessibility={{ announcements }}
         >
-            <div
-                className="
-                  hidden snap-x snap-mandatory items-stretch gap-3 overflow-x-auto
-                  md:flex
-                  lg:grid lg:snap-none lg:grid-cols-4 lg:gap-card-grid lg:overflow-visible
-                "
-            >
+            <div className={styles.rail} role="region" aria-label="Pipeline stages" tabIndex={0}>
                 {DEAL_STAGE_ORDER.map((stage) => (
                     <PipelineColumn
                         key={stage}

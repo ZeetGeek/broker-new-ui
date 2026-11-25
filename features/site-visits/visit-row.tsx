@@ -1,11 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useRef, useState } from "react";
 
 import { formatDurationUntil, formatTimeIn } from "@/lib/format/date";
 import { formatPropertyCardName } from "@/lib/format/property-card-name";
 import { ownerBrokerProfileHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { ContactName } from "@/components/shared/contact-name";
 import { IconButton } from "@/components/shared/icon-button";
@@ -17,6 +18,7 @@ import {
     PhoneCall,
     StickyNote,
 } from "@/components/shared/icons";
+import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +99,9 @@ export function VisitRow({
     now,
     className,
 }: VisitRowProps) {
+    const mobile = useMobileMenu();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const afterClose = useRef<null | (() => void)>(null);
     const meta = VISIT_STATUS_META[visit.status];
     const StatusIcon = meta.icon;
     const scheduled = new Date(visit.scheduledAt);
@@ -373,32 +378,70 @@ export function VisitRow({
                 ) : null}
 
                 {actions.secondary.length + actions.overflow.length > 0 ? (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger
-                            render={
-                                <IconButton
-                                    size="sm"
-                                    aria-label="More actions for this visit"
-                                    className="lg:opacity-0 lg:transition-opacity lg:duration-160 lg:group-hover/row:opacity-100 lg:focus-visible:opacity-100 lg:aria-expanded:opacity-100"
-                                >
+                    mobile ? (
+                        <MobileActionDrawer
+                            open={menuOpen}
+                            onOpenChange={setMenuOpen}
+                            onOpenChangeComplete={(nextOpen) => {
+                                if (nextOpen) return;
+                                const action = afterClose.current;
+                                afterClose.current = null;
+                                action?.();
+                            }}
+                            title="Visit actions"
+                            description={`${visit.property.title} · ${timeRangeLabel}`}
+                            trigger={
+                                <IconButton size="sm" aria-label="More actions for this visit">
                                     <MoreHorizontal aria-hidden />
                                 </IconButton>
                             }
-                        />
-                        <DropdownMenuContent align="end">
+                        >
                             {[...actions.secondary, ...actions.overflow].map((action) => (
-                                <DropdownMenuItem
+                                <button
                                     key={action}
-                                    variant={
-                                        isDestructiveAction(action) ? "destructive" : undefined
-                                    }
-                                    onClick={() => handlers.onAction(visit.id, action)}
+                                    type="button"
+                                    className={cn(
+                                        mobileActionClass,
+                                        isDestructiveAction(action) && "text-danger",
+                                    )}
+                                    onClick={() => {
+                                        afterClose.current = () =>
+                                            handlers.onAction(visit.id, action);
+                                        setMenuOpen(false);
+                                    }}
                                 >
                                     {visitActionLabel(action, viewer)}
-                                </DropdownMenuItem>
+                                </button>
                             ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                        </MobileActionDrawer>
+                    ) : (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger
+                                render={
+                                    <IconButton
+                                        size="sm"
+                                        aria-label="More actions for this visit"
+                                        className="lg:opacity-0 lg:transition-opacity lg:duration-160 lg:group-hover/row:opacity-100 lg:focus-visible:opacity-100 lg:aria-expanded:opacity-100"
+                                    >
+                                        <MoreHorizontal aria-hidden />
+                                    </IconButton>
+                                }
+                            />
+                            <DropdownMenuContent align="end">
+                                {[...actions.secondary, ...actions.overflow].map((action) => (
+                                    <DropdownMenuItem
+                                        key={action}
+                                        variant={
+                                            isDestructiveAction(action) ? "destructive" : undefined
+                                        }
+                                        onClick={() => handlers.onAction(visit.id, action)}
+                                    >
+                                        {visitActionLabel(action, viewer)}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )
                 ) : null}
             </div>
 

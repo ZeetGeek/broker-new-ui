@@ -12,11 +12,13 @@ export function ListingScoreCard({
     tasks,
     onTip,
     className,
+    showHeading = true,
 }: {
     score: number;
     tasks: ListingScoreTask[];
     onTip: (step: PropertyFormStep) => void;
     className?: string;
+    showHeading?: boolean;
 }) {
     const safeScore = Math.max(0, Math.min(100, score));
     const allComplete = tasks.every((task) => task.completed);
@@ -27,10 +29,12 @@ export function ListingScoreCard({
                 className,
             )}
         >
-            <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-bold text-ink">Listing score</h2>
-                <span className="tabular text-xl font-bold text-brand-text">{safeScore}%</span>
-            </div>
+            {showHeading ? (
+                <div className="flex items-center justify-between gap-3">
+                    <h2 className="text-sm font-bold text-ink">Listing score</h2>
+                    <span className="tabular text-xl font-bold text-brand-text">{safeScore}%</span>
+                </div>
+            ) : null}
             <div
                 role="progressbar"
                 aria-label="Listing score"

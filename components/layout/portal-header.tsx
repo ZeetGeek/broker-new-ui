@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import {
     PortalMobileAppBar,
@@ -45,6 +46,7 @@ export function PortalHeader({
 }: PortalHeaderProps) {
     const homeHref = navItems[0]?.href ?? "/";
     const scrolled = usePortalHeaderScrolled();
+    const mobile = useMobileMenu();
 
     return (
         <div data-portal-shell className="bg-surface-muted min-block-screen">
@@ -66,6 +68,7 @@ export function PortalHeader({
                         <PortalMobileAppBar
                             identity={mobileIdentity}
                             notificationsHref={notificationsHref}
+                            profileMenu={mobile ? profileMenu : undefined}
                         />
 
                         <div
@@ -95,7 +98,7 @@ export function PortalHeader({
                                     className="shrink-0 bg-ink-subtle/30 block-7 inline-px"
                                 />
 
-                                {profileMenu}
+                                {!mobile ? profileMenu : null}
                             </div>
                         </div>
                     </div>

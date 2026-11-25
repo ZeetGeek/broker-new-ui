@@ -256,6 +256,7 @@ export function VisitList({
                             </div>
                             <div className={styles.statusSelect}>
                                 <ListStatusSelect
+                                    mobileDrawer
                                     label="Status"
                                     value={tab}
                                     options={VISIT_TABS.map((t) => ({
@@ -283,6 +284,7 @@ export function VisitList({
                     }
                     actions={
                         <ListToolbarSelect
+                            mobileDrawer
                             className={styles.toolbarSort}
                             label="Sort visits"
                             mobileLabel="Sort"
@@ -300,6 +302,7 @@ export function VisitList({
                     }
                 >
                     <ListToolbarSelect
+                        mobileDrawer
                         active
                         className={styles.toolbarDates}
                         label="Visit dates"
