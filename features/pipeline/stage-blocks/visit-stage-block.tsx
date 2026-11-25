@@ -1,85 +1,70 @@
 import { formatDateShort, formatTimeIn, isSameCalendarDay } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
-import { Calendar, CalendarClock, Pencil } from "@/components/shared/icons";
+import { IconButton } from "@/components/shared/icon-button";
+import { Calendar, CalendarClock, CalendarPlus } from "@/components/shared/icons";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { DealItem } from "@/features/pipeline/types";
-import { canScheduleVisit, scheduleVisitHref } from "@/features/pipeline/visit-link";
+import { canOpenVisitAction, scheduleVisitHref } from "@/features/pipeline/visit-link";
 
 import styles from "../deal-card.module.css";
 
-/**
- * Site visit stage: the booked visit, or a prompt to book one. On exclusive
- * listings both links open Visits for this deal (see `scheduleVisitHref`);
- * owner-listed deals show the date only.
- */
+/** Booked visits expose rescheduling; Visits resolves and checks the actual booking. */
 export function VisitStageBlock({ deal }: { deal: DealItem }) {
-    const when = deal.nextVisitAt ? new Date(deal.nextVisitAt) : null;
+    const date = deal.nextVisitAt ? new Date(deal.nextVisitAt) : null;
+    const when = date && Number.isFinite(date.getTime()) ? date : null;
     const isToday = when != null && isSameCalendarDay(when, new Date());
-    const href = scheduleVisitHref(deal);
-    const canSchedule = canScheduleVisit(deal);
+    const canOpenAction = canOpenVisitAction(deal);
+    const label = when ? "Reschedule visit" : "Schedule visit";
     const StatusIcon = when ? CalendarClock : Calendar;
+    const ActionIcon = when ? CalendarClock : CalendarPlus;
+    const dateLabel = when
+        ? `${formatDateShort(when)}, ${formatTimeIn(when)}`
+        : "No visit booked yet";
 
     return (
         <div
             className={cn(
                 styles.visitBlock,
-                "flex items-center gap-2.5 rounded-inner border border-stage-3-soft/70 p-2.5",
+                "rounded-inner border border-stage-3-soft/70 p-2.5 text-pending",
                 isToday ? "bg-stage-3-soft/30" : "bg-stage-3-soft/15",
             )}
         >
-            <span className="flex shrink-0 items-center justify-center text-pending block-4.5 inline-4.5">
-                <StatusIcon aria-hidden strokeWidth={1.75} className="block-4.5 inline-4.5" />
-            </span>
-            <div className="flex flex-1 flex-col gap-0.5 min-inline-0">
-                <p className="body-xs leading-snug font-medium text-ink">
-                    {when
-                        ? `${formatDateShort(when)}, ${formatTimeIn(when)}`
-                        : "No visit booked yet"}
-                </p>
+            <StatusIcon aria-hidden strokeWidth={1.75} className="shrink-0 block-4.5 inline-4.5" />
+            <p className={cn("body-xs font-medium text-ink", styles.stageInfo)} title={dateLabel}>
                 {when ? (
-                    <p className="body-xs leading-relaxed text-pending">
-                        {isToday ? "Site visit today" : "Site visit scheduled"}
-                    </p>
+                    <span className="sr-only">
+                        {isToday ? "Site visit today: " : "Site visit scheduled: "}
+                    </span>
                 ) : null}
-            </div>
-            {!canSchedule ? null : when ? (
+                {when ? <time dateTime={when.toISOString()}>{dateLabel}</time> : dateLabel}
+            </p>
+            {canOpenAction ? (
                 <Tooltip>
                     <TooltipTrigger
                         render={
-                            <Button
-                                variant="link"
-                                size="icon-sm"
+                            <IconButton
+                                size="sm"
+                                tone="warning"
+                                aria-label={label}
+                                className={styles.stageControl}
                                 nativeButton={false}
-                                className="justify-end px-0 text-pending"
                                 render={
                                     <Link
-                                        href={href}
-                                        aria-label="Reschedule this visit"
+                                        href={scheduleVisitHref(deal)}
                                         onClick={(event) => event.stopPropagation()}
                                     />
                                 }
                             />
                         }
                     >
-                        <Pencil aria-hidden strokeWidth={1.75} className="block-4 inline-4" />
+                        <ActionIcon aria-hidden strokeWidth={1.75} className="block-4 inline-4" />
                     </TooltipTrigger>
-                    <TooltipContent>Reschedule on Visits</TooltipContent>
+                    <TooltipContent>{label}</TooltipContent>
                 </Tooltip>
-            ) : (
-                <Button
-                    variant="outline"
-                    size="sm"
-                    nativeButton={false}
-                    className={cn("shrink-0 text-xs", styles.scheduleAction)}
-                    render={<Link href={href} onClick={(event) => event.stopPropagation()} />}
-                >
-                    Schedule visit
-                </Button>
-            )}
+            ) : null}
         </div>
     );
 }

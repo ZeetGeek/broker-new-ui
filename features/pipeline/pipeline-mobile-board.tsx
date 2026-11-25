@@ -2,9 +2,11 @@
 
 import { type ReactNode, useId, useLayoutEffect, useRef } from "react";
 
+import { cn } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
 
-import { columnValue } from "@/features/pipeline/deal-attention";
+import { PipelineStageHeader } from "@/features/pipeline/pipeline-stage-header";
 import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { DEAL_STAGE_ORDER, type DealItem, type DealStage } from "@/features/pipeline/types";
 
@@ -132,30 +134,19 @@ export function PipelineMobileBoard({
                 {stages.map((stage) => {
                     const deals = dealsByStage[stage];
                     const meta = DEAL_STAGE_META[stage];
-                    const totals = columnValue(deals);
                     const remaining = deals.length - stageLimits[stage];
                     return (
                         <section
                             key={stage}
                             data-stage={stage}
-                            className={styles.column}
+                            className={cn(styles.column, meta.columnClass)}
                             aria-labelledby={`${id}-${stage}`}
                         >
-                            <header className={styles.columnHeader}>
-                                <div className={styles.columnTitle}>
-                                    <span
-                                        aria-hidden
-                                        className={`shrink-0 rounded-full block-2 inline-2 ${meta.dotClass}`}
-                                    />
-                                    <h2 id={`${id}-${stage}`}>{meta.label}</h2>
-                                    <span className={styles.count}>{deals.length}</span>
-                                </div>
-                                <p className={styles.value}>
-                                    {totals.sale ? <span>Sale {totals.sale}</span> : null}
-                                    {totals.rent ? <span>Rent {totals.rent}</span> : null}
-                                    {!totals.sale && !totals.rent ? "No deals yet" : null}
-                                </p>
-                            </header>
+                            <PipelineStageHeader
+                                stage={stage}
+                                deals={deals}
+                                labelId={`${id}-${stage}`}
+                            />
                             <div
                                 className={styles.deals}
                                 role="region"

@@ -647,13 +647,14 @@ export function DealCard({
                             className={styles.askPrice}
                             showEmptyTip
                         />
-                        <h3 className="body-sm font-semibold wrap-anywhere whitespace-normal text-ink capitalize">
+                        <h3 className="body-sm font-semibold text-ink capitalize min-inline-0">
                             <Link
                                 data-card-title
                                 href={`/broker/pipeline/${encodeURIComponent(deal.id)}`}
                                 prefetch={false}
                                 draggable={false}
                                 className={styles.titleLink}
+                                title={headline || deal.property.title}
                                 onClick={stopCard}
                                 onNavigate={(event) => {
                                     event.preventDefault();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
     type Announcements,
@@ -75,6 +75,26 @@ export function PipelineBoard({
     stageLimits: Record<DealStage, number>;
     onLoadMore: (stage: DealStage) => void;
 }) {
+    const railRef = useRef<HTMLDivElement>(null);
+    const [hasMoreRight, setHasMoreRight] = useState(false);
+
+    useEffect(() => {
+        const rail = railRef.current;
+        if (!rail) return;
+        const updateEdge = () => {
+            setHasMoreRight(rail.scrollWidth - rail.clientWidth - rail.scrollLeft > 2);
+        };
+        updateEdge();
+        const observer = new ResizeObserver(updateEdge);
+        observer.observe(rail);
+        for (const column of rail.children) observer.observe(column);
+        rail.addEventListener("scroll", updateEdge, { passive: true });
+        return () => {
+            observer.disconnect();
+            rail.removeEventListener("scroll", updateEdge);
+        };
+    }, []);
+
     const dnd = usePipelineDnd({
         deals: allLiveDeals,
         pinnedDealIds,
@@ -116,20 +136,28 @@ export function PipelineBoard({
             onDragCancel={dnd.handleDragCancel}
             accessibility={{ announcements }}
         >
-            <div className={styles.rail} role="region" aria-label="Pipeline stages" tabIndex={0}>
-                {DEAL_STAGE_ORDER.map((stage) => (
-                    <PipelineColumn
-                        key={stage}
-                        stage={stage}
-                        deals={applyStageOrder(dealsByStage[stage], dnd.stageOrder[stage])}
-                        handlers={handlers}
-                        busyId={busyId}
-                        pinnedDealIds={pinnedDealIds}
-                        isDropTarget={dnd.overStage === stage}
-                        visibleLimit={stageLimits[stage]}
-                        onLoadMore={() => onLoadMore(stage)}
-                    />
-                ))}
+            <div className={styles.viewport} data-more-right={hasMoreRight || undefined}>
+                <div
+                    ref={railRef}
+                    className={styles.rail}
+                    role="region"
+                    aria-label="Pipeline stages"
+                    tabIndex={0}
+                >
+                    {DEAL_STAGE_ORDER.map((stage) => (
+                        <PipelineColumn
+                            key={stage}
+                            stage={stage}
+                            deals={applyStageOrder(dealsByStage[stage], dnd.stageOrder[stage])}
+                            handlers={handlers}
+                            busyId={busyId}
+                            pinnedDealIds={pinnedDealIds}
+                            isDropTarget={dnd.overStage === stage}
+                            visibleLimit={stageLimits[stage]}
+                            onLoadMore={() => onLoadMore(stage)}
+                        />
+                    ))}
+                </div>
             </div>
 
             {/* The overlay copy is what actually follows the pointer — it is

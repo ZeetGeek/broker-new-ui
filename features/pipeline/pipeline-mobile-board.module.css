@@ -8,7 +8,7 @@
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: 100%;
-    align-items: start;
+    align-items: stretch;
     gap: 0.75rem;
     min-inline-size: 0;
     max-inline-size: 100%;
@@ -24,46 +24,23 @@
 .column {
     display: flex;
     flex-direction: column;
+    gap: 0.75rem;
     min-inline-size: 0;
+    padding: 0.75rem;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: var(--radius-card);
     scroll-snap-align: start;
     scroll-snap-stop: always;
 }
 .columnHeader {
     display: grid;
     gap: 0.375rem;
-    padding: 0.25rem 0.125rem 0.875rem;
-}
-.columnTitle {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--color-ink);
-}
-.columnTitle h2 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 650;
-    line-height: 1.5;
-}
-.count {
-    color: var(--color-ink-muted);
-    font-size: 0.8125rem;
-    font-variant-numeric: tabular-nums;
-}
-.value {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.75rem;
-    color: var(--color-ink-muted);
-    font-size: 0.75rem;
-    line-height: 1.5;
-    font-variant-numeric: tabular-nums;
 }
 .deals {
     display: flex;
     flex-direction: column;
-    gap: 0.625rem;
-    padding-block-end: 0.5rem;
+    gap: 0.75rem;
 }
 .deals > * {
     flex-shrink: 0;

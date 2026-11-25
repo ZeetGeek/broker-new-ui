@@ -30,8 +30,11 @@
 }
 
 .titleLink {
-    display: inline-block;
+    display: block;
     max-inline-size: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     text-underline-offset: 0.25em;
 }
 
@@ -150,21 +153,44 @@
 
 .visitBlock,
 .negotiationBlock {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    display: flex;
+    align-items: center;
     gap: 0.5rem;
     min-inline-size: 0;
 }
 
-.scheduleAction {
+.stageInfo {
+    flex: 1;
     min-inline-size: 0;
-    max-inline-size: 100%;
-    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: auto;
+}
+
+.stageControl {
+    flex-shrink: 0;
+}
+
+.offerLine {
+    display: flex;
+    align-items: baseline;
+    gap: 0.375rem;
+}
+
+.offerLabel {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-ink-muted);
 }
 
 .offerStatus {
-    min-inline-size: 0;
-    white-space: normal;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    pointer-events: auto;
 }
 
 /* Size belongs to the card, whether it lives in a board column or a phone list. */
@@ -187,17 +213,6 @@
 
     .outcomeHeader {
         gap: 0.25rem 0.5rem;
-    }
-
-    .scheduleAction,
-    .offerStatus {
-        grid-column: 2 / -1;
-    }
-
-    .negotiationBlock > [tabindex] {
-        overflow: visible;
-        overflow-wrap: anywhere;
-        white-space: normal;
     }
 }
 

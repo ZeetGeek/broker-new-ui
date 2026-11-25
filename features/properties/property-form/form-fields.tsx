@@ -117,7 +117,9 @@ export function TextField({
     /** Lets long values wrap on narrow screens while preserving the desktop input. */
     mobileTextarea?: boolean;
     endAction?: ReactNode;
-} & Omit<ComponentProps<typeof Input>, "name" | "errorText" | "size">) {
+    onChange?: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    onBlur?: (event: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+} & Omit<ComponentProps<typeof Input>, "name" | "errorText" | "size" | "onChange" | "onBlur">) {
     const {
         register,
         formState: { errors },
@@ -140,7 +142,7 @@ export function TextField({
                 <div className="relative">
                     {StartIcon ? (
                         <StartIcon
-                            className="absolute inset-s-3.5 inset-bs-3.5 z-10 block-4 inline-4 text-ink-subtle"
+                            className="absolute inset-s-3.5 inset-bs-3.5 z-10 text-ink-subtle block-4 inline-4"
                             aria-hidden
                         />
                     ) : null}
@@ -166,13 +168,11 @@ export function TextField({
                         {...registration}
                         onChange={(event) => {
                             void registration.onChange(event);
-                            onInputChange?.(
-                                event as unknown as React.ChangeEvent<HTMLInputElement>,
-                            );
+                            onInputChange?.(event);
                         }}
                         onBlur={(event) => {
                             void registration.onBlur(event);
-                            onInputBlur?.(event as unknown as React.FocusEvent<HTMLInputElement>);
+                            onInputBlur?.(event);
                         }}
                     />
                     {endAction ? (

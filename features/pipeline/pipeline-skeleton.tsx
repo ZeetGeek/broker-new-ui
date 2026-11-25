@@ -6,6 +6,7 @@ import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
 import { Skeleton } from "@/components/shared/skeleton";
 
+import { DEAL_STAGE_META } from "@/features/pipeline/stage-meta";
 import { DEAL_STAGE_ORDER, type DealStage, type DealsView } from "@/features/pipeline/types";
 
 import cardStyles from "./deal-card.module.css";
@@ -120,27 +121,29 @@ export function PipelineBoardSkeleton({
                     </div>
                 ) : (
                     <>
-                        <div className={desktopBoardStyles.rail}>
-                            {DEAL_STAGE_ORDER.map((stage) => (
-                                <div
-                                    key={stage}
-                                    className={cn(
-                                        "flex snap-start flex-col gap-3 rounded-card border p-3 min-inline-0",
-                                        "border-border-warm bg-border-warm/40",
-                                    )}
-                                >
-                                    <div className="flex flex-col gap-1">
-                                        <Bone className="rounded-sm bg-border-warm block-3 inline-20" />
-                                        <div className="flex items-center justify-between gap-2 block-7">
-                                            <Bone className="rounded-sm bg-border-warm block-5 inline-32" />
-                                            <Bone className="rounded-sm bg-border-warm block-3 inline-12" />
+                        <div className={desktopBoardStyles.viewport}>
+                            <div className={desktopBoardStyles.rail}>
+                                {DEAL_STAGE_ORDER.map((stage) => (
+                                    <div
+                                        key={stage}
+                                        className={cn(
+                                            "flex snap-start flex-col gap-3 rounded-card border p-3 min-inline-0",
+                                            "border-border-warm bg-border-warm/40",
+                                        )}
+                                    >
+                                        <div className="flex flex-col gap-1">
+                                            <Bone className="rounded-sm bg-border-warm block-3 inline-20" />
+                                            <div className="flex items-center justify-between gap-2 block-7">
+                                                <Bone className="rounded-sm bg-border-warm block-5 inline-32" />
+                                                <Bone className="rounded-sm bg-border-warm block-3 inline-12" />
+                                            </div>
                                         </div>
+                                        {Array.from({ length: 6 }, (_, index) => (
+                                            <DealCardSkeleton key={index} stage={stage} />
+                                        ))}
                                     </div>
-                                    {Array.from({ length: 6 }, (_, index) => (
-                                        <DealCardSkeleton key={index} stage={stage} />
-                                    ))}
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                         <div className={boardStyles.board}>
                             <div className={boardStyles.rail}>
@@ -148,7 +151,13 @@ export function PipelineBoardSkeleton({
                                     mobileStage,
                                     ...DEAL_STAGE_ORDER.filter((stage) => stage !== mobileStage),
                                 ].map((stage) => (
-                                    <div key={stage} className={boardStyles.column}>
+                                    <div
+                                        key={stage}
+                                        className={cn(
+                                            boardStyles.column,
+                                            DEAL_STAGE_META[stage].columnClass,
+                                        )}
+                                    >
                                         <div className={boardStyles.columnHeader}>
                                             <Bone className="block-5 inline-28" />
                                             <Bone className="block-3 inline-32" />

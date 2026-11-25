@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
-import { MobileActionFan, type MobileFanAction } from "@/components/layout/mobile-action-fan";
 import { resolveActiveNavHref } from "@/components/layout/resolve-active-nav";
 import type { AppIcon } from "@/components/shared/icons";
 import {
@@ -36,7 +35,18 @@ export type PortalMobileCenterAction = {
     href: string;
     /** Accessible name for the raised center control. */
     label: string;
-    actions?: readonly [MobileFanAction, MobileFanAction, MobileFanAction, MobileFanAction];
+    actions?: readonly [
+        PortalMobileQuickAction,
+        PortalMobileQuickAction,
+        PortalMobileQuickAction,
+        PortalMobileQuickAction,
+    ];
+};
+
+type PortalMobileQuickAction = {
+    href: string;
+    label: string;
+    icon: AppIcon;
 };
 
 export type PortalMobileNavProps = {
@@ -108,26 +118,62 @@ function TabLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
 }
 
 function CenterFab({ action }: { action: PortalMobileCenterAction }) {
-    if (action.actions) return <MobileActionFan actions={action.actions} />;
+    const [open, setOpen] = useState(false);
+    const fabClassName = `
+      -mbs-5 grid shrink-0 place-items-center rounded-full bg-brand text-surface
+      shadow-[0_2px_4px_-1px_rgb(11_31_23/0.12),0_10px_24px_-6px_rgb(27_122_90/0.45),0_18px_36px_-10px_rgb(11_31_23/0.22)] transition-[transform,box-shadow,filter]
+      duration-160
+      block-12 inline-12
+      hover:shadow-[0_3px_6px_-1px_rgb(11_31_23/0.14),0_14px_32px_-6px_rgb(27_122_90/0.5),0_22px_44px_-10px_rgb(11_31_23/0.26)]
+      hover:brightness-105
+      focus-visible:ring-2 focus-visible:ring-brand
+      focus-visible:ring-offset-2
+      focus-visible:ring-offset-surface focus-visible:outline-none active:translate-y-px
+      active:shadow-[0_1px_2px_rgb(11_31_23/0.1),0_6px_16px_-4px_rgb(27_122_90/0.35)] active:brightness-95
+      sm:block-14 sm:inline-14
+    `;
+
+    if (action.actions) {
+        return (
+            <MobileActionDrawer
+                open={open}
+                onOpenChange={setOpen}
+                title="Quick add"
+                description="Choose what you want to create"
+                trigger={
+                    <button
+                        type="button"
+                        aria-label="Open quick add"
+                        aria-expanded={open}
+                        className={fabClassName}
+                    >
+                        <Plus
+                            aria-hidden
+                            className="block-6 inline-6 sm:block-7 sm:inline-7"
+                            strokeWidth={2.25}
+                        />
+                    </button>
+                }
+            >
+                <div className={mobileActionGroupClass}>
+                    {action.actions.map(({ href, label, icon: Icon }) => (
+                        <Link
+                            key={href}
+                            href={href}
+                            className={mobileActionClass}
+                            onClick={() => setOpen(false)}
+                        >
+                            <Icon aria-hidden strokeWidth={1.75} />
+                            <span>{label}</span>
+                        </Link>
+                    ))}
+                </div>
+            </MobileActionDrawer>
+        );
+    }
 
     return (
-        <Link
-            href={action.href}
-            aria-label={action.label}
-            className="
-              -mbs-5 grid shrink-0 place-items-center rounded-full bg-brand text-surface
-              shadow-[0_2px_4px_-1px_rgb(11_31_23/0.12),0_10px_24px_-6px_rgb(27_122_90/0.45),0_18px_36px_-10px_rgb(11_31_23/0.22)] transition-[transform,box-shadow,filter]
-              duration-160
-              block-12 inline-12
-              hover:shadow-[0_3px_6px_-1px_rgb(11_31_23/0.14),0_14px_32px_-6px_rgb(27_122_90/0.5),0_22px_44px_-10px_rgb(11_31_23/0.26)]
-              hover:brightness-105
-              focus-visible:ring-2 focus-visible:ring-brand
-              focus-visible:ring-offset-2
-              focus-visible:ring-offset-surface focus-visible:outline-none active:translate-y-px
-              active:shadow-[0_1px_2px_rgb(11_31_23/0.1),0_6px_16px_-4px_rgb(27_122_90/0.35)] active:brightness-95
-              sm:block-14 sm:inline-14
-            "
-        >
+        <Link href={action.href} aria-label={action.label} className={fabClassName}>
             <Plus
                 aria-hidden
                 className="block-6 inline-6 sm:block-7 sm:inline-7"
