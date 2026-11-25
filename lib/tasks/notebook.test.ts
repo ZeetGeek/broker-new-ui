@@ -137,8 +137,9 @@ test("task moves and ordering within named lists don't mix other list contents o
         ["b", "a", "c"],
     );
     const scheduled = movePlannerTask(moved, "a", "2030-01-03", undefined, now);
-    assert.equal(scheduled[0].listId, "papers");
-    assert.equal(scheduled[0].dueDate, "2030-01-03");
+    assert.equal(scheduled[0].listId, null);
+    assert.equal(scheduled[0].startDate, "2030-01-03");
+    assert.equal(scheduled[0].dueDate, null);
 });
 
 test("notebook storage survives reads, isolates accounts and refuses corrupted data without overwriting it", () => {

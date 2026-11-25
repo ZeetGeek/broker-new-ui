@@ -438,6 +438,10 @@ export function QuickAddComposer({
             setHint(`Keep the task name under ${TITLE_LIMIT} characters.`);
             return;
         }
+        if (values.dueError || values.reminderError) {
+            setHint(values.dueError || values.reminderError);
+            return;
+        }
         const submission = { draft, values, restoreFocus };
         if (!editing) resetDraft();
         if (busy) {
@@ -626,7 +630,7 @@ export function QuickAddComposer({
                             mirrorText(draft.text, marks, invalidChipRanges)
                         ) : (
                             <span className={styles.placeholder}>
-                                <span data-idle>{editing ? "Task name" : "What’s next?"}</span>
+                                <span data-idle>{editing ? "Task name" : "Add a task…"}</span>
                             </span>
                         )}
                     </div>

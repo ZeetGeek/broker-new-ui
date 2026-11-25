@@ -1,17 +1,15 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import Link from "next/link";
 
 import { useQuery } from "@tanstack/react-query";
 import { format, isValid, parseISO } from "date-fns";
 
 import { earningsReportQueryOptions } from "@/lib/api/earnings";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
-import { BROKER_PIPELINE_HREF } from "@/lib/routes/broker";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { AlertCircle, Wallet } from "@/components/shared/icons";
+import { AlertCircle } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -108,30 +106,6 @@ export function EarningsPage() {
                         variant="accent"
                     >
                         Try again
-                    </Button>
-                </EmptyState>
-            </div>
-        );
-    }
-
-    // First run: nothing sold or lost ever, and nothing on the board.
-    if (!report.hasResolvedDeals && report.live.count === 0) {
-        return (
-            <div className="flex flex-col gap-6 pbe-6">
-                <header>
-                    <h1 className="h3 text-ink">Earnings</h1>
-                </header>
-                <EmptyState
-                    icon={Wallet}
-                    heading="Your earnings will show here"
-                    description="Add a client to a property and work the deal in your pipeline. When you mark it as sold, the commission shows up on this page."
-                >
-                    <Button
-                        nativeButton={false}
-                        render={<Link href={BROKER_PIPELINE_HREF} />}
-                        variant="accent"
-                    >
-                        Go to pipeline
                     </Button>
                 </EmptyState>
             </div>

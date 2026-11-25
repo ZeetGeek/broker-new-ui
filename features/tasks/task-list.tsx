@@ -169,7 +169,7 @@ export function TaskLine({
                     setEditing(true);
                 }}
             >
-                <span data-card-title>{rowTitle}</span>
+                <span>{rowTitle}</span>
                 {date && (
                     <small className={styles.listTaskDate}>
                         <Calendar aria-hidden size={12} />

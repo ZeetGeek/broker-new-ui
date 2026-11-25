@@ -13,6 +13,7 @@ export function EarningsCard({
     titleId,
     description,
     action,
+    empty = false,
     className,
     children,
 }: {
@@ -20,6 +21,8 @@ export function EarningsCard({
     titleId: string;
     description?: ReactNode;
     action?: ReactNode;
+    /** Keep each empty section readable within the report grid. */
+    empty?: boolean;
     className?: string;
     children: ReactNode;
 }) {
@@ -28,6 +31,7 @@ export function EarningsCard({
             aria-labelledby={titleId}
             className={cn(
                 "@container flex flex-col gap-4 rounded-card bg-surface p-4 shadow-sm ring-1 ring-border-warm/50 min-inline-0 sm:p-5",
+                empty && "min-block-64 sm:min-block-80",
                 className,
             )}
         >

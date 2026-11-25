@@ -6,7 +6,7 @@ import { addVisitDays, formatVisitDate, formatVisitTime, istDateKey } from "@/li
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { ContactName } from "@/components/shared/contact-name";
-import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyStateCard } from "@/components/shared/empty-state-card";
 import { FilterChip } from "@/components/shared/filter-chip";
 import { IconButton } from "@/components/shared/icon-button";
 import {
@@ -14,7 +14,9 @@ import {
     type AppIcon,
     CalendarClock,
     CalendarDays,
+    CalendarPlus,
     MapPin,
+    RefreshCw,
     Search,
     SlidersHorizontal,
 } from "@/components/shared/icons";
@@ -330,17 +332,13 @@ export function VisitList({
                 aria-busy={loading}
             >
                 {loadError && !loading ? (
-                    <EmptyState
-                        size="page"
+                    <EmptyStateCard
                         variant="error"
                         icon={AlertCircle}
                         heading="Your visits couldn’t be loaded"
                         description="Check your connection and try again, or change your search and filters."
-                    >
-                        <Button variant="accent" onClick={onRetry}>
-                            Try again
-                        </Button>
-                    </EmptyState>
+                        action={{ label: "Try again", icon: RefreshCw, onClick: onRetry }}
+                    />
                 ) : loading ? (
                     <VisitListSkeleton
                         actionCount={
@@ -352,45 +350,45 @@ export function VisitList({
                         }
                     />
                 ) : visits.length === 0 && filtered ? (
-                    <EmptyState
-                        size="page"
+                    <EmptyStateCard
                         variant="filtered"
                         icon={Search}
                         heading="No visits match these filters"
                         description="Try a different client, property or date range, or clear your search and filters."
-                    >
-                        <Button variant="accent" onClick={onClear}>
-                            Clear search & filters
-                        </Button>
-                    </EmptyState>
+                        action={{ label: "Clear search & filters", icon: Search, onClick: onClear }}
+                    />
                 ) : firstRun && visits.length === 0 ? (
-                    <EmptyState
-                        size="page"
+                    <EmptyStateCard
                         icon={CalendarDays}
                         heading="Schedule your first site visit"
                         description="Choose a client, a property and a time. Keep every visit and its outcome together here."
-                    >
-                        <Button size="md" variant="accent" onClick={onSchedule}>
-                            Schedule a visit
-                        </Button>
-                    </EmptyState>
+                        action={{
+                            label: "Schedule a visit",
+                            icon: CalendarPlus,
+                            onClick: onSchedule,
+                        }}
+                    />
                 ) : visits.length === 0 ? (
-                    <EmptyState
-                        size="page"
+                    <EmptyStateCard
                         icon={CalendarDays}
                         heading={empty.heading}
                         description={empty.description}
-                    >
-                        {tab === "upcoming" ? (
-                            <Button variant="accent" onClick={onSchedule}>
-                                Schedule a visit
-                            </Button>
-                        ) : tab !== "needs_update" ? (
-                            <Button variant="accent" onClick={() => onTab("upcoming")}>
-                                View upcoming visits
-                            </Button>
-                        ) : null}
-                    </EmptyState>
+                        action={
+                            tab === "upcoming"
+                                ? {
+                                      label: "Schedule a visit",
+                                      icon: CalendarPlus,
+                                      onClick: onSchedule,
+                                  }
+                                : tab !== "needs_update"
+                                  ? {
+                                        label: "View upcoming visits",
+                                        icon: CalendarDays,
+                                        onClick: () => onTab("upcoming"),
+                                    }
+                                  : undefined
+                        }
+                    />
                 ) : (
                     <div className={styles.groups}>
                         {[...groups].map(([day, rows]) => (

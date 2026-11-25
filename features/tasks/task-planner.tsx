@@ -29,7 +29,13 @@ import { cn } from "@/lib/utils";
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
+import {
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+} from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 
 import { type Task, TASK_TIME_ZONE, taskDateKey, type TaskSort } from "./model";
@@ -103,6 +109,7 @@ export function TaskPlanner({
     const today = taskDateKey(actions.now);
     const reduceMotion = useReducedMotion();
     const daysPanelId = useId();
+    const [daysOpen, setDaysOpen] = useState(true);
     const [anchor, setAnchor] = useState(today);
     const populatedDayCount = countPopulatedPlannerDays(tasks, today);
     const { frame, columns, pickerOptions, setPreferredColumns } = usePlannerColumns(
@@ -267,6 +274,7 @@ export function TaskPlanner({
             ref={frame}
             className={styles.planner}
             data-columns={columns}
+            data-days-collapsed={!daysOpen || undefined}
             aria-label="Task planner"
         >
             <nav className={styles.plannerNav} aria-label="Planner dates">
@@ -347,6 +355,23 @@ export function TaskPlanner({
                             size="sm"
                         />
                     </div>
+                    <span className={styles.dateControlsSeparator} aria-hidden />
+                    <IconButton
+                        size="sm"
+                        type="button"
+                        appearance="outline"
+                        className={styles.collapseLists}
+                        aria-label={daysOpen ? "Collapse day planner" : "Expand day planner"}
+                        aria-expanded={daysOpen}
+                        aria-controls={daysPanelId}
+                        onClick={() => setDaysOpen((open) => !open)}
+                    >
+                        <ChevronDown
+                            aria-hidden
+                            size={16}
+                            data-collapsed={!daysOpen || undefined}
+                        />
+                    </IconButton>
                 </div>
             </nav>
             <DndContext
@@ -397,34 +422,36 @@ export function TaskPlanner({
                 }}
                 onDragEnd={dragEnd}
             >
-                <div
-                    id={daysPanelId}
-                    role="tabpanel"
-                    aria-label="Planner days"
-                    className={styles.dayGrid}
-                    style={{ "--planner-columns": columns } as CSSProperties}
-                >
-                    {days.map((day) => (
-                        <PlannerColumn
-                            key={day}
-                            date={day}
-                            today={today}
-                            minimumLines={dayLineCount}
-                            tasks={plannerColumnTasks(
-                                tasks,
-                                day,
-                                undefined,
-                                notebook,
-                                today,
-                                sort,
-                                dragPreview,
-                            )}
-                            catalogs={catalogs}
-                            onAdd={add}
-                            actions={rowActions}
-                        />
-                    ))}
-                </div>
+                {daysOpen && (
+                    <div
+                        id={daysPanelId}
+                        role="tabpanel"
+                        aria-label="Planner days"
+                        className={styles.dayGrid}
+                        style={{ "--planner-columns": columns } as CSSProperties}
+                    >
+                        {days.map((day) => (
+                            <PlannerColumn
+                                key={day}
+                                date={day}
+                                today={today}
+                                minimumLines={dayLineCount}
+                                tasks={plannerColumnTasks(
+                                    tasks,
+                                    day,
+                                    undefined,
+                                    notebook,
+                                    today,
+                                    sort,
+                                    dragPreview,
+                                )}
+                                catalogs={catalogs}
+                                onAdd={add}
+                                actions={rowActions}
+                            />
+                        ))}
+                    </div>
+                )}
                 <TaskLists
                     notebook={notebook}
                     notebookLoading={notebookLoading}
@@ -491,7 +518,7 @@ export function PlannerColumn({
     actions,
     listId,
     name,
-    minimumLines = date ? 10 : 9,
+    minimumLines = 10,
     headingActions,
     listFooter,
 }: TaskPlannerColumnProps) {

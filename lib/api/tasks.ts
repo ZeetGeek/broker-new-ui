@@ -17,7 +17,7 @@ export type TaskDto = {
     details: string;
     startDate: string | null;
     startTime: string | null;
-    startReminderEnabledAt?: string;
+    startReminderEnabledAt?: string | null;
     repeat: TaskRepeatDto | null;
     repeatAnchor: string | null;
     repeatFromId: string | null;
@@ -33,7 +33,7 @@ export type TaskDto = {
     property: { id: string; title: string } | null;
     completedAt: string | null;
     deletedAt: string | null;
-    plannerOrder?: number;
+    plannerOrder?: number | null;
     listId: string | null;
     createdAt: string;
     updatedAt: string;
@@ -91,7 +91,7 @@ const json = (method: string, body?: unknown) => ({
 });
 
 export const tasksApi = withTestNetwork({
-    list: () => apiFetch<TaskDto[]>("/tasks"),
+    list: (signal?: AbortSignal) => apiFetch<TaskDto[]>("/tasks", { signal }),
     create: (task: TaskWriteDto & { id: string }) =>
         apiFetch<TaskDto>("/tasks", json("POST", task)),
     update: (id: string, patch: TaskWriteDto) =>

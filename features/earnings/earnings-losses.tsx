@@ -8,6 +8,8 @@ import { formatCommission, formatCommissionTick } from "@/lib/format/commission"
 import { plural } from "@/lib/format/plural";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
+import { LostIcon } from "@/components/shared/icons";
 import {
     type ChartConfig,
     ChartContainer,
@@ -117,6 +119,7 @@ export function EarningsLosses({
         <EarningsCard
             title={`Lost deals by ${unitWord}`}
             titleId="earnings-losses-heading"
+            empty={isEmpty}
             action={
                 !isEmpty ? (
                     <div className="flex flex-wrap items-center justify-end gap-3">
@@ -137,12 +140,12 @@ export function EarningsLosses({
         >
             <div className="flex flex-1 flex-col pbe-2 min-block-0 min-inline-0">
                 {isEmpty ? (
-                    <div className="flex flex-1 flex-col items-center justify-center gap-1.5 px-6 py-12 text-center">
-                        <p className="body font-medium text-ink">No deals lost in this period</p>
-                        <p className="body-sm text-ink-muted max-inline-sm">
-                            Try a longer period, or check back after deals are marked lost.
-                        </p>
-                    </div>
+                    <EmptyState
+                        size="card"
+                        icon={LostIcon}
+                        heading="No deals lost in this period"
+                        description="Try a longer period, or check back after deals are marked lost."
+                    />
                 ) : (
                     <ChartContainer
                         key={`lost-${bucketUnit}-${buckets.length}-${showAverage}`}

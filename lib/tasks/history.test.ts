@@ -54,7 +54,7 @@ test("completion columns follow event dates in chronological order and skip empt
         days[0].tasks.map((task) => task.id),
         ["fifteenth-late", "fifteenth-early"],
     );
-    assert.equal(days[1].tasks[0].dueDate, "2030-11-20");
+    assert.equal(days[1].tasks[0].startDate, "2030-11-20");
     assert.equal(records[0].id, "seventeenth", "grouping must not mutate input order");
 });
 

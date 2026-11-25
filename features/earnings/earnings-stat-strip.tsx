@@ -32,20 +32,22 @@ export function EarningsStatStrip({ report }: { report: EarningsReport }) {
             key: "sold",
             icon: CircleCheck,
             label: "Sold",
-            value: report.closedCount > 0 ? report.closedCount : "None",
-            valueClass: report.closedCount > 0 ? "text-brand" : "text-ink-muted",
+            value: report.closedCount,
+            valueClass: "text-brand",
             iconClass: report.closedCount > 0 ? "text-brand" : "text-ink-muted",
             detail: (
                 <>
                     <span>
                         {report.closedCount > 0
                             ? `${plural(report.saleClosedCount, "sale")} · ${plural(report.rentClosedCount, "rental")}`
-                            : "None in this period"}
+                            : "No sales this period"}
                     </span>
-                    <CountDelta
-                        current={report.closedCount}
-                        previous={report.previousClosedCount}
-                    />
+                    {report.closedCount > 0 || (report.previousClosedCount ?? 0) > 0 ? (
+                        <CountDelta
+                            current={report.closedCount}
+                            previous={report.previousClosedCount}
+                        />
+                    ) : null}
                 </>
             ),
         },
@@ -53,21 +55,19 @@ export function EarningsStatStrip({ report }: { report: EarningsReport }) {
             key: "lost",
             icon: LostIcon,
             label: "Lost",
-            value: report.lostCount > 0 ? report.lostCount : "None",
-            valueClass: report.lostCount > 0 ? "text-ink" : "text-ink-muted",
+            value: report.lostCount,
+            valueClass: report.lostCount > 0 ? "text-ink" : "text-brand",
             iconClass: "text-ink-muted",
             detail: (
                 <>
-                    <span>
-                        {report.lostCount > 0
-                            ? "Clients who did not go ahead"
-                            : "None in this period"}
-                    </span>
-                    <CountDelta
-                        invert
-                        current={report.lostCount}
-                        previous={report.previousLostCount}
-                    />
+                    <span>{report.lostCount > 0 ? "Did not go ahead" : "No lost deals"}</span>
+                    {report.lostCount > 0 || (report.previousLostCount ?? 0) > 0 ? (
+                        <CountDelta
+                            invert
+                            current={report.lostCount}
+                            previous={report.previousLostCount}
+                        />
+                    ) : null}
                 </>
             ),
         },
@@ -75,25 +75,22 @@ export function EarningsStatStrip({ report }: { report: EarningsReport }) {
             key: "win-rate",
             icon: Award,
             label: "Win rate",
-            value: report.winRate == null ? "Not yet" : `${report.winRate}%`,
-            valueClass: report.winRate == null ? "text-ink-muted" : "text-brand",
+            value: `${report.winRate ?? 0}%`,
+            valueClass: "text-brand",
             iconClass: report.winRate == null ? "text-ink-muted" : "text-brand",
             detail:
                 resolved > 0
                     ? `${report.closedCount} of ${plural(resolved, "finished deal")} sold`
-                    : "Shows once a deal is sold or lost",
+                    : "After a deal finishes",
         },
         {
             key: "time-to-sell",
             icon: Hourglass,
             label: "Time to sell",
-            value: report.avgDaysToClose == null ? "Not yet" : plural(report.avgDaysToClose, "day"),
-            valueClass: report.avgDaysToClose == null ? "text-ink-muted" : "text-ink",
+            value: plural(report.avgDaysToClose ?? 0, "day"),
+            valueClass: report.avgDaysToClose == null ? "text-brand" : "text-ink",
             iconClass: "text-ink-muted",
-            detail:
-                report.avgDaysToClose == null
-                    ? "Shows once a deal is sold"
-                    : "Average, from new client to sold",
+            detail: report.avgDaysToClose == null ? "After a sale" : "Average days to sell",
         },
     ];
 

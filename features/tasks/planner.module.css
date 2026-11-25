@@ -1,6 +1,7 @@
 .planner {
     --line-height: 40px;
     --planner-inline-padding: 2rem;
+    --planner-header-height: 4rem;
     container-type: inline-size;
     min-inline-size: 0;
     color: var(--color-ink);
@@ -16,8 +17,9 @@
     grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
     align-items: stretch;
     gap: 1rem;
-    padding: 0.75rem var(--planner-inline-padding);
-    min-block-size: 64px;
+    padding-inline: var(--planner-inline-padding);
+    block-size: var(--planner-header-height);
+    min-block-size: var(--planner-header-height);
 }
 .dateRange,
 .dateControls {
@@ -38,7 +40,7 @@
     color: var(--color-ink-muted);
     font-size: 0.875rem;
     font-weight: 600;
-    padding-inline-start: 0.625rem;
+    min-inline-size: 0;
 }
 .dateControls {
     grid-column: 3;
@@ -46,7 +48,14 @@
     display: flex;
     justify-self: end;
     align-items: center;
-    gap: 0.125rem;
+    gap: 0.375rem;
+}
+.dateControlsSeparator {
+    flex-shrink: 0;
+    inline-size: 1px;
+    block-size: 1.25rem;
+    margin-inline: 0.25rem;
+    background: var(--color-border-warm);
 }
 .shortMonth,
 .planner[data-columns="1"] .pageStepButton {
@@ -71,8 +80,11 @@
     background: var(--color-surface-muted);
 }
 .dateJump {
-    inline-size: 36px;
+    inline-size: var(--size-control-sm);
     flex-shrink: 0;
+}
+.plannerNav .dateJump :global(button[data-icon-button]) {
+    --icon-button-size: var(--size-control-sm);
 }
 
 .dayGrid {
@@ -352,17 +364,23 @@
     border-block-end-color: var(--color-brand);
 }
 .somedayBar {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: stretch;
-    min-block-size: 56px;
+    block-size: var(--planner-header-height);
+    min-block-size: var(--planner-header-height);
     padding-inline: var(--planner-inline-padding);
     border-block-start: 1px solid var(--color-border-warm);
     border-block-end: 1px solid var(--color-border-warm);
     gap: 0.5rem;
 }
+.planner[data-days-collapsed] .somedayBar {
+    border-block-start: 0;
+}
 .somedayBarStart {
-    display: flex;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
     gap: 0.5rem;
     min-inline-size: 0;
     flex: 1;
@@ -449,14 +467,14 @@
     align-items: center;
     align-self: center;
     flex-shrink: 0;
-    gap: 0.125rem;
+    gap: 0.375rem;
     margin-inline-start: auto;
 }
 .listTabNav {
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    gap: 0;
+    gap: 0.25rem;
 }
 .collapseLists {
     margin-inline-start: 0;
@@ -495,14 +513,15 @@
 .customList > .dayColumn {
     flex: 1;
 }
-.customList > .dayColumn > .dayHeading {
-    padding-block-start: 0.75rem;
-    padding-inline-start: 0.5rem;
+.somedayGrid .dayHeading {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    block-size: 3.5rem;
+    padding: 0.25rem 0.5rem;
 }
-.newListColumn > .dayHeading {
-    /* Sit a bit lower than the top edge so it lines up with list titles. */
-    padding-block: 1.35rem 0.75rem;
-    padding-inline-start: 0.5rem;
+.somedayGrid .listHeadingRow {
+    flex: 1;
 }
 .listHeadingRow {
     display: flex;
@@ -649,7 +668,7 @@
     display: flex;
     flex-shrink: 0;
     align-items: center;
-    gap: 0.15rem;
+    gap: 0.375rem;
 }
 .listHeadingNewList {
     flex-shrink: 0;
@@ -661,7 +680,7 @@
     pointer-events: auto;
 }
 .somedayGrid .ruledList {
-    min-block-size: calc(9 * var(--line-height));
+    min-block-size: calc(10 * var(--line-height));
 }
 .plannerEmpty {
     padding: 3rem var(--planner-inline-padding);
@@ -678,7 +697,12 @@
 }
 .notebookTabPicker {
     align-self: center;
+    justify-self: start;
+    inline-size: max-content;
+    max-inline-size: 100%;
     min-inline-size: 0;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: 0.25rem;
 }
 .slidingTabLabel {
     display: inline-flex;
@@ -747,12 +771,11 @@
 @container tasks-page (max-width: 1000px) {
     .planner {
         --planner-inline-padding: 1.25rem;
+        --planner-header-height: 3.5rem;
     }
     .plannerNav {
-        grid-template-columns: auto minmax(0, 1fr) auto;
-        min-block-size: 52px;
+        grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
         gap: 0.5rem;
-        padding-block: 0.5rem;
     }
     .dateRange {
         font-size: 0.8125rem;
@@ -771,10 +794,6 @@
     .somedayGrid .ruledList {
         min-block-size: 0;
     }
-    .dayGrid .blankLine,
-    .somedayGrid .blankLine {
-        display: none;
-    }
     .somedayGrid {
         min-block-size: 0;
         padding-block-end: 1rem;
@@ -783,28 +802,38 @@
     .customList:first-child::before {
         inset-inline: -0.625rem;
     }
-    .customList > .dayColumn > .dayHeading {
-        padding-block-start: 0.25rem;
-    }
     .archive {
         min-block-size: 0;
         padding: 1rem 1.25rem;
     }
 }
+@container tasks-page (min-width: 600px) and (max-width: 839px) {
+    .planner:has(> .plannerNav > .columnPicker) {
+        --planner-header-height: 6.5rem;
+    }
+    .plannerNav:has(> .columnPicker) {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-rows: minmax(0, 1fr) auto;
+        padding-block: 0.5rem;
+    }
+    .plannerNav:has(> .columnPicker) .dateControls {
+        grid-column: 2;
+    }
+    .columnPicker {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+}
 @container tasks-page (max-width: 599px) {
     .planner {
-        --planner-inline-padding: 0.75rem;
+        --planner-inline-padding: 1rem;
     }
     .plannerNav {
-        display: flex;
-        flex-wrap: nowrap;
+        grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
         gap: 0.25rem;
-        min-block-size: var(--touch-target-min);
-        padding: 0.25rem 0.5rem;
     }
     .dateRange {
-        flex: 1;
         min-inline-size: 0;
         font-size: 0.75rem;
         white-space: nowrap;
@@ -816,9 +845,9 @@
         display: inline;
     }
     .dateControls {
+        grid-column: 2;
         flex-shrink: 0;
-        gap: 0;
-        margin-inline-start: auto;
+        gap: 0.125rem;
     }
     .todayButton {
         min-inline-size: var(--touch-target-min);
@@ -832,17 +861,13 @@
         inline-size: var(--touch-target-min);
     }
     .plannerNav :global(button[data-icon-button]) {
-        --icon-button-size: 2rem;
-        position: relative;
-        min-inline-size: 2rem;
-        min-block-size: 2rem;
-        margin-inline: calc((var(--touch-target-min) - 2rem) / 2);
-        box-shadow: none;
+        --icon-button-size: var(--touch-target-min);
+        min-inline-size: var(--touch-target-min);
+        min-block-size: var(--touch-target-min);
+        margin-inline: 0;
     }
-    .plannerNav :global(button[data-icon-button])::after {
-        content: "";
-        position: absolute;
-        inset: calc((2rem - var(--touch-target-min)) / 2);
+    .plannerNav .dateJump :global(button[data-icon-button]) {
+        --icon-button-size: var(--touch-target-min);
     }
     .pageStepButton,
     .columnPicker {
@@ -854,7 +879,9 @@
         gap: 0.75rem;
         padding-block: 0.625rem;
     }
-    .dayColumn {
+    .dayColumn,
+    .newListColumn,
+    .emptyListColumn {
         --line-height: var(--touch-target-min);
     }
     .dayHeading {
@@ -909,7 +936,11 @@
         font-size: 0.8125rem;
         font-weight: 500;
         line-height: 1.4;
-        padding: 0.25rem 0.5rem;
+        padding: 0.5rem;
+    }
+    .planner .lineAction,
+    .planner .restoreAction {
+        --icon-button-hover: color-mix(in oklab, var(--color-ink) 7%, transparent);
     }
     .listTaskDate {
         gap: 0.25rem;
@@ -921,42 +952,39 @@
         margin-inline: 0.125rem 0.5rem;
     }
     .somedayBar {
-        min-block-size: var(--touch-target-min);
-        padding: 0.125rem 0.5rem;
-        gap: 0.25rem;
+        gap: 0.5rem;
     }
     .somedayBarStart {
         gap: 0.25rem;
     }
-    .notebookTabPicker {
-        flex: 0 1 auto;
+    .planner .notebookTabPicker {
+        --tabs-control-height: var(--touch-target-min);
         background: transparent;
-        overscroll-behavior-inline: contain;
     }
     .slidingTabName {
         max-inline-size: 5rem;
     }
-    .notebookTab {
-        min-block-size: 2rem;
+    .notebookTabPicker .notebookTab:global(.t-tab[role="tab"]) {
+        min-block-size: var(--touch-target-min);
+        padding-block: 0;
         padding-inline: 0.5rem;
     }
-    .somedayBar :global(button[data-icon-button]) {
+    .somedayBar .notebookTabMenu:global([data-icon-button]) {
         --icon-button-size: 2rem;
         position: relative;
         min-inline-size: 2rem;
         min-block-size: 2rem;
     }
-    .somedayBar :global(button[data-icon-button])::after {
+    .somedayBar .notebookTabMenu:global([data-icon-button])::after {
         content: "";
         position: absolute;
         inset: calc((2rem - var(--touch-target-min)) / 2);
     }
-    .addTabButton {
-        margin-inline-start: auto;
-    }
-    .addTabButton,
-    .collapseLists {
-        margin-inline: calc((var(--touch-target-min) - 2rem) / 2);
+    .somedayBar :is(.addTabButton, .collapseLists):global([data-icon-button]) {
+        --icon-button-size: var(--touch-target-min);
+        min-inline-size: var(--touch-target-min);
+        min-block-size: var(--touch-target-min);
+        margin-inline: 0;
     }
     .customList > .dayColumn > .dayHeading {
         padding: 0 0 0.25rem 2rem;
@@ -989,7 +1017,7 @@
     }
     .listHeadingTools {
         flex: 0 0 auto;
-        gap: 0;
+        gap: 0.25rem;
     }
     .listHeadingNewList {
         margin: 0;
@@ -1013,11 +1041,28 @@
         opacity: 1;
         pointer-events: auto;
     }
-    .newListColumn > .ruledList {
-        display: none;
-    }
     .archive {
         padding: 0.75rem;
+    }
+}
+@container tasks-page (max-width: 339px) {
+    .planner {
+        --planner-header-height: 6.5rem;
+    }
+    .plannerNav {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto;
+        padding-block: 0.5rem;
+    }
+    .dateRange {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    .dateControls {
+        grid-column: 1;
+        grid-row: 2;
+        justify-self: stretch;
+        justify-content: space-between;
     }
 }
 @media (hover: none) {
@@ -1036,8 +1081,18 @@
     }
 }
 @media (pointer: coarse), (max-width: 767px) {
+    .planner {
+        --line-height: var(--touch-target-min);
+    }
     .dragPreview {
         font-size: 0.8125rem;
+    }
+}
+@media (pointer: coarse) {
+    @container tasks-page (min-width: 600px) and (max-width: 839px) {
+        .planner:has(> .plannerNav > .columnPicker) {
+            --planner-header-height: calc(2 * var(--touch-target-min) + 2rem);
+        }
     }
 }
 

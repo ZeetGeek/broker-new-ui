@@ -78,8 +78,8 @@ test("list tasks without a due date become overdue after their start day in Indi
     assert.equal(taskGroup(listTask, Date.parse("2030-01-01T18:30:00Z")), "overdue");
 });
 
-test("start date and time are required; invalid calendar and dependent fields are rejected", () => {
-    assert.equal(validateTaskDraft({ ...EMPTY_TASK_DRAFT, title: "Call Aarav" }).valid, false);
+test("unscheduled tasks are allowed; scheduled tasks require valid start date and time", () => {
+    assert.equal(validateTaskDraft({ ...EMPTY_TASK_DRAFT, title: "Call Aarav" }).valid, true);
     assert.equal(
         validateTaskDraft({
             ...EMPTY_TASK_DRAFT,

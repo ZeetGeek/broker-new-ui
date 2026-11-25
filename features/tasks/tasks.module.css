@@ -21,6 +21,10 @@
 .workspace {
     gap: 1.5rem;
 }
+.workspace :global(button:not([role="checkbox"])) svg {
+    inline-size: 1rem;
+    block-size: 1rem;
+}
 .sortControl {
     inline-size: 100%;
 }

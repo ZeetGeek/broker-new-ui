@@ -5,7 +5,6 @@ import {
     type FormEvent,
     isValidElement,
     type ReactNode,
-    useEffect,
     useId,
     useRef,
     useState,
@@ -112,23 +111,32 @@ export function TaskLists({
     const [notice, setNotice] = useState("");
     const lists = notebook.lists.filter((list) => list.tabId === activeTab);
     const activeNotebookTab = notebook.tabs.find((tab) => tab.id === activeTab);
-    const [listPage, setListPage] = useState(0);
-    useEffect(() => {
-        setListPage(0);
-    }, [activeTab]);
-    useEffect(() => {
-        setListPage(0);
-    }, [listColumns]);
+    const [pageState, setPageState] = useState({ tab: activeTab, columns: listColumns, page: 0 });
     const listCount = lists.length;
     const listStride = Math.max(1, listColumns);
     const pageCount = Math.max(1, Math.ceil(listCount / listStride));
     const maxPage = pageCount - 1;
-    useEffect(() => {
-        setListPage((page) => Math.min(page, maxPage));
-    }, [listCount, maxPage]);
+    const listPage =
+        pageState.tab === activeTab && pageState.columns === listColumns
+            ? Math.min(pageState.page, maxPage)
+            : 0;
+    const setListPage = (next: number | ((page: number) => number)) =>
+        setPageState({
+            tab: activeTab,
+            columns: listColumns,
+            page: typeof next === "function" ? next(listPage) : next,
+        });
     const canPrevList = listPage > 0;
     const canNextList = listPage < maxPage;
     const visibleLists = lists.slice(listPage * listStride, listPage * listStride + listStride);
+    const lineCount = Math.max(
+        10,
+        ...visibleLists.map(
+            (list) =>
+                plannerColumnTasks(tasks, null, list.id, notebook, today, sort, dragPreview)
+                    .length + 1,
+        ),
+    );
     const busy = notebookBusy || actions.busy || notebookLoading || !!notebookError;
     const change = async (updater: NotebookUpdater, message?: string) => {
         const saved = await onNotebookChange(updater);
@@ -215,7 +223,7 @@ export function TaskLists({
                     <IconButton
                         size="sm"
                         type="button"
-                        appearance="ghost"
+                        appearance="outline"
                         className={styles.addTabButton}
                         aria-label="Create tab"
                         title="Create tab"
@@ -225,7 +233,7 @@ export function TaskLists({
                             setOpen(true);
                         }}
                     >
-                        <Plus aria-hidden size={14} />
+                        <Plus aria-hidden size={16} />
                     </IconButton>
                     <SlidingTabs
                         value={activeTab}
@@ -286,6 +294,7 @@ export function TaskLists({
                             setOpen(true);
                         }}
                         label="Custom list tabs"
+                        revealActiveTab
                         panelId="task-someday"
                         height={36}
                         className={styles.notebookTabPicker}
@@ -296,14 +305,14 @@ export function TaskLists({
                     <IconButton
                         size="sm"
                         type="button"
-                        appearance="ghost"
+                        appearance="outline"
                         className={styles.collapseLists}
                         aria-label={open ? "Collapse lists" : "Expand lists"}
                         aria-expanded={open}
                         aria-controls="task-someday"
                         onClick={() => setOpen(!open)}
                     >
-                        <ChevronDown aria-hidden size={14} data-collapsed={!open || undefined} />
+                        <ChevronDown aria-hidden size={16} data-collapsed={!open || undefined} />
                     </IconButton>
                 </div>
             </div>
@@ -378,12 +387,15 @@ export function TaskLists({
                                                         {newListLinkButton}
                                                     </header>
                                                     <ul className={styles.ruledList} aria-hidden>
-                                                        {Array.from({ length: 9 }, (_, line) => (
-                                                            <li
-                                                                key={line}
-                                                                className={styles.blankLine}
-                                                            />
-                                                        ))}
+                                                        {Array.from(
+                                                            { length: lineCount },
+                                                            (_, line) => (
+                                                                <li
+                                                                    key={line}
+                                                                    className={styles.blankLine}
+                                                                />
+                                                            ),
+                                                        )}
                                                     </ul>
                                                 </div>
                                             );
@@ -398,12 +410,15 @@ export function TaskLists({
                                                     <h2 className="h5">&nbsp;</h2>
                                                 </header>
                                                 <ul className={styles.ruledList}>
-                                                    {Array.from({ length: 9 }, (_, line) => (
-                                                        <li
-                                                            key={line}
-                                                            className={styles.blankLine}
-                                                        />
-                                                    ))}
+                                                    {Array.from(
+                                                        { length: lineCount },
+                                                        (_, line) => (
+                                                            <li
+                                                                key={line}
+                                                                className={styles.blankLine}
+                                                            />
+                                                        ),
+                                                    )}
                                                 </ul>
                                             </div>
                                         );
@@ -461,6 +476,7 @@ export function TaskLists({
                                         >
                                             <PlannerColumn
                                                 date={null}
+                                                minimumLines={lineCount}
                                                 listId={list.id}
                                                 name={list.name}
                                                 today={today}

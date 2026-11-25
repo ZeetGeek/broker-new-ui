@@ -39,6 +39,6 @@ export function resolvePlannerVisibleColumns(
 
 export function plannerColumnLabel(count: number): { label: string; ariaLabel: string } {
     return count === 1
-        ? { label: "1 column", ariaLabel: "Show one column" }
-        : { label: `${count} columns`, ariaLabel: `Show ${count} columns` };
+        ? { label: "1 Col", ariaLabel: "Show one column" }
+        : { label: `${count} Cols`, ariaLabel: `Show ${count} columns` };
 }

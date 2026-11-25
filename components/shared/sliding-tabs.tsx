@@ -23,6 +23,8 @@ export type SlidingTabsProps<Value extends string | number> = {
     panelId?: string;
     className?: string;
     tabClassName?: string;
+    /** Keep the selected tab visible inside a horizontally scrolling strip. */
+    revealActiveTab?: boolean;
     /** Whole horizontal bar height, including padding (or each vertical row). Numbers are design pixels. */
     height?: number | string;
     stretch?: boolean;
@@ -38,6 +40,7 @@ export function SlidingTabs<Value extends string | number>({
     panelId,
     className,
     tabClassName,
+    revealActiveTab = false,
     height = 36,
     stretch = false,
     orientation = "horizontal",
@@ -82,15 +85,35 @@ export function SlidingTabs<Value extends string | number>({
         painted.current = true;
     }, [value, options, height, stretch, position]);
 
+    const reveal = useCallback(() => {
+        if (!revealActiveTab || orientation !== "horizontal") return;
+        const viewport = bar.current;
+        const active = viewport?.querySelector<HTMLElement>('[aria-selected="true"]');
+        if (!viewport || !active) return;
+        const padding = 4;
+        const start = active.offsetLeft - padding;
+        const end = active.offsetLeft + active.offsetWidth + padding;
+        if (start < viewport.scrollLeft) viewport.scrollLeft = Math.max(0, start);
+        else if (end > viewport.scrollLeft + viewport.clientWidth)
+            viewport.scrollLeft = end - viewport.clientWidth;
+    }, [orientation, revealActiveTab]);
+
+    useLayoutEffect(() => {
+        reveal();
+    }, [value, optionKeys, reveal]);
+
     useLayoutEffect(() => {
         if (!bar.current) return;
-        const observer = new ResizeObserver(() => position(false));
+        const observer = new ResizeObserver(() => {
+            position(false);
+            reveal();
+        });
         observer.observe(bar.current);
         bar.current
             .querySelectorAll<HTMLElement>('[role="tab"]')
             .forEach((tab) => observer.observe(tab));
         return () => observer.disconnect();
-    }, [optionKeys, position]);
+    }, [optionKeys, position, reveal]);
 
     return (
         <div

@@ -4,9 +4,11 @@ import { Bar, BarChart, Cell, LabelList, XAxis, YAxis } from "recharts";
 
 import { formatCommission } from "@/lib/format/commission";
 import { plural } from "@/lib/format/plural";
+import { BROKER_PIPELINE_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
-import { Info } from "@/components/shared/icons";
+import { EmptyState } from "@/components/empty-state";
+import { ChartBar, Info, Wallet } from "@/components/shared/icons";
 import {
     type ChartConfig,
     ChartContainer,
@@ -19,6 +21,9 @@ import { type EarningsReport, percentChange } from "@/features/earnings/earnings
 
 const SALE_COLOR = "#7dd3fc";
 const RENT_COLOR = "#fdba74";
+
+const HERO_CLASS_NAME =
+    "@container flex flex-col justify-center gap-4 rounded-card bg-linear-to-br from-[#1b7a5a] to-[#16664d] p-5 text-surface shadow-[0_4px_12px_rgb(16_59_45/0.12)] block-full min-inline-0 sm:gap-5 sm:p-6";
 
 const CHART_CONFIG = {
     amount: { label: "Commission" },
@@ -44,6 +49,29 @@ export function EarningsHero({
     const charted = report.buckets.reduce((sum, b) => sum + b.totalInr, 0);
     const perBucketInr = report.buckets.length > 1 ? charted / report.buckets.length : null;
     const avgUnit = report.bucketUnit;
+
+    if (earnedInr === 0) {
+        return (
+            <section
+                aria-labelledby="earnings-hero-heading"
+                className={cn(HERO_CLASS_NAME, "min-block-64 sm:min-block-80", className)}
+            >
+                <EmptyState
+                    size="card"
+                    tone="inverse"
+                    icon={Wallet}
+                    headingId="earnings-hero-heading"
+                    heading="No commission earned yet"
+                    description={
+                        report.unvaluedClosedCount > 0
+                            ? `${plural(report.unvaluedClosedCount, "sold deal")} had no commission set, so there is no commission to add up.`
+                            : "Commission from deals you mark as sold will appear here for the selected period."
+                    }
+                    action={{ label: "Open pipeline", icon: ChartBar, href: BROKER_PIPELINE_HREF }}
+                />
+            </section>
+        );
+    }
 
     const rows = [
         {
@@ -75,18 +103,7 @@ export function EarningsHero({
     const hasMix = earnedInr > 0 && rows.some((row) => row.amount > 0);
 
     return (
-        <section
-            aria-labelledby="earnings-hero-heading"
-            className={cn(
-                `
-                  @container flex flex-col justify-center gap-4 rounded-card bg-linear-to-br from-[#1b7a5a]
-                  to-[#16664d] p-5 text-surface shadow-[0_4px_12px_rgb(16_59_45/0.12)]
-                  block-full min-inline-0 sm:gap-5
-                  sm:p-6
-                `,
-                className,
-            )}
-        >
+        <section aria-labelledby="earnings-hero-heading" className={cn(HERO_CLASS_NAME, className)}>
             <div className="flex flex-col gap-2.5 min-inline-0">
                 <h2 id="earnings-hero-heading" className="sr-only">
                     Estimated earnings

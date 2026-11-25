@@ -13,12 +13,12 @@ import { CharacterCount } from "@/components/shared/character-count";
 import { revealDrawerSections } from "@/components/shared/drawer-section";
 import { Bell, LockKeyhole, Pencil } from "@/components/shared/icons";
 import { ListToolbarSelect } from "@/components/shared/list-toolbar";
-import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import {
     mapTaskClientToPicker,
     mapTaskOwnerToPicker,
 } from "@/components/shared/map-to-people-picker-person";
 import { mapTaskPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
+import { MobileSelectDrawer } from "@/components/shared/mobile-select-drawer";
 import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
 import { PropertyPickerField } from "@/components/shared/property-picker";
 import { Button } from "@/components/ui/button";
@@ -229,6 +229,7 @@ export function TaskForm({
         setSaveError("");
     };
     const validation = validateTaskDraft(draft);
+    const needsSchedule = !!(draft.startDate || draft.startTime || draft.dueDate || draft.repeat);
     const scheduleChanged = draft.dueDate !== initial.dueDate || draft.dueTime !== initial.dueTime;
     const hasNewPastReminder = (atTime: number) =>
         draft.reminders.some((minutes) => {
@@ -260,8 +261,12 @@ export function TaskForm({
         }
         try {
             await onSave(draft);
-        } catch {
-            setSaveError("Your task couldn’t be saved. Your changes are still here; try again.");
+        } catch (failure) {
+            setSaveError(
+                failure instanceof Error
+                    ? failure.message
+                    : "Your task couldn’t be saved. Your changes are still here; try again.",
+            );
         }
     };
     const title = {
@@ -399,7 +404,7 @@ export function TaskForm({
                                 <FormField
                                     label="Start date"
                                     htmlFor={`${formId}-start-date`}
-                                    required
+                                    required={needsSchedule}
                                     error={submitted ? validation.errors.startDate : undefined}
                                 >
                                     <AppDatePicker
@@ -417,8 +422,8 @@ export function TaskForm({
                                 <FormField
                                     label="Start time (IST)"
                                     htmlFor={`${formId}-start-time`}
-                                    required
-                                    hint="A reminder at task start is included automatically."
+                                    required={needsSchedule}
+                                    hint="Leave the schedule empty for an unscheduled task. Scheduled tasks include a start reminder."
                                 >
                                     <AppTimePicker
                                         id={`${formId}-start-time`}
@@ -427,7 +432,7 @@ export function TaskForm({
                                         value={draft.startTime}
                                         onChange={(startTime) => patch({ startTime })}
                                         disabled={busy}
-                                        required
+                                        required={needsSchedule}
                                         error={submitted ? validation.errors.startTime : undefined}
                                     />
                                 </FormField>

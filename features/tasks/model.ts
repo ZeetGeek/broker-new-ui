@@ -207,10 +207,13 @@ export function validateTaskDraft(draft: TaskDraft) {
         errors.title = "Keep the task name under 160 characters.";
     if (draft.details.length > MAX_CHARS.taskDetails)
         errors.details = `Keep the details under ${MAX_CHARS.taskDetails.toLocaleString("en-IN")} characters.`;
-    if (!draft.startDate) errors.startDate = "Choose a start date.";
-    else if (!isTaskDate(draft.startDate)) errors.startDate = "Choose a valid start date.";
-    if (!draft.startTime) errors.startTime = "Choose a start time.";
-    else if (!isTaskTime(draft.startTime)) errors.startTime = "Choose a valid start time.";
+    const scheduled = !!(draft.startDate || draft.startTime || draft.dueDate || draft.repeat);
+    if (scheduled && !draft.startDate) errors.startDate = "Choose a start date.";
+    else if (draft.startDate && !isTaskDate(draft.startDate))
+        errors.startDate = "Choose a valid start date.";
+    if (scheduled && !draft.startTime) errors.startTime = "Choose a start time.";
+    else if (draft.startTime && !isTaskTime(draft.startTime))
+        errors.startTime = "Choose a valid start time.";
     if (draft.startTime && !draft.startDate)
         errors.startDate = "Choose a date for this start time.";
     if (draft.dueDate && !isTaskDate(draft.dueDate)) errors.dueDate = "Choose a valid due date.";

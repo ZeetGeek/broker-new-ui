@@ -9,6 +9,7 @@ import { plural } from "@/lib/format/plural";
 import { BROKER_PIPELINE_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import { ChartBar, Clock, Handshake } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -119,23 +120,30 @@ export function EarningsPipeline({
         <EarningsCard
             title="Money in your pipeline"
             titleId="earnings-pipeline-heading"
+            empty={live.count === 0}
             action={
-                <Button
-                    variant="outline"
-                    size="sm"
-                    nativeButton={false}
-                    render={<Link href={BROKER_PIPELINE_HREF} />}
-                >
-                    <ChartBar aria-hidden />
-                    Open pipeline
-                </Button>
+                live.count > 0 ? (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        nativeButton={false}
+                        render={<Link href={BROKER_PIPELINE_HREF} />}
+                    >
+                        <ChartBar aria-hidden />
+                        Open pipeline
+                    </Button>
+                ) : undefined
             }
             className={cn("gap-0", className)}
         >
             {live.count === 0 ? (
-                <p className="body-sm mbs-4 text-ink-muted">
-                    No open deals. Attach a client to a property in your pipeline to start one.
-                </p>
+                <EmptyState
+                    size="card"
+                    icon={Handshake}
+                    heading="No money in your pipeline yet"
+                    description="Link a client to a property. Possible commission will appear here as you work the deal."
+                    action={{ label: "Open pipeline", icon: ChartBar, href: BROKER_PIPELINE_HREF }}
+                />
             ) : (
                 <div className="mbs-1 flex flex-1 flex-col">
                     <div className="flex flex-1 flex-col justify-center gap-12">

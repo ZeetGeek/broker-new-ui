@@ -63,6 +63,7 @@ export type QuickAddDraft = {
     /** Index of the # / @ whose picker was closed with Escape. */
     closedMention: number | null;
     base: QuickAddBase;
+    preserved?: { atoms: QuickAddAtom[]; values: QuickAddBase };
 };
 
 export type QuickAddEditResult = { draft: QuickAddDraft; caret: number };
@@ -177,14 +178,6 @@ function withLinkedChips(
     return { text, entities };
 }
 
-function draftLinks(draft: Pick<TaskDraft, "propertyId" | "clientId" | "ownerId">) {
-    return {
-        propertyId: draft.propertyId || null,
-        clientId: draft.clientId || null,
-        ownerId: draft.ownerId || null,
-    };
-}
-
 function chipDatePhrase(date: string, now: number): string {
     const today = taskDateKey(now);
     if (date === today) return "today";
@@ -252,14 +245,33 @@ function chipReminderPhrase(minutes: number): string {
     return `!${minutes}m`;
 }
 
+function literalDismissedTitle(draft: QuickAddDraft): string {
+    const quoted = quotedQuickAddRanges(draft.text);
+    let text = draft.text;
+    for (const range of [...draft.dismissed].sort((a, b) => b.start - a.start)) {
+        if (quoted.some((item) => range.start >= item.start && range.end <= item.end)) continue;
+        text =
+            text.slice(0, range.start) +
+            '"' +
+            text.slice(range.start, range.end) +
+            '"' +
+            text.slice(range.end);
+    }
+    return text.trim();
+}
+
 function joinTitleChips(bare: string, chips: string[]): string {
     let title = bare.trim();
+    if (title.length > TITLE_MAX)
+        throw new Error(
+            "This task name needs extra space to preserve literal date or shortcut words. Shorten it slightly before saving; your text has not been changed.",
+        );
     for (const chip of chips) {
         const next = title ? `${title} ${chip}` : chip;
         if (next.length > TITLE_MAX) break;
         title = next;
     }
-    return title.slice(0, TITLE_MAX).trim();
+    return title;
 }
 
 /**
@@ -403,6 +415,21 @@ export function quickAddDraftFromTask(
         entities,
         dismissed: [],
         closedMention: null,
+        preserved: {
+            atoms: parse.atoms.map((atom) => ({ ...atom })),
+            values: {
+                startDate: task.startDate,
+                startTime: task.startTime ?? null,
+                dueDate: task.dueDate,
+                dueTime: task.dueTime,
+                repeat: task.repeat,
+                priority: task.priority === "low" ? null : task.priority,
+                reminders: [...task.reminders],
+                propertyId: task.propertyId,
+                clientId: task.clientId,
+                ownerId: task.ownerId ?? null,
+            },
+        },
         base: {
             // Start stays on base so a word like “tomorrow” does not drift when
             // the task is opened on a later day; typed date words still win while editing.
@@ -482,6 +509,9 @@ function applyEdit(draft: QuickAddDraft, edit: TextEdit): QuickAddDraft {
         text: draft.text.slice(0, edit.start) + edit.inserted + draft.text.slice(edit.end),
         entities: shiftRanges(draft.entities, edit),
         dismissed: shiftRanges(draft.dismissed, edit),
+        preserved: draft.preserved
+            ? { ...draft.preserved, atoms: shiftRanges(draft.preserved.atoms, edit) }
+            : undefined,
         closedMention: closed[0]?.start ?? null,
     };
 }
@@ -680,6 +710,15 @@ export function resolveQuickAddValues(
     now: number,
 ): QuickAddValues {
     const { base } = draft;
+    const isPreserved = (atom: QuickAddAtom) =>
+        draft.preserved?.atoms.some(
+            (saved) =>
+                saved.kind === atom.kind && saved.start === atom.start && saved.end === atom.end,
+        ) ?? false;
+    const preservedGroup = (kinds: QuickAddAtom["kind"][]) => {
+        const atoms = parse.atoms.filter((atom) => kinds.includes(atom.kind));
+        return atoms.length > 0 && atoms.every(isPreserved);
+    };
     const askedDue =
         parse.atoms.some((atom) => atom.kind === "due") ||
         parse.dueDate !== null ||
@@ -687,14 +726,30 @@ export function resolveQuickAddValues(
         base.dueDate !== null ||
         base.dueTime !== null;
 
-    const startDate = parse.startDate ?? base.startDate;
-    const startTime = startDate ? (parse.startTime ?? base.startTime) : null;
+    const dateKinds: QuickAddAtom["kind"][] = [
+        ...parse.atoms,
+        ...(draft.preserved?.atoms ?? []),
+    ].some((atom) => atom.kind === "date")
+        ? ["date"]
+        : ["time", "repeat"];
+    const startDate = preservedGroup(dateKinds)
+        ? draft.preserved!.values.startDate
+        : (parse.startDate ?? base.startDate);
+    const startTime = startDate
+        ? preservedGroup(["time"])
+            ? draft.preserved!.values.startTime
+            : (parse.startTime ?? base.startTime)
+        : null;
 
     const typedDue = parse.atoms.some(
         (atom) => atom.kind === "due" || atom.kind === "due-date" || atom.kind === "due-time",
     );
     let dueDate = typedDue ? parse.dueDate : (parse.dueDate ?? base.dueDate);
     let dueTime = dueDate ? (typedDue ? parse.dueTime : (parse.dueTime ?? base.dueTime)) : null;
+    if (preservedGroup(["due", "due-date", "due-time"])) {
+        dueDate = draft.preserved!.values.dueDate;
+        dueTime = draft.preserved!.values.dueTime;
+    }
 
     const dueIssues: QuickAddRange[] = [];
     let dueError = "";
@@ -742,7 +797,12 @@ export function resolveQuickAddValues(
             issues.push({ start, end, minutes, reason: "duplicate" });
             continue;
         }
-        if (reminderHasPassed(dueDate, dueTime, minutes, now)) {
+        const unchangedReminder =
+            isPreserved(atom) &&
+            draft.preserved!.values.reminders.includes(minutes) &&
+            dueDate === draft.preserved!.values.dueDate &&
+            dueTime === draft.preserved!.values.dueTime;
+        if (!unchangedReminder && reminderHasPassed(dueDate, dueTime, minutes, now)) {
             issues.push({ start, end, minutes, reason: "already-passed" });
             continue;
         }
@@ -763,7 +823,7 @@ export function resolveQuickAddValues(
 
     return {
         // Keep chips in the places they were typed; fields are stored beside this text.
-        title: draft.text.trim(),
+        title: literalDismissedTitle(draft),
         startDate,
         startTime,
         dueDate,
@@ -771,7 +831,9 @@ export function resolveQuickAddValues(
         date: startDate,
         time: startTime,
         // An undated task can still repeat from its start date; typed repeats always bring a date.
-        repeat: parse.repeat ?? base.repeat,
+        repeat: preservedGroup(["repeat"])
+            ? draft.preserved!.values.repeat
+            : (parse.repeat ?? base.repeat),
         priority: parse.priority ?? base.priority,
         reminders: [...accepted].sort((a, b) => b - a),
         propertyId: parse.propertyId ?? base.propertyId,

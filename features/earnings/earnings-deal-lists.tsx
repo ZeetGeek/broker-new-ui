@@ -6,11 +6,13 @@ import { formatCommission } from "@/lib/format/commission";
 import { formatDateIso, formatDateTile } from "@/lib/format/date";
 import { plural } from "@/lib/format/plural";
 import { formatPrice, formatRent } from "@/lib/format/price";
+import { BROKER_PIPELINE_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import { CardLink } from "@/components/shared/card-link";
 import { ContactName } from "@/components/shared/contact-name";
-import { Award } from "@/components/shared/icons";
+import { Award, Briefcase, CircleCheck, LayoutGrid } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 
 import { DealKind, EarningsCard, EarningsDealLink } from "@/features/earnings/earnings-card";
@@ -76,6 +78,7 @@ export function EarningsOpenDeals({
         <EarningsCard
             title="Biggest open deals"
             titleId="earnings-top-heading"
+            empty={deals.length === 0}
             action={
                 deals.length > 0 ? (
                     <ul
@@ -105,9 +108,21 @@ export function EarningsOpenDeals({
             className={cn(deals.length > 0 && "block-120 lg:block-0 lg:min-block-full", className)}
         >
             {deals.length === 0 ? (
-                <p className="body-sm text-ink-muted">
-                    None of your open deals has a commission set yet.
-                </p>
+                <EmptyState
+                    size="card"
+                    icon={Briefcase}
+                    heading={live.count === 0 ? "No open deals yet" : "No commission set yet"}
+                    description={
+                        live.count === 0
+                            ? "Link a client to a property to start a deal. Your biggest opportunities will appear here."
+                            : "Your open deals will appear here once the owner adds a commission."
+                    }
+                    action={{
+                        label: "Open pipeline",
+                        icon: LayoutGrid,
+                        href: BROKER_PIPELINE_HREF,
+                    }}
+                />
             ) : (
                 <>
                     {/* Full-bleed divider under the header, shown once the list is scrolled
@@ -245,6 +260,7 @@ export function EarningsRecentSold({
         <EarningsCard
             title="Recently sold"
             titleId="earnings-recent-heading"
+            empty={rows.length === 0}
             className={cn("@container block-full min-block-full", className)}
         >
             {showBest && !bestInList ? (
@@ -280,9 +296,12 @@ export function EarningsRecentSold({
             ) : null}
 
             {rows.length === 0 ? (
-                <p className="body-sm text-ink-muted">
-                    No deals sold in this period. Try a longer period.
-                </p>
+                <EmptyState
+                    size="card"
+                    icon={CircleCheck}
+                    heading="No deals sold in this period"
+                    description="Deals you mark as sold will appear here. Choose a longer period to see earlier sales."
+                />
             ) : (
                 <ol className="flex flex-col gap-3">
                     {rows.map((row) => (

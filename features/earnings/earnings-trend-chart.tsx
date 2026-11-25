@@ -124,6 +124,7 @@ export function EarningsTrendChart({
         <EarningsCard
             title={isMoney ? `Commission by ${unitWord}` : `Sold and lost by ${unitWord}`}
             titleId="earnings-trend-heading"
+            empty={isEmpty}
             action={
                 <SlidingTabs
                     value={view}

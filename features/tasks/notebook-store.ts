@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 import { tasksApi } from "@/lib/api/tasks";
@@ -40,6 +40,8 @@ export function useTaskNotebook(accountId: string) {
     const mock = isMockMode();
     const client = useQueryClient();
     const queryKey = notebookQueryKey(accountId);
+    const mutationKey = ["task-notebook-mutation", accountId];
+    const busy = useIsMutating({ mutationKey }) > 0;
     const query = useQuery({
         queryKey,
         queryFn: mock
@@ -49,16 +51,22 @@ export function useTaskNotebook(accountId: string) {
               }
             : fetchNotebook,
         staleTime: mock ? Infinity : 60_000,
+        enabled: !busy,
+        refetchOnWindowFocus: !mock,
+        refetchOnReconnect: !mock,
+        refetchInterval: mock ? false : 60_000,
         retry: mock ? false : 1,
     });
     const mutation = useMutation({
+        mutationKey,
         scope: { id: `task-notebook:${accountId}` },
         mutationFn: async (updater: NotebookUpdater) => {
             if (mock) {
                 await simulateTestRequest();
                 return notebookPreviewStore.update(accountId, updater);
             }
-            const current = client.getQueryData<TaskNotebook>(queryKey) ?? (await fetchNotebook());
+            await client.cancelQueries({ queryKey });
+            const current = await fetchNotebook();
             const next = notebookSchema.parse(updater(current));
             return notebookSchema.parse(await tasksApi.replaceNotebook(next));
         },
@@ -71,7 +79,7 @@ export function useTaskNotebook(accountId: string) {
         notebook: query.data ?? defaultNotebook(),
         isLoading: query.isPending,
         error: query.error,
-        busy: mutation.isPending,
+        busy,
         update: mutation.mutateAsync,
     };
 }

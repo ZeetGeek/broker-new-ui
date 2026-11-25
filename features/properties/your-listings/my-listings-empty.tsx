@@ -1,16 +1,7 @@
-import { EmptyState, type EmptyStateProps } from "@/components/shared/empty-state";
+import { EmptyStateCard as ListingsEmptyCard } from "@/components/shared/empty-state-card";
 import { Building2, CheckCircle2, FileText, Plus, Search, Trash2 } from "@/components/shared/icons";
 
 import type { MyListingsStatusTab } from "@/features/properties/your-listings/types";
-
-/** Match the Contacts empty card at phone, tablet and desktop widths. */
-function ListingsEmptyCard(props: Omit<EmptyStateProps, "size">) {
-    return (
-        <div className="flex items-center rounded-card border border-border-warm bg-surface p-3 inline-full min-block-80 min-inline-0 sm:p-4 sm:min-block-96 lg:p-6 lg:min-block-[max(25rem,calc(100dvh-17rem))]">
-            <EmptyState {...props} size="card" />
-        </div>
-    );
-}
 
 export type MyListingsEmptyProps = {
     variant: "filtered" | "first_run" | "no_deleted" | "no_sold" | "no_draft" | "no_published";

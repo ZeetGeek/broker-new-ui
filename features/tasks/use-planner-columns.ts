@@ -27,12 +27,6 @@ export function usePlannerColumns(populatedDayCount: number, calendar = false) {
         () => plannerColumnPickerOptions(populatedDayCount, viewportMax, calendar),
         [populatedDayCount, viewportMax, calendar],
     );
-    useEffect(() => {
-        if (!pickerOptions.length) return;
-        setPreferredColumns((current) =>
-            pickerOptions.includes(current) ? current : Math.max(...pickerOptions),
-        );
-    }, [pickerOptions]);
     const columns = useMemo(
         () =>
             resolvePlannerVisibleColumns(

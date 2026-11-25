@@ -1,4 +1,9 @@
-import { type TaskDto, tasksApi, type TaskWriteDto } from "@/lib/api/tasks";
+import {
+    type TaskDto,
+    type TaskLinkOptionsDto,
+    tasksApi,
+    type TaskWriteDto,
+} from "@/lib/api/tasks";
 
 import { type Task, taskSchema } from "./model";
 
@@ -53,7 +58,29 @@ export function taskWrite(task: Task): TaskWriteDto {
 }
 
 export function taskFromDto(dto: TaskDto): Task {
-    return taskSchema.parse(dto);
+    return taskSchema.parse({
+        ...dto,
+        plannerOrder: dto.plannerOrder ?? undefined,
+        startReminderEnabledAt: dto.startReminderEnabledAt ?? undefined,
+    });
+}
+
+export function withTaskOwnerTypes(
+    current: Task[],
+    next: Task[],
+    catalogs: TaskLinkOptionsDto | undefined,
+): Task[] {
+    const previous = new Map(current.map((task) => [task.id, task]));
+    return next.map((task) => {
+        if (!task.ownerId) return task.ownerType ? { ...task, ownerType: null } : task;
+        const old = previous.get(task.id);
+        const ownerType =
+            (old?.ownerId === task.ownerId ? old.ownerType : undefined) ??
+            catalogs?.owners.find((owner) => owner.id === task.ownerId)?.type ??
+            (!old || old.ownerId === task.ownerId ? task.ownerType : undefined) ??
+            null;
+        return ownerType === task.ownerType ? task : { ...task, ownerType };
+    });
 }
 
 export function diffTasks(before: Task[], after: Task[]): TaskOp[] {

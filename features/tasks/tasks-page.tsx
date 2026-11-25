@@ -11,11 +11,14 @@ import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import toast from "@/components/shared/app-toast";
 import { DrawerSection } from "@/components/shared/drawer-section";
 import { EmptyState } from "@/components/shared/empty-state";
+import { EmptyStateCard } from "@/components/shared/empty-state-card";
 import { FilterChip } from "@/components/shared/filter-chip";
 import {
     AlertCircle,
     CheckCircle2,
     List,
+    Plus,
+    RefreshCw,
     Search,
     SlidersHorizontal,
     Trash2,
@@ -95,16 +98,7 @@ export function TasksPage() {
 }
 
 function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initialQuery: string }) {
-    const {
-        tasks,
-        isLoading,
-        error: loadError,
-        save,
-        update,
-        reset,
-        busy,
-        isLive,
-    } = useTasks(accountId);
+    const { tasks, isLoading, error: loadError, update, reset, busy, isLive } = useTasks(accountId);
     const lists = useTaskNotebook(accountId);
     const catalogs = useTaskCatalogs();
     // Read incoming links once; workspace interactions never navigate or write browser history.
@@ -249,16 +243,23 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
     };
     useShortcut("add_task", create);
     const clear = () => updateWorkspace({ q: undefined, due: undefined, linked: undefined });
-    const commit = async (next: Task[], message: string, after?: () => void) => {
+    const commit = async (
+        next: (latest: Task[]) => Task[],
+        message: string,
+        after?: () => void,
+    ) => {
         setError("");
         try {
-            await save(next);
+            await update(next);
             toast.success(message);
             after?.();
-        } catch {
-            setError(
-                "Your change couldn’t be saved in this tab. Try again; your task is still here.",
-            );
+        } catch (failure) {
+            const message =
+                failure instanceof Error
+                    ? failure.message
+                    : "Your change couldn’t be saved. Try again.";
+            setError(message);
+            throw new Error(message);
         }
     };
     const complete = async (task: Task) => {
@@ -366,16 +367,25 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         return saved;
     };
     const saveDraft = async (draft: TaskDraft) => {
+        if (busy) return;
         const editing = view !== "create" ? selected : undefined;
-        const next = taskFromDraft(draft, {
-            editing,
-            mode: view as TaskDraftMode,
-            catalogs,
-            now: Date.now(),
-            id: editing?.id ?? crypto.randomUUID(),
-        });
+        const id = editing?.id ?? crypto.randomUUID();
         await commit(
-            editing ? tasks.map((t) => (t.id === editing.id ? next : t)) : [next, ...tasks],
+            (latest) => {
+                const current = editing ? latest.find((task) => task.id === id) : undefined;
+                if (editing && (!current || current.deletedAt))
+                    throw new Error("This task is no longer available to edit.");
+                const next = taskFromDraft(draft, {
+                    editing: current,
+                    mode: view as TaskDraftMode,
+                    catalogs,
+                    now: Date.now(),
+                    id,
+                });
+                return current
+                    ? latest.map((task) => (task.id === id ? next : task))
+                    : [next, ...latest];
+            },
             editing
                 ? view === "reschedule"
                     ? "Task rescheduled"
@@ -386,7 +396,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             () =>
                 updateWorkspace({
                     view: "detail",
-                    task: next.id,
+                    task: id,
                     visitClient: undefined,
                     visitProperty: undefined,
                     visitTitle: undefined,
@@ -541,8 +551,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                         </div>
                     )}
                     {loadError && (
-                        <EmptyState
-                            size="page"
+                        <EmptyStateCard
                             variant="error"
                             icon={AlertCircle}
                             heading="Your tasks couldn’t be loaded"
@@ -551,24 +560,20 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                     ? "Check your connection and try again to see your follow-ups."
                                     : "Allow storage in this browser, or reset the task list to start empty."
                             }
-                        >
-                            <Button
-                                size="sm"
-                                variant="accent"
-                                disabled={busy}
-                                onClick={() =>
+                            action={{
+                                label: isLive ? "Try again" : "Reset task list",
+                                icon: RefreshCw,
+                                disabled: busy,
+                                onClick: () =>
                                     void reset().catch(() =>
                                         setError(
                                             isLive
                                                 ? "Your tasks still couldn’t be loaded. Check your connection and try again."
                                                 : "Allow storage in this browser, then try loading tasks again.",
                                         ),
-                                    )
-                                }
-                            >
-                                {isLive ? "Try again" : "Reset task list"}
-                            </Button>
-                        </EmptyState>
+                                    ),
+                            }}
+                        />
                     )}
                     {error && !view && (
                         <p className={styles.error} role="alert">
@@ -588,16 +593,16 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                           !lists.isLoading &&
                           lists.notebook.tabs.length === 1 &&
                           lists.notebook.lists.length === 1 ? (
-                            <EmptyState
-                                size="page"
+                            <EmptyStateCard
                                 icon={CheckCircle2}
                                 heading="Make room for your next follow-up"
                                 description="Add a call, a reminder or something to do. Link it to a client, owner or property when needed."
-                            >
-                                <Button variant="accent" onClick={create}>
-                                    Add your first task
-                                </Button>
-                            </EmptyState>
+                                action={{
+                                    label: "Add your first task",
+                                    icon: Plus,
+                                    onClick: create,
+                                }}
+                            />
                         ) : tab === "all" && !filtered ? (
                             <TaskPlanner
                                 notebook={lists.notebook}
@@ -647,8 +652,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                 onQuickChange={quickChange}
                             />
                         ) : (
-                            <EmptyState
-                                size="page"
+                            <EmptyStateCard
                                 variant={filtered ? "filtered" : "default"}
                                 icon={filtered ? Search : tab === "deleted" ? Trash2 : CheckCircle2}
                                 heading={
@@ -669,16 +673,14 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                             ? "You're caught up. Overdue follow-ups will show up here when a due date has passed."
                                             : "Check off a task when it's done. You can reopen it whenever plans change."
                                 }
-                            >
-                                <Button
-                                    variant="accent"
-                                    onClick={
-                                        filtered ? clear : () => updateWorkspace({ tab: undefined })
-                                    }
-                                >
-                                    {filtered ? "Clear search & filters" : "Back to To do"}
-                                </Button>
-                            </EmptyState>
+                                action={{
+                                    label: filtered ? "Clear search & filters" : "Back to To do",
+                                    icon: filtered ? Search : List,
+                                    onClick: filtered
+                                        ? clear
+                                        : () => updateWorkspace({ tab: undefined }),
+                                }}
+                            />
                         )}
                     </TabsContent>
                 </div>
@@ -702,7 +704,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             )}
             {view === "create" && (
                 <TaskForm
-                    key={`create-${params.get("visitClient") ?? ""}-${params.get("visitProperty") ?? ""}-${params.get("visitTitle") ?? ""}-${catalogs.ready}`}
+                    key={`create-${params.get("visitClient") ?? ""}-${params.get("visitProperty") ?? ""}-${params.get("visitTitle") ?? ""}`}
                     mode="create"
                     prefill={{
                         title: (params.get("visitTitle") ?? "").slice(0, 160),

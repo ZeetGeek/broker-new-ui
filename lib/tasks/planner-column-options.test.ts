@@ -25,8 +25,8 @@ test("visible columns clamp to viewport, populated days, and the chosen step", (
 });
 
 test("column picker options are named as columns", () => {
-    assert.deepEqual(plannerColumnLabel(1), { label: "1 column", ariaLabel: "Show one column" });
-    assert.deepEqual(plannerColumnLabel(3), { label: "3 columns", ariaLabel: "Show 3 columns" });
+    assert.deepEqual(plannerColumnLabel(1), { label: "1 Col", ariaLabel: "Show one column" });
+    assert.deepEqual(plannerColumnLabel(3), { label: "3 Cols", ariaLabel: "Show 3 columns" });
 });
 
 test("the calendar planner always offers every column count that fits", () => {

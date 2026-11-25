@@ -2,6 +2,9 @@ import { formatCommission } from "@/lib/format/commission";
 import { plural } from "@/lib/format/plural";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
+import { MapPin } from "@/components/shared/icons";
+
 import { EarningsCard } from "@/features/earnings/earnings-card";
 import type { AreaEarningsRow, EarningsReport } from "@/features/earnings/earnings-math";
 import { AREA_COLOR_CLASS } from "@/features/earnings/earnings-viz";
@@ -71,10 +74,16 @@ export function EarningsAreas({
         <EarningsCard
             title="Earnings by area"
             titleId="earnings-areas-heading"
+            empty={areas.length === 0}
             className={className}
         >
             {areas.length === 0 ? (
-                <p className="body-sm text-ink-muted">No deals sold in this period.</p>
+                <EmptyState
+                    size="card"
+                    icon={MapPin}
+                    heading="No area earnings yet"
+                    description="Commission from sold deals will appear here, grouped by area."
+                />
             ) : (
                 <>
                     <ul className="flex flex-col divide-y divide-border-warm">
