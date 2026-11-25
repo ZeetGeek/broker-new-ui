@@ -302,6 +302,7 @@ function exclusiveOwnerToRow(item: ExclusiveOwnerItem): OwnerRow {
     return {
         id: item.id,
         name: item.fullName,
+        avatarUrl: item.avatarUrl?.trim() || undefined,
         phoneDigits,
         hasActiveRepresentation: true,
         propertyCount: Math.max(item.propertyCount, properties.length),

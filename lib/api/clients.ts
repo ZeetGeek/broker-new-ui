@@ -41,6 +41,11 @@ export type NewBuyerInput = {
     source: BuyerSource;
     notes?: string | null;
     documents?: BuyerDocument[];
+    /**
+     * Key from `contactPhotosApi.upload`. `undefined` leaves the photo as it
+     * is, `null` removes it.
+     */
+    avatarKey?: string | null;
 };
 
 /** All requests have settled; callers can refresh successful links and retry only failures. */
@@ -751,6 +756,7 @@ export const clientsApi = withTestNetwork({
             const created: ClientItem = {
                 id: `cl_${Date.now()}`,
                 name: input.name,
+                avatarUrl: input.avatarKey ?? undefined,
                 phoneDigits: input.phoneDigits,
                 email: input.email ?? null,
                 lookingFor: input.lookingFor,
@@ -811,6 +817,10 @@ export const clientsApi = withTestNetwork({
             const next: ClientItem = {
                 ...MOCK_CLIENTS[index]!,
                 name: input.name,
+                avatarUrl:
+                    input.avatarKey === undefined
+                        ? MOCK_CLIENTS[index]!.avatarUrl
+                        : (input.avatarKey ?? undefined),
                 phoneDigits: input.phoneDigits,
                 email: input.email ?? null,
                 lookingFor: input.lookingFor,
@@ -1009,5 +1019,6 @@ function toClientPayload(input: NewBuyerInput, updating = false) {
             input.notes === undefined
                 ? undefined
                 : input.notes?.trim() || (updating ? null : undefined),
+        avatarKey: input.avatarKey,
     };
 }

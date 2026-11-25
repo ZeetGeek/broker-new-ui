@@ -8,16 +8,26 @@ import { PhotoCropModal } from "@/components/shared/photo-crop-modal";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 
-/** Local photo selection only; uploading belongs to the contact API integration. */
+/**
+ * Pick and crop a contact photo. Selection stays local; the modal uploads it
+ * on save (see `useContactPhotoKey`).
+ *
+ * `existingUrl` is the photo already saved on the contact (edit mode). It
+ * shows until the user picks a new one or removes it.
+ */
 export function ContactPhotoField({
     name,
     file,
     onChange,
+    existingUrl,
+    onRemoveExisting,
     disabled = false,
 }: {
     name: string;
     file: File | null;
     onChange: (file: File | null) => void;
+    existingUrl?: string;
+    onRemoveExisting?: () => void;
     disabled?: boolean;
 }) {
     const id = useId();
@@ -26,6 +36,7 @@ export function ContactPhotoField({
     const [source, setSource] = useState<{ url: string; name: string } | null>(null);
     const [photoPreview, setPhotoPreview] = useState<{ file: File; url: string } | null>(null);
     const preview = photoPreview?.file === file ? photoPreview?.url : undefined;
+    const hasPhoto = Boolean(file || existingUrl);
     useEffect(() => {
         if (!file) return;
         const url = URL.createObjectURL(file);
@@ -49,13 +60,14 @@ export function ContactPhotoField({
                     type="button"
                     disabled={disabled}
                     onClick={() => input.current?.click()}
-                    aria-label={file ? "Change profile photo" : "Add profile photo"}
+                    aria-label={hasPhoto ? "Change profile photo" : "Add profile photo"}
                     aria-describedby={`${id}-hint`}
                     className="group relative shrink-0 rounded-full outline-none block-14 inline-14 focus-visible:ring-3 focus-visible:ring-ring/30 disabled:opacity-60"
                 >
                     <UserAvatar
                         name={name.trim() || "New contact"}
-                        previewUrl={preview}
+                        previewUrl={file ? preview : undefined}
+                        imageUrl={file ? undefined : existingUrl}
                         size="lg"
                     />
                 </button>
@@ -77,9 +89,9 @@ export function ContactPhotoField({
                             disabled={disabled}
                             onClick={() => input.current?.click()}
                         >
-                            {file ? "Change photo" : "Add photo"}
+                            {hasPhoto ? "Change photo" : "Add photo"}
                         </Button>
-                        {file ? (
+                        {hasPhoto ? (
                             <IconButton
                                 type="button"
                                 size="sm"
@@ -88,7 +100,8 @@ export function ContactPhotoField({
                                 tone="danger"
                                 disabled={disabled}
                                 onClick={() => {
-                                    onChange(null);
+                                    if (file) onChange(null);
+                                    else onRemoveExisting?.();
                                     setError("");
                                 }}
                             >

@@ -31,6 +31,7 @@ import { contactLocationDefaults } from "@/features/contacts/contact-location-de
 import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
 import { ContactPhotoField } from "@/features/contacts/contact-photo-field";
 import type { OwnerRow } from "@/features/contacts/types";
+import { useContactPhotoKey } from "@/features/contacts/use-contact-photo-key";
 import {
     FORM_SECTIONS_CLASS,
     WizardSection,
@@ -115,6 +116,15 @@ export function AddOwnerModal({
     const locationDefaults = useMemo(() => contactLocationDefaults(profile), [profile]);
     const [busy, setBusy] = useState(false);
     const [photo, setPhoto] = useState<File | null>(null);
+    const [photoRemoved, setPhotoRemoved] = useState(false);
+    const uploadPhoto = useContactPhotoKey();
+    const existingPhotoUrl = isEdit && !photoRemoved ? owner?.avatarUrl : undefined;
+    /** `undefined` keeps the saved photo, `null` removes it. */
+    const resolveAvatarKey = async (): Promise<string | null | undefined> => {
+        if (photo) return uploadPhoto(photo);
+        if (photoRemoved && owner?.avatarUrl) return null;
+        return undefined;
+    };
     const [initializedFor, setInitializedFor] = useState<OwnerRow | null | undefined>(undefined);
     const [submitError, setSubmitError] = useState("");
 
@@ -144,6 +154,7 @@ export function AddOwnerModal({
         const timer = window.setTimeout(() => {
             const next = valuesFromOwner(owner, locationDefaults);
             setPhoto(null);
+            setPhotoRemoved(false);
             reset(next);
             setSubmitError("");
             setBusy(false);
@@ -166,9 +177,11 @@ export function AddOwnerModal({
     };
 
     const createOwner = async (parsed: ExclusiveOwnerFormValues) => {
+        const avatarKey = await resolveAvatarKey();
         const saved = await exclusiveOwnersApi.create({
             ...parsed,
             phone: normalizeExclusiveOwnerPhone(parsed.phone),
+            avatarKey,
         });
         onSaved(saved.fullName, "created", saved.id);
         return saved;
@@ -185,7 +198,10 @@ export function AddOwnerModal({
         setSubmitError("");
         try {
             if (owner) {
-                const saved = await exclusiveOwnersApi.update(owner.id, parsed);
+                const saved = await exclusiveOwnersApi.update(owner.id, {
+                    ...parsed,
+                    avatarKey: await resolveAvatarKey(),
+                });
                 onSaved(saved.fullName, "updated", saved.id);
             } else {
                 await createOwner(parsed);
@@ -236,7 +252,7 @@ export function AddOwnerModal({
             onOpenChange={onOpenChange}
             title={isEdit ? "Edit owner" : "Add owner"}
             description=""
-            isDirty={isDirty || photo !== null}
+            isDirty={isDirty || photo !== null || photoRemoved}
             busy={busy}
             primaryLabel={isEdit ? "Save changes" : "Save owner"}
             onPrimary={() => void save()}
@@ -252,6 +268,8 @@ export function AddOwnerModal({
                         name={values.fullName ?? ""}
                         file={photo}
                         onChange={setPhoto}
+                        existingUrl={existingPhotoUrl}
+                        onRemoveExisting={() => setPhotoRemoved(true)}
                         disabled={busy}
                     />
                     <div className="grid grid-cols-1 gap-4 @min-[28rem]/contact-drawer:grid-cols-2">

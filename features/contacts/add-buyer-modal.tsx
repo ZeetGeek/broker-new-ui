@@ -44,6 +44,7 @@ import { contactLocationDefaults } from "@/features/contacts/contact-location-de
 import { ContactLocationFields } from "@/features/contacts/contact-location-fields";
 import { ContactPhotoField } from "@/features/contacts/contact-photo-field";
 import type { BuyerRow } from "@/features/contacts/types";
+import { useContactPhotoKey } from "@/features/contacts/use-contact-photo-key";
 import {
     FORM_SECTIONS_CLASS,
     WizardSection,
@@ -194,6 +195,15 @@ export function AddBuyerModal({
     const values = useWatch({ control: form.control });
     const [busy, setBusy] = useState(false);
     const [photo, setPhoto] = useState<File | null>(null);
+    const [photoRemoved, setPhotoRemoved] = useState(false);
+    const uploadPhoto = useContactPhotoKey();
+    const existingPhotoUrl = isEdit && !photoRemoved ? buyer?.avatarUrl : undefined;
+    /** `undefined` keeps the saved photo, `null` removes it. */
+    const resolveAvatarKey = async (): Promise<string | null | undefined> => {
+        if (photo) return uploadPhoto(photo);
+        if (photoRemoved && buyer?.avatarUrl) return null;
+        return undefined;
+    };
     const [initializedFor, setInitializedFor] = useState<BuyerRow | null | undefined>(undefined);
     const [formError, setFormError] = useState<string>();
     const [duplicate, setDuplicate] = useState<{
@@ -218,6 +228,7 @@ export function AddBuyerModal({
         if (!open) return;
         const timer = window.setTimeout(() => {
             setPhoto(null);
+            setPhotoRemoved(false);
             form.reset(valuesFromBuyer(buyer, locationDefaults));
             setBusy(false);
             setFormError(undefined);
@@ -272,7 +283,10 @@ export function AddBuyerModal({
         setBusy(true);
         setFormError(undefined);
         try {
-            const input = toNewBuyerInput(parsed, phoneCountry!);
+            const input = {
+                ...toNewBuyerInput(parsed, phoneCountry!),
+                avatarKey: await resolveAvatarKey(),
+            };
             if (isEdit && buyer) {
                 await contactsApi.saveBuyer(input, buyer.id);
                 onUpdated?.(input.name);
@@ -309,7 +323,10 @@ export function AddBuyerModal({
         setBusy(true);
         setFormError(undefined);
         try {
-            const input = toNewBuyerInput(parsed, phoneCountry!);
+            const input = {
+                ...toNewBuyerInput(parsed, phoneCountry!),
+                avatarKey: await resolveAvatarKey(),
+            };
             const savedId = await contactsApi.saveBuyer(input);
             onCreated(input.name, savedId);
             toast.success("Client added");
@@ -340,7 +357,7 @@ export function AddBuyerModal({
             onOpenChange={onOpenChange}
             title={isEdit ? "Edit client" : "Add client"}
             description=""
-            isDirty={isDirty || photo !== null}
+            isDirty={isDirty || photo !== null || photoRemoved}
             busy={busy}
             primaryLabel={isEdit ? "Save changes" : "Save client"}
             onPrimary={() => void save()}
@@ -363,6 +380,8 @@ export function AddBuyerModal({
                         name={values.name ?? ""}
                         file={photo}
                         onChange={setPhoto}
+                        existingUrl={existingPhotoUrl}
+                        onRemoveExisting={() => setPhotoRemoved(true)}
                         disabled={busy}
                     />
                     <div className="grid grid-cols-1 gap-4 @min-[28rem]/contact-drawer:grid-cols-2">

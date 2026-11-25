@@ -28,6 +28,8 @@ export type ExclusiveOwnerItem = {
     name: string;
     phone: string;
     email: string | null;
+    /** Contact photo the broker added. */
+    avatarUrl?: string | null;
     ownerType: "individual" | "builder" | "company";
     society: string;
     area: string | null;
@@ -62,7 +64,10 @@ export type ExclusiveOwnerListQuery = {
     limit?: number;
 };
 
-export type NewExclusiveOwnerInput = ExclusiveOwnerFormValues;
+export type NewExclusiveOwnerInput = ExclusiveOwnerFormValues & {
+    /** Key from `contactPhotosApi.upload`; `null` removes the photo. */
+    avatarKey?: string | null;
+};
 
 /** Live owner updates have no documented API contract in this frontend yet. */
 export function canEditExclusiveOwners(): boolean {
@@ -133,6 +138,7 @@ function toPayload(input: NewExclusiveOwnerInput) {
         reraNumber: input.reraNumber?.trim() || undefined,
         source: input.source || undefined,
         notes: input.notes?.trim() || undefined,
+        avatarKey: input.avatarKey,
     };
 }
 
@@ -220,6 +226,7 @@ export const exclusiveOwnersApi = withTestNetwork({
                 name: input.fullName.trim(),
                 phone: `+91${phoneDigits}`,
                 email: input.email.trim() || null,
+                avatarUrl: input.avatarKey ?? null,
                 ownerType: input.ownerType,
                 society: input.society?.trim() || "",
                 area: input.area?.trim() || null,
@@ -255,9 +262,11 @@ export const exclusiveOwnersApi = withTestNetwork({
         if (index < 0) throw new ApiError("Owner not found", 404);
         const payload = toPayload(input);
         const current = mockExclusiveOwners[index];
+        const { avatarKey, ...fields } = payload;
         const updated: ExclusiveOwnerItem = {
             ...current,
-            ...payload,
+            ...fields,
+            avatarUrl: avatarKey === undefined ? current.avatarUrl : avatarKey,
             name: payload.fullName,
             email: payload.email ?? null,
             society: payload.society ?? "",
