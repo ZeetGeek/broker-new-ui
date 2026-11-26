@@ -1,6 +1,6 @@
+import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
 import { CalendarCheck, CalendarPlus, CircleCheck, Search } from "@/components/shared/icons";
-import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 
 import type { VisitViewer } from "@/features/site-visits/types";
@@ -45,14 +45,11 @@ export function VisitsFirstRunEmpty({
             }
             className="py-16"
         >
-            <Button
-                size="lg"
-                nativeButton={false}
-                render={<Link href={canSchedule ? SCHEDULE_HREF : BROWSE_HREF} />}
-                variant="accent"
-            >
-                {canSchedule ? "Schedule a visit" : "Browse Marketplace"}
-            </Button>
+            <EmptyStateAction
+                label={canSchedule ? "Schedule a visit" : "Browse Marketplace"}
+                icon={Search}
+                href={canSchedule ? SCHEDULE_HREF : BROWSE_HREF}
+            />
         </EmptyState>
     );
 }
@@ -66,9 +63,7 @@ export function VisitsFilteredEmpty({ onClear }: { onClear: () => void }) {
             description="Try a different property, name or status."
             className="py-16"
         >
-            <Button variant="accent" size="sm" onClick={onClear}>
-                Clear the filters
-            </Button>
+            <EmptyStateAction label="Clear the filters" icon={Search} onClick={onClear} />
         </EmptyState>
     );
 }

@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
+import { EmptyState } from "@/components/empty-state";
 import {
     CalendarCheck,
     CalendarClock,
@@ -586,22 +587,21 @@ export function BrokerPropertyAnalytics({
                         ))}
                     </ul>
                     {!filtered.length && (
-                        <div className={styles.empty}>
-                            <Search size={24} aria-hidden />
-                            <div>
-                                <strong>No matching clients</strong>
-                                <p>Try another name or choose a different stage.</p>
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => {
-                                        setQuery("");
-                                        setClientFilter("all");
-                                    }}
-                                >
-                                    Clear filters
-                                </Button>
-                            </div>
-                        </div>
+                        <EmptyState
+                            size="card"
+                            variant="filtered"
+                            icon={Search}
+                            heading="No matching clients"
+                            description="Try another name or choose a different stage."
+                            action={{
+                                label: "Clear filters",
+                                icon: Search,
+                                onClick: () => {
+                                    setQuery("");
+                                    setClientFilter("all");
+                                },
+                            }}
+                        />
                     )}
                     <div className={styles.clientFooter}>
                         <p aria-live="polite">

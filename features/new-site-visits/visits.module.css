@@ -137,10 +137,6 @@
 .toolbarDates {
     display: none;
 }
-.toolbarClear {
-    margin-block-start: 0.5rem;
-    padding-inline: 0;
-}
 @container visits (min-width: 640px) {
     .statusSelect {
         flex: 0 1 auto;

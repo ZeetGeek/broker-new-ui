@@ -1,10 +1,8 @@
-import Link from "next/link";
-
 import { ownerBrokersHref } from "@/lib/routes/owner";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Handshake, Search, UserRoundSearch } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 
 import type { OwnerBrokersTab } from "@/features/owner-brokers/types";
 
@@ -27,9 +25,11 @@ export function OwnerBrokersEmpty({
                     className="py-16"
                 >
                     {onClearSearch ? (
-                        <Button variant="accent" size="sm" onClick={onClearSearch}>
-                            Clear the search
-                        </Button>
+                        <EmptyStateAction
+                            label="Clear the search"
+                            icon={Search}
+                            onClick={onClearSearch}
+                        />
                     ) : null}
                 </EmptyState>
             );
@@ -54,9 +54,11 @@ export function OwnerBrokersEmpty({
                 className="py-16"
             >
                 {onClearSearch ? (
-                    <Button variant="accent" size="sm" onClick={onClearSearch}>
-                        Clear the search
-                    </Button>
+                    <EmptyStateAction
+                        label="Clear the search"
+                        icon={Search}
+                        onClick={onClearSearch}
+                    />
                 ) : null}
             </EmptyState>
         );
@@ -69,14 +71,11 @@ export function OwnerBrokersEmpty({
             description="When a broker accepts your invite — or you approve their request — they show up here."
             className="py-16"
         >
-            <Button
-                size="lg"
-                variant="accent"
-                nativeButton={false}
-                render={<Link href={ownerBrokersHref("browse")} />}
-            >
-                Browse brokers
-            </Button>
+            <EmptyStateAction
+                label="Browse brokers"
+                icon={Search}
+                href={ownerBrokersHref("browse")}
+            />
         </EmptyState>
     );
 }

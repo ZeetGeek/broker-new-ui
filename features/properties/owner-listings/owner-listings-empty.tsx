@@ -1,6 +1,6 @@
+import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
-import { MapPin, Search } from "@/components/shared/icons";
-import { TextLinkButton } from "@/components/shared/text-link-button";
+import { MapPin, Search, ShieldCheck } from "@/components/shared/icons";
 
 import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 
@@ -27,7 +27,11 @@ export function OwnerListingsEmpty({
                     heading="Tell us where you work"
                     description="We'll show you new properties in those areas."
                 >
-                    <TextLinkButton href="/broker/profile">Add service areas</TextLinkButton>
+                    <EmptyStateAction
+                        label="Add service areas"
+                        icon={MapPin}
+                        href="/broker/profile"
+                    />
                 </EmptyState>
             );
         }
@@ -40,33 +44,36 @@ export function OwnerListingsEmpty({
                 heading="Add your RERA number to get verified"
                 description="Owners approve verified brokers far more often."
             >
-                <TextLinkButton href="/broker/profile">Add RERA number</TextLinkButton>
+                <EmptyStateAction
+                    label="Add RERA number"
+                    icon={ShieldCheck}
+                    href="/broker/profile"
+                />
             </EmptyState>
         );
     }
 
     if (variant === "filtered") {
         return (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">No properties match these filters</p>
-                <p className="body-sm max-w-prose text-ink-muted">
-                    {searchQuery?.trim()
+            <EmptyState
+                size="card"
+                icon={Search}
+                heading="No properties match these filters"
+                variant="filtered"
+                description={
+                    searchQuery?.trim()
                         ? `No results for "${searchQuery.trim()}". Try a wider budget or a different locality.`
-                        : "Try a wider budget or a different locality."}
-                </p>
+                        : "Try a wider budget or a different locality."
+                }
+            >
                 {onClearFilters ? (
-                    <button
-                        type="button"
+                    <EmptyStateAction
+                        label="Clear filters"
+                        icon={Search}
                         onClick={onClearFilters}
-                        className="
-                          body-sm font-semibold text-brand underline-offset-4
-                          hover:underline
-                        "
-                    >
-                        Clear filters
-                    </button>
+                    />
                 ) : null}
-            </div>
+            </EmptyState>
         );
     }
 

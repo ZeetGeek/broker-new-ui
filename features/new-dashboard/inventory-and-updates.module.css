@@ -623,6 +623,7 @@
 .updateText {
     display: grid;
     flex: 1;
+    align-self: center;
     gap: 0.25rem;
     min-inline-size: 0;
 }

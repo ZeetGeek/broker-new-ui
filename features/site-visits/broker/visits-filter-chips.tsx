@@ -19,13 +19,7 @@ export function visitsRangeChipLabel(range: SlotDateRange, customFrom = "", cust
     return range[0].toUpperCase() + range.slice(1);
 }
 
-export function VisitsFilterChips({
-    chips,
-    onClearAll,
-}: {
-    chips: VisitsFilterChip[];
-    onClearAll: () => void;
-}) {
+export function VisitsFilterChips({ chips }: { chips: VisitsFilterChip[] }) {
     if (chips.length === 0) return null;
 
     return (
@@ -45,16 +39,6 @@ export function VisitsFilterChips({
                     <X aria-hidden className="block-3 inline-3" />
                 </button>
             ))}
-            <button
-                type="button"
-                onClick={onClearAll}
-                className="
-                  body-xs px-2 font-semibold text-brand-text block-control-md
-                  hover:underline
-                "
-            >
-                Clear all
-            </button>
         </div>
     );
 }

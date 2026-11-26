@@ -13,10 +13,11 @@ import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
 import { useDebouncedValue } from "@/hooks/use-locations";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import toast, { showAppToast } from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
-import { AlertCircle } from "@/components/shared/icons";
+import { AlertCircle, RefreshCw } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -935,9 +936,11 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                         heading="Your pipeline couldn’t be loaded"
                         description="Check your connection and try again to see your deals."
                     >
-                        <Button variant="accent" onClick={() => setRevision((value) => value + 1)}>
-                            Try loading again
-                        </Button>
+                        <EmptyStateAction
+                            label="Try loading again"
+                            icon={RefreshCw}
+                            onClick={() => setRevision((value) => value + 1)}
+                        />
                     </EmptyState>
                 ) : isFirstRun && view === "board" ? (
                     <PipelineFirstRunEmpty />

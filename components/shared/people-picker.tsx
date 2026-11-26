@@ -5,6 +5,7 @@ import { type KeyboardEvent, type ReactNode, useEffect, useId, useMemo, useState
 import { formatPersonName } from "@/lib/format/person-name";
 import { cn } from "@/lib/utils";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -577,10 +578,11 @@ export function PeoplePicker(props: PeoplePickerProps) {
                     }
                 >
                     {onCreate ? (
-                        <Button type="button" variant="accent" onClick={onCreate}>
-                            <UserPlus aria-hidden strokeWidth={1.75} />
-                            {resolvedCreateLabel}
-                        </Button>
+                        <EmptyStateAction
+                            label={resolvedCreateLabel}
+                            icon={UserPlus}
+                            onClick={onCreate}
+                        />
                     ) : null}
                 </EmptyState>
             ) : filtered.length === 0 ? (

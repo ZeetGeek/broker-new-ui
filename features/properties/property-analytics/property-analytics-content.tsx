@@ -11,10 +11,17 @@ import { plural } from "@/lib/format/plural";
 import { BROKER_YOUR_LISTINGS_HREF, brokerPropertyDetailHref } from "@/lib/routes/broker";
 import { getTestLabSettings } from "@/lib/testing/test-lab";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
-import { AlertCircle, Building2, Clock, Info, Users } from "@/components/shared/icons";
-import { WorkflowLink as Link } from "@/components/shared/workflow-link";
-import { Button } from "@/components/ui/button";
+import {
+    AlertCircle,
+    Building2,
+    Clock,
+    Info,
+    RefreshCw,
+    UserRoundPlus,
+    Users,
+} from "@/components/shared/icons";
 
 import { PREVIEW_PROPERTY_ANALYTICS } from "@/config";
 import { AnalyticsClientList } from "@/features/properties/property-analytics/analytics-client-list";
@@ -171,22 +178,18 @@ function LivePropertyAnalyticsContent({
                     className={CARD_CLASS}
                 >
                     {notFound ? (
-                        <Button
-                            nativeButton={false}
-                            render={<Link href={BROKER_YOUR_LISTINGS_HREF} />}
-                            variant="accent"
-                        >
-                            Go to My Listings
-                        </Button>
+                        <EmptyStateAction
+                            label="Go to My Listings"
+                            icon={Building2}
+                            href={BROKER_YOUR_LISTINGS_HREF}
+                        />
                     ) : (
-                        <Button
-                            type="button"
+                        <EmptyStateAction
+                            label="Try again"
+                            icon={RefreshCw}
                             onClick={() => void query.refetch()}
                             loading={query.isRefetching}
-                            variant="accent"
-                        >
-                            Try again
-                        </Button>
+                        />
                     )}
                 </EmptyState>
             </div>
@@ -227,13 +230,11 @@ function LivePropertyAnalyticsContent({
                         description="Attach clients from the listing page. Their visits, offers and progress show up here."
                         className={CARD_CLASS}
                     >
-                        <Button
-                            nativeButton={false}
-                            render={<Link href={brokerPropertyDetailHref(data.property.id)} />}
-                            variant="accent"
-                        >
-                            Attach clients
-                        </Button>
+                        <EmptyStateAction
+                            label="Attach clients"
+                            icon={UserRoundPlus}
+                            href={brokerPropertyDetailHref(data.property.id)}
+                        />
                     </EmptyState>
                 </>
             ) : (

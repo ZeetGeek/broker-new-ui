@@ -3,9 +3,16 @@ import { type CSSProperties, type ReactNode, useId, useState } from "react";
 
 import { formatInTimeZone } from "date-fns-tz";
 
+import { EmptyState } from "@/components/empty-state";
 import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { IconButton } from "@/components/shared/icon-button";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "@/components/shared/icons";
+import {
+    CalendarCheck,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight,
+} from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 
 import { groupTaskHistory, type TaskHistoryTab } from "./history-model";
@@ -61,9 +68,11 @@ export function TaskHistoryPlanner({
                 className={styles.planner}
                 aria-label={`${label} tasks by ${dateKind} date`}
             >
-                <p className={styles.plannerEmpty} role="status">
-                    {`No ${label.toLowerCase()} tasks to show by date.`}
-                </p>
+                <EmptyState
+                    size="card"
+                    icon={CalendarCheck}
+                    heading={`No ${label.toLowerCase()} tasks to show by date`}
+                />
             </section>
         );
     }

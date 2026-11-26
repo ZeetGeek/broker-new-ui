@@ -15,10 +15,11 @@ import { isPinnedPropertyIds, togglePinnedProperty } from "@/lib/properties/pinn
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
-import { AlertCircle } from "@/components/shared/icons";
+import { AlertCircle, RefreshCw } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { Button } from "@/components/ui/button";
 
@@ -298,9 +299,11 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
                         heading="Your listings couldn’t be loaded"
                         description="Check your connection and try again to see your properties."
                     >
-                        <Button variant="accent" onClick={() => void query.refetch()}>
-                            Try again
-                        </Button>
+                        <EmptyStateAction
+                            label="Try again"
+                            icon={RefreshCw}
+                            onClick={() => void query.refetch()}
+                        />
                     </EmptyState>
                 ) : query.items.length === 0 ? (
                     <MyListingsEmpty

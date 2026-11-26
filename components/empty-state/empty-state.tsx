@@ -20,7 +20,7 @@ export type EmptyStateProps = {
     children?: ReactNode;
     className?: string;
     headingId?: string;
-    /** Page results get a bounded surface; embedded cards stay compact. */
+    /** Controls the surrounding surface; all sizes share the compact visual design. */
     size?: "compact" | "page" | "card";
     variant?: "default" | "filtered" | "error";
     /** Use on a dark brand surface, such as the featured visit card. */
@@ -61,13 +61,7 @@ export function EmptyState({
                 <Icon className={styles.icon} strokeWidth={1.5} />
             </div>
             <div className={styles.copy}>
-                <Heading
-                    id={headingId}
-                    className={cn(
-                        size === "card" ? "body-sm font-semibold" : "h3",
-                        "text-balance text-ink",
-                    )}
-                >
+                <Heading id={headingId} className="body-sm font-semibold text-balance text-ink">
                     {heading}
                 </Heading>
                 {description ? (

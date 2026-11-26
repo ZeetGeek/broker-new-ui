@@ -6,11 +6,11 @@ import { ApiError } from "@/lib/api/client";
 import { ownerLeadsApi, type PropertyLead } from "@/lib/api/owner-leads";
 import { cn } from "@/lib/utils";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
-import { HandCoins } from "@/components/shared/icons";
+import { AlertCircle, HandCoins, RefreshCw, Search } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
-import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { AcceptOfferModal } from "@/features/owner-leads/accept-offer-modal";
@@ -265,17 +265,19 @@ export function OwnerLeadsPage() {
                 {loading && items.length === 0 ? (
                     <LeadsSkeleton layout="board" />
                 ) : error ? (
-                    <div className="flex flex-col items-center gap-3 py-16 text-center">
-                        <p className="h5 text-ink">Could not load leads</p>
-                        <p className="body-sm text-ink-muted">{error}</p>
-                        <Button
-                            variant="outline"
-                            size="sm"
+                    <EmptyState
+                        size="card"
+                        icon={AlertCircle}
+                        heading="Could not load leads"
+                        variant="error"
+                        description={error}
+                    >
+                        <EmptyStateAction
+                            label="Try again"
+                            icon={RefreshCw}
                             onClick={() => setRevision((value) => value + 1)}
-                        >
-                            Try again
-                        </Button>
-                    </div>
+                        />
+                    </EmptyState>
                 ) : isFirstRun ? (
                     <EmptyState
                         icon={HandCoins}
@@ -294,9 +296,11 @@ export function OwnerLeadsPage() {
                             }
                         >
                             {hasSearch ? (
-                                <Button variant="accent" size="sm" onClick={handleClearSearch}>
-                                    Clear filters
-                                </Button>
+                                <EmptyStateAction
+                                    label="Clear filters"
+                                    icon={Search}
+                                    onClick={handleClearSearch}
+                                />
                             ) : null}
                         </EmptyState>
                     ) : (
@@ -328,9 +332,11 @@ export function OwnerLeadsPage() {
                         }
                     >
                         {hasSearch ? (
-                            <Button variant="accent" size="sm" onClick={handleClearSearch}>
-                                Clear filters
-                            </Button>
+                            <EmptyStateAction
+                                label="Clear filters"
+                                icon={Search}
+                                onClick={handleClearSearch}
+                            />
                         ) : null}
                     </EmptyState>
                 ) : (

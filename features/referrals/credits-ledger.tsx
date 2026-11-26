@@ -5,6 +5,7 @@ import { type ReactNode, useState } from "react";
 import { formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import { type AppIcon, FileText, Gift, Sparkles } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 import { Button } from "@/components/ui/button";
@@ -116,13 +117,13 @@ export function CreditsLedger({ ledger, total, footer, className }: CreditsLedge
                 )}
                 aria-labelledby="credits-ledger-heading"
             >
-                <h2 id="credits-ledger-heading" className="h6 text-ink">
-                    No credits yet
-                </h2>
-                <p className="body-sm text-ink-muted">
-                    Every broker you bring in who starts working a property earns you credits. They
-                    will be listed here.
-                </p>
+                <EmptyState
+                    size="card"
+                    icon={Gift}
+                    headingId="credits-ledger-heading"
+                    heading="No credits yet"
+                    description="Every broker you bring in who starts working a property earns you credits. They will be listed here."
+                />
             </section>
         );
     }

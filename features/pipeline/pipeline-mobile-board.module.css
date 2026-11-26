@@ -74,24 +74,7 @@
     inline-size: 100%;
     min-block-size: 2.75rem;
 }
-.empty {
-    display: grid;
-    justify-items: start;
-    gap: 0.5rem;
-    padding: 1.25rem;
-    border: 1px dashed var(--color-border-warm);
-    border-radius: var(--radius-card);
-    color: var(--color-ink-muted);
-}
-.empty h3 {
-    color: var(--color-ink);
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-.empty p {
-    font-size: 0.8125rem;
-    line-height: 1.6;
-}
+
 @media (min-width: 48rem) {
     .board {
         display: none;

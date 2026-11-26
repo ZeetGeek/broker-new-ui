@@ -9,9 +9,8 @@ import { myListingsApi } from "@/lib/api/my-listings";
 import { BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
 import { OWNER_PROPERTIES_HREF } from "@/lib/routes/owner";
 
-import { EmptyState } from "@/components/empty-state";
-import { Building2, RefreshCw } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
+import { AlertCircle, Building2, RefreshCw } from "@/components/shared/icons";
 
 import { PropertyForm } from "@/features/properties/property-form";
 
@@ -52,16 +51,21 @@ export function PropertyEditPage({ portal = "broker" }: { portal?: "broker" | "o
                 />
             );
         return (
-            <div role="alert" className="flex flex-col items-start gap-4 py-16">
-                <h1 className="h3">Could not load property</h1>
-                <p className="body text-ink-muted">
-                    Check your connection or account access and try again.
-                </p>
-                <Button onClick={() => void query.refetch()} disabled={query.isFetching}>
-                    Retry
-                </Button>
+            <EmptyState
+                size="card"
+                icon={AlertCircle}
+                heading="Could not load property"
+                variant="error"
+                description="Check your connection or account access and try again."
+            >
+                <EmptyStateAction
+                    label="Retry"
+                    icon={RefreshCw}
+                    onClick={() => void query.refetch()}
+                    disabled={query.isFetching}
+                />
                 <Link href={listHref}>{backLabel}</Link>
-            </div>
+            </EmptyState>
         );
     }
 
@@ -81,18 +85,14 @@ export function PropertyEditPage({ portal = "broker" }: { portal?: "broker" | "o
                 />
             );
         return (
-            <div className="flex flex-col items-center gap-4 py-16 text-center">
-                <h1 className="display-md">Property not found</h1>
-                <p className="body text-ink-muted">
-                    This listing isn&apos;t in your inventory (or was removed).
-                </p>
-                <Button
-                    className="bg-brand text-surface hover:bg-brand/90"
-                    render={<Link href={listHref} />}
-                >
-                    {backLabel}
-                </Button>
-            </div>
+            <EmptyState
+                size="card"
+                icon={Building2}
+                heading="Property not found"
+                description="This listing isn't in your inventory (or was removed)."
+            >
+                <EmptyStateAction label={backLabel} icon={Building2} href={listHref} />
+            </EmptyState>
         );
     }
 

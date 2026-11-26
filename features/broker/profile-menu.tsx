@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import {
     PortalProfileMenu,
@@ -48,6 +49,8 @@ export function BrokerProfileMenu({
     open,
     onOpenChange,
 }: BrokerProfileMenuProps) {
+    const pathname = usePathname();
+    const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
     return (
         <PortalProfileMenu
             userName={broker.name}
@@ -62,6 +65,7 @@ export function BrokerProfileMenu({
                 <DropdownMenuItem
                     className={portalProfileMenuItemClass}
                     render={<Link href={PROFILE_HREF} />}
+                    active={isActive(PROFILE_HREF)}
                 >
                     <AccountMenuIcon
                         name="account"
@@ -109,6 +113,7 @@ export function BrokerProfileMenu({
                 <DropdownMenuItem
                     className={portalProfileMenuItemClass}
                     render={<Link href="/broker/notifications" />}
+                    active={isActive("/broker/notifications")}
                 >
                     <Bell aria-hidden className="shrink-0 text-ink! block-4.5! inline-4.5!" />
                     <span className="flex-1 min-inline-0">Notification history</span>
@@ -117,6 +122,7 @@ export function BrokerProfileMenu({
                 <DropdownMenuItem
                     className={portalProfileMenuItemClass}
                     render={<Link href="/broker/recent-updates" />}
+                    active={isActive("/broker/recent-updates")}
                 >
                     <Activity aria-hidden className="shrink-0 text-ink! block-4.5! inline-4.5!" />
                     <span className="flex-1 whitespace-nowrap min-inline-0">Recent updates</span>

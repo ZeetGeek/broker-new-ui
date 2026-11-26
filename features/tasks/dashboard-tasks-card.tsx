@@ -10,6 +10,7 @@ import { EmptyState, LoadingState } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import {
+    AlertCircle,
     ArrowRight,
     CalendarCheck,
     Check,
@@ -368,9 +369,18 @@ export function DashboardTasksCard() {
                             </LoadingState>
                         )}
                         {error && (
-                            <p className="body-sm py-8 text-danger" role="alert">
-                                Couldn’t load your tasks. Open Tasks to try again.
-                            </p>
+                            <EmptyState
+                                size="card"
+                                variant="error"
+                                icon={AlertCircle}
+                                heading="Could not load your tasks"
+                                description="Open Tasks to try again."
+                                action={{
+                                    label: "Open Tasks",
+                                    icon: ArrowRight,
+                                    href: "/broker/tasks",
+                                }}
+                            />
                         )}
                         {!isLoading && !error && (
                             <section

@@ -545,9 +545,6 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
                                     <span className="sr-only">Remove linked record filter</span>
                                 </Button>
                             )}
-                            <Button variant="ghost" size="sm" onClick={clear}>
-                                Clear filters
-                            </Button>
                         </div>
                     )}
                     {loadError && (

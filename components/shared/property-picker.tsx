@@ -4,6 +4,7 @@ import { type KeyboardEvent, type ReactNode, useEffect, useId, useMemo, useState
 
 import { cn } from "@/lib/utils";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -387,10 +388,7 @@ export function PropertyPicker(props: PropertyPickerProps) {
                     }
                 >
                     {onCreate ? (
-                        <Button type="button" variant="accent" onClick={onCreate}>
-                            <Plus aria-hidden strokeWidth={1.75} />
-                            {createLabel}
-                        </Button>
+                        <EmptyStateAction label={createLabel} icon={Plus} onClick={onCreate} />
                     ) : null}
                 </EmptyState>
             ) : filtered.length === 0 ? (

@@ -7,10 +7,10 @@ import { formatRelativePast, parseApiInstant } from "@/lib/format/date";
 import { ownerBrokersHref, ownerPropertyDetailHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Check, Inbox, X } from "@/components/shared/icons";
-import { TextLinkButton } from "@/components/shared/text-link-button";
+import { Check, Inbox, Search, X } from "@/components/shared/icons";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -144,7 +144,7 @@ function EmptyRequests({ className }: { className?: string }) {
                 heading="No pending requests"
                 description="When a broker asks to represent a listing, it shows up here."
             >
-                <TextLinkButton href={ownerBrokersHref()}>Browse brokers</TextLinkButton>
+                <EmptyStateAction label="Browse brokers" icon={Search} href={ownerBrokersHref()} />
             </EmptyState>
         </section>
     );

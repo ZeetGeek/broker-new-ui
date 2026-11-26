@@ -1,10 +1,8 @@
-import Link from "next/link";
-
 import { BROKER_OWNER_LISTINGS_HREF, BROKER_YOUR_LISTINGS_HREF } from "@/lib/routes/broker";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Bookmark } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
+import { Bookmark, Search } from "@/components/shared/icons";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";
 
@@ -19,22 +17,13 @@ export function SavedPropertiesEmpty() {
                     : "Save a property from My Listings, and it will show up here."
             }
         >
-            <Button
-                size="lg"
-                className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-                render={
-                    <Link
-                        href={
-                            FEATURE_PLATFORM_OWNER
-                                ? BROKER_OWNER_LISTINGS_HREF
-                                : BROKER_YOUR_LISTINGS_HREF
-                        }
-                    />
+            <EmptyStateAction
+                label={FEATURE_PLATFORM_OWNER ? "Browse Marketplace" : "View My Listings"}
+                icon={Search}
+                href={
+                    FEATURE_PLATFORM_OWNER ? BROKER_OWNER_LISTINGS_HREF : BROKER_YOUR_LISTINGS_HREF
                 }
-                variant="accent"
-            >
-                {FEATURE_PLATFORM_OWNER ? "Browse Marketplace" : "View My Listings"}
-            </Button>
+            />
         </EmptyState>
     );
 }

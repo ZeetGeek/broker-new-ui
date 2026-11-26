@@ -239,19 +239,6 @@
 .attentionList button {
     color: var(--color-ink-muted);
 }
-.empty {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding-block: 20px;
-}
-.empty > svg {
-    color: var(--color-brand);
-}
-.empty p {
-    margin-top: 5px;
-    color: var(--color-ink-muted);
-}
 
 .progressHeadline {
     display: flex;

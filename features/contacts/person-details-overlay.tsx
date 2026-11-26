@@ -9,10 +9,9 @@ import { representativeApi } from "@/lib/api/representative";
 import type { PersonDetailsTarget } from "@/lib/contacts/person-details-target";
 import { formatPersonName } from "@/lib/format/person-name";
 
-import { EmptyState } from "@/components/empty-state";
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
 import { AppModal } from "@/components/shared/app-modal";
-import { RefreshCw, UserRound } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCw, UserRound } from "@/components/shared/icons";
 
 import { ContactDetailsOverlay } from "@/features/contacts/contact-details-overlay";
 import { BrokerProfileDialog } from "@/features/owner-brokers/broker-profile-dialog";
@@ -100,14 +99,18 @@ function ProfileOverlay({
                     }}
                 />
             ) : query.isError ? (
-                <div role="alert" className="flex flex-col items-start gap-3">
-                    <p className="body-sm text-ink-muted">
-                        Could not load this profile. Check your connection and try again.
-                    </p>
-                    <Button variant="outline" onClick={() => void query.refetch()}>
-                        Retry
-                    </Button>
-                </div>
+                <EmptyState
+                    size="card"
+                    icon={AlertCircle}
+                    heading="Could not load this profile. Check your connection and try again."
+                    variant="error"
+                >
+                    <EmptyStateAction
+                        label="Retry"
+                        icon={RefreshCw}
+                        onClick={() => void query.refetch()}
+                    />
+                </EmptyState>
             ) : owner.data && target.kind === "owner-profile" ? (
                 <OwnerProfileView profile={owner.data} embedded />
             ) : (

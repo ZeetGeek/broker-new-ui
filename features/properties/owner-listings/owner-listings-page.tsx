@@ -8,7 +8,9 @@ import { fetchOwnerListingCities, fetchOwnerListings } from "@/lib/api/owner-lis
 import { profileApi } from "@/lib/api/profile";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
+import { AlertCircle, RefreshCw } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { Button } from "@/components/ui/button";
 
@@ -204,13 +206,19 @@ export function OwnerListingsPage() {
     if (!profile) {
         if (profileQuery.isError)
             return (
-                <div role="alert" className="flex flex-col items-center gap-4 py-12 text-center">
-                    <h1 className="h6 text-ink">Could not load your profile</h1>
-                    <p className="body-sm text-ink-muted">Check your connection and try again.</p>
-                    <Button variant="outline" onClick={() => void profileQuery.refetch()}>
-                        Try again
-                    </Button>
-                </div>
+                <EmptyState
+                    size="card"
+                    icon={AlertCircle}
+                    heading="Could not load your profile"
+                    variant="error"
+                    description="Check your connection and try again."
+                >
+                    <EmptyStateAction
+                        label="Try again"
+                        icon={RefreshCw}
+                        onClick={() => void profileQuery.refetch()}
+                    />
+                </EmptyState>
             );
         return <OwnerListingsPageSkeleton filters={filters} />;
     }
@@ -245,18 +253,19 @@ export function OwnerListingsPage() {
                 {isInitialLoading ? (
                     <OwnerListingsCardsSkeleton />
                 ) : query.isError && query.items.length === 0 ? (
-                    <div
-                        role="alert"
-                        className="flex flex-col items-center gap-4 py-12 text-center"
+                    <EmptyState
+                        size="card"
+                        icon={AlertCircle}
+                        heading="Could not load Marketplace properties"
+                        variant="error"
+                        description="Check your connection and try again."
                     >
-                        <h2 className="h6 text-ink">Could not load Marketplace properties</h2>
-                        <p className="body-sm text-ink-muted">
-                            Check your connection and try again.
-                        </p>
-                        <Button variant="outline" onClick={() => void query.refetch()}>
-                            Try again
-                        </Button>
-                    </div>
+                        <EmptyStateAction
+                            label="Try again"
+                            icon={RefreshCw}
+                            onClick={() => void query.refetch()}
+                        />
+                    </EmptyState>
                 ) : query.items.length === 0 ? (
                     <OwnerListingsEmpty
                         variant={hasActiveFilters ? "filtered" : "first_run"}

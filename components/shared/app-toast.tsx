@@ -53,7 +53,11 @@ export function AppToast({
     const statusVariant = variant === "loading" ? "success" : variant;
 
     return (
-        <div className={cn(styles.toast, className)} data-variant={variant}>
+        <div
+            className={cn(styles.toast, className)}
+            data-variant={variant}
+            data-title-only={!description && !detail && !action}
+        >
             <span
                 className={cn("t-icon-swap", styles.icon)}
                 data-state={variant === "loading" ? "a" : "b"}

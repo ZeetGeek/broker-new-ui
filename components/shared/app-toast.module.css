@@ -14,6 +14,10 @@
     text-align: start;
 }
 
+.toast[data-title-only="true"] {
+    align-items: center;
+}
+
 .icon {
     /* Reuse the installed transitions.dev icon-swap recipe in this fixed slot. */
     --icon-swap-dur: var(--duration-fast);

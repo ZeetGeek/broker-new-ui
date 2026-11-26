@@ -73,7 +73,7 @@ export function PipelineToolbar({
                         icon={SlidersHorizontal}
                         count={filterCount}
                         isActive={filterCount > 0}
-                        clearable={false}
+                        clearable={filterCount > 0}
                         onClick={openFilters}
                         onClear={() =>
                             onPatch({

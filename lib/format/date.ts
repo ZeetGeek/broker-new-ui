@@ -216,9 +216,15 @@ export function activityDayGroup(occurredAt: Date, now: Date): ActivityDayGroup 
     return "this_week";
 }
 
-/** Activity feed day header: `Today · 27 Aug`, `Yesterday · 26 Aug`, `Mon · 24 Aug`. */
-export function formatActivityDayLabel(occurredAt: Date, now: Date): string {
-    const datePart = formatDateShort(occurredAt);
+/** Activity feed day header, with an optional year for full history pages. */
+export function formatActivityDayLabel(
+    occurredAt: Date,
+    now: Date,
+    { includeYear = false }: { includeYear?: boolean } = {},
+): string {
+    const datePart = includeYear
+        ? formatInUserTz(occurredAt, "d MMM yyyy")
+        : formatDateShort(occurredAt);
     const group = activityDayGroup(occurredAt, now);
 
     if (group === "today") return `Today · ${datePart}`;

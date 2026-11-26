@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { OWNER_PROFILE_HREF, OWNER_REFERRALS_HREF } from "@/lib/routes/owner";
 
@@ -33,6 +34,7 @@ export function OwnerProfileMenu({
     open,
     onOpenChange,
 }: OwnerProfileMenuProps) {
+    const pathname = usePathname();
     return (
         <PortalProfileMenu
             userName={userName}
@@ -47,6 +49,10 @@ export function OwnerProfileMenu({
                 <DropdownMenuItem
                     className={portalProfileMenuItemClass}
                     render={<Link href={OWNER_PROFILE_HREF} />}
+                    active={
+                        pathname === OWNER_PROFILE_HREF ||
+                        pathname.startsWith(`${OWNER_PROFILE_HREF}/`)
+                    }
                 >
                     <AccountMenuIcon
                         name="account"

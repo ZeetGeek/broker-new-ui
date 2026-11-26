@@ -16,13 +16,13 @@ import { formatDateIso, formatTime24, toApiInstantFromLocalParts } from "@/lib/f
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { AppPagination } from "@/components/shared/app-pagination";
 import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
-import { CalendarDays } from "@/components/shared/icons";
+import { CalendarDays, Search } from "@/components/shared/icons";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
-import { Button } from "@/components/ui/button";
 
 import { AddTimeDialog } from "@/features/owner-visits/add-time-dialog";
 import {
@@ -401,13 +401,17 @@ export function OwnerVisitsPage() {
                     }
                 >
                     {showingFocus ? (
-                        <Button variant="accent" onClick={() => setShowingFocus(undefined)}>
-                            Clear filter
-                        </Button>
+                        <EmptyStateAction
+                            label="Clear filter"
+                            icon={Search}
+                            onClick={() => setShowingFocus(undefined)}
+                        />
                     ) : (
-                        <Button variant="accent" onClick={() => setTab("availability")}>
-                            Manage availability
-                        </Button>
+                        <EmptyStateAction
+                            label="Manage availability"
+                            icon={CalendarDays}
+                            onClick={() => setTab("availability")}
+                        />
                     )}
                 </EmptyState>
             ) : (

@@ -13,6 +13,7 @@ import { useMobileMenu } from "@/hooks/use-mobile-menu";
 import { EmptyState } from "@/components/empty-state";
 import { IconButton } from "@/components/shared/icon-button";
 import {
+    AlertCircle,
     type AppIcon,
     Building2,
     Check,
@@ -23,6 +24,7 @@ import {
     MapPin,
     MapPinned,
     MapPinOff,
+    RefreshCw,
     Search,
 } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
@@ -953,12 +955,17 @@ export function OwnerListingsWhereMenu({
                             Loading places...
                         </p>
                     ) : hasError ? (
-                        <div role="alert" className="flex flex-col items-center gap-3 px-3 py-8">
-                            <p className="body-sm text-ink-muted">Could not load places.</p>
-                            <button type="button" onClick={onRetry} className={mobileActionClass}>
-                                Try again
-                            </button>
-                        </div>
+                        <EmptyState
+                            size="card"
+                            variant="error"
+                            icon={AlertCircle}
+                            heading="Could not load places"
+                            action={
+                                onRetry
+                                    ? { label: "Try again", icon: RefreshCw, onClick: onRetry }
+                                    : undefined
+                            }
+                        />
                     ) : isSearching && !searchHits.length ? (
                         <WhereMenuEmptyState
                             icon={Search}
@@ -1086,21 +1093,17 @@ export function OwnerListingsWhereMenu({
                             ))}
                         </div>
                     ) : hasError ? (
-                        <div
-                            role="alert"
-                            className="
-                              flex flex-col items-center justify-center gap-3 px-4 py-6 min-block-48
-                            "
-                        >
-                            <p className="body-sm text-ink-muted">Could not load places.</p>
-                            <button
-                                type="button"
-                                onClick={onRetry}
-                                className="body-sm px-4 font-semibold text-brand min-block-11"
-                            >
-                                Try again
-                            </button>
-                        </div>
+                        <EmptyState
+                            size="card"
+                            variant="error"
+                            icon={AlertCircle}
+                            heading="Could not load places"
+                            action={
+                                onRetry
+                                    ? { label: "Try again", icon: RefreshCw, onClick: onRetry }
+                                    : undefined
+                            }
+                        />
                     ) : showEmptyState && isSearching ? (
                         <div
                             className={cn(

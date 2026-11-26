@@ -2,12 +2,12 @@ import { formatDateShort } from "@/lib/format/date";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Check, Clock, Send, X } from "@/components/shared/icons";
+import { Check, Clock, Search, Send, X } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
-import { TextLinkButton } from "@/components/shared/text-link-button";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -188,7 +188,11 @@ function EmptyRequests({ className }: { className?: string }) {
                 heading="No requests sent yet"
                 description="Find a property you'd like to sell and ask the owner."
             >
-                <TextLinkButton href={BROKER_OWNER_LISTINGS_HREF}>Marketplace</TextLinkButton>
+                <EmptyStateAction
+                    label="Marketplace"
+                    icon={Search}
+                    href={BROKER_OWNER_LISTINGS_HREF}
+                />
             </EmptyState>
         </section>
     );

@@ -8,9 +8,19 @@ import { brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
-import { AlertCircle, Check, Clock, Search, Send, X } from "@/components/shared/icons";
+import {
+    AlertCircle,
+    Check,
+    Clock,
+    Inbox,
+    RefreshCw,
+    Search,
+    Send,
+    X,
+} from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -258,9 +268,11 @@ function PlatformMyListingsRequestsPanel() {
                     heading="Your requests couldn’t be loaded"
                     description="Check your connection and try again to see your requests to owners."
                 >
-                    <Button variant="accent" onClick={() => setRevision((value) => value + 1)}>
-                        Try again
-                    </Button>
+                    <EmptyStateAction
+                        label="Try again"
+                        icon={RefreshCw}
+                        onClick={() => setRevision((value) => value + 1)}
+                    />
                 </EmptyState>
             ) : result && total === 0 && status === "all" ? (
                 <MyListingsRequestsEmpty />
@@ -272,9 +284,11 @@ function PlatformMyListingsRequestsPanel() {
                     heading={`No ${status} requests`}
                     description="Requests with this status will appear here. View all requests to see the rest."
                 >
-                    <Button variant="accent" onClick={() => setStatus("all")}>
-                        View all requests
-                    </Button>
+                    <EmptyStateAction
+                        label="View all requests"
+                        icon={Inbox}
+                        onClick={() => setStatus("all")}
+                    />
                 </EmptyState>
             ) : result ? (
                 <WindowVirtualGrid

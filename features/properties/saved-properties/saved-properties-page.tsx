@@ -9,8 +9,10 @@ import { propertiesApi } from "@/lib/api/properties";
 import { visibleSavedProperties } from "@/lib/properties/saved-properties";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import toast from "@/components/shared/app-toast";
+import { AlertCircle, RefreshCw } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";
@@ -88,20 +90,19 @@ export function SavedPropertiesPage() {
             </PortalSectionNav>
 
             {query.isError && query.items.length === 0 ? (
-                <div className="flex flex-col items-center gap-4 py-12 text-center">
-                    <p className="h6 text-ink">Could not load saved properties</p>
-                    <p className="body-sm text-ink-muted">Check your connection and try again.</p>
-                    <button
-                        type="button"
+                <EmptyState
+                    size="card"
+                    icon={AlertCircle}
+                    heading="Could not load saved properties"
+                    variant="error"
+                    description="Check your connection and try again."
+                >
+                    <EmptyStateAction
+                        label="Try again"
+                        icon={RefreshCw}
                         onClick={() => void query.refetch()}
-                        className="
-                          body-sm font-semibold text-brand underline-offset-4
-                          hover:underline
-                        "
-                    >
-                        Try again
-                    </button>
-                </div>
+                    />
+                </EmptyState>
             ) : query.isPending ? (
                 <SavedPropertiesResultsSkeleton />
             ) : items.length === 0 && !query.hasNextPage ? (

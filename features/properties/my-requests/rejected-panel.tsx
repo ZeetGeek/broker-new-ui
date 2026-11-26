@@ -7,7 +7,9 @@ import { representativeApi } from "@/lib/api/representative";
 import { propertyCriteriaCount } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
+import { AlertCircle, Inbox, RefreshCw } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
 import { InviteCard } from "@/features/properties/my-requests/invite-card";
@@ -234,17 +236,19 @@ export function RejectedPanel({
         );
     } else if (error) {
         body = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Could not load rejected deals</p>
-                <p className="body-sm text-ink-muted">{error}</p>
-                <button
-                    type="button"
+            <EmptyState
+                size="card"
+                icon={AlertCircle}
+                heading="Could not load rejected deals"
+                variant="error"
+                description={error}
+            >
+                <EmptyStateAction
+                    label="Try again"
+                    icon={RefreshCw}
                     onClick={() => setRevision((prev) => prev + 1)}
-                    className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                >
-                    Try again
-                </button>
-            </div>
+                />
+            </EmptyState>
         );
     } else if (!rows) {
         body = (
@@ -255,13 +259,12 @@ export function RejectedPanel({
         );
     } else if (rejectedTotal === 0 && !narrowFilters) {
         body = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">No rejected deals</p>
-                <p className="body-sm max-w-prose text-ink-muted">
-                    When an owner turns down your request, or you turn down their invite, it shows
-                    up here.
-                </p>
-            </div>
+            <EmptyState
+                size="card"
+                icon={Inbox}
+                heading="No rejected deals"
+                description="When an owner turns down your request, or you turn down their invite, it shows up here."
+            />
         );
     } else if (rows.length === 0) {
         body = (

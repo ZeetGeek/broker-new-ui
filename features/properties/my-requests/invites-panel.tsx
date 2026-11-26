@@ -5,7 +5,9 @@ import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
+import { Inbox } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
 import { InviteCard } from "@/features/properties/my-requests/invite-card";
@@ -143,12 +145,12 @@ export function InvitesPanel({
         !(filters.q.trim() || filters.type)
     ) {
         body = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">No invitations waiting</p>
-                <p className="body-sm max-w-prose text-ink-muted">
-                    Invites you already answered are under Representing.
-                </p>
-            </div>
+            <EmptyState
+                size="card"
+                icon={Inbox}
+                heading="No invitations waiting"
+                description="Invites you already answered are under Representing."
+            />
         );
     } else if (!result) {
         body = (

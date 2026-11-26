@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
+import { AlertCircle, RefreshCw } from "@/components/shared/icons";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 
 export function DashboardLoading() {
@@ -14,22 +16,15 @@ export function DashboardLoading() {
 
 export function DashboardError({ message, onRetry }: { message: string; onRetry: () => void }) {
     return (
-        <div
-            className="
-              flex flex-col items-center justify-center gap-4 text-center
-              min-block-[calc(100dvh-5rem)]
-            "
+        <EmptyState
+            size="card"
+            icon={AlertCircle}
+            heading="Could not load your dashboard"
+            variant="error"
+            description={message}
         >
-            <p className="h5 text-ink">Could not load your dashboard</p>
-            <p className="body text-ink-muted max-inline-96">{message}</p>
-            <button
-                type="button"
-                onClick={onRetry}
-                className="body font-medium text-brand underline underline-offset-4"
-            >
-                Try again
-            </button>
-        </div>
+            <EmptyStateAction label="Try again" icon={RefreshCw} onClick={onRetry} />
+        </EmptyState>
     );
 }
 

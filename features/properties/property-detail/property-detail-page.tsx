@@ -16,9 +16,9 @@ import {
     ownerPropertyEditHref,
 } from "@/lib/routes/owner";
 
-import { EmptyState } from "@/components/empty-state";
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
-import { Building2, RefreshCw } from "@/components/shared/icons";
+import { AlertCircle, Building2, RefreshCw } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
@@ -238,19 +238,18 @@ function OwnedPropertyDetail({
 function BrowsePropertyFallback({ portal }: { propertyId: string; portal: "broker" | "owner" }) {
     if (portal === "owner") {
         return (
-            <div className="flex flex-col items-center gap-4 py-16 text-center">
-                <h1 className="h3">Property not found</h1>
-                <p className="body max-w-prose text-ink-muted">
-                    This listing isn&apos;t in your inventory (or was removed).
-                </p>
-                <Button
-                    variant="accent"
-                    className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-                    render={<Link href={OWNER_PROPERTIES_HREF} />}
-                >
-                    Back to properties
-                </Button>
-            </div>
+            <EmptyState
+                size="card"
+                icon={Building2}
+                heading="Property not found"
+                description="This listing isn't in your inventory (or was removed)."
+            >
+                <EmptyStateAction
+                    label="Back to properties"
+                    icon={Building2}
+                    href={OWNER_PROPERTIES_HREF}
+                />
+            </EmptyState>
         );
     }
 
@@ -294,19 +293,23 @@ export function PropertyDetailPage({ portal = "broker" }: { portal?: "broker" | 
                 />
             );
         return (
-            <div role="alert" className="flex flex-col items-start gap-4 py-16">
-                <h1 className="h3">Could not load property</h1>
-                <p className="body text-ink-muted">
-                    The property could not be loaded. Check your connection or account access and
-                    try again.
-                </p>
-                <Button onClick={() => void query.refetch()} disabled={query.isFetching}>
-                    Retry
-                </Button>
+            <EmptyState
+                size="card"
+                icon={AlertCircle}
+                heading="Could not load property"
+                variant="error"
+                description="The property could not be loaded. Check your connection or account access and try again."
+            >
+                <EmptyStateAction
+                    label="Retry"
+                    icon={RefreshCw}
+                    onClick={() => void query.refetch()}
+                    disabled={query.isFetching}
+                />
                 <Link href={portal === "owner" ? OWNER_PROPERTIES_HREF : BROKER_YOUR_LISTINGS_HREF}>
                     Back to listings
                 </Link>
-            </div>
+            </EmptyState>
         );
     }
     if (!query.data) return <BrowsePropertyFallback propertyId={propertyId} portal={portal} />;

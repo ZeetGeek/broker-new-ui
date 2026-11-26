@@ -7,11 +7,11 @@ import { type BrokerProfile, representativeApi } from "@/lib/api/representative"
 import { cn } from "@/lib/utils";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
-import { UserRoundSearch } from "@/components/shared/icons";
+import { AlertCircle, RefreshCw, Search, UserRoundSearch } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
-import { Button } from "@/components/ui/button";
 
 import { BrokerProfileDialog } from "@/features/owner-brokers/broker-profile-dialog";
 import { BrowseBrokerCard } from "@/features/owner-brokers/browse-broker-card";
@@ -153,14 +153,18 @@ export function OwnerBrokersBrowse({
         results = <BrowseBrokersSkeleton />;
     } else if (error) {
         results = (
-            <div role="alert" className="flex flex-col items-start gap-3 py-12">
-                <p className="body-sm font-medium text-ink">
-                    Brokers could not load. Check your connection and try again.
-                </p>
-                <Button variant="secondary" size="sm" onClick={() => void query.refetch()}>
-                    Try again
-                </Button>
-            </div>
+            <EmptyState
+                size="card"
+                icon={AlertCircle}
+                heading="Brokers could not load. Check your connection and try again."
+                variant="error"
+            >
+                <EmptyStateAction
+                    label="Try again"
+                    icon={RefreshCw}
+                    onClick={() => void query.refetch()}
+                />
+            </EmptyState>
         );
     } else if (brokers.length === 0 && filtered) {
         results = (
@@ -170,9 +174,7 @@ export function OwnerBrokersBrowse({
                 description="Loosen a filter to see more brokers."
                 className="py-16"
             >
-                <Button variant="accent" size="sm" onClick={clearFilters}>
-                    Clear filters
-                </Button>
+                <EmptyStateAction label="Clear filters" icon={Search} onClick={clearFilters} />
             </EmptyState>
         );
     } else if (brokers.length === 0) {

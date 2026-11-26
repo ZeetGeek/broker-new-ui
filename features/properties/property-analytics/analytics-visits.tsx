@@ -3,6 +3,7 @@ import { plural } from "@/lib/format/plural";
 import { brokerPipelineDealHref } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import { ContactName } from "@/components/shared/contact-name";
 import {
     ArrowRight,
@@ -197,35 +198,29 @@ export function AnalyticsVisits({
                     </ul>
                 </div>
             ) : (
-                <div className={styles.visitEmpty}>
-                    <span className={styles.visitEmptyIcon}>
-                        <CalendarCheck aria-hidden className="block-5 inline-5" />
-                    </span>
-                    <div className={styles.visitEmptyCopy}>
-                        <h3 className="body-sm font-semibold text-ink">
-                            {report.visits.total > 0
-                                ? "No appointment details available"
-                                : "Book the first site visit"}
-                        </h3>
-                        <p className="body-sm text-ink-muted">
-                            {report.visits.total > 0
-                                ? "Visits are recorded, but their dates and outcomes aren’t available here."
-                                : "Choose a client below, then open their deal to schedule a visit."}
-                        </p>
-                        {report.visits.total === 0 && report.counts.total > 0 && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                nativeButton={false}
-                                render={<a href="#analytics-clients-heading" />}
-                                className="mbs-2 self-start"
-                            >
-                                Choose a client
-                                <ArrowRight aria-hidden />
-                            </Button>
-                        )}
-                    </div>
-                </div>
+                <EmptyState
+                    size="card"
+                    icon={CalendarCheck}
+                    heading={
+                        report.visits.total > 0
+                            ? "No appointment details available"
+                            : "Book the first site visit"
+                    }
+                    description={
+                        report.visits.total > 0
+                            ? "Visits are recorded, but their dates and outcomes aren't available here."
+                            : "Choose a client below, then open their deal to schedule a visit."
+                    }
+                    action={
+                        report.visits.total === 0 && report.counts.total > 0
+                            ? {
+                                  label: "Choose a client",
+                                  icon: ArrowRight,
+                                  href: "#analytics-clients-heading",
+                              }
+                            : undefined
+                    }
+                />
             )}
 
             {report.visits.total > 0 && report.visits.clientsVisited === 0 ? (

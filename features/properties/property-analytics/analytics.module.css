@@ -299,30 +299,7 @@ button.journeyValue:hover .journeyClientText,
 .visitReach > span:last-child {
     flex-shrink: 0;
 }
-.visitEmpty {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-}
-.visitEmptyIcon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: 2.5rem;
-    block-size: 2.5rem;
-    flex-shrink: 0;
-    border-radius: var(--radius-inner);
-    background: var(--color-surface-muted);
-    color: var(--color-ink-muted);
-}
-.visitEmptyCopy {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    min-inline-size: 0;
-    max-inline-size: 48ch;
-    overflow-wrap: anywhere;
-}
+
 .visitRow {
     display: grid;
     grid-template-columns: 2.5rem minmax(0, 1fr) auto;

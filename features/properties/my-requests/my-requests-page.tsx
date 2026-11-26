@@ -6,8 +6,10 @@ import { myRequestsApi } from "@/lib/api/my-requests";
 import { ownerInvitesApi } from "@/lib/api/owner-invites";
 import { cn } from "@/lib/utils";
 
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import toast from "@/components/shared/app-toast";
+import { AlertCircle, Inbox, RefreshCw } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
 import { AcceptedPanel } from "@/features/properties/my-requests/accepted-panel";
@@ -184,27 +186,28 @@ function SentRequestsPanel({
         !(filters.q.trim() || filters.type)
     ) {
         body = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Nothing waiting right now</p>
-                <p className="body-sm max-w-prose text-ink-muted">
-                    Properties you can sell are under Representing. Send a new request from
-                    Marketplace when you need more.
-                </p>
-            </div>
+            <EmptyState
+                size="card"
+                icon={Inbox}
+                heading="Nothing waiting right now"
+                description="Properties you can sell are under Representing. Send a new request from Marketplace when you need more."
+            />
         );
     } else if (error) {
         body = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Could not load your requests</p>
-                <p className="body-sm text-ink-muted">{error}</p>
-                <button
-                    type="button"
+            <EmptyState
+                size="card"
+                icon={AlertCircle}
+                heading="Could not load your requests"
+                variant="error"
+                description={error}
+            >
+                <EmptyStateAction
+                    label="Try again"
+                    icon={RefreshCw}
                     onClick={() => setRevision((prev) => prev + 1)}
-                    className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                >
-                    Try again
-                </button>
-            </div>
+                />
+            </EmptyState>
         );
     } else if (!result) {
         body = (

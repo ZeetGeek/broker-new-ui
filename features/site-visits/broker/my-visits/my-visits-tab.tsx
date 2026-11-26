@@ -246,9 +246,7 @@ export function MyVisitsTab({
 
     return (
         <section className="space-y-4">
-            {onClearFilters ? (
-                <VisitsFilterChips chips={chips} onClearAll={onClearFilters} />
-            ) : null}
+            {onClearFilters ? <VisitsFilterChips chips={chips} /> : null}
             {groups.length === 0 ? (
                 <EmptyState
                     kind="no-today"

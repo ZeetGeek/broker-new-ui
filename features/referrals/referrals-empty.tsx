@@ -1,6 +1,6 @@
+import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Search, UserRoundPlus, UsersRound } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
 
 /**
  * First run — nobody invited yet.
@@ -19,10 +19,7 @@ export function ReferralsFirstRunEmpty({ onInvite }: { onInvite: () => void }) {
             description="Brokers you invite show up here, from the moment they open your link to the day they start working a property."
             className="py-14"
         >
-            <Button variant="accent" size="sm" onClick={onInvite}>
-                <UserRoundPlus aria-hidden />
-                Invite by number
-            </Button>
+            <EmptyStateAction label="Invite by number" icon={UserRoundPlus} onClick={onInvite} />
         </EmptyState>
     );
 }
@@ -36,9 +33,7 @@ export function ReferralsFilteredEmpty({ onClear }: { onClear: () => void }) {
             description="Try a different name, number or status."
             className="py-14"
         >
-            <Button variant="accent" size="sm" onClick={onClear}>
-                Clear the filters
-            </Button>
+            <EmptyStateAction label="Clear the filters" icon={Search} onClick={onClear} />
         </EmptyState>
     );
 }

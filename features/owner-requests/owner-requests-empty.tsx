@@ -1,10 +1,8 @@
-import Link from "next/link";
-
 import { ownerBrokersHref } from "@/lib/routes/owner";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Inbox, Mail } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
+import { Inbox, Mail, Search } from "@/components/shared/icons";
 
 import type { OwnerRequestsTab } from "@/features/owner-requests/types";
 
@@ -16,14 +14,7 @@ export function OwnerRequestsEmpty({ tab }: { tab: OwnerRequestsTab }) {
                 heading="No pending requests"
                 description="When a broker asks to sell your property, it shows up here."
             >
-                <Button
-                    size="lg"
-                    variant="accent"
-                    nativeButton={false}
-                    render={<Link href={ownerBrokersHref()} />}
-                >
-                    Browse brokers
-                </Button>
+                <EmptyStateAction label="Browse brokers" icon={Search} href={ownerBrokersHref()} />
             </EmptyState>
         );
     }
@@ -35,14 +26,7 @@ export function OwnerRequestsEmpty({ tab }: { tab: OwnerRequestsTab }) {
                 heading="No open invitations"
                 description="Invite a broker from Browse when you want someone specific on a listing."
             >
-                <Button
-                    size="lg"
-                    variant="accent"
-                    nativeButton={false}
-                    render={<Link href={ownerBrokersHref()} />}
-                >
-                    Browse brokers
-                </Button>
+                <EmptyStateAction label="Browse brokers" icon={Search} href={ownerBrokersHref()} />
             </EmptyState>
         );
     }
@@ -54,14 +38,7 @@ export function OwnerRequestsEmpty({ tab }: { tab: OwnerRequestsTab }) {
                 heading="No broker is selling your listings yet"
                 description="When you accept a broker's request, or a broker accepts your invite, they show up here."
             >
-                <Button
-                    size="lg"
-                    variant="accent"
-                    nativeButton={false}
-                    render={<Link href={ownerBrokersHref()} />}
-                >
-                    Browse brokers
-                </Button>
+                <EmptyStateAction label="Browse brokers" icon={Search} href={ownerBrokersHref()} />
             </EmptyState>
         );
     }
@@ -97,22 +74,20 @@ export function OwnerRequestsFilteredEmpty({
     searchQuery?: string;
 }) {
     return (
-        <div className="flex flex-col items-center gap-4 py-12 text-center">
-            <p className="h6 text-ink">Nothing matches what you picked</p>
-            <p className="body-sm max-w-prose text-ink-muted">
-                {searchQuery?.trim()
+        <EmptyState
+            size="card"
+            icon={Search}
+            heading="Nothing matches what you picked"
+            variant="filtered"
+            description={
+                searchQuery?.trim()
                     ? `No results for "${searchQuery.trim()}". Try clearing the search.`
-                    : "Try another option above, or clear it to see every request."}
-            </p>
+                    : "Try another option above, or clear it to see every request."
+            }
+        >
             {onClearFilters ? (
-                <button
-                    type="button"
-                    onClick={onClearFilters}
-                    className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                >
-                    Clear search
-                </button>
+                <EmptyStateAction label="Clear search" icon={Search} onClick={onClearFilters} />
             ) : null}
-        </div>
+        </EmptyState>
     );
 }

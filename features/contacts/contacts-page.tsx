@@ -13,6 +13,7 @@ import { PREF_KEYS } from "@/lib/prefs/keys";
 import { useInfiniteItems } from "@/hooks/use-infinite-items";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import toast from "@/components/shared/app-toast";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -21,6 +22,7 @@ import {
     ClientsTabIcon,
     OwnersTabIcon,
     Plus,
+    RefreshCw,
     Search,
     UserRoundPlus,
 } from "@/components/shared/icons";
@@ -521,13 +523,11 @@ export function ContactsPage({
                         }
                         description="Check your connection and try again to see your contacts."
                     >
-                        <Button
-                            variant="accent"
-                            size="sm"
+                        <EmptyStateAction
+                            label="Try again"
+                            icon={RefreshCw}
                             onClick={() => void activeQuery.refetch()}
-                        >
-                            Try again
-                        </Button>
+                        />
                     </EmptyState>
                 ) : null}
 
@@ -546,15 +546,13 @@ export function ContactsPage({
                             }
                             description="Try a different name, number or area, or clear your search and filters."
                         >
-                            <Button
-                                variant="accent"
-                                size="sm"
+                            <EmptyStateAction
+                                label="Clear search & filters"
+                                icon={Search}
                                 onClick={() =>
                                     setFilters((prev) => ({ ...prev, q: "", ownerOrigin: "all" }))
                                 }
-                            >
-                                Clear search & filters
-                            </Button>
+                            />
                         </EmptyState>
                     ) : (
                         <div className="flex items-center rounded-card border border-border-warm bg-surface p-3 min-block-80 sm:p-4 sm:min-block-96 lg:p-6 lg:min-block-[max(25rem,calc(100dvh-17rem))]">

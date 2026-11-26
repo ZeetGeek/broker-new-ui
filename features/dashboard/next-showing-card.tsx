@@ -3,11 +3,13 @@ import { BROKER_VISIT_SLOTS_HREF, brokerVisitHref } from "@/lib/routes/broker";
 import { OWNER_VISITS_HREF } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { CardLink } from "@/components/shared/card-link";
 import { ContactName } from "@/components/shared/contact-name";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
     CalendarClock,
+    CalendarDays,
     CalendarPlus,
     MapPin,
     Navigation,
@@ -17,7 +19,6 @@ import {
 import { MarketCurrencyIcon } from "@/components/shared/market-currency-icon";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
-import { TextLinkButton } from "@/components/shared/text-link-button";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
@@ -215,9 +216,11 @@ function EmptyNextShowing({
                         : "Schedule one when a client is ready to see a property."
                 }
             >
-                <TextLinkButton href={isOwner ? OWNER_VISITS_HREF : BROKER_VISIT_SLOTS_HREF}>
-                    {isOwner ? "Manage visits" : "Schedule a visit"}
-                </TextLinkButton>
+                <EmptyStateAction
+                    label={isOwner ? "Manage visits" : "Schedule a visit"}
+                    icon={CalendarDays}
+                    href={isOwner ? OWNER_VISITS_HREF : BROKER_VISIT_SLOTS_HREF}
+                />
             </EmptyState>
         </section>
     );

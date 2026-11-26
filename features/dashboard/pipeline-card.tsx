@@ -5,8 +5,9 @@ import Link from "next/link";
 import { BROKER_ADD_BUYER_HREF } from "@/lib/routes/broker";
 import { cn } from "@/lib/utils";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
-import { AlertCircle, Navigation, Users } from "@/components/shared/icons";
+import { AlertCircle, Navigation, UserRoundPlus, Users } from "@/components/shared/icons";
 import { ShortcutTooltip } from "@/components/shared/shortcut-tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,6 @@ import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
 import { DigitPopIn } from "./digit-pop-in";
 import type { PipelineData, PipelineStage, PipelineStageKey } from "./mock-data";
-import { TextLinkButton } from "./text-link-button";
 
 const PIPELINE_INFO = "Your active clients and which deal stage each one is in.";
 
@@ -207,7 +207,11 @@ function EmptyPipeline({ className }: { className?: string }) {
                 heading="No clients yet"
                 description="Add a client to start tracking deals."
             >
-                <TextLinkButton href={BROKER_ADD_BUYER_HREF}>Add client</TextLinkButton>
+                <EmptyStateAction
+                    label="Add client"
+                    icon={UserRoundPlus}
+                    href={BROKER_ADD_BUYER_HREF}
+                />
             </EmptyState>
         </section>
     );

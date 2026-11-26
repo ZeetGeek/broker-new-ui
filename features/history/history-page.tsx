@@ -11,10 +11,11 @@ import {
 import { matchesCrmSearch } from "@/lib/search/crm-search";
 import { CRM_SEARCH_HELP } from "@/lib/search/search-help";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Activity, type AppIcon, ArrowRight, RefreshCw } from "@/components/shared/icons";
+import { Activity, type AppIcon, ArrowRight, RefreshCw, Search } from "@/components/shared/icons";
 import { ListSearchField, ListToolbarSelect } from "@/components/shared/list-toolbar";
 import {
     ListStatusSelect,
@@ -211,14 +212,6 @@ export function HistoryPage({
                     </div>
                 }
             />
-            {filtered || sort !== "newest" ? (
-                <p className="body-xs text-ink-muted">
-                    Search, filters and sorting apply to loaded history.{" "}
-                    <button className="font-medium text-brand underline" onClick={clear}>
-                        Reset view
-                    </button>
-                </p>
-            ) : null}
             {error ? (
                 <EmptyState
                     icon={Activity}
@@ -226,9 +219,7 @@ export function HistoryPage({
                     heading="Couldn't load history"
                     description="Check your connection and try again."
                 >
-                    <Button variant="outline" onClick={onRefresh}>
-                        Try again
-                    </Button>
+                    <EmptyStateAction label="Try again" icon={RefreshCw} onClick={onRefresh} />
                 </EmptyState>
             ) : null}
             {resultsLoading ? (
@@ -253,17 +244,18 @@ export function HistoryPage({
                                         : formatActivityDayLabel(
                                               new Date(rows[0].createdAt!),
                                               new Date(),
+                                              { includeYear: true },
                                           )}
                                 </h2>
                                 <span>
                                     {rows.length}{" "}
                                     {supportsRead
                                         ? rows.length === 1
-                                            ? "notification"
-                                            : "notifications"
+                                            ? "Notification"
+                                            : "Notifications"
                                         : rows.length === 1
-                                          ? "update"
-                                          : "updates"}
+                                          ? "Update"
+                                          : "Updates"}
                                 </span>
                             </div>
                             <ol className={styles.list}>
@@ -361,9 +353,11 @@ export function HistoryPage({
                     }
                 >
                     {filtered ? (
-                        <Button variant="outline" onClick={clear}>
-                            Clear search & filters
-                        </Button>
+                        <EmptyStateAction
+                            label="Clear search & filters"
+                            icon={Search}
+                            onClick={clear}
+                        />
                     ) : null}
                 </EmptyState>
             ) : null}

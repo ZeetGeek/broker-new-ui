@@ -4,6 +4,7 @@ import { type ReactNode, useId, useLayoutEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import { IconButton } from "@/components/shared/icon-button";
 import { ChevronLeft, ChevronRight } from "@/components/shared/icons";
 import { Button } from "@/components/ui/button";
@@ -209,11 +210,12 @@ export function PipelineMobileBoard({
                                         ) : null}
                                     </>
                                 ) : (
-                                    <div className={styles.empty}>
-                                        <meta.icon aria-hidden size={22} strokeWidth={1.5} />
-                                        <h3>No deals here yet</h3>
-                                        <p>{meta.emptyHint}.</p>
-                                    </div>
+                                    <EmptyState
+                                        size="card"
+                                        icon={meta.icon}
+                                        heading="No deals here yet"
+                                        description={meta.emptyHint + "."}
+                                    />
                                 )}
                             </div>
                         </section>

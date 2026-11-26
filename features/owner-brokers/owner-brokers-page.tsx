@@ -7,9 +7,10 @@ import { ApiError } from "@/lib/api/client";
 import { representativeApi } from "@/lib/api/representative";
 import { cn } from "@/lib/utils";
 
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
+import { AlertCircle, RefreshCw } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
-import { Button } from "@/components/ui/button";
 
 import { ActiveBrokerCard } from "@/features/owner-brokers/active-broker-card";
 import {
@@ -91,24 +92,22 @@ export function OwnerBrokersPage() {
         body = <BrowseBrokersSkeleton />;
     } else if (queue.isError && queue.items.length === 0) {
         body = (
-            <div role="alert" className="flex flex-col items-start gap-3 py-12">
-                <p className="body-sm font-medium text-ink">
-                    Active brokers could not load. Check your connection and try again.
-                </p>
-                <p className="body-sm text-ink-muted">
-                    {apiMessage(queue.error, "Could not load active brokers")}
-                </p>
-                <Button
-                    variant="secondary"
-                    size="sm"
+            <EmptyState
+                size="card"
+                icon={AlertCircle}
+                heading="Active brokers could not load. Check your connection and try again."
+                variant="error"
+                description={apiMessage(queue.error, "Could not load active brokers")}
+            >
+                <EmptyStateAction
+                    label="Try again"
+                    icon={RefreshCw}
                     onClick={() => {
                         setRevision((prev) => prev + 1);
                         void queue.refetch();
                     }}
-                >
-                    Try again
-                </Button>
-            </div>
+                />
+            </EmptyState>
         );
     } else if (queue.items.length === 0 && search.trim()) {
         body = <OwnerBrokersEmpty tab="active" hasSearch onClearSearch={() => setSearch("")} />;

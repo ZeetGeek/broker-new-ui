@@ -871,12 +871,14 @@ export function InventoryAndUpdates({ activity, now }: { activity: ActivityData;
                                                         >
                                                             {item.title}
                                                         </span>
-                                                        <span
-                                                            className={styles.secondary}
-                                                            title={item.subtitle}
-                                                        >
-                                                            {item.subtitle}
-                                                        </span>
+                                                        {item.subtitle?.trim() ? (
+                                                            <span
+                                                                className={styles.secondary}
+                                                                title={item.subtitle}
+                                                            >
+                                                                {item.subtitle}
+                                                            </span>
+                                                        ) : null}
                                                     </span>
                                                     <time
                                                         dateTime={item.occurredAt}

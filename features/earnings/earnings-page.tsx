@@ -8,9 +8,9 @@ import { format, isValid, parseISO } from "date-fns";
 import { earningsReportQueryOptions } from "@/lib/api/earnings";
 import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
-import { AlertCircle } from "@/components/shared/icons";
-import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCw } from "@/components/shared/icons";
 
 import {
     DEFAULT_EARNINGS_PRESET,
@@ -99,14 +99,12 @@ export function EarningsPage() {
                     heading="Couldn’t load your earnings"
                     description="Check your internet connection and try again. Your deals are safe."
                 >
-                    <Button
-                        type="button"
+                    <EmptyStateAction
+                        label="Try again"
+                        icon={RefreshCw}
                         onClick={() => refetch()}
                         loading={isRefetching}
-                        variant="accent"
-                    >
-                        Try again
-                    </Button>
+                    />
                 </EmptyState>
             </div>
         );

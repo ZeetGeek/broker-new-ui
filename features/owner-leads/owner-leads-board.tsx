@@ -7,8 +7,9 @@ import { formatPrice, formatRent } from "@/lib/format/price";
 import { ownerBrokersHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { EmptyState } from "@/components/empty-state";
 import { IconButton } from "@/components/shared/icon-button";
-import { GripVertical, Plus } from "@/components/shared/icons";
+import { GripVertical, Inbox, Plus } from "@/components/shared/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { OwnerLeadBoardCard } from "@/features/owner-leads/owner-lead-board-card";
@@ -69,17 +70,14 @@ function RentTotal({ value }: { value: string }) {
 
 function EmptyColumn({ highlighted = false }: { highlighted?: boolean }) {
     return (
-        <p
+        <div
             className={cn(
-                `
-                  body-sm rounded-card border border-dashed border-border-warm px-3 py-8 text-center
-                  text-ink-muted
-                `,
-                highlighted && "border-brand text-brand-text",
+                "rounded-card border border-dashed border-border-warm",
+                highlighted && "border-brand",
             )}
         >
-            No leads here yet.
-        </p>
+            <EmptyState size="card" icon={Inbox} heading="No leads here yet" />
+        </div>
     );
 }
 

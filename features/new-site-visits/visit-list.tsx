@@ -313,16 +313,6 @@ export function VisitList({
                         options={DATE_RANGES}
                         onChange={onRange}
                     />
-                    {filtered && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className={styles.toolbarClear}
-                            onClick={onClear}
-                        >
-                            Clear filters
-                        </Button>
-                    )}
                 </ResponsiveListToolbar>
             )}
             <TabsContent

@@ -25,9 +25,10 @@ import {
 import { cn } from "@/lib/utils";
 import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
+import { EmptyState } from "@/components/empty-state";
 import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
-import { CheckCheck, NotificationIcon, Trash2 } from "@/components/shared/icons";
+import { Bell, CheckCheck, NotificationIcon, Trash2 } from "@/components/shared/icons";
 import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
@@ -228,36 +229,17 @@ function NotificationsHeader({
 function NotificationsEmpty({ onShowAll }: { onShowAll?: () => void }) {
     const filtered = Boolean(onShowAll);
     return (
-        <div className="flex flex-col items-center gap-1 px-6 py-10 text-center" role="status">
-            <span
-                aria-hidden
-                className="mbe-3 flex items-center justify-center rounded-inner bg-surface-muted text-ink-muted block-10 inline-10"
-            >
-                <NotificationIcon
-                    name={filtered ? "checks" : "bell"}
-                    className="block-5 inline-5"
-                />
-            </span>
-            <p className="body-sm font-semibold text-ink">
-                {filtered ? "Nothing new here" : "You're up to date"}
-            </p>
-            <p className="body-sm text-pretty text-ink-muted max-inline-64">
-                {filtered
+        <EmptyState
+            size="card"
+            icon={filtered ? CheckCheck : Bell}
+            heading={filtered ? "Nothing new here" : "You're up to date"}
+            description={
+                filtered
                     ? "Other tabs may still have updates."
-                    : "When something needs your attention, it shows up here."}
-            </p>
-            {onShowAll ? (
-                <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    onClick={onShowAll}
-                    className="mbs-1 font-semibold text-brand-text"
-                >
-                    Show all
-                </Button>
-            ) : null}
-        </div>
+                    : "When something needs your attention, it shows up here."
+            }
+            action={onShowAll ? { label: "Show all", icon: Bell, onClick: onShowAll } : undefined}
+        />
     );
 }
 

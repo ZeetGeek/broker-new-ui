@@ -12,6 +12,7 @@ import { bhkFromConfigLabel, formatPropertyCardName } from "@/lib/format/propert
 import { PROPERTY_PLACEHOLDER_SRC } from "@/lib/media/property-placeholder";
 import { BROKER_OWNER_LISTINGS_HREF, brokerOwnerListingDetailHref } from "@/lib/routes/broker";
 
+import { EmptyStateAction } from "@/components/empty-state";
 import { AppImage } from "@/components/shared/app-image";
 import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -23,12 +24,12 @@ import {
     Mail,
     MapPin,
     Phone,
+    Search,
     UserRound,
 } from "@/components/shared/icons";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyPlaceholderImage } from "@/components/shared/property-placeholder-image";
 import { UserAvatar } from "@/components/shared/user-avatar";
-import { Button } from "@/components/ui/button";
 
 import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 import { OwnerProfileSkeleton } from "@/features/owners/owner-profile-skeleton";
@@ -113,14 +114,11 @@ function NotFoundState() {
             heading="Owner not found"
             description="This owner profile may be private, or it is no longer available."
         >
-            <Button
-                nativeButton={false}
-                className="bg-brand-ink text-surface hover:bg-brand-ink/90"
-                render={<Link href={BROKER_OWNER_LISTINGS_HREF} />}
-                variant="accent"
-            >
-                Back to Marketplace
-            </Button>
+            <EmptyStateAction
+                label="Back to Marketplace"
+                icon={Search}
+                href={BROKER_OWNER_LISTINGS_HREF}
+            />
         </EmptyState>
     );
 }

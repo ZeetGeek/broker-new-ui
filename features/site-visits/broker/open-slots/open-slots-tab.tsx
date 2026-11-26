@@ -333,21 +333,7 @@ export function OpenSlotsTab({
 
     return (
         <section className="space-y-4">
-            <VisitsFilterChips
-                chips={chips}
-                onClearAll={() => {
-                    // Clear everything in one URL write. Do not call
-                    // onBuyerChange / onPropertyChange afterward — those
-                    // patch from stale searchParams and put filters back.
-                    replaceParams((params) => {
-                        writeFilters(params, DEFAULT_SLOT_FILTERS);
-                        params.delete("q");
-                        params.delete("buyer");
-                        params.delete("lead");
-                        params.delete("propertyId");
-                    });
-                }}
-            />
+            <VisitsFilterChips chips={chips} />
 
             <div className="flex flex-wrap items-center justify-between gap-2 px-1">
                 <p className="body-sm text-ink-muted">

@@ -8,8 +8,10 @@ import { useRouter, useSearchParams } from "@/lib/navigation";
 import { ownerBrokersHref } from "@/lib/routes/owner";
 import { cn } from "@/lib/utils";
 
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
 import toast from "@/components/shared/app-toast";
+import { AlertCircle, RefreshCw } from "@/components/shared/icons";
 import { InfiniteListStatus } from "@/components/shared/infinite-list-status";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
@@ -152,19 +154,19 @@ export function OwnerRequestsPage() {
         body = <RequestsListSkeleton />;
     } else if (queue.isError && queue.items.length === 0) {
         body = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Could not load your requests</p>
-                <p className="body-sm text-ink-muted">
-                    {apiMessage(queue.error, "Could not load requests")}
-                </p>
-                <button
-                    type="button"
+            <EmptyState
+                size="card"
+                icon={AlertCircle}
+                heading="Could not load your requests"
+                variant="error"
+                description={apiMessage(queue.error, "Could not load requests")}
+            >
+                <EmptyStateAction
+                    label="Try again"
+                    icon={RefreshCw}
                     onClick={() => void queue.refetch()}
-                    className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                >
-                    Try again
-                </button>
-            </div>
+                />
+            </EmptyState>
         );
     } else if (queue.items.length === 0 && search.trim()) {
         body = (

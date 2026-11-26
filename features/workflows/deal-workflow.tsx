@@ -10,8 +10,10 @@ import { saveWorkflowDealOffer, saveWorkflowDealStage } from "@/lib/workflows/de
 import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 import type { WorkflowTarget } from "@/lib/workflows/target";
 
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
 import { AppModal } from "@/components/shared/app-modal";
 import toast from "@/components/shared/app-toast";
+import { AlertCircle, RefreshCw } from "@/components/shared/icons";
 import { useWorkflowWorking } from "@/components/shared/workflow-context";
 import { Button } from "@/components/ui/button";
 
@@ -170,12 +172,18 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
                 }}
             >
                 {query.isError ? (
-                    <div role="alert" className="flex flex-col items-start gap-3">
-                        <p>Could not load this deal. Check your connection and try again.</p>
-                        <Button variant="outline" onClick={() => void query.refetch()}>
-                            Retry
-                        </Button>
-                    </div>
+                    <EmptyState
+                        size="card"
+                        icon={AlertCircle}
+                        heading="Could not load this deal. Check your connection and try again."
+                        variant="error"
+                    >
+                        <EmptyStateAction
+                            label="Retry"
+                            icon={RefreshCw}
+                            onClick={() => void query.refetch()}
+                        />
+                    </EmptyState>
                 ) : (
                     <p role="status">Loading deal…</p>
                 )}

@@ -52,10 +52,12 @@ export const portalProfileMenuSurfaceClass = `
   before:backdrop-blur-none
   data-closed:animate-none!
   data-open:animate-none!
-  **:data-[slot$=-item]:data-highlighted:bg-surface-muted!
+  **:data-[slot$=-item]:data-highlighted:bg-surface-muted/50!
   **:data-[slot$=-item]:data-highlighted:text-ink!
-  **:data-[slot$=-item]:focus:bg-surface-muted!
+  **:data-[slot$=-item]:focus:bg-surface-muted/50!
   **:data-[slot$=-item]:focus:text-ink!
+  **:data-[slot$=-item]:aria-[current=page]:data-highlighted:bg-surface-muted!
+  **:data-[slot$=-item]:aria-[current=page]:focus:bg-surface-muted!
   **:data-[variant=destructive]:data-highlighted:bg-danger-soft!
   **:data-[variant=destructive]:data-highlighted:text-danger!
   **:data-[variant=destructive]:focus:bg-danger-soft!
@@ -83,12 +85,15 @@ export function PortalProfileMenuItem({
     onClick,
     disabled,
     className,
+    active = false,
     ...props
 }: Omit<ComponentProps<typeof DropdownMenuItem>, "render" | "onClick"> & {
     render?: ReactElement;
     onClick?: () => void;
+    active?: boolean;
 }) {
     const mobile = useContext(MobileProfileContext);
+    const activeClass = active && "bg-surface-muted! font-semibold! text-ink! [&_svg]:text-ink!";
     if (!mobile)
         return (
             <DropdownMenuItem
@@ -96,7 +101,8 @@ export function PortalProfileMenuItem({
                 render={render}
                 onClick={onClick}
                 disabled={disabled}
-                className={className}
+                aria-current={active ? "page" : undefined}
+                className={cn(className, activeClass)}
             >
                 {children}
             </DropdownMenuItem>
@@ -107,7 +113,13 @@ export function PortalProfileMenuItem({
             nativeButton={!render}
             render={render}
             disabled={disabled}
-            className={cn(mobileActionClass, "justify-start")}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+                mobileActionClass,
+                "justify-start",
+                !active && "hover:bg-surface-muted/50! focus-visible:bg-surface-muted/50!",
+                activeClass,
+            )}
             onClick={() => {
                 if (render) {
                     mobile.close();

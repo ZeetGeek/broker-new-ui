@@ -6,6 +6,8 @@ import { ownerInvitesApi } from "@/lib/api/owner-invites";
 import { propertyCriteriaCount } from "@/lib/properties/list-criteria";
 import { cn } from "@/lib/utils";
 
+import { EmptyState, EmptyStateAction } from "@/components/empty-state";
+import { AlertCircle, Inbox, RefreshCw } from "@/components/shared/icons";
 import { WindowVirtualGrid } from "@/components/shared/window-virtual-grid";
 
 import { InviteCard } from "@/features/properties/my-requests/invite-card";
@@ -184,29 +186,26 @@ export function CancelledPanel({
         body = <RequestsListSkeleton />;
     } else if (error) {
         body = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">Could not load cancelled deals</p>
-                <p className="body-sm text-ink-muted">{error}</p>
-                <button
-                    type="button"
-                    onClick={handleRefresh}
-                    className="body-sm font-semibold text-brand underline-offset-4 hover:underline"
-                >
-                    Try again
-                </button>
-            </div>
+            <EmptyState
+                size="card"
+                icon={AlertCircle}
+                heading="Could not load cancelled deals"
+                variant="error"
+                description={error}
+            >
+                <EmptyStateAction label="Try again" icon={RefreshCw} onClick={handleRefresh} />
+            </EmptyState>
         );
     } else if (!rows) {
         body = <RequestsListSkeleton />;
     } else if (cancelledTotal === 0 && !narrowFilters) {
         body = (
-            <div className="flex flex-col items-center gap-4 py-12 text-center">
-                <p className="h6 text-ink">No cancelled deals</p>
-                <p className="body-sm max-w-prose text-ink-muted">
-                    When you stop selling a property, or an owner cancels your representation, it
-                    shows up here with the reason.
-                </p>
-            </div>
+            <EmptyState
+                size="card"
+                icon={Inbox}
+                heading="No cancelled deals"
+                description="When you stop selling a property, or an owner cancels your representation, it shows up here with the reason."
+            />
         );
     } else if (rows.length === 0) {
         body = (

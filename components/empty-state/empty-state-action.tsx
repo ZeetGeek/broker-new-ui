@@ -8,6 +8,7 @@ export type EmptyStateActionProps = {
     label: string;
     icon: AppIcon;
     disabled?: boolean;
+    loading?: boolean;
 } & ({ href: string; onClick?: never } | { href?: never; onClick: () => void });
 
 /** Empty-state actions share a compact button and a leading semantic icon. */
@@ -15,6 +16,7 @@ export function EmptyStateAction({
     label,
     icon: Icon,
     disabled,
+    loading,
     href,
     onClick,
     tone = "default",
@@ -24,6 +26,7 @@ export function EmptyStateAction({
             variant={tone === "inverse" ? "highlight" : "outline"}
             size="sm"
             disabled={disabled}
+            loading={loading}
             nativeButton={false}
             render={<WorkflowLink href={href} />}
         >
@@ -36,6 +39,7 @@ export function EmptyStateAction({
             variant={tone === "inverse" ? "highlight" : "outline"}
             size="sm"
             disabled={disabled}
+            loading={loading}
             onClick={onClick}
         >
             <Icon aria-hidden />
