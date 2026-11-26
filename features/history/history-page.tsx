@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
+import { historySummary } from "@/lib/format/broker-page-summary";
 import {
     formatActivityDayLabel,
     formatDateIn,
@@ -17,11 +18,11 @@ import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Activity, type AppIcon, ArrowRight, RefreshCw, Search } from "@/components/shared/icons";
 import { ListSearchField, ListToolbarSelect } from "@/components/shared/list-toolbar";
+import { PageHeader } from "@/components/shared/page-header";
 import {
     ListStatusSelect,
     ResponsiveListToolbar,
 } from "@/components/shared/responsive-list-toolbar";
-import { Skeleton } from "@/components/shared/skeleton";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,8 @@ export type HistoryEntry = {
 
 export function HistoryPage({
     title,
-    summary,
+    total,
+    unreadCount,
     entries,
     loading,
     error,
@@ -58,7 +60,8 @@ export function HistoryPage({
     loadingMore = false,
 }: {
     title: string;
-    summary: string;
+    total?: number;
+    unreadCount?: number;
     entries: HistoryEntry[];
     loading: boolean;
     error: boolean;
@@ -123,18 +126,22 @@ export function HistoryPage({
     return (
         <div className={styles.page}>
             <PortalSectionNav>
-                <header className={styles.header}>
-                    <h1 className={`h3 ${styles.title}`}>
-                        {title}.{" "}
-                        <span className={styles.summary}>
-                            {loading ? (
-                                <Skeleton className="inline-block block-5 inline-48 max-inline-full" />
-                            ) : (
-                                summary
-                            )}
-                        </span>
-                    </h1>
-                </header>
+                <PageHeader
+                    title={title}
+                    summaryLines={historySummary({
+                        entries: groups.flatMap(([, entries]) => entries),
+                        notifications: readStatus,
+                        total,
+                        unreadCount,
+                        filtered,
+                        now: new Date(),
+                    })}
+                    summaryLoading={loading}
+                    summaryPlaceholder={
+                        readStatus ? "Loading your notifications" : "Loading recent updates"
+                    }
+                    summaryError={error ? "Could not refresh your history. Try again." : undefined}
+                />
             </PortalSectionNav>
             <ResponsiveListToolbar
                 selection={

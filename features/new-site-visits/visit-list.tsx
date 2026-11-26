@@ -1,6 +1,7 @@
 "use client";
 
 import type { BrokerVisit, VisitSort, VisitTab } from "@/lib/api/site-visits";
+import { visitsSummary } from "@/lib/format/broker-page-summary";
 import { CRM_SEARCH_HELP } from "@/lib/search/search-help";
 import { addVisitDays, formatVisitDate, formatVisitTime, istDateKey } from "@/lib/visits/time";
 
@@ -20,16 +21,15 @@ import {
     Search,
     SlidersHorizontal,
 } from "@/components/shared/icons";
-import { ListPageHeading } from "@/components/shared/list-page-heading";
 import {
     ListAddButton,
     ListSearchField,
     ListToolbarSelect,
 } from "@/components/shared/list-toolbar";
+import { PageHeader } from "@/components/shared/page-header";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { ListStatusSelect } from "@/components/shared/responsive-list-toolbar";
 import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
-import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { StatusTabs } from "@/components/shared/status-tabs";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -195,15 +195,6 @@ export function VisitList({
               : day === yesterday
                 ? "Yesterday"
                 : formatVisitDate(startsAt);
-    const plural = (n: number) => (n === 1 ? "visit" : "visits");
-    const summaryLines = firstRun
-        ? ["Schedule your first visit"]
-        : [
-              counts.upcoming > 0 && `${counts.upcoming} upcoming ${plural(counts.upcoming)}`,
-              counts.running > 0 && `${counts.running} ${plural(counts.running)} happening now`,
-              counts.needs_update > 0 &&
-                  `${counts.needs_update} ${plural(counts.needs_update)} ${counts.needs_update === 1 ? "needs" : "need"} an update`,
-          ].filter((line): line is string => Boolean(line));
     const empty = EMPTY_TAB_COPY[tab];
 
     return (
@@ -215,23 +206,25 @@ export function VisitList({
             }}
         >
             <PortalSectionNav>
-                <header className={styles.pageHeader}>
-                    <ListPageHeading title="Site visits.">
-                        <RotatingHeaderSummary
-                            key={summaryLines.join("|")}
-                            lines={summaryLines.length ? summaryLines : ["Your visits at a glance"]}
-                            loadingPlaceholder="Your visits at a glance"
-                        />
-                    </ListPageHeading>
-                    {firstRun && (
-                        <ListAddButton
-                            label="Schedule visit"
-                            shortcutId="schedule_visit"
-                            onClick={onSchedule}
-                            className={styles.firstSchedule}
-                        />
-                    )}
-                </header>
+                <PageHeader
+                    title="Site visits"
+                    summaryLines={visitsSummary(counts, tab, filtered)}
+                    summaryLoading={loading}
+                    summaryPlaceholder="Loading your visits"
+                    summaryError={
+                        loadError ? "Could not load your visit summary. Try again." : undefined
+                    }
+                    actions={
+                        firstRun && (
+                            <ListAddButton
+                                label="Schedule visit"
+                                shortcutId="schedule_visit"
+                                onClick={onSchedule}
+                                className={styles.firstSchedule}
+                            />
+                        )
+                    }
+                />
             </PortalSectionNav>
             {!firstRun && (
                 <ResponsiveListToolbar

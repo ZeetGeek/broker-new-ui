@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 
 import { LoadingState } from "@/components/empty-state";
+import { PageHeader } from "@/components/shared/page-header";
 import { Skeleton } from "@/components/shared/skeleton";
 
 import commission from "./commission-earned.module.css";
@@ -249,11 +250,12 @@ export function DashboardSkeleton() {
     return (
         <LoadingState label="Loading your dashboard">
             <div className={cn(layout.dashboard, styles.page)}>
-                <div className={styles.pageHeader}>
-                    <div className={styles.pageHeading}>
-                        <Block className={styles.headingDate} />
-                        <Block className={styles.headingSummary} />
-                    </div>
+                <PageHeader
+                    className={styles.pageHeader}
+                    title="Dashboard"
+                    summaryLines={[]}
+                    summaryLoading
+                >
                     <div className={styles.desktopMetadata}>
                         <div className={styles.metadataDetails}>
                             <div className={styles.metadataItem}>
@@ -272,7 +274,7 @@ export function DashboardSkeleton() {
                         </div>
                         <Block className={styles.quickAdd} />
                     </div>
-                </div>
+                </PageHeader>
                 <div className={layout.stats}>
                     {[0, 1, 2, 3].map((id) => (
                         <div key={id} className={layout.stat}>

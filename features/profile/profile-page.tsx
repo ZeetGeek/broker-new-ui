@@ -13,6 +13,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { profileApi, type UpdateProfileInput, type UserProfile } from "@/lib/api/profile";
+import { profileSummary } from "@/lib/format/broker-page-summary";
 import { cn } from "@/lib/utils";
 import {
     BIO_MAX,
@@ -47,6 +48,7 @@ import {
 } from "@/components/shared/icons";
 import { LocalityCombobox } from "@/components/shared/locality-combobox";
 import { OptionCombobox } from "@/components/shared/option-combobox";
+import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -426,13 +428,17 @@ export function ProfilePage() {
     );
 
     if (isLoading && !profile) {
-        return null;
+        return <PageHeader title="My profile" summaryLines={[]} summaryLoading />;
     }
 
     if (loadError && !profile) {
         return (
             <div className="flex flex-col gap-3">
-                <h1 className="h1 text-ink">Profile</h1>
+                <PageHeader
+                    title="My profile"
+                    summaryLines={[]}
+                    summaryError="Could not load your profile. Try again."
+                />
                 <p role="alert" className="body text-urgent">
                     {loadError}
                 </p>
@@ -455,26 +461,24 @@ export function ProfilePage() {
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-4 min-inline-0 lg:gap-5"
         >
-            <header className="flex flex-wrap items-center justify-between gap-3 text-start">
-                <h1 className="h3 wrap-anywhere min-inline-0 max-sm:text-xl">
-                    <span className="text-ink">{profile?.fullName?.trim() || "Your profile"}.</span>{" "}
-                    <span className="text-ink-muted">
-                        {ownerAccount ? "This is what brokers see." : "This is what owners see."}
-                    </span>
-                </h1>
-
-                {/* Header Save on desktop. Mobile uses the sticky bar when dirty. */}
-                <Button
-                    type="submit"
-                    variant="accent"
-                    size="md"
-                    loading={isSubmitting}
-                    disabled={!isDirty}
-                    className="max-md:hidden"
-                >
-                    {isSubmitting ? "Saving…" : "Save changes"}
-                </Button>
-            </header>
+            <PageHeader
+                title="My profile"
+                summaryLines={profileSummary(profile, isDirty, isSubmitting)}
+                summaryLoading={isLoading && !profile}
+                summaryError={loadError ? "Could not refresh your profile. Try again." : undefined}
+                actionsOnDesktopOnly
+                actions={
+                    <Button
+                        type="submit"
+                        variant="accent"
+                        size="md"
+                        loading={isSubmitting}
+                        disabled={!isDirty}
+                    >
+                        {isSubmitting ? "Saving…" : "Save changes"}
+                    </Button>
+                }
+            />
 
             {/* Property-form layout: elevated form panel + sticky glance rail. */}
             <div

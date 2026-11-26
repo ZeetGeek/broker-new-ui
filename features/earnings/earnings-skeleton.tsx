@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { PageHeader } from "@/components/shared/page-header";
 import { Skeleton } from "@/components/shared/skeleton";
 
 import styles from "./earnings.module.css";
@@ -187,19 +188,18 @@ export function EarningsPageSkeleton() {
         <div role="status" aria-live="polite" aria-busy="true">
             <span className="sr-only">Loading your earnings…</span>
             <div aria-hidden="true" className="flex flex-col gap-card-grid min-inline-0">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
-                    <div className="flex flex-col gap-2 min-inline-0">
-                        <div className="flex flex-wrap items-center gap-2 min-block-8">
-                            <Block className="block-6 inline-28" />
-                            <Block className="block-6 inline-72" />
-                        </div>
+                <PageHeader
+                    title="Earnings"
+                    summaryLines={[]}
+                    summaryLoading
+                    description={
                         <div className="flex items-center gap-1.5">
                             <Block className="shrink-0 rounded-full block-3 inline-3" />
                             <Block className="block-3 inline-64" />
                         </div>
-                    </div>
-                    <Block className="rounded-control block-control-md inline-72" />
-                </div>
+                    }
+                    actions={<Block className="rounded-control block-control-md inline-72" />}
+                />
                 <StatStrip />
                 <div className="grid grid-cols-1 gap-card-grid md:grid-cols-2 lg:grid-cols-12">
                     <CommissionSummary />

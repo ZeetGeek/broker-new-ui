@@ -17,14 +17,6 @@
     min-inline-size: 0;
     gap: 1.5rem;
 }
-.pageHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    min-inline-size: 0;
-    flex-wrap: wrap;
-}
 @media (max-width: 639px) {
     .firstSchedule {
         inline-size: 100%;

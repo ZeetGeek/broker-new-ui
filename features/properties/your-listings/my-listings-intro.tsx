@@ -1,15 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
-
 import type { MyListingsSummary } from "@/lib/api/my-listings";
-import { buildMyListingsSummaryLines } from "@/lib/format/my-listings-summary";
+import { listingsSummary } from "@/lib/format/broker-page-summary";
 import { cn } from "@/lib/utils";
 
 import { AddFab } from "@/components/shared/add-fab";
-import { ListPageHeading } from "@/components/shared/list-page-heading";
-import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
-import { Skeleton } from "@/components/shared/skeleton";
+import { PageHeader } from "@/components/shared/page-header";
 
 import type { MyListingsStatusTab } from "@/features/properties/your-listings/types";
 
@@ -51,48 +47,13 @@ export function MyListingsIntro({
     hasActiveFilters,
     isLoading = false,
 }: MyListingsIntroProps) {
-    const lines = useMemo(
-        () =>
-            buildMyListingsSummaryLines({
-                summary,
-                resultTotal,
-                hasActiveFilters,
-                status,
-            }),
-        [summary, resultTotal, hasActiveFilters, status],
-    );
-
     return (
-        <ListPageHeading
-            title={
-                isLoading ? (
-                    <span aria-hidden className="relative inline-block align-bottom">
-                        <span className="invisible">My Listings.</span>
-                        <span
-                            className="
-                          absolute inset-s-0 inset-bs-[0.12em] overflow-hidden rounded-control
-                          bg-border-warm block-[0.8em] inline-full
-                        "
-                        >
-                            <Skeleton className="bg-ink/3 block-full inline-full" />
-                        </span>
-                    </span>
-                ) : (
-                    "My Listings."
-                )
-            }
-        >
-            <RotatingHeaderSummary
-                key={`${status}:${lines.join("|")}`}
-                lines={lines}
-                isLoading={isLoading}
-                loadingLabel="Loading your listing counts"
-                loadingPlaceholder="Finish your property details, then publish when ready"
-                errorMessage={
-                    hasError ? "Could not load your listings. Please try again." : undefined
-                }
-                reservePlaceholder
-            />
-        </ListPageHeading>
+        <PageHeader
+            title="My listings"
+            summaryLines={listingsSummary({ summary, resultTotal, hasActiveFilters, status })}
+            summaryLoading={isLoading}
+            summaryPlaceholder="Loading your listings"
+            summaryError={hasError ? "Could not load your listing summary. Try again." : undefined}
+        />
     );
 }

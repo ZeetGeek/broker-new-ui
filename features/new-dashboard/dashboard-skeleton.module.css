@@ -12,29 +12,9 @@
 .page {
     pointer-events: none;
 }
-.pageHeader {
-    display: grid;
-    gap: 1rem;
-    padding-block: 0.25rem;
-}
 .pageHeader .placeholder {
     --dashboard-skeleton-pulse-min: 0.65;
     background: color-mix(in srgb, var(--color-ink-muted) 12%, var(--color-canvas));
-}
-.pageHeading {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    min-block-size: 2.125rem;
-}
-.headingDate {
-    inline-size: 10rem;
-    block-size: 1.5rem;
-}
-.headingSummary {
-    inline-size: min(25rem, 100%);
-    block-size: 1.5rem;
 }
 .desktopMetadata {
     display: flex;
@@ -504,9 +484,6 @@
 @media (max-width: 767.98px) {
     .desktopMetadata {
         display: none;
-    }
-    .pageHeading {
-        min-block-size: 2.375rem;
     }
     .workCard .viewport {
         max-block-size: clamp(18rem, 55svh, 28rem);

@@ -49,11 +49,6 @@ export function RecentUpdatesPage() {
     return (
         <HistoryPage
             title="Recent updates"
-            summary={
-                query.isPending
-                    ? "Your activity at a glance"
-                    : `${entries.length} recent ${entries.length === 1 ? "update" : "updates"}`
-            }
             entries={entries}
             loading={query.isPending}
             error={query.isError}

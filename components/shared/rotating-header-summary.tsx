@@ -7,9 +7,13 @@ import { useReducedMotion } from "motion/react";
 import { TextLoop } from "@/components/motion-primitives/text-loop";
 import { Skeleton } from "@/components/shared/skeleton";
 
+import styles from "./rotating-header-summary.module.css";
+
 /** Shared by marketplace and CRM headings; every message occupies the same stable slot. */
 export function RotatingHeaderSummary({
     lines,
+    mobileLines,
+    singleLineOnMobile = false,
     isLoading = false,
     loadingLabel = "Loading summary",
     loadingPlaceholder,
@@ -17,6 +21,8 @@ export function RotatingHeaderSummary({
     reservePlaceholder = false,
 }: {
     lines: string[];
+    mobileLines?: string[];
+    singleLineOnMobile?: boolean;
     isLoading?: boolean;
     loadingLabel?: string;
     loadingPlaceholder: string;
@@ -24,25 +30,39 @@ export function RotatingHeaderSummary({
     /** Keep the loading slot as a minimum after data arrives. */
     reservePlaceholder?: boolean;
 }) {
-    const [isPaused, setIsPaused] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
     const reduceMotion = useReducedMotion();
     const visibleLines = errorMessage
         ? [errorMessage]
         : lines.length
           ? lines
           : [loadingPlaceholder];
+    const renderLine = (text: string, index: number) => (
+        <span className={styles.text}>
+            <span className={mobileLines ? styles.desktop : undefined}>{text}</span>
+            {mobileLines && (
+                <span className={styles.mobile}>
+                    {errorMessage ? "Summary unavailable" : (mobileLines[index] ?? text)}
+                </span>
+            )}
+        </span>
+    );
 
     return (
         <span
             aria-live="polite"
             aria-atomic="true"
             aria-busy={isLoading}
-            className="
+            tabIndex={!isLoading && !errorMessage && visibleLines.length > 1 ? 0 : undefined}
+            className={`${singleLineOnMobile ? styles.singleLine : ""}
               relative inline-grid grid-cols-[minmax(0,1fr)] align-bottom text-ink-muted
               max-inline-full
-            "
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
+            `}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
         >
             {(isLoading
                 ? [loadingPlaceholder]
@@ -55,7 +75,7 @@ export function RotatingHeaderSummary({
                     aria-hidden
                     className="invisible col-start-1 row-start-1 text-pretty"
                 >
-                    {line}
+                    {isLoading ? line : renderLine(line, index)}
                 </span>
             ))}
             {isLoading ? (
@@ -72,17 +92,19 @@ export function RotatingHeaderSummary({
                     </span>
                 </>
             ) : reduceMotion || errorMessage || visibleLines.length === 1 ? (
-                <span className="col-start-1 row-start-1 text-pretty">{visibleLines[0]}</span>
+                <span className="col-start-1 row-start-1 text-pretty">
+                    {renderLine(visibleLines[0], 0)}
+                </span>
             ) : (
                 <TextLoop
                     key={visibleLines.length}
                     interval={6.5}
-                    trigger={!isPaused}
+                    trigger={!isHovered && !isFocused}
                     className="absolute inset-0 whitespace-normal"
                 >
                     {visibleLines.map((line, index) => (
                         <span key={index} className="text-pretty">
-                            {line}
+                            {renderLine(line, index)}
                         </span>
                     ))}
                 </TextLoop>

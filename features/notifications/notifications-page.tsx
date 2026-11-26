@@ -16,7 +16,13 @@ import { HistoryPage } from "@/features/history/history-page";
 import { useNotifications } from "@/providers/notification-provider";
 
 export function NotificationsPage() {
-    const { unreadCount, markRead, markAllRead } = useNotifications();
+    const {
+        unreadCount,
+        loading: unreadLoading,
+        error: unreadError,
+        markRead,
+        markAllRead,
+    } = useNotifications();
     const [readOverrides, setReadOverrides] = useState<Set<string>>(() => new Set());
     const [markingAllRead, setMarkingAllRead] = useState(false);
     const query = useInfiniteItems({
@@ -90,11 +96,8 @@ export function NotificationsPage() {
     return (
         <HistoryPage
             title="Notifications"
-            summary={
-                unreadCount
-                    ? `${unreadCount} unread ${unreadCount === 1 ? "notification" : "notifications"}`
-                    : "You're up to date"
-            }
+            total={query.total}
+            unreadCount={unreadLoading || unreadError ? undefined : unreadCount}
             entries={items.map((item) => {
                 const content = getNotificationDisplayContent(item);
                 const visual = getNotificationVisual(item);

@@ -469,7 +469,7 @@ export function ContactsPage({
             <div className="flex flex-col gap-4 min-inline-0 sm:gap-6">
                 <PortalSectionNav>
                     {summaryQuery.isPending ? (
-                        <ContactsIntroSkeleton />
+                        <ContactsIntroSkeleton tab={filters.tab} />
                     ) : (
                         <ContactsIntro
                             summary={summary}
@@ -493,7 +493,7 @@ export function ContactsPage({
                             Add client
                         </Button>
                         <a href="/broker/my-listings" className="body-sm font-medium underline">
-                            My Listings
+                            My listings
                         </a>
                     </div>
                 ) : null}

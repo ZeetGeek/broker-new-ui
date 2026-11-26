@@ -11,6 +11,7 @@ import { usePathname, useRouter, useSearchParams } from "@/lib/navigation";
 import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AlertCircle, RefreshCw } from "@/components/shared/icons";
+import { PageHeader } from "@/components/shared/page-header";
 
 import {
     DEFAULT_EARNINGS_PRESET,
@@ -91,9 +92,11 @@ export function EarningsPage() {
     if (error || !report) {
         return (
             <div className="flex flex-col gap-6 pbe-6">
-                <header>
-                    <h1 className="h3 text-ink">Earnings</h1>
-                </header>
+                <PageHeader
+                    title="Earnings"
+                    summaryLines={[]}
+                    summaryError="Could not load your commissions. Try again."
+                />
                 <EmptyState
                     icon={AlertCircle}
                     heading="Couldn’t load your earnings"

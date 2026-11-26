@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 import { myListingsApi } from "@/lib/api/my-listings";
+import { dashboardSummary } from "@/lib/format/broker-page-summary";
 import { formatWeekdayDate } from "@/lib/format/date";
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
 import { areaColorClassName } from "@/lib/styles/area-color";
@@ -32,7 +33,7 @@ import {
     UserRoundPlus,
 } from "@/components/shared/icons";
 import { ListAddButton } from "@/components/shared/list-toolbar";
-import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
+import { PageHeader } from "@/components/shared/page-header";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,8 +68,6 @@ import { WorkOverview } from "./work-overview";
 import styles from "./dashboard.module.css";
 
 const TIME_ZONE = "Asia/Kolkata";
-const plural = (count: number, singular: string, multiple = `${singular}s`) =>
-    `${count} ${count === 1 ? singular : multiple}`;
 
 function WorkingAreas({ areas }: { areas: string[] }) {
     const uniqueAreas = [...new Set(areas.map((area) => area.trim()).filter(Boolean))];
@@ -200,10 +199,17 @@ export function NewBrokerDashboard() {
 
     if (status === "failed") {
         return (
-            <DashboardError
-                message={error || "Failed to load dashboard"}
-                onRetry={() => void dispatch(fetchBrokerDashboard())}
-            />
+            <div className="flex flex-col gap-4 min-inline-0">
+                <PageHeader
+                    title="Dashboard"
+                    summaryLines={[]}
+                    summaryError="Could not load your dashboard summary. Try again."
+                />
+                <DashboardError
+                    message={error || "Failed to load dashboard"}
+                    onRetry={() => void dispatch(fetchBrokerDashboard())}
+                />
+            </div>
         );
     }
     if (!now || status === "idle" || status === "loading") return <DashboardSkeleton />;
@@ -242,27 +248,13 @@ export function NewBrokerDashboard() {
     const visitNeedsUpdate =
         isMockMode() && !isTestSampleMode() ? needsUpdate : (visits.needsUpdate.data?.total ?? 0);
     const taskCountKnown = !tasks.isLoading && !tasks.error;
-    const lines = [
-        "Your day, organised.",
-        ...(taskCountKnown
-            ? [
-                  overdue
-                      ? `${overdue} overdue ${overdue === 1 ? "task needs" : "tasks need"} attention`
-                      : "You're all caught up on overdue tasks",
-              ]
-            : []),
-        ...(activeDeals === null
-            ? []
-            : [
-                  activeDeals
-                      ? `You're working on ${plural(activeDeals, "active deal")}`
-                      : "Add your first client to start building your pipeline",
-              ]),
-        ...(visitNeedsUpdate ? [`${plural(visitNeedsUpdate, "visit")} need an update`] : []),
-        ...(listings.data
-            ? [`${plural(listings.data.published, "published listing")} in your inventory`]
-            : []),
-    ];
+    const lines = dashboardSummary({
+        overdue: taskCountKnown ? overdue : null,
+        activeDeals,
+        visitsToday: visitTotal,
+        visitsToUpdate: visits.needsUpdate.isError ? null : visitNeedsUpdate,
+        listings: listings.data,
+    });
     const stats = [
         {
             label: "Visits today",
@@ -326,31 +318,12 @@ export function NewBrokerDashboard() {
         <section className={styles.dashboard} aria-labelledby="new-dashboard-heading">
             {/* Row 1: date + rotating summary. Row 2 (md+): info left · actions right.
                 Phone hides row 2 — the bottom-nav fan owns the actions. */}
-            <header className="flex flex-col items-start gap-4 md:-mbe-1 md:max-lg:-mbe-2 lg:gap-4">
-                <h1 id="new-dashboard-heading" className={`h3 ${styles.heading}`}>
-                    <span className="shrink-0">{formatWeekdayDate(now)}.</span>{" "}
-                    {/* A real space (not margin) so a wrapped summary starts flush left. */}
-                    {/*
-                      Phone: one static line at its natural height. The rotating slot
-                      reserves the tallest message, which leaves a blank line under short
-                      ones once messages wrap — and resizing per message would shift the
-                      cards below every few seconds.
-                    */}
-                    {/* Visibility sits on wrappers: the module's display would beat Tailwind's hidden. */}
-                    <span className="md:hidden">
-                        <span className={styles.summary}>
-                            <span className="text-pretty text-ink-muted">{lines[0]}</span>
-                        </span>
-                    </span>
-                    <span className="min-inline-0 max-md:hidden xl:flex-1">
-                        <span className={styles.summary}>
-                            <RotatingHeaderSummary
-                                lines={lines}
-                                loadingPlaceholder="Your day, organised."
-                            />
-                        </span>
-                    </span>
-                </h1>
+            <PageHeader
+                id="new-dashboard-heading"
+                title="Dashboard"
+                summaryLines={lines}
+                summaryPlaceholder="Loading your day"
+            >
                 <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 inline-full max-md:hidden">
                     <div className={`body-sm ${styles.metadata}`}>
                         <time
@@ -358,6 +331,8 @@ export function NewBrokerDashboard() {
                             className="inline-flex shrink-0 items-center gap-1.5"
                         >
                             <Clock aria-hidden className="shrink-0 block-4 inline-4" />
+                            {formatWeekdayDate(now)}
+                            {" · "}
                             {new Intl.DateTimeFormat("en-IN", {
                                 timeZone: TIME_ZONE,
                                 hour: "numeric",
@@ -436,7 +411,7 @@ export function NewBrokerDashboard() {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-            </header>
+            </PageHeader>
             <ul aria-label="Your work overview" className={styles.stats}>
                 {stats.map((stat) => (
                     <li key={stat.label} className={styles.stat}>

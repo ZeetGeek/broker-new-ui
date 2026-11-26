@@ -80,8 +80,8 @@ export const BROKER_NAV_ITEMS: NavItem[] = [
     { label: "Dashboard", mobileLabel: "Home", href: "/broker/dashboard", shortcutId: "dashboard" },
     { label: "Clients", href: BROKER_CONTACTS_HREF, shortcutId: "contacts" },
     {
-        label: "My Listings",
-        mobileLabel: "My Listings",
+        label: "My listings",
+        mobileLabel: "My listings",
         href: BROKER_YOUR_LISTINGS_HREF,
         shortcutId: "your_listings",
         activePrefixes: ["/broker/my-properties", "/broker/properties"],

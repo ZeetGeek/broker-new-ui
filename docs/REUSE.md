@@ -18,11 +18,30 @@ real handler to show a button. Show success only after persistence, reuse an
 Use `toast.success`, `toast.error`, etc. for outcomes outside the common catalog.
 Never import the toast library directly in feature code.
 
-## CRM list headers
+## Page headers and CRM list controls
 
-Use `ListPageHeading` from `components/shared/list-page-heading.tsx` for the
-title and summary, mounted through `PortalSectionNav`. It preserves the desktop
-heading and puts a readable, wrapping summary below the title on phones.
+Use `PageHeader` from `components/shared/page-header.tsx` for page titles and
+summaries. Dashboard, Clients, My listings, Pipeline, Site visits, Tasks,
+Earnings, Profile, Notifications and Recent updates share this component.
+Pass `title`, optional `summary`, `description` and `actions`; use children for
+an additional metadata row. `id` identifies the h1. Set `actionsOnDesktopOnly`
+when a page already provides its action in a sticky phone bar.
+
+Pass data-driven `summaryLines` as paired `{ text, mobile }` messages from
+`lib/format/broker-page-summary.ts`. Each mobile message is a short, complete
+fact; never invent a count when its query is loading or failed. Use
+`summaryLoading`, `summaryError` and `summaryPlaceholder` for those states.
+Pass `summary` only for custom loading placeholders.
+
+The component owns typography and spacing. Below 768px, the title stands alone
+and the rotating summary is a separate, single-line description at body size.
+Desktop keeps the full summary beside the title. Rotation reserves a stable
+height, pauses on hover or keyboard focus, and respects reduced motion.
+Actions stack below the copy until 768px. Keep CRM list
+headers mounted through `PortalSectionNav`; do not add page-specific heading
+sizes or duplicate header CSS. Loading and error states use `PageHeader` too.
+`PortalHeader` supplies the same 1.5rem top inset for section-row and main-content
+headings; do not add another top offset in individual page wrappers.
 
 Use `ResponsiveListToolbar` for list controls. On phones, selection takes the
 first row; search and compact sorting share the second row. Pass a visible

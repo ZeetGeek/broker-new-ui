@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
-import { ListPageHeading } from "@/components/shared/list-page-heading";
+import { PageHeader } from "@/components/shared/page-header";
 import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
 import { Skeleton } from "@/components/shared/skeleton";
@@ -189,10 +189,7 @@ export function PipelineHeaderSkeleton() {
     return (
         <>
             <PortalSectionNav>
-                <ListPageHeading title="Pipeline.">
-                    <span className="sr-only">Loading pipeline summary</span>
-                    <Bone className="bg-border-warm block-5 inline-80 max-inline-full" />
-                </ListPageHeading>
+                <PageHeader title="Pipeline" summaryLines={[]} summaryLoading />
             </PortalSectionNav>
             <div role="status" aria-busy="true">
                 <span className="sr-only">Loading deal controls</span>

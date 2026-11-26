@@ -3,7 +3,6 @@
     flex-direction: column;
     gap: var(--card-grid-gap);
     min-inline-size: 0;
-    padding-block-start: 0.5rem;
 }
 
 .dashboard > * {
@@ -28,24 +27,6 @@
 .tasks {
     display: flex;
     flex-direction: column;
-}
-
-/* Below xl the summary flows inline after the date at heading size and wraps as a whole. */
-.heading {
-    display: block;
-    color: var(--color-ink);
-}
-
-/*
-  inline-block keeps the summary on the date's line when it fits and drops it
-  whole to the next line when it doesn't. overflow clips the rotate animation
-  so the outgoing line never slides over the date.
-*/
-.summary {
-    display: inline-block;
-    max-inline-size: 100%;
-    overflow: hidden;
-    vertical-align: bottom;
 }
 
 .metadata {
@@ -338,26 +319,6 @@
     /* Tasks join the shared-height columns only in the three-column layout. */
     .tasks > section {
         flex: 1;
-    }
-
-    .heading {
-        display: flex;
-        flex-direction: row;
-        align-items: baseline;
-        gap: 0.375rem;
-    }
-
-    .summary {
-        flex: 1;
-        font: inherit;
-    }
-}
-
-/* Keep the heading close to tablet size, easing down on narrow phones. */
-@media (max-width: 767.98px) {
-    .heading {
-        font-size: clamp(1.5rem, calc(1.125rem + 1.875vw), 1.75rem);
-        line-height: 1.35;
     }
 }
 

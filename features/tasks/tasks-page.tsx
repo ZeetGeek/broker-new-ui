@@ -2,6 +2,7 @@
 
 import { useDeferredValue, useEffect, useState } from "react";
 
+import { tasksSummary } from "@/lib/format/broker-page-summary";
 import { useSearchParams } from "@/lib/navigation";
 import { matchesCrmSearch } from "@/lib/search/crm-search";
 import { CRM_SEARCH_HELP } from "@/lib/search/search-help";
@@ -24,17 +25,16 @@ import {
     Trash2,
     X,
 } from "@/components/shared/icons";
-import { ListPageHeading } from "@/components/shared/list-page-heading";
 import {
     ListAddButton,
     ListSearchField,
     ListToolbarSelect,
 } from "@/components/shared/list-toolbar";
+import { PageHeader } from "@/components/shared/page-header";
 import {
     ResponsiveListStatus,
     ResponsiveListToolbar,
 } from "@/components/shared/responsive-list-toolbar";
-import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { StatusTabs } from "@/components/shared/status-tabs";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -162,17 +162,6 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             ? rawSort
             : defaultSort;
     const open = tasks.filter((task) => !task.completedAt && !task.deletedAt);
-    const overdue = open.filter((task) => taskGroup(task, now) === "overdue").length;
-    const today = open.filter((task) => taskGroup(task, now) === "today").length;
-    const summaryLines = [
-        overdue > 0
-            ? `${overdue} overdue ${overdue === 1 ? "task needs" : "tasks need"} attention`
-            : "",
-        today > 0 ? `${today} ${today === 1 ? "task" : "tasks"} due today` : "",
-        open.length > 0
-            ? `${open.length} open ${open.length === 1 ? "task" : "tasks"}`
-            : "Add your next follow-up",
-    ].filter(Boolean);
     const overdueCount = open.filter((task) => taskGroup(task, now) === "overdue").length;
     const tabs = [
         {
@@ -409,16 +398,15 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
     return (
         <div className={styles.page}>
             <PortalSectionNav>
-                <header className={styles.header}>
-                    <ListPageHeading title="Tasks.">
-                        <RotatingHeaderSummary
-                            key={summaryLines.join("|")}
-                            lines={summaryLines}
-                            isLoading={isLoading}
-                            loadingPlaceholder="Your tasks at a glance"
-                        />
-                    </ListPageHeading>
-                </header>
+                <PageHeader
+                    title="Tasks"
+                    summaryLines={tasksSummary(tasks, tab, now, filtered, visible.length)}
+                    summaryLoading={isLoading}
+                    summaryPlaceholder="Loading your tasks"
+                    summaryError={
+                        loadError ? "Could not load your task summary. Try again." : undefined
+                    }
+                />
             </PortalSectionNav>
             <Tabs
                 value={tab}

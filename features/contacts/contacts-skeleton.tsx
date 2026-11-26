@@ -1,9 +1,11 @@
 import { cn } from "@/lib/utils";
 
 import { PortalSectionNav } from "@/components/layout/portal-section-nav";
-import { ListPageHeading } from "@/components/shared/list-page-heading";
+import { PageHeader } from "@/components/shared/page-header";
 import { ResponsiveListToolbar } from "@/components/shared/responsive-list-toolbar";
 import { Skeleton } from "@/components/shared/skeleton";
+
+import type { ContactsTab } from "@/features/contacts/types";
 
 function Bone({ className }: { className?: string }) {
     return <Skeleton className={cn("animate-none", className)} />;
@@ -87,19 +89,14 @@ export function ContactsSkeleton({
     );
 }
 
-export function ContactsIntroSkeleton() {
+export function ContactsIntroSkeleton({ tab = "buyers" }: { tab?: ContactsTab }) {
     return (
         <div role="status" aria-busy="true">
-            <ListPageHeading
-                title={
-                    <>
-                        <span className="sr-only">Loading client summary</span>
-                        <Bone className="bg-border-warm block-6 inline-28" />
-                    </>
-                }
-            >
-                <Bone className="bg-border-warm block-5 inline-80 max-inline-full" />
-            </ListPageHeading>
+            <PageHeader
+                title={tab === "owners" ? "Owners" : "Clients"}
+                summaryLines={[]}
+                summaryLoading
+            />
         </div>
     );
 }
