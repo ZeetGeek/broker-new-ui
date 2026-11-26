@@ -32,7 +32,6 @@ import { Input } from "@/components/ui/input";
 import { FEATURE_PLATFORM_OWNER } from "@/config";
 
 import { AuthFormFrame } from "./auth-back-link";
-import { AuthBusyState } from "./auth-busy-state";
 import { AuthHeading } from "./auth-heading";
 import { CountryPicker, useSuggestedCountryIso2 } from "./country-picker";
 import { OrDivider } from "./or-divider";
@@ -301,18 +300,9 @@ export function RegisterWizard({
         }
     }
 
-    // Only leave the form after a real success. Errors must stay on the form
-    // (docs/MESSAGES.md — never toast an error the user must act on).
-    if (isRedirecting) {
-        return (
-            <AuthFormFrame>
-                <AuthBusyState
-                    title="Account created"
-                    description="Taking you to verify your email."
-                />
-            </AuthFormFrame>
-        );
-    }
+    // Keep the form on screen; the button carries the pending state until the
+    // next page replaces this one. Errors stay on the form (docs/MESSAGES.md).
+    const isBusy = isSubmitting || isRedirecting;
 
     return (
         <AuthFormFrame>
@@ -581,9 +571,9 @@ export function RegisterWizard({
                                 variant="accent"
                                 type="submit"
                                 className="inline-full"
-                                loading={isSubmitting}
+                                loading={isBusy}
                             >
-                                {isSubmitting ? "Creating account" : "Sign up"}
+                                {isBusy ? "Creating account…" : "Sign up"}
                             </Button>
                         </form>
 
