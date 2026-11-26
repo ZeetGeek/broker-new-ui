@@ -88,7 +88,7 @@ function DiscoveryWhereMenu({
         <button
             type="button"
             className={cn(
-                "flex items-center gap-3 rounded-control border border-border-warm bg-surface px-4 py-3 text-start shadow-sm transition-[border-color,background-color,box-shadow] duration-160 inline-full min-block-12 hover:border-ink/25 hover:bg-surface-muted/50 focus-visible:ring-2 focus-visible:ring-brand",
+                "flex items-center gap-3 rounded-control border border-border-warm bg-surface px-4 py-3 text-start shadow-sm transition-[border-color,background-color,box-shadow] duration-160 inline-full min-block-11 hover:border-ink/25 hover:bg-surface-muted/50 focus-visible:ring-2 focus-visible:ring-brand",
                 value && "border-brand/45 bg-brand-soft/35",
             )}
         >
@@ -99,7 +99,7 @@ function DiscoveryWhereMenu({
             />
             <span className="flex flex-1 flex-col min-inline-0">
                 <span className="text-xs font-medium text-ink-muted">Where</span>
-                <span className="truncate text-sm font-medium text-ink">
+                <span data-control-value className="truncate text-control font-medium text-ink">
                     {formatPlaceName(value) || "Anywhere"}
                 </span>
             </span>
@@ -312,7 +312,7 @@ function OwnerListingsPropertySearchFields({
                                     className={cn(
                                         `
                                           gap-1.5 rounded-control border-border-warm bg-surface px-2
-                                          shadow-none min-block-12 min-inline-0
+                                          shadow-none min-block-11 min-inline-0
                                           sm:gap-2 sm:px-3
                                         `,
                                         active &&

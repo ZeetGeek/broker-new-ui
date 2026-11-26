@@ -97,7 +97,7 @@ export function PropertyCoverStack({
                                     className={cn(
                                         `
                                           property-cover-tile relative flex shrink-0
-                                          rounded-inner block-12 inline-12
+                                          rounded-inner block-11 inline-11
                                         `,
                                         index > 0 && "-ms-2.5",
                                     )}
@@ -106,8 +106,8 @@ export function PropertyCoverStack({
                                     <PropertyCoverImage
                                         src={property.coverUrl}
                                         alt=""
-                                        sizes="48px"
-                                        size={48}
+                                        sizes="44px"
+                                        size={44}
                                     />
                                 </button>
                             }
@@ -135,8 +135,8 @@ export function PropertyCoverStack({
                                 className="
                                   property-cover-tile body-xs relative -ms-2.5 flex shrink-0
                                   items-center justify-center rounded-[8px] bg-surface-muted
-                                  font-semibold text-ink-muted ring-2 ring-surface block-12
-                                  inline-12
+                                  font-semibold text-ink-muted ring-2 ring-surface block-11
+                                  inline-11
                                 "
                                 style={{ zIndex: visible.length + 1 }}
                             >

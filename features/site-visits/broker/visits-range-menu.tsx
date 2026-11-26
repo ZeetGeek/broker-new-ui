@@ -259,10 +259,8 @@ export function VisitsRangeMenu({
                             });
                             setPickerOpen(false);
                         }}
-                        className="border-bs border-border-warm bg-surface px-5 py-4"
                     />
                 }
-                footerClassName="p-0"
             >
                 <div className="p-(--dialog-pad)">
                     <AppDateRangeFields from={draft.from} to={draft.to} onChange={setDraft} />

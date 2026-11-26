@@ -1075,14 +1075,7 @@ export function ContactFormDrawer({
                         children
                     )}
                 </div>
-                <AppModalFooter
-                    className={cn(
-                        styles.drawerFooter,
-                        "shrink-0 border-bs border-border-warm p-(--dialog-pad)",
-                    )}
-                >
-                    {footer}
-                </AppModalFooter>
+                <AppModalFooter standalone>{footer}</AppModalFooter>
             </div>
         );
     }
@@ -1101,9 +1094,6 @@ export function ContactFormDrawer({
                 headerClassName="
                   !space-y-0 !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-b border-border-warm
                 "
-                footerClassName={`${styles.drawerFooter}
-                  !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
-                `}
                 header={header}
                 footer={footer}
             >

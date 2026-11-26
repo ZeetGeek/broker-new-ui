@@ -111,7 +111,7 @@ export function AppModal({
     trigger,
     onOpenChangeComplete,
     manageBrowserHistory = true,
-    nativeScroll = false,
+    nativeScroll = true,
     scrollBody = true,
     scrollFade = false,
     modal = true,
@@ -227,12 +227,7 @@ export function AppModal({
                 ) : null}
 
                 {footer ? (
-                    <DialogFooter
-                        className={cn(
-                            "block shrink-0 px-(--dialog-pad) pbs-3 pbe-(--dialog-pad)",
-                            footerClassName,
-                        )}
-                    >
+                    <DialogFooter className={cn(styles.footer, "block", footerClassName)}>
                         {footer}
                     </DialogFooter>
                 ) : null}

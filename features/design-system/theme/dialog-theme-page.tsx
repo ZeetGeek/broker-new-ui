@@ -143,7 +143,7 @@ export function DialogThemePage() {
         <DesignSystemShell
             eyebrow="Components"
             title="Dialog."
-            description="base-ui Dialog + AppModal — one surface, content-height, no dividers. Footer: ghost cancel + default primary, size default, auto width, right-aligned. Motion .t-modal. See docs/DESIGN.md §4.16."
+            description="base-ui Dialog + AppModal — one surface, content-height, scrollable body. Footer: full-width divider, equal vertical padding, ghost cancel + default primary, size default, auto width, right-aligned. Motion .t-modal. See docs/DESIGN.md §4.16."
         >
             <div className="space-y-10">
                 <section>

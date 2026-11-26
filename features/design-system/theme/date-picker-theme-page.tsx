@@ -83,7 +83,7 @@ export function DatePickerThemePage() {
                     <h2 className="h4 text-ink">Sizes</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Same five steps as Input and Select. Default is{" "}
-                        <code className="body-xs">lg</code> (48px) for primary mobile forms.
+                        <code className="body-xs">lg</code> (44px) for primary mobile forms.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {DATE_PICKER_SIZES.map((step) => (

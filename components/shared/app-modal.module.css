@@ -1,3 +1,13 @@
+.footer {
+    flex-shrink: 0;
+    border-block-start: 1px solid var(--dialog-divider);
+    /* Reserve the rim so the visible gap below the actions matches the top. */
+    border-block-end: var(--dialog-footer-rim, calc(var(--dialog-rim) + 1px)) solid transparent;
+    padding-block: max(0.75rem, env(safe-area-inset-bottom, 0px));
+    padding-inline: var(--dialog-pad);
+    background: var(--color-surface);
+}
+
 .body[data-scroll-below] + :global([data-slot="dialog-footer"]),
 .body[data-scroll-below]
     :global(

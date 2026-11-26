@@ -165,7 +165,6 @@ export function ShortcutsCheatsheet({
             size="sm"
             padding="md"
             bodyClassName="px-3 py-3"
-            footerClassName="border-bs border-(--dialog-divider) pbs-3 pbe-3"
             footer={
                 <p className="body-xs text-center text-ink-subtle">
                     Press{" "}

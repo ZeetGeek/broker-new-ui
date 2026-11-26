@@ -642,21 +642,14 @@ export function PropertyPickerField(props: PropertyPickerFieldProps) {
                 )}
                 <span className="flex-1 min-inline-0">
                     {selectedProperties.length === 0 ? (
-                        <span
-                            className={cn(
-                                "truncate text-ink-subtle",
-                                triggerSize === "md" ? "text-sm" : "body",
-                            )}
-                        >
+                        <span data-control-value className="truncate text-control text-ink-subtle">
                             {placeholder}
                         </span>
                     ) : selectedProperties.length === 1 ? (
                         <span className="flex flex-col min-inline-0">
                             <span
-                                className={cn(
-                                    "truncate font-medium text-ink",
-                                    triggerSize === "md" ? "text-sm" : "body",
-                                )}
+                                data-control-value
+                                className="truncate text-control font-medium text-ink"
                             >
                                 {propertyInfoLine(face!)}
                             </span>
@@ -667,7 +660,10 @@ export function PropertyPickerField(props: PropertyPickerFieldProps) {
                             ) : null}
                         </span>
                     ) : (
-                        <span className="body truncate font-medium text-ink">
+                        <span
+                            data-control-value
+                            className="truncate text-control font-medium text-ink"
+                        >
                             {selectedProperties.length} selected
                         </span>
                     )}

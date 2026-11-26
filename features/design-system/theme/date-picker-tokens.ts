@@ -1,3 +1,4 @@
+/** All control sizes use 14px text from the shared text-control token. */
 export const DATE_PICKER_SIZES = [
     { name: "xs", label: "XS", note: "24px — control-xs. Dense icon-adjacent fields." },
     { name: "sm", label: "SM", note: "32px — control-sm. Dense contexts — filters, tables." },
@@ -6,7 +7,7 @@ export const DATE_PICKER_SIZES = [
     {
         name: "lg",
         label: "LG",
-        note: "48px — control-xl. Primary mobile forms (component default).",
+        note: "44px — control-xl. Primary mobile forms (component default).",
     },
 ] as const;
 

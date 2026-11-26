@@ -62,14 +62,13 @@ export function VisitFiltersDialog({
             className={`flex flex-col gap-0 overflow-hidden p-0 inline-[min(32rem,calc(100vw-1rem))] ${styles.filtersDialog}`}
             footer={
                 <AppModalFooter
-                    className={`justify-between border-bs border-border-warm p-5 sm:px-8 ${styles.filtersFooter}`}
+                    className={`justify-between ${styles.filtersFooter}`}
                     secondaryLabel="Clear"
                     onSecondary={() => onApply({ ...draft, client: "", property: "" })}
                     primaryLabel="Show visits"
                     onPrimary={() => onApply(draft)}
                 />
             }
-            footerClassName="p-0"
         >
             <div className="flex flex-col gap-5 p-5 sm:p-8">
                 <PeopleInlineSelect
@@ -129,7 +128,7 @@ export function VisitDateRangeDialog({
             className="flex flex-col gap-0 overflow-hidden p-0 inline-[min(40rem,calc(100vw-1rem))]"
             footer={
                 <AppModalFooter
-                    className="justify-between border-bs border-border-warm p-5 sm:px-8"
+                    className="justify-between"
                     secondaryLabel="Cancel"
                     onSecondary={onClose}
                     primaryLabel="Show visits"
@@ -137,7 +136,6 @@ export function VisitDateRangeDialog({
                     onPrimary={() => onApply({ ...draft, range: "custom" })}
                 />
             }
-            footerClassName="p-0"
         >
             <div className="p-5 sm:p-8">
                 <AppDateRangeFields

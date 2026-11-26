@@ -387,7 +387,7 @@ export function ChatModal({
                     ) : null}
                 </div>
 
-                <AppModalFooter className="block shrink-0 px-5 pbs-3 pbe-5">
+                <AppModalFooter standalone className="block">
                     <ChatComposer
                         key={representationId ?? "chat"}
                         onSend={handleSend}

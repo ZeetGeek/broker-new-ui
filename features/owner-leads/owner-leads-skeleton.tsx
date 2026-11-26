@@ -22,8 +22,8 @@ function BoardCardSkeleton() {
             </div>
             <div className="rounded-sm bg-surface-muted block-4 inline-40" />
             <div className="flex flex-col gap-2">
-                <div className="rounded-control bg-surface-muted block-12" />
-                <div className="rounded-control bg-surface-muted block-12" />
+                <div className="rounded-control bg-surface-muted block-11" />
+                <div className="rounded-control bg-surface-muted block-11" />
             </div>
             <div className="flex gap-2">
                 <div className="flex-1 rounded-control bg-surface-muted block-control-md" />

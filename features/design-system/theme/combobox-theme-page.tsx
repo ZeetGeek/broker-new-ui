@@ -176,7 +176,7 @@ export function ComboboxThemePage() {
                         <code className="body-xs">block-control-xs</code> through{" "}
                         <code className="body-xs">block-control-xl</code>. Default is 36px.{" "}
                         <code className="body-xs">md</code> is 44px (desktop tap-target).{" "}
-                        <code className="body-xs">lg</code> is 48px — use it on primary mobile
+                        <code className="body-xs">lg</code> is 44px — use it on primary mobile
                         forms, next to an Input or Select of the same size.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

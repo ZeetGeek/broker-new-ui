@@ -42,7 +42,7 @@ function Choice<T extends string>({
             className={cn(
                 `
                   rounded-control border border-border-warm bg-surface px-3 text-sm font-bold
-                  text-ink min-block-12
+                  text-ink min-block-11
                 `,
                 current === value && `border-brand-ink bg-brand-ink text-surface`,
             )}
@@ -228,7 +228,7 @@ export default function OutcomeModal({
                                     className={cn(
                                         `
                                           body-xs flex cursor-pointer items-center gap-2
-                                          rounded-control border px-3 font-semibold min-block-12
+                                          rounded-control border px-3 font-semibold min-block-11
                                         `,
                                         objections.includes(item)
                                             ? `border-brand bg-brand-soft text-brand-text`

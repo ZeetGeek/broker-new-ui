@@ -129,13 +129,13 @@
     --radius-control: 12px;
 
     /* Control height — the single source for button/input/select-trigger height.
-       lg (44px) and xl (48px) are the desktop/mobile tap-target minimums from
-       docs/DESIGN.md §4.3. See docs/DESIGN-SYSTEM-SYNC.md before editing. */
+       Both large steps use 44px; xl also preserves the 44px touch minimum
+       under the responsive rem scale. See docs/DESIGN-SYSTEM-SYNC.md before editing. */
     --size-control-xs: calc(var(--spacing) * 6);
     --size-control-sm: calc(var(--spacing) * 8);
     --size-control-md: calc(var(--spacing) * 9);
     --size-control-lg: calc(var(--spacing) * 11);
-    --size-control-xl: calc(var(--spacing) * 12);
+    --size-control-xl: max(var(--size-control-lg), var(--touch-target-min, 2.75rem));
 
     /* Smooth elevation — ink-tinted, layered, low opacity. See docs/DESIGN.md §3.3 */
     --shadow-xs: 0 1px 2px -1px oklch(0.153 0.02 155 / 0.06);
@@ -208,6 +208,8 @@
 
 @theme inline {
     --spacing-card-grid: var(--card-grid-gap);
+    --text-control: var(--control-font-size);
+    --text-control--line-height: 1.4;
     --font-sans: var(--font-sans);
     --font-heading: var(--font-heading);
     --font-display: var(--font-heading);
@@ -334,6 +336,9 @@
 }
 @utility inline-control-* {
     inline-size: --value(--size-control-*);
+}
+@utility min-block-control-* {
+    min-block-size: --value(--size-control-*);
 }
 @utility min-inline-control-* {
     min-inline-size: --value(--size-control-*);
@@ -574,7 +579,8 @@
            Percentages preserve the user's browser font-size preference. */
         --layout-font-scale: 0.9375;
         --touch-target-min: calc(2.75rem / var(--layout-font-scale));
-        --input-font-min: calc(1rem / var(--layout-font-scale));
+        --control-font-size: calc(0.875rem / var(--layout-font-scale));
+        --input-font-min: var(--control-font-size);
         font-size: calc(100% * var(--layout-font-scale));
         @apply font-sans;
     }
@@ -595,6 +601,39 @@
     h5,
     h6 {
         @apply font-heading;
+    }
+
+    /* One 14px size for entered text, placeholders, choices and actions.
+       This is an app-wide requirement: base-layer importance also wins over
+       size utilities and local modal/mobile overrides, including text-sm!. */
+    html
+        :is(
+            input,
+            textarea,
+            select,
+            option,
+            button,
+            [role="combobox"],
+            [data-slot="button"],
+            [data-slot="select-trigger"],
+            [data-slot="select-value"],
+            [data-slot="select-item"],
+            [data-slot="combobox-input-group"],
+            [data-slot="combobox-trigger"],
+            [data-slot="combobox-item"],
+            [data-slot="combobox-chips"],
+            [data-slot="combobox-chip"],
+            [data-slot="time-picker-value"],
+            [data-slot="time-picker-option"],
+            [data-slot="date-input"],
+            [data-control-value]
+        ) {
+        font-size: var(--control-font-size) !important;
+    }
+
+    html :is(input, textarea)::placeholder,
+    html input::file-selector-button {
+        font-size: inherit !important;
     }
 }
 
@@ -657,12 +696,6 @@
     [data-slot="combobox-trigger"] {
         min-block-size: var(--touch-target-min);
         min-inline-size: var(--touch-target-min);
-    }
-
-    /* Keep field text readable while the surrounding rem layout gets smaller. */
-    html
-        :is(input, textarea, select, [data-slot="select-trigger"], [data-slot="combobox-trigger"]) {
-        font-size: var(--input-font-min);
     }
 }
 

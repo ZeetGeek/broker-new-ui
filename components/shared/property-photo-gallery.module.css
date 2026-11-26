@@ -74,7 +74,7 @@
 .thumbnail {
     position: relative;
     flex: 0 0 60px;
-    block-size: 48px;
+    block-size: 44px;
     overflow: hidden;
     border-radius: 8px;
     cursor: pointer;

@@ -292,9 +292,7 @@
     outline-offset: 3px;
 }
 .footerBar {
-    border-block-start: 1px solid var(--color-border);
     background: var(--color-surface);
-    padding-block: 0.75rem;
 }
 .footer {
     display: flex;
@@ -341,6 +339,7 @@
 }
 @media (max-width: 639px) {
     .modal[data-slot="dialog-popup"] {
+        --dialog-footer-rim: 0px;
         inset: 0;
         translate: none;
         inline-size: 100%;
@@ -383,7 +382,6 @@
         font-size: 1rem;
     }
     .footerBar {
-        padding-block: 0.5rem max(0.75rem, env(safe-area-inset-bottom));
         padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
     }
     .footer {
@@ -436,7 +434,7 @@
 }
 .thumbnail {
     flex: 0 0 60px;
-    block-size: 48px;
+    block-size: 44px;
     border-radius: 8px;
 }
 .imageSkeleton {

@@ -1,3 +1,4 @@
+/** All control sizes use 14px text from the shared text-control token. */
 export const BUTTON_VARIANTS = [
     { name: "default", label: "Default", note: "Primary action. One per screen." },
     { name: "accent", label: "Accent", note: "Marketing/hero CTA. One per screen." },
@@ -32,7 +33,7 @@ export const BUTTON_SIZES = [
     { name: "sm", label: "SM", note: "32px desktop; at least 44px on phone/touch" },
     { name: "default", label: "Default", note: "36px desktop; at least 44px on phone/touch" },
     { name: "md", label: "MD", note: "44px — control-lg, desktop tap-target" },
-    { name: "lg", label: "LG", note: "48px — control-xl, same as input lg" },
+    { name: "lg", label: "LG", note: "44px — control-xl, same as input lg" },
 ] as const;
 
 export const BUTTON_ICON_SIZES = [

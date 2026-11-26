@@ -52,7 +52,9 @@ export function OwnerListingsBandSegment({
             <span className="flex flex-1 flex-col items-start gap-1 min-inline-0">
                 <span className="eyebrow shrink-0 text-ink-muted">{label}</span>
                 <span className="flex items-center gap-1 inline-full min-inline-0">
-                    <span className="body-sm truncate font-medium text-ink">{value}</span>
+                    <span data-control-value className="truncate text-control font-medium text-ink">
+                        {value}
+                    </span>
                     <ChevronDown
                         aria-hidden
                         className={cn(

@@ -1369,7 +1369,7 @@ function OwnedOverlayPropertyCard({
                                     size="md"
                                     variant="accent"
                                     type="button"
-                                    className="inline-full min-block-12"
+                                    className="inline-full min-block-11"
                                     disabled={listing.status !== "published"}
                                     onClick={onInviteBroker}
                                 >

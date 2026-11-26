@@ -37,7 +37,7 @@ function optionCardClassName(active: boolean, hasDescription: boolean, disabled?
     return cn(
         `
           flex cursor-pointer gap-3 rounded-control border px-4 py-3 text-start leading-normal
-          font-normal transition-[background-color,border-color,color] duration-160 min-block-12
+          font-normal transition-[background-color,border-color,color] duration-160 min-block-11
           has-focus-visible:ring-3 has-focus-visible:ring-ring/30
         `,
         hasDescription ? "items-start" : "items-center",

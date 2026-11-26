@@ -1,3 +1,4 @@
+/** All control sizes use 14px text from the shared text-control token. */
 export const SELECT_SIZES = [
     { name: "xs", label: "XS", note: "24px desktop; at least 44px on phone/touch." },
     { name: "sm", label: "SM", note: "32px desktop; at least 44px on phone/touch." },
@@ -6,7 +7,7 @@ export const SELECT_SIZES = [
     {
         name: "lg",
         label: "LG",
-        note: "48px — control-xl, same as button lg. Primary mobile forms.",
+        note: "44px — control-xl, same as button lg. Primary mobile forms.",
     },
 ] as const;
 

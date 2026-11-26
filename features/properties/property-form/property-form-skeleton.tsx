@@ -34,7 +34,7 @@ function DesktopStepRailSkeleton() {
         >
             <div className="flex flex-1 flex-col gap-3 min-block-0">
                 {Array.from({ length: 5 }, (_, index) => (
-                    <div key={index} className="flex items-center gap-3 px-3 min-block-12">
+                    <div key={index} className="flex items-center gap-3 px-3 min-block-11">
                         <Skeleton className="shrink-0 rounded-full block-7 inline-7" />
                         <Skeleton className="block-3.5 inline-28" />
                     </div>

@@ -73,7 +73,7 @@ export function ReferralDetailModal({
             title={referral.person.name}
             description={referralStatusHint(referral)}
             footer={
-                <AppModalFooter className="flex flex-wrap gap-2 border-bs border-border-warm pbs-4">
+                <AppModalFooter className="flex flex-wrap gap-2">
                     <Button
                         variant="secondary"
                         size="md"

@@ -233,7 +233,6 @@ export function PhotoCropModal({
                     onPrimary={() => void handleConfirm()}
                 />
             }
-            footerClassName="p-0"
         >
             <div className={styles.body}>
                 <div className={styles.stage} aria-busy={!loaded && !imageFailed}>

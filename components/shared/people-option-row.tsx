@@ -43,7 +43,9 @@ export function PeopleOptionRow({
             {showRolePip ? <span className="sr-only">{peopleRoleLabel(person.role)}</span> : null}
             <UserAvatar name={name} imageUrl={person.imageUrl} size="sm" />
             <span className="flex flex-1 flex-col gap-1 min-inline-0">
-                <span className="body-sm truncate font-semibold text-ink">{name}</span>
+                <span data-control-value className="truncate text-control font-semibold text-ink">
+                    {name}
+                </span>
                 {phone ? (
                     <span className="body-xs truncate text-ink-muted">
                         <PhoneNumber phoneDigits={phone} />

@@ -105,7 +105,7 @@ export function PropertyDetailSkeleton({ isPublic = false }: { isPublic?: boolea
                                 <div className={styles.section}>
                                     <Skeleton className="mbe-3 block-5 inline-5/6" />
                                     <Skeleton className="mbe-5 block-4 inline-full" />
-                                    <Skeleton className="block-12 inline-full" />
+                                    <Skeleton className="block-11 inline-full" />
                                 </div>
                             ) : null}
                         </div>
@@ -126,7 +126,7 @@ export function PropertyDetailSkeleton({ isPublic = false }: { isPublic?: boolea
             {!isPublic ? (
                 <div className={styles.mobileBar} aria-hidden>
                     <Skeleton className="block-8 inline-28" />
-                    <Skeleton className="block-12 inline-40" />
+                    <Skeleton className="block-11 inline-40" />
                 </div>
             ) : null}
         </div>

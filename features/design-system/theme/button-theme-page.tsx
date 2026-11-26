@@ -104,7 +104,7 @@ export function ButtonThemePage() {
                 <section>
                     <h2 className="h4 text-ink">Sizes</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
-                        `md` is 44px (`control-lg`), the desktop tap-target. `lg` is 48px
+                        `md` is 44px (`control-lg`), the desktop tap-target. `lg` is 44px
                         (`control-xl`), the same height as input `lg`. xs/sm are dense contexts only
                         — tables, toolbars — never a primary mobile action.
                     </p>
@@ -235,7 +235,7 @@ export function ButtonThemePage() {
                             every button size.
                         </li>
                         <li>
-                            `lg` is 48px (`control-xl`), matching input `lg`. Use it on primary
+                            `lg` is 44px (`control-xl`), matching input `lg`. Use it on primary
                             mobile actions. Never a height override.
                         </li>
                         <li>

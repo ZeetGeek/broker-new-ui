@@ -114,6 +114,31 @@ export function VisitDetailPanel({
                   sm:inline-(--drawer-detail-width) sm:max-block-none
                   sm:max-inline-(--drawer-detail-width)
                 "
+            footer={
+                ![
+                    "cancelled_by_broker",
+                    "cancelled_by_owner",
+                    "completed",
+                    "no_show",
+                    "expired",
+                ].includes(visit.status) ? (
+                    <AppModalFooter>
+                        {USE_MOCK_VISITS ? (
+                            <Button variant="surface" onClick={onReschedule}>
+                                Reschedule
+                            </Button>
+                        ) : (
+                            <p className="body-xs text-ink-muted">
+                                To change the time, cancel this visit and book another open slot.
+                                Check availability before cancelling.
+                            </p>
+                        )}
+                        <Button variant="destructive" onClick={onCancel}>
+                            <Trash2 aria-hidden /> Cancel visit
+                        </Button>
+                    </AppModalFooter>
+                ) : undefined
+            }
         >
             <div className={`shrink-0 px-5 py-4 ${status.tone}`}>
                 <p className="body-sm text-ink-muted">
@@ -121,7 +146,9 @@ export function VisitDetailPanel({
                     {formatVisitTime(visit.endsAt)}
                 </p>
             </div>
-            <div className={`flex-1 overflow-y-auto p-5 ${styles.sections}`}>
+            <div
+                className={`flex-1 overflow-y-auto overscroll-contain p-5 min-block-0 ${styles.sections}`}
+            >
                 <DrawerSection
                     title="Property"
                     description="Review the property, asking price and address."
@@ -240,29 +267,6 @@ export function VisitDetailPanel({
                             ) : null}
                         </section>
                     </DrawerSection>
-                ) : null}
-                {![
-                    "cancelled_by_broker",
-                    "cancelled_by_owner",
-                    "completed",
-                    "no_show",
-                    "expired",
-                ].includes(visit.status) ? (
-                    <AppModalFooter className="gap-2 border-bs border-danger/15 pbs-4">
-                        {USE_MOCK_VISITS ? (
-                            <Button variant="surface" onClick={onReschedule}>
-                                Reschedule
-                            </Button>
-                        ) : (
-                            <p className="body-xs text-ink-muted">
-                                To change the time, cancel this visit and book another open slot.
-                                Check availability before cancelling.
-                            </p>
-                        )}
-                        <Button variant="destructive" onClick={onCancel}>
-                            <Trash2 aria-hidden /> Cancel visit
-                        </Button>
-                    </AppModalFooter>
                 ) : null}
             </div>
         </AppModal>

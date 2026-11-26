@@ -316,7 +316,7 @@ grid:
 --size-control-sm   32px   dense contexts â€” filters, tables, toolbars
 --size-control-md   36px   default â€” most buttons and form fields
 --size-control-lg   44px   desktop tap-target minimum
---size-control-xl   48px   mobile tap-target minimum â€” primary mobile actions/forms
+--size-control-xl   44px   large controls; preserves the touch minimum under the rem scale
 ```
 
 Applied via `block-control-{step}` / `inline-control-{step}` (logical-property
@@ -326,6 +326,15 @@ utilities Tailwind generates from the `--size-control-*` tokens in
 height at the same step without coordinating by hand. New form controls
 (select trigger, textarea, checkbox/radio hit area) consume this same scale
 instead of inventing their own heights.
+
+Control text is 14px across all sizes and portals: inputs (including search and
+number fields), textareas, selects, combobox values/chips, date/time fields, and
+button labels. `--control-font-size` compensates for `--layout-font-scale` so the
+phone, tablet, and desktop all render the same size while respecting browser text
+preferences. Use `text-control`; size variants change geometry, not text size.
+The shared base-layer rule enforces this value over local field overrides.
+Labels, helper/error messages, and secondary option descriptions keep their own
+typography.
 
 ### 3.2 Radius
 
@@ -442,7 +451,7 @@ All use the standard 12px control radius. Height comes from the control-height s
 `xs`/`sm`/`default`/`md`/`lg` map to `control-xs`/`control-sm`/`control-md`/
 `control-lg`/`control-xl`. Icon sizes follow the same steps (`icon-xs` through
 `icon-lg`). Button `lg` and input `lg` are the same height â€” never mix steps in
-one form row. `md` (44px) is the desktop tap-target; `lg` (48px) is the mobile
+one form row. `md` (44px) is the desktop tap-target; `lg` (44px) is the mobile
 tap-target floor, so use it on primary mobile actions. Minimum horizontal
 padding 20px. Label is sentence case, verb first, one to three words, no
 terminal punctuation.
@@ -450,7 +459,7 @@ terminal punctuation.
 On phone layouts (under 768px) and coarse pointers, shared buttons (including icon
 sizes), filter chips, notification tabs, inputs, and select/combobox triggers have
 an actual 44px minimum block/inline size. The desktop compact size tokens stay
-unchanged. Primary mobile actions still use `lg` (48px). Use layout space for the
+unchanged. Primary mobile actions still use `lg` (44px). Use layout space for the
 target; do not overlap adjacent controls with enlarged invisible hit areas.
 
 **Loading state** uses the `loading` prop on `components/ui/button.tsx`. The spinner is
@@ -649,7 +658,7 @@ API: `Select` / `SelectTrigger` / `SelectValue` / `SelectContent` /
 `SelectItem` (plus optional `SelectGroup`, `SelectLabel`, `SelectSeparator`).
 The trigger uses the same five control-height steps, `rounded-control`, 2px
 `border-warm`, and `surface` fill as Input (Â§4.10). Default trigger is 36px
-(`control-md`); `lg` is 48px for primary mobile forms sitting next to an
+(`control-md`); `lg` is 44px for primary mobile forms sitting next to an
 Input of the same size.
 
 ```
@@ -745,7 +754,7 @@ Three layouts, same primitive:
 | ------------ | ------------------------------------------------------------- |
 | Stack        | Short account-type / role lists                               |
 | Grid         | 2â€“4 columns â€” furnishing, looking-for, deal extras        |
-| Option cards | Default on property forms â€” label wraps the item, 48px tall |
+| Option cards | Default on property forms â€” label wraps the item, 44px tall |
 
 Checked indicator fill is `brand`. Selected cards use `border-brand` +
 `bg-brand-soft` + `text-brand-text`. Hover only shifts the border â€” no soft
@@ -841,8 +850,8 @@ and fullscreen editors, use `AppModal` or `ConfirmDialog`. Photo lightboxes keep
 their specialized viewer. Do not compose the primitive directly in feature code
 or use browser-native alerts or confirmations. Product screens use
 `AppModal` from `components/shared/app-modal.tsx` â€” same visual system: one
-`bg-surface` shell, content-height (`max-block` not forced full viewport), no
-inset header/footer dividers, quiet close. `AppModalFooter`: ghost cancel + default
+`bg-surface` shell, content-height (`max-block` not forced full viewport), full-width
+header/footer dividers, quiet close. `AppModalFooter`: ghost cancel + default
 primary, `Button` `size="default"`, auto width, right-aligned.
 
 All dialog chrome uses `AppModalHeader` and `AppModalFooter`, backed by the
@@ -850,6 +859,13 @@ compound header/footer primitives. Descriptions, extra controls and editor
 toolbars belong in the shared header. Use the shared footer for confirmations,
 form actions, loading states, contact links and multiple actions; do not create
 separate header/footer shells in feature code.
+
+`AppModal` scrolls its body natively by default while the header and footer stay
+visible. Its footer owns the divider and equal vertical padding, including room
+for the dialog rim and phone safe area. Keep action components inside `footer`
+free of extra borders or padding. Custom working surfaces with their own scroll
+viewport use `scrollBody={false}`; an embedded action bar uses
+`AppModalFooter standalone` to receive the same footer chrome.
 
 **Surface:** `rounded-card`, `border-border-warm`, `bg-surface`, `shadow-xl`.
 Backdrop is `bg-ink/50` + light blur. Motion is transitions.dev **06-modal**:
@@ -919,7 +935,7 @@ Three layouts, same primitive:
 | Layout        | When                                                        |
 | ------------- | ----------------------------------------------------------- |
 | Stack         | Consent lines, reminders, short multi-select lists          |
-| Option cards  | Filter sheets (time of day, amenities) â€” 48px tap height  |
+| Option cards  | Filter sheets (time of day, amenities) â€” 44px tap height  |
 | Indeterminate | Parent of a partial group only â€” never a third preference |
 
 Always pair with a visible label (`htmlFor`/`id` or a wrapping `<label>`).
@@ -951,7 +967,7 @@ Empty placeholder is `Pick a date`.
 ```
 
 Same five control-height steps as Input and Select (`xs`â€“`lg`). Default is
-`lg` (48px / `control-xl`) for primary mobile forms â€” the listing
+`lg` (44px / `control-xl`) for primary mobile forms â€” the listing
 "Available from" field is the reference call site. Trigger uses
 `rounded-control`, 1px `border-warm`, `surface` fill; open state sets
 `border-ring` via `aria-expanded`. Calendar icon (not a chevron) owns the
@@ -1110,7 +1126,7 @@ language so moving from Owner listings or My Deals into a property feels continu
   Do not add generated listing imagery.
 - On desktop, pair the broad detail column with a sticky 350px price/action rail;
   the rail narrows to 310px on tablet and stacks below the details on phones.
-  Phone utility controls have at least 44px targets; primary actions remain 48px.
+  Phone utility controls have at least 44px targets; primary actions use 44px.
   Below 768px, the fixed price/action bar replaces portal bottom navigation and
   accounts for the safe-area inset. The surrounding portal otherwise stays intact.
 - Preserve three action contexts: owners manage publication and broker requests;
@@ -1205,7 +1221,7 @@ Things that will be rejected in review:
 - Title Case or ALL CAPS outside the eyebrow label
 - Arbitrary spacing values (`p-[13px]`, `gap-[7px]`)
 - Emoji in production UI
-- A tap target under 48px on mobile
+- A tap target under 44px on mobile
 - Currency formatted with `en-US`, or the string `USA` anywhere
 - A spinner where a skeleton belongs
 - An input showing both an error and a success signal at once, or two end-slot

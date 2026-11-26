@@ -18,7 +18,7 @@ import "ldrs/react/Tailspin.css";
 const selectTriggerVariants = cva(
     `
       group/select-trigger relative flex cursor-pointer items-center justify-between gap-1.5 rounded-control
-      border-2 border-border-warm bg-surface text-[15px] whitespace-nowrap text-ink
+      border-2 border-border-warm bg-surface text-control whitespace-nowrap text-ink
       transition-[border-color,box-shadow] outline-none inline-full min-inline-0
       hover:border-ring/50
       focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
@@ -38,11 +38,11 @@ const selectTriggerVariants = cva(
     {
         variants: {
             size: {
-                xs: "gap-1 px-2.5 text-xs block-control-xs",
-                sm: "gap-1 px-3 text-[13px] block-control-sm",
+                xs: "gap-1 px-2.5 block-control-xs",
+                sm: "gap-1 px-3 block-control-sm",
                 default: "gap-1.5 px-3.5 block-control-md",
                 md: "gap-1.5 px-4 block-control-lg",
-                lg: "gap-2 px-4 text-base block-control-xl",
+                lg: "gap-2 px-4 block-control-xl",
             },
         },
         defaultVariants: {
@@ -360,7 +360,7 @@ function SelectItem({
             data-slot="select-item"
             className={cn(
                 `
-                  relative flex shrink-0 cursor-pointer items-center gap-2 rounded-inner px-2.5 py-1.5 pe-8 text-sm
+                  relative flex shrink-0 cursor-pointer items-center gap-2 rounded-inner px-2.5 py-1.5 pe-8 text-control
                   font-medium text-ink outline-hidden transition-[background-color,color]
                   duration-160 ease-[cubic-bezier(0.22,1,0.36,1)]
                   select-none inline-full data-highlighted:bg-surface-muted

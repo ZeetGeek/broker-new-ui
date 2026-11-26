@@ -121,8 +121,8 @@
     display: flex;
     align-items: center;
     gap: 0.625rem;
-    padding: 0.75rem;
-    min-block-size: 3rem;
+    padding: 0.625rem 0.75rem;
+    min-block-size: var(--size-control-lg);
     border-radius: var(--radius-control);
     text-align: start;
     font-size: 0.875rem;

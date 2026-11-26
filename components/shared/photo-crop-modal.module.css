@@ -95,8 +95,6 @@
     flex-shrink: 0;
     justify-content: flex-end;
     gap: 0.75rem;
-    padding: 1rem 1.25rem;
-    border-block-start: 1px solid var(--color-border-warm);
 }
 
 @media (width < 480px) {

@@ -615,8 +615,7 @@
     padding: 1.5rem !important;
 }
 .overlayFooter {
-    padding-block: 1rem max(1rem, env(safe-area-inset-bottom)) !important;
-    border-block-start: 1px solid var(--color-border-warm);
+    min-inline-size: 0;
 }
 .footerActions {
     display: flex;
@@ -1082,7 +1081,7 @@
     .visitDrawer .overlayFooter [data-slot="dialog-footer"] > button {
         flex: 1 1 0;
         min-inline-size: 0;
-        min-block-size: 48px;
+        min-block-size: 44px;
         white-space: normal;
     }
     .compactDialog .footerActions,
@@ -1092,7 +1091,7 @@
     }
     .compactDialog .footerActions > button,
     .compactDialog .overlayFooter [data-slot="dialog-footer"] > button {
-        min-block-size: 48px;
+        min-block-size: 44px;
         white-space: normal;
     }
     .detailFooter {

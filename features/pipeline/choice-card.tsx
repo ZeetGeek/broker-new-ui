@@ -38,7 +38,7 @@ export function ChoiceCard({
         >
             <label
                 className={cn(
-                    "flex items-start gap-3 px-4 py-3.5 min-block-12",
+                    "flex items-start gap-3 px-4 py-3.5 min-block-11",
                     disabled ? "cursor-not-allowed" : "cursor-pointer",
                 )}
             >

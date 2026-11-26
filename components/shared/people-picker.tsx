@@ -229,7 +229,9 @@ function PeoplePickerRow({
             {showRole ? <span className="sr-only">{peopleRoleLabel(person.role)}</span> : null}
             <UserAvatar name={displayName} imageUrl={person.imageUrl} size="sm" />
             <span className="flex flex-1 flex-col gap-1 min-inline-0">
-                <span className="body-sm truncate font-semibold text-ink">{displayName}</span>
+                <span data-control-value className="truncate text-control font-semibold text-ink">
+                    {displayName}
+                </span>
                 {phone ? (
                     <span className="body-xs truncate text-ink-muted">
                         <PhoneNumber phoneDigits={phone} />
@@ -772,10 +774,15 @@ export function PeoplePickerField(props: PeoplePickerFieldProps) {
                 )}
                 <span className="flex-1 min-inline-0">
                     {selectedPeople.length === 0 ? (
-                        <span className="body truncate text-ink-subtle">{facePlaceholder}</span>
+                        <span data-control-value className="truncate text-control text-ink-subtle">
+                            {facePlaceholder}
+                        </span>
                     ) : selectedPeople.length === 1 ? (
                         <span className="flex flex-col min-inline-0">
-                            <span className="body truncate font-medium text-ink">
+                            <span
+                                data-control-value
+                                className="truncate text-control font-medium text-ink"
+                            >
                                 {formatPersonName(selectedPeople[0]!.name)}
                             </span>
                             {kinds === "both" ? (
@@ -785,7 +792,10 @@ export function PeoplePickerField(props: PeoplePickerFieldProps) {
                             ) : null}
                         </span>
                     ) : (
-                        <span className="body truncate font-medium text-ink">
+                        <span
+                            data-control-value
+                            className="truncate text-control font-medium text-ink"
+                        >
                             {selectedPeople.length} selected
                         </span>
                     )}

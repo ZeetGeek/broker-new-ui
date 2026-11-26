@@ -41,8 +41,8 @@
     align-items: center;
     gap: 0.75rem;
     inline-size: 100%;
-    min-block-size: max(3rem, var(--touch-target-min));
-    padding: 0.75rem;
+    min-block-size: max(var(--size-control-lg), var(--touch-target-min));
+    padding: 0.625rem 0.75rem;
     border-radius: var(--radius-inner);
     font-size: 0.875rem;
     font-weight: 500;

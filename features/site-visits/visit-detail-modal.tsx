@@ -93,7 +93,7 @@ export function VisitDetailModal({
                 (actions.primary ||
                     actions.secondary.length > 0 ||
                     actions.overflow.length > 0) && (
-                    <AppModalFooter className="flex flex-wrap gap-2 border-bs border-border-warm pbs-4">
+                    <AppModalFooter className="flex flex-wrap gap-2">
                         {actions.primary ? (
                             <Button
                                 size="lg"

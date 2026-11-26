@@ -65,14 +65,7 @@ export function TaskPanel({
                           border-border-warm
                         `
                 }
-                footerClassName={cn(
-                    styles.footer,
-                    compact
-                        ? undefined
-                        : `
-                          border-bs border-border-warm pbs-(--dialog-pad)! pbe-(--dialog-pad)!
-                        `,
-                )}
+                footerClassName={styles.footer}
                 footer={typeof footer === "function" ? footer(close) : footer}
             >
                 {children}

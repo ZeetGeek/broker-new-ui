@@ -970,9 +970,6 @@ export function ContactDetailPanel({
             nativeScroll
             className={cn("contacts-detail-drawer", styles.drawer, styles.preview)}
             headerClassName={styles.previewHeader}
-            footerClassName={`${styles.drawerFooter}
-              !pbs-(--dialog-pad) !pbe-(--dialog-pad) border-t border-border-warm
-            `}
             header={
                 <ContactSummary
                     name={formatPersonName(row.name)}

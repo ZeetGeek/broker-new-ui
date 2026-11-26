@@ -122,6 +122,7 @@ export function DateInput({ value, onChange }: { value?: Date; onChange: (date: 
 
     return (
         <div
+            data-slot="date-input"
             className="
               flex items-center gap-0.5 rounded-control border border-border-warm bg-surface
               px-2.5 py-2 text-sm text-ink

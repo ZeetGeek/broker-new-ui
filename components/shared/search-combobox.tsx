@@ -272,7 +272,7 @@ export function SearchCombobox(props: SearchComboboxProps) {
                                 sm: "px-3 py-0.5 min-block-control-sm",
                                 default: "px-3.5 py-0.5 min-block-control-md",
                                 md: "px-4 py-1.5 min-block-control-lg",
-                                lg: "px-4 py-2 min-block-control-xl",
+                                lg: "px-4 py-1.5 min-block-control-xl",
                             }[size],
                             disabled && "pointer-events-none bg-surface-muted opacity-50",
                             className,
@@ -307,9 +307,9 @@ export function SearchCombobox(props: SearchComboboxProps) {
                                         aria-invalid={Boolean(errorText) || undefined}
                                         aria-describedby={message ? messageId : undefined}
                                         className={cn(
-                                            "text-sm block-7 min-inline-24 placeholder:text-ink-subtle",
-                                            size === "xs" && "text-xs block-5",
-                                            size === "sm" && "text-[13px] block-6",
+                                            "text-control block-7 min-inline-24 placeholder:text-ink-subtle",
+                                            size === "xs" && "block-5",
+                                            size === "sm" && "block-6",
                                         )}
                                     />
                                 </>

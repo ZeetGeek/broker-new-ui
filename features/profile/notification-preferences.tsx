@@ -124,7 +124,7 @@ export function NotificationPreferences({ profile, onSaved }: NotificationPrefer
                                       flex flex-1 cursor-pointer items-start gap-3 rounded-control border-2
                                       px-4 py-3.5 text-start leading-normal
                                       transition-[background-color,border-color,color,box-shadow]
-                                      duration-160 min-block-12
+                                      duration-160 min-block-11
                                       has-focus-visible:ring-3 has-focus-visible:ring-ring/30
                                     `,
                                     on

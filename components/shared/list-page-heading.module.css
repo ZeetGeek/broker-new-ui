@@ -16,7 +16,7 @@
         inline-size: 100%;
         min-inline-size: 0;
         font-family: var(--font-sans);
-        font-size: var(--input-font-min);
+        font-size: calc(1rem / var(--layout-font-scale));
         font-weight: 500;
         line-height: 1.45;
     }

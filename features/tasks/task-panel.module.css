@@ -13,9 +13,6 @@
     .panel :global(button[data-icon-button]) {
         --icon-button-size: var(--touch-target-min);
     }
-    .footer {
-        padding-block-end: max(var(--dialog-pad), env(safe-area-inset-bottom)) !important;
-    }
     .footer :global([data-slot="button"]) {
         flex: 1 1 auto;
         min-block-size: var(--touch-target-min);

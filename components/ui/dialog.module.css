@@ -36,7 +36,6 @@
 }
 
 /* Existing full-bleed modal footers use these block-start border utilities. */
-.popup > [data-slot="dialog-footer"],
 .popup > [class~="border-bs"],
 .popup > [class~="border-t"] {
     border-color: var(--dialog-divider);

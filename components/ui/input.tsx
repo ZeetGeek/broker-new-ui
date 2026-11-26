@@ -29,7 +29,7 @@ import "ldrs/react/Tailspin.css";
 
 const inputVariants = cva(
     `
-      peer rounded-control border-2 border-border-warm bg-surface text-[15px] text-ink
+      peer rounded-control border-2 border-border-warm bg-surface text-control text-ink
       transition-[border-color,box-shadow] outline-none inline-full min-inline-0
       file:inline-flex file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-ink
       file:block-7
@@ -49,11 +49,11 @@ const inputVariants = cva(
     {
         variants: {
             size: {
-                xs: "px-2.5 text-xs block-control-xs",
-                sm: "px-3 text-[13px] block-control-sm",
+                xs: "px-2.5 block-control-xs",
+                sm: "px-3 block-control-sm",
                 default: "px-3.5 block-control-md",
                 md: "px-4 block-control-lg",
-                lg: "px-4 text-base block-control-xl",
+                lg: "px-4 block-control-xl",
             },
             hasStartSlot: {
                 true: "",

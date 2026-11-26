@@ -378,7 +378,7 @@ export function TimeRequestModal({
                                 onClick={() => form.setValue("message", preset)}
                                 className="
                                   body-xs rounded-control border border-border-warm bg-surface px-3
-                                  text-start font-semibold text-ink-muted min-block-12
+                                  text-start font-semibold text-ink-muted min-block-11
                                   hover:bg-brand-soft hover:text-brand-text
                                   lg:min-block-9
                                 "

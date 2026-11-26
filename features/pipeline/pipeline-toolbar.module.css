@@ -36,7 +36,7 @@
 }
 .search input {
     min-block-size: 2.75rem;
-    font-size: 1rem !important;
+    font-size: var(--control-font-size);
 }
 .status button {
     min-block-size: 2.75rem;
@@ -48,9 +48,6 @@
     .sortButton > span,
     .sortButton > svg:last-child {
         display: inline;
-    }
-    .search input {
-        font-size: 0.875rem !important;
     }
 }
 @media (min-width: 64rem) {

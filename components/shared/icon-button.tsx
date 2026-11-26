@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import styles from "./icon-button.module.css";
 
 export type IconButtonProps = Omit<ComponentProps<typeof Button>, "variant" | "size" | "color"> & {
-    /** Face size: 24, 32, 36, 44 or 48px. Touch targets expand to at least 44px. */
+    /** Face size: 24, 32, 36 or 44px. Both large sizes use 44px. */
     size?: "xs" | "sm" | "md" | "lg" | "xl";
     /** Ghost inside grouped controls; inverse on dark surfaces; outline otherwise. */
     appearance?: "outline" | "ghost" | "inverse";

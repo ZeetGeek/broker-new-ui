@@ -7,7 +7,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 
+import styles from "./app-modal.module.css";
+
 export type AppModalFooterProps = ComponentProps<"div"> & {
+    /** Add shared chrome when this bar lives inside a custom modal body. */
+    standalone?: boolean;
     /** Primary action on the trailing edge. */
     primaryLabel?: ReactNode;
     onPrimary?: () => void;
@@ -35,6 +39,7 @@ export type AppModalFooterProps = ComponentProps<"div"> & {
  * ghost cancel + accent (brand) primary (`Button` size default).
  */
 export function AppModalFooter({
+    standalone = false,
     primaryLabel,
     onPrimary,
     primaryType = "button",
@@ -57,6 +62,7 @@ export function AppModalFooter({
         <DialogFooter
             className={cn(
                 "flex flex-row flex-wrap items-center justify-end gap-2 inline-full",
+                standalone && styles.footer,
                 className,
             )}
             {...props}

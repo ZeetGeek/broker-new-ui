@@ -800,7 +800,6 @@ export function OwnerListingsFilterSheet({
             title={title}
             bodyClassName="p-0"
             scrollBody={false}
-            footerClassName="p-0"
             className={cn(
                 `
                       flex flex-col gap-0 overflow-hidden border-border-warm bg-surface p-0
@@ -817,11 +816,6 @@ export function OwnerListingsFilterSheet({
             footer={
                 <AppModalFooter
                     className={cn(
-                        `
-                          relative z-1 shrink-0 border-bs border-border-warm bg-surface px-4 py-3
-                          max-[575px]:pbe-[max(0.75rem,env(safe-area-inset-bottom))]
-                          sm:px-8 sm:py-5
-                        `,
                         "flex-nowrap justify-between gap-3 [&_button]:rounded-inner [&_button]:px-4 [&_button]:min-block-11 sm:[&_button]:px-5",
                     )}
                     secondaryLabel="Clear all"

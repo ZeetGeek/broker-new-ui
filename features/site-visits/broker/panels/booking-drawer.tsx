@@ -249,8 +249,7 @@ export function BookingDrawer({
             footer={
                 <AppModalFooter
                     className="
-                  sticky inset-be-0 flex shrink-0 items-center justify-between gap-4 border-bs
-                  border-(--dialog-divider) bg-surface p-4
+                  flex items-center justify-between gap-4
                 "
                 >
                     <p className="body-xs text-ink-muted max-inline-48">
@@ -269,7 +268,6 @@ export function BookingDrawer({
                     </Button>
                 </AppModalFooter>
             }
-            footerClassName="p-0"
         >
             <div className="shrink-0 border-be border-(--dialog-divider) p-5">
                 <p className="body-sm text-ink-muted">

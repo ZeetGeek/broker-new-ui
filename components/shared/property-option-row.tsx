@@ -53,7 +53,9 @@ export function PropertyOptionRow({
                 ) : (
                     <span className="body-xs font-semibold text-ink-subtle">Price not set</span>
                 )}
-                <span className="body-sm truncate font-medium text-ink">{info}</span>
+                <span data-control-value className="truncate text-control font-medium text-ink">
+                    {info}
+                </span>
                 {place ? (
                     <span className="body-xs flex items-center gap-1 text-ink-muted min-inline-0">
                         <MapPin

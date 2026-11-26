@@ -259,7 +259,7 @@ export function InvitePropertyBrokerModal({
                                         className={cn(
                                             `
                                               flex cursor-pointer items-center gap-3 rounded-control
-                                              border border-border-warm p-3 min-block-12
+                                              border border-border-warm p-3 min-block-11
                                               min-inline-0
                                             `,
                                             selected?.id === broker.id &&

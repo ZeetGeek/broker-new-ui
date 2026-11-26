@@ -1190,7 +1190,7 @@ export function PropertyForm({
                             </main>
                         )}
                         {!restoringDraft ? (
-                            <AppModalFooter className={styles.mobileFooter}>
+                            <AppModalFooter standalone className={styles.mobileFooter}>
                                 <div className={styles.mobileButtons}>
                                     {entryMode === "full" && stepIndex > 0 ? (
                                         <Button type="button" variant="ghost" onClick={goBack}>

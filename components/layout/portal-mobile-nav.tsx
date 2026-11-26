@@ -106,7 +106,7 @@ function TabLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
             className={cn(
                 `
                   flex flex-col items-center justify-center gap-0.5 rounded-inner px-0.5
-                  py-1.5 text-center transition-colors duration-160 min-block-12 min-inline-0
+                  py-1.5 text-center transition-colors duration-160 min-block-11 min-inline-0
                 `,
                 isActive ? "text-brand" : "text-ink-subtle",
             )}
@@ -123,7 +123,7 @@ function CenterFab({ action }: { action: PortalMobileCenterAction }) {
       -mbs-5 grid shrink-0 place-items-center rounded-full bg-brand text-surface
       shadow-[0_2px_4px_-1px_rgb(11_31_23/0.12),0_10px_24px_-6px_rgb(27_122_90/0.45),0_18px_36px_-10px_rgb(11_31_23/0.22)] transition-[transform,box-shadow,filter]
       duration-160
-      block-12 inline-12
+      block-11 inline-11
       hover:shadow-[0_3px_6px_-1px_rgb(11_31_23/0.14),0_14px_32px_-6px_rgb(27_122_90/0.5),0_22px_44px_-10px_rgb(11_31_23/0.26)]
       hover:brightness-105
       focus-visible:ring-2 focus-visible:ring-brand
@@ -284,7 +284,7 @@ export function PortalMobileNav({
                                                 `
                                                   flex flex-col items-center justify-center gap-0.5
                                                   rounded-inner px-0.5 py-1.5 text-center
-                                                  outline-none inline-full min-block-12 min-inline-0
+                                                  outline-none inline-full min-block-11 min-inline-0
                                                   focus-visible:ring-2 focus-visible:ring-ring
                                                 `,
                                                 activeOverflow ? "text-brand" : "text-ink-subtle",

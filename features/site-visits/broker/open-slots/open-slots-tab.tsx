@@ -293,12 +293,10 @@ export function OpenSlotsTab({
                         });
                         setFiltersOpen(false);
                     }}
-                    className="border-bs border-border-warm bg-surface px-5 py-4"
                 />
             }
-            footerClassName="p-0"
         >
-            <div className="overflow-y-auto p-5 max-block-[68dvh]">
+            <div className="p-5">
                 <SlotFilters
                     buyers={buyers}
                     buyerId={draftBuyerId}

@@ -467,7 +467,12 @@ export function PropertyInlineSelect({
                                         value={CLEAR_VALUE}
                                         className={INLINE_ITEM_CLASS}
                                     >
-                                        <span className="body-sm text-ink-muted">{clearLabel}</span>
+                                        <span
+                                            data-control-value
+                                            className="text-control text-ink-muted"
+                                        >
+                                            {clearLabel}
+                                        </span>
                                     </ComboboxItem>
                                 );
                             }

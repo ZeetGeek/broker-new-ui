@@ -79,7 +79,16 @@ export default function PropertyLightbox({
                     "--yarl__thumbnails_thumbnail_focus_box_shadow":
                         "0 0 0 0.125rem var(--color-brand)",
                 },
-                button: { minWidth: "3rem", minHeight: "3rem", padding: "0.75rem" },
+                button: {
+                    width: "var(--size-control-xl)",
+                    height: "var(--size-control-xl)",
+                    minWidth: "var(--size-control-xl)",
+                    minHeight: "var(--size-control-xl)",
+                    padding: "0.5rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                },
             }}
             animation={reduceMotion ? { fade: 0, swipe: 0, navigation: 0, zoom: 0 } : undefined}
             render={{

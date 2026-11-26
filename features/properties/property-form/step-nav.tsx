@@ -56,7 +56,7 @@ export function StepNav({
                                     `
                                       flex items-center justify-start gap-3 px-3 text-start
                                       transition-[background-color,color,box-shadow] duration-160
-                                      xl:inline-full xl:min-block-12
+                                      xl:inline-full xl:min-block-11
                                     `,
                                     active
                                         ? `

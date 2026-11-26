@@ -75,11 +75,7 @@ function ListingCardSkeleton({ portal }: { portal: "broker" | "owner" }) {
                     ) : null}
                 </div>
                 <div className="mbs-auto flex flex-col gap-2 pbs-1">
-                    <Skeleton
-                        className={
-                            portal === "owner" ? "block-12 inline-full" : "block-11 inline-full"
-                        }
-                    />
+                    <Skeleton className="block-11 inline-full" />
                 </div>
             </div>
         </div>

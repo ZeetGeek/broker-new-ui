@@ -46,7 +46,7 @@ const MONTH_OPTIONS = [
 
 const datePickerTriggerVariants = cva(
     `
-      justify-between rounded-control border border-border-warm bg-surface font-normal text-ink
+      justify-between rounded-control border border-border-warm bg-surface text-control font-normal text-ink
       shadow-none transition-[border-color,box-shadow] inline-full
       hover:border-ink-subtle hover:bg-surface
       focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
@@ -59,11 +59,11 @@ const datePickerTriggerVariants = cva(
     {
         variants: {
             size: {
-                xs: "gap-1 px-2.5 text-xs block-control-xs",
-                sm: "gap-1 px-3 text-[13px] block-control-sm",
-                default: "gap-1.5 px-3.5 text-[15px] block-control-md",
-                md: "gap-1.5 px-4 text-[15px] block-control-lg",
-                lg: "gap-2 px-4 text-base block-control-xl",
+                xs: "gap-1 px-2.5 block-control-xs",
+                sm: "gap-1 px-3 block-control-sm",
+                default: "gap-1.5 px-3.5 block-control-md",
+                md: "gap-1.5 px-4 block-control-lg",
+                lg: "gap-2 px-4 block-control-xl",
             },
         },
         defaultVariants: {
@@ -138,7 +138,7 @@ function DatePickerDayButton({
             className={cn(
                 `
                   relative isolate z-10 flex aspect-square items-center justify-center rounded-full
-                  border-0 text-[13px] leading-none font-normal text-ink shadow-none block-auto
+                  border-0 text-control leading-none font-normal text-ink shadow-none block-auto
                   inline-full min-inline-(--cell-size)
                   hover:bg-brand-soft hover:text-brand-text
                   focus-visible:ring-2 focus-visible:ring-ring/30

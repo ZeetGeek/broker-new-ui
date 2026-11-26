@@ -529,7 +529,10 @@ function ContactSearchPanel({
                             aria-hidden
                             strokeWidth={1.75}
                         />
-                        <span className="body flex-1 truncate text-ink-subtle">
+                        <span
+                            data-control-value
+                            className="flex-1 truncate text-control text-ink-subtle"
+                        >
                             Select an owner
                         </span>
                         <ChevronDown
@@ -570,7 +573,10 @@ function ContactSearchPanel({
                             aria-hidden
                             strokeWidth={1.75}
                         />
-                        <span className="body flex-1 truncate text-ink-subtle">
+                        <span
+                            data-control-value
+                            className="flex-1 truncate text-control text-ink-subtle"
+                        >
                             {selectedIds.length > lockedIds.length
                                 ? `${selectedIds.length - lockedIds.length} new client${selectedIds.length - lockedIds.length === 1 ? "" : "s"} selected`
                                 : "Add clients"}

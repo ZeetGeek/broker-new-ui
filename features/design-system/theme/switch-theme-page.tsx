@@ -124,7 +124,7 @@ function LiveToggleDemo() {
 
     return (
         <div className="space-y-3 inline-full">
-            <label className="flex items-center justify-between gap-3 inline-full min-block-12">
+            <label className="flex items-center justify-between gap-3 inline-full min-block-11">
                 <span className="body-sm font-semibold text-ink">Only my accepted properties</span>
                 <Switch
                     checked={acceptedOnly}
@@ -135,7 +135,7 @@ function LiveToggleDemo() {
                     "
                 />
             </label>
-            <label className="flex items-center justify-between gap-3 inline-full min-block-12">
+            <label className="flex items-center justify-between gap-3 inline-full min-block-11">
                 <span className="body-sm font-semibold text-ink">Hide full slots</span>
                 <Switch
                     checked={hideFull}
@@ -260,7 +260,7 @@ export function SwitchThemePage() {
                     <h2 className="h4 text-ink">Filter toggles — live demo</h2>
                     <p className="body-sm mbs-1 text-ink-muted max-inline-[65ch]">
                         Flip either switch. Filter sheets use the same row layout without a card
-                        chrome — just label + control, 48px tap height on mobile.
+                        chrome — just label + control, 44px tap height on mobile.
                     </p>
                     <div className="mbs-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <Swatch label="Slot filters">

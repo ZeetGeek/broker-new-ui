@@ -18,7 +18,7 @@ import "ldrs/react/Tailspin.css";
 const comboboxInputGroupVariants = cva(
     `
       group/combobox-input relative flex cursor-pointer items-center justify-between gap-1.5 rounded-control
-      border-2 border-border-warm bg-surface text-[15px] whitespace-nowrap text-ink
+      border-2 border-border-warm bg-surface text-control whitespace-nowrap text-ink
       transition-[border-color,box-shadow] outline-none inline-full min-inline-0
       hover:border-ring/50
       has-[[data-slot=combobox-input]:focus-visible]:border-ring
@@ -40,11 +40,11 @@ const comboboxInputGroupVariants = cva(
     {
         variants: {
             size: {
-                xs: "gap-1 px-2.5 text-xs block-control-xs",
-                sm: "gap-1 px-3 text-[13px] block-control-sm",
+                xs: "gap-1 px-2.5 block-control-xs",
+                sm: "gap-1 px-3 block-control-sm",
                 default: "gap-1.5 px-3.5 block-control-md",
                 md: "gap-1.5 px-4 block-control-lg",
-                lg: "gap-2 px-4 text-base block-control-xl",
+                lg: "gap-2 px-4 block-control-xl",
             },
         },
         defaultVariants: {
@@ -490,7 +490,7 @@ function ComboboxChips({
             className={cn(
                 `
                   flex flex-wrap items-center gap-1.5 rounded-control border-2 border-border-warm
-                  bg-surface px-3 py-1.5 text-sm text-ink
+                  bg-surface px-3 py-1.5 text-control text-ink
                   transition-[color,box-shadow,background-color] min-block-9
                   focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30
                   has-aria-invalid:border-danger-mid has-aria-invalid:ring-3
@@ -522,7 +522,7 @@ function ComboboxChip({
             className={cn(
                 `
                   flex items-center justify-center gap-1 rounded-control bg-surface-muted px-2
-                  text-xs font-medium whitespace-nowrap text-ink block-[calc(--spacing(5.5))]
+                  text-control font-medium whitespace-nowrap text-ink block-[calc(--spacing(5.5))]
                   inline-fit
                   has-disabled:pointer-events-none has-disabled:cursor-not-allowed
                   has-disabled:opacity-50
