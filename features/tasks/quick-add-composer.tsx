@@ -148,7 +148,7 @@ function mirrorText(
 
 /**
  * Todoist-style quick add on one native textarea: words like “tomorrow 5pm p1”
- * are highlighted in a mirror layer underneath and saved as task fields.
+ * have highlight backgrounds in a mirror underneath and are saved as task fields.
  */
 export function QuickAddComposer({
     date,
@@ -792,8 +792,8 @@ export function QuickAddComposer({
                     </span>
                 </p>
                 <p id={helpId} className="sr-only">
-                    Type the task name in plain words. Open Shortcuts for date, time, priority,
-                    property, Client, reminder and repeat tips. Ctrl+Z undoes a change.
+                    Type the task name in plain words. Open Tips for date, time, priority, property,
+                    Client, reminder and repeat tips. Ctrl+Z undoes a change.
                 </p>
             </div>
             <button

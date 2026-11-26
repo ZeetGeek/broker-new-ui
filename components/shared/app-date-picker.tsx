@@ -1,11 +1,13 @@
 "use client";
 import * as React from "react";
 import { useMemo, useState } from "react";
-import { type DayButton, getDefaultClassNames } from "react-day-picker";
+import { type DayButton, getDefaultClassNames, type Matcher } from "react-day-picker";
 
+import { tz, TZDate } from "@date-fns/tz";
 import { cva, type VariantProps } from "class-variance-authority";
-import { addMonths, startOfDay } from "date-fns";
+import { addMonths, parseISO, startOfDay, startOfMonth } from "date-fns";
 
+import { APP_TIME_ZONE } from "@/lib/datetime/timezone";
 import { formatDateIn, formatDateIso } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 import { useMobileMenu } from "@/hooks/use-mobile-menu";
@@ -96,16 +98,31 @@ const captionSelectTriggerClassName = `
   [&>span:last-child]:hidden
 `;
 
-function calendarBounds(allowPast: boolean, now = new Date()) {
-    const startYear = allowPast ? now.getFullYear() - 10 : now.getFullYear();
-    const endYear = now.getFullYear() + 20;
+function parseDay(value: string) {
+    return parseISO(value, { in: tz(APP_TIME_ZONE) });
+}
+
+function calendarBounds(allowPast: boolean, min?: string, max?: string, value?: string | null) {
+    const now = TZDate.tz(APP_TIME_ZONE);
+    const fallbackStart = allowPast
+        ? new TZDate(now.getFullYear() - 10, 0, 1, APP_TIME_ZONE)
+        : startOfMonth(now);
+    const selected = value ? parseDay(value) : undefined;
+    const startMonth = startOfMonth(
+        min
+            ? parseDay(min)
+            : allowPast && selected && selected < fallbackStart
+              ? selected
+              : fallbackStart,
+    );
+    const endMonth = startOfMonth(
+        max ? parseDay(max) : new TZDate(now.getFullYear() + 20, 11, 1, APP_TIME_ZONE),
+    );
     return {
-        startYear,
-        endYear,
-        startMonth: allowPast
-            ? new Date(startYear, 0, 1)
-            : new Date(now.getFullYear(), now.getMonth(), 1),
-        endMonth: new Date(endYear, 11, 1),
+        startYear: startMonth.getFullYear(),
+        endYear: endMonth.getFullYear(),
+        startMonth,
+        endMonth,
     };
 }
 
@@ -188,7 +205,8 @@ function CalendarCaption({
 
     const canGoPrev = month.getTime() > startMonth.getTime();
     const canGoNext = month.getTime() < endMonth.getTime();
-    const clampMonth = (next: Date) => (next < startMonth ? startMonth : next);
+    const clampMonth = (next: Date) =>
+        next < startMonth ? startMonth : next > endMonth ? endMonth : next;
 
     if (mobile) {
         return (
@@ -210,13 +228,35 @@ function CalendarCaption({
                         onChange={(event) =>
                             onMonthChange(
                                 clampMonth(
-                                    new Date(month.getFullYear(), Number(event.target.value), 1),
+                                    new TZDate(
+                                        month.getFullYear(),
+                                        Number(event.target.value),
+                                        1,
+                                        APP_TIME_ZONE,
+                                    ),
                                 ),
                             )
                         }
                     >
                         {MONTH_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
+                            <option
+                                key={option.value}
+                                value={option.value}
+                                disabled={
+                                    new TZDate(
+                                        month.getFullYear(),
+                                        Number(option.value),
+                                        1,
+                                        APP_TIME_ZONE,
+                                    ) < startMonth ||
+                                    new TZDate(
+                                        month.getFullYear(),
+                                        Number(option.value),
+                                        1,
+                                        APP_TIME_ZONE,
+                                    ) > endMonth
+                                }
+                            >
                                 {option.label}
                             </option>
                         ))}
@@ -228,7 +268,12 @@ function CalendarCaption({
                         onChange={(event) =>
                             onMonthChange(
                                 clampMonth(
-                                    new Date(Number(event.target.value), month.getMonth(), 1),
+                                    new TZDate(
+                                        Number(event.target.value),
+                                        month.getMonth(),
+                                        1,
+                                        APP_TIME_ZONE,
+                                    ),
                                 ),
                             )
                         }
@@ -271,7 +316,11 @@ function CalendarCaption({
                     value={String(month.getMonth())}
                     onValueChange={(next) => {
                         if (next == null) return;
-                        onMonthChange(clampMonth(new Date(month.getFullYear(), Number(next), 1)));
+                        onMonthChange(
+                            clampMonth(
+                                new TZDate(month.getFullYear(), Number(next), 1, APP_TIME_ZONE),
+                            ),
+                        );
                     }}
                 >
                     <SelectTrigger
@@ -297,8 +346,18 @@ function CalendarCaption({
                                 key={option.value}
                                 value={option.value}
                                 disabled={
-                                    new Date(month.getFullYear(), Number(option.value), 1) <
-                                    startMonth
+                                    new TZDate(
+                                        month.getFullYear(),
+                                        Number(option.value),
+                                        1,
+                                        APP_TIME_ZONE,
+                                    ) < startMonth ||
+                                    new TZDate(
+                                        month.getFullYear(),
+                                        Number(option.value),
+                                        1,
+                                        APP_TIME_ZONE,
+                                    ) > endMonth
                                 }
                             >
                                 {option.label}
@@ -311,7 +370,11 @@ function CalendarCaption({
                     value={String(month.getFullYear())}
                     onValueChange={(next) => {
                         if (next == null) return;
-                        onMonthChange(clampMonth(new Date(Number(next), month.getMonth(), 1)));
+                        onMonthChange(
+                            clampMonth(
+                                new TZDate(Number(next), month.getMonth(), 1, APP_TIME_ZONE),
+                            ),
+                        );
                     }}
                 >
                     <SelectTrigger
@@ -372,6 +435,8 @@ export function AppDatePicker({
     allowPast = false,
     min,
     max,
+    required = false,
+    disabledDates,
     size = "lg",
     iconOnly = false,
     className,
@@ -388,6 +453,9 @@ export function AppDatePicker({
     /** Inclusive yyyy-MM-dd limits for range fields and constrained scheduling. */
     min?: string;
     max?: string;
+    /** Keep a date selected when choosing the selected day again. */
+    required?: boolean;
+    disabledDates?: Matcher | Matcher[];
     className?: string;
     /** Compact calendar action for planner toolbars. */
     iconOnly?: boolean;
@@ -396,24 +464,28 @@ export function AppDatePicker({
     const mobile = useMobileMenu();
     const [open, setOpen] = useState(false);
     const { startYear, endYear, startMonth, endMonth } = useMemo(
-        () => calendarBounds(allowPast),
-        [allowPast],
+        () => calendarBounds(allowPast, min, max, value),
+        [allowPast, min, max, value],
     );
-    const today = useMemo(() => startOfDay(new Date()), []);
+    const today = startOfDay(TZDate.tz(APP_TIME_ZONE));
 
-    const selected = value ? new Date(`${value}T00:00:00`) : undefined;
+    const selected = value ? parseDay(value) : undefined;
     const hasValidDate = selected != null && !Number.isNaN(selected.getTime());
 
     const [month, setMonth] = useState<Date>(() =>
-        hasValidDate && selected ? selected : new Date(),
+        startOfMonth(hasValidDate && selected ? selected : min ? parseDay(min) : today),
     );
 
     const [calendarInput, setCalendarInput] = useState({ value, open });
     if (calendarInput.value !== value || calendarInput.open !== open) {
         const shouldReset = calendarInput.value !== value || open;
         setCalendarInput({ value, open });
-        if (shouldReset && hasValidDate && selected) setMonth(selected);
+        if (shouldReset)
+            setMonth(
+                startOfMonth(hasValidDate && selected ? selected : min ? parseDay(min) : today),
+            );
     }
+    const visibleMonth = month < startMonth ? startMonth : month > endMonth ? endMonth : month;
 
     const TriggerButton = iconOnly ? IconButton : Button;
     if (mobile) {
@@ -452,7 +524,7 @@ export function AppDatePicker({
             >
                 <div className="flex flex-col gap-3 p-1">
                     <CalendarCaption
-                        month={month}
+                        month={visibleMonth}
                         onMonthChange={setMonth}
                         startYear={startYear}
                         endYear={endYear}
@@ -462,16 +534,25 @@ export function AppDatePicker({
                     />
                     <Calendar
                         mode="single"
-                        month={month}
+                        required={required}
+                        timeZone={APP_TIME_ZONE}
+                        startMonth={startMonth}
+                        endMonth={endMonth}
+                        month={visibleMonth}
                         onMonthChange={setMonth}
                         hideNavigation
                         disabled={[
                             ...(!allowPast ? [{ before: today }] : []),
-                            ...(min ? [{ before: new Date(`${min}T00:00:00`) }] : []),
-                            ...(max ? [{ after: new Date(`${max}T23:59:59`) }] : []),
+                            ...(min ? [{ before: parseDay(min) }] : []),
+                            ...(max ? [{ after: parseDay(max) }] : []),
+                            ...(disabledDates
+                                ? Array.isArray(disabledDates)
+                                    ? disabledDates
+                                    : [disabledDates]
+                                : []),
                         ]}
                         selected={hasValidDate ? selected : undefined}
-                        onSelect={(next) => {
+                        onSelect={(next: Date | undefined) => {
                             onChange(next ? formatDateIso(next) : null);
                             setOpen(false);
                         }}
@@ -538,7 +619,7 @@ export function AppDatePicker({
             >
                 <div className="flex flex-col gap-3 p-3">
                     <CalendarCaption
-                        month={month}
+                        month={visibleMonth}
                         onMonthChange={setMonth}
                         startYear={startYear}
                         endYear={endYear}
@@ -547,16 +628,25 @@ export function AppDatePicker({
                     />
                     <Calendar
                         mode="single"
-                        month={month}
+                        required={required}
+                        timeZone={APP_TIME_ZONE}
+                        startMonth={startMonth}
+                        endMonth={endMonth}
+                        month={visibleMonth}
                         onMonthChange={setMonth}
                         hideNavigation
                         disabled={[
                             ...(!allowPast ? [{ before: today }] : []),
-                            ...(min ? [{ before: new Date(`${min}T00:00:00`) }] : []),
-                            ...(max ? [{ after: new Date(`${max}T23:59:59`) }] : []),
+                            ...(min ? [{ before: parseDay(min) }] : []),
+                            ...(max ? [{ after: parseDay(max) }] : []),
+                            ...(disabledDates
+                                ? Array.isArray(disabledDates)
+                                    ? disabledDates
+                                    : [disabledDates]
+                                : []),
                         ]}
                         selected={hasValidDate ? selected : undefined}
-                        onSelect={(next) => {
+                        onSelect={(next: Date | undefined) => {
                             onChange(next ? formatDateIso(next) : null);
                             setOpen(false);
                         }}

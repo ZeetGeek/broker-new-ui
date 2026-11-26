@@ -3,7 +3,7 @@
 import { type RefObject, useState } from "react";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { Keyboard } from "@/components/shared/icons";
+import { CircleHelp } from "@/components/shared/icons";
 
 import styles from "./quick-add.module.css";
 
@@ -65,7 +65,7 @@ export type QuickAddHelpProps = {
     onOpenChange?: (open: boolean) => void;
 };
 
-/** Quiet pill + modal of every quick-add shortcut — opt-in so the field stays minimal. */
+/** Compact help control for quick-add syntax. */
 export function QuickAddHelp({ fieldRef, onOpenChange }: QuickAddHelpProps) {
     const [open, setOpen] = useState(false);
 
@@ -81,13 +81,13 @@ export function QuickAddHelp({ fieldRef, onOpenChange }: QuickAddHelpProps) {
                 data-quick-add-help
                 type="button"
                 className={styles.helpButton}
-                aria-label="Quick add shortcuts"
-                title="Quick add shortcuts"
+                aria-label="Task entry tips"
+                title="Task entry tips"
                 onPointerDown={(event) => event.preventDefault()}
                 onClick={() => setHelpOpen(true)}
             >
-                <Keyboard aria-hidden />
-                <span>Shortcuts</span>
+                <CircleHelp aria-hidden />
+                <span>Tips</span>
             </button>
             <AppModal
                 open={open}

@@ -3,16 +3,15 @@
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import type { Matcher } from "react-day-picker";
 
-import { startOfDay } from "date-fns";
+import { format, startOfDay } from "date-fns";
 
 import { cn } from "@/lib/utils";
 import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
-import { DateInput } from "@/components/shared/date-input";
+import { AppDatePicker } from "@/components/shared/app-date-picker";
 import { Check, ChevronDown, ChevronUpIcon } from "@/components/shared/icons";
 import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -102,17 +101,7 @@ function rangesEqual(a?: AppDateRange | null, b?: AppDateRange | null): boolean 
     return sameDay(a.from, b.from) && sameDay(a.to, b.to);
 }
 
-/** Leftmost month shown for a dual (or single) month grid ending near `to`. */
-function visibleMonthFor(range: AppDateRange, monthsShown: number): Date {
-    return new Date(range.to.getFullYear(), range.to.getMonth() - (monthsShown - 1), 1);
-}
-
-/**
- * Shared shadcn-style date range picker (johnpolacek layout):
- * compare toggle + manual date fields, dual calendar, preset sidebar, Cancel / Update.
- *
- * Domain presets stay in the feature — pass them via `presets` / `sidebar`.
- */
+/** Shared period editor: common start/end date pickers, presets, and Cancel / Update. */
 export function AppDateRangePicker({
     value,
     triggerLabel,
@@ -151,8 +140,6 @@ export function AppDateRangePicker({
         activePreset ?? undefined,
     );
     const [isSmallScreen, setIsSmallScreen] = useState(false);
-    const monthsShown = isSmallScreen ? 1 : 2;
-    const [month, setMonth] = useState<Date>(() => visibleMonthFor(committed, 2));
 
     const openedRangeRef = useRef<AppDateRange>(committed);
     const openedCompareRef = useRef<AppDateRange | undefined>(undefined);
@@ -172,11 +159,9 @@ export function AppDateRangePicker({
             from: value.from ? startOfDay(value.from) : today,
             to: startOfDay(value.to),
         };
-        const shown = isSmallScreen ? 1 : 2;
         setRange(next);
         setRangeCompare(initialCompare ?? undefined);
         setSelectedPreset(activePreset ?? undefined);
-        setMonth(visibleMonthFor(next, shown));
         openedRangeRef.current = next;
         openedCompareRef.current = initialCompare ?? undefined;
         openedPresetRef.current = activePreset ?? undefined;
@@ -202,7 +187,6 @@ export function AppDateRangePicker({
         };
         setRange(next);
         setSelectedPreset(presetValue);
-        setMonth(visibleMonthFor(next, monthsShown));
         if (rangeCompare) {
             setRangeCompare({
                 from: new Date(
@@ -218,7 +202,6 @@ export function AppDateRangePicker({
     function setDraftRange(next: AppDateRange) {
         setRange(next);
         setSelectedPreset(undefined);
-        setMonth(visibleMonthFor(next, monthsShown));
     }
 
     function handleCancel() {
@@ -238,14 +221,6 @@ export function AppDateRangePicker({
             rangeCompare,
             preset: selectedPreset ?? null,
         });
-    }
-
-    const disabled: Matcher[] = [];
-    if (upperBound) disabled.push({ after: upperBound });
-    if (minDate) disabled.push({ before: minDate });
-    if (disabledDates) {
-        if (Array.isArray(disabledDates)) disabled.push(...disabledDates);
-        else disabled.push(disabledDates);
     }
 
     const displayRange = open ? range : committed;
@@ -292,6 +267,52 @@ export function AppDateRangePicker({
                 })}
             </div>
         ) : null;
+
+    const renderDateFields = (
+        current: AppDateRange,
+        onChange: (next: AppDateRange) => void,
+        prefix: string,
+    ) => (
+        <div className="grid grid-cols-1 gap-3 inline-full sm:grid-cols-2">
+            {(["from", "to"] as const).map((endpoint) => (
+                <div key={endpoint} className="flex flex-col gap-2 min-inline-0">
+                    <Label htmlFor={`${compareId}-${prefix}-${endpoint}`}>
+                        {endpoint === "from" ? "Start date" : "End date"}
+                    </Label>
+                    <AppDatePicker
+                        id={`${compareId}-${prefix}-${endpoint}`}
+                        value={format(current[endpoint], "yyyy-MM-dd")}
+                        onChange={(next) => {
+                            if (!next) return;
+                            const date = new Date(`${next}T00:00:00`);
+                            onChange(
+                                endpoint === "from"
+                                    ? { from: date, to: date > current.to ? date : current.to }
+                                    : { from: date < current.from ? date : current.from, to: date },
+                            );
+                        }}
+                        allowPast
+                        required
+                        min={minDate ? format(minDate, "yyyy-MM-dd") : undefined}
+                        max={upperBound ? format(upperBound, "yyyy-MM-dd") : undefined}
+                        disabledDates={disabledDates}
+                        size="md"
+                    />
+                </div>
+            ))}
+        </div>
+    );
+    const dateFields = (
+        <div className="flex flex-col gap-4 inline-full">
+            {renderDateFields(range, setDraftRange, "range")}
+            {rangeCompare ? (
+                <div className="flex flex-col gap-3 border-bs border-border-warm pbs-3">
+                    <p className="body-sm font-medium text-ink">Compare with</p>
+                    {renderDateFields(rangeCompare, setRangeCompare, "compare")}
+                </div>
+            ) : null}
+        </div>
+    );
 
     if (mobile) {
         return (
@@ -362,87 +383,9 @@ export function AppDateRangePicker({
                         </div>
                     ) : null}
 
-                    <div className="flex flex-col gap-2.5">
-                        <DateInput
-                            value={range.from}
-                            onChange={(date) =>
-                                setDraftRange({
-                                    from: date,
-                                    to: !range.to || date > range.to ? date : range.to,
-                                })
-                            }
-                        />
-                        <span className="body-sm text-ink-muted">to</span>
-                        <DateInput
-                            value={range.to}
-                            onChange={(date) =>
-                                setDraftRange({
-                                    from: date < range.from ? date : range.from,
-                                    to: date,
-                                })
-                            }
-                        />
-                    </div>
-
-                    {rangeCompare ? (
-                        <div className="flex flex-col gap-2.5 border-bs border-border-warm pbs-3">
-                            <p className="body-sm font-medium text-ink">Compare with</p>
-                            <DateInput
-                                value={rangeCompare.from}
-                                onChange={(date) =>
-                                    setRangeCompare({
-                                        from: date,
-                                        to:
-                                            !rangeCompare.to || date > rangeCompare.to
-                                                ? date
-                                                : rangeCompare.to,
-                                    })
-                                }
-                            />
-                            <span className="body-sm text-ink-muted">to</span>
-                            <DateInput
-                                value={rangeCompare.to}
-                                onChange={(date) =>
-                                    setRangeCompare({
-                                        from: date < rangeCompare.from ? date : rangeCompare.from,
-                                        to: date,
-                                    })
-                                }
-                            />
-                        </div>
-                    ) : null}
+                    {dateFields}
 
                     {hasSidebar ? (sidebar ?? presetList) : null}
-
-                    <Calendar
-                        mode="range"
-                        selected={range}
-                        onSelect={(next) => {
-                            if (next?.from) {
-                                setDraftRange({ from: next.from, to: next.to ?? next.from });
-                            }
-                        }}
-                        month={month}
-                        onMonthChange={setMonth}
-                        numberOfMonths={1}
-                        disabled={disabled.length ? disabled : undefined}
-                        endMonth={upperBound ?? undefined}
-                        startMonth={minDate ?? undefined}
-                        className="bg-transparent p-0 [--cell-size:min(--spacing(11),calc((100vw-3rem)/7))] inline-full **:data-[slot=button]:min-inline-0"
-                        classNames={{
-                            months: "relative flex flex-col gap-6",
-                            month: "flex flex-col gap-3.5 inline-full",
-                            month_caption:
-                                "flex items-center justify-center px-(--cell-size) block-10 inline-full",
-                            caption_label: "text-[15px] font-semibold text-ink",
-                            month_grid: "flex w-full flex-col",
-                            weeks: "flex flex-col gap-3",
-                            weekdays: "mb-2 flex w-full",
-                            weekday:
-                                "flex-1 rounded-(--cell-radius) text-xs font-medium text-ink-muted select-none",
-                            week: "flex w-full",
-                        }}
-                    />
 
                     <div className="sticky inset-be-0 flex justify-end gap-2 border-bs border-border-warm bg-surface pbs-3">
                         <Button type="button" variant="ghost" size="sm" onClick={handleCancel}>
@@ -516,18 +459,18 @@ export function AppDateRangePicker({
                 align={align}
                 sideOffset={8}
                 className={cn(
-                    // PopoverContent defaults to inline-72 — override so two months + presets fit.
+                    // Size the period editor for the shared date fields.
                     `
                       gap-0 overflow-hidden rounded-card border border-border-warm
                       bg-surface p-0 shadow-lg ring-0
-                      inline-auto max-block-[min(var(--available-height),calc(100dvh-2rem))] max-inline-[calc(100vw-1.5rem)]
+                      inline-[min(36rem,calc(100vw-1.5rem))] max-block-[min(var(--available-height),calc(100dvh-2rem))] max-inline-[calc(100vw-1.5rem)]
                       max-sm:inline-[calc(100vw-1.5rem)]
                     `,
                     className,
                 )}
             >
                 <div className="flex flex-col overflow-auto overscroll-contain min-block-0 md:flex-row md:items-start">
-                    <div className="flex flex-col min-inline-0 max-sm:inline-full">
+                    <div className="flex flex-1 flex-col min-inline-0">
                         <div
                             className={cn(
                                 "flex flex-wrap items-center gap-3 px-3 pbs-4 pbe-3 sm:px-5",
@@ -564,55 +507,7 @@ export function AppDateRangePicker({
                                     </Label>
                                 </div>
                             ) : null}
-                            <div className="flex flex-col gap-2.5 min-inline-0">
-                                <div className="flex flex-col items-start gap-2.5 min-[400px]:flex-row min-[400px]:flex-wrap min-[400px]:items-center">
-                                    <DateInput
-                                        value={range.from}
-                                        onChange={(date) => {
-                                            const to =
-                                                !range.to || date > range.to ? date : range.to;
-                                            setDraftRange({ from: date, to });
-                                        }}
-                                    />
-                                    <span className="body-sm text-ink-muted" aria-hidden>
-                                        to
-                                    </span>
-                                    <DateInput
-                                        value={range.to}
-                                        onChange={(date) => {
-                                            const from = date < range.from ? date : range.from;
-                                            setDraftRange({ from, to: date });
-                                        }}
-                                    />
-                                </div>
-                                {rangeCompare ? (
-                                    <div className="flex flex-col items-start gap-2.5 min-[400px]:flex-row min-[400px]:flex-wrap min-[400px]:items-center">
-                                        <DateInput
-                                            value={rangeCompare.from}
-                                            onChange={(date) => {
-                                                const to =
-                                                    !rangeCompare.to || date > rangeCompare.to
-                                                        ? date
-                                                        : rangeCompare.to;
-                                                setRangeCompare({ from: date, to });
-                                            }}
-                                        />
-                                        <span className="body-sm text-ink-muted" aria-hidden>
-                                            to
-                                        </span>
-                                        <DateInput
-                                            value={rangeCompare.to}
-                                            onChange={(date) => {
-                                                const from =
-                                                    date < rangeCompare.from
-                                                        ? date
-                                                        : rangeCompare.from;
-                                                setRangeCompare({ from, to: date });
-                                            }}
-                                        />
-                                    </div>
-                                ) : null}
-                            </div>
+                            {dateFields}
                         </div>
 
                         {hasSidebar && isSmallScreen && presets && !sidebar ? (
@@ -640,53 +535,6 @@ export function AppDateRangePicker({
                                 </Select>
                             </div>
                         ) : null}
-
-                        <Calendar
-                            mode="range"
-                            selected={range}
-                            onSelect={(next) => {
-                                if (next?.from) {
-                                    setDraftRange({
-                                        from: next.from,
-                                        to: next.to ?? next.from,
-                                    });
-                                }
-                            }}
-                            month={month}
-                            onMonthChange={setMonth}
-                            numberOfMonths={monthsShown}
-                            disabled={disabled.length ? disabled : undefined}
-                            endMonth={upperBound ?? undefined}
-                            startMonth={minDate ?? undefined}
-                            className="
-                              bg-transparent px-3 pbs-1 pbe-3 [--cell-size:min(--spacing(11),calc((100vw-3rem)/7))]
-                              inline-full
-                              max-sm:**:data-[slot=button]:min-inline-0 sm:px-5
-                              sm:[--cell-size:--spacing(12)]
-                              sm:inline-fit [&_table]:flex
-                              [&_table]:flex-col [&_tbody]:flex [&_tbody]:flex-col
-                              [&_tbody]:gap-3 [&_tbody_tr]:flex [&_tbody_tr]:inline-full
-                              [&_thead]:block [&_thead_tr]:flex
-                              [&_thead_tr]:inline-full
-                            "
-                            classNames={{
-                                months: "relative flex flex-col gap-6 sm:flex-row sm:gap-8",
-                                month: "flex flex-col gap-3.5 inline-full sm:inline-fit",
-                                month_caption:
-                                    "flex items-center justify-center px-(--cell-size) block-10 inline-full",
-                                caption_label: "text-[15px] font-semibold text-ink",
-                                // RDP renders <table> > <tbody class=weeks> > <tr class=week>.
-                                // Gap must sit on `weeks` (tbody) — table rows ignore margin.
-                                month_grid: "flex w-full flex-col",
-                                weeks: "flex flex-col gap-3",
-                                weekdays: "mb-2 flex w-full",
-                                weekday: `
-                                  flex-1 rounded-(--cell-radius) text-xs font-medium
-                                  text-ink-muted select-none
-                                `,
-                                week: "flex w-full",
-                            }}
-                        />
                     </div>
 
                     {hasSidebar && !isSmallScreen ? (

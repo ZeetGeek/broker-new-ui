@@ -605,7 +605,8 @@
 
     /* One 14px size for entered text, placeholders, choices and actions.
        This is an app-wide requirement: base-layer importance also wins over
-       size utilities and local modal/mobile overrides, including text-sm!. */
+       size utilities and local modal/mobile overrides, including text-sm!.
+       The Material clock's large hour/minute display opts out explicitly. */
     html
         :is(
             input,
@@ -627,7 +628,7 @@
             [data-slot="time-picker-option"],
             [data-slot="date-input"],
             [data-control-value]
-        ) {
+        ):not([data-time-display]) {
         font-size: var(--control-font-size) !important;
     }
 

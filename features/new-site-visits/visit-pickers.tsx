@@ -1,19 +1,10 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
-
-import { formatVisitDate, istDateKey } from "@/lib/visits/time";
-import { useMobileMenu } from "@/hooks/use-mobile-menu";
-
-import { CalendarDays, ChevronDown } from "@/components/shared/icons";
-import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { AppDatePicker } from "@/components/shared/app-date-picker";
 
 import styles from "./visits.module.css";
 
-/** IST date picker limited to `[minDate, maxDate]` (YYYY-MM-DD). */
+/** Scheduling constraints and errors around the same date picker used by Tasks. */
 export function VisitDatePicker({
     id,
     value,
@@ -31,69 +22,24 @@ export function VisitDatePicker({
     error?: string;
     disabled?: boolean;
 }) {
-    const mobile = useMobileMenu();
-    const [open, setOpen] = useState(false);
-    const selected = value ? new Date(`${value}T12:00:00+05:30`) : undefined;
-    const trigger = (
-        <Button
-            id={id}
-            type="button"
-            disabled={disabled}
-            variant="outline"
-            size="lg"
-            className={`${styles.dateTrigger} shadow-none hover:border-ring/50 hover:bg-surface aria-expanded:border-ring aria-expanded:bg-surface aria-invalid:border-danger-mid aria-invalid:hover:border-danger-mid aria-invalid:focus-visible:ring-danger/20`}
-            aria-invalid={!!error}
-            aria-describedby={error ? `${id}-error` : undefined}
-        >
-            <CalendarDays className="block-4.5 inline-4.5" aria-hidden />
-            <span>{selected ? formatVisitDate(selected) : "Select a date"}</span>
-            <ChevronDown className="block-4.5 inline-4.5" aria-hidden />
-        </Button>
-    );
-    const calendar = (
-        <Calendar
-            className="inline-full [&_table]:table-fixed [&_td]:min-inline-0"
-            mode="single"
-            weekStartsOn={1}
-            timeZone="Asia/Kolkata"
-            selected={selected}
-            defaultMonth={selected ?? new Date(`${minDate}T12:00:00+05:30`)}
-            onSelect={(date) => {
-                if (date) {
-                    onChange(istDateKey(date));
-                    setOpen(false);
-                }
-            }}
-            disabled={[
-                { before: new Date(`${minDate}T00:00:00+05:30`) },
-                { after: new Date(`${maxDate}T23:59:59+05:30`) },
-            ]}
-        />
-    );
-
     return (
         <div>
-            {mobile ? (
-                <MobileActionDrawer
-                    open={open}
-                    onOpenChange={setOpen}
-                    title="Visit date"
-                    trigger={trigger}
-                >
-                    {calendar}
-                </MobileActionDrawer>
-            ) : (
-                <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger render={trigger} />
-                    <PopoverContent
-                        aria-label="Choose visit date"
-                        align="center"
-                        className="p-0 inline-[min(21rem,calc(100vw-1.5rem))]"
-                    >
-                        {calendar}
-                    </PopoverContent>
-                </Popover>
-            )}
+            <AppDatePicker
+                id={id}
+                value={value || null}
+                onChange={(date) => {
+                    if (date) onChange(date);
+                }}
+                min={minDate}
+                max={maxDate}
+                allowPast
+                required
+                disabled={disabled}
+                invalid={!!error}
+                aria-describedby={error ? `${id}-error` : undefined}
+                placeholder="Select a date"
+                className="border-2 text-sm block-control-lg"
+            />
             {error && (
                 <p id={`${id}-error`} role="alert" className={styles.fieldError}>
                     {error}

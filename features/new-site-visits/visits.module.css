@@ -656,22 +656,6 @@
     font-weight: 600;
     line-height: 1.4;
 }
-.dateTrigger {
-    inline-size: 100%;
-    justify-content: flex-start;
-    font-weight: 400;
-    padding-inline: 1rem;
-    border-width: 2px;
-    font-size: 0.875rem;
-    block-size: var(--size-control-lg);
-}
-.dateTrigger span {
-    flex: 1;
-    text-align: start;
-}
-.dateTrigger > svg {
-    color: var(--color-ink-subtle);
-}
 .timeInput [data-slot="time-picker-trigger"] {
     border-width: 2px;
     padding-inline: 1rem;

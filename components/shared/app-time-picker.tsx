@@ -33,7 +33,7 @@ function formatTimeLabel(value: string): string {
     return parsed ? formatTimeIn(parsed) : value;
 }
 
-/** Material clock with AM/PM; selections apply immediately. Values stay HH:mm. */
+/** Shared Material clock; OK applies the draft and Cancel leaves the field unchanged. */
 export function AppTimePicker({
     id,
     value,
@@ -69,8 +69,8 @@ export function AppTimePicker({
             <div className={cn("min-inline-0", className)}>
                 <TimePicker
                     {...props}
-                    open={open}
-                    onOpenChange={changeOpen}
+                    // The drawer owns mobile visibility; no invisible popover should dismiss it.
+                    open={false}
                     id={fieldId}
                     timeZone={VISITS_TIME_ZONE}
                     value={value || null}
@@ -109,7 +109,13 @@ export function AppTimePicker({
                             {open ? (
                                 <MaterialTimePanel
                                     value={value}
-                                    onChange={onChange}
+                                    onAccept={(next) => {
+                                        onChange(next);
+                                        changeOpen(false);
+                                    }}
+                                    onCancel={() => changeOpen(false)}
+                                    hourCycle={props.hourCycle}
+                                    required={props.required}
                                     timeZone={props.timeZone ?? VISITS_TIME_ZONE}
                                     disabled={props.disabled}
                                     readOnly={props.readOnly}
@@ -122,15 +128,6 @@ export function AppTimePicker({
                                     isTimeDisabled={props.isTimeDisabled}
                                 />
                             ) : null}
-                            <Button
-                                type="button"
-                                variant="accent"
-                                size="lg"
-                                className="inline-full"
-                                onClick={() => changeOpen(false)}
-                            >
-                                Done
-                            </Button>
                         </div>
                     </MobileActionDrawer>
                 </TimePicker>
@@ -162,16 +159,20 @@ export function AppTimePicker({
                     className="border-border-warm bg-surface font-normal text-ink shadow-none inline-full data-placeholder:text-ink-subtle"
                 />
                 <TimePickerContent
-                    side="bottom"
                     align="center"
                     sideOffset={8}
-                    collisionAvoidance={{ side: "none", align: "shift", fallbackAxisSide: "none" }}
                     className="overflow-y-auto rounded-card border border-border-warm bg-surface shadow-lg max-block-(--available-height)"
                 >
                     {open && (
                         <MaterialTimePanel
                             value={value}
-                            onChange={onChange}
+                            onAccept={(next) => {
+                                onChange(next);
+                                changeOpen(false);
+                            }}
+                            onCancel={() => changeOpen(false)}
+                            hourCycle={props.hourCycle}
+                            required={props.required}
                             timeZone={props.timeZone ?? VISITS_TIME_ZONE}
                             disabled={props.disabled}
                             readOnly={props.readOnly}
