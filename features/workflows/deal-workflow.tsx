@@ -70,12 +70,7 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
             if (!deal)
                 throw new Error("This deal is not available. Reload its details and try again.");
             if (intent.kind === "offer") {
-                await saveWorkflowDealOffer(
-                    deal.id,
-                    intent.amount,
-                    intent.notes,
-                    FEATURE_PLATFORM_OWNER,
-                );
+                await saveWorkflowDealOffer(deal.id, intent.amount, intent.notes);
                 return "Offer saved";
             }
             if (intent.kind === "note") {
@@ -136,6 +131,12 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
         if (!deal || save.isPending) return;
         if (status === "visit") {
             setScheduling(true);
+            return;
+        }
+        if (status === "negotiation") {
+            save.reset();
+            setActionError(null);
+            setMode("offer");
             return;
         }
         if (status === "closed") {
@@ -219,7 +220,7 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
             </AppModal>
         );
 
-    if (mode === "offer" && (!FEATURE_PLATFORM_OWNER || (deal && !isLiveStage(deal.status))))
+    if (mode === "offer" && deal && (!isLiveStage(deal.status) || deal.property.isSold))
         return (
             <AppModal
                 open
@@ -231,9 +232,7 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
                 }}
             >
                 <p className="body-sm text-ink-muted">
-                    {!FEATURE_PLATFORM_OWNER
-                        ? "Offers are not available in this portal."
-                        : "This deal is finished. You can still review its details."}
+                    This deal is finished. You can still review its details.
                 </p>
                 <Button variant="outline" onClick={() => openMode("detail")}>
                     View deal
@@ -273,7 +272,7 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
                     }
                 }}
                 onMakeOffer={
-                    FEATURE_PLATFORM_OWNER && deal && isLiveStage(deal.status)
+                    deal && isLiveStage(deal.status) && !deal.property.isSold
                         ? () => openMode("offer")
                         : undefined
                 }

@@ -8,13 +8,9 @@ import { PREF_KEYS } from "@/lib/prefs/keys";
 import { EMPTY_PROPERTY_CRITERIA } from "@/lib/properties/list-criteria";
 import { pipelineStageFromQuery } from "@/lib/properties/pipeline-stage-query";
 import { StageOperationGate } from "@/lib/properties/stage-operation-gate";
-import { saveWorkflowDealStage } from "@/lib/workflows/deal-actions";
+import { saveWorkflowDealOffer, saveWorkflowDealStage } from "@/lib/workflows/deal-actions";
 import { notifyWorkflowSaved, subscribeWorkflowSaved } from "@/lib/workflows/refresh";
-import {
-    cancelDealVisits,
-    getDealWithVisit,
-    listDealsWithVisits,
-} from "@/lib/workflows/visit-deal-sync";
+import { getDealWithVisit, listDealsWithVisits } from "@/lib/workflows/visit-deal-sync";
 import { useDebouncedValue } from "@/hooks/use-locations";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
@@ -299,6 +295,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     const [visitDeal, setVisitDeal] = useState<DealItem | null>(null);
     const [isSavingMove, setIsSavingMove] = useState(false);
     const [offerDealId, setOfferDealId] = useState<string | null>(null);
+    const [offerMoveId, setOfferMoveId] = useState<string | null>(null);
     const [offerFallback, setOfferFallback] = useState<DealItem | null>(null);
     const [isSavingOffer, setIsSavingOffer] = useState(false);
     const [viewDealId, setViewDealId] = useState<string | null>(null);
@@ -383,12 +380,23 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         [stageGate],
     );
 
+    const openOfferRecord = useCallback((deal: DealItem) => {
+        setOfferError(null);
+        setOfferFallback(deal);
+        setOfferMoveId(deal.status !== "negotiation" ? deal.id : null);
+        setOfferDealId(deal.id);
+    }, []);
+
     const requestMove = useCallback(
         (dealId: string, status: DealStatus, successMessage: string) => {
             // Snapshot the deal: the detail modal closes right after this call.
             const deal = findDealForMove(deals, viewDetail, dealId) ?? undefined;
             if (status === "visit" && deal) {
                 openVisitSchedule(deal);
+                return;
+            }
+            if (status === "negotiation" && deal) {
+                openOfferRecord(deal);
                 return;
             }
             if (status === "closed" && deal) {
@@ -401,7 +409,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             setMoveError(null);
             setMoveRequest({ dealId, status, successMessage, deal });
         },
-        [deals, viewDetail, openVisitSchedule],
+        [deals, viewDetail, openVisitSchedule, openOfferRecord],
     );
 
     /** Latest detail request. An older, slower response must not replace a newer deal. */
@@ -477,6 +485,10 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 openVisitSchedule(current);
                 return;
             }
+            if (status === "negotiation") {
+                openOfferRecord(current);
+                return;
+            }
             const version = stageGate.begin(dealId);
             if (version == null) return;
             setBusyId(dealId);
@@ -505,6 +517,11 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                     if (previous === "visit") {
                                         stageGate.end();
                                         openVisitSchedule({ ...current, status });
+                                        return;
+                                    }
+                                    if (previous === "negotiation") {
+                                        stageGate.end();
+                                        openOfferRecord({ ...current, status });
                                         return;
                                     }
                                     setBusyId(dealId);
@@ -558,7 +575,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     }
                 });
         },
-        [applyLocalStage, deals, stageGate, openVisitSchedule],
+        [applyLocalStage, deals, stageGate, openVisitSchedule, openOfferRecord],
     );
 
     const handleConfirmMove = useCallback(
@@ -616,13 +633,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             setBusyId(offerDealId);
             try {
                 setOfferError(null);
-                const latest = await pipelineApi.get(offerDealId);
-                if (!isLiveStage(latest.status) || latest.property.isSold)
-                    throw new Error(
-                        "This deal is finished. Review its latest details before adding an offer.",
-                    );
-                if (latest.status === "visit") await cancelDealVisits(latest.id);
-                await pipelineApi.makeOffer(offerDealId, offerAmount, notes);
+                await saveWorkflowDealOffer(offerDealId, offerAmount, notes);
                 notifyWorkflowSaved("deal");
                 // Show the saved amount immediately; the refresh below reconciles
                 // the server's stage, history and summary counts.
@@ -630,11 +641,20 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     (previous) =>
                         previous?.map((deal) =>
                             deal.id === offerDealId
-                                ? { ...deal, offerAmountInr: offerAmount }
+                                ? {
+                                      ...deal,
+                                      status: "negotiation",
+                                      stageEnteredAt:
+                                          deal.status === "negotiation"
+                                              ? deal.stageEnteredAt
+                                              : new Date().toISOString(),
+                                      offerAmountInr: offerAmount,
+                                  }
                                 : deal,
                         ) ?? null,
                 );
                 setOfferDealId(null);
+                setOfferMoveId(null);
                 setOfferFallback(null);
                 toast.message("offer-saved");
             } catch (saveError) {
@@ -728,9 +748,8 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 requestMove(dealId, stage, "Back on the board");
             },
             onMakeOffer: (dealId) => {
-                setOfferError(null);
-                setOfferFallback(null);
-                setOfferDealId(dealId);
+                const deal = deals?.find((item) => item.id === dealId);
+                if (deal) openOfferRecord(deal);
             },
             onPin: (dealId) => {
                 setPrefs((prev) => ({
@@ -746,7 +765,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 setNoteDealId(dealId);
             },
         }),
-        [openLeadView, requestMove, setPrefs, stageGate],
+        [openLeadView, requestMove, setPrefs, stageGate, deals, openOfferRecord],
     );
 
     const handlePatch = useCallback(
@@ -783,16 +802,20 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         router.replace(`${pathname}${query.size ? `?${query}` : ""}`, { scroll: false });
     };
 
-    // Keep the drop destination visible while scheduling, even if an older
+    // Keep the drop destination visible while its form is open, even if an older
     // server response arrives. Dismissing the form simply removes this preview.
     const filteredDeals = useMemo(
         () =>
-            visitDeal
+            visitDeal || offerMoveId
                 ? (deals ?? []).map((deal) =>
-                      deal.id === visitDeal.id ? { ...deal, status: "visit" as const } : deal,
+                      deal.id === visitDeal?.id
+                          ? { ...deal, status: "visit" as const }
+                          : deal.id === offerMoveId
+                            ? { ...deal, status: "negotiation" as const }
+                            : deal,
                   )
                 : (deals ?? []),
-        [deals, visitDeal],
+        [deals, visitDeal, offerMoveId],
     );
 
     const liveDeals = useMemo(() => {
@@ -1019,7 +1042,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                 allLiveDeals={liveDeals}
                                 handlers={handlers}
                                 busyId={busyId}
-                                pendingDealId={visitDeal?.id}
+                                pendingDealId={visitDeal?.id ?? offerMoveId ?? undefined}
                                 pinnedDealIds={pinnedDealIds}
                                 onDropDeal={moveOptimistically}
                                 stageLimits={stageLimits}
@@ -1089,6 +1112,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 onCancel={() => {
                     if (!isSavingOffer) {
                         setOfferDealId(null);
+                        setOfferMoveId(null);
                         setOfferFallback(null);
                     }
                 }}
@@ -1163,9 +1187,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 onMakeOffer={
                     viewDetail && isLiveStage(viewDetail.status) && !viewDetail.property.isSold
                         ? () => {
-                              setOfferFallback(viewDetail);
-                              setOfferError(null);
-                              setOfferDealId(viewDetail.id);
+                              openOfferRecord(viewDetail);
                               setViewDealId(null);
                               setViewDetail(null);
                               setViewError(null);

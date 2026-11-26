@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { pipelineApi } from "@/lib/api/pipeline";
+import { type BrokerVisit, siteVisitsApi, type VisitListPage } from "@/lib/api/site-visits";
 import { saveWorkflowDealOffer, saveWorkflowDealStage } from "@/lib/workflows/deal-actions";
 
 import type { DealDetail, DealItem } from "@/features/pipeline/types";
@@ -114,13 +115,49 @@ test("a newly pending owner offer preserves the consent gate", async (t) => {
     assert.deepEqual(writes, []);
 });
 
-test("shared offer submission keeps launch mode and live-deal restrictions", async (t) => {
+test("recording an offer is available in the broker portal and keeps live-deal restrictions", async (t) => {
     const current = deal();
     const writes = capture(t, current);
-    await assert.rejects(saveWorkflowDealOffer(current.id, 4000000, "", false), /not available/);
+    await saveWorkflowDealOffer(current.id, 4000000, "Recorded from Negotiation");
     current.status = "closed";
-    await assert.rejects(saveWorkflowDealOffer(current.id, 4000000, "", true), /deal is finished/);
+    await assert.rejects(saveWorkflowDealOffer(current.id, 4000000, ""), /deal is finished/);
     current.status = "negotiation";
-    await saveWorkflowDealOffer(current.id, 4000000, "Ready to close", true);
-    assert.deepEqual(writes, [{ offer: ["deal-1", 4000000, "Ready to close"] }]);
+    current.property.isSold = true;
+    await assert.rejects(saveWorkflowDealOffer(current.id, 4000000, ""), /deal is finished/);
+    current.property.isSold = false;
+    await saveWorkflowDealOffer(current.id, 4000000, "Ready to close");
+    assert.deepEqual(writes, [
+        { offer: ["deal-1", 4000000, "Recorded from Negotiation"] },
+        { offer: ["deal-1", 4000000, "Ready to close"] },
+    ]);
+});
+
+test("saving an offer from Site visit cancels its active visit before recording the offer", async (t) => {
+    const current = deal({ status: "visit" });
+    const writes = capture(t, current);
+    const previous = { searchSource: siteVisitsApi.searchSource, cancel: siteVisitsApi.cancel };
+    t.after(() => Object.assign(siteVisitsApi, previous));
+    siteVisitsApi.searchSource = async () =>
+        ({
+            items: [{ id: "visit-1", leadId: current.id, status: "confirmed" } as BrokerVisit],
+        }) as VisitListPage;
+    siteVisitsApi.cancel = async (id) => {
+        writes.push({ cancel: id });
+    };
+    await assert.rejects(saveWorkflowDealOffer(current.id, 0, ""), /valid offer amount/);
+    assert.deepEqual(writes, []);
+    await saveWorkflowDealOffer(current.id, 4000000, "Agreed after the visit");
+    assert.deepEqual(writes, [
+        { cancel: "visit-1" },
+        { offer: [current.id, 4000000, "Agreed after the visit"] },
+    ]);
+    siteVisitsApi.cancel = async () => {
+        throw new Error("Could not cancel the visit");
+    };
+    await assert.rejects(saveWorkflowDealOffer(current.id, 4100000, ""), /Could not cancel/);
+    assert.equal(
+        writes.length,
+        2,
+        "a failed cancellation must not record the offer or move the deal",
+    );
 });

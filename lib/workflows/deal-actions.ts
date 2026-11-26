@@ -45,15 +45,9 @@ export async function saveWorkflowDealStage(
     return "immediate" as const;
 }
 
-export async function saveWorkflowDealOffer(
-    id: string,
-    amount: number,
-    notes: string,
-    ownerPortalOn: boolean,
-) {
-    if (!ownerPortalOn) throw new Error("Offers are not available in this portal.");
+export async function saveWorkflowDealOffer(id: string, amount: number, notes: string) {
     const latest = await pipelineApi.get(id);
-    if (!isLiveStage(latest.status))
+    if (!isLiveStage(latest.status) || latest.property.isSold)
         throw new Error("This deal is finished. Review its latest details before adding an offer.");
     if (!Number.isFinite(amount) || amount <= 0) throw new Error("Enter a valid offer amount.");
     if (latest.status === "visit") await cancelDealVisits(id);

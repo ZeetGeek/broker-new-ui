@@ -165,25 +165,17 @@
     text-align: start;
 }
 .table col:nth-child(1) {
-    inline-size: auto;
+    inline-size: 33%;
 }
 .table col:nth-child(2) {
-    inline-size: 7.5rem;
+    inline-size: 20%;
 }
-.table col:nth-child(3) {
-    inline-size: 8.5rem;
-}
+.table col:nth-child(3),
 .table col:nth-child(4) {
-    inline-size: 7.5rem;
+    inline-size: 17%;
 }
 .table col:last-child {
-    /* Reserve both action buttons and cell padding before allocating title space. */
-    inline-size: 6rem;
-}
-@media (pointer: coarse) {
-    .table col:last-child {
-        inline-size: 7.5rem;
-    }
+    inline-size: 13%;
 }
 .rowActions {
     display: flex;
