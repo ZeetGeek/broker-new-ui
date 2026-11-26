@@ -308,7 +308,7 @@ export function BrokerSiteVisitsPage() {
         void visitActions.cancel
             .mutateAsync(id)
             .then(() => {
-                toast.success("Visit cancelled");
+                toast.message("visit-cancelled");
                 if (visitId === id) updateUrl({ visit: undefined });
             })
             .catch((error) =>
@@ -764,7 +764,7 @@ export function BrokerSiteVisitsPage() {
                 onSave={async (outcome) => {
                     if (!outcomeVisit) return;
                     await visitActions.outcome.mutateAsync({ visit: outcomeVisit, outcome });
-                    toast.success("Outcome logged");
+                    toast.message("visit-completed");
                     if (outcome.nextStep === "show_other_property")
                         updateUrl({
                             outcome: undefined,
@@ -788,7 +788,7 @@ export function BrokerSiteVisitsPage() {
                         startsAt,
                         endsAt,
                     });
-                    toast.success("Reschedule sent to owner");
+                    toast.message("visit-requested", { title: "Reschedule request sent" });
                     updateUrl({ reschedule: undefined });
                 }}
             />

@@ -61,6 +61,7 @@ export function PipelineBoard({
     allLiveDeals,
     handlers,
     busyId,
+    pendingDealId,
     pinnedDealIds,
     onDropDeal,
     stageLimits,
@@ -70,6 +71,7 @@ export function PipelineBoard({
     allLiveDeals: DealItem[];
     handlers: DealCardHandlers;
     busyId: string | null;
+    pendingDealId?: string;
     pinnedDealIds: string[];
     onDropDeal: (dealId: string, stage: DealStage) => void;
     stageLimits: Record<DealStage, number>;
@@ -151,6 +153,7 @@ export function PipelineBoard({
                             deals={applyStageOrder(dealsByStage[stage], dnd.stageOrder[stage])}
                             handlers={handlers}
                             busyId={busyId}
+                            pendingDealId={pendingDealId}
                             pinnedDealIds={pinnedDealIds}
                             isDropTarget={dnd.overStage === stage}
                             visibleLimit={stageLimits[stage]}

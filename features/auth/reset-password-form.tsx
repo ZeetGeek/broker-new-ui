@@ -40,7 +40,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
     async function onSubmit(values: ResetPasswordValues) {
         try {
             const res = await authApi.resetPassword(token, values.password);
-            toast.success(res.message || "Password reset successfully");
+            toast.message("password-reset", { detail: res.message });
             setIsRedirecting(true);
             router.replace("/login");
         } catch (err: unknown) {

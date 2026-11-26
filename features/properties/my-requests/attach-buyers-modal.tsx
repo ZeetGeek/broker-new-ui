@@ -127,11 +127,12 @@ export function AttachBuyersModal({
             void clientsApi
                 .setPropertyClients(request.propertyId, toAttach)
                 .then(() => {
-                    toast.success(
-                        toAttach.length === 1
-                            ? "Client linked to this property."
-                            : `${toAttach.length} clients linked to this property.`,
-                    );
+                    toast.message("client-attached", {
+                        title:
+                            toAttach.length === 1
+                                ? "Client attached to property"
+                                : `${toAttach.length} clients attached to property`,
+                    });
                     onSaved();
                     onOpenChange(false);
                 })
@@ -178,7 +179,6 @@ export function AttachBuyersModal({
                 open={createOpen}
                 onOpenChange={setCreateOpen}
                 onCreated={(_name, id) => {
-                    toast.success("Client added");
                     for (const queryKey of [["contacts"], ["property-form", "contacts"]]) {
                         void queryClient.invalidateQueries({ queryKey });
                     }

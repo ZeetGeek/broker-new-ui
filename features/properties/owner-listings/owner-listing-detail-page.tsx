@@ -41,6 +41,7 @@ import { PropertyDetailLayout } from "@/features/properties/property-detail/prop
 import { PropertyPriceBlock } from "@/features/properties/property-detail/property-price-block";
 import { mapPropertyListingToMyItem } from "@/features/properties/your-listings/map-my-listing";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
+import { showRepresentationRequestError } from "@/features/representation/request-toast";
 import { useAppSelector } from "@/store/hooks";
 
 import styles from "@/features/properties/property-detail/property-detail.module.css";
@@ -287,15 +288,9 @@ function OwnerListingDetailView({
                     initiatedBy: rep.initiatedBy,
                 },
             }));
-            toast.success("Request sent. The owner will be notified.");
+            toast.message("request-sent");
         } catch (error) {
-            const message =
-                error instanceof ApiError
-                    ? error.message
-                    : error instanceof Error
-                      ? error.message
-                      : "Could not send request";
-            toast.error(message);
+            showRepresentationRequestError(error);
         } finally {
             setBusy(false);
         }
@@ -315,7 +310,7 @@ function OwnerListingDetailView({
             }
             await representativeApi.withdraw(representationId);
             setDetail((prev) => ({ ...prev, representation: null }));
-            toast.success("Request cancelled");
+            toast.message("request-cancelled");
         } catch (error) {
             const message =
                 error instanceof ApiError
@@ -353,7 +348,7 @@ function OwnerListingDetailView({
             const refreshed = await onRefresh();
             if (refreshed) setDetail(refreshed);
             else toast.error("Invitation accepted. Reload the page to load owner contact details.");
-            toast.success("Invite accepted — you can sell this property");
+            toast.message("request-approved", { title: "Invitation accepted" });
         } catch (error) {
             const message =
                 error instanceof ApiError

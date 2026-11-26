@@ -25,6 +25,10 @@ import { toBrowsePropertyCardListing } from "@/features/properties/owner-listing
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 import type { SavedProperty } from "@/features/properties/saved-properties/map-saved-property";
 import { toOwnedPropertyCardListing } from "@/features/properties/your-listings/to-owned-property-card";
+import {
+    showDuplicateRequestToast,
+    showRepresentationRequestError,
+} from "@/features/representation/request-toast";
 
 const GRID_BREAKPOINTS = [
     { minWidth: 640, columns: 2 },
@@ -143,7 +147,11 @@ function MarketplaceSavedPropertiesGrid({ items, onUnsave }: SavedPropertiesGrid
 
     const handleRequest = useCallback(
         async (item: OwnerListingItem) => {
-            if (busyId || hasRequested(item) || item.isRepresenting || item.isInvitePending) return;
+            if (hasRequested(item)) {
+                showDuplicateRequestToast();
+                return;
+            }
+            if (busyId || item.isRepresenting || item.isInvitePending) return;
 
             setBusyId(item.id);
             setBusyKind("request");
@@ -155,9 +163,9 @@ function MarketplaceSavedPropertiesGrid({ items, onUnsave }: SavedPropertiesGrid
                 }));
                 setRemindCounts((prev) => ({ ...prev, [item.id]: 0 }));
                 void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
-                toast.success("Request sent. The owner will be notified.");
+                toast.message("request-sent");
             } catch (error) {
-                toast.error(mutationErrorMessage(error, "Could not send request"));
+                showRepresentationRequestError(error);
             } finally {
                 setBusyId(null);
                 setBusyKind(null);
@@ -185,7 +193,7 @@ function MarketplaceSavedPropertiesGrid({ items, onUnsave }: SavedPropertiesGrid
                 setRequestOverrides((prev) => ({ ...prev, [item.id]: false }));
                 setRemindCounts((prev) => ({ ...prev, [item.id]: 0 }));
                 void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
-                toast.success("Request cancelled");
+                toast.message("request-cancelled");
             } catch (error) {
                 toast.error(mutationErrorMessage(error, "Could not cancel request"));
             } finally {
@@ -221,11 +229,12 @@ function MarketplaceSavedPropertiesGrid({ items, onUnsave }: SavedPropertiesGrid
                 const nextUsed = Math.min(REMINDER_LIMIT, updated.reminderCount ?? used + 1);
                 setRemindCounts((prev) => ({ ...prev, [item.id]: nextUsed }));
                 void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
-                toast.success(
-                    nextUsed >= REMINDER_LIMIT
-                        ? `Reminder sent. You've used all ${REMINDER_LIMIT} reminders.`
-                        : `Reminder sent to the owner (${nextUsed} of ${REMINDER_LIMIT} used).`,
-                );
+                toast.message("reminder-sent", {
+                    detail:
+                        nextUsed >= REMINDER_LIMIT
+                            ? `You've used all ${REMINDER_LIMIT} reminders.`
+                            : `${nextUsed} of ${REMINDER_LIMIT} reminders used.`,
+                });
             } catch (error) {
                 toast.error(mutationErrorMessage(error, "Could not send reminder"));
             } finally {

@@ -88,7 +88,9 @@ export function InvitesPanel({
             setBusyId(id);
             try {
                 await action();
-                if (ok) toast.success(ok);
+                if (ok === "Invite accepted — you can sell this property")
+                    toast.message("request-approved", { title: "Invitation accepted" });
+                else if (ok) toast.success(ok);
                 setRevision((prev) => prev + 1);
             } catch {
                 toast.error("Something went wrong. Try again.");

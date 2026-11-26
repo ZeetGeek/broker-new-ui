@@ -224,7 +224,7 @@ export function AttachExclusiveOwnerModal({
                 open={createOpen}
                 onOpenChange={setCreateOpen}
                 onSaved={(name, _mode, id) => {
-                    toast.success("Owner added");
+                    toast.message("owner-added");
                     for (const queryKey of [
                         ["contacts"],
                         ["exclusive-owner-picker"],

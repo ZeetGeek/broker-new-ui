@@ -7,6 +7,7 @@ import {
     getShortcut,
     shortcutMatchesEvent,
 } from "@/lib/shortcuts";
+import { workflowTarget } from "@/lib/workflows/target";
 
 test("broker navigation shortcuts cover every top-level module with mnemonic keys", () => {
     const expected = {
@@ -44,26 +45,37 @@ test("saved-property navigation is absent from the broker shortcut registry", ()
     assert.equal(getShortcut("saved_properties"), undefined);
 });
 
-test("broker page actions are contextual two-key sequences", () => {
-    assert.deepEqual(getBrokerContextShortcutIds("/broker/dashboard"), [
-        "add_contact",
-        "add_property",
-        "schedule_visit",
-        "add_task",
-    ]);
-    assert.deepEqual(getBrokerContextShortcutIds("/broker/contacts"), ["add_contact", "add_owner"]);
-    assert.deepEqual(getBrokerContextShortcutIds("/broker/my-listings"), ["add_property"]);
-    assert.deepEqual(getBrokerContextShortcutIds("/broker/visits"), ["schedule_visit"]);
-    assert.deepEqual(getBrokerContextShortcutIds("/broker/tasks"), ["add_task"]);
+test("broker quick actions open existing create workflows from every page", () => {
+    const expected = {
+        add_contact: { keys: "KeyA KeyC", kind: "contact", mode: "create-client" },
+        add_owner: { keys: "KeyA KeyO", kind: "contact", mode: "create-owner" },
+        add_property: { keys: "KeyA KeyL", kind: "property", mode: "create" },
+        schedule_visit: { keys: "KeyA KeyV", kind: "visit", mode: "schedule" },
+        add_task: { keys: "KeyA KeyT", kind: "task", mode: "create" },
+    } as const;
+    for (const [id, { keys, kind, mode }] of Object.entries(expected)) {
+        const shortcut = getShortcut(id as keyof typeof expected)!;
+        assert.equal(shortcut.scope, "global");
+        assert.equal(shortcut.group, "Quick actions");
+        assert.equal(shortcut.keys, keys);
+        const target = workflowTarget(shortcut.workflowHref!, "broker");
+        assert.equal(target?.kind, kind);
+        assert.equal(target?.mode, mode);
+    }
+});
+
+test("only form shortcuts depend on the current broker page", () => {
+    assert.deepEqual(getBrokerContextShortcutIds("/broker/dashboard"), []);
+    assert.deepEqual(getBrokerContextShortcutIds("/broker/contacts"), []);
+    assert.deepEqual(getBrokerContextShortcutIds("/broker/my-listings"), []);
+    assert.deepEqual(getBrokerContextShortcutIds("/broker/visits"), []);
+    assert.deepEqual(getBrokerContextShortcutIds("/broker/tasks"), []);
     assert.deepEqual(getBrokerContextShortcutIds("/broker/properties/new"), ["form_primary"]);
     assert.deepEqual(getBrokerContextShortcutIds("/broker/properties/abc/edit"), ["form_primary"]);
     assert.deepEqual(getBrokerContextShortcutIds("/broker/earnings"), []);
 
     const pageBindings = BROKER_SHORTCUTS.filter((shortcut) => shortcut.scope === "page");
-    assert.ok(pageBindings.length > 0);
-    for (const shortcut of pageBindings) {
-        assert.match(shortcut.keys, /^KeyA Key[A-Z]$/);
-    }
+    assert.deepEqual(pageBindings, []);
 });
 
 test("broker registry omits destructive and consequential shortcuts", () => {

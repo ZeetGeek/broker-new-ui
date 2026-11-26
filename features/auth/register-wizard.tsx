@@ -276,7 +276,7 @@ export function RegisterWizard({
                 countryIso2,
                 ...(resolvedReferralCode ? { referralCode: resolvedReferralCode } : {}),
             });
-            toast.success("Account created. Check your email to verify.");
+            toast.message("verification-sent", { title: "Account created" });
             setIsRedirecting(true);
             router.push(`/verify-pending?email=${encodeURIComponent(values.email.trim())}`);
         } catch (err: unknown) {

@@ -319,6 +319,12 @@ export function StageNoteModal({
             }
         >
             <div className="flex flex-col gap-5">
+                {deal?.status === "visit" && request.status !== "visit" && !sendsToOwner ? (
+                    <p className="body-sm text-ink-muted">
+                        Moving this deal will cancel its active site visits. Completed visits stay
+                        in your history.
+                    </p>
+                ) : null}
                 {checkingClients ? (
                     <p role="status" className="body-sm text-ink-muted">
                         Checking other clients on this property…

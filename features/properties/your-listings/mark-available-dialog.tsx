@@ -41,7 +41,10 @@ export function MarkAvailableDialog({
             if (!updated) {
                 throw new Error("Could not publish again. Try again.");
             }
-            toast.success(`${propertyTitle} is available again`);
+            toast.message("property-available", {
+                detail: propertyTitle,
+                description: "The property is marked as available again.",
+            });
             onOpenChange(false);
             onAvailable?.();
         } catch (error) {

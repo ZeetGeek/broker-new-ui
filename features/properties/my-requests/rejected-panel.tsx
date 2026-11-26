@@ -189,7 +189,7 @@ export function RejectedPanel({
         (propertyId: string) => {
             void runMutation(propertyId, async () => {
                 await representativeApi.requestRepresentation(propertyId);
-                toast.success("Request sent to the owner");
+                toast.message("request-sent");
             });
         },
         [runMutation],

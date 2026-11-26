@@ -678,7 +678,7 @@ function ContactSearchPanel({
                     open={createOpen}
                     onOpenChange={setCreateOpen}
                     onSaved={(name, _mode, id) => {
-                        toast.success("Owner added");
+                        toast.message("owner-added");
                         invalidateContactQueries();
                         setQuery(name);
                         setCreateOpen(false);
@@ -690,7 +690,6 @@ function ContactSearchPanel({
                     open={createOpen}
                     onOpenChange={setCreateOpen}
                     onCreated={(name, id) => {
-                        toast.success("Client added");
                         invalidateContactQueries();
                         setQuery(name);
                         setCreateOpen(false);

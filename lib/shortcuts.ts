@@ -1,3 +1,9 @@
+import {
+    BROKER_ADD_BUYER_HREF,
+    BROKER_ADD_OWNER_HREF,
+    BROKER_PROPERTIES_NEW_HREF,
+} from "@/lib/routes/broker";
+
 import { FEATURE_SAVED_PROPERTIES } from "@/config";
 
 export type ShortcutPortal = "broker" | "owner";
@@ -38,13 +44,15 @@ export type ShortcutDef = {
     label: string;
     group: string;
     scope: ShortcutScope;
+    /** Open an existing workflow over the current page instead of navigating. */
+    workflowHref?: string;
     /** Render as a kbd hint inside the account menu. */
     showInProfileMenu?: boolean;
 };
 
 /**
  * The broker registry is the source of truth for behavior and every visible
- * hint. Global navigation uses G, page actions use A, and consequential
+ * hint. Global navigation uses G, create actions use A, and consequential
  * actions deliberately have no shortcut.
  */
 const BROKER_SHORTCUT_DEFINITIONS: readonly ShortcutDef[] = [
@@ -179,40 +187,45 @@ const BROKER_SHORTCUT_DEFINITIONS: readonly ShortcutDef[] = [
         keys: "KeyA KeyC",
         displayKeys: ["A", "C"],
         label: "Add client",
-        group: "On this page",
-        scope: "page",
+        group: "Quick actions",
+        scope: "global",
+        workflowHref: BROKER_ADD_BUYER_HREF,
     },
     {
         id: "add_owner",
         keys: "KeyA KeyO",
         displayKeys: ["A", "O"],
         label: "Add owner",
-        group: "On this page",
-        scope: "page",
+        group: "Quick actions",
+        scope: "global",
+        workflowHref: BROKER_ADD_OWNER_HREF,
     },
     {
         id: "add_property",
         keys: "KeyA KeyL",
         displayKeys: ["A", "L"],
         label: "Add listing",
-        group: "On this page",
-        scope: "page",
+        group: "Quick actions",
+        scope: "global",
+        workflowHref: BROKER_PROPERTIES_NEW_HREF,
     },
     {
         id: "schedule_visit",
         keys: "KeyA KeyV",
         displayKeys: ["A", "V"],
         label: "Schedule visit",
-        group: "On this page",
-        scope: "page",
+        group: "Quick actions",
+        scope: "global",
+        workflowHref: "/broker/visits?view=schedule",
     },
     {
         id: "add_task",
         keys: "KeyA KeyT",
         displayKeys: ["A", "T"],
         label: "Add task",
-        group: "On this page",
-        scope: "page",
+        group: "Quick actions",
+        scope: "global",
+        workflowHref: "/broker/tasks?view=create",
     },
     {
         id: "form_primary",
@@ -365,13 +378,6 @@ export function getShortcut(
 }
 
 export function getBrokerContextShortcutIds(pathname: string): readonly ShortcutId[] {
-    if (pathname === "/broker/dashboard") {
-        return ["add_contact", "add_property", "schedule_visit", "add_task"];
-    }
-    if (pathname === "/broker/contacts") return ["add_contact", "add_owner"];
-    if (pathname === "/broker/my-listings") return ["add_property"];
-    if (pathname === "/broker/visits") return ["schedule_visit"];
-    if (pathname === "/broker/tasks") return ["add_task"];
     if (
         pathname === "/broker/properties/new" ||
         /^\/broker\/properties\/[^/]+\/edit$/.test(pathname)

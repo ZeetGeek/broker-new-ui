@@ -2,6 +2,7 @@ import { ApiError } from "@/lib/api/client";
 import type { BookableLead, BrokerVisit, VisitDuration, VisitTab } from "@/lib/api/site-visits";
 import { isReminderOffset, reminderLabel } from "@/lib/reminders";
 import { MAX_CHARS } from "@/lib/validation/text-limits";
+import { VisitSyncError } from "@/lib/visits/sync-error";
 import { addVisitDays, istDateKey } from "@/lib/visits/time";
 
 export const MAX_VISIT_REMINDERS = 6;
@@ -241,6 +242,7 @@ export function isTimeTaken(error: unknown): boolean {
 
 /** Plain words for a failed save. Never a server address or internal error. */
 export function visitErrorMessage(error: unknown): string {
+    if (error instanceof VisitSyncError) return error.message;
     if (error instanceof ApiError) {
         if (error.status === 0)
             return "You seem to be offline. Check your connection and try again.";

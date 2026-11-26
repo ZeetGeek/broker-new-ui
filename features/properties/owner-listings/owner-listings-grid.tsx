@@ -32,6 +32,10 @@ import { OWNER_LISTINGS_GRID_CLASS } from "@/features/properties/owner-listings/
 import { toBrowsePropertyCardListing } from "@/features/properties/owner-listings/to-browse-property-card";
 import type { OwnerListingItem } from "@/features/properties/owner-listings/types";
 import { SAVED_PROPERTIES_QUERY_KEY } from "@/features/properties/saved-properties/saved-properties-query";
+import {
+    showDuplicateRequestToast,
+    showRepresentationRequestError,
+} from "@/features/representation/request-toast";
 export type OwnerListingsGridProps = {
     items: OwnerListingItem[];
     /** Broker's service areas — listings new in these get the highlighted card. */
@@ -138,7 +142,7 @@ export function OwnerListingsGrid({
             try {
                 if (nextSaved) {
                     await propertiesApi.bookmark(item.id);
-                    toast.success("Property saved");
+                    toast.message("property-saved");
                 } else {
                     await propertiesApi.unbookmark(item.id);
                     toast.success("Removed from saved");
@@ -205,7 +209,11 @@ export function OwnerListingsGrid({
 
     const handleRequest = useCallback(
         async (item: OwnerListingItem) => {
-            if (busyId || hasRequested(item) || isRepresenting(item) || isInvitePending(item)) {
+            if (hasRequested(item)) {
+                showDuplicateRequestToast();
+                return;
+            }
+            if (busyId || isRepresenting(item) || isInvitePending(item)) {
                 return;
             }
 
@@ -219,9 +227,9 @@ export function OwnerListingsGrid({
                 }));
                 setRemindCounts((prev) => ({ ...prev, [item.id]: 0 }));
                 void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
-                toast.success("Request sent. The owner will be notified.");
+                toast.message("request-sent");
             } catch (error) {
-                toast.error(mutationErrorMessage(error, "Could not send request"));
+                showRepresentationRequestError(error);
             } finally {
                 setBusyId(null);
                 setBusyKind(null);
@@ -253,7 +261,7 @@ export function OwnerListingsGrid({
                 setRequestOverrides((prev) => ({ ...prev, [item.id]: false }));
                 setRemindCounts((prev) => ({ ...prev, [item.id]: 0 }));
                 void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
-                toast.success("Request cancelled");
+                toast.message("request-cancelled");
             } catch (error) {
                 toast.error(mutationErrorMessage(error, "Could not cancel request"));
             } finally {
@@ -289,11 +297,12 @@ export function OwnerListingsGrid({
                 const nextUsed = Math.min(REMINDER_LIMIT, updated.reminderCount ?? used + 1);
                 setRemindCounts((prev) => ({ ...prev, [item.id]: nextUsed }));
                 void queryClient.invalidateQueries({ queryKey: PENDING_REMINDER_COUNTS_QUERY_KEY });
-                toast.success(
-                    nextUsed >= REMINDER_LIMIT
-                        ? `Reminder sent. You've used all ${REMINDER_LIMIT} reminders.`
-                        : `Reminder sent to the owner (${nextUsed} of ${REMINDER_LIMIT} used).`,
-                );
+                toast.message("reminder-sent", {
+                    detail:
+                        nextUsed >= REMINDER_LIMIT
+                            ? `You've used all ${REMINDER_LIMIT} reminders.`
+                            : `${nextUsed} of ${REMINDER_LIMIT} reminders used.`,
+                });
             } catch (error) {
                 toast.error(mutationErrorMessage(error, "Could not send reminder"));
             } finally {
@@ -354,7 +363,7 @@ export function OwnerListingsGrid({
                 }
                 await ownerInvitesApi.accept(invitationId);
                 setInviteOverrides((prev) => ({ ...prev, [item.id]: "accepted" }));
-                toast.success("Invite accepted — you can sell this property");
+                toast.message("request-approved", { title: "Invitation accepted" });
             } catch (error) {
                 toast.error(mutationErrorMessage(error, "Could not accept invite"));
             } finally {

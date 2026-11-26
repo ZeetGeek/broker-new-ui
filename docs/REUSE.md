@@ -3,6 +3,21 @@
 Single source of truth for making things common. `.claude/rules/` and
 `.cursor/rules/` only point here.
 
+## Toasts
+
+Import `toast` from `@/components/shared/app-toast`. For common outcomes, use
+`toast.message("property-updated")` or another typed message ID from
+`lib/toast/messages.ts`. The design-system toast page uses this same catalog.
+Pass `description` and `detail` for the actual record and portal; preview copy
+must not claim a private listing is public or a draft is published. Reminder
+callers must replace the specimen title, description, and detail with live data.
+
+Action labels in the catalog are preview metadata. Supply an `action` with a
+real handler to show a button. Show success only after persistence, reuse an
+`id` to replace loading feedback, and retain form failures beside the fields.
+Use `toast.success`, `toast.error`, etc. for outcomes outside the common catalog.
+Never import the toast library directly in feature code.
+
 ## CRM list headers
 
 Use `ListPageHeading` from `components/shared/list-page-heading.tsx` for the

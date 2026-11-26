@@ -204,9 +204,7 @@ export function BookingDrawer({
                 slot,
                 buyers: allBuyers.filter((buyer) => values.buyerIds.includes(buyer.id)),
             });
-            toast.success(
-                visit.status === "awaiting_owner" ? "Booking sent to owner" : "Visit booked",
-            );
+            toast.message(visit.status === "awaiting_owner" ? "visit-requested" : "visit-booked");
             onClose();
         } catch (error) {
             const fromApi = conflictFromApiError(error);

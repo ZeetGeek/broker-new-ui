@@ -200,7 +200,7 @@ function PlatformMyListingsRequestsPanel() {
         setBusyId(id);
         try {
             await brokerRequestsApi.remind(id);
-            toast.success("Reminder sent to the owner");
+            toast.message("reminder-sent");
             setRevision((prev) => prev + 1);
         } catch {
             toast.error("Could not send reminder. Try again.");

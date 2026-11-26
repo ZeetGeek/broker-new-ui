@@ -95,11 +95,12 @@ export function AttachBuyerPropertiesModal({
             void clientsApi
                 .attachClientToProperties(buyer.id, toAttach)
                 .then(() => {
-                    toast.success(
-                        toAttach.length === 1
-                            ? "Client linked to the property."
-                            : `Client linked to ${toAttach.length} properties.`,
-                    );
+                    toast.message("client-attached", {
+                        title:
+                            toAttach.length === 1
+                                ? "Client attached to property"
+                                : `Client attached to ${toAttach.length} properties`,
+                    });
                     onSaved();
                     onOpenChange(false);
                 })

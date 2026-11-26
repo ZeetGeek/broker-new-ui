@@ -437,7 +437,7 @@ function matchesQuery(deal: DealItem, q: string): boolean {
     );
 }
 
-function sortDeals(items: DealItem[], sort: DealsFilters["sort"]): DealItem[] {
+export function sortDeals(items: DealItem[], sort: DealsFilters["sort"]): DealItem[] {
     const sorted = [...items];
 
     switch (sort) {

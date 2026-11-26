@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { FEATURE_SAVED_PROPERTIES } from "@/config";
+import { showRepresentationRequestError } from "@/features/representation/request-toast";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
@@ -254,7 +255,7 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
         try {
             if (nextSaved) {
                 await propertiesApi.bookmark(id);
-                toast.success("Property saved");
+                toast.message("property-saved");
             } else {
                 await propertiesApi.unbookmark(id);
                 toast.success("Removed from saved");
@@ -279,9 +280,9 @@ export function NewInAreas({ properties, serviceAreas, className }: NewInAreasPr
                 ...prev,
                 [id]: { ...current, hasRequested: true },
             }));
-            toast.success("Request sent to the owner");
+            toast.message("request-sent");
         } catch (err: unknown) {
-            toast.error(err instanceof ApiError ? err.message : "Could not send request");
+            showRepresentationRequestError(err);
         } finally {
             setRequestingId(null);
         }

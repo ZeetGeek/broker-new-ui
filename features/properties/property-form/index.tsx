@@ -5,6 +5,7 @@ import {
     type ReactNode,
     useCallback,
     useEffect,
+    useId,
     useMemo,
     useRef,
     useState,
@@ -148,8 +149,28 @@ export function PropertyForm({
     onSaved,
 }: PropertyFormProps) {
     const router = useRouter();
+    const saveToastId = useId();
+    const saveToastState = useRef<"loading" | "error" | null>(null);
+    const retrySave = useRef<((intent: "draft" | "publish", attachments: boolean) => void) | null>(
+        null,
+    );
+    const formRef = useRef<HTMLFormElement>(null);
+    const closeDraftSaved = useRef(false);
     const isDialog = variant === "dialog";
     const formIsActive = !isDialog || open;
+    useEffect(() => {
+        retrySave.current = (intent, attachments) => {
+            if (attachments) void retryBuyerAttachments();
+            else void persistProperty(intent);
+        };
+    });
+    useEffect(() => {
+        if (!formIsActive) return;
+        return () => {
+            if (saveToastState.current) toast.dismiss(saveToastId);
+            toast.dismiss(`${saveToastId}-validation`);
+        };
+    }, [formIsActive, saveToastId]);
     const [step, setStep] = useState<PropertyFormStep>("basics");
     const [highestUnlocked, setHighestUnlocked] = useState(
         mode === "edit" ? FORM_STEPS.length - 1 : 0,
@@ -525,6 +546,7 @@ export function PropertyForm({
     async function persistProperty(intent: "draft" | "publish") {
         if (persistInFlightRef.current || restoringDraft || attachmentRetry) return;
         persistInFlightRef.current = true;
+        toast.dismiss(`${saveToastId}-validation`);
         setFormBanner(null);
         const forceDraft = intent === "draft";
         const publishStatus = forceDraft ? "draft" : "active";
@@ -535,6 +557,9 @@ export function PropertyForm({
         };
         if (current.media.photos.some((photo) => photo.status === "processing")) {
             setFormBanner("Your photos are still being prepared. Please wait before saving.");
+            toast.info("Your photos are still being prepared", {
+                description: "Please wait before saving.",
+            });
             persistInFlightRef.current = false;
             return;
         }
@@ -547,6 +572,7 @@ export function PropertyForm({
             setFormBanner(
                 `Keep up to ${MAX_PROPERTY_PHOTOS} photos before saving. No photos have been removed.`,
             );
+            showValidationToast();
             persistInFlightRef.current = false;
             return;
         }
@@ -575,6 +601,7 @@ export function PropertyForm({
                 requestAnimationFrame(() => {
                     if (focusFieldByPath(first.path)) pendingFocusPathRef.current = null;
                 });
+                showValidationToast();
                 persistInFlightRef.current = false;
                 return;
             }
@@ -589,6 +616,7 @@ export function PropertyForm({
             setFormBanner(
                 "Removing a saved owner is not supported yet. Keep this owner or choose a replacement.",
             );
+            showValidationToast();
             persistInFlightRef.current = false;
             return;
         }
@@ -607,6 +635,7 @@ export function PropertyForm({
                 requestAnimationFrame(() => {
                     if (focusFieldByPath(issues[0]!.path)) pendingFocusPathRef.current = null;
                 });
+                showValidationToast();
                 persistInFlightRef.current = false;
                 return;
             }
@@ -631,6 +660,7 @@ export function PropertyForm({
                 requestAnimationFrame(() => {
                     if (focusFieldByPath(first.path)) pendingFocusPathRef.current = null;
                 });
+                showValidationToast();
                 persistInFlightRef.current = false;
                 return;
             }
@@ -638,6 +668,7 @@ export function PropertyForm({
         // Report errors on Quick add controls first, including the publish photo minimum.
         if (entryMode === "quick") {
             if (!validateQuickAdd(methods, current, portal, intent)) {
+                showValidationToast();
                 persistInFlightRef.current = false;
                 return;
             }
@@ -656,6 +687,7 @@ export function PropertyForm({
                     });
                 }
                 pendingFocusPathRef.current = commissionIssues[0]!.path;
+                showValidationToast();
                 persistInFlightRef.current = false;
                 return;
             }
@@ -668,6 +700,7 @@ export function PropertyForm({
                     const problemIndex = FORM_STEPS.findIndex((item) => item.id === requiredStep);
                     setHighestUnlocked((value) => Math.max(value, problemIndex));
                     setStep(requiredStep);
+                    showValidationToast();
                     persistInFlightRef.current = false;
                     return;
                 }
@@ -691,6 +724,8 @@ export function PropertyForm({
         };
         setSaving(true);
         setSavingIntent(intent);
+        saveToastState.current = "loading";
+        toast.message("loading", { id: saveToastId });
         try {
             if (mode === "edit" && propertyId) {
                 const updated = await myListingsApi.update(propertyId, {
@@ -699,6 +734,7 @@ export function PropertyForm({
                 });
                 if (!updated) {
                     setFormBanner("Couldn't find that property.");
+                    showSaveFailure("Couldn't find that property.", intent);
                     return;
                 }
                 await attachBuyersAndFinish(updated, current, forceDraft);
@@ -707,16 +743,53 @@ export function PropertyForm({
             const created = await myListingsApi.create(input);
             await attachBuyersAndFinish(created, current, forceDraft);
         } catch (error) {
-            setFormBanner(
+            const message =
                 error instanceof Error
                     ? error.message
-                    : "Couldn't save the property. Your changes are still in this form. Please try again.",
-            );
+                    : "Couldn't save the property. Your changes are still in this form. Please try again.";
+            setFormBanner(message);
+            showSaveFailure(message, intent);
         } finally {
+            if (saveToastState.current === "loading") {
+                toast.dismiss(saveToastId);
+                saveToastState.current = null;
+            }
             persistInFlightRef.current = false;
             setSaving(false);
             setSavingIntent(null);
         }
+    }
+
+    function showSaveFailure(message: string, intent: "draft" | "publish", attachments = false) {
+        saveToastState.current = "error";
+        toast.message(navigator.onLine === false ? "offline" : "save-error", {
+            id: saveToastId,
+            ...(attachments ? { description: message } : {}),
+            action: {
+                label: "Try again",
+                onClick: () => {
+                    if (!formRef.current?.isConnected) return;
+                    retrySave.current?.(intent, attachments);
+                },
+            },
+        });
+    }
+
+    function showValidationToast() {
+        toast.message("validation", {
+            id: `${saveToastId}-validation`,
+            description: "Check the highlighted fields before saving.",
+            action: {
+                label: "Review details",
+                onClick: () => {
+                    if (pendingFocusPathRef.current) focusFieldByPath(pendingFocusPathRef.current);
+                    else
+                        formRef.current
+                            ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+                            ?.focus();
+                },
+            },
+        });
     }
 
     async function attachBuyersAndFinish(
@@ -751,6 +824,11 @@ export function PropertyForm({
                     ? "The property is saved as a draft. Contacts or publishing could not be completed. Retry below; this will not create another property."
                     : "The property was saved, but its contacts could not be attached. Retry below; this will not create another property.",
             );
+            showSaveFailure(
+                "The property is saved. Retry the pending client links or publishing below.",
+                draft ? "draft" : "publish",
+                true,
+            );
             return;
         }
     }
@@ -769,6 +847,8 @@ export function PropertyForm({
         if (!attachmentRetry || persistInFlightRef.current) return;
         persistInFlightRef.current = true;
         setSaving(true);
+        saveToastState.current = "loading";
+        toast.message("loading", { id: saveToastId });
         try {
             await clientsApi.setPropertyClients(
                 attachmentRetry.listing.id,
@@ -779,6 +859,11 @@ export function PropertyForm({
         } catch {
             setFormBanner(
                 "The property is saved. Contact attachment or publishing could not be completed. Please retry.",
+            );
+            showSaveFailure(
+                "The property is saved. Contact attachment or publishing could not be completed.",
+                attachmentRetry.draft ? "draft" : "publish",
+                true,
             );
         } finally {
             persistInFlightRef.current = false;
@@ -826,7 +911,25 @@ export function PropertyForm({
             setFormBanner(null);
             photoFilesRef.current.clear();
         }
-        toast.success(draft ? "Property saved as a draft." : "Property published.");
+        saveToastState.current = null;
+        const href =
+            portal === "owner"
+                ? ownerPropertyDetailHref(listing.id)
+                : brokerPropertyDetailHref(listing.id);
+        toast.message(mode === "edit" ? "property-updated" : "property-created", {
+            id: saveToastId,
+            title: draft
+                ? "Property saved as a draft"
+                : mode === "edit"
+                  ? "Property updated"
+                  : "Property created",
+            description: draft
+                ? "Find it in your drafts when you're ready to publish."
+                : portal === "owner"
+                  ? "Your listing is live and ready for brokers to discover."
+                  : "Your listing is published and ready to work on.",
+            action: { label: "View property", onClick: () => router.push(href) },
+        });
         onCancel?.();
         onOpenChange?.(false);
         if (onSaved) {
@@ -869,6 +972,7 @@ export function PropertyForm({
 
     async function requestClose() {
         if (saving || persistInFlightRef.current || confirmation) return;
+        closeDraftSaved.current = false;
         if (attachmentRetry) {
             toast.error("Please retry attaching clients before closing this form.");
             return;
@@ -879,6 +983,7 @@ export function PropertyForm({
                 await writeLocalDraft(methods.getValues());
                 setSavedAt(new Date());
                 locallySaved = true;
+                closeDraftSaved.current = true;
             } catch {
                 // Still allow closing if storage is unavailable.
             }
@@ -898,6 +1003,8 @@ export function PropertyForm({
     }
 
     function closeForm() {
+        if (closeDraftSaved.current) toast.message("draft-saved");
+        closeDraftSaved.current = false;
         onOpenChange?.(false);
         onCancel?.();
         if (!isDialog && !onCancel)
@@ -927,6 +1034,7 @@ export function PropertyForm({
         <FormProvider {...methods}>
             <FieldRulesProvider>
                 <form
+                    ref={formRef}
                     onSubmit={handleFormSubmit}
                     onKeyDown={handleFormKeyDown}
                     noValidate

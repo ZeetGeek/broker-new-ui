@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,11 +39,16 @@ type View =
 export function VisitWorkflow({
     target,
     onClose,
+    lockedLeadId,
+    onSaved,
 }: {
     target: Extract<WorkflowTarget, { kind: "visit" }>;
     onClose: () => void;
+    lockedLeadId?: string;
+    onSaved?: () => void;
 }) {
     const accountId = useAppSelector((state) => state.auth.user?.id);
+    const instanceId = useId();
     const queryClient = useQueryClient();
     const mutations = useVisitMutations();
     const [view, setView] = useState<View | null>(null);
@@ -64,7 +69,7 @@ export function VisitWorkflow({
         target.intent.leadId || target.intent.clientId || target.intent.propertyId,
     );
     const intent = useQuery({
-        queryKey: [...VISITS_KEY, "schedule-intent", accountId, target.intent],
+        queryKey: [...VISITS_KEY, "schedule-intent", accountId, target.intent, instanceId],
         queryFn: async () => {
             const leads = await queryClient.fetchQuery({
                 queryKey: [...VISITS_KEY, "bookable"],
@@ -75,6 +80,9 @@ export function VisitWorkflow({
             return resolveWorkflowVisitIntent(target.intent, leads, active);
         },
         enabled: !target.preview && target.mode === "schedule" && hasIntent,
+        // Resolve once per opening; background refresh must not unmount a dirty form.
+        staleTime: Infinity,
+        gcTime: 0,
         retry: 1,
     });
     const busy = mutations.cancel.isPending || mutations.setOutcome.isPending;
@@ -86,6 +94,7 @@ export function VisitWorkflow({
         });
     };
     const done = () => {
+        onSaved?.();
         refresh();
         void queryClient.invalidateQueries({ queryKey: [...VISITS_KEY, "detail"] });
         onClose();
@@ -114,13 +123,14 @@ export function VisitWorkflow({
             if (outcome === "cancelled") {
                 await mutations.cancel.mutateAsync(visit.id);
                 saved = { ...visit, status: "cancelled" };
-                toast.success("Visit cancelled");
+                toast.message("visit-cancelled", { description: "The visit has been cancelled." });
             } else {
                 saved = await mutations.setOutcome.mutateAsync({
                     id: visit.id,
                     status: outcome === "completed" ? "completed" : "no_show",
                 });
-                toast.success(outcome === "completed" ? "Marked completed" : "Marked not attended");
+                if (outcome === "completed") toast.message("visit-completed");
+                else toast.success("Visit marked as not attended");
             }
             queryClient.setQueryData([...VISITS_KEY, "detail", accountId, saved.id], saved);
             refresh();
@@ -178,12 +188,30 @@ export function VisitWorkflow({
                 </p>
             </VisitOverlay>
         );
+    if (current?.kind === "schedule" && lockedLeadId && current.intent?.leadId !== lockedLeadId)
+        return (
+            <VisitOverlay
+                title="Visit unavailable"
+                onClose={onClose}
+                footer={(close) => (
+                    <Button variant="outline" onClick={close}>
+                        Close
+                    </Button>
+                )}
+            >
+                <p className="body text-ink-muted">
+                    Visits can currently be scheduled only for active deals on your exclusive
+                    listings. This deal has stayed in its original stage.
+                </p>
+            </VisitOverlay>
+        );
     if (current?.kind === "schedule")
         return (
             <ScheduleForm
                 key={current.intent?.leadId ?? "new"}
                 intent={current.intent}
                 intentMissed={current.intentMissed}
+                lockedLeadId={lockedLeadId}
                 onDone={done}
                 onBack={onClose}
             />
@@ -191,7 +219,15 @@ export function VisitWorkflow({
     if (current?.kind === "reschedule") {
         const visit = fresh(current.visit);
         if (getVisitActions(visit, now).includes("reschedule"))
-            return <ScheduleForm key={visit.id} visit={visit} onDone={done} onBack={onClose} />;
+            return (
+                <ScheduleForm
+                    key={visit.id}
+                    visit={visit}
+                    lockedLeadId={lockedLeadId}
+                    onDone={done}
+                    onBack={onClose}
+                />
+            );
         return (
             <VisitOverlay
                 title="Visit cannot be rescheduled"

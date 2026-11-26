@@ -14,6 +14,13 @@ import { isMockMode } from "@/lib/api/mock-mode";
 import { siteVisitsApi, type VisitListQuery } from "@/lib/api/site-visits";
 import { getNotificationSocket } from "@/lib/socket/notifications";
 import { msUntil } from "@/lib/visits/next-change";
+import { notifyWorkflowSaved, subscribeWorkflowSaved } from "@/lib/workflows/refresh";
+import {
+    bookVisitForDeal,
+    cancelVisitForDeal,
+    rescheduleVisitForDeal,
+    updateVisitRemindersForDeal,
+} from "@/lib/workflows/visit-deal-sync";
 
 import { useAppSelector } from "@/store/hooks";
 
@@ -72,11 +79,9 @@ export function useVisitsLive(nextChangeAt: string | null, dataUpdatedAt: number
     useEffect(() => {
         if (!accessToken || isMockMode()) return;
         const socket = getNotificationSocket(accessToken);
-        // A visit changed: the lists and free times may be stale; the bookable
-        // deals are not, so leave those alone.
+        // Stage changes can also affect which deals are bookable.
         const refresh = () => {
-            void queryClient.invalidateQueries({ queryKey: [...VISITS_KEY, "list"] });
-            void queryClient.invalidateQueries({ queryKey: [...VISITS_KEY, "free-times"] });
+            notifyWorkflowSaved("visit");
         };
         socket.on(VISIT_CHANGED_EVENT, refresh);
         socket.on("connect", refresh);
@@ -85,6 +90,19 @@ export function useVisitsLive(nextChangeAt: string | null, dataUpdatedAt: number
             socket.off("connect", refresh);
         };
     }, [accessToken, queryClient]);
+
+    useEffect(
+        () =>
+            subscribeWorkflowSaved((kind) => {
+                if (kind === "visit" || kind === "deal")
+                    void queryClient.invalidateQueries({
+                        predicate: (query) =>
+                            query.queryKey[0] === VISITS_KEY[0] &&
+                            query.queryKey[1] !== "schedule-intent",
+                    });
+            }),
+        [queryClient],
+    );
 
     useEffect(() => {
         const delay = msUntil(nextChangeAt, Date.now());
@@ -100,26 +118,31 @@ export function useVisitsLive(nextChangeAt: string | null, dataUpdatedAt: number
 
 export function useVisitMutations() {
     const queryClient = useQueryClient();
-    const settle = () =>
-        Promise.all([
-            queryClient.invalidateQueries({ queryKey: [...VISITS_KEY, "list"] }),
-            queryClient.invalidateQueries({ queryKey: [...VISITS_KEY, "free-times"] }),
-        ]);
+    const settle = () => {
+        notifyWorkflowSaved("visit");
+        return queryClient.invalidateQueries({
+            predicate: (query) =>
+                query.queryKey[1] !== "schedule-intent" &&
+                /^(broker-visits|workflow-deal|pipeline|property-analytics|broker|dashboard)/.test(
+                    String(query.queryKey[0]),
+                ),
+        });
+    };
     return {
-        book: useMutation({ mutationFn: siteVisitsApi.book, onSettled: settle }),
+        book: useMutation({ mutationFn: bookVisitForDeal, onSettled: settle }),
         reschedule: useMutation({
             mutationFn: (a: { id: string } & Parameters<typeof siteVisitsApi.reschedule>[1]) => {
                 const { id, ...body } = a;
-                return siteVisitsApi.reschedule(id, body);
+                return rescheduleVisitForDeal(id, body);
             },
             onSettled: settle,
         }),
         updateReminders: useMutation({
             mutationFn: (a: { id: string; reminders: number[] }) =>
-                siteVisitsApi.updateReminders(a.id, a.reminders),
+                updateVisitRemindersForDeal(a.id, a.reminders),
             onSettled: settle,
         }),
-        cancel: useMutation({ mutationFn: siteVisitsApi.cancel, onSettled: settle }),
+        cancel: useMutation({ mutationFn: cancelVisitForDeal, onSettled: settle }),
         setOutcome: useMutation({
             mutationFn: (a: { id: string; status: "completed" | "no_show" }) =>
                 siteVisitsApi.setOutcome(a.id, a.status),

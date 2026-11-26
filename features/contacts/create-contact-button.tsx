@@ -58,7 +58,7 @@ export function CreateContactButton({
                     open={open}
                     onOpenChange={setOpen}
                     onSaved={(name, _mode, id) => {
-                        toast.success("Owner added");
+                        toast.message("owner-added");
                         created(name, id);
                     }}
                 />

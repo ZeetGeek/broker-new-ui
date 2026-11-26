@@ -278,7 +278,15 @@ function RequestActions({
         setSaving(status);
         try {
             await onRespond(item.id, representationId, status);
-            toast.success(status === "accepted" ? "Request accepted" : "Request declined");
+            toast.message(
+                status === "accepted" ? "request-approved" : "request-declined",
+                status === "accepted"
+                    ? {
+                          description:
+                              "The broker can now work on this property from their listings.",
+                      }
+                    : {},
+            );
         } catch (error) {
             const message =
                 error instanceof ApiError

@@ -68,8 +68,14 @@ export function OwnerDashboard() {
             setBusyId(representationId);
             try {
                 await representativeApi.ownerRespond(representationId, { status: respondStatus });
-                toast.success(
-                    respondStatus === "accepted" ? "Request accepted" : "Request declined",
+                toast.message(
+                    respondStatus === "accepted" ? "request-approved" : "request-declined",
+                    respondStatus === "accepted"
+                        ? {
+                              description:
+                                  "The broker can now work on this property from their listings.",
+                          }
+                        : {},
                 );
                 setData((prev) => {
                     if (!prev?.brokerRequests) return prev;

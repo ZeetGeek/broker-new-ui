@@ -151,6 +151,8 @@ export function PropertyDetailLayout({
             if (saved) await propertiesApi.unbookmark(item.id);
             else await propertiesApi.bookmark(item.id);
             setSaved(!saved);
+            if (!saved) toast.message("property-saved");
+            else toast.success("Removed from saved");
             void queryClient.invalidateQueries({ queryKey: SAVED_PROPERTIES_QUERY_KEY });
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Couldn't update saved property");

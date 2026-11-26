@@ -23,6 +23,7 @@ export function PipelineColumn({
     deals,
     handlers,
     busyId,
+    pendingDealId,
     pinnedDealIds,
     isDropTarget,
     visibleLimit,
@@ -32,6 +33,7 @@ export function PipelineColumn({
     deals: DealItem[];
     handlers: DealCardHandlers;
     busyId: string | null;
+    pendingDealId?: string;
     pinnedDealIds: string[];
     isDropTarget: boolean;
     visibleLimit: number;
@@ -46,6 +48,12 @@ export function PipelineColumn({
         (a, b) => Number(pinnedDealIds.includes(b.id)) - Number(pinnedDealIds.includes(a.id)),
     );
     const visibleDeals = orderedDeals.slice(0, visibleLimit);
+    // The dropped card must have a destination node for the drop animation,
+    // including when this column already fills its initial batch of cards.
+    const pendingDeal = orderedDeals.find((deal) => deal.id === pendingDealId);
+    if (pendingDeal && !visibleDeals.some((deal) => deal.id === pendingDeal.id)) {
+        visibleDeals.push(pendingDeal);
+    }
     const remaining = deals.length - visibleDeals.length;
 
     return (

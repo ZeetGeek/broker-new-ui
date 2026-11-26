@@ -3,14 +3,11 @@
 import { useEffect, useState } from "react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { tinykeys } from "tinykeys";
 
 import { isMockMode } from "@/lib/api/mock-mode";
 import { myListingsApi } from "@/lib/api/my-listings";
 import { formatWeekdayDate } from "@/lib/format/date";
 import { formatPlaceName } from "@/lib/format/owner-listings-labels";
-import { useRouter } from "@/lib/navigation";
-import { getShortcut, type ShortcutId } from "@/lib/shortcuts";
 import { areaColorClassName } from "@/lib/styles/area-color";
 import { isTestSampleMode } from "@/lib/testing/test-lab";
 import { cn } from "@/lib/utils";
@@ -36,7 +33,6 @@ import {
 } from "@/components/shared/icons";
 import { ListAddButton } from "@/components/shared/list-toolbar";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
-import { useWorkflow } from "@/components/shared/workflow-context";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,7 +50,6 @@ import {
     mapBrokerDashboardViewFromMock,
 } from "@/features/dashboard/map-dashboard";
 import { dashboardMock } from "@/features/dashboard/mock-data";
-import { isShortcutEventBlocked } from "@/features/shortcuts/shortcut-event";
 import { taskGroup } from "@/features/tasks/model";
 import { useTasks } from "@/features/tasks/task-store";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -164,8 +159,6 @@ function WorkingAreas({ areas }: { areas: string[] }) {
 }
 
 export function NewBrokerDashboard() {
-    const router = useRouter();
-    const openWorkflow = useWorkflow();
     const dispatch = useAppDispatch();
     const queryClient = useQueryClient();
     useEffect(() => {
@@ -204,54 +197,6 @@ export function NewBrokerDashboard() {
     useEffect(() => {
         if (hydrated) void dispatch(fetchBrokerDashboard());
     }, [hydrated, dispatch]);
-
-    useEffect(() => {
-        if (!hydrated || status !== "succeeded") return;
-        const actions: [ShortcutId, () => void][] = [
-            ["add_contact", () => setAddClientOpen(true)],
-            [
-                "add_property",
-                () => {
-                    if (!openWorkflow?.("/broker/properties/new"))
-                        router.push("/broker/properties/new");
-                },
-            ],
-            [
-                "schedule_visit",
-                () => {
-                    if (!openWorkflow?.("/broker/visits?view=schedule"))
-                        router.push("/broker/visits?view=schedule");
-                },
-            ],
-            [
-                "add_task",
-                () => {
-                    if (!openWorkflow?.("/broker/tasks?view=create"))
-                        router.push("/broker/tasks?view=create");
-                },
-            ],
-        ];
-        return tinykeys(
-            window,
-            Object.fromEntries(
-                actions.flatMap(([id, action]) => {
-                    const shortcut = getShortcut(id);
-                    if (!shortcut) return [];
-                    return [
-                        [
-                            shortcut.keys,
-                            (event: KeyboardEvent) => {
-                                if (addClientOpen || isShortcutEventBlocked(event)) return;
-                                event.preventDefault();
-                                setAddMenuOpen(false);
-                                action();
-                            },
-                        ],
-                    ];
-                }),
-            ),
-        );
-    }, [hydrated, status, addClientOpen, router, openWorkflow]);
 
     if (status === "failed") {
         return (

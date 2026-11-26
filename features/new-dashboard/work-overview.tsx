@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import toast from "react-hot-toast";
 
 import { useQueryClient } from "@tanstack/react-query";
 import { Label, PolarAngleAxis, PolarRadiusAxis, RadialBar, RadialBarChart } from "recharts";
@@ -16,6 +15,7 @@ import {
     portalProfileMenuItemClass,
     portalProfileMenuSurfaceClass,
 } from "@/components/layout/portal-profile-menu";
+import toast from "@/components/shared/app-toast";
 import { CardLink } from "@/components/shared/card-link";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ContactName } from "@/components/shared/contact-name";
@@ -932,7 +932,6 @@ export function WorkOverview({ now, onAddClient }: { now: Date; onAddClient?: ()
     };
 
     const settled = (message: string) => {
-        toast.success(message);
         setAnnouncement(message);
         void dispatch(fetchBrokerDashboard({ background: true }));
         void refreshDashboardQueries(queryClient);
@@ -943,6 +942,9 @@ export function WorkOverview({ now, onAddClient }: { now: Date; onAddClient?: ()
         setError(null);
         try {
             await mutations.setOutcome.mutateAsync({ id: visit.id, status });
+            if (status === "completed")
+                toast.message("visit-completed", { detail: visit.clientName });
+            else toast.success("Visit marked as not attended", { detail: visit.clientName });
             settled(
                 `Visit with ${visit.clientName} marked ${status === "completed" ? "attended" : "not attended"}`,
             );
@@ -958,6 +960,10 @@ export function WorkOverview({ now, onAddClient }: { now: Date; onAddClient?: ()
         setCancelError("");
         try {
             await mutations.cancel.mutateAsync(cancelling.id);
+            toast.message("visit-cancelled", {
+                description: "The visit has been cancelled.",
+                detail: cancelling.clientName,
+            });
             settled(`Visit with ${cancelling.clientName} cancelled`);
             setCancelling(null);
         } catch (caught) {

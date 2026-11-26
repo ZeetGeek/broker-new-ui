@@ -246,6 +246,7 @@ export function PropertyCardMenu({
             return;
         }
         setCopiedAt(performance.now());
+        toast.message("copied", { id: "property-link-copied" });
     }, [shareUrl]);
 
     const handleNativeShare = useCallback(async () => {

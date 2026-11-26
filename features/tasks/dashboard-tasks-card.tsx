@@ -36,6 +36,7 @@ import { shiftTaskDate } from "./recurrence";
 import { useTaskCatalogs } from "./task-catalogs";
 import { TaskLine } from "./task-list";
 import { useTasks } from "./task-store";
+import { showTaskCompletedToast } from "./task-toast";
 
 import planner from "./planner.module.css";
 import styles from "@/features/new-dashboard/task-card.module.css";
@@ -215,7 +216,7 @@ export function DashboardTasksCard() {
                 : nextTaskDates(task, at)
                   ? "Task completed · next occurrence added"
                   : "Task completed";
-            toast.success(message);
+            showTaskCompletedToast(task, at, update);
             setAnnouncement(`${task.title}. ${message}.`);
         } catch (failure) {
             clearCompletionFeedback(task.id);
@@ -263,7 +264,12 @@ export function DashboardTasksCard() {
             extras,
         );
         const saved = await changeTasks((latest) => [...latest, task]);
-        if (saved) setAnnouncement(`${title}. Task added.`);
+        if (saved) {
+            toast.message("task-added", {
+                action: { label: "View task", onClick: () => openTask(task) },
+            });
+            setAnnouncement(`${title}. Task added.`);
+        }
         return saved;
     };
 

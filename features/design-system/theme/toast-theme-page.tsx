@@ -67,7 +67,7 @@ function ToastSpecimen({
 }
 
 export function ToastThemePage() {
-    const [selected, setSelected] = useState(TOAST_EXAMPLES[0]);
+    const [selected, setSelected] = useState<ToastExample>(TOAST_EXAMPLES[0]);
     const [group, setGroup] = useState<(typeof TOAST_GROUPS)[number]>("Properties");
     const [dismissed, setDismissed] = useState(false);
     const [feedback, setFeedback] = useState(

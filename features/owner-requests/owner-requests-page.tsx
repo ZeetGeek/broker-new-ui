@@ -116,7 +116,13 @@ export function OwnerRequestsPage() {
             setBusyId(id);
             try {
                 await action();
-                toast.success(success);
+                if (success === "Request accepted") {
+                    toast.message("request-approved", {
+                        description:
+                            "The broker can now work on this property from their listings.",
+                    });
+                } else if (success === "Request declined") toast.message("request-declined");
+                else toast.success(success);
                 // Summary counts and the loaded queue pages both move on a decision.
                 setRevision((v) => v + 1);
                 void refetchQueue();

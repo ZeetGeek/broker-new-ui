@@ -50,6 +50,7 @@ import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/compone
 
 import type { ActivityData } from "@/features/dashboard/mock-data";
 import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
+import { showPropertyRemovedToast } from "@/features/properties/property-toast";
 import { MOCK_MY_LISTINGS_SEED } from "@/features/properties/your-listings/mock-my-listings";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
@@ -538,7 +539,11 @@ export function InventoryAndUpdates({ activity, now }: { activity: ActivityData;
                     queryClient.invalidateQueries({ queryKey: ["my-listings-summary"] }),
                     queryClient.invalidateQueries({ queryKey: ["my-listings"] }),
                 ]);
-                toast.success("Moved to Deleted");
+                showPropertyRemovedToast(deletingListing.id, () => {
+                    void queryClient.invalidateQueries({ queryKey: ["dashboard-listings"] });
+                    void queryClient.invalidateQueries({ queryKey: ["my-listings-summary"] });
+                    void queryClient.invalidateQueries({ queryKey: ["my-listings"] });
+                });
             }
             setDeletingListing(null);
         } catch (error) {

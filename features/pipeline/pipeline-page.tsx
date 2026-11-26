@@ -9,7 +9,12 @@ import { EMPTY_PROPERTY_CRITERIA } from "@/lib/properties/list-criteria";
 import { pipelineStageFromQuery } from "@/lib/properties/pipeline-stage-query";
 import { StageOperationGate } from "@/lib/properties/stage-operation-gate";
 import { saveWorkflowDealStage } from "@/lib/workflows/deal-actions";
-import { WORKFLOW_SAVED_EVENT } from "@/lib/workflows/refresh";
+import { notifyWorkflowSaved, subscribeWorkflowSaved } from "@/lib/workflows/refresh";
+import {
+    cancelDealVisits,
+    getDealWithVisit,
+    listDealsWithVisits,
+} from "@/lib/workflows/visit-deal-sync";
 import { useDebouncedValue } from "@/hooks/use-locations";
 import { usePersistedJson } from "@/hooks/use-persisted-json";
 
@@ -23,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 
 import { FEATURE_PLATFORM_OWNER } from "@/config";
+import { useVisitsLive } from "@/features/new-site-visits/use-visits";
 import { DealCard, type DealCardHandlers } from "@/features/pipeline/deal-card";
 import { DealDetailModal } from "@/features/pipeline/deal-detail-modal";
 import { DealNoteModal } from "@/features/pipeline/deal-note-modal";
@@ -67,6 +73,7 @@ import {
     hasActiveDealsFilters,
     isLiveStage,
 } from "@/features/pipeline/types";
+import { VisitWorkflow } from "@/features/workflows/visit-workflow";
 
 const PIPELINE_BATCH_SIZE = 6;
 
@@ -141,6 +148,7 @@ function saleModeFor(deal: DealItem): SaleConfirmMode {
 }
 
 export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
+    useVisitsLive(null, 0);
     // Phones mount just their selected-stage list, without hidden drag cards/images.
     const desktopBoard = useSyncExternalStore(
         subscribeBoardLayout,
@@ -288,6 +296,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     const [revision, setRevision] = useState(0);
 
     const [moveRequest, setMoveRequest] = useState<StageMoveRequest | null>(null);
+    const [visitDeal, setVisitDeal] = useState<DealItem | null>(null);
     const [isSavingMove, setIsSavingMove] = useState(false);
     const [offerDealId, setOfferDealId] = useState<string | null>(null);
     const [offerFallback, setOfferFallback] = useState<DealItem | null>(null);
@@ -329,8 +338,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 propertyFilters: filters.propertyFilters,
             };
 
-            void pipelineApi
-                .list(request, controller.signal)
+            void listDealsWithVisits(request, controller.signal)
                 .then((next) => {
                     if (cancelled || stageGate.revision !== requestRevision) return;
                     setDeals(next.items);
@@ -367,10 +375,22 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         stageGate,
     ]);
 
+    const openVisitSchedule = useCallback(
+        (deal: DealItem) => {
+            if (stageGate.begin(deal.id) == null) return;
+            setVisitDeal(deal);
+        },
+        [stageGate],
+    );
+
     const requestMove = useCallback(
         (dealId: string, status: DealStatus, successMessage: string) => {
             // Snapshot the deal: the detail modal closes right after this call.
             const deal = findDealForMove(deals, viewDetail, dealId) ?? undefined;
+            if (status === "visit" && deal) {
+                openVisitSchedule(deal);
+                return;
+            }
             if (status === "closed" && deal) {
                 const blocked = markSoldBlockedReason(deal, saleModeFor(deal));
                 if (blocked) {
@@ -381,7 +401,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
             setMoveError(null);
             setMoveRequest({ dealId, status, successMessage, deal });
         },
-        [deals, viewDetail],
+        [deals, viewDetail, openVisitSchedule],
     );
 
     /** Latest detail request. An older, slower response must not replace a newer deal. */
@@ -393,8 +413,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         setViewError(null);
         setIsLoadingView(true);
 
-        void pipelineApi
-            .get(dealId)
+        void getDealWithVisit(dealId)
             .then((detail) => {
                 if (request === viewRequest.current) setViewDetail(detail);
             })
@@ -418,17 +437,18 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
     }, [initialLeadId, openLeadView]);
 
     useEffect(() => {
-        const refresh = (event: Event) => {
-            if (
-                !(event instanceof CustomEvent) ||
-                !["contact", "visit", "property", "deal"].includes(event.detail?.kind)
-            )
-                return;
+        const refresh = (kind: string) => {
+            if (!["contact", "visit", "property", "deal"].includes(kind)) return;
             setRevision((value) => value + 1);
             if (viewDealId) openLeadView(viewDealId);
         };
-        window.addEventListener(WORKFLOW_SAVED_EVENT, refresh);
-        return () => window.removeEventListener(WORKFLOW_SAVED_EVENT, refresh);
+        const unsubscribe = subscribeWorkflowSaved(refresh);
+        const focus = () => refresh("visit");
+        window.addEventListener("focus", focus);
+        return () => {
+            unsubscribe();
+            window.removeEventListener("focus", focus);
+        };
     }, [openLeadView, viewDealId]);
 
     const applyLocalStage = useCallback((dealId: string, status: DealStatus) => {
@@ -453,6 +473,10 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         (dealId: string, status: DealStage) => {
             const current = (deals ?? []).find((deal) => deal.id === dealId);
             if (!current || current.status === status) return;
+            if (status === "visit") {
+                openVisitSchedule(current);
+                return;
+            }
             const version = stageGate.begin(dealId);
             if (version == null) return;
             setBusyId(dealId);
@@ -476,6 +500,11 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                         setActionError(
                                             "Could not undo: this deal changed or is still saving. Check its current stage.",
                                         );
+                                        return;
+                                    }
+                                    if (previous === "visit") {
+                                        stageGate.end();
+                                        openVisitSchedule({ ...current, status });
                                         return;
                                     }
                                     setBusyId(dealId);
@@ -529,7 +558,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     }
                 });
         },
-        [applyLocalStage, deals, stageGate],
+        [applyLocalStage, deals, stageGate, openVisitSchedule],
     );
 
     const handleConfirmMove = useCallback(
@@ -592,7 +621,9 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     throw new Error(
                         "This deal is finished. Review its latest details before adding an offer.",
                     );
+                if (latest.status === "visit") await cancelDealVisits(latest.id);
                 await pipelineApi.makeOffer(offerDealId, offerAmount, notes);
+                notifyWorkflowSaved("deal");
                 // Show the saved amount immediately; the refresh below reconciles
                 // the server's stage, history and summary counts.
                 setDeals(
@@ -605,7 +636,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 );
                 setOfferDealId(null);
                 setOfferFallback(null);
-                toast.success("Offer saved");
+                toast.message("offer-saved");
             } catch (saveError) {
                 setOfferError(
                     saveError instanceof Error
@@ -636,7 +667,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 await pipelineApi.setNote(noteDealId, current.status, note);
                 setNoteDealId(null);
                 setNoteFallback(null);
-                toast.success("Note saved");
+                toast.message("note-saved");
             } catch (saveError) {
                 setNoteError(
                     saveError instanceof Error
@@ -672,7 +703,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 void pipelineApi
                     .logContact(dealId, currentStatus)
                     .then(() => {
-                        toast.success("Call logged");
+                        toast.message("call-logged");
                     })
                     .catch((logError) => {
                         setActionError(
@@ -752,8 +783,17 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
         router.replace(`${pathname}${query.size ? `?${query}` : ""}`, { scroll: false });
     };
 
-    // The API already applied the filter sheet.
-    const filteredDeals = useMemo(() => deals ?? [], [deals]);
+    // Keep the drop destination visible while scheduling, even if an older
+    // server response arrives. Dismissing the form simply removes this preview.
+    const filteredDeals = useMemo(
+        () =>
+            visitDeal
+                ? (deals ?? []).map((deal) =>
+                      deal.id === visitDeal.id ? { ...deal, status: "visit" as const } : deal,
+                  )
+                : (deals ?? []),
+        [deals, visitDeal],
+    );
 
     const liveDeals = useMemo(() => {
         const live = filteredDeals.filter((deal) => isLiveStage(deal.status));
@@ -979,6 +1019,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                 allLiveDeals={liveDeals}
                                 handlers={handlers}
                                 busyId={busyId}
+                                pendingDealId={visitDeal?.id}
                                 pinnedDealIds={pinnedDealIds}
                                 onDropDeal={moveOptimistically}
                                 stageLimits={stageLimits}
@@ -998,6 +1039,29 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                     </div>
                 )}
             </TabsContent>
+
+            {visitDeal ? (
+                <VisitWorkflow
+                    key={visitDeal.id}
+                    lockedLeadId={visitDeal.id}
+                    target={{
+                        kind: "visit",
+                        mode: "schedule",
+                        intent: {
+                            leadId: visitDeal.id,
+                            clientId: visitDeal.buyer.id,
+                            propertyId: visitDeal.property.id,
+                        },
+                    }}
+                    onClose={() => {
+                        // Retire reads that started before the booking finished.
+                        stageGate.end();
+                        setVisitDeal(null);
+                        setRevision((value) => value + 1);
+                    }}
+                    onSaved={() => applyLocalStage(visitDeal.id, "visit")}
+                />
+            ) : null}
 
             <StageNoteModal
                 open={moveRequest != null}
@@ -1076,7 +1140,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                                               item.id === deal.id ? { ...item, note } : item,
                                           ) ?? null,
                                   );
-                                  toast.success("Notes saved");
+                                  toast.message("note-saved");
                               } finally {
                                   stageGate.end();
                                   setBusyId(null);

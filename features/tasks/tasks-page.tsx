@@ -39,10 +39,9 @@ import { StatusTabs } from "@/components/shared/status-tabs";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 
-import { useShortcut } from "@/features/shortcuts/use-shortcut";
 import { useAppSelector } from "@/store/hooks";
 
-import { nextTaskDates, setTaskCompleted } from "./lifecycle";
+import { setTaskCompleted } from "./lifecycle";
 import {
     type Task,
     type TaskDraft,
@@ -67,6 +66,7 @@ import { TaskPanel } from "./task-panel";
 import { TaskPlanner } from "./task-planner";
 import { TaskResultsSkeleton } from "./task-results-skeleton";
 import { useTasks } from "./task-store";
+import { showTaskCompletedToast } from "./task-toast";
 
 import styles from "./tasks.module.css";
 
@@ -241,7 +241,6 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             visitTitle: undefined,
         });
     };
-    useShortcut("add_task", create);
     const clear = () => updateWorkspace({ q: undefined, due: undefined, linked: undefined });
     const commit = async (
         next: (latest: Task[]) => Task[],
@@ -251,7 +250,8 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
         setError("");
         try {
             await update(next);
-            toast.success(message);
+            if (message === "Task created") toast.message("task-added");
+            else toast.success(message);
             after?.();
         } catch (failure) {
             const message =
@@ -280,13 +280,7 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             } else {
                 clearCompletionFeedback(task.id);
             }
-            toast.success(
-                task.completedAt
-                    ? "Task reopened"
-                    : nextTaskDates(task, now)
-                      ? "Task completed · next occurrence added"
-                      : "Task completed",
-            );
+            showTaskCompletedToast(task, now, update);
         } catch (failure) {
             clearCompletionFeedback(task.id);
             setError(
@@ -345,7 +339,9 @@ function TasksWorkspace({ accountId, initialQuery }: { accountId: string; initia
             listId,
             extras,
         );
-        return changeTasks((latest) => [...latest, task]);
+        const saved = await changeTasks((latest) => [...latest, task]);
+        if (saved) toast.message("task-added");
+        return saved;
     };
     const move = async (id: string, date: string | null, beforeId?: string, listId?: string) => {
         const saved = await changeTasks((latest) => {

@@ -9,6 +9,7 @@ import { pipelineApi } from "@/lib/api/pipeline";
 import { saveWorkflowDealOffer, saveWorkflowDealStage } from "@/lib/workflows/deal-actions";
 import { notifyWorkflowSaved } from "@/lib/workflows/refresh";
 import type { WorkflowTarget } from "@/lib/workflows/target";
+import { getDealWithVisit } from "@/lib/workflows/visit-deal-sync";
 
 import { EmptyState, EmptyStateAction } from "@/components/empty-state";
 import { AppModal } from "@/components/shared/app-modal";
@@ -29,6 +30,7 @@ import {
     StageNoteModal,
 } from "@/features/pipeline/stage-note-modal";
 import { type DealStatus, isLiveStage } from "@/features/pipeline/types";
+import { VisitWorkflow } from "@/features/workflows/visit-workflow";
 import { useAppSelector } from "@/store/hooks";
 
 type DealTarget = Extract<WorkflowTarget, { kind: "deal" }>;
@@ -42,11 +44,12 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
     const queryClient = useQueryClient();
     const [mode, setMode] = useState(target.mode);
     const [move, setMove] = useState<StageMoveRequest | null>(null);
+    const [scheduling, setScheduling] = useState(false);
     const [actionError, setActionError] = useState<string | null>(null);
     const saving = useRef(false);
     const query = useQuery({
         queryKey: ["workflow-deal", accountId, target.id],
-        queryFn: () => pipelineApi.get(target.id),
+        queryFn: () => getDealWithVisit(target.id),
         retry: 1,
     });
     const deal = query.data ?? null;
@@ -104,11 +107,13 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
                     ),
             });
             notifyWorkflowSaved("deal");
-            toast.success(message);
+            if (intent.kind === "offer") toast.message("offer-saved");
+            else if (intent.kind === "note") toast.message("note-saved");
+            else toast.success(message);
             if (intent.kind !== "note" || !intent.keepOpen) onClose();
         },
     });
-    useWorkflowWorking(mode !== "detail" || move != null || save.isPending);
+    useWorkflowWorking(scheduling || mode !== "detail" || move != null || save.isPending);
     const submit = (intent: SaveIntent) => {
         if (saving.current) return;
         saving.current = true;
@@ -129,6 +134,10 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
               : null;
     const requestStage = (status: DealStatus) => {
         if (!deal || save.isPending) return;
+        if (status === "visit") {
+            setScheduling(true);
+            return;
+        }
         if (status === "closed") {
             const blocked = markSoldBlockedReason(deal, saleMode);
             if (blocked) {
@@ -159,6 +168,26 @@ export function DealWorkflow({ target, onClose }: { target: DealTarget; onClose:
             setMode(next);
         }
     };
+
+    if (scheduling && deal)
+        return (
+            <VisitWorkflow
+                lockedLeadId={deal.id}
+                target={{
+                    kind: "visit",
+                    mode: "schedule",
+                    intent: {
+                        leadId: deal.id,
+                        clientId: deal.buyer.id,
+                        propertyId: deal.property.id,
+                    },
+                }}
+                onClose={() => {
+                    setScheduling(false);
+                    void query.refetch();
+                }}
+            />
+        );
 
     if (!deal && mode !== "detail")
         return (

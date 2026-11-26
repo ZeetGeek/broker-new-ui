@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
 import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
+import { showPropertyRemovedToast } from "@/features/properties/property-toast";
 import { AttachExclusiveOwnerModal } from "@/features/properties/your-listings/attach-exclusive-owner-modal";
 import { hasActiveMyListingsFilters } from "@/features/properties/your-listings/filter-my-listings";
 import { InvitePropertyBrokerModal } from "@/features/properties/your-listings/invite-property-broker-modal";
@@ -179,7 +180,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
         void queryClient.invalidateQueries({ queryKey: ["my-listings-summary"] });
     }, [queryClient]);
 
-    useShortcut("add_property", () => setAddOpen(true), { portal });
+    useShortcut("add_property", () => setAddOpen(true), { portal, enabled: isOwnerPortal });
 
     const confirmDelete = useCallback(async () => {
         if (!deletingListing) return;
@@ -188,7 +189,8 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             if (isDeletedView) await myListingsApi.removePermanently(deletingListing.id);
             else await myListingsApi.remove(deletingListing.id);
             setDeletingListing(null);
-            toast.success(isDeletedView ? "Property permanently deleted" : "Moved to Deleted");
+            if (isDeletedView) toast.success("Property permanently deleted");
+            else showPropertyRemovedToast(deletingListing.id, refreshListings);
             refreshListings();
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Couldn't remove property");
@@ -202,7 +204,7 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             setRestoringId(listing.id);
             try {
                 await myListingsApi.restore(listing.id);
-                toast.success("Property restored to Draft");
+                toast.message("property-restored");
                 refreshListings();
             } catch (error) {
                 toast.error(error instanceof Error ? error.message : "Could not restore property");

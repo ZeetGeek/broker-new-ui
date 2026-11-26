@@ -13,7 +13,7 @@ import { List, RefreshCw } from "@/components/shared/icons";
 import { useWorkflowWorking } from "@/components/shared/workflow-context";
 import { Button } from "@/components/ui/button";
 
-import { nextTaskDates, setTaskCompleted } from "@/features/tasks/lifecycle";
+import { setTaskCompleted } from "@/features/tasks/lifecycle";
 import type { TaskDraft } from "@/features/tasks/model";
 import { setTaskDeleted } from "@/features/tasks/planner-model";
 import { TASK_CATALOGS_QUERY_KEY, useTaskCatalogs } from "@/features/tasks/task-catalogs";
@@ -22,6 +22,7 @@ import { TaskForm } from "@/features/tasks/task-form";
 import { type TaskDraftMode, taskFromDraft } from "@/features/tasks/task-from-draft";
 import { TaskPanel } from "@/features/tasks/task-panel";
 import { type TaskUpdater, useTasks } from "@/features/tasks/task-store";
+import { showTaskCompletedToast } from "@/features/tasks/task-toast";
 import { useAppSelector } from "@/store/hooks";
 
 type Target = Extract<WorkflowTarget, { kind: "task" }>;
@@ -53,7 +54,8 @@ export function TaskWorkflow({ target, onClose }: { target: Target; onClose: () 
         try {
             await update(updater);
             notifyWorkflowSaved("task");
-            if (message) toast.success(message);
+            if (message === "Task created") toast.message("task-added");
+            else if (message) toast.success(message);
             return true;
         } catch (failure) {
             setError(
@@ -205,21 +207,17 @@ export function TaskWorkflow({ target, onClose }: { target: Target; onClose: () 
             error={error}
             onClose={onClose}
             onComplete={() =>
-                void change(
-                    (latest) =>
-                        setTaskCompleted(
-                            latest,
-                            task.id,
-                            !task.completedAt,
-                            Date.now(),
-                            crypto.randomUUID(),
-                        ),
-                    task.completedAt
-                        ? "Task reopened"
-                        : nextTaskDates(task)
-                          ? "Task completed · next occurrence added"
-                          : "Task completed",
-                )
+                void change((latest) =>
+                    setTaskCompleted(
+                        latest,
+                        task.id,
+                        !task.completedAt,
+                        Date.now(),
+                        crypto.randomUUID(),
+                    ),
+                ).then((saved) => {
+                    if (saved) showTaskCompletedToast(task, Date.now(), update);
+                })
             }
             onRestore={() =>
                 void change((latest) => setTaskDeleted(latest, task.id, false), "Task restored")

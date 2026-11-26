@@ -223,7 +223,7 @@ export function LiveSummaryPanel({
         try {
             await navigator.clipboard.writeText(summaryText);
             setCopiedSummary(summaryText);
-            toast.success("Deal summary copied.");
+            toast.message("copied", { title: "Deal summary copied" });
         } catch {
             toast.error("Couldn't copy the summary.");
         }

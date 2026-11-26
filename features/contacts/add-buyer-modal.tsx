@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ApiError } from "@/lib/api/client";
 import type { NewBuyerInput } from "@/lib/api/clients";
 import { contactsApi } from "@/lib/api/contacts";
+import { useRouter } from "@/lib/navigation";
 import { brokerContactHref } from "@/lib/routes/broker";
 import {
     type BuyerFormValues,
@@ -274,6 +275,8 @@ export function AddBuyerModal({
         setFormError("Check the highlighted fields and try again.");
     };
 
+    const router = useRouter();
+
     const save = form.handleSubmit(async (parsed) => {
         if (duplicate && !ignoreDuplicate && !isEdit) {
             setFormError(
@@ -291,12 +294,20 @@ export function AddBuyerModal({
             if (isEdit && buyer) {
                 await contactsApi.saveBuyer(input, buyer.id);
                 onUpdated?.(input.name);
-                toast.success("Client updated");
+                toast.message("client-updated", { detail: input.name });
                 onOpenChange(false);
             } else {
                 const savedId = await contactsApi.saveBuyer(input);
                 onCreated(input.name, savedId);
-                toast.success("Client added");
+                toast.message("client-added", {
+                    detail: input.name,
+                    action: savedId
+                        ? {
+                              label: "View client",
+                              onClick: () => router.push(brokerContactHref(savedId, "buyer")),
+                          }
+                        : undefined,
+                });
                 setPhoto(null);
                 form.reset(emptyValues(locationDefaults));
                 onOpenChange(false);
@@ -330,7 +341,15 @@ export function AddBuyerModal({
             };
             const savedId = await contactsApi.saveBuyer(input);
             onCreated(input.name, savedId);
-            toast.success("Client added");
+            toast.message("client-added", {
+                detail: input.name,
+                action: savedId
+                    ? {
+                          label: "View client",
+                          onClick: () => router.push(brokerContactHref(savedId, "buyer")),
+                      }
+                    : undefined,
+            });
             setPhoto(null);
             form.reset(emptyValues(locationDefaults));
             setDuplicate(null);

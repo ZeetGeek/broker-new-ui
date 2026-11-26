@@ -115,7 +115,10 @@ function SentRequestsPanel({
             setBusyId(id);
             try {
                 await action();
-                if (successMessage) toast.success(successMessage);
+                if (successMessage === "Request cancelled") toast.message("request-cancelled");
+                else if (successMessage === "Request sent again") toast.message("request-sent");
+                else if (successMessage)
+                    toast.message("reminder-sent", { description: successMessage });
                 setRevision((prev) => prev + 1);
             } catch {
                 toast.error("Something went wrong. Try again.");

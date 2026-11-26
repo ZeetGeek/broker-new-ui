@@ -34,10 +34,12 @@ export function VerifyPendingPanel() {
         setIsSending(true);
         try {
             const res = await authApi.resendVerification(email);
-            toast.success(
-                res.message ||
+            toast.message("verification-sent", {
+                title: "Verification email requested",
+                description:
+                    res.message ||
                     "If that email is registered and unverified, a verification link has been sent.",
-            );
+            });
             setSecondsLeft(30);
         } catch (err: unknown) {
             toast.error(err instanceof ApiError ? err.message : "Could not resend verification");

@@ -7,7 +7,7 @@ import { isMockMode } from "@/lib/api/mock-mode";
 import type { NotificationItem } from "@/lib/api/notifications";
 import { getNotificationSocket } from "@/lib/socket/notifications";
 
-import { dismissAppToast, showAppToast } from "@/components/shared/app-toast";
+import toast, { dismissAppToast } from "@/components/shared/app-toast";
 import { useWorkflow } from "@/components/shared/workflow-context";
 
 import { useAppSelector } from "@/store/hooks";
@@ -42,21 +42,19 @@ function showReminderToast(
     content: ReminderToastContent,
     open: (href: string) => boolean,
 ) {
-    showAppToast(
-        {
-            variant: "reminder",
-            title: content.title,
-            description: content.line,
-            detail: content.detail,
-            action: {
-                label: content.action,
-                onClick: () => {
-                    if (!open(content.href)) window.location.assign(content.href);
-                },
+    toast.message(content.kind === "task" ? "task-reminder" : "visit-reminder", {
+        title: content.title,
+        description: content.line,
+        detail: content.detail,
+        action: {
+            label: content.action,
+            onClick: () => {
+                if (!open(content.href)) window.location.assign(content.href);
             },
         },
-        { id, duration: 12_000 },
-    );
+        id,
+        duration: 12_000,
+    });
 }
 
 function LiveReminders({ accountId, accessToken }: { accountId: string; accessToken: string }) {

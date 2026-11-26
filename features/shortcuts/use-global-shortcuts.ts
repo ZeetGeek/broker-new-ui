@@ -5,11 +5,16 @@ import { useEffect } from "react";
 import { tinykeys } from "tinykeys";
 
 import { useRouter } from "@/lib/navigation";
-import { getShortcut, type ShortcutId, type ShortcutPortal } from "@/lib/shortcuts";
+import type { ShortcutPortal } from "@/lib/shortcuts";
 
-import { isShortcutEventBlocked } from "@/features/shortcuts/shortcut-event";
+import { useWorkflow } from "@/components/shared/workflow-context";
 
-export type GlobalShortcutRoutes = Partial<Record<ShortcutId, string>>;
+import {
+    buildGlobalShortcutBindings,
+    type GlobalShortcutRoutes,
+} from "@/features/shortcuts/global-shortcut-bindings";
+
+export type { GlobalShortcutRoutes } from "@/features/shortcuts/global-shortcut-bindings";
 
 export type UseGlobalShortcutsOptions = {
     routes: GlobalShortcutRoutes;
@@ -18,7 +23,7 @@ export type UseGlobalShortcutsOptions = {
 };
 
 /**
- * Registry-backed navigation for a portal. Global shortcuts pause while the
+ * Registry-backed navigation and quick actions for a portal. Shortcuts pause while the
  * user types or a modal owns focus; Escape remains owned by the topmost layer.
  */
 export function useGlobalShortcuts({
@@ -27,32 +32,17 @@ export function useGlobalShortcuts({
     portal = "broker",
 }: UseGlobalShortcutsOptions) {
     const router = useRouter();
+    const openWorkflow = useWorkflow();
 
     useEffect(() => {
-        const bindings: Record<string, (event: KeyboardEvent) => void> = {};
-
-        for (const [rawId, href] of Object.entries(routes)) {
-            if (!href) continue;
-            const id = rawId as ShortcutId;
-            const shortcut = getShortcut(id, portal);
-            if (!shortcut || shortcut.scope !== "global") continue;
-
-            bindings[shortcut.keys] = (event) => {
-                if (isShortcutEventBlocked(event)) return;
-                event.preventDefault();
-                router.push(href);
-            };
-        }
-
-        const helpShortcut = getShortcut("shortcuts_cheatsheet", portal);
-        if (helpShortcut) {
-            bindings[helpShortcut.keys] = (event) => {
-                if (isShortcutEventBlocked(event)) return;
-                event.preventDefault();
-                onShortcutsOpen();
-            };
-        }
+        const bindings = buildGlobalShortcutBindings({
+            routes,
+            onNavigate: (href) => router.push(href),
+            onWorkflowOpen: openWorkflow,
+            onShortcutsOpen,
+            portal,
+        });
 
         return tinykeys(window, bindings);
-    }, [onShortcutsOpen, portal, router, routes]);
+    }, [onShortcutsOpen, openWorkflow, portal, router, routes]);
 }

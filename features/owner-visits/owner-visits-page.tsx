@@ -336,7 +336,9 @@ export function OwnerVisitsPage() {
             setBusyId(showingId);
             try {
                 await ownerSlotsApi.updateShowingStatus(showingId, status);
-                toast.success(status === "confirmed" ? "Visit confirmed" : "Visit cancelled");
+                if (status === "confirmed")
+                    toast.message("visit-booked", { title: "Visit confirmed" });
+                else toast.message("visit-cancelled");
                 setRevision((value) => value + 1);
             } catch (err) {
                 toast.error(apiMessage(err, "Could not update showing"));

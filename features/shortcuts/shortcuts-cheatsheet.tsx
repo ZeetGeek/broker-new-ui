@@ -11,6 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { AppModal } from "@/components/shared/app-modal";
+import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import {
     Activity,
     Bell,
@@ -100,8 +101,8 @@ function ShortcutRow({ shortcut }: { shortcut: ShortcutDef }) {
     const Icon = SHORTCUT_ICONS[shortcut.id] ?? Keyboard;
     const displayKeys = useShortcutDisplayKeys(shortcut);
     const sequence = isSequence(shortcut);
-    // Green marks shortcuts that act on the current page; navigation stays neutral.
-    const isPageAction = shortcut.scope !== "global";
+    // Green marks actions that open a form; navigation stays neutral.
+    const isPageAction = Boolean(shortcut.workflowHref) || shortcut.scope !== "global";
 
     return (
         <li className="flex items-center gap-3 px-2 py-1.5">
@@ -166,16 +167,22 @@ export function ShortcutsCheatsheet({
             padding="md"
             bodyClassName="px-3 py-3"
             footer={
-                <p className="body-xs text-center text-ink-subtle">
-                    Press{" "}
-                    <Kbd
-                        variant="surface"
-                        className="border-border-warm p-0 align-middle text-ink block-5 inline-5"
-                    >
-                        ?
-                    </Kbd>{" "}
-                    anytime you are not typing to open this list
-                </p>
+                <AppModalFooter className="flex-col items-stretch gap-2 text-center">
+                    <p className="body-xs text-ink-subtle">
+                        Navigation and quick actions pause while you type or use a menu, dropdown,
+                        or dialog.
+                    </p>
+                    <p className="body-xs text-ink-subtle">
+                        Close menus and dialogs with{" "}
+                        <Kbd
+                            variant="surface"
+                            className="border-border-warm px-1.5 py-0 align-middle text-ink block-5"
+                        >
+                            Esc
+                        </Kbd>
+                        , then use your shortcut.
+                    </p>
+                </AppModalFooter>
             }
         >
             <div className="flex flex-col gap-5">

@@ -413,7 +413,7 @@ export function ProfilePage() {
                 // the form stops being dirty and shows any value the server
                 // adjusted on the way in.
                 reset(toFormValues(updated));
-                toast.success("Profile saved");
+                toast.message("profile-saved");
             } catch (error) {
                 setSubmitError(
                     error instanceof Error && error.message

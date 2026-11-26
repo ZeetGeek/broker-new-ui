@@ -59,12 +59,14 @@ export function ScheduleForm({
     visit,
     intent,
     intentMissed = false,
+    lockedLeadId,
     onDone,
     onBack,
 }: {
     visit?: BrokerVisit;
     intent?: BookableLead | null;
     intentMissed?: boolean;
+    lockedLeadId?: string;
     onDone: () => void;
     onBack: () => void;
 }) {
@@ -146,6 +148,12 @@ export function ScheduleForm({
     const submit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (busy) return;
+        if (lockedLeadId && draft.leadId !== lockedLeadId) {
+            setSaveError(
+                "This visit must use the deal you selected. Close and reopen the scheduler.",
+            );
+            return;
+        }
         setSubmitted(true);
         // Check against the clock at submit, not the last tick.
         const valid = Object.keys(validateVisitDraft(draft, Date.now())).length === 0;
@@ -175,7 +183,7 @@ export function ScheduleForm({
                     notes,
                     reminders: draft.reminders,
                 });
-                toast.success("Visit moved");
+                toast.message("visit-rescheduled");
             } else {
                 await book.mutateAsync({
                     propertyId: draft.propertyId,
@@ -185,7 +193,9 @@ export function ScheduleForm({
                     ...(notes ? { notes } : {}),
                     reminders: draft.reminders,
                 });
-                toast.success("Visit scheduled");
+                toast.message("visit-booked", {
+                    description: "Your visit is saved for the selected time.",
+                });
             }
             onDone();
         } catch (error) {
@@ -315,7 +325,11 @@ export function ScheduleForm({
                                             people={clientPeople}
                                             value={draft.clientId || null}
                                             onValueChange={(id) => chooseClient(id ?? "")}
-                                            disabled={busy || leadsQuery.isPending}
+                                            disabled={
+                                                Boolean(lockedLeadId) ||
+                                                busy ||
+                                                leadsQuery.isPending
+                                            }
                                             errorText={show("clientId")}
                                             placeholder="Select a client"
                                             size="md"
@@ -340,7 +354,9 @@ export function ScheduleForm({
                                             value={draft.propertyId || null}
                                             onConfirm={(id) => chooseProperty(id ?? "")}
                                             required
-                                            disabled={busy || !draft.clientId}
+                                            disabled={
+                                                Boolean(lockedLeadId) || busy || !draft.clientId
+                                            }
                                             errorText={show("propertyId")}
                                             helperText={
                                                 !draft.clientId

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import toast, { Toaster, type ToastOptions, useToasterStore } from "react-hot-toast";
 
+import { resolveToastContent } from "@/lib/toast/content";
+import type { ToastMessageId } from "@/lib/toast/messages";
 import { cn } from "@/lib/utils";
 
 import { GradientSpinner } from "@/components/shared/gradient-spinner";
@@ -202,6 +204,7 @@ type AppToastApi = {
     info: (title: string, options?: AppToastOptions) => string;
     loading: (title: string, options?: AppToastOptions) => string;
     reminder: (title: string, options?: AppToastOptions) => string;
+    message: (id: ToastMessageId, options?: AppToastOptions & { title?: string }) => string;
     dismiss: (toastId?: string, toasterId?: string) => void;
     remove: (toastId?: string, toasterId?: string) => void;
 };
@@ -216,6 +219,17 @@ const appToast = Object.assign(
         info: (title: string, options?: AppToastOptions) => notify(title, "info", options),
         loading: (title: string, options?: AppToastOptions) => notify(title, "loading", options),
         reminder: (title: string, options?: AppToastOptions) => notify(title, "reminder", options),
+        message: (id: ToastMessageId, options: AppToastOptions & { title?: string } = {}) => {
+            const {
+                title: _title,
+                description: _description,
+                detail: _detail,
+                action: _action,
+                ...toastOptions
+            } = options;
+            const content = resolveToastContent(id, options);
+            return showAppToast(content, toastOptions);
+        },
         dismiss: (toastId?: string, toasterId = APP_TOASTER_ID) =>
             toast.dismiss(toastId, toasterId),
         remove: (toastId?: string, toasterId = APP_TOASTER_ID) => toast.remove(toastId, toasterId),

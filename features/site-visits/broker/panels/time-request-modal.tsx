@@ -166,7 +166,7 @@ export function TimeRequestModal({
                 }),
                 message: values.message || undefined,
             });
-            toast.success("Time request sent");
+            toast.message("visit-requested");
             onCreated();
         } catch (error) {
             setRequestError(

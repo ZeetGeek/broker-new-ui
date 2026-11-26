@@ -16,7 +16,6 @@ import { closeDirectVisitHref, directVisitWorkflow } from "@/lib/visits/direct-w
 
 import toast from "@/components/shared/app-toast";
 
-import { useShortcut } from "@/features/shortcuts/use-shortcut";
 import { VisitWorkflow } from "@/features/workflows/visit-workflow";
 
 import {
@@ -105,7 +104,6 @@ export function NewSiteVisitsPage() {
     );
     const [actionError, setActionError] = useState("");
     const scheduleVisit = () => setView({ kind: "schedule", intent: null, intentMissed: false });
-    useShortcut("schedule_visit", scheduleVisit);
 
     const range = filters.range || defaultRange(tab);
     const bounds = range === "custom" ? filters : visitDateBounds(range, now);
@@ -171,13 +169,14 @@ export function NewSiteVisitsPage() {
         try {
             if (intent === "cancelled") {
                 await mutations.cancel.mutateAsync(visit.id);
-                toast.success("Visit cancelled");
+                toast.message("visit-cancelled", { description: "The visit has been cancelled." });
             } else {
                 await mutations.setOutcome.mutateAsync({
                     id: visit.id,
                     status: intent === "completed" ? "completed" : "no_show",
                 });
-                toast.success(intent === "completed" ? "Marked completed" : "Marked not attended");
+                if (intent === "completed") toast.message("visit-completed");
+                else toast.success("Visit marked as not attended");
             }
             setView(null);
         } catch (error) {

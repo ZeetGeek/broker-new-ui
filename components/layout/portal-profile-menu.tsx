@@ -200,11 +200,11 @@ function useLogoutHandler() {
         try {
             await dispatch(logout()).unwrap();
             dispatch(resetDashboard());
-            toast.success("Signed out");
+            toast.message("signed-out");
             router.replace("/login");
         } catch {
             dispatch(resetDashboard());
-            toast.success("Signed out");
+            toast.message("signed-out");
             router.replace("/login");
         } finally {
             setIsLoggingOut(false);

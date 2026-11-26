@@ -63,7 +63,6 @@ import {
     DEFAULT_CONTACTS_FILTERS,
     type OwnerRow,
 } from "@/features/contacts/types";
-import { useShortcut } from "@/features/shortcuts/use-shortcut";
 import { useAppSelector } from "@/store/hooks";
 
 /** Keep phone cards full-width; tablets and desktops get 2 → 3 → 4 columns. */
@@ -203,15 +202,13 @@ export function ContactsPage({
         queryFn: ({ signal }) => contactsApi.summary(signal),
     });
 
-    const handleCreated = useCallback((name: string) => {
+    const handleCreated = useCallback(() => {
         setRevision((prev) => prev + 1);
-        toast.success(`${name} added`);
     }, []);
 
-    const handleUpdated = useCallback((name: string) => {
+    const handleUpdated = useCallback(() => {
         setRevision((prev) => prev + 1);
         setEditingBuyer(null);
-        toast.success(`${name} updated`);
     }, []);
 
     const handleAttached = useCallback(() => {
@@ -312,7 +309,12 @@ export function ContactsPage({
     const handleOwnerSaved = useCallback((name: string, mode: "created" | "updated") => {
         setRevision((prev) => prev + 1);
         setEditingOwner(null);
-        toast.success(mode === "created" ? `${name} added to your owners` : `${name} updated`);
+        if (mode === "created") toast.message("owner-added", { detail: name });
+        else
+            toast.success("Owner updated", {
+                description: "The latest details have been saved.",
+                detail: name,
+            });
     }, []);
 
     const hasSearch = filters.q.trim().length > 0;
@@ -333,9 +335,6 @@ export function ContactsPage({
         if (isBuyers) setIsAddOpen(true);
         else setIsOwnerAddOpen(true);
     }, [isBuyers]);
-
-    useShortcut("add_contact", () => setIsAddOpen(true));
-    useShortcut("add_owner", () => setIsOwnerAddOpen(true));
 
     const restoreCardFocus = useCallback(() => {
         const id = openerIdRef.current;
@@ -637,9 +636,9 @@ export function ContactsPage({
                             setIsOwnerAddOpen(false);
                         }
                     }}
-                    onClientCreated={(name) => {
+                    onClientCreated={() => {
                         setFilters((previous) => ({ ...previous, tab: "buyers" }));
-                        handleCreated(name);
+                        handleCreated();
                     }}
                     onOwnerSaved={(name, mode) => {
                         setFilters((previous) => ({ ...previous, tab: "owners" }));

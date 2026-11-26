@@ -126,6 +126,18 @@ export function StepMedia({
                 status: "error",
                 errorMessage: "This photo could not be compressed on this device.",
             });
+            toast.message("upload-error", {
+                id: `photo-error-${photoId}`,
+                title: "Photo preparation failed",
+                description:
+                    "This photo could not be prepared on this device. Try again or choose another photo.",
+                action: {
+                    label: "Try again",
+                    onClick: () => {
+                        if (photoFilesRef.current.has(photoId)) retryPhoto(photoId);
+                    },
+                },
+            });
         }
     }
 
@@ -222,7 +234,9 @@ export function StepMedia({
         const galleryCap = MAX_PHOTOS - (cover ? 1 : 0);
         for (const file of Array.from(files)) {
             if (gallery.length + accepted.length >= galleryCap) {
-                toast.error(`You can add up to ${galleryCap} property photos.`);
+                toast.message("photo-limit", {
+                    detail: `You can add up to ${galleryCap} property photos.`,
+                });
                 break;
             }
             accepted.push(buildPhotoEntry(file, false));
@@ -245,7 +259,7 @@ export function StepMedia({
         const photo = photos.find((item) => item.id === photoId);
         const file = photoFilesRef.current.get(photoId);
         if (!photo || !file) {
-            toast.error("Choose this photo again to retry.");
+            toast.message("upload-error");
             return;
         }
         if (file.size > MAX_PHOTO_BYTES || !PHOTO_TYPES.has(file.type)) {

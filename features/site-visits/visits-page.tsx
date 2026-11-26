@@ -185,7 +185,16 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
                 await action();
                 setRevision((prev) => prev + 1);
                 setModal({ kind: "none" });
-                if (message) toast.success(message);
+                if (message === "Saved") toast.message("visit-completed");
+                else if (message === "Visit confirmed")
+                    toast.message("visit-booked", { title: "Visit confirmed" });
+                else if (message === "Visit cancelled") toast.message("visit-cancelled");
+                else if (message === "New time suggested")
+                    toast.message("visit-requested", {
+                        title: "New time suggested",
+                        description: "The other party still needs to confirm this time.",
+                    });
+                else if (message) toast.success(message);
             } catch {
                 toast.error("Could not save that. Try again.");
             } finally {
@@ -302,7 +311,11 @@ export function VisitsPage({ viewer }: VisitsPageProps) {
             void runMutation(
                 visitId,
                 action,
-                intent === "withdraw" ? "Request withdrawn" : "The other side has been told",
+                intent === "withdraw"
+                    ? "Request withdrawn"
+                    : intent === "decline"
+                      ? "Visit request declined"
+                      : "Visit cancelled",
             );
         },
         [modal, runMutation, viewer],

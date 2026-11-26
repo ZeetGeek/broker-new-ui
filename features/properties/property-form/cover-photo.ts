@@ -98,6 +98,18 @@ async function processCoverPhoto(
             status: "error",
             errorMessage: "This photo could not be compressed on this device.",
         });
+        toast.message("upload-error", {
+            id: `photo-error-${photoId}`,
+            title: "Photo preparation failed",
+            description: "Choose another cover photo or try again.",
+            action: {
+                label: "Try again",
+                onClick: () => {
+                    if (photoFilesRef.current.has(photoId))
+                        void processCoverPhoto(photoId, file, url, photoFilesRef, patchPhoto);
+                },
+            },
+        });
     }
 }
 
@@ -116,9 +128,9 @@ export async function replaceCoverPhoto({
     patchPhoto: (photoId: string, patch: Partial<DraftPhoto>) => void;
 }): Promise<void> {
     if (!photos.some((photo) => photo.isCover) && photos.length >= MAX_PROPERTY_PHOTOS) {
-        toast.error(
-            `Remove a photo before adding a cover. The limit is ${MAX_PROPERTY_PHOTOS} photos in total.`,
-        );
+        toast.message("photo-limit", {
+            detail: `The limit is ${MAX_PROPERTY_PHOTOS} photos in total, including the cover.`,
+        });
         return;
     }
     const currentCover = photos.find((photo) => photo.isCover) ?? null;

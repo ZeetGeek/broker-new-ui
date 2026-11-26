@@ -11,7 +11,9 @@ All shortcut definitions live in `lib/shortcuts.ts`.
 - `BROKER_SHORTCUTS` is the broker registry.
 - `OWNER_SHORTCUTS` is separate so broker changes cannot silently rewrite the
   owner portal.
-- `useGlobalShortcuts` builds navigation bindings from the registry.
+- `useGlobalShortcuts` binds portal navigation and quick actions from the registry.
+  Quick actions use `workflowHref` to open existing forms through the shared
+  workflow host over the current page.
 - `useShortcut` registers page and form bindings from the registry.
 - `ShortcutsCheatsheet`, menu hints, button badges, and tooltips render from the
   same definitions.
@@ -29,6 +31,12 @@ Never hard-code a product shortcut inside a component.
 
 ### Go to
 
+Press the keys one after another: `G`, then `D` opens Dashboard. Finish typing
+before using a navigation shortcut. If a menu, dropdown, or dialog is open,
+press `Escape` to close it first, then start the shortcut sequence. Nested
+overlays may need more than one `Escape`; forms may ask you to confirm
+discarding unsaved changes.
+
 | Keys  | Destination                          |
 | ----- | ------------------------------------ |
 | `G D` | Dashboard                            |
@@ -45,17 +53,19 @@ Never hard-code a product shortcut inside a component.
 | `G U` | My profile                           |
 | `G F` | Referrals, when enabled              |
 
-### On this page
+### Quick actions
 
-The help sheet shows only actions active on the current page.
+Available from every broker page. Each shortcut opens the existing form over
+the current page; saving or closing it keeps you on that page. Finish typing
+and close any open menu or dialog before starting a quick action.
 
-| Keys  | Action         | Active on              |
-| ----- | -------------- | ---------------------- |
-| `A C` | Add client     | Dashboard, Clients     |
-| `A O` | Add owner      | Clients                |
-| `A L` | Add listing    | Dashboard, My Listings |
-| `A V` | Schedule visit | Dashboard, Visits      |
-| `A T` | Add task       | Dashboard, Tasks       |
+| Keys  | Action         |
+| ----- | -------------- |
+| `A C` | Add client     |
+| `A O` | Add owner      |
+| `A L` | Add listing    |
+| `A V` | Schedule visit |
+| `A T` | Add task       |
 
 ### Forms
 
@@ -69,13 +79,18 @@ direct logout remain button-only because they are consequential.
 
 ## Runtime rules
 
-1. Global and page shortcuts do not fire from inputs, textareas, selects,
+1. Navigation, quick actions, and page shortcuts do not fire from inputs, textareas, selects,
    contenteditable regions, or ARIA textboxes.
 2. Repeated, composing, or already-handled key events are ignored.
 3. An open dialog or alert dialog suspends global and page shortcuts. Only the
    active form's own registered shortcuts and native `Escape` behavior remain.
-4. Route-scoped bindings unsubscribe when their page unmounts.
-5. Page actions use two-key `A …` sequences, so there are no bare character
+   Menus and select dropdowns own letter keys for type-to-select. Keep global
+   listeners in the bubbling phase so they respect these components' keyboard
+   handling. Do not bypass it with a blanket capture listener.
+4. Navigation and quick actions register once in the portal shell. Page and
+   form bindings unsubscribe when their page unmounts; do not register a
+   global quick action a second time on its list or dashboard page.
+5. Create actions use two-key `A …` sequences, so there are no bare character
    shortcuts across a whole page.
 6. Letter bindings use `KeyboardEvent.code` names (`KeyG KeyD`) so the same
    physical shortcut remains stable across keyboard layouts.
@@ -102,4 +117,7 @@ Before adding one:
 - Add its ID to the current-page context list when it is not global.
 - Show the hint on the equivalent button, menu item, or tooltip.
 - Verify typing and dialogs suppress it.
+- Verify menus and select dropdowns retain type-to-select, and a fresh
+  navigation sequence works after closing them with `Escape` (once focus is
+  outside editable fields).
 - Add or update a regression test in `lib/shortcuts.test.ts`.

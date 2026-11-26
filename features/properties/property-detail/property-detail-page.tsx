@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { myListingsApi } from "@/lib/api/my-listings";
 import { representativeApi } from "@/lib/api/representative";
@@ -28,6 +28,7 @@ import { PropertyActionRail } from "@/features/properties/property-detail/proper
 import { PropertyDeleteDialog } from "@/features/properties/property-detail/property-delete-dialog";
 import { PropertyDetailLayout } from "@/features/properties/property-detail/property-detail-layout";
 import { PropertyDetailSkeleton } from "@/features/properties/property-detail/property-detail-skeleton";
+import { showPropertyRemovedToast } from "@/features/properties/property-toast";
 import type { MyListingItem, MyListingStatus } from "@/features/properties/your-listings/types";
 import { useAppSelector } from "@/store/hooks";
 
@@ -64,6 +65,7 @@ function OwnedPropertyDetail({
     portal: "broker" | "owner";
 }) {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const searchParams = useSearchParams();
     const activeTab =
         portal === "broker" && searchParams.get("tab") === "analytics" ? "analytics" : "info";
@@ -105,31 +107,40 @@ function OwnedPropertyDetail({
             const updated = await myListingsApi.setStatus(item.id, nextStatus);
             if (!updated) throw new Error("Couldn't update status");
             setItem(updated);
-            toast.success(
-                nextStatus === "published"
-                    ? "Published. Brokers can now find it."
-                    : "Property unpublished.",
-            );
+            if (nextStatus === "published") {
+                toast.message("property-available", {
+                    title: "Property published",
+                    description:
+                        portal === "owner"
+                            ? "Brokers can discover your listing again."
+                            : "Your listing is published.",
+                });
+            } else toast.success("Property unpublished");
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Couldn't update status");
         } finally {
             setBusy(false);
         }
-    }, [busy, item]);
+    }, [busy, item, portal]);
 
     const handleDelete = useCallback(async () => {
         setBusy(true);
         try {
             await myListingsApi.remove(item.id);
             setIsDeleteOpen(false);
-            toast.success("Moved to Deleted");
+            showPropertyRemovedToast(item.id, () => {
+                void queryClient.invalidateQueries({ queryKey: ["my-listings"] });
+                void queryClient.invalidateQueries({ queryKey: ["my-listings-summary"] });
+                void queryClient.invalidateQueries({ queryKey: ["dashboard-listings"] });
+                router.refresh();
+            });
             router.push(listHref);
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Couldn't remove property");
         } finally {
             setBusy(false);
         }
-    }, [item.id, listHref, router]);
+    }, [item.id, listHref, router, queryClient]);
 
     return (
         <>

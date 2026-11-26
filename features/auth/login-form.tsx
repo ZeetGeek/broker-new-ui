@@ -87,7 +87,7 @@ export function LoginForm() {
                 }),
             ).unwrap();
             setIsRedirecting(true);
-            toast.success("Signed in successfully");
+            toast.message("signed-in");
             const destination = destinationForRole(result.user.role, searchParams.get("next"));
             router.replace(destination);
         } catch (err: unknown) {
@@ -106,10 +106,12 @@ export function LoginForm() {
         setIsResending(true);
         try {
             const res = await authApi.resendVerification(unverifiedEmail);
-            toast.success(
-                res.message ||
+            toast.message("verification-sent", {
+                title: "Verification email requested",
+                description:
+                    res.message ||
                     "If that email is registered and unverified, a verification link has been sent.",
-            );
+            });
         } catch (err: unknown) {
             toast.error(err instanceof ApiError ? err.message : "Could not resend verification");
         } finally {
