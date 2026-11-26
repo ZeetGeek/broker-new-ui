@@ -592,9 +592,6 @@ export function ContactsPage({
                                     <BuyerCard
                                         buyer={buyer}
                                         onOpen={(row) => openContact("buyer", row)}
-                                        onOpenProperties={(row) =>
-                                            openContact("buyer", row, "properties")
-                                        }
                                         onEdit={setEditingBuyer}
                                         onAttachProperties={setAttachingBuyer}
                                         onDelete={setDeletingBuyer}

@@ -148,14 +148,14 @@ export function OwnerCard({
                                 variant="outline"
                                 type="button"
                                 aria-label={
-                                    propertyCount
-                                        ? `View ${propertyCount} linked properties for ${owner.name}`
-                                        : `Link a property to ${owner.name}`
+                                    attach
+                                        ? `Attach a property to ${owner.name}`
+                                        : `View ${propertyCount} linked properties for ${owner.name}`
                                 }
                                 onClick={(event) => {
                                     event.stopPropagation();
-                                    if (propertyCount) (onOpenProperties ?? onOpen)(owner);
-                                    else attach?.();
+                                    if (attach) attach();
+                                    else (onOpenProperties ?? onOpen)(owner);
                                 }}
                                 className="flex-wrap gap-2 border-dashed border-brand/40 p-2 font-semibold whitespace-normal text-brand-text shadow-none block-auto inline-full min-block-11 min-inline-0 hover:border-brand hover:bg-brand-soft/30 hover:text-brand-text @[20rem]/contact-card:px-4"
                             >

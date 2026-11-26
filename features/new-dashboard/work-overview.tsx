@@ -461,7 +461,10 @@ function VisitCard({
             ) : null}
 
             <div className={s.schedule}>
-                <p className={cn(s.time, needsUpdate && s.timeNeedsUpdate)}>
+                <p
+                    className={cn(s.time, needsUpdate && s.timeNeedsUpdate)}
+                    title={visitWhenLabel(visit, now)}
+                >
                     {visitWhenLabel(visit, now)}
                 </p>
                 <div className={s.scheduleMeta}>

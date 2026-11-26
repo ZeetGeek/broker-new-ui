@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, BarStack, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
 
 import {
     formatCommission,
@@ -353,29 +353,27 @@ export function CommissionEarned({ now }: { now: Date }) {
                             <ChartLegend
                                 content={<ChartLegendContent className={styles.legend} />}
                             />
-                            <Bar
-                                dataKey="sale"
-                                stackId="commission"
-                                fill="var(--color-sale)"
-                                radius={[0, 0, 8, 8]}
-                                isAnimationActive={false}
-                            />
-                            <Bar
-                                dataKey="rent"
-                                stackId="commission"
-                                fill="var(--color-rent)"
-                                radius={[8, 8, 0, 0]}
-                                isAnimationActive={false}
-                            >
-                                <LabelList
-                                    dataKey="total"
-                                    position="top"
-                                    offset={12}
-                                    className={styles.barLabel}
-                                    fontSize={12}
-                                    formatter={(value) => formatCommission(Number(value), true)}
+                            <BarStack stackId="commission" radius={8}>
+                                <Bar
+                                    dataKey="sale"
+                                    fill="var(--color-sale)"
+                                    isAnimationActive={false}
                                 />
-                            </Bar>
+                                <Bar
+                                    dataKey="rent"
+                                    fill="var(--color-rent)"
+                                    isAnimationActive={false}
+                                >
+                                    <LabelList
+                                        dataKey="total"
+                                        position="top"
+                                        offset={12}
+                                        className={styles.barLabel}
+                                        fontSize={12}
+                                        formatter={(value) => formatCommission(Number(value), true)}
+                                    />
+                                </Bar>
+                            </BarStack>
                         </BarChart>
                     </ChartContainer>
                 </div>

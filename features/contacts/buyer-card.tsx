@@ -36,14 +36,12 @@ export function BuyerCard({
     onOpen,
     onEdit,
     onAttachProperties,
-    onOpenProperties,
     onDelete,
 }: {
     buyer: BuyerRow;
     onOpen: (buyer: BuyerRow) => void;
     onEdit: (buyer: BuyerRow) => void;
     onAttachProperties: (buyer: BuyerRow) => void;
-    onOpenProperties?: (buyer: BuyerRow) => void;
     onDelete?: (buyer: BuyerRow) => void;
     onViewLeads?: (buyer: BuyerRow) => void;
 }) {
@@ -209,15 +207,10 @@ export function BuyerCard({
                         <Button
                             variant="outline"
                             type="button"
-                            aria-label={
-                                propertyCount
-                                    ? `View ${propertyCount} linked properties for ${buyer.name}`
-                                    : `Link a property to ${buyer.name}`
-                            }
+                            aria-label={`Attach properties to ${buyer.name}`}
                             onClick={(event) => {
                                 event.stopPropagation();
-                                if (propertyCount) (onOpenProperties ?? onOpen)(buyer);
-                                else onAttachProperties(buyer);
+                                onAttachProperties(buyer);
                             }}
                             className="flex-wrap gap-2 border-dashed border-brand/40 p-2 font-semibold whitespace-normal text-brand-text shadow-none block-auto inline-full min-block-11 min-inline-0 hover:border-brand hover:bg-brand-soft/30 hover:text-brand-text @[20rem]/contact-card:px-4"
                         >
