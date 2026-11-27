@@ -148,11 +148,8 @@
     background: var(--color-brand-soft);
     font-size: 0.875rem;
 }
-@media (pointer: coarse) {
+@media (width < 48rem) {
     .period button {
-        min-block-size: 2.75rem;
-    }
-    .timeValue {
-        block-size: 5.5rem;
+        min-block-size: var(--touch-target-min);
     }
 }

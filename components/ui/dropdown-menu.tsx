@@ -106,7 +106,7 @@ function DropdownMenuItem({
                   data-[variant=destructive]:focus:text-danger
                   data-[variant=destructive]:data-highlighted:bg-danger-soft
                   data-[variant=destructive]:data-highlighted:text-danger
-                  pointer-coarse:min-block-11
+                  max-md:min-block-(--touch-target-min)
                   data-disabled:pointer-events-none data-disabled:opacity-50
                   [&_svg]:pointer-events-none [&_svg]:shrink-0
                   data-[variant=destructive]:[&_svg]:text-danger! data-[variant=destructive]:[&_svg_*]:text-danger!
@@ -146,7 +146,7 @@ function DropdownMenuSubTrigger({
                   data-highlighted:text-ink
                   data-inset:ps-9.5
                   data-popup-open:bg-surface-muted
-                  data-popup-open:text-ink pointer-coarse:min-block-11
+                  data-popup-open:text-ink max-md:min-block-(--touch-target-min)
                   data-open:bg-surface-muted data-open:text-ink
                   [&_svg]:pointer-events-none [&_svg]:shrink-0
                   [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
@@ -208,7 +208,7 @@ function DropdownMenuCheckboxItem({
                   focus:**:text-ink data-highlighted:bg-surface-muted
                   data-highlighted:text-ink
                   data-inset:ps-9.5
-                  pointer-coarse:min-block-11
+                  max-md:min-block-(--touch-target-min)
                   data-disabled:pointer-events-none data-disabled:opacity-50
                   [&_svg]:pointer-events-none [&_svg]:shrink-0
                   [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4
@@ -256,7 +256,7 @@ function DropdownMenuRadioItem({
                   focus:**:text-ink data-highlighted:bg-surface-muted
                   data-highlighted:text-ink
                   data-inset:ps-9.5
-                  pointer-coarse:min-block-11
+                  max-md:min-block-(--touch-target-min)
                   data-disabled:pointer-events-none data-disabled:opacity-50
                   [&_svg]:pointer-events-none [&_svg]:shrink-0
                   [&_svg:not([class*='size-'])]:block-4 [&_svg:not([class*='size-'])]:inline-4

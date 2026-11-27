@@ -485,10 +485,12 @@ Only for genuinely repeated layout patterns. Keep this list short.
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
-/* Mobile: users are one-handed on cheap Android phones */
-@utility touch-target {
-    min-height: 44px;
-    min-inline-size: 44px;
+/* Opt in to a full-size action on the phone layout. */
+@media (width < 48rem) {
+    .touch-target {
+        min-block-size: var(--touch-target-min);
+        min-inline-size: var(--touch-target-min);
+    }
 }
 
 @utility safe-bottom {
@@ -496,9 +498,9 @@ Only for genuinely repeated layout patterns. Keep this list short.
 }
 ```
 
-`touch-target` and `safe-bottom` matter more than they look. Every interactive
-element on mobile needs a 44px hit area, and the bottom nav must clear the
-home indicator. Encoding both as utilities means nobody has to remember.
+Use `touch-target` for a full-size phone action and `safe-bottom` to clear the
+home indicator. Secondary controls can use the shared compact sizes with
+enough space between adjacent targets.
 
 ---
 

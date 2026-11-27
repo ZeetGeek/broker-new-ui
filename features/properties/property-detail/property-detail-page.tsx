@@ -168,7 +168,7 @@ function OwnedPropertyDetail({
                             onValueChange={changeTab}
                             label="Property sections"
                             panelId="property-detail-panel"
-                            height="var(--size-control-md)"
+                            height="var(--gallery-control-height, var(--size-control-md))"
                         />
                     ) : undefined
                 }

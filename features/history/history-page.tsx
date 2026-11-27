@@ -208,7 +208,7 @@ export function HistoryPage({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="block-[38px]! pointer-coarse:min-block-11"
+                            className="block-[38px]!"
                             loading={refreshing}
                             onClick={onRefresh}
                         >

@@ -112,7 +112,7 @@ const DEAL_MENU_SURFACE_CLASS = `
 `;
 
 const DEAL_MENU_ITEM_CLASS = `
-  text-sm min-block-10 pointer-coarse:min-block-11 cursor-pointer gap-2.5 rounded-inner px-3 font-medium text-ink
+  text-sm min-block-10 cursor-pointer gap-2.5 rounded-inner px-3 font-medium text-ink
   focus:bg-surface-muted! focus:text-ink!
   data-highlighted:bg-surface-muted! data-highlighted:text-ink!
   not-data-[variant=destructive]:focus:**:text-ink!

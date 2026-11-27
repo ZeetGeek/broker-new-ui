@@ -787,6 +787,7 @@ function TodayVisits({
                     onValueChange={setFilter}
                     label="Filter visits"
                     panelId="visit-list-panel"
+                    revealActiveTab
                     className={cn(taskStyles.tabs, visitStyles.tabs)}
                     tabClassName={visitStyles.tab}
                 />

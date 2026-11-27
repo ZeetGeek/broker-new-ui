@@ -142,7 +142,7 @@ function WorkingAreas({ areas }: { areas: string[] }) {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="inline-full pointer-coarse:min-block-11"
+                                className="touch-target inline-full"
                                 nativeButton={false}
                                 render={<Link href="/broker/profile" />}
                             >

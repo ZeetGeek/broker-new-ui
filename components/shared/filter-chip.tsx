@@ -178,7 +178,7 @@ export function FilterChip({
             type="button"
             className={cn(
                 filterChipClassName(isActive),
-                showClear && "pe-10 pointer-coarse:pe-14",
+                showClear && "pe-10",
                 warning &&
                     !isActive &&
                     "border-pending/20 bg-urgent-soft/70 text-pending shadow-none",

@@ -33,7 +33,7 @@ test("functional secondary text tokens meet 4.5:1 on app light surfaces", () => 
     }
 });
 
-test("cited visit and notes fields have accessible names and phone targets use layout space", () => {
+test("cited visit and notes fields have accessible names", () => {
     const reschedule = source("features/site-visits/broker/panels/reschedule-modal.tsx");
     assert.match(reschedule, /htmlFor=\{timeId\}/);
     assert.match(reschedule, /aria-describedby=/);
@@ -44,8 +44,15 @@ test("cited visit and notes fields have accessible names and phone targets use l
     const contact = source("features/contacts/contact-detail-panel.tsx");
     assert.match(contact, /aria-label="Client notes"/);
     assert.match(contact, /aria-label="Owner notes"/);
+});
+
+test("phone fields and full-size actions reserve tap space by viewport width", () => {
     const css = source("app/globals.css");
-    assert.match(css, /@media \(pointer: coarse\), \(max-width: 767px\)/);
-    assert.match(css, /min-block-size: 44px/);
-    assert.match(css, /min-inline-size: 44px/);
+    const phoneTargets = css.match(/@media \(width < 48rem\) \{\s*\.touch-target,([^}]+)}/)?.[1];
+    assert.ok(phoneTargets);
+    assert.match(css, /--touch-target-min:\s*calc\(2\.75rem \/ var\(--layout-font-scale\)\)/);
+    assert.match(phoneTargets, /\[data-slot="input"\]/);
+    assert.match(phoneTargets, /min-block-size:\s*var\(--touch-target-min\)/);
+    assert.match(phoneTargets, /min-inline-size:\s*var\(--touch-target-min\)/);
+    assert.doesNotMatch(phoneTargets, /\[data-slot="button"\]|\.t-tab\b|\.person-name\b/);
 });

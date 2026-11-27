@@ -43,7 +43,7 @@ import { logout } from "@/store/slices/auth-slice";
 import { resetDashboard } from "@/store/slices/dashboard-slice";
 
 export const portalProfileMenuItemClass = `
-  min-block-10 pointer-coarse:min-block-11 cursor-pointer gap-2.5 rounded-inner px-3 text-sm font-medium text-ink
+  min-block-10 max-md:min-block-(--touch-target-min) cursor-pointer gap-2.5 rounded-inner px-3 text-sm font-medium text-ink
 `;
 
 export const portalProfileMenuSurfaceClass = `

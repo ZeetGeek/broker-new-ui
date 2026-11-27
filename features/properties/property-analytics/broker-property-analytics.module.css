@@ -934,7 +934,7 @@
     }
 }
 
-@media (pointer: coarse) {
+@media (width < 48rem) {
     .report button {
         min-height: var(--touch-target-min);
     }

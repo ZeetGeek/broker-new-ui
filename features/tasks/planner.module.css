@@ -1080,15 +1080,13 @@
         pointer-events: auto;
     }
 }
-@media (pointer: coarse), (max-width: 767px) {
+@media (width < 48rem) {
     .planner {
         --line-height: var(--touch-target-min);
     }
     .dragPreview {
         font-size: 0.8125rem;
     }
-}
-@media (pointer: coarse) {
     @container tasks-page (min-width: 600px) and (max-width: 839px) {
         .planner:has(> .plannerNav > .columnPicker) {
             --planner-header-height: calc(2 * var(--touch-target-min) + 2rem);
@@ -1096,36 +1094,32 @@
     }
 }
 
-/*
- * Dashboard embed: same row as the full planner — check and more menu sit in
- * the gutters outside the ruled line and appear on hover / focus only. The
- * list reserves a full action target on the right so the menu never overlaps
- * the title, including when shared touch-control styles enlarge the button.
- */
+/* The dashboard reserves space on each side of the title for a full tap target. */
 .rowGutters {
-    /* Inherits --dashboard-row-gutter from the dashboard .paper wrapper. */
-    padding-inline: var(--dashboard-row-gutter, 1.375rem) var(--dashboard-action-gutter, 2.75rem);
-}
-/* Check further left, more further right — gutters sized so they don’t clip. */
-.rowGutters .taskLine {
-    --task-action-size: var(--dashboard-action-gutter, 2.75rem);
-    --task-action-gutter: var(--dashboard-action-gutter, 2.75rem);
+    padding-inline: var(--touch-target-min);
 }
 .rowGutters .lineCheck {
-    inset-inline-start: -22px;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    inset-inline-start: calc((var(--touch-target-min) + 1.25rem) / -2);
 }
-.rowGutters .lineAction,
-.rowGutters .restoreAction {
-    inset-inline-end: calc(-1 * var(--dashboard-action-gutter, 2.75rem));
-    inline-size: var(--dashboard-action-gutter, 2.75rem);
-    block-size: var(--dashboard-action-gutter, 2.75rem);
+.rowGutters .lineCheck::after {
+    inset: calc((1.25rem - var(--touch-target-min)) / 2);
 }
-/*
- * The dashboard card is narrower than 600px even on desktop, so the planner's
- * small-container rules force the controls visible. With a real pointer,
- * keep them hover / focus only. Touch devices keep them always visible.
- */
-@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+.rowGutters :is(.lineAction, .restoreAction)[data-icon-button] {
+    --icon-button-size: var(--size-control-xs);
+    inset-inline-end: calc((var(--touch-target-min) + var(--icon-button-size)) / -2);
+    border-radius: 50%;
+    box-shadow: none;
+}
+.rowGutters :is(.lineAction, .restoreAction)::after {
+    content: "";
+    position: absolute;
+    inset: calc((var(--size-control-xs) - var(--touch-target-min)) / 2);
+}
+
+/* Narrow layouts and touch inputs show these actions without a hover. */
+@media (width >= 48rem) and (hover: hover) and (pointer: fine) {
     .rowGutters .lineCheck,
     .rowGutters .lineAction,
     .rowGutters .restoreAction {
@@ -1142,47 +1136,11 @@
     }
 }
 
-/* Phone layouts expose both controls even when DevTools keeps a mouse pointer.
-   Touch and hybrid devices also keep these actions visible at wider widths. */
-@media (max-width: 767px), (hover: none), (pointer: coarse) {
-    .rowGutters {
-        --dashboard-task-target: var(--touch-target-min, max(2.75rem, 44px));
-    }
-
+@media (width < 48rem), (hover: none), (pointer: coarse) {
     .rowGutters .taskLine .lineCheck,
     .rowGutters .taskLine .lineAction,
     .rowGutters .taskLine .restoreAction {
         opacity: 1;
-    }
-
-    .rowGutters .lineCheck {
-        inline-size: 1.25rem;
-        block-size: 1.25rem;
-        inset-inline-start: calc((var(--dashboard-row-gutter, 2.75rem) + 1.25rem) / -2);
-    }
-
-    .rowGutters .lineCheck::after {
-        inset: calc((1.25rem - var(--dashboard-task-target)) / 2);
-    }
-
-    /* Small circular face; the transparent hit area stays phone-sized. */
-    .rowGutters .lineAction[data-icon-button],
-    .rowGutters .restoreAction[data-icon-button] {
-        --icon-button-size: 1.5rem;
-        inline-size: 1.5rem;
-        block-size: 1.5rem;
-        min-inline-size: 1.5rem;
-        min-block-size: 1.5rem;
-        inset-inline-end: calc((var(--dashboard-action-gutter, 1.75rem) + 1.5rem) / -2);
-        border-radius: 50%;
-        box-shadow: none;
-    }
-
-    .rowGutters .lineAction::after,
-    .rowGutters .restoreAction::after {
-        content: "";
-        position: absolute;
-        inset: calc((1.5rem - var(--dashboard-task-target)) / 2);
     }
 }
 @media (prefers-reduced-motion: reduce) {

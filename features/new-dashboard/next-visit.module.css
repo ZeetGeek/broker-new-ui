@@ -32,7 +32,7 @@
 
 .menuTrigger::after {
     position: absolute;
-    inset: -6px;
+    inset: calc((var(--icon-button-size) - var(--touch-target-min)) / 2);
     content: "";
 }
 
@@ -187,6 +187,11 @@
         display: contents;
     }
 
+    .personRole,
+    .personName {
+        line-height: max(1.5em, var(--size-control-xs));
+    }
+
     .person + .person::before {
         content: none;
     }
@@ -200,7 +205,7 @@
 
 .action {
     min-inline-size: 0;
-    min-block-size: 44px;
+    min-block-size: var(--touch-target-min);
 }
 
 .secondaryAction {
@@ -299,7 +304,7 @@
     }
 
     .actions:has(.actionLabel) > :last-child {
-        inline-size: 2.75rem;
+        inline-size: var(--touch-target-min);
         padding-inline: 0;
     }
 

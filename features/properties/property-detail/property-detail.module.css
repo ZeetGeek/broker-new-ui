@@ -338,6 +338,7 @@
     }
 }
 .carouselFooter {
+    --gallery-control-height: var(--size-control-md);
     display: grid;
     grid-template-columns: 1fr minmax(0, 560px) 1fr;
     align-items: center;
@@ -346,14 +347,8 @@
     margin-inline: auto;
     padding-block-start: 20px;
 }
-.carouselFooter:has(.galleryNavigation) {
-    --gallery-control-height: var(--size-control-md);
-}
-.carouselFooter:has(.galleryNavigation) :global([data-icon-button]) {
+.carouselFooter :global([data-icon-button]) {
     --icon-button-size: var(--gallery-control-height);
-}
-.carouselFooter:has(.galleryNavigation) .carouselCounter {
-    block-size: var(--gallery-control-height);
 }
 .carouselControls {
     display: flex;
@@ -371,7 +366,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    block-size: var(--size-control-md);
+    block-size: var(--gallery-control-height);
     min-inline-size: 64px;
     padding-inline: 16px;
     font-size: 14px;
@@ -1403,6 +1398,7 @@
 
 /* Modal variant: keep page-sized controls out of the narrower dialog. */
 .compactCarouselFooter.compactCarouselFooter {
+    --gallery-control-height: var(--size-control-sm);
     inline-size: 100%;
     grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 12px;
@@ -1417,16 +1413,16 @@
     padding-inline: 10px;
     font-size: 12px;
 }
-@media (pointer: coarse) {
-    .carouselFooter:has(.galleryNavigation) {
-        /* Match the tabs' touch target plus their 3px track padding on each side. */
-        --gallery-control-height: calc(max(2.75rem, var(--touch-target-min)) + 6px);
+@media (width < 48rem) {
+    .carouselFooter:not(.compactCarouselFooter),
+    .emptyGalleryNavigation {
+        --gallery-control-height: var(--size-control-xl);
+    }
+    .header .headerActions :global([data-icon-button]) {
+        --icon-button-size: var(--size-control-xl);
     }
     .iconSkeleton {
         min-inline-size: var(--touch-target-min);
-        min-block-size: var(--touch-target-min);
-    }
-    .carouselCounter {
         min-block-size: var(--touch-target-min);
     }
 }

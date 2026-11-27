@@ -133,7 +133,7 @@ export function NotificationsPage() {
                 <Button
                     size="sm"
                     variant="accent"
-                    className="block-[38px]! pointer-coarse:min-block-11"
+                    className="block-[38px]!"
                     disabled={!unreadCount || markingAllRead}
                     loading={markingAllRead}
                     onClick={() => void handleMarkAllRead()}

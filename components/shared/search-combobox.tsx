@@ -266,7 +266,7 @@ export function SearchCombobox(props: SearchComboboxProps) {
                     <ComboboxChips
                         ref={anchor}
                         className={cn(
-                            "has-data-[slot=combobox-chip]:px-3 pointer-coarse:min-block-(--touch-target-min)",
+                            "has-data-[slot=combobox-chip]:px-3",
                             {
                                 xs: "px-2.5 py-0 min-block-control-xs",
                                 sm: "px-3 py-0.5 min-block-control-sm",

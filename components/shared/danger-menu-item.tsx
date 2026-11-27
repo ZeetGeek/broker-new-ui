@@ -22,7 +22,7 @@ export function DangerMenuItem({
             className="
               cursor-pointer rounded-inner bg-danger-soft px-3 text-sm font-medium text-danger!
               min-block-10 focus:bg-danger-soft! focus:text-danger! data-highlighted:bg-danger-soft!
-              data-highlighted:text-danger! pointer-coarse:min-block-11
+              data-highlighted:text-danger!
             "
             onClick={(event) => {
                 event.stopPropagation();

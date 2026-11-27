@@ -131,7 +131,7 @@
     /* Control height — the single source for button/input/select-trigger height.
        Both large steps use 44px; xl also preserves the 44px touch minimum
        under the responsive rem scale. See docs/DESIGN-SYSTEM-SYNC.md before editing. */
-    --size-control-xs: calc(var(--spacing) * 6);
+    --size-control-xs: calc(1.5rem / var(--layout-font-scale, 1));
     --size-control-sm: calc(var(--spacing) * 8);
     --size-control-md: calc(var(--spacing) * 9);
     --size-control-lg: calc(var(--spacing) * 11);
@@ -673,26 +673,12 @@
     color: var(--color-ink);
 }
 
-/* Input capability controls button/tab density; viewport width controls layout.
-   Grow touch targets without enlarging mouse controls at the phone breakpoint. */
-@media (pointer: coarse) {
+/* Phone layouts reserve space for form fields and full-size actions in both input modes. */
+@media (width < 48rem) {
     .touch-target,
-    [data-slot="button"],
-    .t-tab,
-    .t-notif-filter-tab {
-        min-block-size: var(--touch-target-min);
-        min-inline-size: var(--touch-target-min);
-    }
-
-    .t-tabs .t-tabs-pill {
-        min-block-size: var(--touch-target-min);
-    }
-}
-
-/* Fields keep their readable size on narrow screens and touch devices. */
-@media (pointer: coarse), (max-width: 767px) {
     [data-slot="input"],
     [data-slot="select-trigger"],
+    [data-slot="combobox-chips"],
     [data-slot="combobox-input-group"],
     [data-slot="combobox-trigger"] {
         min-block-size: var(--touch-target-min);
@@ -749,14 +735,4 @@
 .person-name[data-person-link]:focus-visible {
     outline: 2px solid currentColor;
     outline-offset: 3px;
-}
-
-@media (pointer: coarse) {
-    .person-name[data-person-link] {
-        display: inline-block;
-        min-block-size: 44px;
-        min-inline-size: 44px;
-        align-content: center;
-        vertical-align: middle;
-    }
 }

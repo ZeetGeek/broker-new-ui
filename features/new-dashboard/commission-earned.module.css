@@ -196,16 +196,6 @@
     block-size: 100%;
 }
 
-@media (pointer: coarse) {
-    .navigation button,
-    .range {
-        min-block-size: 2.75rem;
-    }
-    .navigation button {
-        min-inline-size: 2.75rem;
-    }
-}
-
 .chartViewport {
     min-inline-size: 0;
     max-inline-size: 100%;

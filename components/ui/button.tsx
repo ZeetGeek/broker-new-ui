@@ -8,7 +8,7 @@ import "ldrs/react/Tailspin.css";
 
 const buttonVariants = cva(
     `
-      touch-target group/button inline-flex shrink-0 items-center justify-center rounded-control
+      group/button inline-flex shrink-0 items-center justify-center rounded-control
       border border-transparent bg-clip-padding text-control font-semibold whitespace-nowrap
       transition-all duration-160 ease-out outline-none select-none
       focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30
@@ -63,7 +63,7 @@ const buttonVariants = cva(
             },
             size: {
                 default: `
-                  gap-1.5 px-3 block-control-md inline-auto min-inline-control-md
+                  touch-target gap-1.5 px-3 block-control-md inline-auto min-inline-control-md
                   has-data-[icon=inline-end]:pe-2.5
                   has-data-[icon=inline-start]:ps-2.5
                 `,
@@ -79,7 +79,7 @@ const buttonVariants = cva(
                   has-data-[icon=inline-start]:ps-2
                 `,
                 md: `
-                  gap-1.5 px-4 block-control-lg inline-auto min-inline-control-lg
+                  touch-target gap-1.5 px-4 block-control-lg inline-auto min-inline-control-lg
                   has-data-[icon=inline-end]:pe-3
                   has-data-[icon=inline-start]:ps-3
                 `,
@@ -88,13 +88,13 @@ const buttonVariants = cva(
                   has-data-[icon=inline-end]:pe-4
                   has-data-[icon=inline-start]:ps-4
                 `,
-                icon: `block-control-md inline-control-md`,
+                icon: `touch-target block-control-md inline-control-md`,
                 "icon-xs": `
                   block-control-xs inline-control-xs
                   [&_svg:not([class*='size-'])]:block-3 [&_svg:not([class*='size-'])]:inline-3
                 `,
                 "icon-sm": `block-control-sm inline-control-sm`,
-                "icon-md": `block-control-lg inline-control-lg`,
+                "icon-md": `touch-target block-control-lg inline-control-lg`,
                 "icon-lg": `block-control-xl inline-control-xl`,
             },
         },

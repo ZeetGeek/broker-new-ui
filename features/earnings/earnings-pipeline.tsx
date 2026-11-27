@@ -238,7 +238,7 @@ export function EarningsPipeline({
                                 <li>
                                     <Link
                                         href={BROKER_PIPELINE_HREF}
-                                        className="body-xs inline-flex items-center gap-1.5 rounded-full bg-urgent-soft px-3 py-1.5 font-semibold text-urgent hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring pointer-coarse:min-block-11"
+                                        className="body-xs inline-flex items-center gap-1.5 rounded-full bg-urgent-soft px-3 py-1.5 font-semibold text-urgent min-block-control-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                                     >
                                         <Clock aria-hidden className="block-3.5 inline-3.5" />
                                         {plural(live.stalledCount, "deal")} quiet for 2+ weeks

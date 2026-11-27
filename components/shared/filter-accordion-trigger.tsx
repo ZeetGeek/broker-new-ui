@@ -28,8 +28,8 @@ export function FilterAccordionTrigger({
                     className="
                       flex items-center font-display text-base font-semibold tracking-tight
                       min-block-8
+                      max-md:min-block-(--touch-target-min)
                       sm:text-lg
-                      pointer-coarse:min-block-(--touch-target-min)
                     "
                 >
                     {title}

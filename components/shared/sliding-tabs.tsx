@@ -31,7 +31,7 @@ export type SlidingTabsProps<Value extends string | number> = {
     orientation?: "horizontal" | "vertical";
 };
 
-/** Surface-pill tabs. Phone targets remain at least 44px regardless of height. */
+/** Surface-pill tabs with a caller-selected height across input modes. */
 export function SlidingTabs<Value extends string | number>({
     value,
     options,

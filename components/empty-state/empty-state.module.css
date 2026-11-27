@@ -74,7 +74,7 @@
     white-space: normal;
 }
 
-@media (pointer: coarse) {
+@media (width < 48rem) {
     .actions > :is(button, a) {
         min-block-size: var(--touch-target-min, 2.75rem);
     }

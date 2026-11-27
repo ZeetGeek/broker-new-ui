@@ -364,7 +364,7 @@ function SelectItem({
                   font-medium text-ink outline-hidden transition-[background-color,color]
                   duration-160 ease-[cubic-bezier(0.22,1,0.36,1)]
                   select-none inline-full data-highlighted:bg-surface-muted
-                  data-highlighted:text-ink pointer-coarse:min-block-11
+                  data-highlighted:text-ink max-md:min-block-(--touch-target-min)
                   data-selected:bg-surface-muted
                   data-disabled:pointer-events-none data-disabled:opacity-50
                   [&_svg]:pointer-events-none [&_svg]:shrink-0

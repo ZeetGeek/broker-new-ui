@@ -169,12 +169,6 @@
 .priorityLabel {
     display: none;
 }
-@media (pointer: coarse) {
-    .dateOptions button {
-        min-inline-size: 44px;
-        min-block-size: 44px;
-    }
-}
 .customDate {
     inline-size: 100%;
     margin-block-start: 8px;
@@ -333,20 +327,6 @@
     text-decoration: underline;
     text-underline-offset: 3px;
 }
-@media (pointer: coarse) {
-    .menu :global([data-slot="dropdown-menu-item"]),
-    .menu :global([data-slot="dropdown-menu-sub-trigger"]) {
-        min-block-size: 44px;
-    }
-    .reminderChip:global([data-slot="dropdown-menu-checkbox-item"]) {
-        min-block-size: 44px;
-    }
-}
-@media (pointer: coarse) {
-    .priorities button {
-        min-inline-size: 44px;
-    }
-}
 .remindersSection .customDate {
     margin-block-start: 0;
     padding-inline: 12px;
@@ -386,15 +366,7 @@
 .feedback[data-error="true"] {
     color: var(--color-danger);
 }
-@media (pointer: coarse) {
-    .actions button,
-    .customDate,
-    .reminder,
-    .priorities button {
-        min-block-size: 44px;
-    }
-}
-@media (pointer: coarse), (max-width: 767px) {
+@media (width < 48rem) {
     .menu {
         inline-size: min(20rem, calc(100dvw - 1.5rem));
         max-block-size: min(80dvh, var(--available-height));

@@ -135,7 +135,7 @@
 /* 44px hit area without growing the visible button. */
 .menuTrigger::after {
     position: absolute;
-    inset: -0.375rem;
+    inset: calc((var(--icon-button-size) - var(--touch-target-min)) / 2);
     content: "";
 }
 
@@ -242,6 +242,11 @@
         display: contents;
     }
 
+    .personRole,
+    .personName {
+        line-height: max(1.5em, var(--size-control-xs));
+    }
+
     .person + .person {
         padding-inline-start: 0;
         border-inline-start: 0;
@@ -256,7 +261,7 @@
 
 .action {
     min-inline-size: 0;
-    min-block-size: 2.75rem;
+    min-block-size: var(--touch-target-min);
 }
 
 .action:focus-visible {
@@ -306,32 +311,31 @@
 .tabsBar .tabs {
     margin-block-start: 1rem;
 }
-.tabs .tab {
-    flex-shrink: 0;
-}
 .tab:global(.t-tab[role="tab"]) {
     font-size: 0.75rem;
 }
 
-/* Keep the shared tab height; overflow stays inside a swipeable single row. */
+/* Fit the three visit filters on phones and keep overflow scrollable for larger text. */
 @container task-card (max-width: 22rem) {
     .tabs:global(.t-tabs) {
+        --tabs-control-height: 2rem;
         display: flex;
         inline-size: 100%;
         min-inline-size: 0;
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: none;
-        white-space: nowrap;
     }
 
-    .tabs::-webkit-scrollbar {
-        display: none;
+    .tabs .tab:global(.t-tab[role="tab"]) {
+        flex: 1 1 auto;
+        min-inline-size: min-content;
+        gap: 0.1875rem;
+        padding: 0 0.1875rem;
+        text-align: center;
+        white-space: normal;
     }
 
-    .tab:global(.t-tab[role="tab"]) {
-        flex: 0 0 auto;
-        white-space: nowrap;
+    .tabs [data-slot="tab-count"] {
+        min-inline-size: 1rem;
+        padding-inline: 0.25rem;
     }
 }
 
@@ -405,7 +409,7 @@
     }
 
     .actions:has(.actionLabel) > :last-child {
-        inline-size: 2.75rem;
+        inline-size: var(--touch-target-min);
         padding-inline: 0;
     }
 

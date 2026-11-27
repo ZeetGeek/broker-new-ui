@@ -443,6 +443,8 @@
     white-space: nowrap;
 }
 .moreClients {
+    min-block-size: var(--size-control-xs);
+    min-inline-size: var(--size-control-xs);
     border-radius: 4px;
     color: var(--color-ink);
     font-size: 0.75rem;
@@ -463,11 +465,6 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 0.25rem;
-}
-@media (pointer: coarse) {
-    .moreClients {
-        min-block-size: 44px;
-    }
 }
 .updatedCell {
     font-weight: 600;

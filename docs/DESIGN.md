@@ -55,10 +55,10 @@ breakpoints and the PostCSS conversion baseline unchanged.
 
 Spacing, headings, and rem-sized surfaces scale together. Named body styles retain
 their minimum readable sizes (14px body, 12px small/caption, 16px large body at the
-default browser setting). Shared buttons and tabs retain a 44px minimum on coarse
-pointers; a narrow viewport alone does not enlarge mouse controls. Form fields
-retain a 44px minimum and 16px font size on phones or coarse pointers. These floors also grow with
-the browser's preferred font size; they do not disable user zoom.
+default browser setting). Form fields and full-size actions reserve 44px on phone
+layouts. Compact buttons, inline contact links, and tabs keep their chosen density.
+Choose sizes by viewport and available space so touch and mouse lay out the same
+controls at the same width. Control floors grow with browser text preferences.
 
 ---
 
@@ -456,11 +456,10 @@ tap-target floor, so use it on primary mobile actions. Minimum horizontal
 padding 20px. Label is sentence case, verb first, one to three words, no
 terminal punctuation.
 
-On phone layouts (under 768px) and coarse pointers, shared buttons (including icon
-sizes), filter chips, notification tabs, inputs, and select/combobox triggers have
-an actual 44px minimum block/inline size. The desktop compact size tokens stay
-unchanged. Primary mobile actions still use `lg` (44px). Use layout space for the
-target; do not overlap adjacent controls with enlarged invisible hit areas.
+On phone layouts (under 48rem), standard `Button` sizes and form controls reserve
+44px. Use `lg` for primary actions and `lg` or `xl` for full-size `IconButton`
+actions. The `sm` and `xs` sizes suit secondary toolbar actions and embedded
+controls. Reserve enough space for each action to have its own tap area.
 
 **Loading state** uses the `loading` prop on `components/ui/button.tsx`. The spinner is
 `Tailspin` from `ldrs/react` (`import { Tailspin } from 'ldrs/react'`), `size="16"
@@ -795,7 +794,9 @@ desktop, they do not replace affordance.
 Surface-pill controls share `SlidingTabs` from
 `components/shared/sliding-tabs.tsx`. Pass `height` for the full bar height
 (default 36 design pixels), optional option `count`s, and `stretch` when needed.
-The Tabs catalog demonstrates the common component at 36, 44, and 52px.
+The Tabs catalog demonstrates the common component at 36, 44, and 52px. Use a
+taller bar where tabs are the primary navigation. For compact filters, keep
+labels and counts reachable at narrow widths and larger text settings.
 
 base-ui Tabs, wrapped once in `components/ui/tabs.tsx`. Peer views and section
 chrome â€” not binary form choices (those are `TextSegmentedToggle` /

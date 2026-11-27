@@ -1,5 +1,8 @@
 .tabs {
-    --tabs-control-height: max(1.25rem, calc(var(--tabs-height, 2.25rem) - 0.375rem));
+    --tabs-control-height: max(
+        var(--size-control-xs),
+        calc(var(--tabs-height, 2.25rem) - 0.375rem)
+    );
     max-inline-size: 100%;
     overflow-x: auto;
     white-space: nowrap;
@@ -14,6 +17,7 @@
 }
 .tab:global(.t-tab[role="tab"]) {
     flex-shrink: 0;
+    min-inline-size: var(--size-control-xs);
     gap: 0.375rem;
     font-size: 0.75rem;
     font-weight: 600;
@@ -35,9 +39,4 @@
 .tab[aria-selected="true"] .count {
     background: var(--color-surface-muted);
     color: var(--color-ink);
-}
-@media (pointer: coarse) {
-    .tabs {
-        --tabs-control-height: max(2.75rem, calc(var(--tabs-height, 2.25rem) - 0.375rem));
-    }
 }

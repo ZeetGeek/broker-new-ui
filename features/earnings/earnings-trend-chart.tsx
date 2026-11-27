@@ -384,34 +384,36 @@ export function EarningsTrendChart({
                 )}
             </div>
 
-            <table className="sr-only">
-                <caption>
-                    {isMoney ? "Estimated commission" : "Deals sold and lost"} by {unitWord}
-                </caption>
-                <thead>
-                    <tr>
-                        <th scope="col">Period</th>
-                        <th scope="col">Sale commission</th>
-                        <th scope="col">Rent commission</th>
-                        <th scope="col">Sold</th>
-                        <th scope="col">Lost</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {buckets.map((b) => (
-                        <tr key={b.key}>
-                            <th scope="row">
-                                {b.longLabel}
-                                {b.isToDate ? " (so far)" : ""}
-                            </th>
-                            <td>{formatCommission(b.saleInr)}</td>
-                            <td>{formatCommission(b.rentInr)}</td>
-                            <td>{b.closed}</td>
-                            <td>{b.lost}</td>
+            <div className="sr-only">
+                <table>
+                    <caption>
+                        {isMoney ? "Estimated commission" : "Deals sold and lost"} by {unitWord}
+                    </caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Period</th>
+                            <th scope="col">Sale commission</th>
+                            <th scope="col">Rent commission</th>
+                            <th scope="col">Sold</th>
+                            <th scope="col">Lost</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {buckets.map((b) => (
+                            <tr key={b.key}>
+                                <th scope="row">
+                                    {b.longLabel}
+                                    {b.isToDate ? " (so far)" : ""}
+                                </th>
+                                <td>{formatCommission(b.saleInr)}</td>
+                                <td>{formatCommission(b.rentInr)}</td>
+                                <td>{b.closed}</td>
+                                <td>{b.lost}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </EarningsCard>
     );
 }

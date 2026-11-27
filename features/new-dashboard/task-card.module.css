@@ -178,35 +178,11 @@
 
 /* Embed the shared planner paper list inside the dashboard card. */
 .paper {
-    --line-height: 40px;
-    /*
-      Shared with planner .rowGutters to reserve space around the colored bars.
-      Start (check) and end (row action) gutters are equal so the list sits
-      centred in the card. Touch reserves the actual minimum target size.
-    */
-    --dashboard-row-gutter: var(--touch-target-min, 2.75rem);
-    --dashboard-action-gutter: var(--touch-target-min, 2.75rem);
+    --line-height: var(--touch-target-min);
     background: transparent;
     border-radius: 0;
 }
 
-/*
-  Mouse / trackpad: actions only show on hover, so both columns shrink to the
-  check's original 22px — tight and equal on each side.
-*/
-@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
-    .paper {
-        --dashboard-row-gutter: 1.375rem;
-        --dashboard-action-gutter: 1.375rem;
-    }
-}
-
-@media (max-width: 767px), (hover: none), (pointer: coarse) {
-    .paper {
-        --dashboard-row-gutter: 2.25rem;
-        --dashboard-action-gutter: 2.25rem;
-    }
-}
 .dayColumnFlush {
     padding-inline: 0;
 }
@@ -273,9 +249,9 @@
     justify-content: space-between;
     gap: 0.75rem;
 }
-/* Higher specificity than planner .dayHeading so the shared gutter wins. */
+/* Use the card width for dates. The action gutters belong to task rows. */
 .paper .dayNav {
-    padding: 0.625rem var(--dashboard-action-gutter) 0.5rem var(--dashboard-row-gutter);
+    padding: 0.625rem 0.5rem 0.5rem;
 }
 .dayNavLabel {
     flex-shrink: 0;
@@ -313,23 +289,6 @@
         gap: 0;
     }
 }
-@media (pointer: coarse) {
-    /* The date/nav use the full card width; task action gutters belong to rows. */
-    .paper .dayNav {
-        padding-inline: 0.5rem;
-    }
-
-    /* A one-line task must still leave room for its always-visible action. */
-    .paper .dayColumnFlush {
-        --line-height: var(--touch-target-min, 2.75rem);
-    }
-
-    .dayNavButtons :global(button) {
-        min-inline-size: var(--touch-target-min, 2.75rem);
-        min-block-size: var(--touch-target-min, 2.75rem);
-    }
-}
-
 /* Empty messages grow with shared-height cards and stay natural when stacked. */
 .fixedCard[data-empty="true"] .scrollViewport,
 .fixedCard[data-empty="true"] .list,

@@ -368,7 +368,7 @@
     }
 }
 
-@media (pointer: coarse), (max-width: 767px) {
+@media (width < 48rem) {
     .root {
         --qa-line: max(var(--line-height, 2.5rem), var(--touch-target-min));
     }

@@ -14,10 +14,7 @@
 .button[data-icon-size="md"] {
     --icon-button-size: var(--size-control-md);
 }
-.button[data-icon-size="lg"] {
-    --icon-button-size: var(--size-control-lg);
-}
-.button[data-icon-size="xl"] {
+.button:is([data-icon-size="lg"], [data-icon-size="xl"]) {
     --icon-button-size: var(--size-control-xl);
 }
 
@@ -77,13 +74,6 @@
         border-color var(--icon-button-duration) ease-out,
         box-shadow var(--icon-button-duration) ease-out,
         transform var(--icon-button-duration) ease-out;
-}
-
-@media (pointer: coarse) {
-    .button.button {
-        min-inline-size: var(--touch-target-min, 44px);
-        min-block-size: var(--touch-target-min, 44px);
-    }
 }
 
 .button.button:hover:not(:disabled):not([aria-disabled="true"]),
