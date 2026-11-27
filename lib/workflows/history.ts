@@ -110,6 +110,14 @@ export function createWorkflowHistory(
                 if (!dialogs.size) scheduleRelease();
             };
         },
+        /** Let route navigation replace the final dialog's same-URL Back stop. */
+        takeNavigationEntry() {
+            if (dialogs.size !== 1 || environment.url() !== openedUrl || !ownsCurrent())
+                return false;
+            stripCurrentMarker();
+            armed = false;
+            return true;
+        },
         start() {
             if (stopTimer !== null) environment.cancel(stopTimer);
             stopTimer = null;

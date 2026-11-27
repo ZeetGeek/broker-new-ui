@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 import { Info } from "@/components/shared/icons";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 
 export type CardLabelProps = {
     children: ReactNode;
@@ -38,8 +38,8 @@ export function CardLabel({ children, className, tone = "light", info }: CardLab
             />
             <span className="min-inline-0">{children}</span>
             {info ? (
-                <Tooltip>
-                    <TooltipTrigger
+                <InfoTip>
+                    <InfoTipTrigger
                         render={
                             <button
                                 type="button"
@@ -63,10 +63,10 @@ export function CardLabel({ children, className, tone = "light", info }: CardLab
                             </button>
                         }
                     />
-                    <TooltipContent side="right" align="center" className="text-pretty">
+                    <InfoTipContent side="right" align="center" className="text-pretty">
                         {info}
-                    </TooltipContent>
-                </Tooltip>
+                    </InfoTipContent>
+                </InfoTip>
             ) : null}
         </div>
     );

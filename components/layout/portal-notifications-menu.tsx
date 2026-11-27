@@ -182,36 +182,45 @@ function NotificationsHeader({
     onClearAll: () => void;
     onTabChange: (tab: NotificationTab) => void;
 }) {
+    const hasActions = unreadCount > 0 || hasItems;
+    // On mobile the drawer shows the title, so this row only exists for the
+    // "N new" count and actions. When both are gone, drop it instead of
+    // leaving an empty strip above the tabs.
+    const showTopRow = !hideTitle || hasActions;
+
     return (
         <div className="flex shrink-0 flex-col gap-3 px-4 pbs-4 pbe-3">
-            <div className="flex items-center justify-between gap-3 min-block-8">
-                <div className="flex items-baseline gap-2">
-                    <h2 className={hideTitle ? "sr-only" : "h6 text-ink"}>Notifications</h2>
-                    {unreadCount > 0 ? (
-                        <span className="tabular body-xs font-semibold text-brand-text">
-                            {unreadCount} new
-                        </span>
-                    ) : null}
-                </div>
-                {unreadCount > 0 || hasItems ? (
-                    <div className="flex items-center gap-2">
+            {hideTitle && !showTopRow ? <h2 className="sr-only">Notifications</h2> : null}
+            {showTopRow ? (
+                <div className="flex items-center justify-between gap-3 min-block-8">
+                    <div className="flex items-baseline gap-2">
+                        <h2 className={hideTitle ? "sr-only" : "h6 text-ink"}>Notifications</h2>
                         {unreadCount > 0 ? (
-                            <HeaderAction
-                                label="Mark all read"
-                                tone="neutral"
-                                onClick={onMarkAllRead}
-                            >
-                                <CheckCheck aria-hidden className="block-4 inline-4" />
-                            </HeaderAction>
-                        ) : null}
-                        {hasItems ? (
-                            <HeaderAction label="Clear all" tone="danger" onClick={onClearAll}>
-                                <Trash2 aria-hidden className="block-4 inline-4" />
-                            </HeaderAction>
+                            <span className="tabular body-xs font-semibold text-brand-text">
+                                {unreadCount} new
+                            </span>
                         ) : null}
                     </div>
-                ) : null}
-            </div>
+                    {hasActions ? (
+                        <div className="flex items-center gap-2">
+                            {unreadCount > 0 ? (
+                                <HeaderAction
+                                    label="Mark all read"
+                                    tone="neutral"
+                                    onClick={onMarkAllRead}
+                                >
+                                    <CheckCheck aria-hidden className="block-4 inline-4" />
+                                </HeaderAction>
+                            ) : null}
+                            {hasItems ? (
+                                <HeaderAction label="Clear all" tone="danger" onClick={onClearAll}>
+                                    <Trash2 aria-hidden className="block-4 inline-4" />
+                                </HeaderAction>
+                            ) : null}
+                        </div>
+                    ) : null}
+                </div>
+            ) : null}
             <SlidingTabs
                 value={activeTab}
                 onValueChange={onTabChange}

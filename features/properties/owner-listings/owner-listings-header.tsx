@@ -79,7 +79,7 @@ export function OwnerListingsHeader({
 
     return (
         <>
-            <div className="sticky inset-bs-0 z-10 flex flex-col gap-6">
+            <div className="relative z-10 flex flex-col gap-6">
                 <OwnerListingsSearchBand
                     appliedFilters={filters}
                     listings={listings}

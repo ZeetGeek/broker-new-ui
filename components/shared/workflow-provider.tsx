@@ -25,7 +25,7 @@ export function WorkflowProvider({
     const pathname = usePathname();
     const accountId = useAppSelector((state) => state.auth.user?.id);
     const location = `${accountId}:${pathname}`;
-    const registerDismiss = useWorkflowHistory(location);
+    const { register: registerDismiss, takeNavigationEntry } = useWorkflowHistory(location);
     const [route, setRoute] = useState(location);
     const [selection, setSelection] = useState<WorkflowSelection | null>(null);
     const opener = useRef<HTMLElement | null>(null);
@@ -67,7 +67,9 @@ export function WorkflowProvider({
         });
     }, []);
     return (
-        <WorkflowContext value={{ open, selection, close, setWorking, registerDismiss }}>
+        <WorkflowContext
+            value={{ open, selection, close, setWorking, registerDismiss, takeNavigationEntry }}
+        >
             {children}
         </WorkflowContext>
     );

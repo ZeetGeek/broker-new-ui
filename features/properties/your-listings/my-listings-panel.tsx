@@ -59,8 +59,8 @@ export function MyListingsPanel({ portal = "broker" }: { portal?: "broker" | "ow
             if (!userId) return;
             try {
                 setPinnedIds((ids) => togglePinnedProperty(ids, listing.id));
-                toast.success(
-                    pinnedIds.includes(listing.id) ? "Property unpinned" : "Property pinned to top",
+                toast.message(
+                    pinnedIds.includes(listing.id) ? "property-unpinned" : "property-pinned",
                 );
             } catch {
                 toast.error("Could not save your pin. Please try again.");

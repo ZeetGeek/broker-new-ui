@@ -6,6 +6,7 @@ import { formatPersonName } from "@/lib/format/person-name";
 import { cn } from "@/lib/utils";
 
 import { CircleCheck, MapPin, Phone } from "@/components/shared/icons";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -167,8 +168,8 @@ function NowMarker({
 }) {
     return (
         <li ref={markerRef} className="flex items-center gap-3 py-1" aria-label={`Now, ${label}`}>
-            <Tooltip>
-                <TooltipTrigger
+            <InfoTip>
+                <InfoTipTrigger
                     render={
                         <button
                             type="button"
@@ -182,11 +183,11 @@ function NowMarker({
                         </button>
                     }
                 />
-                <TooltipContent side="top" align="center" className="text-pretty max-inline-64">
+                <InfoTipContent side="top" align="center" className="text-pretty max-inline-64">
                     The current time. Anything above this line has already passed; anything below is
                     still ahead of you today.
-                </TooltipContent>
-            </Tooltip>
+                </InfoTipContent>
+            </InfoTip>
             <span className="flex-1 bg-urgent/70 block-px min-inline-0" aria-hidden />
         </li>
     );

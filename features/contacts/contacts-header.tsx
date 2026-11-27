@@ -66,7 +66,7 @@ export function ContactsHeader({
     };
 
     return (
-        <div className="sticky inset-bs-0 z-10 bg-canvas">
+        <div className="relative z-10">
             <TooltipProvider>
                 <ResponsiveListToolbar
                     selection={

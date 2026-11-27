@@ -10,6 +10,7 @@ export const WorkflowContext = createContext<{
     close: () => void;
     setWorking: (working: boolean | null) => void;
     registerDismiss: (handler: () => void) => () => void;
+    takeNavigationEntry: () => boolean;
 } | null>(null);
 export const useWorkflow = () => useContext(WorkflowContext)?.open ?? null;
 export const useWorkflowState = () => useContext(WorkflowContext);

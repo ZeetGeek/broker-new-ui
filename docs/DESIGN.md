@@ -789,6 +789,21 @@ hints use `ShortcutTooltip` from `components/shared/shortcut-tooltip.tsx` (or
 `docs/SHORTCUTS.md`. Prefer a visible label on mobile â€” tooltips assist
 desktop, they do not replace affordance.
 
+**Touch: Tooltip vs InfoTip.** Base UI tooltips never open on touch. Pick by
+what the trigger does on click:
+
+| Trigger                                                          | Use                                          | Phone behaviour                        |
+| ---------------------------------------------------------------- | -------------------------------------------- | -------------------------------------- |
+| Button, link, chip, menu, toggle — anything that acts on click   | `Tooltip`                                    | No tip; the tap runs the action        |
+| Sits inside a clickable card / row (the tap belongs to the card) | `Tooltip`                                    | No tip; the tap opens the card         |
+| Does nothing on click — price, avatar, badge, status, info icon  | `InfoTip` (`components/shared/info-tip.tsx`) | Tap opens; tap outside / Escape closes |
+| Disabled button whose tip explains why                           | `InfoTip` on a wrapper `span`                | Tap opens the reason                   |
+
+`InfoTip` looks and times exactly like `Tooltip` (hover on desktop), is built
+on Base UI Popover, and stops the tap reaching a parent card. Never put it on
+a trigger that already acts on click — a tap there must run the action, not
+open a hint.
+
 ### 4.15 Tabs
 
 Surface-pill controls share `SlidingTabs` from

@@ -6,6 +6,7 @@ import { EmptyStateAction } from "@/components/empty-state";
 import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Check, Clock, Search, Send, X } from "@/components/shared/icons";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyTitleLink } from "@/components/shared/property-title-link";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
@@ -220,8 +221,8 @@ export function RequestsCard({ data, className }: RequestsCardProps) {
                 <CardLabel info={REQUESTS_INFO}>
                     <span id="requests-card-heading">Requests & Invitations</span>
                 </CardLabel>
-                <Tooltip>
-                    <TooltipTrigger
+                <InfoTip>
+                    <InfoTipTrigger
                         render={
                             <button
                                 type="button"
@@ -235,14 +236,14 @@ export function RequestsCard({ data, className }: RequestsCardProps) {
                             </button>
                         }
                     />
-                    <TooltipContent
+                    <InfoTipContent
                         side="bottom"
                         align="center"
                         className="text-pretty max-inline-64"
                     >
                         {quotaHint}
-                    </TooltipContent>
-                </Tooltip>
+                    </InfoTipContent>
+                </InfoTip>
             </div>
 
             <MetricStrip label="Request status counts">

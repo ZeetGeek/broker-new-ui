@@ -752,6 +752,9 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 if (deal) openOfferRecord(deal);
             },
             onPin: (dealId) => {
+                toast.message(
+                    pinnedDealIds.includes(dealId) ? "property-unpinned" : "property-pinned",
+                );
                 setPrefs((prev) => ({
                     ...prev,
                     pinnedDealIds: prev.pinnedDealIds.includes(dealId)
@@ -765,7 +768,7 @@ export function PipelinePage({ initialLeadId }: { initialLeadId?: string }) {
                 setNoteDealId(dealId);
             },
         }),
-        [openLeadView, requestMove, setPrefs, stageGate, deals, openOfferRecord],
+        [openLeadView, requestMove, setPrefs, stageGate, deals, openOfferRecord, pinnedDealIds],
     );
 
     const handlePatch = useCallback(

@@ -79,11 +79,6 @@
 }
 
 .viewport {
-    --app-toast-bottom: max(1.5rem, env(safe-area-inset-bottom));
-}
-
-@media (max-width: 767px) {
-    .viewport {
-        --app-toast-bottom: calc(5.5rem + env(safe-area-inset-bottom));
-    }
+    /* Top-anchored stack: enter from above, so flip the shared slide distance. */
+    --toast-distance: -16px;
 }

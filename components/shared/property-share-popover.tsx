@@ -19,6 +19,7 @@ import { useMobileMenu } from "@/hooks/use-mobile-menu";
 import toast from "@/components/shared/app-toast";
 import { IconButton } from "@/components/shared/icon-button";
 import { Check, Link2, Share2 } from "@/components/shared/icons";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 import {
     mobileActionClass,
     MobileActionDrawer,
@@ -217,8 +218,11 @@ export function PropertySharePopover({
     if (disabled) {
         // A disabled button fires no pointer events, so the span carries the tooltip.
         return (
-            <Tooltip>
-                <TooltipTrigger render={<span className="inline-flex" tabIndex={0} />}>
+            <InfoTip>
+                <InfoTipTrigger
+                    nativeButton={false}
+                    render={<span className="inline-flex" tabIndex={0} />}
+                >
                     <ActionButton
                         type="button"
                         {...(!iconOnly ? { variant: "link" as const } : {})}
@@ -234,9 +238,9 @@ export function PropertySharePopover({
                         />
                         {iconOnly ? null : "Share"}
                     </ActionButton>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">{disabledReason}</TooltipContent>
-            </Tooltip>
+                </InfoTipTrigger>
+                <InfoTipContent side="bottom">{disabledReason}</InfoTipContent>
+            </InfoTip>
         );
     }
 

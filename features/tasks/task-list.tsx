@@ -8,6 +8,7 @@ import { useMobileMenu } from "@/hooks/use-mobile-menu";
 import { CardLink } from "@/components/shared/card-link";
 import { IconButton } from "@/components/shared/icon-button";
 import { AlertCircle, Calendar, MoreHorizontal, RotateCcw } from "@/components/shared/icons";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 import {
     mobileActionClass,
     MobileActionDrawer,
@@ -20,7 +21,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import {
     sortTasks,
@@ -181,13 +181,16 @@ export function TaskLine({
                 )}
             </button>
             {overdue && (
-                <Tooltip>
-                    <TooltipTrigger render={<span className={styles.overdueMark} tabIndex={0} />}>
+                <InfoTip>
+                    <InfoTipTrigger
+                        nativeButton={false}
+                        render={<span className={styles.overdueMark} tabIndex={0} />}
+                    >
                         <AlertCircle aria-hidden size={16} />
                         <span className="sr-only">Overdue</span>
-                    </TooltipTrigger>
-                    <TooltipContent>Overdue — complete or reschedule this task</TooltipContent>
-                </Tooltip>
+                    </InfoTipTrigger>
+                    <InfoTipContent>Overdue — complete or reschedule this task</InfoTipContent>
+                </InfoTip>
             )}
             {task.deletedAt ? (
                 mobile ? (

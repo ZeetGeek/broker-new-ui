@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { cn } from "@/lib/utils";
+
 import { ProgressiveBlur } from "@/components/motion-primitives/progressive-blur";
 import {
     Building2,
@@ -13,7 +15,7 @@ import {
     UserPlus,
 } from "@/components/shared/icons";
 import { Logo } from "@/components/shared/logo";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 import { APP_NAME } from "@/config";
 
@@ -75,22 +77,27 @@ export function HomeHero() {
 
             <header
                 className="
-                  absolute inset-x-0 inset-bs-0 z-10 flex items-center justify-between p-4
+                  absolute inset-x-0 inset-bs-0 z-20 flex items-center justify-between p-4
                   md:p-6
                 "
             >
                 <Logo variant="accent" />
                 <nav aria-label="Account" className="flex items-center gap-2">
-                    <Button
-                        variant="link"
-                        className="text-canvas hover:text-canvas"
-                        render={<Link href="/login" />}
+                    <Link
+                        href="/login"
+                        className={cn(
+                            buttonVariants({ variant: "link" }),
+                            "text-canvas hover:text-canvas",
+                        )}
                     >
                         Log in
-                    </Button>
-                    <Button variant="highlight" render={<Link href={BROKER_SIGNUP_HREF} />}>
+                    </Link>
+                    <Link
+                        href={BROKER_SIGNUP_HREF}
+                        className={buttonVariants({ variant: "highlight" })}
+                    >
                         Get started
-                    </Button>
+                    </Link>
                 </nav>
             </header>
 
@@ -127,15 +134,13 @@ export function HomeHero() {
                           sm:flex-row sm:inline-auto
                         "
                     >
-                        <Button
-                            size="lg"
-                            variant="highlight"
-                            nativeButton={false}
-                            render={<Link href={HERO_COPY.primary.href} />}
+                        <Link
+                            href={HERO_COPY.primary.href}
+                            className={buttonVariants({ size: "lg", variant: "highlight" })}
                         >
                             <UserPlus aria-hidden="true" data-icon="inline-end" />
                             {HERO_COPY.primary.label}
-                        </Button>
+                        </Link>
                     </div>
 
                     <ul

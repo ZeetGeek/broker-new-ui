@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { EmptyStateAction } from "@/components/empty-state";
 import { EmptyState } from "@/components/shared/empty-state";
 import { CalendarDays } from "@/components/shared/icons";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 
 import { CardLabel } from "./card-label";
 import { DASHBOARD_CARD_SHELL, DASHBOARD_CARD_SHELL_EMPTY } from "./card-shell";
@@ -118,8 +118,8 @@ export function TodayCard({ agenda, now, className, portal = "broker" }: TodayCa
                         <time dateTime={dateIso}>{dateLabel}</time>
                     </span>
                 </CardLabel>
-                <Tooltip>
-                    <TooltipTrigger
+                <InfoTip>
+                    <InfoTipTrigger
                         render={
                             <button
                                 type="button"
@@ -138,10 +138,10 @@ export function TodayCard({ agenda, now, className, portal = "broker" }: TodayCa
                             </button>
                         }
                     />
-                    <TooltipContent side="top" align="center" className="text-pretty max-inline-64">
+                    <InfoTipContent side="top" align="center" className="text-pretty max-inline-64">
                         {`${agenda.doneCount} of ${agenda.doneCount + agenda.remainingCount} items today are done. ${agenda.remainingCount} still to go.`}
-                    </TooltipContent>
-                </Tooltip>
+                    </InfoTipContent>
+                </InfoTip>
             </div>
 
             <div className="relative mbs-2 flex-1 min-block-0">

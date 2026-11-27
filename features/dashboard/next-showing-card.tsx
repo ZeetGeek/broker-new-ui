@@ -16,6 +16,7 @@ import {
     Phone,
     User,
 } from "@/components/shared/icons";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 import { MarketCurrencyIcon } from "@/components/shared/market-currency-icon";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
@@ -137,8 +138,8 @@ function StatusBadge({
     const { label, hint, color } = statusBadgeContent(status, isStartingSoon, isPast, portal);
 
     return (
-        <Tooltip>
-            <TooltipTrigger
+        <InfoTip>
+            <InfoTipTrigger
                 render={
                     <button
                         type="button"
@@ -152,10 +153,10 @@ function StatusBadge({
                     </button>
                 }
             />
-            <TooltipContent side="bottom" align="center" className="text-pretty max-inline-64">
+            <InfoTipContent side="bottom" align="center" className="text-pretty max-inline-64">
                 {hint}
-            </TooltipContent>
-        </Tooltip>
+            </InfoTipContent>
+        </InfoTip>
     );
 }
 

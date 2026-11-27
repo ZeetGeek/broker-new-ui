@@ -38,7 +38,7 @@ function subscribeToMinute(onStoreChange: () => void) {
     return () => window.clearInterval(id);
 }
 
-function useDayPartGreeting() {
+export function useDayPartGreeting() {
     return useSyncExternalStore(
         subscribeToMinute,
         () => dayPartGreeting(Date.now()),
@@ -64,34 +64,33 @@ export function PortalMobileAppBar({
               md:hidden
             "
         >
-            <div className="flex items-center gap-3 min-inline-0">
-                {profileMenu}
-                <Link
-                    href={identity.profileHref}
-                    className="
-                  flex items-center gap-3 rounded-inner pe-1 min-inline-0
-                  focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none
-                "
-                    aria-label={`Profile for ${identity.name}`}
-                >
-                    {!profileMenu ? (
+            <div className="flex flex-1 items-center gap-3 min-inline-0">
+                {profileMenu ?? (
+                    <Link
+                        href={identity.profileHref}
+                        className="
+                      flex items-center gap-3 rounded-inner pe-1 min-inline-0
+                      focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none
+                    "
+                        aria-label={`Profile for ${identity.name}`}
+                    >
                         <UserAvatar
                             name={identity.name}
                             imageUrl={identity.avatarUrl}
                             size="md"
                             className="shrink-0"
                         />
-                    ) : null}
 
-                    <span className="flex flex-col gap-0.5 text-start min-inline-0">
-                        <span className="body-xs truncate leading-tight font-medium text-ink-muted">
-                            {greeting}
+                        <span className="flex flex-col gap-0.5 text-start min-inline-0">
+                            <span className="body-xs truncate leading-tight font-medium text-ink-muted">
+                                {greeting}
+                            </span>
+                            <span className="body truncate leading-tight font-semibold text-ink">
+                                {identity.name}
+                            </span>
                         </span>
-                        <span className="body truncate leading-tight font-semibold text-ink">
-                            {identity.name}
-                        </span>
-                    </span>
-                </Link>
+                    </Link>
+                )}
             </div>
 
             <PortalNotificationsMenu

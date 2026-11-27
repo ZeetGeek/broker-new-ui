@@ -3,8 +3,8 @@
 import { type ReactNode, useMemo, useState } from "react";
 
 import { TextLoop } from "@/components/motion-primitives/text-loop";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 import { Badge, type BadgeColor } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import type { OwnerRequestsSummary, OwnerRequestsTab } from "@/features/owner-requests/types";
 
@@ -101,16 +101,17 @@ function StatusBadge({
     if (count <= 0) return null;
 
     return (
-        <Tooltip>
-            <TooltipTrigger
+        <InfoTip>
+            <InfoTipTrigger
+                nativeButton={false}
                 render={
                     <Badge color={color} className="cursor-help">
                         {label} · {count}
                     </Badge>
                 }
             />
-            <TooltipContent side="bottom">{hint}</TooltipContent>
-        </Tooltip>
+            <InfoTipContent side="bottom">{hint}</InfoTipContent>
+        </InfoTip>
     );
 }
 
@@ -158,30 +159,28 @@ export function OwnerRequestsIntro({
     );
 
     return (
-        <TooltipProvider>
-            <div className="flex flex-wrap items-center justify-between gap-3 text-start">
-                <h1 className="h3 min-inline-0">
-                    <span className="text-ink">Broker requests</span>
-                    <span className="text-ink">.</span>{" "}
-                    <span
-                        aria-live="polite"
-                        aria-atomic="true"
-                        className="text-ink-muted"
-                        onMouseEnter={() => setIsPaused(true)}
-                        onMouseLeave={() => setIsPaused(false)}
-                    >
-                        <TextLoop interval={SUMMARY_LOOP_INTERVAL_S} trigger={!isPaused}>
-                            {lines.map((line, index) => (
-                                <span key={index}>{line}</span>
-                            ))}
-                        </TextLoop>
-                    </span>
-                </h1>
+        <div className="flex flex-wrap items-center justify-between gap-3 text-start">
+            <h1 className="h3 min-inline-0">
+                <span className="text-ink">Broker requests</span>
+                <span className="text-ink">.</span>{" "}
+                <span
+                    aria-live="polite"
+                    aria-atomic="true"
+                    className="text-ink-muted"
+                    onMouseEnter={() => setIsPaused(true)}
+                    onMouseLeave={() => setIsPaused(false)}
+                >
+                    <TextLoop interval={SUMMARY_LOOP_INTERVAL_S} trigger={!isPaused}>
+                        {lines.map((line, index) => (
+                            <span key={index}>{line}</span>
+                        ))}
+                    </TextLoop>
+                </span>
+            </h1>
 
-                {activeTab === "requests" || activeTab === "invitations" ? (
-                    <RequestsStatusMeta summary={summary} />
-                ) : null}
-            </div>
-        </TooltipProvider>
+            {activeTab === "requests" || activeTab === "invitations" ? (
+                <RequestsStatusMeta summary={summary} />
+            ) : null}
+        </div>
     );
 }

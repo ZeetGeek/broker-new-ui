@@ -253,12 +253,12 @@ export function AppToaster({ toasterId = APP_TOASTER_ID }: { toasterId?: string 
     return (
         <Toaster
             toasterId={toasterId}
-            position="bottom-center"
+            position="top-center"
             gutter={12}
             containerClassName={styles.viewport}
             containerStyle={{
                 top: "max(1rem, env(safe-area-inset-top))",
-                bottom: "var(--app-toast-bottom)",
+                bottom: "max(1rem, env(safe-area-inset-bottom))",
                 left: "max(1rem, env(safe-area-inset-left))",
                 right: "max(1rem, env(safe-area-inset-right))",
             }}

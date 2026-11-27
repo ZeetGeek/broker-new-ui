@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { createWorkflowHistory } from "@/lib/workflows/history";
 
-/** Returns a stable registration callback for the current route and account scope. */
+/** Manages modal history for the current route and account scope. */
 export function useWorkflowHistory(scope: string) {
     const history = useMemo(
         () =>
@@ -27,5 +27,5 @@ export function useWorkflowHistory(scope: string) {
         history.start();
         return () => history.stop();
     }, [history]);
-    return useCallback((handler: () => void) => history.register(handler), [history]);
+    return history;
 }

@@ -71,7 +71,7 @@ export function VisitsTabs({
     const tabs = inventory === "exclusive" ? EXCLUSIVE_TABS : PLATFORM_TABS;
 
     return (
-        <div className="sticky inset-bs-0 z-10 flex flex-col gap-3">
+        <div className="relative z-10 flex flex-col gap-3">
             {FEATURE_PLATFORM_OWNER ? (
                 <div
                     className="flex flex-wrap items-center gap-2"

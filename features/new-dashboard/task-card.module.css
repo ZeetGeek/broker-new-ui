@@ -166,10 +166,6 @@
         max-block-size: clamp(18rem, 55svh, 28rem);
         overscroll-behavior-y: auto;
     }
-
-    .scrollViewport.scrollViewportFlush {
-        margin-inline: calc(-0.5rem - 4px);
-    }
 }
 
 .row:first-child {
@@ -251,7 +247,7 @@
 }
 /* Use the card width for dates. The action gutters belong to task rows. */
 .paper .dayNav {
-    padding: 0.625rem 0.5rem 0.5rem;
+    padding: 0.625rem 0 0.5rem;
 }
 .dayNavLabel {
     flex-shrink: 0;
@@ -273,9 +269,6 @@
 }
 
 @container task-card (max-width: 18rem) {
-    .paper .dayNav {
-        padding-inline: 0;
-    }
     .dayNav {
         align-items: center;
         gap: 0.5rem;

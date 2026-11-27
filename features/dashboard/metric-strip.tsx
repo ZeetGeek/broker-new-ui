@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 
 import { DigitPopIn } from "./digit-pop-in";
 
@@ -20,8 +20,8 @@ export function MetricCell({
     valueClassName?: string;
 }) {
     return (
-        <Tooltip>
-            <TooltipTrigger
+        <InfoTip>
+            <InfoTipTrigger
                 render={
                     <button
                         type="button"
@@ -42,10 +42,10 @@ export function MetricCell({
                     </button>
                 }
             />
-            <TooltipContent side="bottom" align="center" className="text-pretty max-inline-64">
+            <InfoTipContent side="bottom" align="center" className="text-pretty max-inline-64">
                 {hint}
-            </TooltipContent>
-        </Tooltip>
+            </InfoTipContent>
+        </InfoTip>
     );
 }
 

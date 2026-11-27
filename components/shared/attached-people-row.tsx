@@ -132,7 +132,12 @@ function AttachedPeopleShell({
 
     const content = (
         <>
-            <AvatarStack people={people} max={3} className="shrink-0" />
+            <AvatarStack
+                people={people}
+                max={3}
+                className="shrink-0"
+                hoverOnly={Boolean(onManage)}
+            />
             <span className="flex flex-col gap-0.5 min-inline-0">
                 <span className="body-sm font-semibold tracking-wide text-ink">{title}</span>
                 <span className="body-xs truncate tracking-wide text-ink-muted capitalize">
@@ -248,7 +253,13 @@ export function InvitedBrokersRow({
     if (brokers.length === 0) return null;
     const content = (
         <>
-            <AvatarStack people={brokers} size="2xs" max={3} className="shrink-0" />
+            <AvatarStack
+                people={brokers}
+                size="2xs"
+                max={3}
+                className="shrink-0"
+                hoverOnly={Boolean(onManage)}
+            />
             <span className="body-xs font-medium text-pending min-inline-0">
                 {brokers.length}{" "}
                 {brokers.length === 1 ? "invitation pending" : "invitations pending"}

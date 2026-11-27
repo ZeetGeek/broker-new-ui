@@ -175,7 +175,7 @@ export function MyListingsToolbarSkeleton({
     const shortcut = getShortcut("add_property");
 
     return (
-        <div role="status" aria-busy="true" className="sticky inset-bs-0 z-10">
+        <div role="status" aria-busy="true" className="relative z-10">
             <span className="sr-only">Loading listing controls</span>
             <div aria-hidden>
                 <ResponsiveListToolbar
@@ -280,7 +280,7 @@ export function MyListingsHeader({
 
     return (
         <>
-            <div className="sticky inset-bs-0 z-10">
+            <div className="relative z-10">
                 <TooltipProvider>
                     <ResponsiveListToolbar
                         selection={

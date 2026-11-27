@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { LogoutMenuItem } from "@/components/layout/logout-menu-item";
+import { useDayPartGreeting } from "@/components/layout/portal-mobile-app-bar";
 import toast from "@/components/shared/app-toast";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { PropertyMenuIcon as AccountMenuIcon } from "@/components/shared/icons";
@@ -332,6 +333,7 @@ export function PortalProfileMenu({
     onOpenChange,
 }: PortalProfileMenuProps) {
     const mobile = useMobileMenu();
+    const greeting = useDayPartGreeting();
     const [localOpen, setLocalOpen] = useState(false);
     const [confirmLogout, setConfirmLogout] = useState(false);
     const afterClose = useRef<(() => void) | null>(null);
@@ -355,15 +357,40 @@ export function PortalProfileMenu({
                         }
                     }}
                     title="Account"
-                    description={`${userName} · ${roleLabel}`}
                     trigger={
                         <Button
                             variant="ghost"
-                            size="icon-md"
-                            className="shrink-0 rounded-full p-0"
+                            className="
+                              group justify-start gap-2.5 rounded-inner p-0 pe-1 text-ink block-auto!
+                              max-inline-full min-inline-0
+                              hover:bg-transparent
+                              focus-visible:ring-2 focus-visible:ring-brand
+                              aria-expanded:bg-transparent
+                            "
                             aria-label={`Account menu for ${userName}`}
                         >
-                            <UserAvatar name={userName} imageUrl={userAvatarUrl} size="md" />
+                            <UserAvatar
+                                name={userName}
+                                imageUrl={userAvatarUrl}
+                                size="md"
+                                className="shrink-0"
+                            />
+                            <span className="flex flex-col gap-0.5 text-start min-inline-0">
+                                <span className="body-xs truncate leading-tight font-medium text-ink-muted">
+                                    {greeting}
+                                </span>
+                                <span className="body truncate leading-tight font-semibold text-ink max-inline-36">
+                                    {userName}
+                                </span>
+                            </span>
+                            <AccountMenuIcon
+                                name="chevron-down"
+                                aria-hidden="true"
+                                className="
+                                  -ms-1 shrink-0 self-center text-ink-subtle transition-transform
+                                  duration-160 block-3.5 inline-3.5 group-aria-expanded:rotate-180
+                                "
+                            />
                         </Button>
                     }
                 >

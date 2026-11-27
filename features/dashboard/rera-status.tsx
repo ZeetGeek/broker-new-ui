@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 import { type AppIcon, Clock, Shield, ShieldAlert, ShieldCheck } from "@/components/shared/icons";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -46,8 +47,9 @@ export function ReraStatusChip({ status }: ReraStatusChipProps) {
     if (!FEATURE_RERA_VERIFICATION) return null;
     if (status === "verifying") {
         return (
-            <Tooltip>
-                <TooltipTrigger
+            <InfoTip>
+                <InfoTipTrigger
+                    nativeButton={false}
                     render={
                         <Badge color="amber" aria-label={`RERA verifying. ${VERIFY_WAIT_COPY}.`}>
                             <Clock aria-hidden className="block-3 inline-3" strokeWidth={1.75} />
@@ -55,8 +57,8 @@ export function ReraStatusChip({ status }: ReraStatusChipProps) {
                         </Badge>
                     }
                 />
-                <TooltipContent side="bottom">{VERIFY_WAIT_COPY}</TooltipContent>
-            </Tooltip>
+                <InfoTipContent side="bottom">{VERIFY_WAIT_COPY}</InfoTipContent>
+            </InfoTip>
         );
     }
 

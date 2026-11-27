@@ -68,7 +68,7 @@ export function OwnerBrokersHeader({
         activeTab === "browse" ? "Search name, agency or area" : "Search name or property";
 
     return (
-        <div className="sticky inset-bs-0 z-10">
+        <div className="relative z-10">
             <TooltipProvider>
                 <div className="flex items-center justify-between gap-3 sm:gap-4">
                     <OwnerListingsChipsCarousel>

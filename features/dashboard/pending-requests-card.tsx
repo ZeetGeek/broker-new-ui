@@ -11,10 +11,10 @@ import { EmptyStateAction } from "@/components/empty-state";
 import { CardLink } from "@/components/shared/card-link";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Check, Inbox, Search, X } from "@/components/shared/icons";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { FEATURE_RERA_VERIFICATION } from "@/config/index";
 
@@ -170,8 +170,8 @@ export function PendingRequestsCard({
                 <CardLabel info={REQUESTS_INFO}>
                     <span id="owner-requests-heading">Pending requests</span>
                 </CardLabel>
-                <Tooltip>
-                    <TooltipTrigger
+                <InfoTip>
+                    <InfoTipTrigger
                         render={
                             <button
                                 type="button"
@@ -185,14 +185,14 @@ export function PendingRequestsCard({
                             </button>
                         }
                     />
-                    <TooltipContent
+                    <InfoTipContent
                         side="bottom"
                         align="center"
                         className="text-pretty max-inline-64"
                     >
                         Broker representation requests that still need your reply.
-                    </TooltipContent>
-                </Tooltip>
+                    </InfoTipContent>
+                </InfoTip>
             </div>
 
             <div className="mbs-1 flex-1 overflow-hidden min-block-0">

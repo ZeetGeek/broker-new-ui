@@ -279,7 +279,7 @@ export function MyDealsHeader({
 
     return (
         <>
-            <div className="sticky inset-bs-0 z-10">
+            <div className="relative z-10">
                 <TooltipProvider>
                     <div className={DEALS_TOOLBAR_CLASS}>
                         <OwnerListingsChipsCarousel>

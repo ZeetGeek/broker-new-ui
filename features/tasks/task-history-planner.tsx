@@ -14,6 +14,7 @@ import {
     ChevronsRight,
 } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
+import { Button } from "@/components/ui/button";
 
 import { groupTaskHistory, type TaskHistoryTab } from "./history-model";
 import { type Task, TASK_TIME_ZONE, taskDateKey, type TaskSort } from "./model";
@@ -109,13 +110,15 @@ export function TaskHistoryPlanner({
                     />
                 )}
                 <div className={styles.dateControls}>
-                    <button
+                    <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         className={styles.todayButton}
                         onClick={() => jump(taskDateKey(now))}
                     >
                         Today
-                    </button>
+                    </Button>
                     <IconButton
                         size="sm"
                         type="button"

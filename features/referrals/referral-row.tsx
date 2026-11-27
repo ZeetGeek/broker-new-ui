@@ -8,6 +8,7 @@ import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { IconButton } from "@/components/shared/icon-button";
 import { ArrowRight, BellRing, MessageSquare, MoreHorizontal } from "@/components/shared/icons";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { PhoneNumber } from "@/components/shared/phone-number";
 import { UserAvatar } from "@/components/shared/user-avatar";
@@ -19,7 +20,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import {
     buildInviteMessage,
@@ -221,18 +221,21 @@ export function ReferralRow({
 
                 {isNudgeable(referral.status) ? (
                     blockedReason ? (
-                        <Tooltip>
+                        <InfoTip>
                             {/* A disabled button swallows its own events, so
                                 the tooltip hangs off a wrapper. Without this
                                 the explanation never appears. */}
-                            <TooltipTrigger render={<span className="inline-flex" />}>
+                            <InfoTipTrigger
+                                nativeButton={false}
+                                render={<span className="inline-flex" />}
+                            >
                                 <Button variant="secondary" size="sm" disabled>
                                     <BellRing aria-hidden />
                                     <span className="hidden sm:inline">Nudge</span>
                                 </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{blockedReason}</TooltipContent>
-                        </Tooltip>
+                            </InfoTipTrigger>
+                            <InfoTipContent>{blockedReason}</InfoTipContent>
+                        </InfoTip>
                     ) : (
                         <Button
                             variant="secondary"

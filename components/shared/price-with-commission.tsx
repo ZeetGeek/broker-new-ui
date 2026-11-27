@@ -7,7 +7,7 @@ import { offersBoth, offersRent, offersSale } from "@/lib/format/listing-availab
 import { formatPrice, formatRent } from "@/lib/format/price";
 import { cn } from "@/lib/utils";
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 
 /** Who is looking. Brokers earn the cut; owners see what they offered a broker. */
 export type CommissionAudience = "broker" | "owner";
@@ -245,48 +245,44 @@ export function PriceWithCommission({
         : `${priceLabel}. ${tip.headline}. ${tip.detail}`;
 
     return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger
-                    delay={200}
-                    render={
-                        <button
-                            type="button"
-                            className={cn(
-                                "inline-block border-0 bg-transparent p-0 text-start text-inherit inline-fit max-inline-full",
-                                tip.plain ? "cursor-default" : "cursor-help",
-                            )}
-                            aria-label={ariaLabel}
-                            onClick={(event) => {
-                                // Pipeline / deal cards open on article click — keep the tip control local.
-                                event.stopPropagation();
-                            }}
-                            onPointerDown={(event) => {
-                                event.stopPropagation();
-                            }}
-                        >
-                            <span className={priceClass}>{priceContent}</span>
-                        </button>
-                    }
-                />
-                <TooltipContent
-                    side={tooltipSide}
-                    className={cn(
-                        "text-center",
-                        tip.plain ? "whitespace-nowrap max-inline-none" : "max-inline-xs",
-                    )}
-                >
-                    {tip.plain ? (
-                        <span className="font-medium">{tip.headline}</span>
-                    ) : (
-                        <>
-                            <span className="font-semibold tabular-nums">{tip.headline}</span>
-                            <span className="opacity-80">{tip.detail}</span>
-                        </>
-                    )}
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
+        <InfoTip>
+            <InfoTipTrigger
+                delay={200}
+                render={
+                    <button
+                        type="button"
+                        className={cn(
+                            "inline-block border-0 bg-transparent p-0 text-start text-inherit inline-fit max-inline-full",
+                            tip.plain ? "cursor-default" : "cursor-help",
+                        )}
+                        aria-label={ariaLabel}
+                        onPointerDown={(event) => {
+                            // Keep the press local to the price — parent cards react to presses.
+                            // (InfoTipTrigger already stops the click reaching the card.)
+                            event.stopPropagation();
+                        }}
+                    >
+                        <span className={priceClass}>{priceContent}</span>
+                    </button>
+                }
+            />
+            <InfoTipContent
+                side={tooltipSide}
+                className={cn(
+                    "text-center",
+                    tip.plain ? "whitespace-nowrap max-inline-none" : "max-inline-xs",
+                )}
+            >
+                {tip.plain ? (
+                    <span className="font-medium">{tip.headline}</span>
+                ) : (
+                    <>
+                        <span className="font-semibold tabular-nums">{tip.headline}</span>
+                        <span className="opacity-80">{tip.detail}</span>
+                    </>
+                )}
+            </InfoTipContent>
+        </InfoTip>
     );
 }
 

@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 
+import { useRouter } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import type { WorkflowNavigationEvent } from "@/lib/workflows/navigation";
 
 import { resolveActiveNavHref } from "@/components/layout/resolve-active-nav";
 import type { AppIcon } from "@/components/shared/icons";
@@ -27,6 +29,7 @@ import {
     MobileActionDrawer,
     mobileActionGroupClass,
 } from "@/components/shared/mobile-action-drawer";
+import { useWorkflowState } from "@/components/shared/workflow-context";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 
 import type { NavItem } from "@/config/nav";
@@ -215,10 +218,24 @@ export function PortalMobileNav({
     profileHref,
 }: PortalMobileNavProps) {
     const pathname = usePathname();
+    const router = useRouter();
+    const takeNavigationEntry = useWorkflowState()?.takeNavigationEntry;
     const activeHref = resolveActiveNavHref(pathname, items);
     const { left, right, overflow } = pickPrimaryItems(items, primaryHrefs);
     const profileActive = Boolean(profileHref && pathname.startsWith(profileHref));
     const [moreOpen, setMoreOpen] = useState(false);
+
+    function navigateFromMore(href: string, event: WorkflowNavigationEvent) {
+        const currentHref = `${pathname}${window.location.search}${window.location.hash}`;
+        if (href === currentHref) {
+            event.preventDefault();
+        } else if (takeNavigationEntry?.()) {
+            event.preventDefault();
+            router.replace(href);
+        }
+        setMoreOpen(false);
+    }
+
     const activeOverflow =
         overflow.find((item) => item.href === activeHref) ??
         (profileActive && profileHref ? { label: "Profile", href: profileHref } : undefined);
@@ -308,7 +325,9 @@ export function PortalMobileNav({
                                             <Link
                                                 key={item.href}
                                                 href={item.href}
-                                                onClick={() => setMoreOpen(false)}
+                                                onNavigate={(event) =>
+                                                    navigateFromMore(item.href, event)
+                                                }
                                                 className={cn(
                                                     mobileActionClass,
                                                     item.href === activeHref &&
@@ -325,7 +344,9 @@ export function PortalMobileNav({
                                         {profileHref ? (
                                             <Link
                                                 href={profileHref}
-                                                onClick={() => setMoreOpen(false)}
+                                                onNavigate={(event) =>
+                                                    navigateFromMore(profileHref, event)
+                                                }
                                                 className={cn(
                                                     mobileActionClass,
                                                     profileActive &&

@@ -37,6 +37,7 @@ import {
     ChevronsRight,
 } from "@/components/shared/icons";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
+import { Button } from "@/components/ui/button";
 
 import { type Task, TASK_TIME_ZONE, taskDateKey, type TaskSort } from "./model";
 import { moveNotebookList, moveNotebookTab, taskListId, type TaskNotebook } from "./notebook-model";
@@ -297,13 +298,15 @@ export function TaskPlanner({
                     />
                 )}
                 <div className={styles.dateControls}>
-                    <button
+                    <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         className={styles.todayButton}
                         onClick={() => setAnchor(today)}
                     >
                         Today
-                    </button>
+                    </Button>
                     <IconButton
                         size="sm"
                         type="button"
@@ -355,7 +358,6 @@ export function TaskPlanner({
                             size="sm"
                         />
                     </div>
-                    <span className={styles.dateControlsSeparator} aria-hidden />
                     <IconButton
                         size="sm"
                         type="button"

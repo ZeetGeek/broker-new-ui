@@ -43,12 +43,12 @@ import {
     Users,
     Zap,
 } from "@/components/shared/icons";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertySharePopover } from "@/components/shared/property-share-popover";
 import { RotatingHeaderSummary } from "@/components/shared/rotating-header-summary";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { FEATURE_SAVED_PROPERTIES } from "@/config";
 import { NEARBY_PLACE_TYPE_OPTIONS, toLabel } from "@/constants/property";
@@ -224,8 +224,11 @@ export function PropertyDetailLayout({
                         }}
                     />
                     {!canBookmark ? null : isDraft ? (
-                        <Tooltip>
-                            <TooltipTrigger render={<span className="inline-flex" tabIndex={0} />}>
+                        <InfoTip>
+                            <InfoTipTrigger
+                                nativeButton={false}
+                                render={<span className="inline-flex" tabIndex={0} />}
+                            >
                                 <IconButton
                                     type="button"
                                     size="md"
@@ -234,11 +237,11 @@ export function PropertyDetailLayout({
                                 >
                                     <Bookmark aria-hidden size={20} fill="none" />
                                 </IconButton>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
+                            </InfoTipTrigger>
+                            <InfoTipContent side="bottom">
                                 Publish this property to save it
-                            </TooltipContent>
-                        </Tooltip>
+                            </InfoTipContent>
+                        </InfoTip>
                     ) : (
                         <IconButton
                             type="button"

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 
 import { EarningsChart } from "@/features/referrals/earnings-chart";
 import {
@@ -29,7 +29,7 @@ function Stat({
 }: {
     value: string;
     label: string;
-    /** Tooltip for a label that cannot say everything in three words. */
+    /** Hint for a label that cannot say everything in three words. */
     hint?: string;
     tone?: "default" | "brand";
 }) {
@@ -45,10 +45,12 @@ function Stat({
     if (!hint) return body;
 
     return (
-        <Tooltip>
-            <TooltipTrigger render={<span className="inline-flex" />}>{body}</TooltipTrigger>
-            <TooltipContent>{hint}</TooltipContent>
-        </Tooltip>
+        <InfoTip>
+            <InfoTipTrigger nativeButton={false} render={<span className="inline-flex" />}>
+                {body}
+            </InfoTipTrigger>
+            <InfoTipContent>{hint}</InfoTipContent>
+        </InfoTip>
     );
 }
 

@@ -90,6 +90,7 @@ test("opening nested dialogs adds one same-URL entry and preserves Next history 
     history.start();
     const removeFirst = history.register(() => {});
     const removeSecond = history.register(() => {});
+    assert.equal(history.takeNavigationEntry(), false);
     assert.equal(browser.pushes(), 1);
     assert.equal(browser.env.url(), browser.entries[0].url);
     assert.equal(browser.entries[1].state.__NA, true);
@@ -224,6 +225,27 @@ test("a real route change strips copied markers without navigating back or reope
     assert.equal(browser.entries[browser.index()].state.tree, "new route");
     assert.equal(WORKFLOW_HISTORY_KEY in browser.entries[browser.index()].state, false);
     assert.equal(closes, 0);
+});
+
+test("a navigation from the final dialog can replace its entry after the dialog closes", () => {
+    const browser = harness();
+    const history = createWorkflowHistory("account:dashboard", browser.env, "token-1");
+    history.start();
+    const remove = history.register(() => assert.fail("The drawer already closed"));
+
+    assert.equal(history.takeNavigationEntry(), true);
+    remove();
+    // The route can still be loading when dialog cleanup runs.
+    browser.flush();
+    assert.equal(browser.backs(), 0);
+    assert.equal(browser.index(), 1);
+    assert.equal(WORKFLOW_HISTORY_KEY in browser.entries[browser.index()].state, false);
+
+    browser.env.replace({ __NA: true }, "https://app.test/broker/visits");
+    browser.env.back();
+    browser.flush();
+    assert.equal(browser.index(), 0);
+    assert.deepEqual(browser.env.state(), browser.initial);
 });
 
 test("old account cleanup cannot remove a new account's modal marker", () => {

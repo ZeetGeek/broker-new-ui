@@ -65,7 +65,7 @@
 
 .actions > :is(button, a) {
     block-size: auto;
-    min-block-size: 2rem;
+    min-block-size: var(--size-control-sm);
     min-inline-size: 0;
     max-inline-size: 100%;
     padding-block: 0.25rem;
@@ -77,6 +77,19 @@
 @media (width < 48rem) {
     .actions > :is(button, a) {
         min-block-size: var(--touch-target-min, 2.75rem);
+    }
+
+    .card .actions > :is(button, a):only-child {
+        position: relative;
+        min-block-size: var(--size-control-sm);
+    }
+
+    /* The empty card has room around its single action for a taller tap area. */
+    .card .actions > :is(button, a):only-child::after {
+        position: absolute;
+        inset-block: calc((var(--size-control-sm) - var(--touch-target-min)) / 2 - 1px);
+        inset-inline: 0;
+        content: "";
     }
 }
 

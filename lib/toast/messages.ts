@@ -64,6 +64,20 @@ export const APP_TOAST_MESSAGES = [
         description: "It is back in your drafts.",
     },
     {
+        id: "property-pinned",
+        group: "Properties",
+        variant: "success",
+        title: "Property pinned to top",
+        description: "It will stay first in this list until you unpin it.",
+    },
+    {
+        id: "property-unpinned",
+        group: "Properties",
+        variant: "success",
+        title: "Property unpinned",
+        description: "It is back in its usual place in the list.",
+    },
+    {
         id: "request-sent",
         group: "Properties",
         variant: "success",

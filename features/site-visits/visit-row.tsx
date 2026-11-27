@@ -18,6 +18,7 @@ import {
     PhoneCall,
     StickyNote,
 } from "@/components/shared/icons";
+import { InfoTip, InfoTipContent, InfoTipTrigger } from "@/components/shared/info-tip";
 import { mobileActionClass, MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { PriceWithCommission } from "@/components/shared/price-with-commission";
 import { PropertyThumb } from "@/components/shared/property-thumb";
@@ -69,8 +70,30 @@ type VisitRowProps = {
  * Wraps anything in a tooltip. Every abbreviation and bare icon in this row
  * goes through it — "45m" and a padlock glyph are only obvious to whoever
  * wrote them, and this product's users are non-technical.
+ *
+ * `tapToOpen` makes the hint open on tap too (phones have no hover). Pass it
+ * only when the wrapped content does nothing on click — never around a
+ * button, link, contact name, or price that has its own tap behaviour.
  */
-function Hint({ label, children }: { label: string; children: ReactNode }) {
+function Hint({
+    label,
+    tapToOpen = false,
+    children,
+}: {
+    label: string;
+    tapToOpen?: boolean;
+    children: ReactNode;
+}) {
+    if (tapToOpen) {
+        return (
+            <InfoTip>
+                <InfoTipTrigger nativeButton={false} render={<span className="inline-flex" />}>
+                    {children}
+                </InfoTipTrigger>
+                <InfoTipContent>{label}</InfoTipContent>
+            </InfoTip>
+        );
+    }
     return (
         <Tooltip>
             <TooltipTrigger render={<span className="inline-flex" />}>{children}</TooltipTrigger>
@@ -144,7 +167,7 @@ export function VisitRow({
             {/* Time gutter. Fixed width so every row in a day lines up and the
                 column reads as a schedule rather than as prose. */}
             <div className="flex shrink-0 flex-col items-start gap-1 inline-20 sm:inline-24">
-                <Hint label={`Starts at ${formatTimeIn(scheduled)}`}>
+                <Hint label={`Starts at ${formatTimeIn(scheduled)}`} tapToOpen>
                     <span
                         className={cn(
                             "body-sm tabular font-semibold text-ink",
@@ -155,7 +178,10 @@ export function VisitRow({
                     </span>
                 </Hint>
 
-                <Hint label={`Lasts about ${visit.durationMin} minutes · ${timeRangeLabel}`}>
+                <Hint
+                    label={`Lasts about ${visit.durationMin} minutes · ${timeRangeLabel}`}
+                    tapToOpen
+                >
                     <span className="body-xs flex items-center gap-1 text-ink-subtle">
                         <Clock3 aria-hidden className="block-3 inline-3" />
                         {visit.durationMin} min
@@ -163,7 +189,7 @@ export function VisitRow({
                 </Hint>
 
                 {isImminent ? (
-                    <Hint label="This visit starts soon — time to leave">
+                    <Hint label="This visit starts soon — time to leave" tapToOpen>
                         <span className="body-xs font-semibold text-urgent">{until.label}</span>
                     </Hint>
                 ) : null}
@@ -199,7 +225,7 @@ export function VisitRow({
 
                     {/* The badge word is short by necessity; the tooltip is
                         where it says what it actually means for this viewer. */}
-                    <Hint label={VISIT_STATUS_HINT[visit.status][viewer]}>
+                    <Hint label={VISIT_STATUS_HINT[visit.status][viewer]} tapToOpen>
                         <Badge variant={meta.badgeVariant}>
                             <StatusIcon aria-hidden />
                             {meta.label}
@@ -208,7 +234,7 @@ export function VisitRow({
                 </div>
 
                 <div className="body-sm flex flex-wrap items-center gap-x-2 gap-y-1 text-ink-muted">
-                    <Hint label={`${visit.property.locality}, ${visit.property.city}`}>
+                    <Hint label={`${visit.property.locality}, ${visit.property.city}`} tapToOpen>
                         <span className="flex items-center gap-1">
                             <MapPin aria-hidden className="block-3.5 inline-3.5" />
                             {visit.property.locality}, {visit.property.city}
@@ -296,6 +322,7 @@ export function VisitRow({
                                 ·
                             </span>
                             <Hint
+                                tapToOpen
                                 label={
                                     viewer === "broker"
                                         ? "You can only call the owner while you represent this property"
@@ -312,7 +339,7 @@ export function VisitRow({
                 </div>
 
                 {visit.meetingNote ? (
-                    <Hint label={visit.meetingNote}>
+                    <Hint label={visit.meetingNote} tapToOpen>
                         <span className="body-sm flex items-center gap-1.5 text-ink-muted">
                             <StickyNote aria-hidden className="shrink-0 block-3.5 inline-3.5" />
                             <span className="truncate">{visit.meetingNote}</span>
@@ -322,7 +349,7 @@ export function VisitRow({
 
                 <div className="flex flex-wrap items-center gap-2">
                     {visit.outcome ? (
-                        <Hint label="What the client thought after this visit">
+                        <Hint label="What the client thought after this visit" tapToOpen>
                             <Badge variant={VISIT_OUTCOME_META[visit.outcome].badgeVariant}>
                                 {VISIT_OUTCOME_META[visit.outcome].label}
                             </Badge>
