@@ -1,6 +1,6 @@
 "use client";
 
-import { PropertyForm } from "@/features/properties/property-form";
+import { PropertyForm, type PropertyFormProps } from "@/features/properties/property-form";
 import type { MyListingItem } from "@/features/properties/your-listings/types";
 
 export type PropertyFormDialogProps = {
@@ -11,6 +11,7 @@ export type PropertyFormDialogProps = {
     listing?: MyListingItem | null;
     /** Called after a successful save so the caller can refresh its list. */
     onSaved?: (listing: MyListingItem) => void;
+    modalCloseRequest?: PropertyFormProps["modalCloseRequest"];
 };
 
 export function PropertyFormDialog({
@@ -19,6 +20,7 @@ export function PropertyFormDialog({
     portal = "broker",
     listing,
     onSaved,
+    modalCloseRequest,
 }: PropertyFormDialogProps) {
     const mode = listing ? "edit" : "create";
 
@@ -34,8 +36,8 @@ export function PropertyFormDialog({
             variant="dialog"
             open={open}
             onOpenChange={onOpenChange}
-            onCancel={() => onOpenChange(false)}
             onSaved={onSaved}
+            modalCloseRequest={modalCloseRequest}
         />
     );
 }

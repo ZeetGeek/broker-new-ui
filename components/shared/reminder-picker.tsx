@@ -44,6 +44,7 @@ export function ReminderPicker({
     now,
     onChange,
     disabled = false,
+    compact = false,
     maxReminders,
     minReminders = 0,
 }: {
@@ -57,6 +58,7 @@ export function ReminderPicker({
     now: number;
     onChange: (reminders: number[]) => void;
     disabled?: boolean;
+    compact?: boolean;
     maxReminders?: number;
     minReminders?: number;
 }) {
@@ -125,7 +127,7 @@ export function ReminderPicker({
         <Button
             type="button"
             variant="outline"
-            size="md"
+            size={compact ? "sm" : "md"}
             disabled={disabled}
             className={styles.addTrigger}
         >
@@ -269,7 +271,7 @@ export function ReminderPicker({
         </>
     );
     return (
-        <div className={styles.picker}>
+        <div className={styles.picker} data-compact={compact || undefined}>
             <div className={styles.heading}>
                 <span className={styles.label}>Reminders</span>
                 {maxReminders !== undefined ? (
@@ -297,7 +299,7 @@ export function ReminderPicker({
                                     ) : null}
                                 </div>
                                 <IconButton
-                                    size="lg"
+                                    size={compact ? "md" : "lg"}
                                     type="button"
                                     disabled={disabled}
                                     aria-label={`Remove ${label.toLowerCase()} reminder`}

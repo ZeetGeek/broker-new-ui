@@ -25,6 +25,7 @@ export type BrokerVisit = {
     leadId: string;
     clientId: string;
     clientName: string;
+    clientAvatarUrl?: string | null;
     clientPhone: string | null;
     /** Keep the owner's identity for contact links; never resolve a live visit by name. */
     ownerId?: string | null;
@@ -157,6 +158,7 @@ export function mapShowing(api: ApiShowing): BrokerVisit {
         leadId: api.leadId,
         clientId: api.client?.id ?? "",
         clientName: api.client?.name?.trim() || "Client",
+        clientAvatarUrl: api.client?.avatarUrl || null,
         clientPhone: api.client?.phone || null,
         ownerId: api.owner?.id || null,
         ownerName: api.owner?.fullName?.trim() || null,

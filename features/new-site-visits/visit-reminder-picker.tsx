@@ -12,6 +12,7 @@ export function VisitReminderPicker({
     startTime,
     now,
     disabled,
+    compact,
     onChange,
 }: {
     reminders: number[];
@@ -19,6 +20,7 @@ export function VisitReminderPicker({
     startTime: string;
     now: number;
     disabled: boolean;
+    compact?: boolean;
     onChange: (values: number[]) => void;
 }) {
     const scheduledAt = () => inputValueToUtc(`${date}T${startTime}`);
@@ -41,6 +43,7 @@ export function VisitReminderPicker({
             now={now}
             onChange={onChange}
             disabled={disabled}
+            compact={compact}
             minReminders={1}
             maxReminders={MAX_VISIT_REMINDERS}
         />

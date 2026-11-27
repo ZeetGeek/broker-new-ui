@@ -1,7 +1,13 @@
+.planner,
+.archive {
+    --task-title-font-size: var(--control-font-size);
+}
+
 .planner {
     --line-height: 40px;
     --planner-inline-padding: 2rem;
     --planner-header-height: 4rem;
+    --planner-column-gap: 2rem;
     container-type: inline-size;
     min-inline-size: 0;
     color: var(--color-ink);
@@ -64,13 +70,13 @@
 .dayGrid {
     display: grid;
     grid-template-columns: repeat(var(--planner-columns, 1), minmax(0, 1fr));
-    gap: 3.25rem;
+    column-gap: var(--planner-column-gap);
     padding: 1.5rem var(--planner-inline-padding) 1.25rem;
 }
 .somedayGrid {
     display: grid;
     grid-template-columns: repeat(var(--planner-list-columns, 1), minmax(0, 1fr));
-    gap: 3.25rem;
+    column-gap: var(--planner-column-gap);
     padding: 0.875rem var(--planner-inline-padding) 1.25rem;
 }
 .emptyListColumn {
@@ -170,13 +176,11 @@
     min-block-size: calc(var(--line-height) + 1px);
 }
 .taskLine {
-    --task-action-size: 28px;
-    --task-action-gutter: 24px;
     position: relative;
     isolation: isolate;
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.75rem;
     min-inline-size: 0;
     min-block-size: var(--line-height);
     padding-inline: 0.5rem;
@@ -212,10 +216,12 @@
     overflow-wrap: anywhere;
     text-align: start;
     color: inherit;
-    font-size: 12px;
     line-height: 1.5;
     font-weight: 600;
     cursor: text;
+}
+.lineTitle > span {
+    font-size: var(--task-title-font-size);
 }
 .completedLine .lineTitle {
     color: var(--color-ink-subtle);
@@ -237,16 +243,12 @@
     flex-shrink: 0;
 }
 .lineCheck {
-    position: absolute;
-    inset-inline-start: -22px;
-    inset-block-start: 50%;
-    transform: translateY(-50%);
-    inline-size: 18px;
-    block-size: 18px;
+    flex-shrink: 0;
+    inline-size: 1rem;
+    block-size: 1rem;
     border-width: 1.5px;
     border-radius: 50%;
     cursor: pointer;
-    opacity: 0;
 }
 .lineCheck:disabled {
     cursor: not-allowed;
@@ -258,43 +260,22 @@
 .lineCheck::after {
     inset: -10px -6px;
 }
-.lineCheck[data-checked] {
-    opacity: 1;
-}
-@media (hover: hover) {
-    .historyLine .lineCheck[data-checked] {
-        opacity: 0;
-    }
-}
-.lineAction,
-.restoreAction {
-    position: absolute;
-    inset-inline-end: calc(-1 * var(--task-action-gutter));
-    inset-block-start: 50%;
-    transform: translateY(-50%);
-    display: inline-grid;
-    place-items: center;
+.taskLine .lineAction[data-icon-button] {
+    --icon-button-size: calc(1.25rem / var(--layout-font-scale, 1));
+    position: relative;
     flex-shrink: 0;
 }
-.lineAction,
-.restoreAction {
-    opacity: 0;
-}
-
-.lineAction svg,
-.restoreAction svg {
+.lineAction svg {
     inline-size: 14px;
     block-size: 14px;
 }
 
-.taskLine:hover .lineCheck,
-.taskLine:focus-within .lineCheck,
-.taskLine:hover .lineAction,
-.taskLine:focus-within .lineAction,
-.taskLine:hover .restoreAction,
-.taskLine:focus-within .restoreAction,
-.lineAction[data-popup-open] {
-    opacity: 1;
+@media (pointer: coarse) {
+    .lineAction::after {
+        content: "";
+        position: absolute;
+        inset: -0.875rem;
+    }
 }
 .overdueMark {
     display: inline-flex;
@@ -470,15 +451,15 @@
 .customList::before {
     content: "";
     position: absolute;
-    inset-block: -0.75rem -2rem;
-    inset-inline: -1.625rem;
+    inset-block: -0.75rem calc(0.5rem - var(--list-grid-padding-end));
+    inset-inline: calc(var(--planner-column-gap) / -2);
     z-index: -1;
     pointer-events: none;
 }
 .customList:first-child::before {
     inset-inline-start: calc(-1 * var(--planner-inline-padding));
 }
-.customList:has(> .dayColumn > .dayHeading:hover)::before,
+.customList[data-list-sortable]:has(> .dayColumn > .dayHeading:hover)::before,
 .customList:has(> .listDragHandle:hover)::before,
 .customList:has(> .listDragHandle:focus-visible)::before,
 .customList.dragging::before {
@@ -513,10 +494,6 @@
     flex-direction: column;
     min-inline-size: 0;
     padding-inline: 0.125rem;
-}
-.listColumnFooter {
-    margin-block-start: auto;
-    padding: 0.75rem 0.5rem 0;
 }
 .customList .listHeadingRow .listMenu {
     flex-shrink: 0;
@@ -632,10 +609,11 @@
     transform: rotate(-90deg);
 }
 .somedayGrid {
+    --list-grid-padding-end: 2rem;
     background: color-mix(in oklab, var(--color-surface) 94%, var(--color-canvas));
     border-end-start-radius: var(--radius-card);
     border-end-end-radius: var(--radius-card);
-    padding-block: 0.875rem 2rem;
+    padding-block: 0.875rem var(--list-grid-padding-end);
     min-block-size: 350px;
 }
 .listHeadingTools {
@@ -746,9 +724,10 @@
     .planner {
         --planner-inline-padding: 1.25rem;
         --planner-header-height: 3.5rem;
+        --planner-column-gap: 1rem;
     }
     .plannerNav {
-        grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) max-content minmax(max-content, 1fr);
         gap: 0.5rem;
     }
     .dateRange {
@@ -757,7 +736,6 @@
     }
     .dayGrid,
     .somedayGrid {
-        gap: 1.25rem;
         padding: 0.875rem var(--planner-inline-padding);
     }
     .dayHeading h2 {
@@ -769,34 +747,22 @@
         min-block-size: 0;
     }
     .somedayGrid {
+        --list-grid-padding-end: 1rem;
         min-block-size: 0;
-        padding-block-end: 1rem;
+        padding-block-end: var(--list-grid-padding-end);
     }
-    .customList::before,
     .customList:first-child::before {
-        inset-inline: -0.625rem;
+        inset-inline-start: calc(var(--planner-column-gap) / -2);
     }
     .archive {
         min-block-size: 0;
         padding: 1rem 1.25rem;
     }
 }
-@container tasks-page (min-width: 600px) and (max-width: 839px) {
-    .plannerNav:has(> .columnPicker) {
-        grid-template-columns: minmax(0, 1fr) auto;
-        padding-block: 0.5rem;
-    }
-    .plannerNav:has(> .columnPicker) .dateControls {
-        grid-column: 2;
-    }
-    .columnPicker {
-        grid-column: 1 / -1;
-        grid-row: 2;
-    }
-}
 @container tasks-page (max-width: 599px) {
     .planner {
         --planner-inline-padding: 1rem;
+        --planner-column-gap: 0px;
         --planner-icon-tap-inset: calc((var(--size-control-sm) - var(--touch-target-min)) / 2);
     }
     .plannerNav {
@@ -831,8 +797,17 @@
         position: relative;
         margin-inline: calc(-1 * var(--planner-icon-tap-inset));
     }
+    .dateControls > .todayButton,
+    .dateControls > :global(button[data-icon-button]),
+    .plannerNav .dateJump :global(button[data-icon-button]),
+    .listHeadingTools :global(button[data-icon-button]) {
+        --icon-button-size: var(--size-control-sm);
+        position: relative;
+        margin-inline: calc(-1 * var(--planner-icon-tap-inset) - 2px);
+    }
     .dateControls > .todayButton::after,
     .dateControls :global(button[data-icon-button])::after,
+    .listHeadingTools :global(button[data-icon-button])::after,
     .somedayBar :is(.addTabButton, .collapseLists)::after {
         content: "";
         position: absolute;
@@ -845,11 +820,12 @@
     .dayGrid,
     .somedayGrid {
         grid-template-columns: minmax(0, 1fr);
-        gap: 0.75rem;
+        row-gap: 0.75rem;
         padding-block: 0.625rem;
     }
-    .dayGrid .blankLine {
-        display: none;
+    .somedayGrid {
+        --list-grid-padding-end: 0.625rem;
+        padding-block-end: var(--list-grid-padding-end);
     }
     .dayColumn,
     .newListColumn,
@@ -867,53 +843,36 @@
         font-size: 0.6875rem;
         margin-block-end: 0.125rem;
     }
-    :is(.dayGrid, .somedayGrid, .archive) .taskLine {
+}
+
+@media (width < 48rem) {
+    .planner,
+    .archive {
+        --task-title-font-size: calc(0.75rem / var(--layout-font-scale, 1));
+    }
+    .taskLine {
         gap: 0;
         min-block-size: var(--touch-target-min);
         padding-inline: 0;
     }
-    :is(.dayGrid, .somedayGrid, .archive) .lineCheck {
-        position: relative;
-        inset: auto;
-        transform: none;
-        flex-shrink: 0;
-        inline-size: 1rem;
-        block-size: 1rem;
+    .lineCheck {
         margin-inline: 0.5rem;
-        opacity: 1;
     }
-    :is(.dayGrid, .somedayGrid, .archive) .lineCheck::after {
+    .lineCheck::after {
         inset: calc((1rem - var(--touch-target-min)) / 2);
     }
-    :is(.dayGrid, .somedayGrid, .archive) .taskLine .lineAction[data-icon-button],
-    :is(.dayGrid, .somedayGrid, .archive) .taskLine .restoreAction[data-icon-button] {
-        --icon-button-size: 2rem;
-        position: relative;
-        inset: auto;
-        transform: none;
-        flex-shrink: 0;
-        inline-size: 2rem;
-        block-size: 2rem;
-        min-inline-size: 2rem;
-        min-block-size: 2rem;
-        opacity: 1;
-    }
-    :is(.dayGrid, .somedayGrid, .archive) .lineAction::after,
-    :is(.dayGrid, .somedayGrid, .archive) .restoreAction::after {
-        content: "";
-        position: absolute;
-        inset: calc((2rem - var(--touch-target-min)) / 2);
-    }
-    :is(.dayGrid, .somedayGrid, .archive) .lineTitle {
-        font-size: 0.8125rem;
+    .lineTitle {
         font-weight: 500;
         line-height: 1.4;
         padding: 0.5rem;
         padding-inline-start: 0.25rem;
     }
-    .planner .lineAction,
-    .planner .restoreAction {
-        --icon-button-hover: color-mix(in oklab, var(--color-ink) 7%, transparent);
+    .lineTitle > span {
+        display: block;
+        line-height: 1.3;
+    }
+    .taskLine .lineAction[data-icon-button] {
+        margin-inline-end: 0.375rem;
     }
     .listTaskDate {
         gap: 0.25rem;
@@ -924,6 +883,9 @@
     .overdueMark {
         margin-inline: 0.125rem 0.5rem;
     }
+}
+
+@container tasks-page (max-width: 599px) {
     .somedayBar {
         gap: 0.5rem;
     }
@@ -959,7 +921,7 @@
         inset-block: calc(var(--planner-icon-tap-inset) - 1px);
         inset-inline: 0;
     }
-    .customList > .dayColumn > .dayHeading {
+    .customList[data-list-sortable] > .dayColumn > .dayHeading {
         padding: 0 0 0.25rem 2rem;
     }
     .listDragHandle {
@@ -988,27 +950,13 @@
         white-space: normal;
         overflow-wrap: anywhere;
     }
-    .listHeadingTools {
+    .listHeadingTools,
+    .listHeadingTools .listTabNav {
         flex: 0 0 auto;
-        gap: 0.25rem;
+        gap: 0;
     }
     .listHeadingNewList {
         margin: 0;
-    }
-    .listHeadingNewList button {
-        position: relative;
-        display: grid;
-        place-items: center;
-        inline-size: var(--touch-target-min);
-        min-inline-size: var(--touch-target-min);
-        min-block-size: var(--touch-target-min);
-        padding: 0;
-    }
-    .listHeadingNewList .newListLabel {
-        display: none;
-    }
-    .listHeadingTools :global(button[data-icon-button]) {
-        --icon-button-size: var(--touch-target-min);
     }
     .customList .listHeadingRow .listMenu {
         opacity: 1;
@@ -1027,18 +975,19 @@
     .dateRange {
         grid-column: 1;
         grid-row: 1;
+        margin-block-start: 0.25rem;
     }
     .dateControls {
         grid-column: 1;
         grid-row: 2;
+        justify-self: start;
+        margin-block-start: 0.25rem;
+    }
+    .dateControls > .todayButton {
+        margin-inline-start: 0;
     }
 }
 @media (hover: none) {
-    .lineCheck,
-    .lineAction,
-    .restoreAction {
-        opacity: 1;
-    }
     .customList .listHeadingRow .listMenu {
         opacity: 1;
         pointer-events: auto;
@@ -1057,90 +1006,6 @@
     }
 }
 
-/* Only saved dashboard rows need room for the checkbox and menu. */
-.rowGutters {
-    --task-control-size: var(--size-control-xs);
-    --task-checkbox-inset: 1px;
-    --task-checkbox-size: calc(var(--task-control-size) - 2 * var(--task-checkbox-inset));
-}
-.rowGutters > .historyLine {
-    margin-inline: var(--touch-target-min);
-}
-.rowGutters .lineCheck {
-    inline-size: var(--task-checkbox-size);
-    block-size: var(--task-checkbox-size);
-    box-sizing: border-box;
-    border-width: 1px;
-    inset-inline-start: calc((var(--touch-target-min) + var(--task-checkbox-size)) / -2);
-}
-.rowGutters .lineCheck::after {
-    inset: calc((var(--task-checkbox-size) - var(--touch-target-min)) / 2);
-}
-.rowGutters :is(.lineAction, .restoreAction)[data-icon-button] {
-    --icon-button-size: var(--task-control-size);
-    inset-inline-end: calc((var(--touch-target-min) + var(--icon-button-size)) / -2);
-    border-radius: 50%;
-    box-shadow: none;
-}
-.rowGutters :is(.lineAction, .restoreAction)::after {
-    content: "";
-    position: absolute;
-    inset: calc((var(--task-control-size) - var(--touch-target-min)) / 2);
-}
-
-/* Desktop controls sit in the row so the title can use more of the card width. */
-@media (width >= 48rem) and (hover: hover) and (pointer: fine) {
-    .rowGutters > .historyLine {
-        margin-inline: 0;
-    }
-    .rowGutters .taskLine {
-        --task-row-gap: 0.25rem;
-        gap: var(--task-row-gap);
-        padding-inline: 0;
-    }
-    .rowGutters .taskLine::before {
-        inset-inline: calc(var(--task-control-size) + var(--task-row-gap));
-    }
-    .rowGutters .lineTitle {
-        padding-inline-start: 0.5rem;
-    }
-    .rowGutters .lineTitle:not(:has(+ .overdueMark)),
-    .rowGutters .overdueMark {
-        padding-inline-end: 0.5rem;
-    }
-    .rowGutters .taskLine > :is(.lineCheck, .lineAction, .restoreAction) {
-        position: relative;
-        inset: auto;
-        transform: none;
-        flex: 0 0 var(--task-control-size);
-        visibility: hidden;
-        opacity: 1;
-    }
-    .rowGutters .taskLine > .lineCheck {
-        flex-basis: var(--task-checkbox-size);
-        margin-inline: var(--task-checkbox-inset);
-    }
-    .rowGutters :is(.lineAction, .restoreAction)::after {
-        inset: calc((var(--task-control-size) - var(--touch-target-min)) / 2)
-            calc(-1 * var(--task-row-gap));
-    }
-    .rowGutters .lineCheck::after {
-        inset-inline: calc(-1 * (var(--task-checkbox-inset) + var(--task-row-gap)));
-    }
-    /* The row link receives keyboard focus before its controls. */
-    .rowGutters .taskLine:is(:hover, :focus-within) :is(.lineCheck, .lineAction, .restoreAction),
-    .rowGutters .lineAction[data-popup-open] {
-        visibility: visible;
-    }
-}
-
-@media (width < 48rem), (hover: none), (pointer: coarse) {
-    .rowGutters .taskLine .lineCheck,
-    .rowGutters .taskLine .lineAction,
-    .rowGutters .taskLine .restoreAction {
-        opacity: 1;
-    }
-}
 @media (prefers-reduced-motion: reduce) {
     .sortableLine {
         transition: none !important;

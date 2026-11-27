@@ -76,7 +76,7 @@ export function DatePickerThemePage() {
         <DesignSystemShell
             eyebrow="Components"
             title="Date picker."
-            description="Compact light Popover with Button nav and Select month/year. Wrapped once as AppDatePicker. Value is yyyy-MM-dd; the trigger shows dd/mm/yyyy. Selected day uses a brand fill circle."
+            description="A compact desktop popover and a centred mobile drawer share the same calendar and custom month and year menus."
         >
             <div className="space-y-10">
                 <section>
@@ -148,12 +148,9 @@ export function DatePickerThemePage() {
                             <code className="body-xs">rounded-control</code>.
                         </li>
                         <li>
-                            Popup is light only — <code className="body-xs">bg-surface</code>,{" "}
-                            <code className="body-xs">rounded-card</code>,{" "}
-                            <code className="body-xs">shadow-lg</code>. Header uses{" "}
-                            <code className="body-xs">Button</code> for prev/next (circular muted
-                            hover) and compact <code className="body-xs">Select</code> for month +
-                            year.
+                            The mobile drawer centres the calendar in seven equal columns. Month and
+                            year use the shared <code className="body-xs">Select</code> menus on
+                            both layouts.
                         </li>
                         <li>
                             Day cells are compact circles. Selected day uses{" "}

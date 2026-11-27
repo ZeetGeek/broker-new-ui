@@ -26,6 +26,7 @@ import {
     Lock,
     Mail,
     MapPin,
+    Pencil,
     Phone,
     Plus,
     RefreshCw,
@@ -390,13 +391,14 @@ function ContactSummary({
                 {editLocked ? null : (
                     <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         className="min-block-11"
                         onClick={onEdit}
                         disabled={!editAvailable}
                         title={editAvailable ? undefined : "Owner editing is not available yet"}
                     >
+                        <Pencil aria-hidden />
                         Edit
                     </Button>
                 )}

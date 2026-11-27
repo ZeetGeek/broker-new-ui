@@ -106,6 +106,7 @@ export function TaskLists({
     dragPreview,
     listColumns,
 }: TaskListsProps) {
+    const mobile = useMobileMenu();
     const [open, setOpen] = useState(true);
     const [editor, setEditor] = useState<Editor | null>(null);
     const [notice, setNotice] = useState("");
@@ -150,11 +151,12 @@ export function TaskLists({
             editor.kind === "new-tab"
                 ? addNotebookTab(latest, name, id)
                 : editor.kind === "new-list"
-                  ? addNotebookList(latest, activeTab, name, id)
+                  ? addNotebookList(latest, editor.id, name, id)
                   : renameNotebookItem(latest, editor.kind, editor.id, name),
         );
         if (saved) {
             if (editor.kind === "new-tab") onSelectTab(id);
+            if (editor.kind === "new-list") onSelectTab(editor.id);
             setEditor(null);
             setOpen(true);
         }
@@ -165,26 +167,22 @@ export function TaskLists({
         const beforeId = direction === -1 ? lists[index - 1]?.id : lists[index + 2]?.id;
         void change((latest) => moveNotebookList(latest, list.id, activeTab, beforeId));
     };
-    const openNewListEditor = () => {
-        setEditor({ kind: "new-list", id: "", name: "" });
+    const openNewListEditor = (tabId: string) => {
+        setEditor({ kind: "new-list", id: tabId, name: "" });
         setOpen(true);
     };
-    const newListLinkButton = (
+    const newListButton = (
         <Button
             type="button"
             aria-label="Create list"
             title="Create list"
-            variant="link"
+            variant="outline"
             size="sm"
-            className="
-              gap-1 p-0 text-xs font-bold tracking-wide text-brand uppercase block-auto min-block-0
-              hover:text-brand-text
-            "
             disabled={busy}
-            onClick={openNewListEditor}
+            onClick={() => openNewListEditor(activeTab)}
         >
             <Plus aria-hidden size={14} />
-            <span className={styles.newListLabel}>New list</span>
+            New list
         </Button>
     );
     const showListPageNav = listCount > listStride;
@@ -193,9 +191,6 @@ export function TaskLists({
             <IconButton
                 type="button"
                 size="sm"
-                tone="brand"
-                appearance="ghost"
-                className="text-brand hover:text-brand-text disabled:opacity-35"
                 aria-label="Previous lists"
                 disabled={!canPrevList}
                 onClick={() => setListPage((page) => Math.max(0, page - 1))}
@@ -205,9 +200,6 @@ export function TaskLists({
             <IconButton
                 type="button"
                 size="sm"
-                tone="brand"
-                appearance="ghost"
-                className="text-brand hover:text-brand-text disabled:opacity-35"
                 aria-label="Next lists"
                 disabled={!canNextList}
                 onClick={() => setListPage((page) => Math.min(maxPage, page + 1))}
@@ -253,6 +245,7 @@ export function TaskLists({
                                             busy={busy}
                                             menuAlign="start"
                                             triggerClassName={styles.notebookTabMenu}
+                                            onCreateList={() => openNewListEditor(tab.id)}
                                             onRename={() => {
                                                 if (tab.id !== activeTab) onSelectTab(tab.id);
                                                 window.setTimeout(() => {
@@ -384,7 +377,7 @@ export function TaskLists({
                                                     className={styles.newListColumn}
                                                 >
                                                     <header className={styles.dayHeading}>
-                                                        {newListLinkButton}
+                                                        {newListButton}
                                                     </header>
                                                     <ul className={styles.ruledList} aria-hidden>
                                                         {Array.from(
@@ -428,24 +421,33 @@ export function TaskLists({
                                     const showColumnListNav = showListPageNav && isLeadListColumn;
                                     const showNewListInHeader =
                                         listColumns === 1 && isLeadListColumn;
-                                    // Only when every column on this page already has a list.
-                                    const showNewListAtBottom =
-                                        listColumns > 1 &&
-                                        visibleLists.length >= listColumns &&
-                                        isLeadListColumn;
                                     return (
                                         <SortableList
                                             key={list.id}
                                             list={list}
                                             tabs={notebook.tabs}
                                             busy={busy}
+                                            canDrag={visibleLists.length > 1}
                                             onlyList={notebook.lists.length === 1}
                                             isFirst={index === 0}
                                             isLast={index === listCount - 1}
                                             headingLeading={
                                                 showNewListInHeader ? (
                                                     <div className={styles.listHeadingNewList}>
-                                                        {newListLinkButton}
+                                                        {mobile ? (
+                                                            <IconButton
+                                                                aria-label="Create list"
+                                                                title="Create list"
+                                                                disabled={busy}
+                                                                onClick={() =>
+                                                                    openNewListEditor(activeTab)
+                                                                }
+                                                            >
+                                                                <Plus aria-hidden size={16} />
+                                                            </IconButton>
+                                                        ) : (
+                                                            newListButton
+                                                        )}
                                                     </div>
                                                 ) : undefined
                                             }
@@ -492,11 +494,6 @@ export function TaskLists({
                                                 catalogs={catalogs}
                                                 onAdd={onAdd}
                                                 actions={actions}
-                                                listFooter={
-                                                    showNewListAtBottom
-                                                        ? newListLinkButton
-                                                        : undefined
-                                                }
                                             />
                                         </SortableList>
                                     );
@@ -517,6 +514,7 @@ function NotebookTabManageMenu({
     busy,
     menuAlign,
     triggerClassName,
+    onCreateList,
     onRename,
     onMoveLeft,
     onMoveRight,
@@ -528,6 +526,7 @@ function NotebookTabManageMenu({
     busy: boolean;
     menuAlign: "start" | "end";
     triggerClassName?: string;
+    onCreateList: () => void;
     onRename: () => void;
     onMoveLeft: () => void;
     onMoveRight: () => void;
@@ -539,6 +538,12 @@ function NotebookTabManageMenu({
     const runAfterClose = (action: () => void) => {
         afterClose.current = action;
         setOpen(false);
+    };
+    const onOpenChangeComplete = (nextOpen: boolean) => {
+        if (nextOpen) return;
+        const action = afterClose.current;
+        afterClose.current = null;
+        action?.();
     };
     const trigger = (
         <IconButton
@@ -561,17 +566,21 @@ function NotebookTabManageMenu({
             <MobileActionDrawer
                 open={open}
                 onOpenChange={setOpen}
-                onOpenChangeComplete={(nextOpen) => {
-                    if (nextOpen) return;
-                    const action = afterClose.current;
-                    afterClose.current = null;
-                    action?.();
-                }}
+                onOpenChangeComplete={onOpenChangeComplete}
                 title="Tab actions"
                 description={tab.name}
                 trigger={trigger}
             >
                 <div className={mobileActionGroupClass}>
+                    <button
+                        type="button"
+                        className={mobileActionClass}
+                        disabled={busy}
+                        onClick={() => runAfterClose(onCreateList)}
+                    >
+                        <Plus aria-hidden />
+                        Create new list
+                    </button>
                     <button
                         type="button"
                         className={mobileActionClass}
@@ -617,9 +626,17 @@ function NotebookTabManageMenu({
     }
 
     return (
-        <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenu
+            open={open}
+            onOpenChange={setOpen}
+            onOpenChangeComplete={onOpenChangeComplete}
+        >
             <DropdownMenuTrigger render={trigger} />
             <DropdownMenuContent align={menuAlign}>
+                <DropdownMenuItem onClick={() => runAfterClose(onCreateList)}>
+                    <Plus aria-hidden />
+                    Create new list
+                </DropdownMenuItem>
                 <DropdownMenuItem
                     onClick={(event) => {
                         event.preventDefault();
@@ -656,6 +673,7 @@ function SortableList({
     tabs,
     children,
     busy,
+    canDrag,
     onlyList,
     isFirst,
     isLast,
@@ -670,6 +688,7 @@ function SortableList({
     tabs: NotebookTab[];
     children: React.ReactNode;
     busy: boolean;
+    canDrag: boolean;
     onlyList: boolean;
     isFirst: boolean;
     isLast: boolean;
@@ -690,13 +709,12 @@ function SortableList({
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: `list:${list.id}`,
         data: { kind: "list", listId: list.id, tabId: list.tabId },
-        disabled: busy,
+        disabled: { draggable: busy || !canDrag, droppable: !canDrag },
     });
     const listMenuTrigger = (
         <IconButton
             size="sm"
             type="button"
-            appearance={mobile ? "ghost" : "outline"}
             className={styles.listMenu}
             disabled={busy}
             aria-label={`Manage list ${list.name}`}
@@ -823,19 +841,26 @@ function SortableList({
         : children;
     return (
         <div
-            ref={setNodeRef}
+            ref={canDrag ? setNodeRef : undefined}
             className={cn(styles.customList, isDragging && styles.dragging)}
-            style={{ transform: measuredCssToRem(CSS.Transform.toString(transform)), transition }}
+            data-list-sortable={canDrag || undefined}
+            style={
+                canDrag
+                    ? { transform: measuredCssToRem(CSS.Transform.toString(transform)), transition }
+                    : undefined
+            }
         >
-            <button
-                type="button"
-                className={styles.listDragHandle}
-                {...attributes}
-                {...listeners}
-                aria-label={`Reorder list ${list.name}`}
-            >
-                <Equal aria-hidden size={16} strokeWidth={2.5} />
-            </button>
+            {canDrag && (
+                <button
+                    type="button"
+                    className={styles.listDragHandle}
+                    {...attributes}
+                    {...listeners}
+                    aria-label={`Reorder list ${list.name}`}
+                >
+                    <Equal aria-hidden size={16} strokeWidth={2.5} />
+                </button>
+            )}
             {column}
         </div>
     );

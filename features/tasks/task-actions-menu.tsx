@@ -15,6 +15,7 @@ import {
     Bell,
     CalendarClock,
     Check,
+    ChevronDown,
     CircleSlash,
     FileText,
     Flag,
@@ -181,19 +182,19 @@ export function TaskActionsMenu({
         if (value) setError("");
     };
     if (mobile) {
+        const hasDueTime = !!(task.dueDate && task.dueTime);
+        const reminderCount = task.reminders.length;
         return (
             <MobileActionDrawer
                 open={open}
                 onOpenChange={changeOpen}
                 onOpenChangeComplete={finishClose}
                 title="Task actions"
-                description={task.title}
                 bodyClassName={styles.drawerBody}
                 trigger={
                     <IconButton
                         size="xs"
                         type="button"
-                        appearance="ghost"
                         className={planner.lineAction}
                         disabled={busy}
                         aria-label={`Actions for ${task.title}`}
@@ -213,54 +214,85 @@ export function TaskActionsMenu({
                         {task.completedAt ? "Reopen task" : "Mark complete"}
                     </button>
                 </div>
-                <div className={mobileActionGroupClass}>{quickControls}</div>
+                <div className={cn(mobileActionGroupClass, styles.mobileQuickControls)}>
+                    {quickControls}
+                </div>
                 <div className={mobileActionGroupClass}>
-                    <fieldset className={styles.section} disabled={disabled}>
-                        <legend>Reminders</legend>
-                        <div className={styles.mobileReminders}>
-                            {[...new Set([...task.reminders, 0, 15, 30, 60])].map((value) => {
-                                const selected = task.reminders.includes(value);
-                                const label = taskReminderLabel(value);
-                                return (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        aria-pressed={selected}
-                                        disabled={!task.dueDate || !task.dueTime}
-                                        aria-label={
-                                            (selected ? "Remove " : "Add ") +
-                                            label.toLowerCase() +
-                                            " reminder"
-                                        }
-                                        onClick={() =>
-                                            void save({
-                                                reminders: selected
-                                                    ? task.reminders.filter(
-                                                          (offset) => offset !== value,
-                                                      )
-                                                    : [...task.reminders, value],
-                                            })
-                                        }
-                                    >
-                                        {label}
-                                        {selected ? <Check aria-hidden /> : <Plus aria-hidden />}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        {!task.dueDate || !task.dueTime ? (
-                            <p className={styles.hint}>Set a due date and time to use reminders.</p>
-                        ) : null}
-                    </fieldset>
-                    <button
-                        type="button"
-                        className={mobileActionClass}
-                        disabled={disabled}
-                        onClick={() => act(() => onIntent(task, "reminder"))}
-                    >
-                        <Bell aria-hidden />
-                        Custom reminders
-                    </button>
+                    {hasDueTime ? (
+                        <details className={styles.reminderDisclosure}>
+                            <summary className={cn(mobileActionClass, styles.reminderSummary)}>
+                                <Bell aria-hidden />
+                                Reminders
+                                <span className={styles.summary}>
+                                    {reminderCount ? `${reminderCount} set` : "None set"}
+                                </span>
+                                <ChevronDown aria-hidden />
+                            </summary>
+                            <fieldset className={styles.section} disabled={disabled}>
+                                <legend className="sr-only">Reminder presets</legend>
+                                <div className={styles.mobileReminders}>
+                                    {[...new Set([0, 15, 30, 60, ...task.reminders])].map(
+                                        (value) => {
+                                            const selected = task.reminders.includes(value);
+                                            const label = taskReminderLabel(value);
+                                            return (
+                                                <button
+                                                    key={value}
+                                                    type="button"
+                                                    aria-pressed={selected}
+                                                    aria-label={
+                                                        (selected ? "Remove " : "Add ") +
+                                                        label.toLowerCase() +
+                                                        " reminder"
+                                                    }
+                                                    onClick={() =>
+                                                        void save({
+                                                            reminders: selected
+                                                                ? task.reminders.filter(
+                                                                      (offset) => offset !== value,
+                                                                  )
+                                                                : [...task.reminders, value],
+                                                        })
+                                                    }
+                                                >
+                                                    <span>
+                                                        {value === 0
+                                                            ? "At due"
+                                                            : `−${label
+                                                                  .replace(/ before$/, "")
+                                                                  .replace(
+                                                                      / (day|hour|minute)s?/g,
+                                                                      (_, unit: string) => unit[0],
+                                                                  )}`}
+                                                    </span>
+                                                </button>
+                                            );
+                                        },
+                                    )}
+                                </div>
+                            </fieldset>
+                            <button
+                                type="button"
+                                className={mobileActionClass}
+                                disabled={disabled}
+                                onClick={() => act(() => onIntent(task, "reminder"))}
+                            >
+                                <CalendarClock aria-hidden />
+                                Custom reminders
+                            </button>
+                        </details>
+                    ) : (
+                        <button
+                            type="button"
+                            className={mobileActionClass}
+                            disabled={disabled}
+                            onClick={() => act(() => onIntent(task, "reminder"))}
+                        >
+                            <Bell aria-hidden />
+                            Reminders
+                            <span className={styles.summary}>Set due time</span>
+                        </button>
+                    )}
                 </div>
                 <div className={mobileActionGroupClass}>
                     <button

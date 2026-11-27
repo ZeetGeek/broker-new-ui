@@ -38,7 +38,7 @@ export function VisitDatePicker({
                 invalid={!!error}
                 aria-describedby={error ? `${id}-error` : undefined}
                 placeholder="Select a date"
-                className="border-2 text-sm block-control-lg"
+                className={`${styles.visitDateTrigger} border-2 text-sm block-control-lg`}
             />
             {error && (
                 <p id={`${id}-error`} role="alert" className={styles.fieldError}>

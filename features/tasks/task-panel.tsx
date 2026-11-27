@@ -19,6 +19,7 @@ export function TaskPanel({
     busy = false,
     dirty = false,
     compact = false,
+    className,
 }: {
     title: ReactNode;
     description?: ReactNode;
@@ -28,6 +29,7 @@ export function TaskPanel({
     busy?: boolean;
     dirty?: boolean;
     compact?: boolean;
+    className?: string;
 }) {
     const [discardOpen, setDiscardOpen] = useState(false);
     const close = () => {
@@ -48,6 +50,7 @@ export function TaskPanel({
                 bodyClassName={styles.body}
                 className={cn(
                     styles.panel,
+                    className,
                     compact
                         ? undefined
                         : `

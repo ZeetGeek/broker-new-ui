@@ -25,16 +25,23 @@ import { useWorkflowWorking } from "@/components/shared/workflow-context";
 import { Button } from "@/components/ui/button";
 
 import { AttachBuyersModal } from "@/features/properties/my-requests/attach-buyers-modal";
-import { PropertyFormDialog } from "@/features/properties/property-form/property-form-dialog";
+import {
+    PropertyFormDialog,
+    type PropertyFormDialogProps,
+} from "@/features/properties/property-form/property-form-dialog";
 import { AttachExclusiveOwnerModal } from "@/features/properties/your-listings/attach-exclusive-owner-modal";
 import { useAppSelector } from "@/store/hooks";
+
+import { PropertyEditStatus } from "./property-edit-status";
 
 export function PropertyWorkflow({
     target,
     onClose,
+    modalCloseRequest,
 }: {
     target: Extract<WorkflowTarget, { kind: "property" }>;
     onClose: () => void;
+    modalCloseRequest?: PropertyFormDialogProps["modalCloseRequest"];
 }) {
     const client = useQueryClient();
     const accountId = useAppSelector((state) => state.auth.user?.id);
@@ -91,9 +98,55 @@ export function PropertyWorkflow({
                 portal="broker"
                 listing={listing}
                 onOpenChange={back}
-                onSaved={saved}
+                onSaved={modalCloseRequest ? refresh : saved}
+                modalCloseRequest={modalCloseRequest}
             />
         );
+    const status = query.isPending ? (
+        <p role="status" className="body-sm text-ink-muted">
+            Loading property…
+        </p>
+    ) : query.isError ? (
+        <EmptyState
+            size="card"
+            variant="error"
+            icon={Building2}
+            heading="Could not load this property"
+            description="Check your connection and try again."
+            action={{
+                label: "Try again",
+                icon: RefreshCw,
+                onClick: () => void query.refetch(),
+                disabled: query.isFetching,
+            }}
+        />
+    ) : !listing ? (
+        <EmptyState
+            size="card"
+            icon={Building2}
+            heading="Property no longer available"
+            description="It may have been removed. Open My Listings to choose another property."
+            action={{
+                label: "Open My Listings",
+                icon: Building2,
+                href: "/broker/my-listings",
+            }}
+        />
+    ) : listing.deletedAt ? (
+        <EmptyState
+            size="card"
+            icon={Building2}
+            heading="Property is deleted"
+            description="Restore this property from the Deleted view in My Listings before editing it."
+            action={{
+                label: "Open My Listings",
+                icon: Building2,
+                href: "/broker/my-listings",
+            }}
+        />
+    ) : null;
+    if (modalCloseRequest) return <PropertyEditStatus>{status}</PropertyEditStatus>;
+
     const amount = listing ? toLegacyAmountFields(listing) : { amountInr: 0, isRent: false };
     return (
         <>
@@ -115,48 +168,8 @@ export function PropertyWorkflow({
                     ) : undefined
                 }
             >
-                {query.isPending ? (
-                    <p role="status" className="body-sm text-ink-muted">
-                        Loading property…
-                    </p>
-                ) : query.isError ? (
-                    <EmptyState
-                        size="card"
-                        variant="error"
-                        icon={Building2}
-                        heading="Could not load this property"
-                        description="Check your connection and try again."
-                        action={{
-                            label: "Try again",
-                            icon: RefreshCw,
-                            onClick: () => void query.refetch(),
-                            disabled: query.isFetching,
-                        }}
-                    />
-                ) : !listing ? (
-                    <EmptyState
-                        size="card"
-                        icon={Building2}
-                        heading="Property no longer available"
-                        description="It may have been removed. Open My Listings to choose another property."
-                        action={{
-                            label: "Open My Listings",
-                            icon: Building2,
-                            href: "/broker/my-listings",
-                        }}
-                    />
-                ) : listing.deletedAt ? (
-                    <EmptyState
-                        size="card"
-                        icon={Building2}
-                        heading="Property is deleted"
-                        description="Restore this property from the Deleted view in My Listings before editing it."
-                        action={{
-                            label: "Open My Listings",
-                            icon: Building2,
-                            href: "/broker/my-listings",
-                        }}
-                    />
+                {status || !listing ? (
+                    status
                 ) : (
                     <>
                         <div className="mbe-5 flex items-start gap-3 min-inline-0">

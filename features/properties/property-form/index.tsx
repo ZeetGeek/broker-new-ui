@@ -3,9 +3,11 @@ import {
     type FormEvent,
     type MutableRefObject,
     type ReactNode,
+    type RefObject,
     useCallback,
     useEffect,
     useId,
+    useImperativeHandle,
     useMemo,
     useRef,
     useState,
@@ -91,6 +93,8 @@ import type {
     MyListingPropertyType,
 } from "@/features/properties/your-listings/types";
 
+import { propertyFormModalLayout } from "./property-form-modal-layout";
+
 import styles from "./property-form.module.css";
 
 // v2: nearbyPlaces changed from {id,type,name,distanceKm}[] to a plain string[] of place types.
@@ -134,6 +138,8 @@ export type PropertyFormProps = {
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     onSaved?: (listing: MyListingItem) => void;
+    /** The parent owns the dialog and calls this handler to honor the form's close guard. */
+    modalCloseRequest?: RefObject<(() => Promise<void>) | null>;
 };
 
 export function PropertyForm({
@@ -147,6 +153,7 @@ export function PropertyForm({
     open = false,
     onOpenChange,
     onSaved,
+    modalCloseRequest,
 }: PropertyFormProps) {
     const router = useRouter();
     const saveToastId = useId();
@@ -213,6 +220,7 @@ export function PropertyForm({
         mode: "onTouched",
         shouldUnregister: false,
     });
+    const { isDirty } = methods.formState;
     const values = useWatch({ control: methods.control }) as PropertyDraftValues;
 
     const draftUiState = useMemo(
@@ -408,7 +416,7 @@ export function PropertyForm({
     }, [entryMode, step]);
 
     async function startFreshListing(confirmed = false) {
-        if ((methods.formState.isDirty || savedAt !== null) && !confirmed) {
+        if ((isDirty || savedAt !== null) && !confirmed) {
             setConfirmation({
                 action: "fresh",
                 description: "This removes the current draft and its photos from this device.",
@@ -988,7 +996,7 @@ export function PropertyForm({
                 // Still allow closing if storage is unavailable.
             }
         }
-        if (methods.formState.isDirty) {
+        if (isDirty) {
             setConfirmation({
                 action: "close",
                 description: !keepsLocalDraft
@@ -1010,6 +1018,8 @@ export function PropertyForm({
         if (!isDialog && !onCancel)
             router.push(portal === "owner" ? OWNER_PROPERTIES_HREF : BROKER_YOUR_LISTINGS_HREF);
     }
+
+    useImperativeHandle(modalCloseRequest, () => requestClose);
 
     const formActions = (
         <PropertyFormActions
@@ -1361,6 +1371,7 @@ export function PropertyForm({
                     description={confirmation?.description}
                     confirmLabel={confirmation?.action === "fresh" ? "Start fresh" : "Close form"}
                     cancelLabel="Keep editing"
+                    buttonSize={confirmation?.action === "close" ? "sm" : undefined}
                     onConfirm={() => {
                         const action = confirmation?.action;
                         setConfirmation(null);
@@ -1384,6 +1395,8 @@ export function PropertyForm({
             </div>
         );
 
+    if (modalCloseRequest) return surface;
+
     return (
         <AppModal
             open={open}
@@ -1391,11 +1404,7 @@ export function PropertyForm({
             showHeader={false}
             scrollBody={false}
             bodyClassName="min-inline-0"
-            size="full"
-            className={cn(
-                "inset-0 translate-none overflow-clip rounded-none border-0 p-0 shadow-none block-dvh inline-dvw max-block-none max-inline-none sm:inline-dvw sm:max-inline-none",
-                styles.fullscreen,
-            )}
+            {...propertyFormModalLayout}
             onOpenChange={(next) => {
                 if (!next) void requestClose();
             }}
@@ -1678,7 +1687,7 @@ function PropertyFormActions({
     );
 
     return (
-        <AppModalFooter className="flex flex-col items-stretch gap-4 pbe-[env(safe-area-inset-bottom)] text-center">
+        <AppModalFooter className="flex flex-col items-stretch gap-4 pbe-[env(safe-area-inset-bottom)] text-center shadow-none!">
             <div className="flex flex-col gap-4 min-inline-0">
                 {showStartFresh ? (
                     <Button

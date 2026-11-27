@@ -191,13 +191,6 @@
         font-size: calc(0.875rem / var(--layout-font-scale, 1));
     }
 
-    /* Both layers must use the same type metrics so the caret stays aligned. */
-    .paper :global([data-quick-add] textarea),
-    .paper :global([data-quick-add] [data-quick-add-mirror]) {
-        font-size: calc(0.75rem / var(--layout-font-scale, 1));
-        font-weight: 600;
-    }
-
     .paper :global([data-quick-add]) {
         --qa-line: var(--touch-target-min, calc(2.75rem / var(--layout-font-scale, 1)));
     }

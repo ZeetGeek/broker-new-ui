@@ -603,7 +603,7 @@
         @apply font-heading;
     }
 
-    /* One 14px size for entered text, placeholders, choices and actions.
+    /* Default to 14px for entered text, placeholders, choices and actions.
        This is an app-wide requirement: base-layer importance also wins over
        size utilities and local modal/mobile overrides, including text-sm!.
        The Material clock's large hour/minute display opts out explicitly. */

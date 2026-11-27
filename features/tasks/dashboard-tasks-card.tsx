@@ -446,20 +446,10 @@ export function DashboardTasksCard() {
                                         </IconButton>
                                     </div>
                                 </header>
-                                <ul
-                                    className={cn(
-                                        planner.ruledList,
-                                        planner.rowGutters,
-                                        styles.paperList,
-                                    )}
-                                >
+                                <ul className={cn(planner.ruledList, styles.paperList)}>
                                     {visible.map((task) => (
                                         <li key={task.id} className={planner.historyLine}>
-                                            <TaskLine
-                                                task={task}
-                                                showDate={filter === "overdue"}
-                                                {...rowActions}
-                                            />
+                                            <TaskLine task={task} showDate {...rowActions} />
                                         </li>
                                     ))}
                                     {filter === "today" ? (

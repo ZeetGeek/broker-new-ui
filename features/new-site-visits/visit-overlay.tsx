@@ -2,6 +2,8 @@
 
 import { type ReactNode, useState } from "react";
 
+import { cn } from "@/lib/utils";
+
 import { AppModal } from "@/components/shared/app-modal";
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 
@@ -15,7 +17,9 @@ export function VisitOverlay({
     busy = false,
     dirty = false,
     compact = false,
+    className,
     error,
+    headerActions,
     footer,
     children,
     lightboxOpen = false,
@@ -26,8 +30,10 @@ export function VisitOverlay({
     busy?: boolean;
     dirty?: boolean;
     compact?: boolean;
+    className?: string;
     error?: string;
-    footer: (close: () => void) => ReactNode;
+    headerActions?: ReactNode;
+    footer?: (close: () => void) => ReactNode;
     children: ReactNode;
     lightboxOpen?: boolean;
 }) {
@@ -47,21 +53,24 @@ export function VisitOverlay({
                     if (!open) close();
                 }}
                 title={title}
+                headerActions={headerActions}
                 description={description}
                 size={compact ? "md" : "lg"}
                 padding="md"
-                className={compact ? styles.compactDialog : styles.visitDrawer}
+                className={cn(compact ? styles.compactDialog : styles.visitDrawer, className)}
                 bodyClassName={styles.overlayBody}
                 footerClassName={styles.overlayFooter}
                 footer={
-                    <AppModalFooter className="flex-col items-stretch">
-                        {error && (
-                            <p role="alert" className={styles.saveError}>
-                                {error}
-                            </p>
-                        )}
-                        {footer(close)}
-                    </AppModalFooter>
+                    (footer || error) && (
+                        <AppModalFooter className="flex-col items-stretch">
+                            {error && (
+                                <p role="alert" className={styles.saveError}>
+                                    {error}
+                                </p>
+                            )}
+                            {footer?.(close)}
+                        </AppModalFooter>
+                    )
                 }
             >
                 {children}

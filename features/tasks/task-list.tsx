@@ -111,7 +111,6 @@ export function TaskLine({
         <IconButton
             size="xs"
             type="button"
-            appearance={mobile ? "ghost" : "outline"}
             className={styles.lineAction}
             disabled={busy}
             aria-label={`Actions for ${rowTitle}`}
@@ -204,7 +203,6 @@ export function TaskLine({
                             action?.();
                         }}
                         title="Task actions"
-                        description={rowTitle}
                         trigger={deletedTaskMenuTrigger}
                     >
                         <div className={mobileActionGroupClass}>

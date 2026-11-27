@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 
+import { formatWeekdayDate } from "@/lib/format/date";
+
 import { TimePicker, TimePickerColumns, TimePickerPanel } from "@/components/reui/time-picker";
+import { AppDateCalendar, parseCalendarDate } from "@/components/shared/app-date-calendar";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
     Card,
     CardContent,
@@ -14,21 +16,15 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 
-/* Plain arrays rather than Intl or toLocale*, so the server and the browser
-   always print the same summary. */
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/* Fixed dates, so the server and every visitor render the same month. */
-const FIRST_MONTH = new Date(2026, 9, 1);
-const SUGGESTED_DAY = new Date(2026, 9, 14);
+const SUGGESTED_DAY = "2026-10-14";
 
 export function Pattern() {
     const [date, setDate] = useState(SUGGESTED_DAY);
     const [time, setTime] = useState("09:00");
     const [scheduled, setScheduled] = useState<string | null>(null);
 
-    const summary = `${WEEKDAYS[date.getDay()]}, ${MONTHS[date.getMonth()]} ${date.getDate()} at ${time}`;
+    const selected = parseCalendarDate(date);
+    const summary = selected ? `${formatWeekdayDate(selected)} at ${time}` : "";
     /* Derived, so changing the day or the time after scheduling reads as a
      new, unsaved choice again. */
     const isScheduled = scheduled === summary;
@@ -43,12 +39,13 @@ export function Pattern() {
                 <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
                     {/* `required` keeps one day selected, so the summary always has
               a date to show. */}
-                    <Calendar
-                        mode="single"
+                    <AppDateCalendar
+                        value={date}
+                        allowPast
                         required
-                        selected={date}
-                        onSelect={setDate}
-                        defaultMonth={FIRST_MONTH}
+                        onChange={(next) => {
+                            if (next) setDate(next);
+                        }}
                     />
                     <div className="flex justify-center self-stretch max-sm:border-bs max-sm:pbs-4 sm:border-s sm:ps-4">
                         <TimePicker
