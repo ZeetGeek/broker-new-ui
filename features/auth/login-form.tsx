@@ -28,6 +28,14 @@ import { SocialAuthButtons } from "./social-auth-buttons";
 
 const REMEMBERED_EMAIL_KEY = "remembered-login-email";
 
+/**
+ * Testing aid: `/login?email=…&password=…` signs in automatically.
+ * On in development; elsewhere only when NEXT_PUBLIC_ENABLE_QUERY_LOGIN=true.
+ * Never enable on production — the password travels in the URL.
+ */
+const QUERY_LOGIN_ENABLED =
+    process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_ENABLE_QUERY_LOGIN === "true";
+
 export function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -100,6 +108,25 @@ export function LoginForm() {
             toast.error(payload?.message || "Login failed");
         }
     }
+
+    const hasAutoLoginStartedRef = React.useRef(false);
+
+    React.useEffect(() => {
+        if (!QUERY_LOGIN_ENABLED || hasAutoLoginStartedRef.current) return;
+        const email = searchParams.get("email");
+        const password = searchParams.get("password");
+        if (!email || !password) return;
+        hasAutoLoginStartedRef.current = true;
+
+        // Drop the credentials from the address bar and history; keep `next`.
+        const url = new URL(window.location.href);
+        url.searchParams.delete("email");
+        url.searchParams.delete("password");
+        window.history.replaceState(window.history.state, "", url);
+
+        reset({ email, password, rememberMe: false });
+        void handleSubmit(onSubmit)();
+    });
 
     async function handleResendVerification() {
         if (!unverifiedEmail) return;
