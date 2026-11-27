@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
+import { decodeLoginLinkToken } from "@/lib/auth/login-link";
 import { destinationForRole } from "@/lib/auth/session";
 import { useRouter, useSearchParams } from "@/lib/navigation";
 import { loginSchema, type LoginValues } from "@/lib/validation/auth";
@@ -29,9 +30,10 @@ import { SocialAuthButtons } from "./social-auth-buttons";
 const REMEMBERED_EMAIL_KEY = "remembered-login-email";
 
 /**
- * Testing aid: `/login?email=…&password=…` signs in automatically.
+ * Testing aid: `/login?t=<token>` signs in automatically (token from
+ * `scripts/make-login-link.ts`). The credentials never touch the form fields.
  * On in development; elsewhere only when NEXT_PUBLIC_ENABLE_QUERY_LOGIN=true.
- * Never enable on production — the password travels in the URL.
+ * Never enable on production — the token is obfuscated, not encrypted.
  */
 const QUERY_LOGIN_ENABLED =
     process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_ENABLE_QUERY_LOGIN === "true";
@@ -43,6 +45,11 @@ export function LoginForm() {
     const [unverifiedEmail, setUnverifiedEmail] = React.useState<string | null>(null);
     const [isResending, setIsResending] = React.useState(false);
     const [isRedirecting, setIsRedirecting] = React.useState(false);
+    // Busy from the first paint when a sign-in link is present, so the empty
+    // form never looks idle while the token is used.
+    const [isAutoSigningIn, setIsAutoSigningIn] = React.useState(
+        () => QUERY_LOGIN_ENABLED && Boolean(searchParams.get("t")),
+    );
 
     const {
         control,
@@ -79,13 +86,16 @@ export function LoginForm() {
     }, [reset]);
 
     async function onSubmit(values: LoginValues) {
-        setUnverifiedEmail(null);
         if (values.rememberMe) {
             window.localStorage.setItem(REMEMBERED_EMAIL_KEY, values.email);
         } else {
             window.localStorage.removeItem(REMEMBERED_EMAIL_KEY);
         }
+        await signIn(values);
+    }
 
+    async function signIn(values: LoginValues) {
+        setUnverifiedEmail(null);
         try {
             const result = await dispatch(
                 login({
@@ -111,22 +121,36 @@ export function LoginForm() {
 
     const hasAutoLoginStartedRef = React.useRef(false);
 
+    // Sign in straight from the token; the fields stay empty so the email
+    // and password are never shown on screen.
+    const signInFromToken = React.useEffectEvent(async (token: string) => {
+        try {
+            const credentials = decodeLoginLinkToken(token);
+            if (!credentials) {
+                toast.error(
+                    "This sign-in link is not valid. Sign in with your email and password.",
+                );
+                return;
+            }
+            await signIn({ ...credentials, rememberMe: false });
+        } finally {
+            setIsAutoSigningIn(false);
+        }
+    });
+
     React.useEffect(() => {
         if (!QUERY_LOGIN_ENABLED || hasAutoLoginStartedRef.current) return;
-        const email = searchParams.get("email");
-        const password = searchParams.get("password");
-        if (!email || !password) return;
+        const token = searchParams.get("t");
+        if (!token) return;
         hasAutoLoginStartedRef.current = true;
 
-        // Drop the credentials from the address bar and history; keep `next`.
+        // Drop the token from the address bar and history; keep `next`.
         const url = new URL(window.location.href);
-        url.searchParams.delete("email");
-        url.searchParams.delete("password");
+        url.searchParams.delete("t");
         window.history.replaceState(window.history.state, "", url);
 
-        reset({ email, password, rememberMe: false });
-        void handleSubmit(onSubmit)();
-    });
+        void signInFromToken(token);
+    }, [searchParams]);
 
     async function handleResendVerification() {
         if (!unverifiedEmail) return;
@@ -148,7 +172,7 @@ export function LoginForm() {
 
     // Keep the form on screen; the button carries the pending state until the
     // dashboard replaces this page.
-    const isBusy = isSubmitting || isRedirecting;
+    const isBusy = isSubmitting || isRedirecting || isAutoSigningIn;
 
     return (
         <AuthFormFrame>
