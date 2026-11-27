@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 
 import { Bar, BarChart, BarStack, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
@@ -85,8 +85,39 @@ export function CommissionEarned({ now }: { now: Date }) {
     const [periodOpen, setPeriodOpen] = useState(false);
     const [months, setMonths] = useState<CommissionMonths>(DASHBOARD_DEFAULT_MONTHS);
     const [page, setPage] = useState(0);
+    const [chartScrollable, setChartScrollable] = useState(false);
+    const [tooltipPortal, setTooltipPortal] = useState<HTMLDivElement | null>(null);
+    const [legendPortal, setLegendPortal] = useState<HTMLDivElement | null>(null);
     const report = useDashboardEarnings(months, page, now);
     const lastPage = maxCommissionPage(months);
+
+    const chartViewportRef = useCallback((viewport: HTMLDivElement | null) => {
+        if (!viewport) return;
+
+        const updateEdges = () => {
+            const { scrollLeft, scrollWidth, clientWidth } = viewport;
+            viewport.toggleAttribute("data-scroll-left", scrollLeft > 1);
+            viewport.toggleAttribute(
+                "data-scroll-right",
+                scrollWidth - clientWidth - scrollLeft > 1,
+            );
+        };
+        const updateOverflow = () => {
+            setChartScrollable(viewport.scrollWidth - viewport.clientWidth > 1);
+            updateEdges();
+        };
+
+        updateOverflow();
+        viewport.addEventListener("scroll", updateEdges, { passive: true });
+        const observer = new ResizeObserver(updateOverflow);
+        observer.observe(viewport);
+        if (viewport.firstElementChild) observer.observe(viewport.firstElementChild);
+
+        return () => {
+            viewport.removeEventListener("scroll", updateEdges);
+            observer.disconnect();
+        };
+    }, []);
 
     if (report.isPending) {
         return (
@@ -285,98 +316,111 @@ export function CommissionEarned({ now }: { now: Date }) {
                         Open earnings
                     </Button>
                 </header>
-                <div
-                    className={styles.chartViewport}
-                    role="region"
-                    aria-label="Monthly commission chart"
-                    tabIndex={0}
-                >
-                    <ChartContainer
-                        key={`${months}-${page}`}
-                        config={CHART_CONFIG}
-                        data-months={months}
-                        className={`${styles.chart} ${months === 12 ? styles.yearChart : ""} ${report.isPlaceholderData ? "opacity-60" : ""}`}
-                        aria-label={`Monthly sale and rent commission, ${period}`}
+                <div className={styles.chartFrame} data-scrollable={chartScrollable}>
+                    <div
+                        key={months}
+                        ref={chartViewportRef}
+                        className={styles.chartViewport}
+                        role="region"
+                        aria-label="Monthly commission chart"
+                        tabIndex={0}
                     >
-                        <BarChart
-                            accessibilityLayer
-                            aria-label={`Sale and rent commission by month, ${period}`}
-                            data={selectedMonths}
-                            margin={{ top: 24 }}
+                        <ChartContainer
+                            config={CHART_CONFIG}
+                            data-months={months}
+                            className={`${styles.chart} ${months === 12 ? styles.yearChart : ""} ${report.isPlaceholderData ? "opacity-60" : ""}`}
+                            aria-label={`Monthly sale and rent commission, ${period}`}
                         >
-                            <CartesianGrid vertical={false} />
-                            {/* Keep labels inside the plot and its full-height hover highlight. */}
-                            <YAxis
-                                hide
-                                domain={[0, (dataMax: number) => Math.max(1, dataMax * 1.2)]}
-                            />
-                            <XAxis
-                                dataKey="monthKey"
-                                axisLine={false}
-                                tickLine={false}
-                                tickMargin={10}
-                                interval={0}
-                                tick={{ fontSize: 12, fill: "var(--color-ink-muted)" }}
-                                tickFormatter={(monthKey: string) =>
-                                    `${formatCommissionMonth(monthKey, "short").split(" ")[0]}${selectedMonths.find((month) => month.monthKey === monthKey)?.isToDate ? "*" : ""}`
-                                }
-                            />
-                            <ChartTooltip
-                                cursor={{ fill: "var(--color-brand-soft)", radius: 8 }}
-                                content={
-                                    <ChartTooltipContent
-                                        hideLabel
-                                        className={styles.tooltip}
-                                        formatter={(value, name) => (
-                                            <div className={styles.tooltipRow}>
-                                                <span className={styles.tooltipLabel}>
-                                                    <span
-                                                        aria-hidden
-                                                        className={styles.tooltipSwatch}
-                                                        style={{
-                                                            backgroundColor:
-                                                                name === "sale"
-                                                                    ? "var(--color-sale)"
-                                                                    : "var(--color-rent)",
-                                                        }}
-                                                    />
-                                                    {name === "sale"
-                                                        ? "Sale commission"
-                                                        : "Rent commission"}
-                                                </span>
-                                                <strong>{formatCommission(Number(value))}</strong>
-                                            </div>
-                                        )}
-                                    />
-                                }
-                            />
-                            <ChartLegend
-                                content={<ChartLegendContent className={styles.legend} />}
-                            />
-                            <BarStack stackId="commission" radius={8}>
-                                <Bar
-                                    dataKey="sale"
-                                    fill="var(--color-sale)"
-                                    isAnimationActive={false}
+                            <BarChart
+                                key={page}
+                                accessibilityLayer
+                                aria-label={`Sale and rent commission by month, ${period}`}
+                                data={selectedMonths}
+                                margin={{ top: 24 }}
+                                maxBarSize={mobile ? 44 : undefined}
+                            >
+                                <CartesianGrid vertical={false} />
+                                {/* Keep labels inside the plot and its full-height hover highlight. */}
+                                <YAxis
+                                    hide
+                                    domain={[0, (dataMax: number) => Math.max(1, dataMax * 1.2)]}
                                 />
-                                <Bar
-                                    dataKey="rent"
-                                    fill="var(--color-rent)"
-                                    isAnimationActive={false}
-                                >
-                                    <LabelList
-                                        dataKey="total"
-                                        position="top"
-                                        offset={12}
-                                        className={styles.barLabel}
-                                        fontSize={12}
-                                        formatter={(value) => formatCommission(Number(value), true)}
+                                <XAxis
+                                    dataKey="monthKey"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tickMargin={10}
+                                    interval={0}
+                                    tick={{ fontSize: 12, fill: "var(--color-ink-muted)" }}
+                                    tickFormatter={(monthKey: string) =>
+                                        formatCommissionMonth(monthKey, "short").split(" ")[0]!
+                                    }
+                                />
+                                <ChartTooltip
+                                    portal={chartScrollable ? tooltipPortal : null}
+                                    cursor={{ fill: "var(--color-brand-soft)", radius: 8 }}
+                                    content={
+                                        <ChartTooltipContent
+                                            hideLabel
+                                            className={styles.tooltip}
+                                            formatter={(value, name) => (
+                                                <div className={styles.tooltipRow}>
+                                                    <span className={styles.tooltipLabel}>
+                                                        <span
+                                                            aria-hidden
+                                                            className={styles.tooltipSwatch}
+                                                            style={{
+                                                                backgroundColor:
+                                                                    name === "sale"
+                                                                        ? CHART_CONFIG.sale.color
+                                                                        : CHART_CONFIG.rent.color,
+                                                            }}
+                                                        />
+                                                        {name === "sale"
+                                                            ? "Sale commission"
+                                                            : "Rent commission"}
+                                                    </span>
+                                                    <strong>
+                                                        {formatCommission(Number(value))}
+                                                    </strong>
+                                                </div>
+                                            )}
+                                        />
+                                    }
+                                />
+                                <ChartLegend
+                                    portal={chartScrollable ? legendPortal : null}
+                                    content={<ChartLegendContent className={styles.legend} />}
+                                />
+                                <BarStack stackId="commission" radius={8}>
+                                    <Bar
+                                        dataKey="sale"
+                                        fill={CHART_CONFIG.sale.color}
+                                        isAnimationActive={false}
                                     />
-                                </Bar>
-                            </BarStack>
-                        </BarChart>
-                    </ChartContainer>
+                                    <Bar
+                                        dataKey="rent"
+                                        fill={CHART_CONFIG.rent.color}
+                                        isAnimationActive={false}
+                                    >
+                                        <LabelList
+                                            dataKey="total"
+                                            position="top"
+                                            offset={12}
+                                            className={styles.barLabel}
+                                            fontSize={12}
+                                            formatter={(value) =>
+                                                formatCommission(Number(value), true)
+                                            }
+                                        />
+                                    </Bar>
+                                </BarStack>
+                            </BarChart>
+                        </ChartContainer>
+                    </div>
+                    <div ref={setTooltipPortal} className={styles.tooltipPortal} />
                 </div>
+                <div ref={setLegendPortal} />
                 {report.isError ? (
                     <p role="alert" className="body-sm text-ink-muted">
                         Couldn&apos;t refresh this period.{" "}
@@ -388,12 +432,6 @@ export function CommissionEarned({ now }: { now: Date }) {
                             Try again
                         </button>
                     </p>
-                ) : null}
-                {latest.isToDate ? (
-                    <footer className={styles.footer}>
-                        <span />
-                        <span>* {monthLabel}</span>
-                    </footer>
                 ) : null}
                 <div className="sr-only">
                     <table>

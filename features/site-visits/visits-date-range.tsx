@@ -2,24 +2,16 @@
 
 import { useState } from "react";
 
-import { formatDateIso, formatDateShort } from "@/lib/format/date";
+import { formatDateShort } from "@/lib/format/date";
 import { cn } from "@/lib/utils";
 import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
+import { AppDateCalendar, parseCalendarDate } from "@/components/shared/app-date-calendar";
 import { AppDateRangeFields } from "@/components/shared/app-date-range-fields";
 import { CalendarRange } from "@/components/shared/icons";
 import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
-/** `YYYY-MM-DD` → Date, or undefined for "". */
-function parseKey(key: string): Date | undefined {
-    if (!key) return undefined;
-    const [y, m, d] = key.split("-").map(Number);
-    if (!y || !m || !d) return undefined;
-    return new Date(y, m - 1, d);
-}
 
 /**
  * Whether the calendar picks one day or a window.
@@ -56,8 +48,8 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
     const mobile = useMobileMenu();
     const [open, setOpen] = useState(false);
 
-    const from = parseKey(dateFrom);
-    const to = parseKey(dateTo);
+    const from = parseCalendarDate(dateFrom);
+    const to = parseCalendarDate(dateTo);
     const hasRange = Boolean(from || to);
 
     /** Whether the filter as it stands spans more than one day. */
@@ -83,15 +75,15 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
         }
     };
 
-    const handleSelectSingle = (day: Date | undefined) => {
-        const key = day ? formatDateIso(day) : "";
+    const handleSelectSingle = (day: string | null) => {
+        const key = day ?? "";
         onChange({ dateFrom: key, dateTo: key });
     };
 
     const label = (() => {
         if (!from && !to) return "Any date";
         if (from && to) {
-            return formatDateIso(from) === formatDateIso(to)
+            return dateFrom === dateTo
                 ? formatDateShort(from)
                 : `${formatDateShort(from)} – ${formatDateShort(to)}`;
         }
@@ -148,16 +140,16 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
                     </ModeButton>
                 </div>
                 {mode === "single" ? (
-                    <Calendar
-                        mode="single"
-                        selected={from}
-                        onSelect={(day) => {
-                            handleSelectSingle(day);
-                            setOpen(false);
-                        }}
-                        defaultMonth={from ?? new Date()}
-                        numberOfMonths={1}
-                    />
+                    <div className="py-3">
+                        <AppDateCalendar
+                            value={dateFrom}
+                            allowPast
+                            onChange={(day) => {
+                                handleSelectSingle(day);
+                                setOpen(false);
+                            }}
+                        />
+                    </div>
                 ) : (
                     <AppDateRangeFields
                         className="py-3"
@@ -238,14 +230,14 @@ export function VisitsDateRange({ dateFrom, dateTo, onChange }: VisitsDateRangeP
                     </div>
 
                     {mode === "single" ? (
-                        <Calendar
-                            mode="single"
-                            autoFocus
-                            selected={from}
-                            onSelect={handleSelectSingle}
-                            defaultMonth={from ?? new Date()}
-                            numberOfMonths={1}
-                        />
+                        <div className="p-3">
+                            <AppDateCalendar
+                                value={dateFrom}
+                                allowPast
+                                autoFocus
+                                onChange={handleSelectSingle}
+                            />
+                        </div>
                     ) : (
                         <AppDateRangeFields
                             className="p-3"

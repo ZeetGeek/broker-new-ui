@@ -1,11 +1,27 @@
 "use client";
+import { useRef, useState } from "react";
+
 import type { BrokerVisit } from "@/lib/api/site-visits";
 import { formatVisitDate, formatVisitTime } from "@/lib/visits/time";
+import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
 import { AppModalFooter } from "@/components/shared/app-modal-footer";
 import { ContactName } from "@/components/shared/contact-name";
 import { DrawerSection } from "@/components/shared/drawer-section";
-import { CalendarDays, CalendarPlus, Clock, MapPin, Plus } from "@/components/shared/icons";
+import { IconButton } from "@/components/shared/icon-button";
+import {
+    CalendarDays,
+    CalendarPlus,
+    Clock,
+    MapPin,
+    MoreHorizontal,
+    Plus,
+} from "@/components/shared/icons";
+import {
+    mobileActionClass,
+    MobileActionDrawer,
+    mobileActionGroupClass,
+} from "@/components/shared/mobile-action-drawer";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
 import { Button } from "@/components/ui/button";
@@ -117,70 +133,130 @@ export function VisitDetail({
     onReschedule: () => void;
     onScheduleAnother: () => void;
 }) {
+    const mobile = useMobileMenu();
+    const [actionsOpen, setActionsOpen] = useState(false);
+    const pendingAction = useRef<(() => void) | null>(null);
     const state = visitState(visit, now);
     const waitingForOwner = visit.status === "scheduled" && !visit.isExclusive;
     const primary = (action: string) => action === "completed" || action === "reschedule";
+    const followUpHref = `/broker/tasks?${new URLSearchParams({
+        view: "create",
+        visitClient: visit.clientId,
+        visitProperty: visit.propertyId,
+        visitTitle: `Follow up with ${visit.clientName} after ${visit.propertyTitle}`,
+    })}`;
+    const visitActions = getVisitActions(visit, now).sort((a, b) => {
+        const rank = (action: keyof typeof VISIT_ACTIONS) =>
+            VISIT_ACTIONS[action].danger ? 0 : primary(action) ? 2 : 1;
+        return rank(a) - rank(b);
+    });
+    const footerActions = mobile ? visitActions.filter(primary) : visitActions;
+    const menuActions = visitActions.filter((action) => !primary(action) && action !== "view");
+    const relatedActions = (
+        <>
+            {visit.isExclusive && (
+                <Button size="sm" variant="outline" disabled={busy} onClick={onScheduleAnother}>
+                    <CalendarPlus aria-hidden />
+                    Book another visit
+                </Button>
+            )}
+            <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                render={<Link href={followUpHref} />}
+            >
+                <Plus aria-hidden />
+                Add follow-up task
+            </Button>
+        </>
+    );
+    function runVisitAction(action: keyof typeof VISIT_ACTIONS) {
+        if (action === "reschedule") onReschedule();
+        else if (action === "view") onBack();
+        else onConfirm(action);
+    }
+    function selectAction(action: () => void) {
+        pendingAction.current = action;
+        setActionsOpen(false);
+    }
     return (
         <VisitOverlay
             title="Visit details"
             busy={busy}
             onClose={onBack}
-            footer={(close) => (
-                <AppModalFooter className={styles.detailFooter}>
-                    {visit.isExclusive && (
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={busy}
-                            onClick={onScheduleAnother}
-                        >
-                            <CalendarPlus aria-hidden />
-                            Book another visit
-                        </Button>
-                    )}
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={busy}
-                        render={
-                            <Link
-                                href={`/broker/tasks?${new URLSearchParams({ view: "create", visitClient: visit.clientId, visitProperty: visit.propertyId, visitTitle: `Follow up with ${visit.clientName} after ${visit.propertyTitle}` })}`}
-                            />
+            headerActions={
+                mobile && menuActions.length > 0 ? (
+                    <MobileActionDrawer
+                        open={actionsOpen}
+                        onOpenChange={setActionsOpen}
+                        onOpenChangeComplete={(open) => {
+                            if (open) return;
+                            const action = pendingAction.current;
+                            pendingAction.current = null;
+                            action?.();
+                        }}
+                        title="Visit actions"
+                        trigger={
+                            <IconButton size="md" disabled={busy} aria-label="Visit actions">
+                                <MoreHorizontal aria-hidden />
+                            </IconButton>
                         }
                     >
-                        <Plus aria-hidden />
-                        Create follow-up task
-                    </Button>
-                    {getVisitActions(visit, now)
-                        .sort((a, b) => {
-                            const rank = (action: keyof typeof VISIT_ACTIONS) =>
-                                VISIT_ACTIONS[action].danger ? 0 : primary(action) ? 2 : 1;
-                            return rank(a) - rank(b);
-                        })
-                        .map((action) => {
-                            const { label, icon: Icon, danger } = VISIT_ACTIONS[action];
-                            return (
-                                <Button
-                                    key={action}
-                                    size="sm"
-                                    className={danger ? styles.detailFooterDanger : undefined}
-                                    disabled={busy}
-                                    variant={
-                                        danger ? "ghost" : primary(action) ? "accent" : "outline"
-                                    }
-                                    onClick={() => {
-                                        if (action === "reschedule") onReschedule();
-                                        else if (action === "view") close();
-                                        else onConfirm(action);
-                                    }}
-                                >
-                                    <Icon aria-hidden />
-                                    {action === "view" ? "Close" : label}
-                                </Button>
-                            );
-                        })}
-                </AppModalFooter>
-            )}
+                        <div className={mobileActionGroupClass}>
+                            {menuActions.map((action) => {
+                                const { label, icon: Icon, danger } = VISIT_ACTIONS[action];
+                                return (
+                                    <button
+                                        key={action}
+                                        type="button"
+                                        className={mobileActionClass}
+                                        data-destructive={danger || undefined}
+                                        disabled={busy}
+                                        onClick={() => selectAction(() => runVisitAction(action))}
+                                    >
+                                        <Icon aria-hidden />
+                                        {label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </MobileActionDrawer>
+                ) : undefined
+            }
+            footer={
+                mobile && footerActions.length === 0
+                    ? undefined
+                    : () => (
+                          <AppModalFooter
+                              className={mobile ? styles.detailButtonGrid : styles.detailFooter}
+                          >
+                              {!mobile && relatedActions}
+                              {footerActions.map((action) => {
+                                  const { label, icon: Icon, danger } = VISIT_ACTIONS[action];
+                                  return (
+                                      <Button
+                                          key={action}
+                                          size="sm"
+                                          className={danger ? styles.detailFooterDanger : undefined}
+                                          disabled={busy}
+                                          variant={
+                                              danger
+                                                  ? "ghost"
+                                                  : primary(action)
+                                                    ? "accent"
+                                                    : "outline"
+                                          }
+                                          onClick={() => runVisitAction(action)}
+                                      >
+                                          <Icon aria-hidden />
+                                          {action === "view" ? "Close" : label}
+                                      </Button>
+                                  );
+                              })}
+                          </AppModalFooter>
+                      )
+            }
         >
             <div className="flex flex-col min-inline-0">
                 <DrawerSection title="Property" description="The property for this visit.">
@@ -284,6 +360,9 @@ export function VisitDetail({
                             </div>
                         </section>
                     </DrawerSection>
+                )}
+                {mobile && (
+                    <div className={`mbs-4 ${styles.detailButtonGrid}`}>{relatedActions}</div>
                 )}
             </div>
         </VisitOverlay>

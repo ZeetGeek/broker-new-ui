@@ -55,6 +55,8 @@ import { useTaskCatalogs } from "./task-catalogs";
 import { TaskPanel } from "./task-panel";
 import { TaskReminderPicker } from "./task-reminder-picker";
 
+import styles from "./task-panel.module.css";
+
 export function TaskSelect({
     label,
     value,
@@ -285,6 +287,7 @@ export function TaskForm({
     return (
         <TaskPanel
             title={title}
+            className={mode === "reminder" ? styles.reminderPanel : undefined}
             description={description}
             onClose={onClose}
             busy={busy}
@@ -499,7 +502,12 @@ export function TaskForm({
                                 </FormField>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div
+                                className={cn(
+                                    "flex flex-wrap items-center gap-2",
+                                    styles.dateShortcuts,
+                                )}
+                            >
                                 <Button
                                     variant="outline"
                                     size="md"
@@ -651,11 +659,16 @@ export function TaskForm({
                         </>
                     ) : null}
 
-                    <p className="flex items-start gap-2 text-sm/6 text-ink-muted">
-                        <LockKeyhole aria-hidden className="mbs-0.5 shrink-0 block-4 inline-4" />
-                        Only you can see this task. Linked contacts and property records stay
-                        unchanged.
-                    </p>
+                    {mode !== "reminder" ? (
+                        <p className="flex items-start gap-2 text-sm/6 text-ink-muted">
+                            <LockKeyhole
+                                aria-hidden
+                                className="mbs-0.5 shrink-0 block-4 inline-4"
+                            />
+                            Only you can see this task. Linked contacts and property records stay
+                            unchanged.
+                        </p>
+                    ) : null}
 
                     {error || saveError ? (
                         <p

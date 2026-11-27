@@ -13,7 +13,7 @@ import {
     useState,
 } from "react";
 
-import { Check, Plus } from "@/components/shared/icons";
+import { AlertCircle, Check, Plus } from "@/components/shared/icons";
 import {
     mapTaskClientToPicker,
     mapTaskOwnerToPicker,
@@ -166,6 +166,7 @@ export function QuickAddComposer({
     const id = useId();
     const listboxId = `${id}-options`;
     const helpId = `${id}-help`;
+    const feedbackId = `${id}-feedback`;
     const formRef = useRef<HTMLFormElement>(null);
     const fieldRef = useRef<HTMLTextAreaElement>(null);
     const selectionRef = useRef<QuickAddRange>({ start: 0, end: 0 });
@@ -194,7 +195,7 @@ export function QuickAddComposer({
         key: "",
         index: 0,
     });
-    const [hint, setHint] = useState("");
+    const [notice, setNotice] = useState<{ message: string; error?: boolean }>();
     const optionsListRef = useRef<HTMLDivElement>(null);
     const [propertyScopeState, setPropertyScopeState] = useState<{
         mentionStart: number | null;
@@ -286,6 +287,9 @@ export function QuickAddComposer({
     // Saved title keeps chips in place; emptiness still ignores pure detail words.
     const bareTitle = parse.title;
     const tooLong = values.title.length > TITLE_LIMIT;
+    const validationMessage = values.dueError || values.scheduleError || values.reminderError;
+    const feedback = notice?.message || validationMessage;
+    const feedbackError = notice ? !!notice.error : !!validationMessage;
     const marks: Mark[] = [
         ...parse.highlights,
         ...(mention ? [{ start: mention.start, end: mention.end, kind: "mention" as const }] : []),
@@ -348,7 +352,7 @@ export function QuickAddComposer({
         setOptionNav({ key: "", index: 0 });
         setPeopleScopeState({ mentionStart: null, scope: "all" });
         setPropertyScopeState({ mentionStart: null, scope: "all" });
-        setHint("");
+        setNotice(undefined);
         selectionRef.current = { start: snapshot.caret, end: snapshot.caret };
         pendingCaretRef.current = snapshot.caret;
     };
@@ -379,7 +383,7 @@ export function QuickAddComposer({
                     return;
                 }
                 if (await onSave?.(change)) onClose?.(restoreFocus);
-                else setHint("Couldn’t save this change. Try again.");
+                else setNotice({ message: "Couldn’t save this change. Try again.", error: true });
                 return;
             }
             const added = await onAdd?.(saved.title, saved.startDate, listId, {
@@ -401,15 +405,17 @@ export function QuickAddComposer({
                     setCaret(sent.text.length);
                     pendingCaretRef.current = sent.text.length;
                 }
-                setHint("Couldn’t add this task. Try again.");
+                setNotice({ message: "Couldn’t add this task. Try again.", error: true });
                 return;
             }
-            setHint(
+            setNotice(
                 saved.date === date
-                    ? ""
-                    : saved.date
-                      ? `Added to ${taskDateLabel(saved.date, now)}`
-                      : "Added without a date",
+                    ? undefined
+                    : {
+                          message: saved.date
+                              ? `Added to ${taskDateLabel(saved.date, now)}`
+                              : "Added without a date",
+                      },
             );
         } finally {
             savingRef.current = false;
@@ -431,22 +437,25 @@ export function QuickAddComposer({
         const text = draft.text.trim();
         if (!editing && !text) return;
         if (text && !bareTitle) {
-            setHint("Add a task name — a date or tag alone can’t be a task.");
+            setNotice({ message: "Add a task name alongside the date or tag.", error: true });
             return;
         }
         if (tooLong) {
-            setHint(`Keep the task name under ${TITLE_LIMIT} characters.`);
+            setNotice({
+                message: `Keep the task name under ${TITLE_LIMIT} characters.`,
+                error: true,
+            });
             return;
         }
         if (values.dueError || values.reminderError) {
-            setHint(values.dueError || values.reminderError);
+            setNotice({ message: values.dueError || values.reminderError, error: true });
             return;
         }
         const submission = { draft, values, restoreFocus };
         if (!editing) resetDraft();
         if (busy) {
             queuedRef.current = submission;
-            setHint("Saving…");
+            setNotice({ message: "Saving…" });
             return;
         }
         void commit(submission);
@@ -459,7 +468,7 @@ export function QuickAddComposer({
         setCaret(result.caret);
         setOptionIndex(0);
         setPropertyScopeState({ mentionStart: null, scope: "all" });
-        setHint("");
+        setNotice(undefined);
         selectionRef.current = { start: result.caret, end: result.caret };
         pendingCaretRef.current = result.caret;
         fieldRef.current?.focus({ preventScroll: true });
@@ -491,7 +500,7 @@ export function QuickAddComposer({
         setDraft(synced);
         setCaret(result.caret);
         setOptionIndex(0);
-        setHint("");
+        setNotice(undefined);
         selectionRef.current = { start: result.caret, end: result.caret };
         if (synced.text !== raw || result.caret !== caretAfter)
             pendingCaretRef.current = result.caret;
@@ -615,6 +624,7 @@ export function QuickAddComposer({
             data-quick-add=""
             data-active={active || undefined}
             data-editing={editing || undefined}
+            data-invalid={(active && (tooLong || !!validationMessage)) || undefined}
             data-empty={!draft.text || undefined}
             onSubmit={(event) => {
                 event.preventDefault();
@@ -649,7 +659,8 @@ export function QuickAddComposer({
                                 ? `Edit task: ${task.title}`
                                 : `Add a task${where ? ` to ${where}` : ""}`
                         }
-                        aria-describedby={helpId}
+                        aria-invalid={(active && (tooLong || !!validationMessage)) || undefined}
+                        aria-describedby={active && feedback ? `${helpId} ${feedbackId}` : helpId}
                         aria-autocomplete="list"
                         aria-controls={mention ? listboxId : undefined}
                         aria-activedescendant={
@@ -768,33 +779,32 @@ export function QuickAddComposer({
                         </div>
                     )}
                 </div>
-                <p data-quick-add-meta className={styles.meta} hidden={!active}>
-                    <QuickAddHelp
-                        fieldRef={fieldRef}
-                        onOpenChange={(open) => {
-                            helpOpenRef.current = open;
-                        }}
-                    />
-                    {values.title.length >= COUNTER_FROM && (
-                        <span data-over={tooLong || undefined}>
-                            {values.title.length}/{TITLE_LIMIT}
-                        </span>
-                    )}
-                    <span
-                        role="status"
-                        data-error={
-                            values.dueError || values.scheduleError || values.reminderError
-                                ? ""
-                                : undefined
-                        }
-                    >
-                        {hint || values.dueError || values.scheduleError || values.reminderError}
-                    </span>
-                </p>
                 <p id={helpId} className="sr-only">
                     Type the task name in plain words. Open Tips for date, time, priority, property,
                     Client, reminder and repeat tips. Ctrl+Z undoes a change.
                 </p>
+            </div>
+            <div data-quick-add-meta className={styles.meta} hidden={!active}>
+                <QuickAddHelp
+                    fieldRef={fieldRef}
+                    onOpenChange={(open) => {
+                        helpOpenRef.current = open;
+                    }}
+                />
+                {values.title.length >= COUNTER_FROM && (
+                    <span data-over={tooLong || undefined}>
+                        {values.title.length}/{TITLE_LIMIT}
+                    </span>
+                )}
+                <span
+                    id={feedbackId}
+                    className={styles.feedback}
+                    role="status"
+                    data-error={feedbackError || undefined}
+                >
+                    {feedback && feedbackError && <AlertCircle aria-hidden />}
+                    {feedback && <span>{feedback}</span>}
+                </span>
             </div>
             <button
                 type="submit"

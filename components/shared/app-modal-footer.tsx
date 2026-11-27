@@ -27,6 +27,7 @@ export type AppModalFooterProps = ComponentProps<"div"> & {
     secondaryLabel?: ReactNode;
     onSecondary?: () => void;
     secondaryDisabled?: boolean;
+    secondarySize?: ComponentProps<typeof Button>["size"];
     secondaryIcon?: ReactNode;
     secondaryVariant?: ComponentProps<typeof Button>["variant"];
     /** Extra content between the two actions (a "skip" link, a count, etc.). */
@@ -52,6 +53,7 @@ export function AppModalFooter({
     secondaryLabel,
     onSecondary,
     secondaryDisabled,
+    secondarySize = "default",
     secondaryIcon,
     secondaryVariant = "ghost",
     children,
@@ -72,7 +74,7 @@ export function AppModalFooter({
                 <Button
                     type="button"
                     variant={secondaryVariant}
-                    size="default"
+                    size={secondarySize}
                     disabled={secondaryDisabled}
                     onClick={onSecondary}
                     className="inline-auto"

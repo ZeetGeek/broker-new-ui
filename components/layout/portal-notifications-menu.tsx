@@ -32,7 +32,7 @@ import { Bell, CheckCheck, NotificationIcon, Trash2 } from "@/components/shared/
 import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { SlidingTabs } from "@/components/shared/sliding-tabs";
 import { WorkflowLink as Link } from "@/components/shared/workflow-link";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -718,19 +718,20 @@ export function PortalNotificationsMenu({
                 data-scroll-shadow={hasMoreBelow}
                 className={cn(
                     `
-                      relative z-1 shrink-0 border-bs bg-surface p-3
+                      sticky bottom-0 z-1 shrink-0 border-bs bg-surface p-3
                       transition-shadow duration-160
                       data-[scroll-shadow=true]:shadow-[0_-10px_18px_-12px_rgb(25_28_26/28%)]
                     `,
                     mobile ? "border-(--dialog-divider)" : "border-border-warm",
                 )}
             >
-                <Button
-                    variant="outline"
-                    size="default"
-                    nativeButton={false}
-                    render={<Link href={viewAllHref} onClick={() => setOpen(false)} />}
-                    className="font-medium inline-full"
+                <Link
+                    href={viewAllHref}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                        buttonVariants({ variant: "outline", size: "default" }),
+                        "font-medium inline-full",
+                    )}
                 >
                     View all notifications
                     <NotificationIcon
@@ -739,7 +740,7 @@ export function PortalNotificationsMenu({
                         data-icon="inline-end"
                         className="block-4 inline-4"
                     />
-                </Button>
+                </Link>
             </div>
         </>
     );

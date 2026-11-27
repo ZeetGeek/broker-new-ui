@@ -16,6 +16,7 @@ export function MobileActionDrawer({
     title,
     description,
     children,
+    headerClassName,
     bodyClassName,
     edgeToEdge = false,
 }: {
@@ -26,6 +27,7 @@ export function MobileActionDrawer({
     title: string;
     description?: string;
     children: ReactNode;
+    headerClassName?: string;
     bodyClassName?: string;
     /** Panels with their own content insets, such as notifications. */
     edgeToEdge?: boolean;
@@ -38,10 +40,11 @@ export function MobileActionDrawer({
             trigger={trigger}
             title={title}
             description={description}
+            headerClassName={headerClassName}
             descriptionClassName="line-clamp-2 wrap-break-word"
             padding="sm"
             nativeScroll
-            scrollFade
+            scrollFade={!edgeToEdge}
             className={styles.drawer}
             bodyClassName={cn(styles.body, edgeToEdge && styles.edgeToEdge)}
         >

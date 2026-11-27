@@ -964,9 +964,9 @@ cleanly. No bouncy spring.
 
 ### 4.19 Date picker
 
-Popover + outline Button + Calendar, wrapped once as `AppDatePicker` in
-`components/shared/app-date-picker.tsx`. Do not recompose those three at call
-sites. Value in state / forms is `yyyy-MM-dd`; the trigger always shows
+Use `AppDatePicker` for date fields. It opens a popover on desktop and a
+bottom drawer on mobile. `AppDateTimePicker` and inline date filters reuse
+`AppDateCalendar`. Value in state / forms is `yyyy-MM-dd`; the trigger always shows
 `dd/mm/yyyy` via `formatDateIn` â€” never month-first `en-US` formatting.
 Empty placeholder is `Pick a date`.
 
@@ -989,13 +989,12 @@ Same five control-height steps as Input and Select (`xs`â€“`lg`). Default i
 `border-ring` via `aria-expanded`. Calendar icon (not a chevron) owns the
 end slot; the date string sits on the start.
 
-Popup is light only â€” `bg-surface`, `rounded-card`, `border-warm`,
-`shadow-lg`. Caption is custom: `Button` (ghost, circular hover) for
-prev/next and compact `Select` triggers for month + year (`surface-muted`,
-`ChevronsUpDown`). Day cells are compact and circular; selected day uses a `brand` fill with
-`surface` text â€” never a under-dot. Unselected today uses a quiet
-`surface-muted` chip. Year range is roughly âˆ’10 / +20 years. Month select
-shows short names (`Jan`â€“`Dec`), not zero-based indices.
+The desktop popover is compact and uses `bg-surface`, `rounded-card`,
+`border-warm`, and `shadow-lg`. The mobile drawer centres seven equal day
+columns and uses 44px-high day and navigation targets. The shared caption uses
+`IconButton` for previous and next month and custom `Select` menus for month and
+year. The selected day uses a `brand` circle with `surface` text. Today uses a
+`brand-soft` circle when unselected.
 
 Pass `invalid` when validation fails â€” error copy lives under the field
 (with the form's `FieldError`), not inside the popover. Always pair with a

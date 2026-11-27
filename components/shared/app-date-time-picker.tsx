@@ -1,9 +1,9 @@
 "use client";
 
-import { type CSSProperties, type Ref, useId, useState } from "react";
+import { type Ref, useId, useState } from "react";
 import dynamic from "next/dynamic";
 
-import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
+import { formatInTimeZone } from "date-fns-tz";
 
 import { timeOnlyToDate } from "@/lib/datetime/time-only";
 import { formatTimeIn } from "@/lib/format/date";
@@ -11,10 +11,10 @@ import { cn } from "@/lib/utils";
 import { VISITS_TIME_ZONE } from "@/lib/visits/constants";
 import { useMobileMenu } from "@/hooks/use-mobile-menu";
 
+import { AppDateCalendar, parseCalendarDate } from "@/components/shared/app-date-calendar";
 import { CalendarClock } from "@/components/shared/icons";
 import { MobileActionDrawer } from "@/components/shared/mobile-action-drawer";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const MaterialTimePanel = dynamic(() => import("./material-time-panel"), {
@@ -80,27 +80,13 @@ export function AppDateTimePicker({
     };
     const [date = "", time = ""] = draft.split("T");
     const [savedDate = "", savedTime = ""] = value.split("T");
-    const savedDay = savedDate
-        ? fromZonedTime(`${savedDate}T12:00:00`, VISITS_TIME_ZONE)
-        : undefined;
-    const summary =
-        savedDay && !Number.isNaN(savedDay.getTime())
-            ? `${formatInTimeZone(savedDay, VISITS_TIME_ZONE, "dd/MM/yyyy")}${savedTime ? ` at ${formatTimeLabel(savedTime)}` : ""}`
-            : "";
-    const selected = date ? fromZonedTime(`${date}T12:00:00`, VISITS_TIME_ZONE) : undefined;
-    const validDate = selected && !Number.isNaN(selected.getTime()) ? selected : undefined;
+    const savedDay = parseCalendarDate(savedDate);
+    const summary = savedDay
+        ? `${formatInTimeZone(savedDay, VISITS_TIME_ZONE, "dd/MM/yyyy")}${savedTime ? ` at ${formatTimeLabel(savedTime)}` : ""}`
+        : "";
+    const validDate = parseCalendarDate(date);
     const minDate = min?.slice(0, 10);
     const maxDate = max?.slice(0, 10);
-    const calendarDisabled = disabled
-        ? true
-        : [
-              ...(minDate
-                  ? [{ before: fromZonedTime(`${minDate}T00:00:00`, VISITS_TIME_ZONE) }]
-                  : []),
-              ...(maxDate
-                  ? [{ after: fromZonedTime(`${maxDate}T23:59:59`, VISITS_TIME_ZONE) }]
-                  : []),
-          ];
     const description =
         [describedBy, error ? `${fieldId}-error` : null].filter(Boolean).join(" ") || undefined;
     const canConfirm =
@@ -118,6 +104,29 @@ export function AppDateTimePicker({
         }
         setDraft(`${day}T${nextTime}`);
     };
+
+    const calendar = (
+        <AppDateCalendar
+            value={date}
+            required
+            allowPast
+            min={minDate}
+            max={maxDate}
+            weekStartsOn={1}
+            disabledDates={disabled}
+            onChange={(nextDate) => {
+                if (!nextDate) return;
+                const nextTime =
+                    time ||
+                    (timeOptional
+                        ? ""
+                        : nextDate === minDate
+                          ? min?.slice(11, 16) || "09:00"
+                          : "09:00");
+                setDraft(`${nextDate}T${nextTime}`);
+            }}
+        />
+    );
 
     if (mobile) {
         return (
@@ -154,39 +163,7 @@ export function AppDateTimePicker({
                     }
                 >
                     <div className="flex flex-col items-center gap-4">
-                        <Calendar
-                            key={date || "empty"}
-                            mode="single"
-                            required
-                            weekStartsOn={1}
-                            timeZone={VISITS_TIME_ZONE}
-                            selected={validDate}
-                            defaultMonth={validDate}
-                            disabled={calendarDisabled}
-                            onSelect={(next) => {
-                                if (!next) return;
-                                const nextDate = formatInTimeZone(
-                                    next,
-                                    VISITS_TIME_ZONE,
-                                    "yyyy-MM-dd",
-                                );
-                                const nextTime =
-                                    time ||
-                                    (timeOptional
-                                        ? ""
-                                        : nextDate === minDate
-                                          ? min?.slice(11, 16) || "09:00"
-                                          : "09:00");
-                                setDraft(`${nextDate}T${nextTime}`);
-                            }}
-                            className="bg-transparent p-0 inline-full max-inline-77 min-inline-0 [&_button]:aspect-auto [&_button]:min-inline-0! [&_table]:table-fixed [&_td]:min-inline-0"
-                            style={
-                                {
-                                    "--cell-size":
-                                        "clamp(1.75rem, calc((100cqi - 1.5rem) / 7), 2.75rem)",
-                                } as CSSProperties
-                            }
-                        />
+                        {calendar}
                         <div className="flex justify-center self-stretch border-bs border-border-warm pbs-3">
                             {open ? (
                                 <MaterialTimePanel
@@ -288,40 +265,7 @@ export function AppDateTimePicker({
                     className="@container gap-0 overflow-y-auto p-0 inline-[min(40rem,calc(100vw-1.5rem))] max-block-[min(80dvh,var(--available-height))]"
                 >
                     <div className="flex flex-col items-center gap-4 p-3 @[36rem]:flex-row @[36rem]:items-start">
-                        <Calendar
-                            key={date || "empty"}
-                            mode="single"
-                            required
-                            weekStartsOn={1}
-                            timeZone={VISITS_TIME_ZONE}
-                            selected={validDate}
-                            defaultMonth={validDate}
-                            disabled={calendarDisabled}
-                            onSelect={(next) => {
-                                if (next) {
-                                    const nextDate = formatInTimeZone(
-                                        next,
-                                        VISITS_TIME_ZONE,
-                                        "yyyy-MM-dd",
-                                    );
-                                    const nextTime =
-                                        time ||
-                                        (timeOptional
-                                            ? ""
-                                            : nextDate === minDate
-                                              ? min?.slice(11, 16) || "09:00"
-                                              : "09:00");
-                                    setDraft(`${nextDate}T${nextTime}`);
-                                }
-                            }}
-                            className="bg-transparent p-0 inline-full max-inline-77 min-inline-0 [&_button]:aspect-auto [&_button]:min-inline-0! [&_table]:table-fixed [&_td]:min-inline-0"
-                            style={
-                                {
-                                    "--cell-size":
-                                        "clamp(1.75rem, calc((100cqi - 1.5rem) / 7), 2.75rem)",
-                                } as CSSProperties
-                            }
-                        />
+                        {calendar}
                         <div className="flex justify-center self-stretch border-bs border-border-warm pbs-3 @[36rem]:border-s @[36rem]:border-bs-0 @[36rem]:ps-3 @[36rem]:pbs-0">
                             {open ? (
                                 <MaterialTimePanel

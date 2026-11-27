@@ -19,12 +19,13 @@ import {
     CalendarPlus,
     Clock,
     RefreshCw,
-    UserRound,
 } from "@/components/shared/icons";
 import { mapFilterPersonToPicker } from "@/components/shared/map-to-people-picker-person";
 import { mapVisitLeadPropertyToPicker } from "@/components/shared/map-to-property-picker-property";
 import { PeopleInlineSelect } from "@/components/shared/people-inline-select";
+import { PropertyCoverImage } from "@/components/shared/property-cover-image";
 import { PropertyPickerField } from "@/components/shared/property-picker";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -50,6 +51,70 @@ import { VisitDatePicker } from "./visit-pickers";
 import { VisitReminderPicker } from "./visit-reminder-picker";
 
 import styles from "./visits.module.css";
+
+function RescheduleVisitSummary({ visit }: { visit: BrokerVisit }) {
+    const locality = visit.locality.trim();
+    const city = visit.city.trim();
+    const location =
+        locality.toLowerCase() === city.toLowerCase()
+            ? city
+            : [locality, city].filter(Boolean).join(", ");
+    const client = formatPersonName(visit.clientName);
+    const owner = formatPersonName(visit.ownerName);
+
+    return (
+        <div className={styles.rescheduleSummary}>
+            <div className={styles.rescheduleProperty}>
+                <PropertyCoverImage src={visit.coverImage} alt="" size={64} />
+                <div className="min-inline-0">
+                    <p className="body-sm font-semibold text-ink">{visit.propertyTitle}</p>
+                    {location && <p className="body-xs text-ink-muted">{location}</p>}
+                </div>
+            </div>
+            <ul className={styles.reschedulePeople} aria-label="Visit contacts">
+                <li className={styles.reschedulePerson}>
+                    <UserAvatar
+                        name={visit.clientName}
+                        imageUrl={visit.clientAvatarUrl ?? undefined}
+                        size="xs"
+                    />
+                    <div className="min-inline-0">
+                        <p className="body-xs text-ink-muted">Client</p>
+                        <p className="body-sm font-medium text-ink">{client}</p>
+                    </div>
+                </li>
+                <li className={styles.reschedulePerson}>
+                    {owner ? (
+                        <UserAvatar
+                            name={visit.ownerName ?? owner}
+                            imageUrl={visit.ownerAvatarUrl ?? undefined}
+                            size="xs"
+                        />
+                    ) : (
+                        <span className={styles.rescheduleOwnerIcon} aria-hidden>
+                            <Building2 />
+                        </span>
+                    )}
+                    <div className="min-inline-0">
+                        <p className="body-xs text-ink-muted">Owner</p>
+                        <p className="body-sm font-medium text-ink">
+                            {owner || (visit.isExclusive ? "Your listing" : "Not available")}
+                        </p>
+                    </div>
+                </li>
+            </ul>
+            <p className={styles.rescheduleCurrentTime}>
+                <Clock aria-hidden className="shrink-0 block-4 inline-4" />
+                <span>
+                    Current visit:{" "}
+                    <time dateTime={visit.startsAt}>
+                        {formatVisitDate(visit.startsAt)}, {formatVisitTime(visit.startsAt)} IST
+                    </time>
+                </span>
+            </p>
+        </div>
+    );
+}
 
 /**
  * Book a visit, or move one (`visit`). Client → property → length → date →
@@ -247,6 +312,7 @@ export function ScheduleForm({
     return (
         <VisitOverlay
             title={visit ? "Reschedule visit" : "Schedule a visit"}
+            className={visit ? styles.rescheduleDrawer : undefined}
             onClose={onBack}
             busy={busy}
             dirty={dirty}
@@ -276,34 +342,13 @@ export function ScheduleForm({
                             </p>
                         )}
                         <WizardSection
-                            title="Client and property"
+                            title={visit ? "Visit summary" : "Client and property"}
                             description={
-                                visit
-                                    ? "Client and property for this visit."
-                                    : "Choose the client, then their property."
+                                visit ? undefined : "Choose the client, then their property."
                             }
                         >
                             {visit ? (
-                                <div className="flex flex-col gap-2">
-                                    <p className="body-sm flex items-center gap-2 text-ink">
-                                        <UserRound
-                                            aria-hidden
-                                            className="shrink-0 block-4 inline-4"
-                                        />
-                                        {formatPersonName(visit.clientName)}
-                                    </p>
-                                    <p className="body-sm flex items-center gap-2 text-ink">
-                                        <Building2
-                                            aria-hidden
-                                            className="shrink-0 block-4 inline-4"
-                                        />
-                                        {visit.propertyTitle}, {visit.locality}
-                                    </p>
-                                    <p className="body-xs text-ink-muted">
-                                        Current: {formatVisitDate(visit.startsAt)},{" "}
-                                        {formatVisitTime(visit.startsAt)} IST
-                                    </p>
-                                </div>
+                                <RescheduleVisitSummary visit={visit} />
                             ) : (
                                 <div className="flex flex-col gap-4">
                                     <div className={styles.field}>
@@ -399,7 +444,7 @@ export function ScheduleForm({
                                                 <Button
                                                     key={chip.value}
                                                     type="button"
-                                                    size="md"
+                                                    size={visit ? "sm" : "md"}
                                                     variant={
                                                         draft.durationMinutes === chip.value
                                                             ? "accent"
@@ -503,6 +548,7 @@ export function ScheduleForm({
                                             now={now}
                                             onChange={(reminders) => patch({ reminders })}
                                             disabled={busy}
+                                            compact={Boolean(visit)}
                                         />
                                     ) : (
                                         <p className={styles.reminderHint}>

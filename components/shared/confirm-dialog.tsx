@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 
 import { AppModal } from "@/components/shared/app-modal";
-import { AppModalFooter } from "@/components/shared/app-modal-footer";
+import { AppModalFooter, type AppModalFooterProps } from "@/components/shared/app-modal-footer";
 
 export type ConfirmDialogProps = {
     open: boolean;
@@ -18,6 +18,7 @@ export type ConfirmDialogProps = {
     confirmLabel: string;
     /** Safe choice: "Keep visit", "Stay signed in". */
     cancelLabel?: string;
+    buttonSize?: AppModalFooterProps["primarySize"];
     busy?: boolean;
     onConfirm: () => void;
 };
@@ -34,6 +35,7 @@ export function ConfirmDialog({
     children,
     confirmLabel,
     cancelLabel = "Cancel",
+    buttonSize,
     busy = false,
     onConfirm,
 }: ConfirmDialogProps) {
@@ -51,10 +53,12 @@ export function ConfirmDialog({
                 <AppModalFooter
                     className="flex flex-row flex-wrap items-center justify-end gap-2 inline-full"
                     secondaryLabel={cancelLabel}
+                    secondarySize={buttonSize}
                     secondaryVariant="ghost"
                     secondaryDisabled={busy}
                     onSecondary={() => onOpenChange(false)}
                     primaryLabel={confirmLabel}
+                    primarySize={buttonSize}
                     primaryType="button"
                     primaryVariant="destructive"
                     primaryDisabled={busy}

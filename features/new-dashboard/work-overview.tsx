@@ -362,6 +362,8 @@ function VisitCard({
                         }
                     }}
                     title="Visit actions"
+                    headerClassName="pbs-1"
+                    bodyClassName="pbe-2"
                     description={`${visit.propertyTitle} · ${visit.clientName}`}
                     trigger={
                         <IconButton

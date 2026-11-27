@@ -710,6 +710,7 @@ export function resolveQuickAddValues(
     now: number,
 ): QuickAddValues {
     const { base } = draft;
+    const saved = draft.preserved?.values;
     const isPreserved = (atom: QuickAddAtom) =>
         draft.preserved?.atoms.some(
             (saved) =>
@@ -753,7 +754,10 @@ export function resolveQuickAddValues(
 
     const dueIssues: QuickAddRange[] = [];
     let dueError = "";
-    if (askedDue || typedDue) {
+    const unchangedStart = saved && startDate === saved.startDate && startTime === saved.startTime;
+    const unchangedDeadline =
+        unchangedStart && dueDate === saved.dueDate && dueTime === saved.dueTime;
+    if ((askedDue || typedDue) && !unchangedDeadline) {
         if (!startDate || !startTime) {
             dueIssues.push(...dueClauseRanges(parse));
             dueError = "Add a start date and time before the due date.";
@@ -814,7 +818,7 @@ export function resolveQuickAddValues(
     }
 
     const startAt = startDate ? scheduleInstant(startDate, startTime) : null;
-    const schedulePassed = startAt !== null && startAt <= now;
+    const schedulePassed = !unchangedStart && startAt !== null && startAt <= now;
     const scheduleIssues = schedulePassed
         ? parse.highlights
               .filter((highlight) => highlight.kind === "schedule")

@@ -69,6 +69,7 @@ export type ApiShowing = {
     client?: {
         id: string;
         name: string;
+        avatarUrl?: string | null;
         phone?: string;
         email?: string | null;
     } | null;

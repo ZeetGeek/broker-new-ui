@@ -75,6 +75,7 @@ const buttonVariants = cva(
                 `,
                 sm: `
                   gap-1 px-3 block-control-sm inline-auto min-inline-control-sm
+                  [--control-font-size:calc(0.8125rem/var(--layout-font-scale))]
                   has-data-[icon=inline-end]:pe-2
                   has-data-[icon=inline-start]:ps-2
                 `,

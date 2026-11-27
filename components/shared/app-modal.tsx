@@ -82,6 +82,7 @@ export type AppModalProps = {
     description?: ReactNode;
     /** Extra sticky content under the title (tabs, filters, etc.) */
     header?: ReactNode;
+    headerActions?: ReactNode;
     footer?: ReactNode;
     children: ReactNode;
     showCloseButton?: boolean;
@@ -119,6 +120,7 @@ export function AppModal({
     title,
     description,
     header,
+    headerActions,
     footer,
     children,
     showCloseButton = true,
@@ -181,12 +183,13 @@ export function AppModal({
                         description={showDescription ? description : undefined}
                         descriptionClassName={descriptionClassName}
                         contentClassName={headerClassName}
+                        actions={headerActions}
                     >
                         {header}
                     </AppModalHeader>
                 ) : null}
 
-                {!scrollBody ? (
+                {children == null ? null : !scrollBody ? (
                     <div
                         ref={setBody}
                         className={cn(

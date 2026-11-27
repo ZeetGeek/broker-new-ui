@@ -13,6 +13,35 @@
     .panel :global(button[data-icon-button]) {
         --icon-button-size: var(--touch-target-min);
     }
+    .reminderPanel :global([data-slot="dialog-close"][data-icon-button]) {
+        --icon-button-size: var(--size-control-md);
+    }
+    .reminderPanel .dateShortcuts {
+        row-gap: 1rem;
+    }
+    .reminderPanel .dateShortcuts > button {
+        --control-font-size: calc(0.8125rem / var(--layout-font-scale));
+        block-size: var(--size-control-sm);
+        min-block-size: 0;
+        padding-inline: 0.75rem;
+    }
+
+    @media (pointer: coarse) {
+        .reminderPanel :global([data-slot="dialog-close"][data-icon-button]),
+        .reminderPanel .dateShortcuts > button {
+            position: relative;
+        }
+        .reminderPanel :global([data-slot="dialog-close"][data-icon-button])::after {
+            position: absolute;
+            inset: -0.375rem;
+            content: "";
+        }
+        .reminderPanel .dateShortcuts > button::after {
+            position: absolute;
+            inset: -0.5rem 0;
+            content: "";
+        }
+    }
     .footer :global([data-slot="button"]) {
         flex: 1 1 auto;
         min-block-size: var(--touch-target-min);

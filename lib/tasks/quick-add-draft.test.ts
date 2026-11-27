@@ -82,6 +82,22 @@ const pick = (draft: QuickAddDraft, id: string, label: string) => {
     });
 };
 
+test("renaming a saved task preserves its deadline even if it has no start date", () => {
+    const task = {
+        ...createPlannerTask("Call the owner", null, now, "deadline-only"),
+        dueDate: "2030-11-20",
+    };
+    const draft = quickAddDraftFromTask(task, now, catalogs);
+    const edited = type(draft, "Call the owner again").draft;
+    const values = resolveQuickAddValues(edited, parse(edited), now);
+    assert.equal(values.dueError, "");
+    assert.equal(values.startDate, null);
+    assert.equal(values.dueDate, task.dueDate);
+
+    const rescheduled = type(edited, "Call the owner again due tomorrow 6pm").draft;
+    assert.notEqual(resolveQuickAddValues(rescheduled, parse(rescheduled), now).dueError, "");
+});
+
 test("the caret pins edits inside repeated letters", () => {
     assert.deepEqual(diffText("aaa", "aaaa", 1), { start: 0, end: 0, inserted: "a" });
     assert.deepEqual(diffText("aaa", "aaaa", 2), { start: 1, end: 1, inserted: "a" });
